@@ -271,30 +271,30 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                             {buyShares && buyPrice && parseFloat(buyShares) > 0 && parseFloat(buyPrice) > 0 && (
                                 <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900/30">
                                     <div className="text-sm space-y-1">
-                                        <div className="flex justify-between">
-                                            <span className="text-green-600 dark:text-green-400">Gekaufte Anteile:</span>
-                                            <span className="font-medium">{parseFloat(buyShares).toFixed(2)}</span>
+                                        <div className="flex justify-between font-medium text-green-600 dark:text-green-400">
+                                            <span>Gekaufte Anteile:</span>
+                                            <span>{parseFloat(buyShares).toFixed(2)} Stk</span>
+                                        </div>
+                                        <div className="flex justify-between text-xs">
+                                            <span>zum Kurs von:</span>
+                                            <span className="font-medium">
+                                                {formatCurrency(parseFloat(buyPrice), position.stock.currency)}
+                                            </span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Neuer Bestand:</span>
-                                            <span className="font-medium">{(position.shares + parseFloat(buyShares)).toFixed(2)}</span>
+                                            <span className="font-medium">{(position.shares + parseFloat(buyShares)).toFixed(2)} Stk</span>
                                         </div>
                                         <div className="flex justify-between border-t border-green-200 dark:border-green-900/30 pt-1 mt-1">
                                             <span>Kaufwert:</span>
                                             <span className="font-medium text-green-600 dark:text-green-400">
-                                                {buyValue.toLocaleString('de-DE', {
-                                                    style: 'currency',
-                                                    currency: position.stock.currency,
-                                                })}
+                                                {formatCurrency(buyValue, position.stock.currency)}
                                             </span>
                                         </div>
                                         <div className="flex justify-between text-xs text-muted-foreground">
                                             <span>Neuer Ø Kaufpreis:</span>
                                             <span>
-                                                {((position.shares * position.buyPriceAvg + buyValue) / (position.shares + parseFloat(buyShares))).toLocaleString('de-DE', {
-                                                    style: 'currency',
-                                                    currency: position.stock.currency,
-                                                })}
+                                                {formatCurrency((position.shares * position.buyPriceAvg + buyValue) / (position.shares + parseFloat(buyShares)), position.stock.currency)}
                                             </span>
                                         </div>
                                     </div>
