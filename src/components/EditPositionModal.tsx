@@ -25,7 +25,12 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
     // Buy state
     const [buyShares, setBuyShares] = useState('');
-    const [buyPrice, setBuyPrice] = useState(position.stock.currentPrice.toString());
+    const [buyPrice, setBuyPrice] = useState(position.stock.currentPrice.toFixed(2));
+
+    // Helper: Format shares (no decimals for whole numbers)
+    const formatShares = (shares: number) => {
+        return shares % 1 === 0 ? shares.toString() : shares.toFixed(2);
+    };
 
     if (!isOpen) return null;
 
@@ -278,17 +283,17 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                     <div className="text-sm space-y-1">
                                         <div className="flex justify-between font-medium text-green-600 dark:text-green-400">
                                             <span>Gekaufte Anteile:</span>
-                                            <span>{parseFloat(buyShares).toFixed(2)} Stk</span>
+                                            <span>{formatShares(parseFloat(buyShares))} Stk</span>
                                         </div>
                                         <div className="flex justify-between text-xs">
-                                            <span>{parseFloat(buyShares).toFixed(2)} Stk zu:</span>
+                                            <span>{formatShares(parseFloat(buyShares))} Stk zu:</span>
                                             <span className="font-medium">
                                                 {formatCurrency(parseFloat(buyPrice), position.stock.currency)}
                                             </span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Neuer Bestand:</span>
-                                            <span className="font-medium">{(position.shares + parseFloat(buyShares)).toFixed(2)} Stk</span>
+                                            <span className="font-medium">{formatShares(position.shares + parseFloat(buyShares))} Stk</span>
                                         </div>
                                         <div className="flex justify-between border-t border-green-200 dark:border-green-900/30 pt-1 mt-1">
                                             <span>Kaufwert:</span>
