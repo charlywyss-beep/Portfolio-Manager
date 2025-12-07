@@ -1,9 +1,35 @@
-import { usePortfolioData } from '../hooks/usePortfolioData';
-import { Plus, Search, MoreHorizontal, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { useState } from 'react';
+import { usePortfolio } from '../context/PortfolioContext';
+import { Plus, Search, Trash2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { cn } from '../utils';
+import { AddPositionModal } from '../components/AddPositionModal';
 
 export function Portfolio() {
-    const { positions } = usePortfolioData();
+    const { positions: rawPositions, stocks, addPosition, deletePosition } = usePortfolio();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // Enrich positions with stock data
+    const positions = rawPositions.map((pos) => {
+        const stock = stocks.find((s) => s.id === pos.stockId)!;
+        const currentValue = pos.shares * stock.currentPrice;
+        const buyValue = pos.shares * pos.buyPriceAvg;
+        const gainLoss = currentValue - buyValue;
+        const gainLossPercent = (gainLoss / buyValue) * 100;
+
+        return {
+            ...pos,
+            stock,
+            currentValue,
+            gainLoss,
+            gainLossPercent,
+        };
+    });
+
+    const filteredPositions = positions.filter((pos) =>
+        pos.stock.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pos.stock.symbol.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -14,10 +40,15 @@ export function Portfolio() {
                     <input
                         type="text"
                         placeholder="Aktien suchen..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
                     />
                 </div>
-                <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium text-sm">
+                <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium text-sm"
+                >
                     <Plus className="size-4" />
                     <span>Position hinzufügen</span>
                 </button>
@@ -38,7 +69,7 @@ export function Portfolio() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {positions.map((pos) => (
+                            {filteredPositions.map((pos) => (
                                 <tr key={pos.id} className="group hover:bg-muted/30 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
@@ -86,16 +117,24 @@ export function Portfolio() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-center">
-                                        <button className="text-muted-foreground hover:text-foreground p-2 rounded-md hover:bg-muted transition-colors">
-                                            <MoreHorizontal className="size-5" />
+                                        <button
+                                            onClick={() => {
+                                                if (confirm(`Position "${pos.stock.name}" wirklich löschen?`)) {
+                                                    deletePosition(pos.id);
+                                                }
+                                            }}
+                                            className="text-muted-foreground hover:text-red-600 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                                            title="Position löschen"
+                                        >
+                                            <Trash2 className="size-5" />
                                         </button>
                                     </td>
                                 </tr>
                             ))}
-                            {positions.length === 0 && (
+                            {filteredPositions.length === 0 && (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
-                                        Noch keine Aktien im Depot.
+                                        {searchTerm ? 'Keine Aktien gefunden.' : 'Noch keine Aktien im Depot.'}
                                     </td>
                                 </tr>
                             )}
@@ -103,6 +142,13 @@ export function Portfolio() {
                     </table>
                 </div>
             </div>
+
+            <AddPositionModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                stocks={stocks}
+                onAdd={addPosition}
+            />
         </div>
     );
 }
