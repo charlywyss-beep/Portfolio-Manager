@@ -1,5 +1,5 @@
 // Transaction export utilities for Excel and PDF
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx-js-style';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
