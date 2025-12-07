@@ -49,34 +49,39 @@ export function exportToExcel(transaction: TransactionData) {
         ? transaction.chfEquivalent / transaction.totalValue
         : undefined;
 
+    // Helper to format currency
+    const fmt = (val: number, curr: string) => `${val.toFixed(2)} ${curr}`;
+    // Helper to calc and format CHF
+    const fmtCHF = (val: number) => conversionRate ? `${(val * conversionRate).toFixed(2)} CHF` : '';
+
     const data: (string | null)[][] = [
-        ['Portfolio Manager - Transaktionsbeleg', null, null],
-        [null, null, null],
-        ['Datum', null, transaction.date.toLocaleString('de-DE')],
-        ['Typ', null, transaction.type === 'buy' ? 'KAUF' : 'VERKAUF'],
-        [null, null, null],
-        ['Aktie', null, transaction.stockName],
-        ['Symbol', null, transaction.stockSymbol],
+        [null, 'Portfolio Manager - Transaktionsbeleg', null, null, null],
+        [null, null, null, null, null], // Spacer row
+        [null, 'Datum', null, transaction.date.toLocaleString('de-DE'), null],
+        [null, 'Typ', null, transaction.type === 'buy' ? 'KAUF' : 'VERKAUF', null],
+        [null, null, null, null, null], // Spacer
+        [null, 'Aktie', null, transaction.stockName, null],
+        [null, 'Symbol', null, transaction.stockSymbol, null],
     ];
 
-    if (transaction.valor) data.push(['Valor', null, transaction.valor]);
-    if (transaction.isin) data.push(['ISIN', null, transaction.isin]);
+    if (transaction.valor) data.push([null, 'Valor', null, transaction.valor, null]);
+    if (transaction.isin) data.push([null, 'ISIN', null, transaction.isin, null]);
 
     data.push(
-        [null, null, null],
-        ['Anzahl', null, `${transaction.shares} Stk`],
-        ['Preis pro Stück', null, formatDualCurrency(transaction.pricePerShare, transaction.currency, conversionRate)],
-        [null, null, null],
-        ['Transaktionswert', null, formatDualCurrency(transaction.totalValue, transaction.currency, conversionRate)]
+        [null, null, null, null, null], // Spacer
+        [null, 'Anzahl', null, `${transaction.shares} Stk`, null],
+        [null, 'Preis pro Stück', null, fmt(transaction.pricePerShare, transaction.currency), fmtCHF(transaction.pricePerShare)],
+        [null, null, null, null, null], // Spacer
+        [null, 'Transaktionswert', null, fmt(transaction.totalValue, transaction.currency), fmtCHF(transaction.totalValue)]
     );
 
     // Removed separate CHF row as requested
 
     if (transaction.type === 'sell' && transaction.avgBuyPrice && transaction.profitLoss !== undefined) {
         data.push(
-            [null, null, null],
-            ['Ø Kaufpreis', null, formatDualCurrency(transaction.avgBuyPrice, transaction.currency, conversionRate)],
-            ['Gewinn/Verlust', null, formatDualCurrency(transaction.profitLoss, transaction.currency, conversionRate)]
+            [null, null, null, null, null], // Spacer
+            [null, 'Ø Kaufpreis', null, fmt(transaction.avgBuyPrice, transaction.currency), fmtCHF(transaction.avgBuyPrice)],
+            [null, 'Gewinn/Verlust', null, fmt(transaction.profitLoss, transaction.currency), fmtCHF(transaction.profitLoss)]
         );
     }
 
@@ -84,11 +89,13 @@ export function exportToExcel(transaction: TransactionData) {
 
     const ws = XLSX.utils.aoa_to_sheet(data);
 
-    // Set column widths
+    // Set column widths to match the look
     ws['!cols'] = [
-        { wch: 20 }, // Column A (Labels)
-        { wch: 5 },  // Column B (Spacer)
-        { wch: 40 }, // Column C (Values) - made wider for dual currency
+        { wch: 2 },  // A: Margin
+        { wch: 20 }, // B: Labels
+        { wch: 2 },  // C: Spacer
+        { wch: 20 }, // D: Value Original
+        { wch: 20 }, // E: Value CHF
     ];
 
     const wb = XLSX.utils.book_new();
