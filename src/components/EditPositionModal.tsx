@@ -182,13 +182,12 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                     <div className="text-sm space-y-1">
                                         <div className="flex justify-between font-medium text-red-600 dark:text-red-400">
                                             <span>Verkaufte Anteile:</span>
-                                            <span>{formatShares(parseFloat(sellShares))} Stk</span>
-                                        </div>
-                                        <div className="flex justify-between text-xs">
-                                            <span>zum Kurs von:</span>
-                                            <span className="font-medium">
-                                                {formatCurrency(position.stock.currentPrice, position.stock.currency)}
-                                            </span>
+                                            <div className="text-right">
+                                                <div>{formatShares(parseFloat(sellShares))} Stk</div>
+                                                <div className="text-xs text-muted-foreground mt-0.5">
+                                                    zu: {formatCurrency(position.stock.currentPrice, position.stock.currency)}
+                                                </div>
+                                            </div>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Verbleibend:</span>
