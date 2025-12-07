@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, TrendingDown, TrendingUp } from 'lucide-react';
 import type { Stock } from '../types';
 import { cn } from '../utils';
-import { formatCurrency } from '../utils/currency';
+import { useCurrencyFormatter } from '../utils/currency';
 
 interface EditPositionModalProps {
     isOpen: boolean;
@@ -19,6 +19,7 @@ interface EditPositionModalProps {
 
 export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelete }: EditPositionModalProps) {
     const [tab, setTab] = useState<'sell' | 'buy'>('sell');
+    const { formatCurrency } = useCurrencyFormatter();
 
     // Sell state
     const [sellShares, setSellShares] = useState('');
