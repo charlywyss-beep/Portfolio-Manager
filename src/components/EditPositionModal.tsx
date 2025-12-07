@@ -281,7 +281,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                             <span>{parseFloat(buyShares).toFixed(2)} Stk</span>
                                         </div>
                                         <div className="flex justify-between text-xs">
-                                            <span>zum Kurs von:</span>
+                                            <span>{parseFloat(buyShares).toFixed(2)} Stk zu:</span>
                                             <span className="font-medium">
                                                 {formatCurrency(parseFloat(buyPrice), position.stock.currency)}
                                             </span>
