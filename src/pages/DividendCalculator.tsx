@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calculator, TrendingUp, DollarSign, RefreshCw } from 'lucide-react';
-import { cn } from '../utils';
+import { Calculator, RefreshCw } from 'lucide-react';
 
 export function DividendCalculator() {
     // State for inputs

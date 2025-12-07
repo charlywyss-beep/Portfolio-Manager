@@ -1,4 +1,4 @@
-import { Stock, Position, Dividend } from '../types';
+import type { Stock, Position, Dividend } from '../types';
 
 export const MOCK_STOCKS: Stock[] = [
     {
