@@ -15,7 +15,10 @@ export interface Stock {
     symbol: string;
     name: string;
     sector: string;
+    valor?: string;
+    isin?: string;
     currentPrice: number;
+    previousClose: number; // For daily performance calculation
     currency: Currency;
     dividendYield: number; // Percentage (e.g., 3.5 for 3.5%)
     logoUrl?: string;
