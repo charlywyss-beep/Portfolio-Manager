@@ -54,8 +54,12 @@ export function Portfolio() {
         setIsEditModalOpen(true);
     };
 
-    const handleUpdate = (id: string, newShares: number) => {
-        updatePosition(id, { shares: newShares });
+    const handleUpdate = (id: string, newShares: number, newAvgPrice?: number) => {
+        const updates: any = { shares: newShares };
+        if (newAvgPrice !== undefined) {
+            updates.buyPriceAvg = newAvgPrice;
+        }
+        updatePosition(id, updates);
     };
 
     return (
