@@ -294,7 +294,10 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                         <div className="flex justify-between text-xs text-muted-foreground">
                                             <span>Neuer Ø Kaufpreis:</span>
                                             <span>
-                                                {formatCurrency((position.shares * position.buyPriceAvg + buyValue) / (position.shares + parseFloat(buyShares)), position.stock.currency)}
+                                                {((position.shares * position.buyPriceAvg + buyValue) / (position.shares + parseFloat(buyShares))).toLocaleString('de-DE', {
+                                                    style: 'currency',
+                                                    currency: position.stock.currency,
+                                                })}
                                             </span>
                                         </div>
                                     </div>
