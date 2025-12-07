@@ -199,6 +199,12 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                                 {formatCurrency(sellValue, position.stock.currency)}
                                             </span>
                                         </div>
+                                        <div className="flex justify-between text-xs text-muted-foreground">
+                                            <span>Einstandspreis (Ø):</span>
+                                            <span>
+                                                {formatCurrency(position.buyPriceAvg, position.stock.currency)}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             )}
