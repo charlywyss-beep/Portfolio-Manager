@@ -32,11 +32,17 @@ export function exportToExcel(transaction: TransactionData) {
         [''],
         ['Aktie', transaction.stockName],
         ['Symbol', transaction.stockSymbol],
+    ];
+
+    if (transaction.valor) data.push(['Valor', transaction.valor]);
+    if (transaction.isin) data.push(['ISIN', transaction.isin]);
+
+    data.push(
         ['Anzahl', `${transaction.shares} Stk`],
         ['Preis pro Stück', `${transaction.pricePerShare.toFixed(2)} ${transaction.currency}`],
         [''],
-        ['Transaktionswert', `${transaction.totalValue.toFixed(2)} ${transaction.currency}`],
-    ];
+        ['Transaktionswert', `${transaction.totalValue.toFixed(2)} ${transaction.currency}`]
+    );
 
     if (transaction.chfEquivalent) {
         data.push(['Wert in CHF', `${transaction.chfEquivalent.toFixed(2)} CHF`]);
@@ -89,10 +95,20 @@ export function exportToPDF(transaction: TransactionData) {
     const detailsData = [
         ['Aktie', transaction.stockName],
         ['Symbol', transaction.stockSymbol],
+    ];
+
+    if (transaction.valor) {
+        detailsData.push(['Valor', transaction.valor]);
+    }
+    if (transaction.isin) {
+        detailsData.push(['ISIN', transaction.isin]);
+    }
+
+    detailsData.push(
         ['Anzahl', `${transaction.shares} Stk`],
         ['Preis pro Stück', `${transaction.pricePerShare.toFixed(2)} ${transaction.currency}`],
-        ['Transaktionswert', `${transaction.totalValue.toFixed(2)} ${transaction.currency}`],
-    ];
+        ['Transaktionswert', `${transaction.totalValue.toFixed(2)} ${transaction.currency}`]
+    );
 
     if (transaction.chfEquivalent) {
         detailsData.push(['Wert in CHF', `${transaction.chfEquivalent.toFixed(2)} CHF`]);
@@ -117,21 +133,6 @@ export function exportToPDF(transaction: TransactionData) {
             startY: (doc as any).lastAutoTable.finalY + 10,
             head: [['Gewinn/Verlust Analyse', '']],
             body: profitLossData,
-            theme: 'grid',
-            headStyles: { fillColor: [100, 100, 100] },
-        });
-    }
-
-    // Additional info for buy
-    if (transaction.type === 'buy' && transaction.newAvgPrice) {
-        const buyData = [
-            ['Neuer Ø Kaufpreis', `${transaction.newAvgPrice.toFixed(2)} ${transaction.currency}`],
-        ];
-
-        autoTable(doc, {
-            startY: (doc as any).lastAutoTable.finalY + 10,
-            head: [['Neue Position', '']],
-            body: buyData,
             theme: 'grid',
             headStyles: { fillColor: [100, 100, 100] },
         });
