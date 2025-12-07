@@ -3,6 +3,7 @@ import { X, TrendingDown, TrendingUp } from 'lucide-react';
 import type { Stock } from '../types';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
+import { TransactionSuccessDialog } from './TransactionSuccessDialog';
 
 interface EditPositionModalProps {
     isOpen: boolean;
@@ -28,6 +29,10 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     const [buyShares, setBuyShares] = useState('');
     const [buyPrice, setBuyPrice] = useState(position.stock.currentPrice.toFixed(2));
 
+    // Transaction success state
+    const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+    const [completedTransaction, setCompletedTransaction] = useState<any>(null);
+
     // Helper: Format shares (no decimals for whole numbers)
     const formatShares = (shares: number) => {
         return shares % 1 === 0 ? shares.toString() : shares.toFixed(2);
@@ -39,6 +44,19 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
         e.preventDefault();
         const sharesToSell = parseFloat(sellShares);
         const newShares = position.shares - sharesToSell;
+        const sellValue = sharesToSell * position.stock.currentPrice;
+        const profitLoss = sellValue - (sharesToSell * position.buyPriceAvg);
+
+        // Store transaction data
+        setCompletedTransaction({
+            type: 'sell',
+            stock: position.stock,
+            shares: sharesToSell,
+            pricePerShare: position.stock.currentPrice,
+            totalValue: sellValue,
+            avgBuyPrice: position.buyPriceAvg,
+            profitLoss: profitLoss,
+        });
 
         if (newShares <= 0) {
             onDelete(position.id);
@@ -47,6 +65,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
         }
 
         onClose();
+        setShowSuccessDialog(true);
     };
 
     const handleBuy = (e: React.FormEvent) => {
@@ -60,8 +79,19 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
         const newTotalShares = position.shares + sharesToBuy;
         const newAvgPrice = (currentValue + addedValue) / newTotalShares;
 
+        // Store transaction data
+        setCompletedTransaction({
+            type: 'buy',
+            stock: position.stock,
+            shares: sharesToBuy,
+            pricePerShare: pricePerShare,
+            totalValue: addedValue,
+            newAvgPrice: newAvgPrice,
+        });
+
         onUpdate(position.id, newTotalShares, newAvgPrice);
         onClose();
+        setShowSuccessDialog(true);
     };
 
     const sellValue = sellShares ? parseFloat(sellShares) * position.stock.currentPrice : 0;
@@ -342,6 +372,15 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                     )}
                 </div>
             </div>
+
+            {/* Transaction Success Dialog */}
+            {completedTransaction && (
+                <TransactionSuccessDialog
+                    isOpen={showSuccessDialog}
+                    onClose={() => setShowSuccessDialog(false)}
+                    transaction={completedTransaction}
+                />
+            )}
         </div>
     );
 }
