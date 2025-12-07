@@ -49,53 +49,112 @@ export function exportToExcel(transaction: TransactionData) {
         ? transaction.chfEquivalent / transaction.totalValue
         : undefined;
 
-    // Helper to format currency
-    const fmt = (val: number, curr: string) => `${val.toFixed(2)} ${curr}`;
-    // Helper to calc and format CHF
-    const fmtCHF = (val: number) => conversionRate ? `${(val * conversionRate).toFixed(2)} CHF` : '';
+    // We use cell objects for numbers to ensure proper formatting and right alignment in Excel
+    const numCell = (val: number, curr: string) => ({
+        t: 'n',
+        v: val,
+        z: `#,##0.00 "${curr}"`
+    });
 
-    const data: (string | null)[][] = [
-        [null, 'Portfolio Manager - Transaktionsbeleg', null, null, null],
-        [null, null, null, null, null], // Spacer row
-        [null, 'Datum', null, transaction.date.toLocaleString('de-DE'), null],
-        [null, 'Typ', null, transaction.type === 'buy' ? 'KAUF' : 'VERKAUF', null],
-        [null, null, null, null, null], // Spacer
-        [null, 'Aktie', null, transaction.stockName, null],
-        [null, 'Symbol', null, transaction.stockSymbol, null],
+    const chfCell = (val: number) => {
+        if (!conversionRate) return null;
+        return {
+            t: 'n',
+            v: val * conversionRate,
+            z: '#,##0.00 "CHF"'
+        };
+    };
+
+    // Layout matches user request:
+    // Row 1: Empty
+    // Row 2: Header (B2)
+    // Cols: A(Spacer), B(Label), C(Spacer), D(Value), E(Spacer), F(CHF)
+
+    const data: any[][] = [
+        [null, null, null, null, null, null], // Row 1: Empty
+        [null, 'Portfolio Manager - Transaktionsbeleg', null, null, null, null], // Row 2: Title (Plain)
+        [null, null, null, null, null, null], // Row 3: Empty
+        [null, 'Datum', null, transaction.date.toLocaleString('de-DE'), null, null], // Row 4
+        [null, 'Typ', null, transaction.type === 'buy' ? 'KAUF' : 'VERKAUF', null, null], // Row 5
+        [null, null, null, null, null, null], // Row 6: Spacer
+        [null, 'Aktie', null, transaction.stockName, null, null], // Row 7
+        [null, 'Symbol', null, transaction.stockSymbol, null, null], // Row 8
     ];
 
-    if (transaction.valor) data.push([null, 'Valor', null, transaction.valor, null]);
-    if (transaction.isin) data.push([null, 'ISIN', null, transaction.isin, null]);
+    if (transaction.valor) data.push([null, 'Valor', null, transaction.valor, null, null]);
+    if (transaction.isin) data.push([null, 'ISIN', null, transaction.isin, null, null]);
 
-    data.push(
-        [null, null, null, null, null], // Spacer
-        [null, 'Anzahl', null, `${transaction.shares} Stk`, null],
-        [null, 'Preis pro Stück', null, fmt(transaction.pricePerShare, transaction.currency), fmtCHF(transaction.pricePerShare)],
-        [null, null, null, null, null], // Spacer
-        [null, 'Transaktionswert', null, fmt(transaction.totalValue, transaction.currency), fmtCHF(transaction.totalValue)]
-    );
+    // Spacer
+    data.push([null, null, null, null, null, null]);
 
-    // Removed separate CHF row as requested
+    // Anzahl
+    // "5 Stk" - Formatting as number with "Stk" unit
+    data.push([
+        null,
+        'Anzahl',
+        null,
+        { t: 'n', v: transaction.shares, z: '0 "Stk"' },
+        null,
+        null
+    ]);
+
+    // Preis pro Stück
+    data.push([
+        null,
+        'Preis pro Stück',
+        null,
+        numCell(transaction.pricePerShare, transaction.currency),
+        null,
+        chfCell(transaction.pricePerShare)
+    ]);
+
+    // Spacer
+    data.push([null, null, null, null, null, null]);
+
+    // Transaktionswert
+    data.push([
+        null,
+        'Transaktionswert',
+        null,
+        numCell(transaction.totalValue, transaction.currency),
+        null,
+        chfCell(transaction.totalValue)
+    ]);
+
+    // Spacer
+    data.push([null, null, null, null, null, null]);
 
     if (transaction.type === 'sell' && transaction.avgBuyPrice && transaction.profitLoss !== undefined) {
-        data.push(
-            [null, null, null, null, null], // Spacer
-            [null, 'Ø Kaufpreis', null, fmt(transaction.avgBuyPrice, transaction.currency), fmtCHF(transaction.avgBuyPrice)],
-            [null, 'Gewinn/Verlust', null, fmt(transaction.profitLoss, transaction.currency), fmtCHF(transaction.profitLoss)]
-        );
-    }
+        data.push([
+            null,
+            'Ø Kaufpreis',
+            null,
+            numCell(transaction.avgBuyPrice, transaction.currency),
+            null,
+            chfCell(transaction.avgBuyPrice)
+        ]);
 
-    // Removed "Neue Position" section
+        data.push([
+            null,
+            'Gewinn/Verlust',
+            null,
+            numCell(transaction.profitLoss, transaction.currency),
+            null,
+            chfCell(transaction.profitLoss)
+        ]);
+    }
 
     const ws = XLSX.utils.aoa_to_sheet(data);
 
-    // Set column widths to match the look
+    // Set column widths
+    // A=2, B=25, C=2, D=15 (Right aligned numbers), E=2, F=15 (Right aligned CHF)
     ws['!cols'] = [
-        { wch: 2 },  // A: Margin
-        { wch: 20 }, // B: Labels
-        { wch: 2 },  // C: Spacer
-        { wch: 20 }, // D: Value Original
-        { wch: 20 }, // E: Value CHF
+        { wch: 2 },  // A
+        { wch: 25 }, // B
+        { wch: 2 },  // C
+        { wch: 15 }, // D
+        { wch: 2 },  // E
+        { wch: 15 }, // F
     ];
 
     const wb = XLSX.utils.book_new();
