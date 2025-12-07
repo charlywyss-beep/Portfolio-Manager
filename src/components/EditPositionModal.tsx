@@ -64,7 +64,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
             onUpdate(position.id, newShares);
         }
 
-        onClose();
+        // Don't close yet - show success dialog first
         setShowSuccessDialog(true);
     };
 
@@ -90,7 +90,8 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
         });
 
         onUpdate(position.id, newTotalShares, newAvgPrice);
-        onClose();
+
+        // Don't close yet - show success dialog first
         setShowSuccessDialog(true);
     };
 
@@ -377,7 +378,11 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
             {completedTransaction && (
                 <TransactionSuccessDialog
                     isOpen={showSuccessDialog}
-                    onClose={() => setShowSuccessDialog(false)}
+                    onClose={() => {
+                        setShowSuccessDialog(false);
+                        setCompletedTransaction(null);
+                        onClose();
+                    }}
                     transaction={completedTransaction}
                 />
             )}
