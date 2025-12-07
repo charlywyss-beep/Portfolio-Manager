@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, TrendingDown, TrendingUp } from 'lucide-react';
 import type { Stock } from '../types';
 import { cn } from '../utils';
+import { formatCurrency } from '../utils/currency';
 
 interface EditPositionModalProps {
     isOpen: boolean;
@@ -173,21 +174,24 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                             {sellShares && parseFloat(sellShares) > 0 && (
                                 <div className="p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900/30">
                                     <div className="text-sm space-y-1">
-                                        <div className="flex justify-between">
-                                            <span className="text-red-600 dark:text-red-400">Verkaufte Anteile:</span>
-                                            <span className="font-medium">{parseFloat(sellShares).toFixed(2)}</span>
+                                        <div className="flex justify-between font-medium text-red-600 dark:text-red-400">
+                                            <span>Verkaufte Anteile:</span>
+                                            <span>{parseFloat(sellShares).toFixed(2)} Stk</span>
+                                        </div>
+                                        <div className="flex justify-between text-xs">
+                                            <span>zum Kurs von:</span>
+                                            <span className="font-medium">
+                                                {formatCurrency(position.stock.currentPrice, position.stock.currency)}
+                                            </span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Verbleibend:</span>
-                                            <span className="font-medium">{(position.shares - parseFloat(sellShares)).toFixed(2)}</span>
+                                            <span className="font-medium">{(position.shares - parseFloat(sellShares)).toFixed(2)} Stk</span>
                                         </div>
                                         <div className="flex justify-between border-t border-red-200 dark:border-red-900/30 pt-1 mt-1">
                                             <span>Verkaufswert:</span>
                                             <span className="font-medium text-red-600 dark:text-red-400">
-                                                {sellValue.toLocaleString('de-DE', {
-                                                    style: 'currency',
-                                                    currency: position.stock.currency,
-                                                })}
+                                                {formatCurrency(sellValue, position.stock.currency)}
                                             </span>
                                         </div>
                                     </div>
