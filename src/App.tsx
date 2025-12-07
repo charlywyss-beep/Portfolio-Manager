@@ -113,7 +113,7 @@ function App() {
             </div>
           </header>
 
-          <div className="p-8 max-w-7xl mx-auto">
+          <div className="p-8">
             {renderContent()}
           </div>
         </main>

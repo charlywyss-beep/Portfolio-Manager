@@ -100,7 +100,7 @@ export function Portfolio() {
                                 <th className="px-4 py-3 text-right">Gesamt +/-</th>
                                 <th className="px-4 py-3 text-right">Gesamt % +/-</th>
                                 <th className="px-4 py-3 text-right">Wert seit Kauf</th>
-                                <th className="px-4 py-3 text-center">Aktionen</th>
+                                <th className="px-4 py-3 text-center">Kauf/Verkauf</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">

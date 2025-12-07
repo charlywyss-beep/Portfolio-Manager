@@ -65,6 +65,30 @@ export const MOCK_STOCKS: Stock[] = [
         currency: 'CHF',
         dividendYield: 3.10,
         logoUrl: 'https://logo.clearbit.com/nestle.com'
+    },
+    {
+        id: '6',
+        symbol: 'SPY',
+        name: 'SPDR S&P 500 ETF',
+        sector: 'ETF',
+        valor: '2950556',
+        isin: 'US78462F1030',
+        currentPrice: 445.50,
+        previousClose: 443.20,
+        currency: 'USD',
+        dividendYield: 1.45,
+    },
+    {
+        id: '7',
+        symbol: 'VWRL',
+        name: 'Vanguard FTSE All-World',
+        sector: 'ETF',
+        valor: '10540823',
+        isin: 'IE00B3RBWM25',
+        currentPrice: 108.20,
+        previousClose: 107.80,
+        currency: 'USD',
+        dividendYield: 1.92,
     }
 ];
 
