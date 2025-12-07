@@ -26,6 +26,7 @@ interface TransactionData {
 // e.g. "175.50 USD (154.44 CHF)"
 
 
+
 function getSafeFilename(transaction: TransactionData, extension: string): string {
     // Sanitize stock name for filename (replace spaces and special chars with underscores)
     const safeName = transaction.stockName.replace(/[^a-zA-Z0-9]/g, '_');
@@ -56,14 +57,25 @@ export function exportToExcel(transaction: TransactionData) {
         };
     };
 
+    // Header Style (Best effort for SheetJS Community)
+    const headerStyle = {
+        font: { bold: true },
+        alignment: { horizontal: 'center', vertical: 'center' },
+        fill: { fgColor: { rgb: "DDEBF7" } }
+    };
+
+    const headerCell = {
+        v: 'Portfolio Manager - Transaktionsbeleg',
+        s: headerStyle
+    };
+
     // Layout matches user request:
     // Row 1: Empty
-    // Row 2: Header (B2)
-    // Cols: A(Spacer), B(Label), C(Spacer), D(Value), E(Spacer), F(CHF)
+    // Row 2: Header (B2) merged B2:F2
 
     const data: any[][] = [
         [null, null, null, null, null, null], // Row 1: Empty
-        [null, 'Portfolio Manager - Transaktionsbeleg', null, null, null, null], // Row 2: Title (Plain)
+        [null, headerCell, null, null, null, null], // Row 2: Header (B2)
         [null, null, null, null, null, null], // Row 3: Empty
         [null, 'Datum', null, transaction.date.toLocaleString('de-DE'), null, null], // Row 4
         [null, 'Typ', null, transaction.type === 'buy' ? 'KAUF' : 'VERKAUF', null, null], // Row 5
@@ -79,7 +91,6 @@ export function exportToExcel(transaction: TransactionData) {
     data.push([null, null, null, null, null, null]);
 
     // Anzahl
-    // "5 Stk" - Formatting as number with "Stk" unit
     data.push([
         null,
         'Anzahl',
@@ -137,8 +148,12 @@ export function exportToExcel(transaction: TransactionData) {
 
     const ws = XLSX.utils.aoa_to_sheet(data);
 
+    // Merge B2:F2 (0-indexed: r1 c1 to r1 c5)
+    ws['!merges'] = [
+        { s: { r: 1, c: 1 }, e: { r: 1, c: 5 } }
+    ];
+
     // Set column widths
-    // A=2, B=25, C=2, D=15 (Right aligned numbers), E=2, F=15 (Right aligned CHF)
     ws['!cols'] = [
         { wch: 2 },  // A
         { wch: 25 }, // B
