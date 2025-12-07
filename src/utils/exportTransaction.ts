@@ -22,11 +22,6 @@ interface TransactionData {
     newAvgPrice?: number;
 }
 
-// Helper to format currency with dual display if needed
-// e.g. "175.50 USD (154.44 CHF)"
-
-
-
 function getSafeFilename(transaction: TransactionData, extension: string): string {
     // Sanitize stock name for filename (replace spaces and special chars with underscores)
     const safeName = transaction.stockName.replace(/[^a-zA-Z0-9]/g, '_');
@@ -194,16 +189,17 @@ export function exportToPDF(transaction: TransactionData) {
     doc.setFontSize(10);
     doc.text(`Datum: ${transaction.date.toLocaleString('de-DE')}`, 20, 45);
 
-    // Standard column styles for both tables to ensure equal width
+    // Strict Styles to ensure alignment
+    // We use a fixed table width of 170mm centered-ish or with standard margins.
+    // Cols: 0: 70mm, 1: 50mm, 2: 50mm = 170mm
     const columnStyles = {
-        0: { cellWidth: 60 }, // Description
-        1: { cellWidth: 50 }, // Value Original
-        2: { cellWidth: 50 }, // Value CHF
+        0: { cellWidth: 70 },
+        1: { cellWidth: 50 },
+        2: { cellWidth: 50 },
     };
+    const tableWidth = 170;
 
     // Transaction details table
-    // 3 Columns: Label | Value | CHF Value (if applicable)
-
     const detailsData: string[][] = [
         ['Aktie', transaction.stockName, ''],
         ['Symbol', transaction.stockSymbol, ''],
@@ -214,18 +210,18 @@ export function exportToPDF(transaction: TransactionData) {
 
     detailsData.push(
         ['Anzahl', `${transaction.shares} Stk`, ''],
-        // Price: USD in col 2, CHF in col 3 (no brackets)
         ['Preis pro Stück', fmt(transaction.pricePerShare, transaction.currency), fmtCHF(transaction.pricePerShare)],
         ['Transaktionswert', fmt(transaction.totalValue, transaction.currency), fmtCHF(transaction.totalValue)]
     );
 
     autoTable(doc, {
         startY: 55,
-        head: [['Beschreibung', 'Wert', 'in CHF']], // added 3rd header
+        head: [['Beschreibung', 'Wert', 'in CHF']],
         body: detailsData,
         theme: 'grid',
-        headStyles: { fillColor: transaction.type === 'buy' ? [34, 139, 34] : [220, 38, 38] },
+        tableWidth: tableWidth,
         columnStyles: columnStyles,
+        headStyles: { fillColor: transaction.type === 'buy' ? [34, 139, 34] : [220, 38, 38] },
     });
 
     // Additional info for sell
@@ -240,8 +236,9 @@ export function exportToPDF(transaction: TransactionData) {
             head: [['Gewinn/Verlust Analyse', 'Wert', 'in CHF']],
             body: profitLossData,
             theme: 'grid',
+            tableWidth: tableWidth,
+            columnStyles: columnStyles,
             headStyles: { fillColor: [100, 100, 100] },
-            columnStyles: columnStyles, // Apply same column widths
         });
     }
 
