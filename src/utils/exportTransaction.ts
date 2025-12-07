@@ -22,9 +22,33 @@ interface TransactionData {
     newAvgPrice?: number;
 }
 
-// Export transaction to Excel
+// Helper to format currency with dual display if needed
+// e.g. "175.50 USD (154.44 CHF)"
+function formatDualCurrency(amount: number, currency: string, chfRate?: number): string {
+    const mainStr = `${amount.toFixed(2)} ${currency}`;
+
+    if (currency === 'CHF' || !chfRate) {
+        return mainStr;
+    }
+
+    const chfAmount = amount * chfRate;
+    return `${mainStr} (${chfAmount.toFixed(2)} CHF)`;
+}
+
+function getSafeFilename(transaction: TransactionData, extension: string): string {
+    // Sanitize stock name for filename (replace spaces and special chars with underscores)
+    const safeName = transaction.stockName.replace(/[^a-zA-Z0-9]/g, '_');
+    const dateStr = transaction.date.toISOString().split('T')[0];
+    return `${transaction.type}_${safeName}_${dateStr}.${extension}`;
+}
+
 // Export transaction to Excel
 export function exportToExcel(transaction: TransactionData) {
+    // Calculate implied exchange rate if CHF equivalent is present
+    const conversionRate = (transaction.chfEquivalent && transaction.totalValue)
+        ? transaction.chfEquivalent / transaction.totalValue
+        : undefined;
+
     const data: (string | null)[][] = [
         ['Portfolio Manager - Transaktionsbeleg', null, null],
         [null, null, null],
@@ -41,24 +65,22 @@ export function exportToExcel(transaction: TransactionData) {
     data.push(
         [null, null, null],
         ['Anzahl', null, `${transaction.shares} Stk`],
-        ['Preis pro Stück', null, `${transaction.pricePerShare.toFixed(2)} ${transaction.currency}`],
+        ['Preis pro Stück', null, formatDualCurrency(transaction.pricePerShare, transaction.currency, conversionRate)],
         [null, null, null],
-        ['Transaktionswert', null, `${transaction.totalValue.toFixed(2)} ${transaction.currency}`]
+        ['Transaktionswert', null, formatDualCurrency(transaction.totalValue, transaction.currency, conversionRate)]
     );
 
-    if (transaction.chfEquivalent) {
-        data.push(['Wert in CHF', null, `${transaction.chfEquivalent.toFixed(2)} CHF`]);
-    }
+    // Removed separate CHF row as requested
 
     if (transaction.type === 'sell' && transaction.avgBuyPrice && transaction.profitLoss !== undefined) {
         data.push(
             [null, null, null],
-            ['Ø Kaufpreis', null, `${transaction.avgBuyPrice.toFixed(2)} ${transaction.currency}`],
-            ['Gewinn/Verlust', null, `${transaction.profitLoss.toFixed(2)} ${transaction.currency}`]
+            ['Ø Kaufpreis', null, formatDualCurrency(transaction.avgBuyPrice, transaction.currency, conversionRate)],
+            ['Gewinn/Verlust', null, formatDualCurrency(transaction.profitLoss, transaction.currency, conversionRate)]
         );
     }
 
-    // "Neue Position" section removed
+    // Removed "Neue Position" section
 
     const ws = XLSX.utils.aoa_to_sheet(data);
 
@@ -66,19 +88,23 @@ export function exportToExcel(transaction: TransactionData) {
     ws['!cols'] = [
         { wch: 20 }, // Column A (Labels)
         { wch: 5 },  // Column B (Spacer)
-        { wch: 30 }, // Column C (Values)
+        { wch: 40 }, // Column C (Values) - made wider for dual currency
     ];
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Transaktion');
 
-    const filename = `${transaction.type}_${transaction.stockSymbol}_${transaction.date.toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(wb, filename);
+    XLSX.writeFile(wb, getSafeFilename(transaction, 'xlsx'));
 }
 
 // Export transaction to PDF
 export function exportToPDF(transaction: TransactionData) {
     const doc = new jsPDF();
+
+    // Calculate implied exchange rate if CHF equivalent is present
+    const conversionRate = (transaction.chfEquivalent && transaction.totalValue)
+        ? transaction.chfEquivalent / transaction.totalValue
+        : undefined;
 
     // Title
     doc.setFontSize(18);
@@ -107,13 +133,11 @@ export function exportToPDF(transaction: TransactionData) {
 
     detailsData.push(
         ['Anzahl', `${transaction.shares} Stk`],
-        ['Preis pro Stück', `${transaction.pricePerShare.toFixed(2)} ${transaction.currency}`],
-        ['Transaktionswert', `${transaction.totalValue.toFixed(2)} ${transaction.currency}`]
+        ['Preis pro Stück', formatDualCurrency(transaction.pricePerShare, transaction.currency, conversionRate)],
+        ['Transaktionswert', formatDualCurrency(transaction.totalValue, transaction.currency, conversionRate)]
     );
 
-    if (transaction.chfEquivalent) {
-        detailsData.push(['Wert in CHF', `${transaction.chfEquivalent.toFixed(2)} CHF`]);
-    }
+    // Removed separate CHF row
 
     autoTable(doc, {
         startY: 55,
@@ -126,8 +150,8 @@ export function exportToPDF(transaction: TransactionData) {
     // Additional info for sell
     if (transaction.type === 'sell' && transaction.avgBuyPrice && transaction.profitLoss !== undefined) {
         const profitLossData = [
-            ['Ø Kaufpreis', `${transaction.avgBuyPrice.toFixed(2)} ${transaction.currency}`],
-            ['Gewinn/Verlust', `${transaction.profitLoss.toFixed(2)} ${transaction.currency}`],
+            ['Ø Kaufpreis', formatDualCurrency(transaction.avgBuyPrice, transaction.currency, conversionRate)],
+            ['Gewinn/Verlust', formatDualCurrency(transaction.profitLoss, transaction.currency, conversionRate)],
         ];
 
         autoTable(doc, {
@@ -139,6 +163,5 @@ export function exportToPDF(transaction: TransactionData) {
         });
     }
 
-    const filename = `${transaction.type}_${transaction.stockSymbol}_${transaction.date.toISOString().split('T')[0]}.pdf`;
-    doc.save(filename);
+    doc.save(getSafeFilename(transaction, 'pdf'));
 }
