@@ -37,11 +37,14 @@ function App() {
       <div className="flex h-screen w-full bg-background text-foreground transition-colors duration-300">
         {/* Sidebar */}
         <aside className="w-64 border-r border-border bg-card shadow-lg flex flex-col">
-          <div className="p-6 border-b border-border flex items-center gap-2">
-            <div className="size-8 rounded-lg bg-primary flex items-center justify-center">
-              <Wallet className="text-primary-foreground size-5" />
+          <div className="p-6 border-b border-border">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="size-8 rounded-lg bg-primary flex items-center justify-center">
+                <Wallet className="text-primary-foreground size-5" />
+              </div>
+              <h1 className="text-xl font-bold tracking-tight">Portfolio</h1>
             </div>
-            <h1 className="text-xl font-bold tracking-tight">PortfolioMgr</h1>
+            <div className="text-xs text-muted-foreground ml-10">v1.0.1</div>
           </div>
 
           <nav className="flex-1 p-4 space-y-2">
