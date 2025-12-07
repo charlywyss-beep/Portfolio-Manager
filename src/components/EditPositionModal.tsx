@@ -20,7 +20,7 @@ interface EditPositionModalProps {
 
 export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelete }: EditPositionModalProps) {
     const [tab, setTab] = useState<'sell' | 'buy'>('sell');
-    const { formatCurrency } = useCurrencyFormatter();
+    const { formatCurrency, convertToCHF } = useCurrencyFormatter();
 
     // Sell state
     const [sellShares, setSellShares] = useState('');
@@ -47,6 +47,9 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
         const sellValue = sharesToSell * position.stock.currentPrice;
         const profitLoss = sellValue - (sharesToSell * position.buyPriceAvg);
 
+        // Calculate CHF equivalent for record
+        const chfValue = convertToCHF(sellValue, position.stock.currency);
+
         // Store transaction data
         setCompletedTransaction({
             type: 'sell',
@@ -54,6 +57,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
             shares: sharesToSell,
             pricePerShare: position.stock.currentPrice,
             totalValue: sellValue,
+            chfEquivalent: chfValue,
             avgBuyPrice: position.buyPriceAvg,
             profitLoss: profitLoss,
         });
@@ -79,6 +83,9 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
         const newTotalShares = position.shares + sharesToBuy;
         const newAvgPrice = (currentValue + addedValue) / newTotalShares;
 
+        // Calculate CHF equivalent for record
+        const chfValue = convertToCHF(addedValue, position.stock.currency);
+
         // Store transaction data
         setCompletedTransaction({
             type: 'buy',
@@ -86,6 +93,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
             shares: sharesToBuy,
             pricePerShare: pricePerShare,
             totalValue: addedValue,
+            chfEquivalent: chfValue,
             newAvgPrice: newAvgPrice,
         });
 

@@ -7,6 +7,8 @@ interface TransactionData {
     type: 'buy' | 'sell';
     stockName: string;
     stockSymbol: string;
+    valor?: string;
+    isin?: string;
     shares: number;
     pricePerShare: number;
     totalValue: number;

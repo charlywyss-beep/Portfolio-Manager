@@ -15,6 +15,7 @@ interface TransactionSuccessDialogProps {
         avgBuyPrice?: number;
         profitLoss?: number;
         newAvgPrice?: number;
+        chfEquivalent?: number;
     };
 }
 
@@ -26,10 +27,13 @@ export function TransactionSuccessDialog({ isOpen, onClose, transaction }: Trans
             type: transaction.type,
             stockName: transaction.stock.name,
             stockSymbol: transaction.stock.symbol,
+            valor: transaction.stock.valor,
+            isin: transaction.stock.isin,
             shares: transaction.shares,
             pricePerShare: transaction.pricePerShare,
             totalValue: transaction.totalValue,
             currency: transaction.stock.currency,
+            chfEquivalent: transaction.chfEquivalent,
             date: new Date(),
             avgBuyPrice: transaction.avgBuyPrice,
             profitLoss: transaction.profitLoss,
@@ -42,10 +46,13 @@ export function TransactionSuccessDialog({ isOpen, onClose, transaction }: Trans
             type: transaction.type,
             stockName: transaction.stock.name,
             stockSymbol: transaction.stock.symbol,
+            valor: transaction.stock.valor,
+            isin: transaction.stock.isin,
             shares: transaction.shares,
             pricePerShare: transaction.pricePerShare,
             totalValue: transaction.totalValue,
             currency: transaction.stock.currency,
+            chfEquivalent: transaction.chfEquivalent,
             date: new Date(),
             avgBuyPrice: transaction.avgBuyPrice,
             profitLoss: transaction.profitLoss,
