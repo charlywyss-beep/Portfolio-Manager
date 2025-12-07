@@ -192,12 +192,13 @@ export function exportToPDF(transaction: TransactionData) {
     // Strict Styles to ensure alignment
     // We use a fixed table width of 170mm centered-ish or with standard margins.
     // Cols: 0: 70mm, 1: 50mm, 2: 50mm = 170mm
-    const columnStyles = {
-        0: { cellWidth: 70 },
-        1: { cellWidth: 50 },
-        2: { cellWidth: 50 },
+    const columnStyles: { [key: string]: { cellWidth: number; halign?: 'left' | 'center' | 'right' } } = {
+        0: { cellWidth: 70 }, // Left align default
+        1: { cellWidth: 50, halign: 'right' },
+        2: { cellWidth: 50, halign: 'right' },
     };
     const tableWidth = 170;
+    const margin = { left: 20 };
 
     // Transaction details table
     const detailsData: string[][] = [
@@ -220,8 +221,12 @@ export function exportToPDF(transaction: TransactionData) {
         body: detailsData,
         theme: 'grid',
         tableWidth: tableWidth,
+        margin: margin,
         columnStyles: columnStyles,
-        headStyles: { fillColor: transaction.type === 'buy' ? [34, 139, 34] : [220, 38, 38] },
+        headStyles: {
+            fillColor: transaction.type === 'buy' ? [34, 139, 34] : [220, 38, 38],
+            halign: 'center'
+        },
     });
 
     // Additional info for sell
@@ -237,8 +242,12 @@ export function exportToPDF(transaction: TransactionData) {
             body: profitLossData,
             theme: 'grid',
             tableWidth: tableWidth,
+            margin: margin,
             columnStyles: columnStyles,
-            headStyles: { fillColor: [100, 100, 100] },
+            headStyles: {
+                fillColor: [100, 100, 100],
+                halign: 'center'
+            },
         });
     }
 
