@@ -24,16 +24,7 @@ interface TransactionData {
 
 // Helper to format currency with dual display if needed
 // e.g. "175.50 USD (154.44 CHF)"
-function formatDualCurrency(amount: number, currency: string, chfRate?: number): string {
-    const mainStr = `${amount.toFixed(2)} ${currency}`;
 
-    if (currency === 'CHF' || !chfRate) {
-        return mainStr;
-    }
-
-    const chfAmount = amount * chfRate;
-    return `${mainStr} (${chfAmount.toFixed(2)} CHF)`;
-}
 
 function getSafeFilename(transaction: TransactionData, extension: string): string {
     // Sanitize stock name for filename (replace spaces and special chars with underscores)
@@ -172,6 +163,10 @@ export function exportToPDF(transaction: TransactionData) {
         ? transaction.chfEquivalent / transaction.totalValue
         : undefined;
 
+    // Helpers
+    const fmt = (val: number, curr: string) => `${val.toFixed(2)} ${curr}`;
+    const fmtCHF = (val: number) => conversionRate ? `${(val * conversionRate).toFixed(2)} CHF` : '';
+
     // Title
     doc.setFontSize(18);
     doc.text('Portfolio Manager', 105, 20, { align: 'center' });
@@ -184,48 +179,54 @@ export function exportToPDF(transaction: TransactionData) {
     doc.setFontSize(10);
     doc.text(`Datum: ${transaction.date.toLocaleString('de-DE')}`, 20, 45);
 
+    // Standard column styles for both tables to ensure equal width
+    const columnStyles = {
+        0: { cellWidth: 60 }, // Description
+        1: { cellWidth: 50 }, // Value Original
+        2: { cellWidth: 50 }, // Value CHF
+    };
+
     // Transaction details table
-    const detailsData = [
-        ['Aktie', transaction.stockName],
-        ['Symbol', transaction.stockSymbol],
+    // 3 Columns: Label | Value | CHF Value (if applicable)
+
+    const detailsData: string[][] = [
+        ['Aktie', transaction.stockName, ''],
+        ['Symbol', transaction.stockSymbol, ''],
     ];
 
-    if (transaction.valor) {
-        detailsData.push(['Valor', transaction.valor]);
-    }
-    if (transaction.isin) {
-        detailsData.push(['ISIN', transaction.isin]);
-    }
+    if (transaction.valor) detailsData.push(['Valor', transaction.valor, '']);
+    if (transaction.isin) detailsData.push(['ISIN', transaction.isin, '']);
 
     detailsData.push(
-        ['Anzahl', `${transaction.shares} Stk`],
-        ['Preis pro Stück', formatDualCurrency(transaction.pricePerShare, transaction.currency, conversionRate)],
-        ['Transaktionswert', formatDualCurrency(transaction.totalValue, transaction.currency, conversionRate)]
+        ['Anzahl', `${transaction.shares} Stk`, ''],
+        // Price: USD in col 2, CHF in col 3 (no brackets)
+        ['Preis pro Stück', fmt(transaction.pricePerShare, transaction.currency), fmtCHF(transaction.pricePerShare)],
+        ['Transaktionswert', fmt(transaction.totalValue, transaction.currency), fmtCHF(transaction.totalValue)]
     );
-
-    // Removed separate CHF row
 
     autoTable(doc, {
         startY: 55,
-        head: [['Beschreibung', 'Wert']],
+        head: [['Beschreibung', 'Wert', 'in CHF']], // added 3rd header
         body: detailsData,
         theme: 'grid',
         headStyles: { fillColor: transaction.type === 'buy' ? [34, 139, 34] : [220, 38, 38] },
+        columnStyles: columnStyles,
     });
 
     // Additional info for sell
     if (transaction.type === 'sell' && transaction.avgBuyPrice && transaction.profitLoss !== undefined) {
         const profitLossData = [
-            ['Ø Kaufpreis', formatDualCurrency(transaction.avgBuyPrice, transaction.currency, conversionRate)],
-            ['Gewinn/Verlust', formatDualCurrency(transaction.profitLoss, transaction.currency, conversionRate)],
+            ['Ø Kaufpreis', fmt(transaction.avgBuyPrice, transaction.currency), fmtCHF(transaction.avgBuyPrice)],
+            ['Gewinn/Verlust', fmt(transaction.profitLoss, transaction.currency), fmtCHF(transaction.profitLoss)],
         ];
 
         autoTable(doc, {
             startY: (doc as any).lastAutoTable.finalY + 10,
-            head: [['Gewinn/Verlust Analyse', '']],
+            head: [['Gewinn/Verlust Analyse', 'Wert', 'in CHF']],
             body: profitLossData,
             theme: 'grid',
             headStyles: { fillColor: [100, 100, 100] },
+            columnStyles: columnStyles, // Apply same column widths
         });
     }
 
