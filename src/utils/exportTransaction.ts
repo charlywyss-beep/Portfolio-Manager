@@ -23,53 +23,54 @@ interface TransactionData {
 }
 
 // Export transaction to Excel
+// Export transaction to Excel
 export function exportToExcel(transaction: TransactionData) {
-    const data = [
-        ['Portfolio Manager - Transaktionsbeleg'],
-        [''],
-        ['Datum', transaction.date.toLocaleString('de-DE')],
-        ['Typ', transaction.type === 'buy' ? 'KAUF' : 'VERKAUF'],
-        [''],
-        ['Aktie', transaction.stockName],
-        ['Symbol', transaction.stockSymbol],
+    const data: (string | null)[][] = [
+        ['Portfolio Manager - Transaktionsbeleg', null, null],
+        [null, null, null],
+        ['Datum', null, transaction.date.toLocaleString('de-DE')],
+        ['Typ', null, transaction.type === 'buy' ? 'KAUF' : 'VERKAUF'],
+        [null, null, null],
+        ['Aktie', null, transaction.stockName],
+        ['Symbol', null, transaction.stockSymbol],
     ];
 
-    if (transaction.valor) data.push(['Valor', transaction.valor]);
-    if (transaction.isin) data.push(['ISIN', transaction.isin]);
+    if (transaction.valor) data.push(['Valor', null, transaction.valor]);
+    if (transaction.isin) data.push(['ISIN', null, transaction.isin]);
 
     data.push(
-        ['Anzahl', `${transaction.shares} Stk`],
-        ['Preis pro Stück', `${transaction.pricePerShare.toFixed(2)} ${transaction.currency}`],
-        [''],
-        ['Transaktionswert', `${transaction.totalValue.toFixed(2)} ${transaction.currency}`]
+        [null, null, null],
+        ['Anzahl', null, `${transaction.shares} Stk`],
+        ['Preis pro Stück', null, `${transaction.pricePerShare.toFixed(2)} ${transaction.currency}`],
+        [null, null, null],
+        ['Transaktionswert', null, `${transaction.totalValue.toFixed(2)} ${transaction.currency}`]
     );
 
     if (transaction.chfEquivalent) {
-        data.push(['Wert in CHF', `${transaction.chfEquivalent.toFixed(2)} CHF`]);
+        data.push(['Wert in CHF', null, `${transaction.chfEquivalent.toFixed(2)} CHF`]);
     }
 
     if (transaction.type === 'sell' && transaction.avgBuyPrice && transaction.profitLoss !== undefined) {
         data.push(
-            [''],
-            ['Ø Kaufpreis', `${transaction.avgBuyPrice.toFixed(2)} ${transaction.currency}`],
-            ['Gewinn/Verlust', `${transaction.profitLoss.toFixed(2)} ${transaction.currency}`]
+            [null, null, null],
+            ['Ø Kaufpreis', null, `${transaction.avgBuyPrice.toFixed(2)} ${transaction.currency}`],
+            ['Gewinn/Verlust', null, `${transaction.profitLoss.toFixed(2)} ${transaction.currency}`]
         );
     }
 
-    if (transaction.type === 'buy' && transaction.newAvgPrice) {
-        data.push(
-            [''],
-            ['Neuer Ø Kaufpreis', `${transaction.newAvgPrice.toFixed(2)} ${transaction.currency}`]
-        );
-    }
+    // "Neue Position" section removed
 
     const ws = XLSX.utils.aoa_to_sheet(data);
+
+    // Set column widths
+    ws['!cols'] = [
+        { wch: 20 }, // Column A (Labels)
+        { wch: 5 },  // Column B (Spacer)
+        { wch: 30 }, // Column C (Values)
+    ];
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Transaktion');
-
-    // Auto-size columns
-    const colWidths = data.map(row => Math.max(...row.map(cell => String(cell).length)));
-    ws['!cols'] = colWidths.map(w => ({ wch: w + 2 }));
 
     const filename = `${transaction.type}_${transaction.stockSymbol}_${transaction.date.toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, filename);
