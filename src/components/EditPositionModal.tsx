@@ -245,19 +245,24 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
                             <div className="space-y-2">
                                 <label htmlFor="buyPrice" className="text-sm font-medium">
-                                    Kaufpreis pro Stück
+                                    Kaufpreis pro Stück ({position.stock.currency})
                                 </label>
-                                <input
-                                    id="buyPrice"
-                                    type="number"
-                                    step="0.01"
-                                    min="0.01"
-                                    placeholder={position.stock.currentPrice.toString()}
-                                    value={buyPrice}
-                                    onChange={(e) => setBuyPrice(e.target.value)}
-                                    className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-green-500/20"
-                                    required
-                                />
+                                <div className="relative">
+                                    <input
+                                        id="buyPrice"
+                                        type="number"
+                                        step="0.01"
+                                        min="0.01"
+                                        placeholder={position.stock.currentPrice.toFixed(2)}
+                                        value={buyPrice}
+                                        onChange={(e) => setBuyPrice(e.target.value)}
+                                        className="w-full px-4 py-2 pr-12 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-green-500/20"
+                                        required
+                                    />
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">
+                                        {position.stock.currency}
+                                    </div>
+                                </div>
                                 <button
                                     type="button"
                                     onClick={() => setBuyPrice(position.stock.currentPrice.toString())}
@@ -292,7 +297,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                             </span>
                                         </div>
                                         <div className="flex justify-between text-xs text-muted-foreground">
-                                            <span>Neuer Ø Kaufpreis:</span>
+                                            <span>Neuer Einstandspreis (Ø):</span>
                                             <span>
                                                 {((position.shares * position.buyPriceAvg + buyValue) / (position.shares + parseFloat(buyShares))).toLocaleString('de-DE', {
                                                     style: 'currency',
