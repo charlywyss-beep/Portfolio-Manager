@@ -34,11 +34,11 @@ export function Dashboard() {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-popover border border-border p-3 rounded-lg shadow-lg">
-                    <p className="font-bold text-popover-foreground">{payload[0].payload.fullName}</p>
-                    <p className={cn("text-sm font-medium", payload[0].value >= 0 ? "text-green-500" : "text-red-500")}>
+                    <p className="font-bold text-lg text-popover-foreground mb-1">{payload[0].payload.fullName}</p>
+                    <p className={cn("text-base font-bold", payload[0].value >= 0 ? "text-green-500" : "text-red-500")}>
                         {payload[0].value >= 0 ? '+' : ''}{payload[0].value.toFixed(2)}%
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                         {payload[0].payload.valueCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                     </p>
                 </div>
@@ -166,12 +166,12 @@ export function Dashboard() {
                                 <BarChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
                                     <XAxis
                                         dataKey="name"
-                                        tick={{ fill: 'currentColor', fontSize: 12, opacity: 0.7 }}
+                                        tick={{ fill: 'currentColor', fontSize: 13, opacity: 0.7 }}
                                         tickLine={false}
                                         axisLine={false}
                                     />
                                     <YAxis
-                                        tick={{ fill: 'currentColor', fontSize: 12, opacity: 0.7 }}
+                                        tick={{ fill: 'currentColor', fontSize: 13, opacity: 0.7 }}
                                         tickLine={false}
                                         axisLine={false}
                                         tickFormatter={(value) => `${value}%`}
