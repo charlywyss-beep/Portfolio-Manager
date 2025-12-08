@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
-import { ArrowUpRight, ArrowDownRight, DollarSign, Calendar, TrendingUp, BarChart3 } from 'lucide-react';
+import { usePortfolio } from '../context/PortfolioContext';
+import { ArrowUpRight, ArrowDownRight, DollarSign, Calendar, TrendingUp, BarChart3, Plus, Trash2, Edit } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { HistoryChart } from '../components/HistoryChart';
+import { AddHistoryEntryModal } from '../components/AddHistoryEntryModal';
 
 // Helper to translate frequency to German
 const translateFrequency = (freq?: string) => {
@@ -17,7 +21,10 @@ const translateFrequency = (freq?: string) => {
 
 export function Dashboard() {
     const { totals, upcomingDividends, positions } = usePortfolioData();
+    const { history, deleteHistoryEntry } = usePortfolio();
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
+    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+    const [editingHistoryEntry, setEditingHistoryEntry] = useState<any>(null);
 
     // Prepare chart data: Top 5 Performers
     const chartData = positions
@@ -131,6 +138,84 @@ export function Dashboard() {
             {/* Bottom Section: Dividends & Chart */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
+                {/* History Section */}
+                <div className="col-span-1 lg:col-span-2 p-6 rounded-xl bg-card border border-border shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-2">
+                            <BarChart3 className="size-5 text-muted-foreground" />
+                            <h3 className="text-lg font-bold">Depot Entwicklung (Jahr zu Jahr)</h3>
+                        </div>
+                        <button
+                            onClick={() => setIsHistoryModalOpen(true)}
+                            className="flex items-center gap-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1.5 rounded-md transition-colors font-medium"
+                        >
+                            <Plus className="size-3" />
+                            <span>Eintrag hinzufügen</span>
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Chart */}
+                        <div className="lg:col-span-2">
+                            <HistoryChart />
+                        </div>
+
+                        {/* History Table */}
+                        <div className="overflow-hidden border border-border rounded-lg bg-background/50">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border">
+                                    <tr>
+                                        <th className="px-3 py-2">Jahr</th>
+                                        <th className="px-3 py-2 text-right">Wert</th>
+                                        <th className="px-3 py-2 text-center">Aktion</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {history.map((entry) => (
+                                        <tr key={entry.id} className="hover:bg-muted/30 transition-colors group">
+                                            <td className="px-3 py-2 font-medium">
+                                                {new Date(entry.date).getFullYear()}
+                                                <span className="text-xs text-muted-foreground ml-1">({new Date(entry.date).toLocaleDateString('de-DE')})</span>
+                                            </td>
+                                            <td className="px-3 py-2 text-right font-bold text-foreground">
+                                                {formatCurrency(entry.totalValue, 'CHF')}
+                                            </td>
+                                            <td className="px-3 py-2 text-center">
+                                                <div className="flex items-center justify-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingHistoryEntry(entry);
+                                                            setIsHistoryModalOpen(true);
+                                                        }}
+                                                        className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
+                                                    >
+                                                        <Edit className="size-3" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            if (confirm('Historischen Eintrag löschen?')) deleteHistoryEntry(entry.id);
+                                                        }}
+                                                        className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                                                    >
+                                                        <Trash2 className="size-3" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {history.length === 0 && (
+                                        <tr>
+                                            <td colSpan={3} className="px-3 py-8 text-center text-muted-foreground text-xs">
+                                                Keine Daten vorhanden.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Upcoming Dividends List */}
                 <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
                     <div className="flex items-center justify-between mb-6">
@@ -199,6 +284,15 @@ export function Dashboard() {
                     </div>
                 </div>
             </div>
+
+            <AddHistoryEntryModal
+                isOpen={isHistoryModalOpen}
+                onClose={() => {
+                    setIsHistoryModalOpen(false);
+                    setEditingHistoryEntry(null);
+                }}
+                editingEntry={editingHistoryEntry}
+            />
         </div>
     );
 }

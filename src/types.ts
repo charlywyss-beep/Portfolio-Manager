@@ -29,8 +29,30 @@ export interface Position {
     buyPriceAvg: number; // Average buy price
 }
 
+// Festgeld (Fixed Deposit)
+export interface FixedDeposit {
+    id: string;
+    bankName: string;
+    amount: number;
+    interestRate: number; // Percentage (e.g. 2.5)
+    startDate: string; // ISO Date
+    maturityDate: string; // ISO Date
+    currency: Currency;
+    notes?: string;
+}
+
+export interface PortfolioHistoryEntry {
+    id: string;
+    date: string; // ISO Date (YYYY-MM-DD or YYYY-12-31)
+    totalValue: number;
+    investedCapital?: number; // Optional: to calculate true return
+    notes?: string;
+}
+
 export interface Portfolio {
     id: string;
     positions: Position[];
+    fixedDeposits: FixedDeposit[];
+    history: PortfolioHistoryEntry[]; // New field
     cash: number;
 }

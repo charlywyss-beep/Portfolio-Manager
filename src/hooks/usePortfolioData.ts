@@ -40,9 +40,21 @@ export function usePortfolioData() {
     }, [rawPositions, stocks]);
 
     const totals = useMemo(() => {
-        const totalValue = positions.reduce((sum, p) => sum + convertToCHF(p.currentValue, p.stock.currency, rates), 0);
-        const totalCost = positions.reduce((sum, p) => sum + convertToCHF(p.costBasis, p.stock.currency, rates), 0);
-        const totalGainLoss = totalValue - totalCost;
+        const totalValueStock = positions.reduce((sum, p) => sum + convertToCHF(p.currentValue, p.stock.currency, rates), 0);
+        const totalCostStock = positions.reduce((sum, p) => sum + convertToCHF(p.costBasis, p.stock.currency, rates), 0);
+        const totalGainLossStock = totalValueStock - totalCostStock;
+
+        // Fixed Deposits Totals
+        const { fixedDeposits } = usePortfolio();
+        const totalValueFixed = fixedDeposits?.reduce((sum, fd) => sum + convertToCHF(fd.amount, fd.currency, rates), 0) || 0;
+        const totalInterestFixed = fixedDeposits?.reduce((sum, fd) => {
+            const interest = fd.amount * (fd.interestRate / 100);
+            return sum + convertToCHF(interest, fd.currency, rates);
+        }, 0) || 0;
+
+        const totalValue = totalValueStock + totalValueFixed;
+        const totalCost = totalCostStock + totalValueFixed; // Treat FD amount as cost basis
+        const totalGainLoss = totalGainLossStock; // FDs don't have capital gains in this simple model, only interest
         const totalGainLossPercent = totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
 
         // Calculate projected yearly dividends (Converted to CHF)
@@ -61,14 +73,20 @@ export function usePortfolioData() {
             return sum + convertToCHF(dividendValue, currency, rates);
         }, 0);
 
+        const totalProjectedIncome = projectedYearlyDividends + totalInterestFixed;
+
         return {
             totalValue,
             totalCost,
             gainLoss: totalGainLoss,
             gainLossPercent: totalGainLossPercent,
             projectedYearlyDividends,
+            totalProjectedIncome, // Combined Dividends + Interest
+            totalValueStock,
+            totalValueFixed,
+            totalInterestFixed
         };
-    }, [positions, rates]);
+    }, [positions, rates, usePortfolio().fixedDeposits]);
 
     // Calculate upcoming dividends from stock dividend data
     const upcomingDividends = useMemo(() => {

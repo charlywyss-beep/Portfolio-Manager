@@ -1,0 +1,190 @@
+import { useState, useEffect } from 'react';
+import { X } from 'lucide-react';
+import { usePortfolio } from '../context/PortfolioContext';
+import type { FixedDeposit, Currency } from '../types';
+
+interface AddFixedDepositModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    editingDeposit?: FixedDeposit | null;
+}
+
+export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFixedDepositModalProps) {
+    const { addFixedDeposit, updateFixedDeposit } = usePortfolio();
+
+    const [bankName, setBankName] = useState('');
+    const [amount, setAmount] = useState<number | ''>('');
+    const [interestRate, setInterestRate] = useState<number | ''>('');
+    const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+    const [maturityDate, setMaturityDate] = useState(new Date().toISOString().split('T')[0]);
+    const [currency, setCurrency] = useState<Currency>('CHF');
+    const [notes, setNotes] = useState('');
+
+    useEffect(() => {
+        if (editingDeposit) {
+            setBankName(editingDeposit.bankName);
+            setAmount(editingDeposit.amount);
+            setInterestRate(editingDeposit.interestRate);
+            setStartDate(editingDeposit.startDate);
+            setMaturityDate(editingDeposit.maturityDate);
+            setCurrency(editingDeposit.currency);
+            setNotes(editingDeposit.notes || '');
+        } else {
+            // Reset form for new entry
+            setBankName('');
+            setAmount('');
+            setInterestRate('');
+            setStartDate(new Date().toISOString().split('T')[0]);
+            setMaturityDate(new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]); // Default 1 year
+            setCurrency('CHF');
+            setNotes('');
+        }
+    }, [editingDeposit, isOpen]);
+
+    if (!isOpen) return null;
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        const depositData = {
+            bankName,
+            amount: Number(amount),
+            interestRate: Number(interestRate),
+            startDate,
+            maturityDate,
+            currency,
+            notes
+        };
+
+        if (editingDeposit) {
+            updateFixedDeposit(editingDeposit.id, depositData);
+        } else {
+            addFixedDeposit(depositData);
+        }
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex items-center justify-between p-6 border-b border-border">
+                    <h2 className="text-xl font-bold">
+                        {editingDeposit ? 'Festgeld bearbeiten' : 'Neues Festgeld'}
+                    </h2>
+                    <button onClick={onClose} className="p-2 hover:bg-secondary rounded-full transition-colors">
+                        <X className="size-5" />
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Bank / Institut</label>
+                        <input
+                            type="text"
+                            required
+                            className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                            value={bankName}
+                            onChange={(e) => setBankName(e.target.value)}
+                            placeholder="z.B. UBS, PostFinance"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Betrag</label>
+                            <input
+                                type="number"
+                                required
+                                min="0"
+                                step="0.01"
+                                className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                value={amount}
+                                onChange={(e) => setAmount(Number(e.target.value))}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Währung</label>
+                            <select
+                                className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                value={currency}
+                                onChange={(e) => setCurrency(e.target.value as Currency)}
+                            >
+                                <option value="CHF">CHF</option>
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="GBp">GBp</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Zins (% p.a.)</label>
+                            <input
+                                type="number"
+                                required
+                                min="0"
+                                step="0.01"
+                                className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                value={interestRate}
+                                onChange={(e) => setInterestRate(Number(e.target.value))}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            {/* Placeholder for layout balance */}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Startdatum</label>
+                            <input
+                                type="date"
+                                required
+                                className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Fälligkeitsdatum</label>
+                            <input
+                                type="date"
+                                required
+                                className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                value={maturityDate}
+                                onChange={(e) => setMaturityDate(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Notizen (Optional)</label>
+                        <textarea
+                            className="w-full p-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all min-h-[80px]"
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            placeholder="z.B. Sonderkonditionen"
+                        />
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md transition-colors"
+                        >
+                            Abbrechen
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-6 py-2 text-sm font-bold text-primary-foreground bg-primary hover:bg-primary/90 rounded-md shadow-sm transition-all"
+                        >
+                            {editingDeposit ? 'Speichern' : 'Hinzufügen'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}

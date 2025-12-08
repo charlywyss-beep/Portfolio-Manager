@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Plus, Search, Trash2, ArrowUpRight, ArrowDownRight, PieChart, BarChart3, Edit } from 'lucide-react';
+import { Plus, Search, Trash2, ArrowUpRight, ArrowDownRight, PieChart, BarChart3, Edit, Landmark } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
 import { AddPositionModal } from '../components/AddPositionModal';
 import { EditPositionModal } from '../components/EditPositionModal';
+import { AddFixedDepositModal } from '../components/AddFixedDepositModal';
 import { PriceUpdateDialog } from '../components/PriceUpdateDialog';
 
 export function Portfolio() {
-    const { positions: rawPositions, stocks, addPosition, deletePosition, updatePosition } = usePortfolio();
+    const { positions: rawPositions, stocks, fixedDeposits, addPosition, deletePosition, updatePosition, deleteFixedDeposit } = usePortfolio();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isAddFixedDepositModalOpen, setIsAddFixedDepositModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedPosition, setSelectedPosition] = useState<any>(null);
+    const [editingFixedDeposit, setEditingFixedDeposit] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [priceEditStock, setPriceEditStock] = useState<any>(null);
     const { formatCurrency } = useCurrencyFormatter();
@@ -231,6 +234,116 @@ export function Portfolio() {
         </div>
     );
 
+    const FixedDepositTable = () => {
+        const filteredFixedDeposits = fixedDeposits?.filter(fd =>
+            fd.bankName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (fd.notes && fd.notes.toLowerCase().includes(searchTerm.toLowerCase()))
+        ) || [];
+
+        return (
+            <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                    <Landmark className="size-5 text-primary" />
+                    <h2 className="text-lg font-bold">Festgeld & Einlagen</h2>
+                    <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{filteredFixedDeposits.length} Positionen</span>
+                    <button
+                        onClick={() => setIsAddFixedDepositModalOpen(true)}
+                        className="ml-auto flex items-center gap-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary px-2 py-1 rounded transition-colors"
+                    >
+                        <Plus className="size-3" />
+                        <span>Hinzufügen</span>
+                    </button>
+                </div>
+                <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border">
+                                <tr>
+                                    <th className="px-4 py-3">Bank / Institut</th>
+                                    <th className="px-4 py-3 text-right">Betrag</th>
+                                    <th className="px-4 py-3 text-right">Zins p.a.</th>
+                                    <th className="px-4 py-3 text-right">Jährlicher Ertrag</th>
+                                    <th className="px-4 py-3 text-right">Laufzeit</th>
+                                    <th className="px-4 py-3 text-right">Fällig am</th>
+                                    <th className="px-4 py-3 text-center">Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border">
+                                {filteredFixedDeposits.map((fd) => {
+                                    const interestAmount = fd.amount * (fd.interestRate / 100);
+                                    return (
+                                        <tr key={fd.id} className="group hover:bg-muted/30 transition-colors">
+                                            <td className="px-4 py-3 font-medium">
+                                                <div className="flex flex-col">
+                                                    <span>{fd.bankName}</span>
+                                                    {fd.notes && <span className="text-xs text-muted-foreground">{fd.notes}</span>}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-bold text-foreground">
+                                                {formatCurrency(fd.amount, fd.currency)}
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full text-xs font-medium border border-green-200 dark:border-green-900/50">
+                                                    {fd.interestRate.toFixed(2)}%
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-medium text-green-600 dark:text-green-400">
+                                                +{formatCurrency(interestAmount, fd.currency)}
+                                            </td>
+                                            <td className="px-4 py-3 text-right text-muted-foreground">
+                                                {new Date(fd.startDate).toLocaleDateString('de-DE')} - {new Date(fd.maturityDate).toLocaleDateString('de-DE')}
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <span className={cn(
+                                                    "font-medium",
+                                                    new Date(fd.maturityDate) < new Date() ? "text-red-500" : ""
+                                                )}>
+                                                    {new Date(fd.maturityDate).toLocaleDateString('de-DE')}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingFixedDeposit(fd);
+                                                            setIsAddFixedDepositModalOpen(true);
+                                                        }}
+                                                        className="text-muted-foreground hover:text-primary p-2 rounded-md hover:bg-primary/10 transition-colors"
+                                                        title="Bearbeiten"
+                                                    >
+                                                        <Edit className="size-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            if (confirm(`Festgeld bei "${fd.bankName}" wirklich löschen?`)) {
+                                                                deleteFixedDeposit(fd.id);
+                                                            }
+                                                        }}
+                                                        className="text-muted-foreground hover:text-red-600 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                                                        title="Löschen"
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
+                                {filteredFixedDeposits.length === 0 && (
+                                    <tr>
+                                        <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
+                                            {searchTerm ? 'Kein Festgeld gefunden.' : 'Noch keine Festgeld-Anlagen erfasst.'}
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             {/* Header / Actions */}
@@ -239,19 +352,28 @@ export function Portfolio() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <input
                         type="text"
-                        placeholder="Aktien oder ETFs suchen..."
+                        placeholder="Aktien, ETFs oder Festgeld suchen..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
                     />
                 </div>
-                <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium text-sm"
-                >
-                    <Plus className="size-4" />
-                    <span>Position hinzufügen</span>
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setIsAddFixedDepositModalOpen(true)}
+                        className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-medium text-sm border border-border"
+                    >
+                        <Landmark className="size-4" />
+                        <span>Festgeld</span>
+                    </button>
+                    <button
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium text-sm"
+                    >
+                        <Plus className="size-4" />
+                        <span>Aktie / ETF</span>
+                    </button>
+                </div>
             </div>
 
             {/* Aktien Table */}
@@ -270,11 +392,23 @@ export function Portfolio() {
                 emptyMessage={searchTerm ? 'Keine ETFs gefunden.' : 'Noch keine ETFs im Depot.'}
             />
 
+            {/* Fixed Deposits Table */}
+            <FixedDepositTable />
+
             <AddPositionModal
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
                 stocks={stocks}
                 onAdd={addPosition}
+            />
+
+            <AddFixedDepositModal
+                isOpen={isAddFixedDepositModalOpen}
+                onClose={() => {
+                    setIsAddFixedDepositModalOpen(false);
+                    setEditingFixedDeposit(null);
+                }}
+                editingDeposit={editingFixedDeposit}
             />
 
             {selectedPosition && (
