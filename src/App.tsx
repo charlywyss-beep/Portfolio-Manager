@@ -121,7 +121,7 @@ function App() {
             <header className="h-16 border-b border-border flex items-center justify-between px-8 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
               <h2 className="text-lg font-semibold capitalize">
                 {activeTab === 'dashboard' && 'Portfolio Übersicht'}
-                {activeTab === 'portfolio' && 'Meine Aktien'}
+                {activeTab === 'portfolio' && 'Mein Depot'}
                 {activeTab === 'calculator' && 'Performance-Rechner'}
                 {activeTab === 'dividends' && 'Dividenden Planer'}
               </h2>
