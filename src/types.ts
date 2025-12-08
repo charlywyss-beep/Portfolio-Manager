@@ -1,14 +1,6 @@
 export type Currency = 'EUR' | 'USD' | 'CHF';
 
-export interface Dividend {
-    id: string;
-    stockId: string;
-    amount: number; // Amount per share
-    currency: Currency;
-    payDate: string; // ISO Date
-    exDate: string; // ISO Date
-    frequency: 'monthly' | 'quarterly' | 'annually' | 'semi-annually';
-}
+
 
 export interface Stock {
     id: string;
@@ -22,6 +14,11 @@ export interface Stock {
     currency: Currency;
     type?: 'stock' | 'etf';
     dividendYield?: number; // Percentage (e.g., 3.5 for 3.5%)
+    dividendAmount?: number; // Amount per share (e.g., 2.80)
+    dividendCurrency?: Currency; // Currency of dividend payment
+    dividendExDate?: string; // Ex-dividend date (ISO format)
+    dividendPayDate?: string; // Payment date (ISO format)
+    dividendFrequency?: 'monthly' | 'quarterly' | 'annually' | 'semi-annually';
     logoUrl?: string;
 }
 

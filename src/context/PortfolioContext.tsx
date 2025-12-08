@@ -1,20 +1,17 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import type { Position, Stock, Dividend } from '../types';
+import type { Position, Stock } from '../types';
 import { MOCK_POSITIONS, MOCK_STOCKS } from '../data/mockData';
 
 interface PortfolioContextType {
     positions: Position[];
     stocks: Stock[];
-    dividends: Dividend[];
     addPosition: (position: Omit<Position, 'id'>) => void;
     deletePosition: (id: string) => void;
     updatePosition: (id: string, updates: Partial<Position>) => void;
     addStock: (stock: Omit<Stock, 'id'>) => string;
     updateStockPrice: (stockId: string, newPrice: number) => void;
     updateStockDividendYield: (stockId: string, dividendYield: number) => void;
-    addDividend: (dividend: Omit<Dividend, 'id'>) => void;
-    updateDividend: (id: string, updates: Partial<Dividend>) => void;
-    deleteDividend: (id: string) => void;
+    updateStockDividend: (stockId: string, dividendData: Partial<Pick<Stock, 'dividendYield' | 'dividendAmount' | 'dividendCurrency' | 'dividendExDate' | 'dividendPayDate' | 'dividendFrequency'>>) => void;
 }
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
@@ -30,10 +27,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         return stored ? JSON.parse(stored) : MOCK_STOCKS;
     });
 
-    const [dividends, setDividends] = useState<Dividend[]>(() => {
-        const stored = localStorage.getItem('portfolio_dividends');
-        return stored ? JSON.parse(stored) : [];
-    });
+
 
     useEffect(() => {
         localStorage.setItem('portfolio_positions', JSON.stringify(positions));
@@ -43,9 +37,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('portfolio_stocks', JSON.stringify(stocks));
     }, [stocks]);
 
-    useEffect(() => {
-        localStorage.setItem('portfolio_dividends', JSON.stringify(dividends));
-    }, [dividends]);
+
 
     const addStock = (stockData: Omit<Stock, 'id'>) => {
         const newId = `stock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -93,22 +85,12 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         );
     };
 
-    const addDividend = (dividend: Omit<Dividend, 'id'>) => {
-        const newDividend: Dividend = {
-            ...dividend,
-            id: `div_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        };
-        setDividends((prev) => [...prev, newDividend]);
-    };
-
-    const updateDividend = (id: string, updates: Partial<Dividend>) => {
-        setDividends((prev) =>
-            prev.map((d) => (d.id === id ? { ...d, ...updates } : d))
+    const updateStockDividend = (stockId: string, dividendData: Partial<Pick<Stock, 'dividendYield' | 'dividendAmount' | 'dividendCurrency' | 'dividendExDate' | 'dividendPayDate' | 'dividendFrequency'>>) => {
+        setStocks((prev) =>
+            prev.map((s) =>
+                s.id === stockId ? { ...s, ...dividendData } : s
+            )
         );
-    };
-
-    const deleteDividend = (id: string) => {
-        setDividends((prev) => prev.filter((d) => d.id !== id));
     };
 
     return (
@@ -116,16 +98,13 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
             value={{
                 positions,
                 stocks,
-                dividends,
                 addPosition,
                 deletePosition,
                 updatePosition,
                 addStock,
                 updateStockPrice,
                 updateStockDividendYield,
-                addDividend,
-                updateDividend,
-                deleteDividend
+                updateStockDividend
             }}
         >
             {children}

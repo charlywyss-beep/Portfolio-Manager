@@ -1,77 +1,92 @@
 import { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Calendar, Trash2, TrendingUp, Plus, Edit } from 'lucide-react';
+import { Calendar, TrendingUp, Plus, Edit } from 'lucide-react';
 import { AddDividendModal } from '../components/AddDividendModal';
 import { useCurrencyFormatter } from '../utils/currency';
+import type { Stock } from '../types';
 
 export function DividendPlanner() {
-    const { stocks, positions, dividends, deleteDividend } = usePortfolio();
+    const { stocks, positions } = usePortfolio();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [editingDividend, setEditingDividend] = useState<any>(null);
+    const [editingStock, setEditingStock] = useState<Stock | null>(null);
     const { formatCurrency } = useCurrencyFormatter();
 
     // Calculate projected dividends from yield
-    const projectedDividends = positions.map(pos => {
-        const stock = stocks.find(s => s.id === pos.stockId);
-        if (!stock || !stock.dividendYield) return null;
+    const projectedDividends = positions
+        .map((pos) => {
+            const stock = stocks.find((s) => s.id === pos.stockId);
+            if (!stock || !stock.dividendYield) return null;
 
-        const currentValue = pos.shares * stock.currentPrice;
-        const yearlyDividend = currentValue * (stock.dividendYield / 100);
+            const currentValue = pos.shares * stock.currentPrice;
+            const annualDividend = currentValue * (stock.dividendYield / 100);
+            const quarterlyDividend = annualDividend / 4;
 
-        return {
-            stock,
-            position: pos,
-            yearlyDividend,
-            quarterlyDividend: yearlyDividend / 4
-        };
-    }).filter(Boolean);
+            return {
+                position: pos,
+                stock,
+                annualDividend,
+                quarterlyDividend,
+            };
+        })
+        .filter(Boolean);
 
-    const totalYearlyDividends = projectedDividends.reduce((sum, d) => sum + (d?.yearlyDividend || 0), 0);
-    const totalMonthlyAvg = totalYearlyDividends / 12;
+    const totalAnnual = projectedDividends.reduce((sum, d) => sum + d!.annualDividend, 0);
+    const totalMonthly = totalAnnual / 12;
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Header Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 rounded-lg bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
-                            <TrendingUp className="size-6" />
-                        </div>
-                        <h3 className="text-lg font-bold">Jährliche Gesamtdividende</h3>
-                    </div>
-                    <p className="text-3xl font-bold tracking-tight">
-                        {totalYearlyDividends.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
-                    </p>
-                </div>
-
-                <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+        <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+            {/* Header */}
+            <div className="border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 sticky top-0 z-10">
+                <div className="container mx-auto px-4 py-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600 dark:text-green-400">
                             <Calendar className="size-6" />
                         </div>
-                        <h3 className="text-lg font-bold">Monatlicher Durchschnitt</h3>
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight">Dividenden Planer</h1>
+                            <p className="text-muted-foreground">Erwartete Dividendenausschüttungen</p>
+                        </div>
                     </div>
-                    <p className="text-3xl font-bold tracking-tight">
-                        {totalMonthlyAvg.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
-                    </p>
                 </div>
             </div>
 
-            {/* Projected Dividends Table */}
-            <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold">Erwartete Dividenden</h3>
-                    <button
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm"
-                    >
-                        <Plus className="size-4" />
-                        Dividende hinzufügen
-                    </button>
+            {/* Summary Cards */}
+            <div className="container mx-auto px-4 py-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl p-6 border border-green-200 dark:border-green-800">
+                        <div className="flex items-center gap-3 mb-2">
+                            <TrendingUp className="size-5 text-green-600 dark:text-green-400" />
+                            <span className="text-sm font-medium text-green-900 dark:text-green-100">Jährliche Gesamtdividende</span>
+                        </div>
+                        <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+                            CHF {totalAnnual.toFixed(2)}
+                        </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
+                        <div className="flex items-center gap-3 mb-2">
+                            <Calendar className="size-5 text-blue-600 dark:text-blue-400" />
+                            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">Monatlicher Durchschnitt</span>
+                        </div>
+                        <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                            CHF {totalMonthly.toFixed(2)}
+                        </div>
+                    </div>
                 </div>
 
-                {projectedDividends.length > 0 ? (
+                {/* Table */}
+                <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between p-4 border-b bg-muted/30">
+                        <h2 className="text-lg font-semibold">Erwartete Dividenden</h2>
+                        <button
+                            onClick={() => setIsAddModalOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium transition-colors"
+                        >
+                            <Plus className="size-4" />
+                            Dividende hinzufügen
+                        </button>
+                    </div>
+
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
@@ -81,103 +96,79 @@ export function DividendPlanner() {
                                     <th className="text-right py-3 px-4 font-semibold">Rendite %</th>
                                     <th className="text-right py-3 px-4 font-semibold">Jährlich</th>
                                     <th className="text-right py-3 px-4 font-semibold">Quartalsweise</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {projectedDividends.map((item, idx) => item && (
-                                    <tr key={idx} className="border-b border-border hover:bg-muted/50 transition-colors">
-                                        <td className="py-3 px-4">
-                                            <div>
-                                                <p className="font-semibold">{item.stock.name}</p>
-                                                <p className="text-sm text-muted-foreground">{item.stock.symbol}</p>
-                                            </div>
-                                        </td>
-                                        <td className="text-right py-3 px-4">{item.position.shares}</td>
-                                        <td className="text-right py-3 px-4">{item.stock.dividendYield?.toFixed(2)}%</td>
-                                        <td className="text-right py-3 px-4 font-medium text-green-600 dark:text-green-400">
-                                            {item.yearlyDividend.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
-                                        </td>
-                                        <td className="text-right py-3 px-4 text-muted-foreground">
-                                            {item.quarterlyDividend.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                ) : (
-                    <div className="text-center py-12">
-                        <Calendar className="size-12 mx-auto text-muted-foreground mb-4" />
-                        <p className="text-muted-foreground">Keine Dividenden projected. Fügen Sie Dividendenrenditen zu Ihren Stocks hinzu.</p>
-                    </div>
-                )}
-            </div>
-
-            {/* Manual Dividends table */}
-            {dividends.length > 0 && (
-                <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
-                    <h3 className="text-lg font-bold mb-6">Manuelle Dividenden</h3>
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-border">
-                                    <th className="text-left py-3 px-4 font-semibold">Aktie</th>
-                                    <th className="text-right py-3 px-4 font-semibold">Betrag</th>
-                                    <th className="text-right py-3 px-4 font-semibold">Datum</th>
-                                    <th className="text-right py-3 px-4 font-semibold">Häufigkeit</th>
+                                    <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
+                                    <th className="text-right py-3 px-4 font-semibold">Pay-Date</th>
                                     <th className="text-right py-3 px-4 w-24">Aktionen</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {dividends.map(div => {
-                                    const stock = stocks.find(s => s.id === div.stockId);
-                                    return (
-                                        <tr key={div.id} className="border-b border-border hover:bg-muted/50 transition-colors">
-                                            <td className="py-3 px-4">
-                                                <div>
-                                                    <p className="font-semibold">{stock?.name || 'Unbekannt'}</p>
-                                                    <p className="text-sm text-muted-foreground">{stock?.symbol}</p>
-                                                </div>
-                                            </td>
-                                            <td className="text-right py-3 px-4 font-medium">
-                                                {formatCurrency(div.amount, div.currency, div.currency !== 'CHF')}
-                                            </td>
-                                            <td className="text-right py-3 px-4">{new Date(div.payDate).toLocaleDateString('de-DE')}</td>
-                                            <td className="text-right py-3 px-4 text-muted-foreground capitalize">{div.frequency}</td>
-                                            <td className="text-right py-3 px-4">
-                                                <div className="flex items-center justify-end gap-2">
+                                {projectedDividends.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={8} className="text-center py-8 text-muted-foreground">
+                                            Keine Dividenden-Aktien im Portfolio
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    projectedDividends.map((data) => {
+                                        const { position, stock, annualDividend, quarterlyDividend } = data!;
+
+                                        // Format currency with dual display if needed
+                                        let annualDisplay = `CHF ${annualDividend.toFixed(2)}`;
+                                        if (stock.dividendCurrency && stock.dividendCurrency !== 'CHF') {
+                                            const originalAmount = stock.dividendAmount ? stock.dividendAmount * position.shares : annualDividend;
+                                            annualDisplay = formatCurrency(originalAmount, stock.dividendCurrency);
+                                        }
+
+                                        return (
+                                            <tr key={position.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
+                                                <td className="py-3 px-4">
+                                                    <div className="font-semibold">{stock.name}</div>
+                                                    <div className="text-xs text-muted-foreground">{stock.symbol}</div>
+                                                </td>
+                                                <td className="text-right py-3 px-4">{position.shares}</td>
+                                                <td className="text-right py-3 px-4 text-green-600 dark:text-green-400 font-medium">
+                                                    {stock.dividendYield?.toFixed(2)}%
+                                                </td>
+                                                <td className="text-right py-3 px-4 font-semibold text-primary">
+                                                    {annualDisplay}
+                                                </td>
+                                                <td className="text-right py-3 px-4 text-muted-foreground">
+                                                    CHF {quarterlyDividend.toFixed(2)}
+                                                </td>
+                                                <td className="text-right py-3 px-4 text-muted-foreground capitalize">
+                                                    {stock.dividendFrequency || 'annually'}
+                                                </td>
+                                                <td className="text-right py-3 px-4 text-muted-foreground">
+                                                    {stock.dividendPayDate
+                                                        ? new Date(stock.dividendPayDate).toLocaleDateString('de-DE')
+                                                        : '-'}
+                                                </td>
+                                                <td className="text-right py-3 px-4">
                                                     <button
-                                                        onClick={() => setEditingDividend(div)}
+                                                        onClick={() => setEditingStock(stock)}
                                                         className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
                                                         title="Bearbeiten"
                                                     >
                                                         <Edit className="size-4" />
                                                     </button>
-                                                    <button
-                                                        onClick={() => deleteDividend(div.id)}
-                                                        className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg transition-colors"
-                                                        title="Löschen"
-                                                    >
-                                                        <Trash2 className="size-4" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
                             </tbody>
                         </table>
                     </div>
                 </div>
-            )}
+            </div>
 
             <AddDividendModal
-                isOpen={isAddModalOpen || !!editingDividend}
+                isOpen={isAddModalOpen || !!editingStock}
                 onClose={() => {
                     setIsAddModalOpen(false);
-                    setEditingDividend(null);
+                    setEditingStock(null);
                 }}
-                editingDividend={editingDividend}
+                editingStock={editingStock}
             />
         </div>
     );

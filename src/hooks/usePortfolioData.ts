@@ -1,60 +1,71 @@
 import { useMemo } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { MOCK_DIVIDENDS } from '../data/mockData';
-import type { Position, Stock } from '../types';
 
 export function usePortfolioData() {
     const { positions: rawPositions, stocks } = usePortfolio();
 
-    // Merge positions with stock data
-    const portfolioPositions = useMemo(() => {
-        return rawPositions.map(pos => {
-            const stock = stocks.find(s => s.id === pos.stockId);
+    const positions = useMemo(() => {
+        return rawPositions.map((pos) => {
+            const stock = stocks.find((s) => s.id === pos.stockId);
             if (!stock) return null;
 
             const currentValue = pos.shares * stock.currentPrice;
-            const investValue = pos.shares * pos.buyPriceAvg;
-            const gainLoss = currentValue - investValue;
-            const gainLossPercent = investValue !== 0 ? (gainLoss / investValue) * 100 : 0;
-
-            // Project yearly dividend
-            const yearlyDividend = stock.dividendYield ? (currentValue * (stock.dividendYield / 100)) : 0;
+            const costBasis = pos.shares * pos.buyPriceAvg;
+            const gainLoss = currentValue - costBasis;
+            const gainLossPercent = (gainLoss / costBasis) * 100;
 
             return {
                 ...pos,
                 stock,
                 currentValue,
+                costBasis,
                 gainLoss,
                 gainLossPercent,
-                yearlyDividend
             };
-        }).filter((p): p is (Position & { stock: Stock, currentValue: number, gainLoss: number, gainLossPercent: number, yearlyDividend: number }) => p !== null);
+        }).filter((p): p is NonNullable<typeof p> => p !== null);
     }, [rawPositions, stocks]);
 
     const totals = useMemo(() => {
-        return portfolioPositions.reduce((acc, pos) => {
-            acc.totalValue += pos.currentValue;
-            acc.totalInvested += (pos.shares * pos.buyPriceAvg);
-            acc.projectedYearlyDividends += pos.yearlyDividend;
-            return acc;
-        }, { totalValue: 0, totalInvested: 0, projectedYearlyDividends: 0 });
-    }, [portfolioPositions]);
+        const totalValue = positions.reduce((sum, p) => sum + p.currentValue, 0);
+        const totalCost = positions.reduce((sum, p) => sum + p.costBasis, 0);
+        const totalGainLoss = totalValue - totalCost;
+        const totalGainLossPercent = totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
 
+        // Calculate projected yearly dividends
+        const projectedYearlyDividends = positions.reduce((sum, p) => {
+            if (p.stock.dividendAmount) {
+                return sum + (p.stock.dividendAmount * p.shares);
+            } else if (p.stock.dividendYield) {
+                return sum + (p.currentValue * (p.stock.dividendYield / 100));
+            }
+            return sum;
+        }, 0);
+
+        return {
+            totalValue,
+            totalCost,
+            gainLoss: totalGainLoss,
+            gainLossPercent: totalGainLossPercent,
+            projectedYearlyDividends,
+        };
+    }, [positions]);
+
+    // Calculate upcoming dividends from stock dividend data
     const upcomingDividends = useMemo(() => {
-        // Simple mock logic: just take the mock dividends and add stock info
-        return MOCK_DIVIDENDS.map(div => {
-            const stock = stocks.find(s => s.id === div.stockId);
-            return { ...div, stock };
-        }).sort((a, b) => new Date(a.payDate).getTime() - new Date(b.payDate).getTime());
-    }, [stocks]);
+        return positions
+            .filter(p => p.stock.dividendPayDate)
+            .map(p => ({
+                stock: p.stock,
+                payDate: p.stock.dividendPayDate!,
+                amount: p.stock.dividendAmount ? p.stock.dividendAmount * p.shares : 0,
+                currency: p.stock.dividendCurrency || p.stock.currency
+            }))
+            .sort((a, b) => new Date(a.payDate).getTime() - new Date(b.payDate).getTime());
+    }, [positions]);
 
     return {
-        positions: portfolioPositions,
-        totals: {
-            ...totals,
-            gainLoss: totals.totalValue - totals.totalInvested,
-            gainLossPercent: totals.totalInvested ? ((totals.totalValue - totals.totalInvested) / totals.totalInvested) * 100 : 0
-        },
-        upcomingDividends
+        positions,
+        totals,
+        upcomingDividends,
     };
 }

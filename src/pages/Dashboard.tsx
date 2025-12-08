@@ -87,22 +87,22 @@ export function Dashboard() {
                         <Calendar className="size-5 text-muted-foreground" />
                     </div>
                     <div className="space-y-4">
-                        {upcomingDividends.map(div => (
-                            <div key={div.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                        {upcomingDividends.map((div, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
                                 <div className="flex items-center gap-3">
                                     {div.stock?.logoUrl && (
                                         <img src={div.stock.logoUrl} alt={div.stock.name} className="size-8 rounded-full bg-white object-contain p-1 border border-border" />
                                     )}
                                     <div>
-                                        <p className="font-semibold text-sm">{div.stock?.symbol}</p>
+                                        <p className="font-semibold text-sm">{div.stock.symbol}</p>
                                         <p className="text-xs text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
                                     </div>
                                 </div>
                                 <div className="text-right">
                                     <p className="font-medium text-green-600 dark:text-green-400">
-                                        +{(div.amount * (positions.find(p => p.stockId === div.stockId)?.shares || 0)).toLocaleString('de-DE', { style: 'currency', currency: div.currency })}
+                                        +{div.amount.toFixed(2)} {div.currency}
                                     </p>
-                                    <p className="text-xs text-muted-foreground">{div.frequency}</p>
+                                    <p className="text-xs text-muted-foreground">{div.stock.dividendFrequency || 'annually'}</p>
                                 </div>
                             </div>
                         ))}
