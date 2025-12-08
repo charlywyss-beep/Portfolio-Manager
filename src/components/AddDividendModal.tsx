@@ -177,6 +177,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                             <option value="CHF">CHF (Schweizer Franken)</option>
                             <option value="USD">USD (US Dollar)</option>
                             <option value="EUR">EUR (Euro)</option>
+                            <option value="GBp">GBp (Britische Pence)</option>
                         </select>
                     </div>
 

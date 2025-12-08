@@ -1,4 +1,4 @@
-export type Currency = 'EUR' | 'USD' | 'CHF';
+export type Currency = 'EUR' | 'USD' | 'CHF' | 'GBp';
 
 
 
