@@ -108,6 +108,7 @@ export function DividendPlanner() {
                                     <th className="text-right py-3 px-4 font-semibold">Jährlich</th>
                                     <th className="text-right py-3 px-4 font-semibold">Quartalsweise</th>
                                     <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
+                                    <th className="text-right py-3 px-4 font-semibold">Ex-Date</th>
                                     <th className="text-right py-3 px-4 font-semibold">Pay-Date</th>
                                     <th className="text-right py-3 px-4 w-24">Aktionen</th>
                                 </tr>
@@ -115,7 +116,7 @@ export function DividendPlanner() {
                             <tbody>
                                 {projectedDividends.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} className="text-center py-8 text-muted-foreground">
+                                        <td colSpan={9} className="text-center py-8 text-muted-foreground">
                                             Keine Dividenden-Aktien im Portfolio
                                         </td>
                                     </tr>
@@ -148,6 +149,11 @@ export function DividendPlanner() {
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground">
                                                     {translateFrequency(stock.dividendFrequency)}
+                                                </td>
+                                                <td className="text-right py-3 px-4 text-muted-foreground">
+                                                    {stock.dividendExDate
+                                                        ? new Date(stock.dividendExDate).toLocaleDateString('de-DE')
+                                                        : '-'}
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground">
                                                     {stock.dividendPayDate
