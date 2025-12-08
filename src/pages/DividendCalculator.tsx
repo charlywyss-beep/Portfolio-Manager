@@ -138,7 +138,7 @@ export function DividendCalculator() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-muted-foreground">Div. Rendite (%)</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Dividenden Rendite (%)</label>
                                     <input
                                         type="number"
                                         step="0.1"
@@ -148,7 +148,7 @@ export function DividendCalculator() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-muted-foreground">Kursgewinn p.a. (%)</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Kursgewinn pro Jahr (%)</label>
                                     <input
                                         type="number"
                                         step="0.1"
