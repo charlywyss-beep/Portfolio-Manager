@@ -3,6 +3,17 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
 
+// Helper to get frequency multiplication factor
+const getFrequencyFactor = (freq?: string) => {
+    switch (freq) {
+        case 'monthly': return 12;
+        case 'quarterly': return 4;
+        case 'semi-annually': return 2;
+        case 'annually': return 1;
+        default: return 1;
+    }
+};
+
 export function usePortfolioData() {
     const { positions: rawPositions, stocks } = usePortfolio();
     const { rates } = useExchangeRates();
@@ -38,7 +49,9 @@ export function usePortfolioData() {
         const projectedYearlyDividends = positions.reduce((sum, p) => {
             let dividendValue = 0;
             if (p.stock.dividendAmount) {
-                dividendValue = p.stock.dividendAmount * p.shares;
+                // Annualize based on frequency
+                const factor = getFrequencyFactor(p.stock.dividendFrequency);
+                dividendValue = p.stock.dividendAmount * p.shares * factor;
             } else if (p.stock.dividendYield) {
                 dividendValue = p.currentValue * (p.stock.dividendYield / 100);
             }

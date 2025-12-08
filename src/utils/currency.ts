@@ -40,7 +40,7 @@ export function formatCurrency(amount: number, currency: string, showCHF: boolea
 
     if (showCHF && currency !== 'CHF') {
         const chfAmount = convertToCHF(amount, currency, liveRates);
-        const chfFormatted = chfAmount.toLocaleString('de-DE', {
+        const chfFormatted = chfAmount.toLocaleString('de-CH', {
             style: 'currency',
             currency: 'CHF',
             minimumFractionDigits: 2,
