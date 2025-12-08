@@ -29,6 +29,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd }: AddPosition
         valor: string;
         currency: string;
         currentPrice: string;
+        dividendYield: string;
     }>({
         name: '',
         symbol: '',
@@ -38,6 +39,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd }: AddPosition
         valor: '',
         currency: 'USD',
         currentPrice: '',
+        dividendYield: '',
     });
 
     if (!isOpen) return null;
@@ -73,7 +75,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd }: AddPosition
                 previousClose: parseFloat(newStock.currentPrice), // Fallback
                 isin: newStock.isin || undefined,
                 valor: newStock.valor || undefined,
-                dividendYield: 0,
+                dividendYield: newStock.dividendYield ? parseFloat(newStock.dividendYield) : undefined,
             });
 
             // Create position
@@ -98,6 +100,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd }: AddPosition
             valor: '',
             currency: 'USD',
             currentPrice: '',
+            dividendYield: '',
         });
         onClose();
     };
@@ -278,6 +281,13 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd }: AddPosition
                                             if (!buyPrice) setBuyPrice(e.target.value);
                                         }} />
                                     <p className="text-xs text-muted-foreground">Dieser Preis wird als aktueller Kurs für die Simulation verwendet.</p>
+                                </div>
+                                <div className="space-y-2 col-span-2">
+                                    <label className="text-sm font-medium">Dividendenrendite % (Optional)</label>
+                                    <input type="number" step="0.01" min="0" placeholder="z.B. 3.5" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                        value={newStock.dividendYield}
+                                        onChange={e => setNewStock({ ...newStock, dividendYield: e.target.value })} />
+                                    <p className="text-xs text-muted-foreground">Jährliche Dividendenrendite in Prozent.</p>
                                 </div>
                             </div>
                         </div>

@@ -1,15 +1,16 @@
 import { useState } from 'react';
-import { Moon, Sun, LayoutDashboard, Wallet, Calculator } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp } from 'lucide-react';
 import { cn } from './utils';
 import { PortfolioProvider } from './context/PortfolioContext';
 import { ExchangeRateProvider } from './context/ExchangeRateContext';
 
 import { Dashboard } from './pages/Dashboard';
 import { Portfolio } from './pages/Portfolio';
+import { DividendPlanner } from './pages/DividendPlanner';
 import { DividendCalculator } from './pages/DividendCalculator';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'calculator'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'calculator' | 'dividends'>('dashboard');
   const [isDarkMode, setIsDarkMode] = useState(true);
 
   const toggleDarkMode = () => {
@@ -29,6 +30,7 @@ function App() {
       case 'dashboard': return <Dashboard />;
       case 'portfolio': return <Portfolio />;
       case 'calculator': return <DividendCalculator />;
+      case 'dividends': return <DividendPlanner />;
       default: return <Dashboard />;
     }
   };
@@ -46,7 +48,7 @@ function App() {
                 </div>
                 <h1 className="text-xl font-bold tracking-tight">Portfolio</h1>
               </div>
-              <div className="text-xs text-muted-foreground ml-10">v1.5.1</div>
+              <div className="text-xs text-muted-foreground ml-10">v1.6.0</div>
             </div>
 
             <nav className="flex-1 p-4 space-y-2">
@@ -86,6 +88,19 @@ function App() {
                 )}
               >
                 <Calculator className="size-5" />
+                <span>Dividenden Rechner</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('dividends')}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all",
+                  activeTab === 'dividends'
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "hover:bg-accent hover:text-accent-foreground"
+                )}
+              >
+                <TrendingUp className="size-5" />
                 <span>Dividenden Planer</span>
               </button>
             </nav>
@@ -108,6 +123,7 @@ function App() {
                 {activeTab === 'dashboard' && 'Portfolio Übersicht'}
                 {activeTab === 'portfolio' && 'Meine Aktien'}
                 {activeTab === 'calculator' && 'Dividenden Rechner'}
+                {activeTab === 'dividends' && 'Dividenden Planer'}
               </h2>
               <div className="flex items-center gap-4">
                 {/* Placeholder for User Profile or other actions */}
