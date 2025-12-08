@@ -17,7 +17,7 @@ const translateFrequency = (freq?: string) => {
 
 export function Dashboard() {
     const { totals, upcomingDividends, positions } = usePortfolioData();
-    const { formatCurrency } = useCurrencyFormatter();
+    const { formatCurrency, convertToCHF } = useCurrencyFormatter();
 
     // Prepare chart data: Top 5 Performers
     const chartData = positions
@@ -27,7 +27,7 @@ export function Dashboard() {
             name: p.stock.symbol,
             gain: p.gainLossPercent,
             fullName: p.stock.name,
-            valueCHF: p.gainLoss
+            valueCHF: convertToCHF(p.gainLoss, p.stock.currency)
         }));
 
     const CustomTooltip = ({ active, payload }: any) => {
@@ -111,7 +111,7 @@ export function Dashboard() {
                                     {positions.sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0]?.stock.name}
                                 </h3>
                                 <p className="text-sm text-green-600 dark:text-green-400 mt-2 font-medium">
-                                    +{positions.sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0]?.gainLossPercent.toFixed(2)}% ({positions.sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0]?.gainLoss.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })})
+                                    +{positions.sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0]?.gainLossPercent.toFixed(2)}% ({convertToCHF(positions.sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0]?.gainLoss, positions.sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0]?.stock.currency).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })})
                                 </p>
                             </>
                         ) : (

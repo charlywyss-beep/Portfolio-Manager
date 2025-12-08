@@ -1,8 +1,11 @@
 import { useMemo } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
+import { useExchangeRates } from '../context/ExchangeRateContext';
+import { convertToCHF } from '../utils/currency';
 
 export function usePortfolioData() {
     const { positions: rawPositions, stocks } = usePortfolio();
+    const { rates } = useExchangeRates();
 
     const positions = useMemo(() => {
         return rawPositions.map((pos) => {
@@ -26,19 +29,23 @@ export function usePortfolioData() {
     }, [rawPositions, stocks]);
 
     const totals = useMemo(() => {
-        const totalValue = positions.reduce((sum, p) => sum + p.currentValue, 0);
-        const totalCost = positions.reduce((sum, p) => sum + p.costBasis, 0);
+        const totalValue = positions.reduce((sum, p) => sum + convertToCHF(p.currentValue, p.stock.currency, rates), 0);
+        const totalCost = positions.reduce((sum, p) => sum + convertToCHF(p.costBasis, p.stock.currency, rates), 0);
         const totalGainLoss = totalValue - totalCost;
         const totalGainLossPercent = totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
 
-        // Calculate projected yearly dividends
+        // Calculate projected yearly dividends (Converted to CHF)
         const projectedYearlyDividends = positions.reduce((sum, p) => {
+            let dividendValue = 0;
             if (p.stock.dividendAmount) {
-                return sum + (p.stock.dividendAmount * p.shares);
+                dividendValue = p.stock.dividendAmount * p.shares;
             } else if (p.stock.dividendYield) {
-                return sum + (p.currentValue * (p.stock.dividendYield / 100));
+                dividendValue = p.currentValue * (p.stock.dividendYield / 100);
             }
-            return sum;
+            // Convert dividend value to CHF
+            // Note: dividendCurrency might differ from stock currency, but fallback to stock currency
+            const currency = p.stock.dividendCurrency || p.stock.currency;
+            return sum + convertToCHF(dividendValue, currency, rates);
         }, 0);
 
         return {
@@ -48,7 +55,7 @@ export function usePortfolioData() {
             gainLossPercent: totalGainLossPercent,
             projectedYearlyDividends,
         };
-    }, [positions]);
+    }, [positions, rates]);
 
     // Calculate upcoming dividends from stock dividend data
     const upcomingDividends = useMemo(() => {
