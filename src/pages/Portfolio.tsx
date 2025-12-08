@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Plus, Search, Pencil, Trash2, ArrowUpRight, ArrowDownRight, PieChart, BarChart3 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, ArrowUpRight, ArrowDownRight, PieChart, BarChart3, Edit } from 'lucide-react';
 import { cn } from '../utils';
 import { AddPositionModal } from '../components/AddPositionModal';
 import { EditPositionModal } from '../components/EditPositionModal';
+import { PriceUpdateDialog } from '../components/PriceUpdateDialog';
 
 export function Portfolio() {
     const { positions: rawPositions, stocks, addPosition, deletePosition, updatePosition } = usePortfolio();
@@ -11,6 +12,7 @@ export function Portfolio() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedPosition, setSelectedPosition] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [priceEditStock, setPriceEditStock] = useState<any>(null);
 
     // Enrich positions with stock data and calculations
     const positions = rawPositions.map((pos) => {
@@ -85,9 +87,6 @@ export function Portfolio() {
                                 <th className="px-4 py-3 text-right">Kauf Wert</th>
                                 <th className="px-4 py-3 text-right">Aktueller Kurs</th>
                                 <th className="px-4 py-3 text-right">Aktueller Wert</th>
-                                <th className="px-4 py-3 text-right">Heute +/-</th>
-                                <th className="px-4 py-3 text-right">Heute % +/-</th>
-                                <th className="px-4 py-3 text-right">Wert heute</th>
                                 <th className="px-4 py-3 text-right">Gesamt +/-</th>
                                 <th className="px-4 py-3 text-right">Gesamt % +/-</th>
                                 <th className="px-4 py-3 text-right">Wert seit Kauf</th>
@@ -151,43 +150,21 @@ export function Portfolio() {
 
                                     {/* Aktueller Kurs */}
                                     <td className="px-4 py-3 text-right">
-                                        {pos.stock.currentPrice.toLocaleString('de-DE', { style: 'currency', currency: pos.stock.currency })}
+                                        <div className="flex items-center justify-end gap-2">
+                                            <span>{pos.stock.currentPrice.toLocaleString('de-DE', { style: 'currency', currency: pos.stock.currency })}</span>
+                                            <button
+                                                onClick={() => setPriceEditStock(pos.stock)}
+                                                className="text-muted-foreground hover:text-primary p-1 rounded transition-colors"
+                                                title="Kurs aktualisieren"
+                                            >
+                                                <Edit className="size-3" />
+                                            </button>
+                                        </div>
                                     </td>
 
                                     {/* Aktueller Wert */}
                                     <td className="px-4 py-3 text-right font-bold">
                                         {pos.currentValue.toLocaleString('de-DE', { style: 'currency', currency: pos.stock.currency })}
-                                    </td>
-
-                                    {/* Heute +/- */}
-                                    <td className="px-4 py-3 text-right">
-                                        <div className={cn(
-                                            "font-medium",
-                                            pos.dailyChange >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                        )}>
-                                            {pos.dailyChange >= 0 ? '+' : ''}{pos.dailyChange.toLocaleString('de-DE', { style: 'currency', currency: pos.stock.currency })}
-                                        </div>
-                                    </td>
-
-                                    {/* Heute % +/- */}
-                                    <td className="px-4 py-3 text-right">
-                                        <div className={cn(
-                                            "flex items-center justify-end gap-1 font-medium",
-                                            pos.dailyChange >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                        )}>
-                                            {pos.dailyChange >= 0 ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
-                                            {pos.dailyChange >= 0 ? '+' : ''}{pos.dailyChangePercent.toFixed(2)}%
-                                        </div>
-                                    </td>
-
-                                    {/* Wert heute */}
-                                    <td className="px-4 py-3 text-right">
-                                        <div className={cn(
-                                            "font-medium",
-                                            pos.dailyValueChange >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                        )}>
-                                            {pos.dailyValueChange >= 0 ? '+' : ''}{pos.dailyValueChange.toLocaleString('de-DE', { style: 'currency', currency: pos.stock.currency })}
-                                        </div>
                                     </td>
 
                                     {/* Gesamt +/- */}
@@ -248,7 +225,7 @@ export function Portfolio() {
                             ))}
                             {data.length === 0 && (
                                 <tr>
-                                    <td colSpan={14} className="px-4 py-12 text-center text-muted-foreground">
+                                    <td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">
                                         {emptyMessage}
                                     </td>
                                 </tr>
@@ -316,6 +293,14 @@ export function Portfolio() {
                     position={selectedPosition}
                     onUpdate={handleUpdate}
                     onDelete={deletePosition}
+                />
+            )}
+
+            {priceEditStock && (
+                <PriceUpdateDialog
+                    isOpen={true}
+                    onClose={() => setPriceEditStock(null)}
+                    stock={priceEditStock}
                 />
             )}
         </div>

@@ -8,7 +8,8 @@ interface PortfolioContextType {
     addPosition: (position: Omit<Position, 'id'>) => void;
     deletePosition: (id: string) => void;
     updatePosition: (id: string, updates: Partial<Position>) => void;
-    addStock: (stock: Omit<Stock, 'id'>) => string; // Returns new ID
+    addStock: (stock: Omit<Stock, 'id'>) => string;
+    updateStockPrice: (stockId: string, newPrice: number) => void;
 }
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
@@ -60,9 +61,19 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         );
     };
 
+    const updateStockPrice = (stockId: string, newPrice: number) => {
+        setStocks((prev) =>
+            prev.map((s) =>
+                s.id === stockId
+                    ? { ...s, currentPrice: newPrice, previousClose: s.currentPrice } // Update prev close to old price
+                    : s
+            )
+        );
+    };
+
     return (
         <PortfolioContext.Provider
-            value={{ positions, stocks, addPosition, deletePosition, updatePosition, addStock }}
+            value={{ positions, stocks, addPosition, deletePosition, updatePosition, addStock, updateStockPrice }}
         >
             {children}
         </PortfolioContext.Provider>
