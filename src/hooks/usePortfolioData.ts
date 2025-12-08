@@ -1,18 +1,21 @@
 import { useMemo } from 'react';
-import { MOCK_POSITIONS, MOCK_STOCKS, MOCK_DIVIDENDS } from '../data/mockData';
+import { usePortfolio } from '../context/PortfolioContext';
+import { MOCK_DIVIDENDS } from '../data/mockData';
 import type { Position, Stock } from '../types';
 
 export function usePortfolioData() {
+    const { positions: rawPositions, stocks } = usePortfolio();
+
     // Merge positions with stock data
     const portfolioPositions = useMemo(() => {
-        return MOCK_POSITIONS.map(pos => {
-            const stock = MOCK_STOCKS.find(s => s.id === pos.stockId);
+        return rawPositions.map(pos => {
+            const stock = stocks.find(s => s.id === pos.stockId);
             if (!stock) return null;
 
             const currentValue = pos.shares * stock.currentPrice;
             const investValue = pos.shares * pos.buyPriceAvg;
             const gainLoss = currentValue - investValue;
-            const gainLossPercent = (gainLoss / investValue) * 100;
+            const gainLossPercent = investValue !== 0 ? (gainLoss / investValue) * 100 : 0;
 
             // Project yearly dividend
             const yearlyDividend = stock.dividendYield ? (currentValue * (stock.dividendYield / 100)) : 0;
@@ -26,7 +29,7 @@ export function usePortfolioData() {
                 yearlyDividend
             };
         }).filter((p): p is (Position & { stock: Stock, currentValue: number, gainLoss: number, gainLossPercent: number, yearlyDividend: number }) => p !== null);
-    }, []);
+    }, [rawPositions, stocks]);
 
     const totals = useMemo(() => {
         return portfolioPositions.reduce((acc, pos) => {
@@ -40,10 +43,10 @@ export function usePortfolioData() {
     const upcomingDividends = useMemo(() => {
         // Simple mock logic: just take the mock dividends and add stock info
         return MOCK_DIVIDENDS.map(div => {
-            const stock = MOCK_STOCKS.find(s => s.id === div.stockId);
+            const stock = stocks.find(s => s.id === div.stockId);
             return { ...div, stock };
         }).sort((a, b) => new Date(a.payDate).getTime() - new Date(b.payDate).getTime());
-    }, []);
+    }, [stocks]);
 
     return {
         positions: portfolioPositions,
