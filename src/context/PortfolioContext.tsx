@@ -20,6 +20,7 @@ interface PortfolioContextType {
     addHistoryEntry: (entry: Omit<import('../types').PortfolioHistoryEntry, 'id'>) => void;
     deleteHistoryEntry: (id: string) => void;
     updateHistoryEntry: (id: string, updates: Partial<import('../types').PortfolioHistoryEntry>) => void;
+    importData: (data: { positions: Position[], stocks: Stock[], fixedDeposits: import('../types').FixedDeposit[], history: import('../types').PortfolioHistoryEntry[] }) => boolean;
 }
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
@@ -161,6 +162,19 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         );
     };
 
+    const importData = (data: { positions: Position[], stocks: Stock[], fixedDeposits: any[], history: any[] }) => {
+        try {
+            if (data.positions) setPositions(data.positions);
+            if (data.stocks) setStocks(data.stocks);
+            if (data.fixedDeposits) setFixedDeposits(data.fixedDeposits);
+            if (data.history) setHistory(data.history);
+            return true;
+        } catch (e) {
+            console.error("Import failed", e);
+            return false;
+        }
+    };
+
     return (
         <PortfolioContext.Provider
             value={{
@@ -180,7 +194,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 history,
                 addHistoryEntry,
                 deleteHistoryEntry,
-                updateHistoryEntry
+                updateHistoryEntry,
+                importData
             }}
         >
             {children}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon } from 'lucide-react';
 import { cn } from './utils';
 import { PortfolioProvider } from './context/PortfolioContext';
 import { ExchangeRateProvider } from './context/ExchangeRateContext';
@@ -8,9 +8,10 @@ import { Dashboard } from './pages/Dashboard';
 import { Portfolio } from './pages/Portfolio';
 import { DividendPlanner } from './pages/DividendPlanner';
 import { DividendCalculator } from './pages/DividendCalculator';
+import { Settings } from './pages/Settings';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'calculator' | 'dividends'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'calculator' | 'dividends' | 'settings'>('dashboard');
   const [isDarkMode, setIsDarkMode] = useState(true);
 
   const toggleDarkMode = () => {
@@ -31,6 +32,7 @@ function App() {
       case 'portfolio': return <Portfolio />;
       case 'calculator': return <DividendCalculator />;
       case 'dividends': return <DividendPlanner />;
+      case 'settings': return <Settings />;
       default: return <Dashboard />;
     }
   };
@@ -48,7 +50,7 @@ function App() {
                 </div>
                 <h1 className="text-xl font-bold tracking-tight">Portfolio</h1>
               </div>
-              <div className="text-xs text-muted-foreground ml-10">v3.2.0</div>
+              <div className="text-xs text-muted-foreground ml-10">v3.3.0</div>
             </div>
 
             <nav className="flex-1 p-4 space-y-2">
@@ -103,6 +105,21 @@ function App() {
                 <TrendingUp className="size-5" />
                 <span>Dividenden Planer</span>
               </button>
+
+              <div className="pt-4 mt-4 border-t border-border">
+                <button
+                  onClick={() => setActiveTab('settings')}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all",
+                    activeTab === 'settings'
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "hover:bg-accent hover:text-accent-foreground"
+                  )}
+                >
+                  <SettingsIcon className="size-5" />
+                  <span>Einstellungen</span>
+                </button>
+              </div>
             </nav>
 
             <div className="p-4 border-t border-border">
@@ -124,6 +141,7 @@ function App() {
                 {activeTab === 'portfolio' && 'Meine Positionen'}
                 {activeTab === 'calculator' && 'Performance-Rechner'}
                 {activeTab === 'dividends' && 'Dividenden Planer'}
+                {activeTab === 'settings' && 'Einstellungen'}
               </h2>
               <div className="flex items-center gap-4">
                 {/* Placeholder for User Profile or other actions */}
