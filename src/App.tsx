@@ -88,7 +88,7 @@ function App() {
                 )}
               >
                 <Calculator className="size-5" />
-                <span>Dividenden Rechner</span>
+                <span>Performance-Rechner</span>
               </button>
 
               <button
@@ -122,7 +122,7 @@ function App() {
               <h2 className="text-lg font-semibold capitalize">
                 {activeTab === 'dashboard' && 'Portfolio Übersicht'}
                 {activeTab === 'portfolio' && 'Meine Aktien'}
-                {activeTab === 'calculator' && 'Dividenden Rechner'}
+                {activeTab === 'calculator' && 'Performance-Rechner'}
                 {activeTab === 'dividends' && 'Dividenden Planer'}
               </h2>
               <div className="flex items-center gap-4">
