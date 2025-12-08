@@ -1,6 +1,7 @@
 import { usePortfolioData } from '../hooks/usePortfolioData';
-import { ArrowUpRight, ArrowDownRight, DollarSign, Calendar, TrendingUp } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, DollarSign, Calendar, TrendingUp, BarChart3 } from 'lucide-react';
 import { cn } from '../utils';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 // Helper to translate frequency to German
 const translateFrequency = (freq?: string) => {
@@ -15,6 +16,34 @@ const translateFrequency = (freq?: string) => {
 
 export function Dashboard() {
     const { totals, upcomingDividends, positions } = usePortfolioData();
+
+    // Prepare chart data: Top 5 Performers
+    const chartData = positions
+        .sort((a, b) => b.gainLossPercent - a.gainLossPercent)
+        .slice(0, 5)
+        .map(p => ({
+            name: p.stock.symbol,
+            gain: p.gainLossPercent,
+            fullName: p.stock.name,
+            valueCHF: p.gainLoss
+        }));
+
+    const CustomTooltip = ({ active, payload }: any) => {
+        if (active && payload && payload.length) {
+            return (
+                <div className="bg-popover border border-border p-3 rounded-lg shadow-lg">
+                    <p className="font-bold text-popover-foreground">{payload[0].payload.fullName}</p>
+                    <p className={cn("text-sm font-medium", payload[0].value >= 0 ? "text-green-500" : "text-red-500")}>
+                        {payload[0].value >= 0 ? '+' : ''}{payload[0].value.toFixed(2)}%
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        {payload[0].payload.valueCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
+                    </p>
+                </div>
+            );
+        }
+        return null;
+    };
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -65,7 +94,7 @@ export function Dashboard() {
                     </div>
                 </div>
 
-                {/* Top Performer (Mock for now) */}
+                {/* Top Performer (Stats) */}
                 <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
                     <div className="flex justify-between items-start mb-4">
                         <div className="p-2 rounded-lg bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
@@ -90,8 +119,10 @@ export function Dashboard() {
                 </div>
             </div>
 
-            {/* Recent Dividends / Calendar Teaser */}
+            {/* Bottom Section: Dividends & Chart */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                {/* Upcoming Dividends List */}
                 <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-bold">Nächste Dividenden</h3>
@@ -121,13 +152,41 @@ export function Dashboard() {
                     </div>
                 </div>
 
-                <div className="p-6 rounded-xl bg-card border border-border shadow-sm flex items-center justify-center bg-gradient-to-br from-primary/5 to-transparent">
-                    <div className="text-center">
-                        <p className="text-muted-foreground mb-4">Performance Chart (Placeholder)</p>
-                        {/* Placeholder for Recharts driven chart */}
-                        <div className="h-40 w-64 bg-muted/30 rounded-lg border border-dashed border-border flex items-center justify-center">
-                            Chart Area
-                        </div>
+                {/* Top 5 Performance Chart */}
+                <div className="p-6 rounded-xl bg-card border border-border shadow-sm flex flex-col">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-bold">Top 5 Performance</h3>
+                        <BarChart3 className="size-5 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 w-full min-h-[200px]">
+                        {chartData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+                                    <XAxis
+                                        dataKey="name"
+                                        tick={{ fill: 'currentColor', fontSize: 12, opacity: 0.7 }}
+                                        tickLine={false}
+                                        axisLine={false}
+                                    />
+                                    <YAxis
+                                        tick={{ fill: 'currentColor', fontSize: 12, opacity: 0.7 }}
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tickFormatter={(value) => `${value}%`}
+                                    />
+                                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent', opacity: 0.1 }} />
+                                    <Bar dataKey="gain" radius={[4, 4, 0, 0]}>
+                                        {chartData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.gain >= 0 ? '#22c55e' : '#ef4444'} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
+                                Keine Performance-Daten verfügbar
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
