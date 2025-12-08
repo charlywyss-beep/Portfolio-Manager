@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Calendar, Trash2, TrendingUp } from 'lucide-react';
+import { Calendar, Trash2, TrendingUp, Plus } from 'lucide-react';
+import { AddDividendModal } from '../components/AddDividendModal';
 
 export function DividendPlanner() {
     const { stocks, positions, dividends, deleteDividend } = usePortfolio();
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     // Calculate projected dividends from yield
     const projectedDividends = positions.map(pos => {
@@ -56,7 +59,13 @@ export function DividendPlanner() {
             <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-bold">Erwartete Dividenden</h3>
-                    {/* TODO: Add dividend modal */}
+                    <button
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm"
+                    >
+                        <Plus className="size-4" />
+                        Dividende hinzufügen
+                    </button>
                 </div>
 
                 {projectedDividends.length > 0 ? (
@@ -148,6 +157,11 @@ export function DividendPlanner() {
                     </div>
                 </div>
             )}
+
+            <AddDividendModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+            />
         </div>
     );
 }
