@@ -46,12 +46,16 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Defaults if fields are empty
+        const finalStartDate = startDate || new Date().toISOString().split('T')[0];
+        const finalMaturityDate = maturityDate || new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0];
+
         const depositData = {
             bankName,
             amount: Number(amount),
-            interestRate: Number(interestRate),
-            startDate,
-            maturityDate,
+            interestRate: interestRate === '' ? 0 : Number(interestRate),
+            startDate: finalStartDate,
+            maturityDate: finalMaturityDate,
             currency,
             notes
         };
@@ -122,12 +126,12 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                             <label className="text-sm font-medium">Zins (% p.a.)</label>
                             <input
                                 type="number"
-                                required
                                 min="0"
                                 step="0.01"
+                                placeholder="Optional (0%)"
                                 className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                                 value={interestRate}
-                                onChange={(e) => setInterestRate(Number(e.target.value))}
+                                onChange={(e) => setInterestRate(e.target.value === '' ? '' : Number(e.target.value))}
                             />
                         </div>
                         <div className="space-y-2">
@@ -140,7 +144,6 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                             <label className="text-sm font-medium">Startdatum</label>
                             <input
                                 type="date"
-                                required
                                 className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
@@ -150,7 +153,6 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                             <label className="text-sm font-medium">Fälligkeitsdatum</label>
                             <input
                                 type="date"
-                                required
                                 className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                                 value={maturityDate}
                                 onChange={(e) => setMaturityDate(e.target.value)}
