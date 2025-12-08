@@ -20,7 +20,8 @@ export interface Stock {
     currentPrice: number;
     previousClose: number; // For daily performance calculation
     currency: Currency;
-    dividendYield: number; // Percentage (e.g., 3.5 for 3.5%)
+    type?: 'stock' | 'etf';
+    dividendYield?: number; // Percentage (e.g., 3.5 for 3.5%)
     logoUrl?: string;
 }
 

@@ -46,7 +46,7 @@ function App() {
                 </div>
                 <h1 className="text-xl font-bold tracking-tight">Portfolio</h1>
               </div>
-              <div className="text-xs text-muted-foreground ml-10">v1.2.11</div>
+              <div className="text-xs text-muted-foreground ml-10">v1.3.0</div>
             </div>
 
             <nav className="flex-1 p-4 space-y-2">

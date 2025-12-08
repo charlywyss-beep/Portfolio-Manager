@@ -8,6 +8,7 @@ interface PortfolioContextType {
     addPosition: (position: Omit<Position, 'id'>) => void;
     deletePosition: (id: string) => void;
     updatePosition: (id: string, updates: Partial<Position>) => void;
+    addStock: (stock: Omit<Stock, 'id'>) => string; // Returns new ID
 }
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
@@ -18,11 +19,28 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         return stored ? JSON.parse(stored) : MOCK_POSITIONS;
     });
 
-    const [stocks] = useState<Stock[]>(MOCK_STOCKS);
+    const [stocks, setStocks] = useState<Stock[]>(() => {
+        const stored = localStorage.getItem('portfolio_stocks');
+        return stored ? JSON.parse(stored) : MOCK_STOCKS;
+    });
 
     useEffect(() => {
         localStorage.setItem('portfolio_positions', JSON.stringify(positions));
     }, [positions]);
+
+    useEffect(() => {
+        localStorage.setItem('portfolio_stocks', JSON.stringify(stocks));
+    }, [stocks]);
+
+    const addStock = (stockData: Omit<Stock, 'id'>) => {
+        const newId = `stock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const newStock: Stock = {
+            ...stockData,
+            id: newId,
+        };
+        setStocks(prev => [...prev, newStock]);
+        return newId;
+    };
 
     const addPosition = (position: Omit<Position, 'id'>) => {
         const newPosition: Position = {
@@ -44,7 +62,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
     return (
         <PortfolioContext.Provider
-            value={{ positions, stocks, addPosition, deletePosition, updatePosition }}
+            value={{ positions, stocks, addPosition, deletePosition, updatePosition, addStock }}
         >
             {children}
         </PortfolioContext.Provider>

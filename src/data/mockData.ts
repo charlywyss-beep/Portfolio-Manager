@@ -11,6 +11,7 @@ export const MOCK_STOCKS: Stock[] = [
         currentPrice: 175.50,
         previousClose: 174.20,
         currency: 'USD',
+        type: 'stock',
         dividendYield: 0.55,
         logoUrl: 'https://logo.clearbit.com/apple.com'
     },
@@ -76,6 +77,7 @@ export const MOCK_STOCKS: Stock[] = [
         currentPrice: 445.50,
         previousClose: 443.20,
         currency: 'USD',
+        type: 'etf',
         dividendYield: 1.45,
     },
     {
@@ -88,6 +90,7 @@ export const MOCK_STOCKS: Stock[] = [
         currentPrice: 108.20,
         previousClose: 107.80,
         currency: 'USD',
+        type: 'etf',
         dividendYield: 1.92,
     }
 ];

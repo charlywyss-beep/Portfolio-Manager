@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Plus, Search, Pencil, Trash2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, ArrowUpRight, ArrowDownRight, PieChart, BarChart3 } from 'lucide-react';
 import { cn } from '../utils';
 import { AddPositionModal } from '../components/AddPositionModal';
 import { EditPositionModal } from '../components/EditPositionModal';
@@ -15,6 +15,7 @@ export function Portfolio() {
     // Enrich positions with stock data and calculations
     const positions = rawPositions.map((pos) => {
         const stock = stocks.find((s) => s.id === pos.stockId)!;
+        if (!stock) return null; // Should not happen
 
         // Current values
         const currentValue = pos.shares * stock.currentPrice;
@@ -22,11 +23,11 @@ export function Portfolio() {
 
         // Total gain/loss (since purchase)
         const gainLossTotal = currentValue - buyValue;
-        const gainLossTotalPercent = (gainLossTotal / buyValue) * 100;
+        const gainLossTotalPercent = buyValue !== 0 ? (gainLossTotal / buyValue) * 100 : 0;
 
         // Daily performance
         const dailyChange = stock.currentPrice - stock.previousClose;
-        const dailyChangePercent = (dailyChange / stock.previousClose) * 100;
+        const dailyChangePercent = stock.previousClose !== 0 ? (dailyChange / stock.previousClose) * 100 : 0;
         const dailyValueChange = pos.shares * dailyChange;
 
         return {
@@ -40,7 +41,7 @@ export function Portfolio() {
             dailyChangePercent,
             dailyValueChange,
         };
-    });
+    }).filter(Boolean) as any[];
 
     const filteredPositions = positions.filter((pos) =>
         pos.stock.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -48,6 +49,9 @@ export function Portfolio() {
         pos.stock.valor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         pos.stock.isin?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const stockPositions = filteredPositions.filter(p => !p.stock.type || p.stock.type === 'stock');
+    const etfPositions = filteredPositions.filter(p => p.stock.type === 'etf');
 
     const handleEdit = (pos: any) => {
         setSelectedPosition(pos);
@@ -62,30 +66,13 @@ export function Portfolio() {
         updatePosition(id, updates);
     };
 
-    return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Header / Actions */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="relative w-full sm:w-72">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                    <input
-                        type="text"
-                        placeholder="Aktien suchen..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
-                    />
-                </div>
-                <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium text-sm"
-                >
-                    <Plus className="size-4" />
-                    <span>Position hinzufügen</span>
-                </button>
+    const PositionTable = ({ title, icon: Icon, data, emptyMessage }: { title: string, icon: any, data: any[], emptyMessage: string }) => (
+        <div className="space-y-3">
+            <div className="flex items-center gap-2">
+                <Icon className="size-5 text-primary" />
+                <h2 className="text-lg font-bold">{title}</h2>
+                <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{data.length} Positionen</span>
             </div>
-
-            {/* Portfolio Table */}
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
@@ -104,11 +91,11 @@ export function Portfolio() {
                                 <th className="px-4 py-3 text-right">Gesamt +/-</th>
                                 <th className="px-4 py-3 text-right">Gesamt % +/-</th>
                                 <th className="px-4 py-3 text-right">Wert seit Kauf</th>
-                                <th className="px-4 py-3 text-center">Kauf/Verkauf</th>
+                                <th className="px-4 py-3 text-center">Aktionen</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {filteredPositions.map((pos) => (
+                            {data.map((pos) => (
                                 <tr key={pos.id} className="group hover:bg-muted/30 transition-colors">
                                     {/* Name */}
                                     <td className="px-4 py-3">
@@ -259,10 +246,10 @@ export function Portfolio() {
                                     </td>
                                 </tr>
                             ))}
-                            {filteredPositions.length === 0 && (
+                            {data.length === 0 && (
                                 <tr>
                                     <td colSpan={14} className="px-4 py-12 text-center text-muted-foreground">
-                                        {searchTerm ? 'Keine Aktien gefunden.' : 'Noch keine Aktien im Depot.'}
+                                        {emptyMessage}
                                     </td>
                                 </tr>
                             )}
@@ -270,6 +257,47 @@ export function Portfolio() {
                     </table>
                 </div>
             </div>
+        </div>
+    );
+
+    return (
+        <div className="space-y-8 animate-in fade-in duration-500">
+            {/* Header / Actions */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="relative w-full sm:w-72">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <input
+                        type="text"
+                        placeholder="Aktien oder ETFs suchen..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
+                    />
+                </div>
+                <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium text-sm"
+                >
+                    <Plus className="size-4" />
+                    <span>Position hinzufügen</span>
+                </button>
+            </div>
+
+            {/* Aktien Table */}
+            <PositionTable
+                title="Aktien"
+                icon={BarChart3}
+                data={stockPositions}
+                emptyMessage={searchTerm ? 'Keine Aktien gefunden.' : 'Noch keine Aktien im Depot.'}
+            />
+
+            {/* ETFs Table */}
+            <PositionTable
+                title="ETFs"
+                icon={PieChart}
+                data={etfPositions}
+                emptyMessage={searchTerm ? 'Keine ETFs gefunden.' : 'Noch keine ETFs im Depot.'}
+            />
 
             <AddPositionModal
                 isOpen={isAddModalOpen}

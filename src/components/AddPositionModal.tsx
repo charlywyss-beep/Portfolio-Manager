@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { X, Search } from 'lucide-react';
+import { X, Search, PlusCircle, BarChart3, PieChart } from 'lucide-react';
 import type { Stock } from '../types';
 import { cn } from '../utils';
+import { usePortfolio } from '../context/PortfolioContext';
 
 interface AddPositionModalProps {
     isOpen: boolean;
@@ -11,10 +12,33 @@ interface AddPositionModalProps {
 }
 
 export function AddPositionModal({ isOpen, onClose, stocks, onAdd }: AddPositionModalProps) {
+    const { addStock } = usePortfolio();
+    const [activeTab, setActiveTab] = useState<'search' | 'manual'>('search');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
     const [shares, setShares] = useState('');
     const [buyPrice, setBuyPrice] = useState('');
+
+    // Manual entry state
+    const [newStock, setNewStock] = useState<{
+        name: string;
+        symbol: string;
+        type: 'stock' | 'etf';
+        sector: string;
+        isin: string;
+        valor: string;
+        currency: string;
+        currentPrice: string;
+    }>({
+        name: '',
+        symbol: '',
+        type: 'stock',
+        sector: '',
+        isin: '',
+        valor: '',
+        currency: 'USD',
+        currentPrice: '',
+    });
 
     if (!isOpen) return null;
 
@@ -26,190 +50,272 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd }: AddPosition
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedStock || !shares || !buyPrice) return;
 
-        onAdd({
-            stockId: selectedStock.id,
-            shares: parseFloat(shares),
-            buyPriceAvg: parseFloat(buyPrice),
-        });
+        if (activeTab === 'search') {
+            if (!selectedStock || !shares || !buyPrice) return;
+            onAdd({
+                stockId: selectedStock.id,
+                shares: parseFloat(shares),
+                buyPriceAvg: parseFloat(buyPrice),
+            });
+        } else {
+            // Manual entry
+            if (!shares || !buyPrice || !newStock.name || !newStock.symbol || !newStock.currentPrice) return;
 
-        // Reset form
+            // Create stock first
+            const stockId = addStock({
+                name: newStock.name,
+                symbol: newStock.symbol.toUpperCase(),
+                type: newStock.type,
+                sector: newStock.sector || 'Unbekannt',
+                currency: newStock.currency as any,
+                currentPrice: parseFloat(newStock.currentPrice),
+                previousClose: parseFloat(newStock.currentPrice), // Fallback
+                isin: newStock.isin || undefined,
+                valor: newStock.valor || undefined,
+                dividendYield: 0,
+            });
+
+            // Create position
+            onAdd({
+                stockId: stockId,
+                shares: parseFloat(shares),
+                buyPriceAvg: parseFloat(buyPrice),
+            });
+        }
+
+        // Reset and close
         setSelectedStock(null);
         setShares('');
         setBuyPrice('');
         setSearchTerm('');
+        setNewStock({
+            name: '',
+            symbol: '',
+            type: 'stock',
+            sector: '',
+            isin: '',
+            valor: '',
+            currency: 'USD',
+            currentPrice: '',
+        });
         onClose();
     };
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-border">
+                <div className="flex items-center justify-between p-6 border-b border-border shrink-0">
                     <h2 className="text-xl font-bold">Position hinzufügen</h2>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-muted rounded-lg transition-colors"
-                    >
+                    <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors">
                         <X className="size-5" />
                     </button>
                 </div>
 
+                {/* Tabs */}
+                <div className="flex border-b border-border">
+                    <button
+                        onClick={() => setActiveTab('search')}
+                        className={cn(
+                            "flex-1 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-2",
+                            activeTab === 'search'
+                                ? "border-primary text-primary"
+                                : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
+                        )}
+                    >
+                        <Search className="size-4" /> Suchliste
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('manual')}
+                        className={cn(
+                            "flex-1 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-2",
+                            activeTab === 'manual'
+                                ? "border-primary text-primary"
+                                : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
+                        )}
+                    >
+                        <PlusCircle className="size-4" /> Manuell hinzufügen
+                    </button>
+                </div>
+
                 {/* Content */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    {/* Stock Selection */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Aktie auswählen</label>
-                        {!selectedStock ? (
-                            <>
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                                    <input
-                                        type="text"
-                                        placeholder="Aktienname oder Symbol suchen..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full pl-9 pr-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                    />
-                                </div>
-                                <div className="max-h-60 overflow-y-auto border border-border rounded-lg divide-y divide-border">
-                                    {filteredStocks.map((stock) => (
-                                        <button
-                                            key={stock.id}
-                                            type="button"
-                                            onClick={() => setSelectedStock(stock)}
-                                            className="w-full p-3 hover:bg-muted transition-colors text-left flex items-center gap-3"
-                                        >
-                                            <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
-                                                {stock.symbol.slice(0, 2)}
+                <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto">
+
+                    {activeTab === 'search' ? (
+                        /* Search Mode */
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Aktie auswählen</label>
+                                {!selectedStock ? (
+                                    <>
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                                            <input
+                                                type="text"
+                                                placeholder="Aktienname oder Symbol suchen..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                className="w-full pl-9 pr-4 py-2 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary/20"
+                                            />
+                                        </div>
+                                        <div className="max-h-60 overflow-y-auto border border-border rounded-lg divide-y divide-border">
+                                            {filteredStocks.map((stock) => (
+                                                <button
+                                                    key={stock.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSelectedStock(stock);
+                                                        setBuyPrice(stock.currentPrice.toString());
+                                                    }}
+                                                    className="w-full p-3 hover:bg-muted transition-colors text-left flex items-center gap-3"
+                                                >
+                                                    <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
+                                                        {stock.symbol.slice(0, 2)}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="font-semibold flex items-center gap-2">
+                                                            {stock.name}
+                                                            {stock.type === 'etf' && <span className="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-1.5 py-0.5 rounded">ETF</span>}
+                                                        </div>
+                                                        <div className="text-sm text-muted-foreground">
+                                                            {stock.symbol} • {stock.sector}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="font-medium">
+                                                            {stock.currentPrice.toLocaleString('de-DE', { style: 'currency', currency: stock.currency })}
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="p-4 border border-border rounded-lg bg-muted/30 flex items-center gap-3">
+                                        <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
+                                            {selectedStock.symbol.slice(0, 2)}
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="font-semibold">{selectedStock.name}</div>
+                                            <div className="text-sm text-muted-foreground">
+                                                {selectedStock.symbol} • {selectedStock.currentPrice.toLocaleString('de-DE', { style: 'currency', currency: selectedStock.currency })}
                                             </div>
-                                            <div className="flex-1">
-                                                <div className="font-semibold">{stock.name}</div>
-                                                <div className="text-sm text-muted-foreground">
-                                                    {stock.symbol} • {stock.sector}
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="font-medium">
-                                                    {stock.currentPrice.toLocaleString('de-DE', {
-                                                        style: 'currency',
-                                                        currency: stock.currency,
-                                                    })}
-                                                </div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    {stock.dividendYield}% Dividend
-                                                </div>
-                                            </div>
+                                        </div>
+                                        <button type="button" onClick={() => setSelectedStock(null)} className="text-muted-foreground hover:text-foreground">
+                                            <X className="size-5" />
                                         </button>
-                                    ))}
-                                </div>
-                            </>
-                        ) : (
-                            <div className="p-4 border border-border rounded-lg bg-muted/30 flex items-center gap-3">
-                                <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
-                                    {selectedStock.symbol.slice(0, 2)}
-                                </div>
-                                <div className="flex-1">
-                                    <div className="font-semibold">{selectedStock.name}</div>
-                                    <div className="text-sm text-muted-foreground">
-                                        {selectedStock.symbol} • {selectedStock.currentPrice.toLocaleString('de-DE', {
-                                            style: 'currency',
-                                            currency: selectedStock.currency,
-                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        /* Manual Mode */
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="col-span-2">
+                                    <label className="text-sm font-medium mb-2 block">Typ</label>
+                                    <div className="flex gap-4">
+                                        <label className={cn(
+                                            "flex-1 flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                                            newStock.type === 'stock' ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:bg-muted/50"
+                                        )}>
+                                            <input type="radio" name="type" className="sr-only" checked={newStock.type === 'stock'} onChange={() => setNewStock({ ...newStock, type: 'stock' })} />
+                                            <BarChart3 className={cn("size-5", newStock.type === 'stock' ? "text-primary" : "text-muted-foreground")} />
+                                            <span className="font-medium">Aktie</span>
+                                        </label>
+                                        <label className={cn(
+                                            "flex-1 flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                                            newStock.type === 'etf' ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:bg-muted/50"
+                                        )}>
+                                            <input type="radio" name="type" className="sr-only" checked={newStock.type === 'etf'} onChange={() => setNewStock({ ...newStock, type: 'etf' })} />
+                                            <PieChart className={cn("size-5", newStock.type === 'etf' ? "text-primary" : "text-muted-foreground")} />
+                                            <span className="font-medium">ETF</span>
+                                        </label>
                                     </div>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedStock(null)}
-                                    className="text-muted-foreground hover:text-foreground"
-                                >
-                                    <X className="size-5" />
-                                </button>
-                            </div>
-                        )}
-                    </div>
 
-                    {/* Shares Input */}
-                    <div className="space-y-2">
-                        <label htmlFor="shares" className="text-sm font-medium">
-                            Anzahl Anteile
-                        </label>
-                        <input
-                            id="shares"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="z.B. 10"
-                            value={shares}
-                            onChange={(e) => setShares(e.target.value)}
-                            className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                            required
-                        />
-                    </div>
-
-                    {/* Buy Price Input */}
-                    <div className="space-y-2">
-                        <label htmlFor="buyPrice" className="text-sm font-medium">
-                            Durchschnittlicher Kaufpreis
-                        </label>
-                        <input
-                            id="buyPrice"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder={selectedStock ? `z.B. ${selectedStock.currentPrice}` : 'z.B. 150.00'}
-                            value={buyPrice}
-                            onChange={(e) => setBuyPrice(e.target.value)}
-                            className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                            required
-                        />
-                    </div>
-
-                    {/* Summary */}
-                    {selectedStock && shares && buyPrice && (
-                        <div className="p-4 bg-muted/50 rounded-lg border border-border space-y-2">
-                            <h3 className="font-semibold text-sm">Zusammenfassung</h3>
-                            <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div className="text-muted-foreground">Gesamtinvestition:</div>
-                                <div className="font-medium text-right">
-                                    {(parseFloat(shares) * parseFloat(buyPrice)).toLocaleString('de-DE', {
-                                        style: 'currency',
-                                        currency: selectedStock.currency,
-                                    })}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Name</label>
+                                    <input required placeholder="z.B. Nestlé S.A." className="w-full px-3 py-2 border rounded-md"
+                                        value={newStock.name} onChange={e => setNewStock({ ...newStock, name: e.target.value })} />
                                 </div>
-                                <div className="text-muted-foreground">Aktueller Wert:</div>
-                                <div className="font-medium text-right">
-                                    {(parseFloat(shares) * selectedStock.currentPrice).toLocaleString('de-DE', {
-                                        style: 'currency',
-                                        currency: selectedStock.currency,
-                                    })}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Symbol</label>
+                                    <input required placeholder="z.B. NESN" className="w-full px-3 py-2 border rounded-md uppercase"
+                                        value={newStock.symbol} onChange={e => setNewStock({ ...newStock, symbol: e.target.value.toUpperCase() })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Sektor (Optional)</label>
+                                    <input placeholder="z.B. Konsumgüter" className="w-full px-3 py-2 border rounded-md"
+                                        value={newStock.sector} onChange={e => setNewStock({ ...newStock, sector: e.target.value })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Währung</label>
+                                    <select className="w-full px-3 py-2 border rounded-md bg-background"
+                                        value={newStock.currency} onChange={e => setNewStock({ ...newStock, currency: e.target.value })}>
+                                        <option value="USD">USD</option>
+                                        <option value="CHF">CHF</option>
+                                        <option value="EUR">EUR</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Valor (Optional)</label>
+                                    <input placeholder="z.B. 3886335" className="w-full px-3 py-2 border rounded-md"
+                                        value={newStock.valor} onChange={e => setNewStock({ ...newStock, valor: e.target.value })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">ISIN (Optional)</label>
+                                    <input placeholder="z.B. CH0038863350" className="w-full px-3 py-2 border rounded-md"
+                                        value={newStock.isin} onChange={e => setNewStock({ ...newStock, isin: e.target.value })} />
+                                </div>
+                                <div className="space-y-2 col-span-2">
+                                    <label className="text-sm font-medium">Aktueller Marktpreis</label>
+                                    <input required type="number" step="0.01" placeholder="z.B. 98.50" className="w-full px-3 py-2 border rounded-md"
+                                        value={newStock.currentPrice}
+                                        onChange={e => {
+                                            setNewStock({ ...newStock, currentPrice: e.target.value });
+                                            if (!buyPrice) setBuyPrice(e.target.value);
+                                        }} />
+                                    <p className="text-xs text-muted-foreground">Dieser Preis wird als aktueller Kurs für die Simulation verwendet.</p>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Actions */}
-                    <div className="flex gap-3 pt-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors font-medium"
-                        >
-                            Abbrechen
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={!selectedStock || !shares || !buyPrice}
-                            className={cn(
-                                "flex-1 px-4 py-2 rounded-lg font-medium transition-colors",
-                                selectedStock && shares && buyPrice
-                                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                                    : "bg-muted text-muted-foreground cursor-not-allowed"
-                            )}
-                        >
-                            Position hinzufügen
-                        </button>
+                    {/* Shared Inputs */}
+                    <div className="pt-4 border-t border-border space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Anzahl Anteile</label>
+                                <input required type="number" step="0.01" min="0" placeholder="z.B. 10" className="w-full px-3 py-2 border rounded-md" value={shares} onChange={e => setShares(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Kaufpreis Ø</label>
+                                <input required type="number" step="0.01" min="0" placeholder="z.B. 150.00" className="w-full px-3 py-2 border rounded-md" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} />
+                            </div>
+                        </div>
+
+                        {/* Summary */}
+                        {shares && buyPrice && (
+                            <div className="p-4 bg-muted/50 rounded-lg border border-border space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <span>Gesamtinvestition:</span>
+                                    <span className="font-medium">
+                                        {(parseFloat(shares) * parseFloat(buyPrice)).toLocaleString('de-DE', { style: 'currency', currency: activeTab === 'manual' ? newStock.currency : (selectedStock?.currency || 'USD') })}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex gap-3 pt-2">
+                            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border rounded-lg hover:bg-muted font-medium">Abbrechen</button>
+                            <button type="submit"
+                                disabled={activeTab === 'search' ? !selectedStock || !shares || !buyPrice : !shares || !buyPrice || !newStock.name || !newStock.currentPrice}
+                                className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                                Position hinzufügen
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
