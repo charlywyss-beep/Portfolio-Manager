@@ -73,11 +73,13 @@ export function AddDividendModal({ isOpen, onClose }: AddDividendModalProps) {
                             className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                         >
                             <option value="">Aktie auswählen...</option>
-                            {stocks.map((stock) => (
-                                <option key={stock.id} value={stock.id}>
-                                    {stock.name} ({stock.symbol})
-                                </option>
-                            ))}
+                            {stocks
+                                .filter(stock => positions.some(p => p.stockId === stock.id))
+                                .map((stock) => (
+                                    <option key={stock.id} value={stock.id}>
+                                        {stock.name} ({stock.symbol})
+                                    </option>
+                                ))}
                         </select>
                         {position && (
                             <p className="text-xs text-muted-foreground">
