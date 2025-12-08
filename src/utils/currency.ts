@@ -4,10 +4,10 @@ import { useExchangeRates } from '../context/ExchangeRateContext';
 // Static fallback rates (used only if API fails)
 export const FALLBACK_EXCHANGE_RATES: Record<string, number> = {
     CHF: 1.0,
-    USD: 0.88,
-    EUR: 0.94,
-    GBP: 1.10,
-    GBp: 0.011,  // British Pence = 1/100 of GBP = ~0.011 CHF per pence
+    USD: 1.12, // 1 CHF = ~1.12 USD
+    EUR: 1.06, // 1 CHF = ~1.06 EUR
+    GBP: 0.88, // 1 CHF = ~0.88 GBP
+    GBp: 88.0, // 1 CHF = ~88.0 GBp (Pence)
 };
 
 // Convert any currency to CHF using live rates

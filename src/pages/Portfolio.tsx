@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { Plus, Search, Trash2, ArrowUpRight, ArrowDownRight, PieChart, BarChart3, Edit } from 'lucide-react';
 import { cn } from '../utils';
+import { useCurrencyFormatter } from '../utils/currency';
 import { AddPositionModal } from '../components/AddPositionModal';
 import { EditPositionModal } from '../components/EditPositionModal';
 import { PriceUpdateDialog } from '../components/PriceUpdateDialog';
@@ -13,6 +14,7 @@ export function Portfolio() {
     const [selectedPosition, setSelectedPosition] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [priceEditStock, setPriceEditStock] = useState<any>(null);
+    const { formatCurrency } = useCurrencyFormatter();
 
     // Enrich positions with stock data and calculations
     const positions = rawPositions.map((pos) => {
@@ -166,7 +168,7 @@ export function Portfolio() {
 
                                     {/* Aktueller Wert */}
                                     <td className="px-4 py-3 text-right font-bold">
-                                        {pos.currentValue.toLocaleString('de-DE', { style: 'currency', currency: pos.stock.currency })}
+                                        {formatCurrency(pos.currentValue, pos.stock.currency)}
                                     </td>
 
                                     {/* Gesamt +/- */}
@@ -175,7 +177,7 @@ export function Portfolio() {
                                             "font-medium",
                                             pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                         )}>
-                                            {pos.gainLossTotal >= 0 ? '+' : ''}{pos.gainLossTotal.toLocaleString('de-DE', { style: 'currency', currency: pos.stock.currency })}
+                                            {pos.gainLossTotal >= 0 ? '+' : ''}{formatCurrency(pos.gainLossTotal, pos.stock.currency)}
                                         </div>
                                     </td>
 
