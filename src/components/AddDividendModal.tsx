@@ -144,7 +144,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                             <label className="text-sm font-medium">Rendite %</label>
                             <input
                                 type="number"
-                                step="0.01"
+                                step="0.001"
                                 min="0"
                                 placeholder="z.B. 3.90"
                                 value={yieldPercent}
@@ -157,7 +157,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                             <label className="text-sm font-medium">Dividende/Aktie</label>
                             <input
                                 type="number"
-                                step="0.01"
+                                step="0.001"
                                 min="0"
                                 placeholder="z.B. 2.80"
                                 value={amount}

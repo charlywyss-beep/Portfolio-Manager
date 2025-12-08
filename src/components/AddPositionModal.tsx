@@ -275,7 +275,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd }: AddPosition
                                 </div>
                                 <div className="space-y-2 col-span-2">
                                     <label className="text-sm font-medium">Aktueller Marktpreis</label>
-                                    <input required type="number" step="0.01" placeholder="z.B. 98.50" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                    <input required type="number" step="0.001" placeholder="z.B. 98.50" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                         value={newStock.currentPrice}
                                         onChange={e => {
                                             setNewStock({ ...newStock, currentPrice: e.target.value });
@@ -285,7 +285,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd }: AddPosition
                                 </div>
                                 <div className="space-y-2 col-span-2">
                                     <label className="text-sm font-medium">Dividendenrendite % (Optional)</label>
-                                    <input type="number" step="0.01" min="0" placeholder="z.B. 3.5" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                    <input type="number" step="0.001" min="0" placeholder="z.B. 3.5" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                         value={newStock.dividendYield}
                                         onChange={e => setNewStock({ ...newStock, dividendYield: e.target.value })} />
                                     <p className="text-xs text-muted-foreground">Jährliche Dividendenrendite in Prozent.</p>
@@ -299,11 +299,11 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd }: AddPosition
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Anzahl Anteile</label>
-                                <input required type="number" step="0.01" min="0" placeholder="z.B. 10" className="w-full px-3 py-2 border rounded-md bg-background text-foreground" value={shares} onChange={e => setShares(e.target.value)} />
+                                <input required type="number" step="0.001" min="0" placeholder="z.B. 10" className="w-full px-3 py-2 border rounded-md bg-background text-foreground" value={shares} onChange={e => setShares(e.target.value)} />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Kaufpreis</label>
-                                <input required type="number" step="0.01" min="0" placeholder="z.B. 150.00" className="w-full px-3 py-2 border rounded-md bg-background text-foreground" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} />
+                                <input required type="number" step="0.001" min="0" placeholder="z.B. 150.00" className="w-full px-3 py-2 border rounded-md bg-background text-foreground" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} />
                             </div>
                         </div>
 

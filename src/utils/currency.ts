@@ -28,7 +28,7 @@ export function formatCurrency(amount: number, currency: string, showCHF: boolea
     // Special handling for GBp (not a standard ISO currency code)
     let formatted: string;
     if (currency === 'GBp') {
-        formatted = `${amount.toFixed(2)} GBp`;
+        formatted = `${amount.toFixed(3)} GBp`;
     } else {
         formatted = amount.toLocaleString('de-DE', {
             style: 'currency',
