@@ -66,7 +66,7 @@ export function DividendCalculator() {
 
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-muted-foreground">Startkapital (€)</label>
+                                <label className="text-sm font-medium text-muted-foreground">Startkapital (CHF)</label>
                                 <input
                                     type="number"
                                     value={initialCapital}
@@ -76,7 +76,7 @@ export function DividendCalculator() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-muted-foreground">Monatliche Sparrate (€)</label>
+                                <label className="text-sm font-medium text-muted-foreground">Monatliche Sparrate (CHF)</label>
                                 <input
                                     type="number"
                                     value={monthlyContribution}
@@ -142,28 +142,28 @@ export function DividendCalculator() {
                         <div className="p-5 rounded-xl bg-card border border-border shadow-sm flex flex-col">
                             <span className="text-sm text-muted-foreground font-medium mb-1">Endkapital (nach {years} Jahren)</span>
                             <span className="text-2xl font-bold tracking-tight text-primary">
-                                {finalYear.capital.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}
+                                {finalYear.capital.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
                             </span>
                             <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
                                 <span className="text-sm text-muted-foreground font-medium">Investiertes Kapital</span>
                                 <span className="font-bold text-base tracking-tight">
-                                    {finalYear.invested.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}
+                                    {finalYear.invested.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
                                 </span>
                             </div>
                         </div>
                         <div className="p-5 rounded-xl bg-card border border-border shadow-sm flex flex-col">
                             <span className="text-sm text-muted-foreground font-medium mb-1">Passives Einkommen (Monat)</span>
                             <span className="text-2xl font-bold tracking-tight text-green-600 dark:text-green-400">
-                                {finalYear.monthlyDividend.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}
+                                {finalYear.monthlyDividend.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
                             </span>
                             <span className="text-xs text-muted-foreground mt-2">
-                                Jährlich: {finalYear.dividend.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}
+                                Jährlich: {finalYear.dividend.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
                             </span>
                         </div>
                         <div className="p-5 rounded-xl bg-card border border-border shadow-sm flex flex-col">
                             <span className="text-sm text-muted-foreground font-medium mb-1">Gesamtgewinn</span>
                             <span className="text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400">
-                                {(finalYear.capital - finalYear.invested).toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}
+                                {(finalYear.capital - finalYear.invested).toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
                             </span>
                             <span className="text-xs text-muted-foreground mt-2">
                                 Davon Zinseszins & Kurseffekt
@@ -204,7 +204,7 @@ export function DividendCalculator() {
                                 <Tooltip
                                     contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                                     itemStyle={{ color: 'hsl(var(--foreground))' }}
-                                    formatter={(value: number) => value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}
+                                    formatter={(value: number) => value.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
                                 />
                                 <Area
                                     type="monotone"
