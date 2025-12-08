@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Plus, Search, Pencil, Trash2, ArrowUpRight, ArrowDownRight, PieChart, BarChart3, Edit } from 'lucide-react';
+import { Plus, Search, Trash2, ArrowUpRight, ArrowDownRight, PieChart, BarChart3, Edit } from 'lucide-react';
 import { cn } from '../utils';
 import { AddPositionModal } from '../components/AddPositionModal';
 import { EditPositionModal } from '../components/EditPositionModal';
 import { PriceUpdateDialog } from '../components/PriceUpdateDialog';
-import { EditStockDialog } from '../components/EditStockDialog';
 
 export function Portfolio() {
     const { positions: rawPositions, stocks, addPosition, deletePosition, updatePosition } = usePortfolio();
@@ -14,7 +13,6 @@ export function Portfolio() {
     const [selectedPosition, setSelectedPosition] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [priceEditStock, setPriceEditStock] = useState<any>(null);
-    const [editingStock, setEditingStock] = useState<any>(null);
 
     // Enrich positions with stock data and calculations
     const positions = rawPositions.map((pos) => {
@@ -112,13 +110,6 @@ export function Portfolio() {
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex items-center gap-2">
                                                     <div className="font-semibold text-foreground truncate">{pos.stock.name}</div>
-                                                    <button
-                                                        onClick={() => setEditingStock(pos.stock)}
-                                                        className="text-muted-foreground hover:text-primary p-1 rounded transition-colors flex-shrink-0"
-                                                        title="Stock bearbeiten (Dividende, Preis)"
-                                                    >
-                                                        <Pencil className="size-3" />
-                                                    </button>
                                                 </div>
                                                 <div className="text-xs text-muted-foreground flex items-center gap-1">
                                                     <span className="font-mono bg-muted px-1 rounded">{pos.stock.symbol}</span>
@@ -207,7 +198,7 @@ export function Portfolio() {
                                                 className="text-muted-foreground hover:text-primary p-2 rounded-md hover:bg-primary/10 transition-colors"
                                                 title="Position bearbeiten"
                                             >
-                                                <Pencil className="size-4" />
+                                                <Edit className="size-4" />
                                             </button>
                                             <button
                                                 onClick={() => {
@@ -302,14 +293,6 @@ export function Portfolio() {
                     isOpen={true}
                     onClose={() => setPriceEditStock(null)}
                     stock={priceEditStock}
-                />
-            )}
-
-            {editingStock && (
-                <EditStockDialog
-                    stock={editingStock}
-                    isOpen={!!editingStock}
-                    onClose={() => setEditingStock(null)}
                 />
             )}
         </div>
