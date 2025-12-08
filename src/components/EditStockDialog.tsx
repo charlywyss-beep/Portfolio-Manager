@@ -14,13 +14,42 @@ export function EditStockDialog({ stock, isOpen, onClose }: EditStockDialogProps
 
     const [currentPrice, setCurrentPrice] = useState(stock.currentPrice.toString());
     const [dividendYield, setDividendYield] = useState(stock.dividendYield?.toString() || '');
+    const [dividendPerShare, setDividendPerShare] = useState('');
 
     useEffect(() => {
         setCurrentPrice(stock.currentPrice.toString());
         setDividendYield(stock.dividendYield?.toString() || '');
+
+        // Calculate dividend per share from yield
+        if (stock.dividendYield && stock.currentPrice) {
+            const perShare = (stock.currentPrice * stock.dividendYield / 100).toFixed(2);
+            setDividendPerShare(perShare);
+        } else {
+            setDividendPerShare('');
+        }
     }, [stock]);
 
     if (!isOpen) return null;
+
+    const handleDividendPerShareChange = (value: string) => {
+        setDividendPerShare(value);
+        if (value && currentPrice && parseFloat(currentPrice) > 0) {
+            const yieldPercent = ((parseFloat(value) / parseFloat(currentPrice)) * 100).toFixed(2);
+            setDividendYield(yieldPercent);
+        } else if (!value) {
+            setDividendYield('');
+        }
+    };
+
+    const handleDividendYieldChange = (value: string) => {
+        setDividendYield(value);
+        if (value && currentPrice && parseFloat(currentPrice) > 0) {
+            const perShare = ((parseFloat(currentPrice) * parseFloat(value)) / 100).toFixed(2);
+            setDividendPerShare(perShare);
+        } else if (!value) {
+            setDividendPerShare('');
+        }
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -66,20 +95,38 @@ export function EditStockDialog({ stock, isOpen, onClose }: EditStockDialogProps
                         />
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Dividendenrendite % (Optional)</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="z.B. 3.5"
-                            value={dividendYield}
-                            onChange={(e) => setDividendYield(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                            Jährliche Dividendenrendite in Prozent
-                        </p>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Dividende/Aktie</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                placeholder={`z.B. 2.80 ${stock.currency}`}
+                                value={dividendPerShare}
+                                onChange={(e) => handleDividendPerShareChange(e.target.value)}
+                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Jährlich pro Aktie
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Rendite %</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                placeholder="z.B. 3.5"
+                                value={dividendYield}
+                                onChange={(e) => handleDividendYieldChange(e.target.value)}
+                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Dividendenrendite
+                            </p>
+                        </div>
                     </div>
 
                     <div className="flex gap-3 pt-4">
