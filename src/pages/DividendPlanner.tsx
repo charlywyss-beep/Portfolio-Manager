@@ -127,8 +127,17 @@ export function DividendPlanner() {
                                         // Format currency with dual display if needed
                                         let annualDisplay = `CHF ${annualDividend.toFixed(2)}`;
                                         if (stock.dividendCurrency && stock.dividendCurrency !== 'CHF') {
-                                            const originalAmount = stock.dividendAmount ? stock.dividendAmount * position.shares : annualDividend;
-                                            annualDisplay = formatCurrency(originalAmount, stock.dividendCurrency);
+                                            const factor = stock.dividendFrequency === 'quarterly' ? 4
+                                                : stock.dividendFrequency === 'semi-annually' ? 2
+                                                    : stock.dividendFrequency === 'monthly' ? 12
+                                                        : 1;
+
+                                            // Annual Amount = Payment Amount * Shares * Frequency
+                                            const originalAnnualAmount = stock.dividendAmount
+                                                ? stock.dividendAmount * position.shares * factor
+                                                : annualDividend;
+
+                                            annualDisplay = formatCurrency(originalAnnualAmount, stock.dividendCurrency);
                                         }
 
                                         return (
