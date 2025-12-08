@@ -367,7 +367,7 @@ export function Portfolio() {
                         className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-medium text-sm border border-border"
                     >
                         <Landmark className="size-4" />
-                        <span>Festgeld</span>
+                        <span>Bankkonto</span>
                     </button>
                     <button
                         onClick={() => setIsAddModalOpen(true)}
