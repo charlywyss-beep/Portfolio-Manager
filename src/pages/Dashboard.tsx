@@ -138,15 +138,15 @@ export function Dashboard() {
                                         <img src={div.stock.logoUrl} alt={div.stock.name} className="size-8 rounded-full bg-white object-contain p-1 border border-border" />
                                     )}
                                     <div>
-                                        <p className="font-bold text-base">{div.stock.symbol}</p>
-                                        <p className="text-sm text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
+                                        <p className="font-bold text-lg">{div.stock.symbol}</p>
+                                        <p className="text-base text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-bold text-lg text-green-600 dark:text-green-400">
+                                    <p className="font-bold text-xl text-green-600 dark:text-green-400">
                                         +{formatCurrency(div.amount, div.currency)}
                                     </p>
-                                    <p className="text-sm text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
+                                    <p className="text-sm font-medium text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
                                 </div>
                             </div>
                         ))}
