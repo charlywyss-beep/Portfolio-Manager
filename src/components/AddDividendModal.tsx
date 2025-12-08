@@ -23,6 +23,7 @@ const getFrequencyFactor = (freq: string) => {
 export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendModalProps) {
     const { stocks, positions, updateStockDividend } = usePortfolio();
 
+    // 1. All Hooks MUST be at the top level, before any return statements
     const [selectedStockId, setSelectedStockId] = useState('');
     const [amount, setAmount] = useState('');
     const [yieldPercent, setYieldPercent] = useState('');
@@ -30,6 +31,10 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
     const [exDate, setExDate] = useState('');
     const [payDate, setPayDate] = useState('');
     const [frequency, setFrequency] = useState<'quarterly' | 'semi-annually' | 'annually' | 'monthly'>('quarterly');
+
+    // Derived state (safe to have here, but used in effects)
+    const selectedStock = stocks.find(s => s.id === selectedStockId);
+    const position = positions.find(p => p.stockId === selectedStockId);
 
     // Pre-fill fields when editing
     useEffect(() => {
@@ -68,10 +73,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
         }
     }, [selectedStockId, stocks, editingStock]);
 
-    if (!isOpen) return null;
-
-    const selectedStock = stocks.find(s => s.id === selectedStockId);
-    const position = positions.find(p => p.stockId === selectedStockId);
+    // 2. Helper Logic (Handlers) - Safe to define here
 
     // Auto-calculate between yield% ↔ amount/share (Annualized)
     const handleYieldChange = (newYield: string) => {
@@ -92,7 +94,6 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
         if (selectedStock && newAmount && !isNaN(parseFloat(newAmount))) {
             const dividendAmount = parseFloat(newAmount);
             const factor = getFrequencyFactor(frequency);
-            // Yield = (Amount * Factor / Price) * 100
             const yieldValue = ((dividendAmount * factor) / selectedStock.currentPrice) * 100;
             if (isFinite(yieldValue)) {
                 setYieldPercent(yieldValue.toFixed(2));
@@ -100,17 +101,19 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
         }
     };
 
-    // Recalculate when frequency changes
-    useEffect(() => {
+    // Update yield when frequency changes (instead of useEffect, we do it in the handler)
+    const handleFrequencyChange = (newFrequency: 'quarterly' | 'semi-annually' | 'annually' | 'monthly') => {
+        setFrequency(newFrequency);
+        // Optional: Recalculate Yield if Amount is present, to keep Amount constant but update Yield logic
         if (amount && selectedStock && !isNaN(parseFloat(amount))) {
             const dividendAmount = parseFloat(amount);
-            const factor = getFrequencyFactor(frequency);
+            const factor = getFrequencyFactor(newFrequency);
             const yieldValue = ((dividendAmount * factor) / selectedStock.currentPrice) * 100;
             if (isFinite(yieldValue)) {
                 setYieldPercent(yieldValue.toFixed(2));
             }
         }
-    }, [frequency]); // Depend solely on frequency to trigger recalculation of Yield based on existing Amount
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -128,6 +131,9 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
 
         onClose();
     };
+
+    // 3. Conditional Return ONLY AFTER all hooks are declared
+    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -249,7 +255,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                         <label className="text-sm font-medium">Frequenz</label>
                         <select
                             value={frequency}
-                            onChange={(e) => setFrequency(e.target.value as any)}
+                            onChange={(e) => handleFrequencyChange(e.target.value as any)}
                             className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                         >
                             <option value="quarterly">Quartalsweise (4x/Jahr)</option>
