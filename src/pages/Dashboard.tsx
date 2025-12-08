@@ -26,12 +26,12 @@ export function Dashboard() {
                     <div>
                         <p className="text-sm text-muted-foreground font-medium">Gesamtwert</p>
                         <h3 className="text-3xl font-bold mt-1 tracking-tight">
-                            {totals.totalValue.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                            {totals.totalValue.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                         </h3>
                         <p className={cn("text-sm mt-2",
                             totals.gainLoss >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                         )}>
-                            {totals.gainLoss >= 0 ? '+' : ''}{totals.gainLoss.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })} Gewinn/Verlust
+                            {totals.gainLoss >= 0 ? '+' : ''}{totals.gainLoss.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })} Gewinn/Verlust
                         </p>
                     </div>
                 </div>
@@ -46,10 +46,10 @@ export function Dashboard() {
                     <div>
                         <p className="text-sm text-muted-foreground font-medium">Erwartete Dividende (Jahr)</p>
                         <h3 className="text-3xl font-bold mt-1 tracking-tight">
-                            {totals.projectedYearlyDividends.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                            {totals.projectedYearlyDividends.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                         </h3>
                         <p className="text-sm text-muted-foreground mt-2">
-                            Ø {(totals.projectedYearlyDividends / 12).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })} / Monat
+                            Ø {(totals.projectedYearlyDividends / 12).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })} / Monat
                         </p>
                     </div>
                 </div>
@@ -69,7 +69,7 @@ export function Dashboard() {
                                     {positions.sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0]?.stock.name}
                                 </h3>
                                 <p className="text-sm text-green-600 dark:text-green-400 mt-2 font-medium">
-                                    +{positions[0].gainLossPercent.toFixed(2)}%
+                                    +{positions.sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0]?.gainLossPercent.toFixed(2)}% ({positions.sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0]?.gainLoss.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })})
                                 </p>
                             </>
                         ) : (
