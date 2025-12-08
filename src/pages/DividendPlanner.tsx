@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { Calendar, Trash2, TrendingUp, Plus } from 'lucide-react';
 import { AddDividendModal } from '../components/AddDividendModal';
+import { useCurrencyFormatter } from '../utils/currency';
 
 export function DividendPlanner() {
     const { stocks, positions, dividends, deleteDividend } = usePortfolio();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const { formatCurrency } = useCurrencyFormatter();
 
     // Calculate projected dividends from yield
     const projectedDividends = positions.map(pos => {
@@ -137,7 +139,7 @@ export function DividendPlanner() {
                                                 </div>
                                             </td>
                                             <td className="text-right py-3 px-4 font-medium">
-                                                {div.amount.toLocaleString('de-CH', { style: 'currency', currency: div.currency })}
+                                                {formatCurrency(div.amount, div.currency, div.currency !== 'CHF')}
                                             </td>
                                             <td className="text-right py-3 px-4">{new Date(div.payDate).toLocaleDateString('de-DE')}</td>
                                             <td className="text-right py-3 px-4 text-muted-foreground capitalize">{div.frequency}</td>

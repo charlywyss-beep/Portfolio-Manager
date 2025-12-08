@@ -12,6 +12,7 @@ export function AddDividendModal({ isOpen, onClose }: AddDividendModalProps) {
 
     const [selectedStockId, setSelectedStockId] = useState('');
     const [amount, setAmount] = useState('');
+    const [currency, setCurrency] = useState<'CHF' | 'USD' | 'EUR'>('CHF');
     const [exDate, setExDate] = useState('');
     const [payDate, setPayDate] = useState('');
     const [frequency, setFrequency] = useState<'quarterly' | 'semi-annually' | 'annually' | 'monthly'>('quarterly');
@@ -32,7 +33,7 @@ export function AddDividendModal({ isOpen, onClose }: AddDividendModalProps) {
         addDividend({
             stockId: selectedStockId,
             amount: parseFloat(amount),
-            currency: stock.currency,
+            currency: currency,
             exDate,
             payDate,
             frequency
@@ -85,23 +86,41 @@ export function AddDividendModal({ isOpen, onClose }: AddDividendModalProps) {
                         )}
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Dividende pro Aktie</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            required
-                            placeholder={selectedStock ? `z.B. 0.88 ${selectedStock.currency}` : "Betrag"}
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
-                        />
-                        {selectedStock && position && amount && (
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Dividende pro Aktie</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                required
+                                placeholder="z.B. 0.88"
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                            />
+                            {selectedStock && position && amount && (
+                                <p className="text-xs text-muted-foreground">
+                                    Total: {(parseFloat(amount) * position.shares).toFixed(2)} {currency}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Währung</label>
+                            <select
+                                value={currency}
+                                onChange={(e) => setCurrency(e.target.value as any)}
+                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                            >
+                                <option value="CHF">CHF (Schweizer Franken)</option>
+                                <option value="USD">USD (US Dollar)</option>
+                                <option value="EUR">EUR (Euro)</option>
+                            </select>
                             <p className="text-xs text-muted-foreground">
-                                Total: {(parseFloat(amount) * position.shares).toFixed(2)} {selectedStock.currency}
+                                Dividendenwährung
                             </p>
-                        )}
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
