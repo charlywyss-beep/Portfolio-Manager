@@ -244,14 +244,14 @@ export function Portfolio() {
             <div className="space-y-3">
                 <div className="flex items-center gap-2">
                     <Landmark className="size-5 text-primary" />
-                    <h2 className="text-lg font-bold">Festgeld & Einlagen</h2>
-                    <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{filteredFixedDeposits.length} Positionen</span>
+                    <h2 className="text-lg font-bold">Bankguthaben (Konto & Einlagen)</h2>
+                    <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{filteredFixedDeposits.length} Konten</span>
                     <button
                         onClick={() => setIsAddFixedDepositModalOpen(true)}
                         className="ml-auto flex items-center gap-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary px-2 py-1 rounded transition-colors"
                     >
                         <Plus className="size-3" />
-                        <span>Hinzufügen</span>
+                        <span>Konto hinzufügen</span>
                     </button>
                 </div>
                 <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
@@ -260,11 +260,10 @@ export function Portfolio() {
                             <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border">
                                 <tr>
                                     <th className="px-4 py-3">Bank / Institut</th>
+                                    <th className="px-4 py-3">Konto-Typ</th>
                                     <th className="px-4 py-3 text-right">Betrag</th>
                                     <th className="px-4 py-3 text-right">Zins p.a.</th>
                                     <th className="px-4 py-3 text-right">Jährlicher Ertrag</th>
-                                    <th className="px-4 py-3 text-right">Laufzeit</th>
-                                    <th className="px-4 py-3 text-right">Fällig am</th>
                                     <th className="px-4 py-3 text-center">Aktionen</th>
                                 </tr>
                             </thead>
@@ -279,27 +278,31 @@ export function Portfolio() {
                                                     {fd.notes && <span className="text-xs text-muted-foreground">{fd.notes}</span>}
                                                 </div>
                                             </td>
+                                            <td className="px-4 py-3">
+                                                <span className={cn(
+                                                    "px-2 py-0.5 rounded-md text-xs font-medium border",
+                                                    fd.accountType === 'sparkonto'
+                                                        ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50"
+                                                        : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                                                )}>
+                                                    {fd.accountType === 'sparkonto' ? 'Sparkonto' : 'Privatkonto'}
+                                                </span>
+                                            </td>
                                             <td className="px-4 py-3 text-right font-bold text-foreground">
                                                 {formatCurrency(fd.amount, fd.currency)}
                                             </td>
                                             <td className="px-4 py-3 text-right">
-                                                <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full text-xs font-medium border border-green-200 dark:border-green-900/50">
+                                                <span className={cn(
+                                                    "px-2 py-0.5 rounded-full text-xs font-medium border",
+                                                    fd.interestRate > 0
+                                                        ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-900/50"
+                                                        : "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-500 dark:border-gray-700"
+                                                )}>
                                                     {fd.interestRate.toFixed(2)}%
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 text-right font-medium text-green-600 dark:text-green-400">
                                                 +{formatCurrency(interestAmount, fd.currency)}
-                                            </td>
-                                            <td className="px-4 py-3 text-right text-muted-foreground">
-                                                {new Date(fd.startDate).toLocaleDateString('de-DE')} - {new Date(fd.maturityDate).toLocaleDateString('de-DE')}
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <span className={cn(
-                                                    "font-medium",
-                                                    new Date(fd.maturityDate) < new Date() ? "text-red-500" : ""
-                                                )}>
-                                                    {new Date(fd.maturityDate).toLocaleDateString('de-DE')}
-                                                </span>
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center justify-center gap-1">
@@ -315,7 +318,7 @@ export function Portfolio() {
                                                     </button>
                                                     <button
                                                         onClick={() => {
-                                                            if (confirm(`Festgeld bei "${fd.bankName}" wirklich löschen?`)) {
+                                                            if (confirm(`Konto bei "${fd.bankName}" wirklich löschen?`)) {
                                                                 deleteFixedDeposit(fd.id);
                                                             }
                                                         }}
@@ -331,8 +334,8 @@ export function Portfolio() {
                                 })}
                                 {filteredFixedDeposits.length === 0 && (
                                     <tr>
-                                        <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
-                                            {searchTerm ? 'Kein Festgeld gefunden.' : 'Noch keine Festgeld-Anlagen erfasst.'}
+                                        <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                                            {searchTerm ? 'Keine Konten gefunden.' : 'Noch keine Bankguthaben erfasst.'}
                                         </td>
                                     </tr>
                                 )}

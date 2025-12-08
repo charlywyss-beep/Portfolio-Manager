@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
-import type { FixedDeposit, Currency } from '../types';
+import type { FixedDeposit, Currency, BankAccountType } from '../types';
 
 interface AddFixedDepositModalProps {
     isOpen: boolean;
@@ -15,29 +15,26 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
     const [bankName, setBankName] = useState('');
     const [amount, setAmount] = useState<number | ''>('');
     const [interestRate, setInterestRate] = useState<number | ''>('');
-    const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
-    const [maturityDate, setMaturityDate] = useState(new Date().toISOString().split('T')[0]);
     const [currency, setCurrency] = useState<Currency>('CHF');
     const [notes, setNotes] = useState('');
+    const [accountType, setAccountType] = useState<BankAccountType>('sparkonto');
 
     useEffect(() => {
         if (editingDeposit) {
             setBankName(editingDeposit.bankName);
             setAmount(editingDeposit.amount);
             setInterestRate(editingDeposit.interestRate);
-            setStartDate(editingDeposit.startDate);
-            setMaturityDate(editingDeposit.maturityDate);
             setCurrency(editingDeposit.currency);
             setNotes(editingDeposit.notes || '');
+            setAccountType(editingDeposit.accountType || 'sparkonto');
         } else {
             // Reset form for new entry
             setBankName('');
             setAmount('');
             setInterestRate('');
-            setStartDate(new Date().toISOString().split('T')[0]);
-            setMaturityDate(new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]); // Default 1 year
             setCurrency('CHF');
             setNotes('');
+            setAccountType('sparkonto');
         }
     }, [editingDeposit, isOpen]);
 
@@ -46,18 +43,15 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Defaults if fields are empty
-        const finalStartDate = startDate || new Date().toISOString().split('T')[0];
-        const finalMaturityDate = maturityDate || new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0];
-
-        const depositData = {
+        const depositData: any = {
             bankName,
             amount: Number(amount),
             interestRate: interestRate === '' ? 0 : Number(interestRate),
-            startDate: finalStartDate,
-            maturityDate: finalMaturityDate,
             currency,
-            notes
+            notes,
+            accountType,
+            startDate: new Date().toISOString(), // Internal timestamp
+            maturityDate: new Date().toISOString() // Internal timestamp (irrelevant for open end)
         };
 
         if (editingDeposit) {
@@ -73,7 +67,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between p-6 border-b border-border">
                     <h2 className="text-xl font-bold">
-                        {editingDeposit ? 'Festgeld bearbeiten' : 'Neues Festgeld'}
+                        {editingDeposit ? 'Konto bearbeiten' : 'Neues Bankkonto'}
                     </h2>
                     <button onClick={onClose} className="p-2 hover:bg-secondary rounded-full transition-colors">
                         <X className="size-5" />
@@ -81,6 +75,34 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Konto-Typ</label>
+                        <div className="flex gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="accountType"
+                                    value="sparkonto"
+                                    checked={accountType === 'sparkonto'}
+                                    onChange={() => setAccountType('sparkonto')}
+                                    className="w-4 h-4 text-primary focus:ring-primary"
+                                />
+                                <span>Sparkonto</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="accountType"
+                                    value="privatkonto"
+                                    checked={accountType === 'privatkonto'}
+                                    onChange={() => setAccountType('privatkonto')}
+                                    className="w-4 h-4 text-primary focus:ring-primary"
+                                />
+                                <span>Privatkonto</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Bank / Institut</label>
                         <input
@@ -132,30 +154,6 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                 className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                                 value={interestRate}
                                 onChange={(e) => setInterestRate(e.target.value === '' ? '' : Number(e.target.value))}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            {/* Placeholder for layout balance */}
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Startdatum</label>
-                            <input
-                                type="date"
-                                className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Fälligkeitsdatum</label>
-                            <input
-                                type="date"
-                                className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                                value={maturityDate}
-                                onChange={(e) => setMaturityDate(e.target.value)}
                             />
                         </div>
                     </div>

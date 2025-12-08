@@ -29,16 +29,19 @@ export interface Position {
     buyPriceAvg: number; // Average buy price
 }
 
-// Festgeld (Fixed Deposit)
+// Bankguthaben (e.g. Sparkonto / Privatkonto)
+export type BankAccountType = 'sparkonto' | 'privatkonto';
+
 export interface FixedDeposit {
     id: string;
     bankName: string;
     amount: number;
     interestRate: number; // Percentage (e.g. 2.5)
-    startDate: string; // ISO Date
-    maturityDate: string; // ISO Date
+    startDate?: string; // ISO Date (Optional)
+    maturityDate?: string; // ISO Date (Optional)
     currency: Currency;
     notes?: string;
+    accountType?: BankAccountType; // New field
 }
 
 export interface PortfolioHistoryEntry {
