@@ -1,6 +1,7 @@
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { ArrowUpRight, ArrowDownRight, DollarSign, Calendar, TrendingUp, BarChart3 } from 'lucide-react';
 import { cn } from '../utils';
+import { useCurrencyFormatter } from '../utils/currency';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 // Helper to translate frequency to German
@@ -16,6 +17,7 @@ const translateFrequency = (freq?: string) => {
 
 export function Dashboard() {
     const { totals, upcomingDividends, positions } = usePortfolioData();
+    const { formatCurrency } = useCurrencyFormatter();
 
     // Prepare chart data: Top 5 Performers
     const chartData = positions
@@ -136,15 +138,15 @@ export function Dashboard() {
                                         <img src={div.stock.logoUrl} alt={div.stock.name} className="size-8 rounded-full bg-white object-contain p-1 border border-border" />
                                     )}
                                     <div>
-                                        <p className="font-semibold text-sm">{div.stock.symbol}</p>
-                                        <p className="text-xs text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
+                                        <p className="font-bold text-base">{div.stock.symbol}</p>
+                                        <p className="text-sm text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-medium text-green-600 dark:text-green-400">
-                                        +{div.amount.toFixed(2)} {div.currency}
+                                    <p className="font-bold text-lg text-green-600 dark:text-green-400">
+                                        +{formatCurrency(div.amount, div.currency)}
                                     </p>
-                                    <p className="text-xs text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
+                                    <p className="text-sm text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
                                 </div>
                             </div>
                         ))}
