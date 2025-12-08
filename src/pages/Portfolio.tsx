@@ -89,7 +89,6 @@ export function Portfolio() {
                                 <th className="px-4 py-3 text-right">Aktueller Wert</th>
                                 <th className="px-4 py-3 text-right">Gesamt +/-</th>
                                 <th className="px-4 py-3 text-right">Gesamt % +/-</th>
-                                <th className="px-4 py-3 text-right">Wert seit Kauf</th>
                                 <th className="px-4 py-3 text-center">Aktionen</th>
                             </tr>
                         </thead>
@@ -188,16 +187,6 @@ export function Portfolio() {
                                         </div>
                                     </td>
 
-                                    {/* Wert seit Kauf (same as Gesamt +/-) */}
-                                    <td className="px-4 py-3 text-right">
-                                        <div className={cn(
-                                            "font-medium",
-                                            pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                        )}>
-                                            {pos.gainLossTotal >= 0 ? '+' : ''}{pos.gainLossTotal.toLocaleString('de-DE', { style: 'currency', currency: pos.stock.currency })}
-                                        </div>
-                                    </td>
-
                                     {/* Aktionen */}
                                     <td className="px-4 py-3">
                                         <div className="flex items-center justify-center gap-1">
@@ -225,7 +214,7 @@ export function Portfolio() {
                             ))}
                             {data.length === 0 && (
                                 <tr>
-                                    <td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">
+                                    <td colSpan={10} className="px-4 py-12 text-center text-muted-foreground">
                                         {emptyMessage}
                                     </td>
                                 </tr>
