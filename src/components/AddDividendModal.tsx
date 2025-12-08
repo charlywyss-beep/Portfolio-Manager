@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
+import type { Dividend } from '../types';
 
 interface AddDividendModalProps {
     isOpen: boolean;
     onClose: () => void;
+    editingDividend?: Dividend | null;
 }
 
-export function AddDividendModal({ isOpen, onClose }: AddDividendModalProps) {
-    const { stocks, positions, addDividend } = usePortfolio();
+export function AddDividendModal({ isOpen, onClose, editingDividend }: AddDividendModalProps) {
+    const { stocks, positions, addDividend, updateDividend } = usePortfolio();
 
     const [selectedStockId, setSelectedStockId] = useState('');
     const [amount, setAmount] = useState('');
@@ -16,6 +18,26 @@ export function AddDividendModal({ isOpen, onClose }: AddDividendModalProps) {
     const [exDate, setExDate] = useState('');
     const [payDate, setPayDate] = useState('');
     const [frequency, setFrequency] = useState<'quarterly' | 'semi-annually' | 'annually' | 'monthly'>('quarterly');
+
+    // Pre-fill fields when editing
+    useEffect(() => {
+        if (editingDividend) {
+            setSelectedStockId(editingDividend.stockId);
+            setAmount(editingDividend.amount.toString());
+            setCurrency(editingDividend.currency as any);
+            setExDate(editingDividend.exDate);
+            setPayDate(editingDividend.payDate);
+            setFrequency(editingDividend.frequency);
+        } else {
+            // Reset form when not editing
+            setSelectedStockId('');
+            setAmount('');
+            setCurrency('CHF');
+            setExDate('');
+            setPayDate('');
+            setFrequency('quarterly');
+        }
+    }, [editingDividend, isOpen]);
 
     if (!isOpen) return null;
 
@@ -30,21 +52,28 @@ export function AddDividendModal({ isOpen, onClose }: AddDividendModalProps) {
         const stock = stocks.find(s => s.id === selectedStockId);
         if (!stock) return;
 
-        addDividend({
-            stockId: selectedStockId,
-            amount: parseFloat(amount),
-            currency: currency,
-            exDate,
-            payDate,
-            frequency
-        });
+        if (editingDividend) {
+            // Update existing dividend
+            updateDividend(editingDividend.id, {
+                stockId: selectedStockId,
+                amount: parseFloat(amount),
+                currency: currency,
+                exDate,
+                payDate,
+                frequency
+            });
+        } else {
+            // Add new dividend
+            addDividend({
+                stockId: selectedStockId,
+                amount: parseFloat(amount),
+                currency: currency,
+                exDate,
+                payDate,
+                frequency
+            });
+        }
 
-        // Reset form
-        setSelectedStockId('');
-        setAmount('');
-        setExDate('');
-        setPayDate('');
-        setFrequency('quarterly');
         onClose();
     };
 
@@ -54,7 +83,7 @@ export function AddDividendModal({ isOpen, onClose }: AddDividendModalProps) {
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-border">
                     <div>
-                        <h2 className="text-xl font-bold">Dividende hinzufügen</h2>
+                        <h2 className="text-xl font-bold">{editingDividend ? 'Dividende bearbeiten' : 'Dividende hinzufügen'}</h2>
                         <p className="text-sm text-muted-foreground">Manuelle Dividendenzahlung erfassen</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors">
@@ -177,7 +206,7 @@ export function AddDividendModal({ isOpen, onClose }: AddDividendModalProps) {
                             type="submit"
                             className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium"
                         >
-                            Hinzufügen
+                            {editingDividend ? 'Aktualisieren' : 'Hinzufügen'}
                         </button>
                     </div>
                 </form>

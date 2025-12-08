@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Calendar, Trash2, TrendingUp, Plus } from 'lucide-react';
+import { Calendar, Trash2, TrendingUp, Plus, Edit } from 'lucide-react';
 import { AddDividendModal } from '../components/AddDividendModal';
 import { useCurrencyFormatter } from '../utils/currency';
 
 export function DividendPlanner() {
     const { stocks, positions, dividends, deleteDividend } = usePortfolio();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [editingDividend, setEditingDividend] = useState<any>(null);
     const { formatCurrency } = useCurrencyFormatter();
 
     // Calculate projected dividends from yield
@@ -124,7 +125,7 @@ export function DividendPlanner() {
                                     <th className="text-right py-3 px-4 font-semibold">Betrag</th>
                                     <th className="text-right py-3 px-4 font-semibold">Datum</th>
                                     <th className="text-right py-3 px-4 font-semibold">Häufigkeit</th>
-                                    <th className="text-right py-3 px-4"></th>
+                                    <th className="text-right py-3 px-4 w-24">Aktionen</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -144,12 +145,22 @@ export function DividendPlanner() {
                                             <td className="text-right py-3 px-4">{new Date(div.payDate).toLocaleDateString('de-DE')}</td>
                                             <td className="text-right py-3 px-4 text-muted-foreground capitalize">{div.frequency}</td>
                                             <td className="text-right py-3 px-4">
-                                                <button
-                                                    onClick={() => deleteDividend(div.id)}
-                                                    className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg transition-colors"
-                                                >
-                                                    <Trash2 className="size-4" />
-                                                </button>
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => setEditingDividend(div)}
+                                                        className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
+                                                        title="Bearbeiten"
+                                                    >
+                                                        <Edit className="size-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => deleteDividend(div.id)}
+                                                        className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg transition-colors"
+                                                        title="Löschen"
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     );
@@ -161,8 +172,12 @@ export function DividendPlanner() {
             )}
 
             <AddDividendModal
-                isOpen={isAddModalOpen}
-                onClose={() => setIsAddModalOpen(false)}
+                isOpen={isAddModalOpen || !!editingDividend}
+                onClose={() => {
+                    setIsAddModalOpen(false);
+                    setEditingDividend(null);
+                }}
+                editingDividend={editingDividend}
             />
         </div>
     );
