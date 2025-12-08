@@ -291,7 +291,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd }: AddPosition
                                 <input required type="number" step="0.01" min="0" placeholder="z.B. 10" className="w-full px-3 py-2 border rounded-md bg-background text-foreground" value={shares} onChange={e => setShares(e.target.value)} />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Kaufpreis (Durchschnitt)</label>
+                                <label className="text-sm font-medium">Kaufpreis</label>
                                 <input required type="number" step="0.01" min="0" placeholder="z.B. 150.00" className="w-full px-3 py-2 border rounded-md bg-background text-foreground" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} />
                             </div>
                         </div>
