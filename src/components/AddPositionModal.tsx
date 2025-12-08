@@ -237,22 +237,22 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd }: AddPosition
 
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Name</label>
-                                    <input required placeholder="z.B. Nestlé S.A." className="w-full px-3 py-2 border rounded-md"
+                                    <input required placeholder="z.B. Nestlé S.A." className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                         value={newStock.name} onChange={e => setNewStock({ ...newStock, name: e.target.value })} />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Symbol</label>
-                                    <input required placeholder="z.B. NESN" className="w-full px-3 py-2 border rounded-md uppercase"
+                                    <input required placeholder="z.B. NESN" className="w-full px-3 py-2 border rounded-md uppercase bg-background text-foreground"
                                         value={newStock.symbol} onChange={e => setNewStock({ ...newStock, symbol: e.target.value.toUpperCase() })} />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Sektor (Optional)</label>
-                                    <input placeholder="z.B. Konsumgüter" className="w-full px-3 py-2 border rounded-md"
+                                    <input placeholder="z.B. Konsumgüter" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                         value={newStock.sector} onChange={e => setNewStock({ ...newStock, sector: e.target.value })} />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Währung</label>
-                                    <select className="w-full px-3 py-2 border rounded-md bg-background"
+                                    <select className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                         value={newStock.currency} onChange={e => setNewStock({ ...newStock, currency: e.target.value })}>
                                         <option value="USD">USD</option>
                                         <option value="CHF">CHF</option>
@@ -261,17 +261,17 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd }: AddPosition
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Valor (Optional)</label>
-                                    <input placeholder="z.B. 3886335" className="w-full px-3 py-2 border rounded-md"
+                                    <input placeholder="z.B. 3886335" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                         value={newStock.valor} onChange={e => setNewStock({ ...newStock, valor: e.target.value })} />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">ISIN (Optional)</label>
-                                    <input placeholder="z.B. CH0038863350" className="w-full px-3 py-2 border rounded-md"
+                                    <input placeholder="z.B. CH0038863350" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                         value={newStock.isin} onChange={e => setNewStock({ ...newStock, isin: e.target.value })} />
                                 </div>
                                 <div className="space-y-2 col-span-2">
                                     <label className="text-sm font-medium">Aktueller Marktpreis</label>
-                                    <input required type="number" step="0.01" placeholder="z.B. 98.50" className="w-full px-3 py-2 border rounded-md"
+                                    <input required type="number" step="0.01" placeholder="z.B. 98.50" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                         value={newStock.currentPrice}
                                         onChange={e => {
                                             setNewStock({ ...newStock, currentPrice: e.target.value });
