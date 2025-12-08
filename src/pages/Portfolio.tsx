@@ -5,6 +5,7 @@ import { cn } from '../utils';
 import { AddPositionModal } from '../components/AddPositionModal';
 import { EditPositionModal } from '../components/EditPositionModal';
 import { PriceUpdateDialog } from '../components/PriceUpdateDialog';
+import { EditStockDialog } from '../components/EditStockDialog';
 
 export function Portfolio() {
     const { positions: rawPositions, stocks, addPosition, deletePosition, updatePosition } = usePortfolio();
@@ -13,6 +14,7 @@ export function Portfolio() {
     const [selectedPosition, setSelectedPosition] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [priceEditStock, setPriceEditStock] = useState<any>(null);
+    const [editingStock, setEditingStock] = useState<any>(null);
 
     // Enrich positions with stock data and calculations
     const positions = rawPositions.map((pos) => {
@@ -107,11 +109,21 @@ export function Portfolio() {
                                                     {pos.stock.symbol.slice(0, 2)}
                                                 </div>
                                             )}
-                                            <div className="min-w-0">
-                                                <div className="font-semibold text-foreground truncate">{pos.stock.name}</div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="font-semibold text-foreground truncate">{pos.stock.name}</div>
+                                                    <button
+                                                        onClick={() => setEditingStock(pos.stock)}
+                                                        className="text-muted-foreground hover:text-primary p-1 rounded transition-colors flex-shrink-0"
+                                                        title="Stock bearbeiten (Dividende, Preis)"
+                                                    >
+                                                        <Pencil className="size-3" />
+                                                    </button>
+                                                </div>
                                                 <div className="text-xs text-muted-foreground flex items-center gap-1">
                                                     <span className="font-mono bg-muted px-1 rounded">{pos.stock.symbol}</span>
                                                     <span>• {pos.stock.sector}</span>
+                                                    {pos.stock.dividendYield && <span>• {pos.stock.dividendYield.toFixed(2)}% Div.</span>}
                                                 </div>
                                             </div>
                                         </div>
@@ -290,6 +302,14 @@ export function Portfolio() {
                     isOpen={true}
                     onClose={() => setPriceEditStock(null)}
                     stock={priceEditStock}
+                />
+            )}
+
+            {editingStock && (
+                <EditStockDialog
+                    stock={editingStock}
+                    isOpen={!!editingStock}
+                    onClose={() => setEditingStock(null)}
                 />
             )}
         </div>
