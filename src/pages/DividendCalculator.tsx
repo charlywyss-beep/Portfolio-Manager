@@ -144,9 +144,12 @@ export function DividendCalculator() {
                             <span className="text-2xl font-bold tracking-tight text-primary">
                                 {finalYear.capital.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}
                             </span>
-                            <span className="text-xs text-muted-foreground mt-2">
-                                Investiert: {finalYear.invested.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}
-                            </span>
+                            <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+                                <span className="text-sm text-muted-foreground font-medium">Investiertes Kapital</span>
+                                <span className="font-bold text-base tracking-tight">
+                                    {finalYear.invested.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}
+                                </span>
+                            </div>
                         </div>
                         <div className="p-5 rounded-xl bg-card border border-border shadow-sm flex flex-col">
                             <span className="text-sm text-muted-foreground font-medium mb-1">Passives Einkommen (Monat)</span>
