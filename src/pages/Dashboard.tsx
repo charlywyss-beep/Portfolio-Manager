@@ -75,9 +75,13 @@ export function Dashboard() {
                         )}>
                             {totals.gainLoss >= 0 ? '+' : ''}{totals.gainLoss.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })} Gewinn/Verlust
                         </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Investiert: {totals.totalCost.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
-                        </p>
+
+                        <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground font-medium">Investiertes Kapital</span>
+                            <span className="font-bold text-base tracking-tight">
+                                {totals.totalCost.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
