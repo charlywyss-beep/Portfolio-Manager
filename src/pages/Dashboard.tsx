@@ -2,6 +2,17 @@ import { usePortfolioData } from '../hooks/usePortfolioData';
 import { ArrowUpRight, ArrowDownRight, DollarSign, Calendar, TrendingUp } from 'lucide-react';
 import { cn } from '../utils';
 
+// Helper to translate frequency to German
+const translateFrequency = (freq?: string) => {
+    switch (freq) {
+        case 'quarterly': return 'Quartalsweise';
+        case 'semi-annually': return 'Halbjährlich';
+        case 'annually': return 'Jährlich';
+        case 'monthly': return 'Monatlich';
+        default: return 'Jährlich';
+    }
+};
+
 export function Dashboard() {
     const { totals, upcomingDividends, positions } = usePortfolioData();
 
@@ -102,7 +113,7 @@ export function Dashboard() {
                                     <p className="font-medium text-green-600 dark:text-green-400">
                                         +{div.amount.toFixed(2)} {div.currency}
                                     </p>
-                                    <p className="text-xs text-muted-foreground">{div.stock.dividendFrequency || 'annually'}</p>
+                                    <p className="text-xs text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
                                 </div>
                             </div>
                         ))}

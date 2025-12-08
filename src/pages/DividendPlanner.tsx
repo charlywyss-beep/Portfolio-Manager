@@ -5,6 +5,17 @@ import { AddDividendModal } from '../components/AddDividendModal';
 import { useCurrencyFormatter } from '../utils/currency';
 import type { Stock } from '../types';
 
+// Helper to translate frequency to German
+const translateFrequency = (freq?: string) => {
+    switch (freq) {
+        case 'quarterly': return 'Quartalsweise';
+        case 'semi-annually': return 'Halbjährlich';
+        case 'annually': return 'Jährlich';
+        case 'monthly': return 'Monatlich';
+        default: return 'Jährlich';
+    }
+};
+
 export function DividendPlanner() {
     const { stocks, positions } = usePortfolio();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -135,8 +146,8 @@ export function DividendPlanner() {
                                                 <td className="text-right py-3 px-4 text-muted-foreground">
                                                     CHF {quarterlyDividend.toFixed(2)}
                                                 </td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground capitalize">
-                                                    {stock.dividendFrequency || 'annually'}
+                                                <td className="text-right py-3 px-4 text-muted-foreground">
+                                                    {translateFrequency(stock.dividendFrequency)}
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground">
                                                     {stock.dividendPayDate
