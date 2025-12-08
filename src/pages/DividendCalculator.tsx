@@ -65,6 +65,33 @@ export function DividendCalculator() {
                         </div>
 
                         <div className="space-y-4">
+                            {/* Scenarios */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-muted-foreground">Szenario wählen</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <button
+                                        onClick={() => { setDividendYield(2.0); setPriceAppreciation(2.0); }}
+                                        className="px-2 py-1.5 text-xs font-medium rounded-md border border-border hover:bg-muted hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                        title="2% Dividende + 2% Kurs = 4% Total"
+                                    >
+                                        Konservativ
+                                    </button>
+                                    <button
+                                        onClick={() => { setDividendYield(3.0); setPriceAppreciation(4.0); }}
+                                        className="px-2 py-1.5 text-xs font-medium rounded-md border border-border bg-muted/50 text-foreground hover:bg-muted hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                        title="3% Dividende + 4% Kurs = 7% Total"
+                                    >
+                                        Ausgewogen
+                                    </button>
+                                    <button
+                                        onClick={() => { setDividendYield(1.5); setPriceAppreciation(7.5); }}
+                                        className="px-2 py-1.5 text-xs font-medium rounded-md border border-border hover:bg-muted hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                        title="1.5% Dividende + 7.5% Kurs = 9% Total"
+                                    >
+                                        Wachstum
+                                    </button>
+                                </div>
+                            </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-muted-foreground">Startkapital (CHF)</label>
                                 <input
