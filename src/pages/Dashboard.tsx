@@ -70,10 +70,13 @@ export function Dashboard() {
                         <h3 className="text-3xl font-bold mt-1 tracking-tight">
                             {totals.totalValue.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                         </h3>
-                        <p className={cn("text-sm mt-2",
+                        <p className={cn("text-sm mt-2 font-medium",
                             totals.gainLoss >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                         )}>
                             {totals.gainLoss >= 0 ? '+' : ''}{totals.gainLoss.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })} Gewinn/Verlust
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Investiert: {totals.totalCost.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                         </p>
                     </div>
                 </div>
