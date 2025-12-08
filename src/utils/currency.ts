@@ -7,6 +7,7 @@ export const FALLBACK_EXCHANGE_RATES: Record<string, number> = {
     USD: 0.88,
     EUR: 0.94,
     GBP: 1.10,
+    GBp: 0.011,  // British Pence = 1/100 of GBP = ~0.011 CHF per pence
 };
 
 // Convert any currency to CHF using live rates
@@ -24,12 +25,18 @@ export function convertToCHF(amount: number, fromCurrency: string, liveRates?: R
 
 // Format currency with optional CHF conversion
 export function formatCurrency(amount: number, currency: string, showCHF: boolean = true, liveRates?: Record<string, number>): string {
-    const formatted = amount.toLocaleString('de-DE', {
-        style: 'currency',
-        currency,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
+    // Special handling for GBp (not a standard ISO currency code)
+    let formatted: string;
+    if (currency === 'GBp') {
+        formatted = `${amount.toFixed(2)} GBp`;
+    } else {
+        formatted = amount.toLocaleString('de-DE', {
+            style: 'currency',
+            currency,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+    }
 
     if (showCHF && currency !== 'CHF') {
         const chfAmount = convertToCHF(amount, currency, liveRates);
