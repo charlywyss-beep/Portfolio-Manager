@@ -9,6 +9,17 @@ interface AddDividendModalProps {
     editingStock?: Stock | null;
 }
 
+// Helper to get annual factor
+const getFrequencyFactor = (freq: string) => {
+    switch (freq) {
+        case 'monthly': return 12;
+        case 'quarterly': return 4;
+        case 'semi-annually': return 2;
+        case 'annually': return 1;
+        default: return 1;
+    }
+};
+
 export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendModalProps) {
     const { stocks, positions, updateStockDividend } = usePortfolio();
 
@@ -62,50 +73,44 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
     const selectedStock = stocks.find(s => s.id === selectedStockId);
     const position = positions.find(p => p.stockId === selectedStockId);
 
-    // Helper to get annual factor
-    const getFrequencyFactor = (freq: string) => {
-        switch (freq) {
-            case 'monthly': return 12;
-            case 'quarterly': return 4;
-            case 'semi-annually': return 2;
-            case 'annually': return 1;
-            default: return 1;
-        }
-    };
-
     // Auto-calculate between yield% ↔ amount/share (Annualized)
     const handleYieldChange = (newYield: string) => {
         setYieldPercent(newYield);
-        if (selectedStock && newYield) {
+        if (selectedStock && newYield && !isNaN(parseFloat(newYield))) {
             const yieldValue = parseFloat(newYield);
             const factor = getFrequencyFactor(frequency);
             // Amount = (Price * Yield) / 100 / Factor
             const dividendAmount = ((selectedStock.currentPrice * yieldValue) / 100) / factor;
-            setAmount(dividendAmount.toFixed(4));
+            if (isFinite(dividendAmount)) {
+                setAmount(dividendAmount.toFixed(4));
+            }
         }
     };
 
     const handleAmountChange = (newAmount: string) => {
         setAmount(newAmount);
-        if (selectedStock && newAmount) {
+        if (selectedStock && newAmount && !isNaN(parseFloat(newAmount))) {
             const dividendAmount = parseFloat(newAmount);
             const factor = getFrequencyFactor(frequency);
             // Yield = (Amount * Factor / Price) * 100
             const yieldValue = ((dividendAmount * factor) / selectedStock.currentPrice) * 100;
-            setYieldPercent(yieldValue.toFixed(2));
+            if (isFinite(yieldValue)) {
+                setYieldPercent(yieldValue.toFixed(2));
+            }
         }
     };
 
     // Recalculate when frequency changes
     useEffect(() => {
-        if (amount && selectedStock) {
-            // Keep amount constant, update yield
+        if (amount && selectedStock && !isNaN(parseFloat(amount))) {
             const dividendAmount = parseFloat(amount);
             const factor = getFrequencyFactor(frequency);
             const yieldValue = ((dividendAmount * factor) / selectedStock.currentPrice) * 100;
-            setYieldPercent(yieldValue.toFixed(2));
+            if (isFinite(yieldValue)) {
+                setYieldPercent(yieldValue.toFixed(2));
+            }
         }
-    }, [frequency]);
+    }, [frequency]); // Depend solely on frequency to trigger recalculation of Yield based on existing Amount
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -207,7 +212,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                         </select>
                     </div>
 
-                    {selectedStock && position && amount && (
+                    {selectedStock && position && amount && !isNaN(parseFloat(amount)) && (
                         <div className="p-3 bg-muted rounded-lg">
                             <p className="text-sm font-medium">Erwartete Jahresausschüttung</p>
                             <p className="text-lg font-bold text-primary">
