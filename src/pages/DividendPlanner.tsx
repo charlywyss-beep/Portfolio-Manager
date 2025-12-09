@@ -20,7 +20,7 @@ export function DividendPlanner() {
     const { stocks, positions } = usePortfolio();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingStock, setEditingStock] = useState<Stock | null>(null);
-    const { formatCurrency } = useCurrencyFormatter();
+    const { formatCurrency, convertToCHF } = useCurrencyFormatter();
 
     // Calculate projected dividends from yield
     const projectedDividends = positions
@@ -125,7 +125,7 @@ export function DividendPlanner() {
                                         const { position, stock, annualDividend, quarterlyDividend } = data!;
 
                                         // Format currency with dual display if needed
-                                        let annualDisplay = `CHF ${annualDividend.toFixed(2)}`;
+                                        let annualDisplay: React.ReactNode;
                                         if (stock.dividendCurrency && stock.dividendCurrency !== 'CHF') {
                                             const factor = stock.dividendFrequency === 'quarterly' ? 4
                                                 : stock.dividendFrequency === 'semi-annually' ? 2
@@ -137,7 +137,18 @@ export function DividendPlanner() {
                                                 ? stock.dividendAmount * position.shares * factor
                                                 : annualDividend;
 
-                                            annualDisplay = formatCurrency(originalAnnualAmount, stock.dividendCurrency);
+                                            const originalFormatted = formatCurrency(originalAnnualAmount, stock.dividendCurrency, false);
+                                            const chfValue = convertToCHF(originalAnnualAmount, stock.dividendCurrency);
+                                            const chfFormatted = formatCurrency(chfValue, 'CHF', false);
+
+                                            annualDisplay = (
+                                                <div className="flex flex-col items-end">
+                                                    <span>{originalFormatted}</span>
+                                                    <span className="text-xs text-muted-foreground font-normal">({chfFormatted})</span>
+                                                </div>
+                                            );
+                                        } else {
+                                            annualDisplay = `CHF ${annualDividend.toFixed(2)}`;
                                         }
 
                                         return (
