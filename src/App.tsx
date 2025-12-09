@@ -57,7 +57,7 @@ function App() {
               <button
                 onClick={() => setActiveTab('dashboard')}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all",
+                  "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
                   activeTab === 'dashboard'
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "hover:bg-accent hover:text-accent-foreground"
@@ -70,7 +70,7 @@ function App() {
               <button
                 onClick={() => setActiveTab('portfolio')}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all",
+                  "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
                   activeTab === 'portfolio'
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "hover:bg-accent hover:text-accent-foreground"
@@ -83,7 +83,7 @@ function App() {
               <button
                 onClick={() => setActiveTab('calculator')}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all",
+                  "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
                   activeTab === 'calculator'
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "hover:bg-accent hover:text-accent-foreground"
@@ -96,7 +96,7 @@ function App() {
               <button
                 onClick={() => setActiveTab('dividends')}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all",
+                  "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
                   activeTab === 'dividends'
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "hover:bg-accent hover:text-accent-foreground"
@@ -110,7 +110,7 @@ function App() {
                 <button
                   onClick={() => setActiveTab('settings')}
                   className={cn(
-                    "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all",
+                    "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
                     activeTab === 'settings'
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "hover:bg-accent hover:text-accent-foreground"

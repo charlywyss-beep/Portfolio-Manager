@@ -98,7 +98,7 @@ export function DividendCalculator() {
                                     type="number"
                                     value={initialCapital}
                                     onChange={(e) => setInitialCapital(Number(e.target.value))}
-                                    className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all"
+                                    className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all text-right"
                                 />
                             </div>
 
@@ -108,7 +108,7 @@ export function DividendCalculator() {
                                     type="number"
                                     value={monthlyContribution}
                                     onChange={(e) => setMonthlyContribution(Number(e.target.value))}
-                                    className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all"
+                                    className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all text-right"
                                 />
                             </div>
 
@@ -119,7 +119,7 @@ export function DividendCalculator() {
                                         type="number"
                                         value={years}
                                         onChange={(e) => setYears(Number(e.target.value))}
-                                        className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all"
+                                        className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all text-right"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -144,7 +144,7 @@ export function DividendCalculator() {
                                         step="0.1"
                                         value={dividendYield}
                                         onChange={(e) => setDividendYield(Number(e.target.value))}
-                                        className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all"
+                                        className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all text-right"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -154,7 +154,7 @@ export function DividendCalculator() {
                                         step="0.1"
                                         value={priceAppreciation}
                                         onChange={(e) => setPriceAppreciation(Number(e.target.value))}
-                                        className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all"
+                                        className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all text-right"
                                     />
                                 </div>
                             </div>
