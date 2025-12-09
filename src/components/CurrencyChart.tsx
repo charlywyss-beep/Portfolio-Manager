@@ -13,11 +13,19 @@ type Currency = 'EUR' | 'USD' | 'GBP';
 // Helper to get date string YYYY-MM-DD
 const formatDate = (date: Date) => date.toISOString().split('T')[0];
 
-export function CurrencyChart() {
+interface Props {
+    inverse?: boolean;
+}
+
+export function CurrencyChart({ inverse = false }: Props) {
     const [selectedCurrency, setSelectedCurrency] = useState<Currency>('EUR');
     const [historyData, setHistoryData] = useState<RateHistory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [currRate, setCurrRate] = useState<number | null>(null);
+
+    // Derived values based on mode
+    const baseCurrency = inverse ? selectedCurrency : 'CHF';
+    const targetCurrency = inverse ? 'CHF' : selectedCurrency;
 
     useEffect(() => {
         const fetchHistory = async () => {
@@ -29,16 +37,16 @@ export function CurrencyChart() {
 
                 const startStr = formatDate(startDate);
                 // frankfurter.app API
-                // GET /<date_start>..?from=CHF&to=EUR,USD,GBP
-                // Note: The API returns rates for business days only
-                const response = await fetch(`https://api.frankfurter.app/${startStr}..?from=CHF&to=${selectedCurrency}`);
+                // Standard: from=CHF&to=EUR -> Returns rates relative to 1 CHF
+                // Inverse: from=EUR&to=CHF -> Returns rates relative to 1 EUR
+                const response = await fetch(`https://api.frankfurter.app/${startStr}..?from=${baseCurrency}&to=${targetCurrency}`);
                 const data = await response.json();
 
-                // Transform data: { rates: { "2024-01-01": { "EUR": 0.93 } } }
+                // Transform data
                 if (data.rates) {
                     const transformed = Object.entries(data.rates).map(([date, rates]: [string, any]) => ({
                         date,
-                        rate: rates[selectedCurrency]
+                        rate: rates[targetCurrency] // Always get the rate of the target
                     }));
                     setHistoryData(transformed);
                     // Set current rate (last entry)
@@ -54,7 +62,7 @@ export function CurrencyChart() {
         };
 
         fetchHistory();
-    }, [selectedCurrency]);
+    }, [selectedCurrency, inverse]);
 
     // Calculate min/max for Y-Axis domain to make chart look dynamic
     const domain = useMemo(() => {
@@ -80,8 +88,8 @@ export function CurrencyChart() {
                         <RefreshCcw className="size-6" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold">Wechselkurse</h3>
-                        <p className="text-xs text-muted-foreground">Basis: 1 CHF</p>
+                        <h3 className="text-lg font-bold">{inverse ? 'Kurs in CHF' : 'Wechselkurse'}</h3>
+                        <p className="text-xs text-muted-foreground">Basis: 1 {baseCurrency}</p>
                     </div>
                 </div>
 
@@ -108,7 +116,7 @@ export function CurrencyChart() {
                 {currRate ? (
                     <div className="flex items-baseline gap-3">
                         <h4 className="text-3xl font-bold tracking-tight">
-                            {currRate.toFixed(4)} <span className="text-lg text-muted-foreground font-medium">{selectedCurrency}</span>
+                            {currRate.toFixed(4)} <span className="text-lg text-muted-foreground font-medium">{targetCurrency}</span>
                         </h4>
                         <span className={cn(
                             "text-sm font-medium px-2 py-0.5 rounded-full flex items-center",
@@ -161,7 +169,7 @@ export function CurrencyChart() {
                                 contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                                 itemStyle={{ color: 'hsl(var(--foreground))' }}
                                 labelFormatter={(date) => new Date(date).toLocaleDateString('de-DE')}
-                                formatter={(value: number) => [value.toFixed(4), selectedCurrency]}
+                                formatter={(value: number) => [value.toFixed(4), targetCurrency]}
                             />
                             <Area
                                 type="monotone"

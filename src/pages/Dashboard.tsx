@@ -285,9 +285,10 @@ export function Dashboard() {
                     </div>
                 </div>
 
-                {/* Currency Chart */}
-                <div className="h-[400px]">
-                    <CurrencyChart />
+                {/* Currency Charts */}
+                <div className="col-span-1 lg:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-6 h-[400px]">
+                    <CurrencyChart inverse={false} />
+                    <CurrencyChart inverse={true} />
                 </div>
             </div>
 
