@@ -7,6 +7,7 @@ import { useCurrencyFormatter } from '../utils/currency';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { HistoryChart } from '../components/HistoryChart';
 import { AddHistoryEntryModal } from '../components/AddHistoryEntryModal';
+import { CurrencyChart } from '../components/CurrencyChart';
 
 // Helper to translate frequency to German
 const translateFrequency = (freq?: string) => {
@@ -282,6 +283,11 @@ export function Dashboard() {
                             </div>
                         )}
                     </div>
+                </div>
+
+                {/* Currency Chart */}
+                <div className="h-[400px]">
+                    <CurrencyChart />
                 </div>
             </div>
 
