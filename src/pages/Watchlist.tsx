@@ -126,17 +126,17 @@ export function Watchlist() {
                                                         {stock.dividendDates && stock.dividendDates.length > 0 ? (
                                                             <div className="flex flex-wrap justify-end gap-2">
                                                                 {stock.dividendDates
+                                                                    .map((d, i) => ({ ...d, label: `Q${i + 1}` }))
                                                                     .filter(d => d.exDate)
                                                                     .sort((a, b) => new Date(a.exDate).getTime() - new Date(b.exDate).getTime())
                                                                     .map((d, idx) => {
                                                                         const dateObj = new Date(d.exDate);
                                                                         const dDays = Math.ceil((dateObj.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                                                                         const dIsSoon = dDays >= 0 && dDays <= 14;
-                                                                        const quarter = Math.floor(dateObj.getMonth() / 3) + 1;
 
                                                                         return (
                                                                             <div key={idx} className="flex items-center gap-1">
-                                                                                <span className="text-xs text-muted-foreground font-medium">Q{quarter}</span>
+                                                                                <span className="text-xs text-muted-foreground font-medium">{d.label}</span>
                                                                                 <span className="text-xs whitespace-nowrap">{dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span>
                                                                                 {dIsSoon && <AlertCircle className="size-3 text-yellow-500" />}
                                                                             </div>
