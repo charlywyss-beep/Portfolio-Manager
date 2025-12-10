@@ -26,6 +26,13 @@ export function Dashboard() {
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [editingHistoryEntry, setEditingHistoryEntry] = useState<any>(null);
+    const [watchlistTimeframe, setWatchlistTimeframe] = useState<number>(90); // Default 90 days
+
+    // Filter watchlist opportunities based on selected timeframe
+    const filteredWatchlistDividends = upcomingWatchlistDividends.filter(item => {
+        const daysToEx = Math.ceil((new Date(item.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+        return daysToEx <= watchlistTimeframe;
+    });
 
     // Prepare chart data: Top 5 Performers
     const chartData = positions
@@ -261,14 +268,26 @@ export function Dashboard() {
                 </div>
 
                 {/* Watchlist Opportunities (Blue Info Cards) */}
-                {upcomingWatchlistDividends.length > 0 && (
+                {filteredWatchlistDividends.length > 0 && (
                     <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-bold text-blue-600 dark:text-blue-400">Watchlist Chancen</h3>
-                            <Info className="size-5 text-blue-500" />
+                            <div className="flex items-center gap-3">
+                                <h3 className="text-lg font-bold text-blue-600 dark:text-blue-400">Watchlist Chancen</h3>
+                                <Info className="size-5 text-blue-500" />
+                            </div>
+                            <select
+                                value={watchlistTimeframe}
+                                onChange={(e) => setWatchlistTimeframe(Number(e.target.value))}
+                                className="text-xs px-2 py-1 rounded border border-border bg-background"
+                            >
+                                <option value={90}>3 Monate</option>
+                                <option value={180}>6 Monate</option>
+                                <option value={270}>9 Monate</option>
+                                <option value={365}>1 Jahr</option>
+                            </select>
                         </div>
                         <div className="space-y-4">
-                            {upcomingWatchlistDividends.map((item, idx) => {
+                            {filteredWatchlistDividends.map((item, idx) => {
                                 const daysToEx = Math.ceil((new Date(item.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                                 return (
                                     <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50 hover:bg-blue-100/50 transition-colors">

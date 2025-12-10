@@ -127,7 +127,7 @@ export function usePortfolioData() {
         const watchlistStocks = stocks.filter(s => watchlist.includes(s.id));
         const today = new Date();
         const futureLimit = new Date();
-        futureLimit.setDate(today.getDate() + 30); // Look ahead 30 days
+        futureLimit.setDate(today.getDate() + 365); // Look ahead 1 year (filtering happens in UI)
 
         return watchlistStocks
             .flatMap(stock => {
