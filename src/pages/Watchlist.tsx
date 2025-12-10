@@ -116,17 +116,17 @@ export function Watchlist() {
                                                     {stock.dividendAmount ? formatCurrency(stock.dividendAmount, stock.dividendCurrency || stock.currency) : '-'}
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground">
-                                                    {stock.dividendFrequency === 'quarterly' ? 'Quarterly'
-                                                        : stock.dividendFrequency === 'semi-annually' ? 'Semi-Annually'
-                                                            : stock.dividendFrequency === 'monthly' ? 'Monthly'
-                                                                : 'Annually'}
+                                                    {stock.dividendFrequency === 'quarterly' ? 'Quartalsweise'
+                                                        : stock.dividendFrequency === 'semi-annually' ? 'Halbjährlich'
+                                                            : stock.dividendFrequency === 'monthly' ? 'Monatlich'
+                                                                : 'Jährlich'}
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground">
                                                     <div className="flex flex-col items-end gap-1">
                                                         {stock.dividendDates && stock.dividendDates.length > 0 ? (
-                                                            <div className="flex flex-wrap justify-end gap-2">
+                                                            <div className="flex flex-col items-end gap-0.5">
                                                                 {stock.dividendDates
-                                                                    .map((d, i) => ({ ...d, label: `Q${i + 1}` }))
+                                                                    .map((d, i) => ({ ...d, label: stock.dividendFrequency === 'semi-annually' ? `${i + 1}.` : `Q${i + 1}` }))
                                                                     .filter(d => d.exDate)
                                                                     .sort((a, b) => new Date(a.exDate).getTime() - new Date(b.exDate).getTime())
                                                                     .map((d, idx) => {
@@ -135,9 +135,9 @@ export function Watchlist() {
                                                                         const dIsSoon = dDays >= 0 && dDays <= 14;
 
                                                                         return (
-                                                                            <div key={idx} className="flex items-center gap-1">
-                                                                                <span className="text-xs text-muted-foreground font-medium">{d.label}</span>
-                                                                                <span className="text-xs whitespace-nowrap">{dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span>
+                                                                            <div key={idx} className="flex items-center gap-2">
+                                                                                <span className="text-[10px] text-muted-foreground/70 font-medium w-4 text-right">{d.label}</span>
+                                                                                <span className="text-xs whitespace-nowrap font-medium">{dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span>
                                                                                 {dIsSoon && <AlertCircle className="size-3 text-yellow-500" />}
                                                                             </div>
                                                                         );
@@ -145,7 +145,7 @@ export function Watchlist() {
                                                             </div>
                                                         ) : (
                                                             <div className="flex items-center justify-end gap-2">
-                                                                {stock.dividendExDate ? new Date(stock.dividendExDate).toLocaleDateString('de-DE') : '-'}
+                                                                {stock.dividendExDate ? new Date(stock.dividendExDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
                                                                 {isExSoon && (
                                                                     <span title={`Ex-Datum in ${daysToEx} Tagen`} className="text-yellow-600 dark:text-yellow-400">
                                                                         <AlertCircle className="size-4" />
