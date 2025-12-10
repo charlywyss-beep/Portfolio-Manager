@@ -122,12 +122,29 @@ export function Watchlist() {
                                                                 : 'Annually'}
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        {stock.dividendExDate ? new Date(stock.dividendExDate).toLocaleDateString('de-DE') : '-'}
-                                                        {isExSoon && (
-                                                            <span title={`Ex-Datum in ${daysToEx} Tagen`} className="text-yellow-600 dark:text-yellow-400">
-                                                                <AlertCircle className="size-4" />
-                                                            </span>
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        {stock.dividendDates && stock.dividendDates.length > 0 ? (
+                                                            <div className="flex flex-wrap justify-end gap-2 max-w-[200px]">
+                                                                {stock.dividendDates.filter(d => d.exDate).map((d, idx) => {
+                                                                    const dDays = Math.ceil((new Date(d.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                                                                    const dIsSoon = dDays >= 0 && dDays <= 14;
+                                                                    return (
+                                                                        <div key={idx} className="flex items-center gap-1">
+                                                                            <span className="text-xs">{new Date(d.exDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span>
+                                                                            {dIsSoon && <AlertCircle className="size-3 text-yellow-500" />}
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center justify-end gap-2">
+                                                                {stock.dividendExDate ? new Date(stock.dividendExDate).toLocaleDateString('de-DE') : '-'}
+                                                                {isExSoon && (
+                                                                    <span title={`Ex-Datum in ${daysToEx} Tagen`} className="text-yellow-600 dark:text-yellow-400">
+                                                                        <AlertCircle className="size-4" />
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </td>
@@ -135,7 +152,7 @@ export function Watchlist() {
                                                     {stock.dividendPayDate ? new Date(stock.dividendPayDate).toLocaleDateString('de-DE') : '-'}
                                                 </td>
                                                 <td className="text-right py-3 px-4">
-                                                    <div className="flex items-center justify-end gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                                                    <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity">
                                                         <button
                                                             onClick={() => {
                                                                 setEditingStock(stock);

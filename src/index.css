@@ -36,7 +36,8 @@
   }
 
   .dark {
-    --background: 222.2 47.4% 11.2%; /* Deep dark blue-grey */
+    --background: 222.2 47.4% 11.2%;
+    /* Deep dark blue-grey */
     --foreground: 210 40% 98%;
 
     --card: 217 33% 17%;
@@ -64,12 +65,17 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
   }
+
+  .dark ::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
 }
 
 @layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
