@@ -29,14 +29,14 @@ function App() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard': return <Dashboard />;
+      case 'dashboard': return <Dashboard onNavigate={(tab) => setActiveTab(tab as any)} />;
       case 'portfolio': return <Portfolio />;
 
       case 'watchlist': return <Watchlist />;
       case 'calculator': return <DividendCalculator />;
       case 'dividends': return <DividendPlanner />;
       case 'settings': return <Settings />;
-      default: return <Dashboard />;
+      default: return <Dashboard onNavigate={(tab) => setActiveTab(tab as any)} />;
     }
   };
 

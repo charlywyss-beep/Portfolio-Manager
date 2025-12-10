@@ -1,4 +1,5 @@
 import { useState } from 'react';
+
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
 import { ArrowUpRight, ArrowDownRight, DollarSign, Calendar, TrendingUp, BarChart3, Plus, Trash2, Edit, Bell, Info } from 'lucide-react';
@@ -20,7 +21,7 @@ const translateFrequency = (freq?: string) => {
     }
 };
 
-export function Dashboard() {
+export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void }) {
     const { totals, upcomingDividends, positions, upcomingWatchlistDividends } = usePortfolioData();
     const { history, deleteHistoryEntry } = usePortfolio();
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
@@ -325,7 +326,10 @@ export function Dashboard() {
                                                         })}
                                                     </div>
 
-                                                    <div className="px-2 py-0.5 w-fit rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow">
+                                                    <div
+                                                        onClick={() => onNavigate('watchlist')}
+                                                        className="block mt-1 px-2 py-0.5 w-fit rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors cursor-pointer"
+                                                    >
                                                         <p className="text-sm text-blue-600 dark:text-blue-300 font-medium">{item.stock.name}</p>
                                                     </div>
                                                 </div>
