@@ -300,7 +300,7 @@ export function Dashboard() {
                                                 <div>
                                                     <div className="flex items-center gap-2">
                                                         <p className="font-bold text-lg text-foreground">{item.stock.symbol}</p>
-                                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-medium">
+                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-800 shadow-sm text-blue-600 dark:text-blue-400 text-xs font-bold">
                                                             <span>Ex in {daysToEx} Tagen</span>
                                                         </div>
                                                     </div>
