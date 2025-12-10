@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye } from 'lucide-react';
 import { cn } from './utils';
 import { PortfolioProvider } from './context/PortfolioContext';
 import { ExchangeRateProvider } from './context/ExchangeRateContext';
@@ -9,9 +9,10 @@ import { Portfolio } from './pages/Portfolio';
 import { DividendPlanner } from './pages/DividendPlanner';
 import { DividendCalculator } from './pages/DividendCalculator';
 import { Settings } from './pages/Settings';
+import { Watchlist } from './pages/Watchlist';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'calculator' | 'dividends' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'watchlist' | 'calculator' | 'dividends' | 'settings'>('dashboard');
   const [isDarkMode, setIsDarkMode] = useState(true);
 
   const toggleDarkMode = () => {
@@ -30,6 +31,8 @@ function App() {
     switch (activeTab) {
       case 'dashboard': return <Dashboard />;
       case 'portfolio': return <Portfolio />;
+
+      case 'watchlist': return <Watchlist />;
       case 'calculator': return <DividendCalculator />;
       case 'dividends': return <DividendPlanner />;
       case 'settings': return <Settings />;
@@ -50,7 +53,7 @@ function App() {
                 </div>
                 <h1 className="text-xl font-bold tracking-tight">Portfolio</h1>
               </div>
-              <div className="text-xs text-muted-foreground ml-10">v3.3.0</div>
+              <div className="text-xs text-muted-foreground ml-10">v3.4.0</div>
             </div>
 
             <nav className="flex-1 p-4 space-y-2">
@@ -78,6 +81,19 @@ function App() {
               >
                 <Wallet className="size-5" />
                 <span>Meine Positionen</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('watchlist')}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
+                  activeTab === 'watchlist'
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "hover:bg-accent hover:text-accent-foreground"
+                )}
+              >
+                <Eye className="size-5" />
+                <span>Watchlist</span>
               </button>
 
               <button
@@ -139,6 +155,7 @@ function App() {
               <h2 className="text-lg font-semibold capitalize">
                 {activeTab === 'dashboard' && 'Portfolio Übersicht'}
                 {activeTab === 'portfolio' && 'Meine Positionen'}
+                {activeTab === 'watchlist' && 'Watchlist'}
                 {activeTab === 'calculator' && 'Performance-Rechner'}
                 {activeTab === 'dividends' && 'Dividenden Planer'}
                 {activeTab === 'settings' && 'Einstellungen'}

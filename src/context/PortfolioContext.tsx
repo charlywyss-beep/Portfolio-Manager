@@ -20,7 +20,10 @@ interface PortfolioContextType {
     addHistoryEntry: (entry: Omit<import('../types').PortfolioHistoryEntry, 'id'>) => void;
     deleteHistoryEntry: (id: string) => void;
     updateHistoryEntry: (id: string, updates: Partial<import('../types').PortfolioHistoryEntry>) => void;
-    importData: (data: { positions: Position[], stocks: Stock[], fixedDeposits: import('../types').FixedDeposit[], history: import('../types').PortfolioHistoryEntry[] }) => boolean;
+    importData: (data: { positions: Position[], stocks: Stock[], fixedDeposits: import('../types').FixedDeposit[], history: import('../types').PortfolioHistoryEntry[], watchlist: string[] }) => boolean;
+    watchlist: string[];
+    addToWatchlist: (stockId: string) => void;
+    removeFromWatchlist: (stockId: string) => void;
 }
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
@@ -43,6 +46,11 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         return stored ? JSON.parse(stored) : [];
     });
 
+    const [watchlist, setWatchlist] = useState<string[]>(() => {
+        const stored = localStorage.getItem('portfolio_watchlist');
+        return stored ? JSON.parse(stored) : [];
+    });
+
     useEffect(() => {
         localStorage.setItem('portfolio_positions', JSON.stringify(positions));
     }, [positions]);
@@ -54,6 +62,10 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         localStorage.setItem('portfolio_fixed_deposits', JSON.stringify(fixedDeposits));
     }, [fixedDeposits]);
+
+    useEffect(() => {
+        localStorage.setItem('portfolio_watchlist', JSON.stringify(watchlist));
+    }, [watchlist]);
 
     const addStock = (stockData: Omit<Stock, 'id'>) => {
         const newId = `stock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -136,6 +148,18 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         });
     };
 
+
+    const addToWatchlist = (stockId: string) => {
+        setWatchlist((prev) => {
+            if (prev.includes(stockId)) return prev;
+            return [...prev, stockId];
+        });
+    };
+
+    const removeFromWatchlist = (stockId: string) => {
+        setWatchlist((prev) => prev.filter((id) => id !== stockId));
+    };
+
     const updateStockPrice = (stockId: string, newPrice: number) => {
         setStocks((prev) =>
             prev.map((s) =>
@@ -162,12 +186,13 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         );
     };
 
-    const importData = (data: { positions: Position[], stocks: Stock[], fixedDeposits: any[], history: any[] }) => {
+    const importData = (data: { positions: Position[], stocks: Stock[], fixedDeposits: any[], history: any[], watchlist?: string[] }) => {
         try {
             if (data.positions) setPositions(data.positions);
             if (data.stocks) setStocks(data.stocks);
             if (data.fixedDeposits) setFixedDeposits(data.fixedDeposits);
             if (data.history) setHistory(data.history);
+            if (data.watchlist) setWatchlist(data.watchlist);
             return true;
         } catch (e) {
             console.error("Import failed", e);
@@ -195,7 +220,10 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 addHistoryEntry,
                 deleteHistoryEntry,
                 updateHistoryEntry,
-                importData
+                importData,
+                watchlist,
+                addToWatchlist,
+                removeFromWatchlist
             }}
         >
             {children}

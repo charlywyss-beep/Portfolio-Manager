@@ -44,7 +44,13 @@ export function Settings() {
                 }
 
                 if (window.confirm(`Möchten Sie wirklich ein Backup laden?\n\nDatum: ${json.exportedAt || 'Unbekannt'}\nPositionen: ${json.positions.length}\n\nACHTUNG: Alle aktuellen Daten werden überschrieben!`)) {
-                    const success = importData(json);
+                    const success = importData({
+                        positions: json.positions,
+                        stocks: json.stocks,
+                        fixedDeposits: json.fixedDeposits || [],
+                        history: json.history || [],
+                        watchlist: (json.watchlist || []) as string[]
+                    });
                     if (success) {
                         setImportStatus('success');
                         setImportMessage(`Erfolgreich geladen: ${json.positions.length} Positionen, ${json.fixedDeposits?.length || 0} Bankkonten.`);
@@ -66,7 +72,7 @@ export function Settings() {
 
     const handleReset = () => {
         if (window.confirm("ACHTUNG: Wirklich ALLE Daten unwiderruflich löschen?\n\nDas Portfolio wird komplett zurückgesetzt.")) {
-            importData({ positions: [], stocks: [], fixedDeposits: [], history: [] });
+            importData({ positions: [], stocks: [], fixedDeposits: [], history: [], watchlist: [] });
             setImportStatus('success');
             setImportMessage("Alle Daten wurden gelöscht.");
         }

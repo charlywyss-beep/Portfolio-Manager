@@ -105,6 +105,7 @@ export function DividendPlanner() {
                                     <th className="text-left py-3 px-4 font-semibold">Aktie</th>
                                     <th className="text-right py-3 px-4 font-semibold">Anteile</th>
                                     <th className="text-right py-3 px-4 font-semibold">Rendite %</th>
+                                    <th className="text-right py-3 px-4 font-semibold">Betrag/Aktie</th>
                                     <th className="text-right py-3 px-4 font-semibold">Jährlich</th>
                                     <th className="text-right py-3 px-4 font-semibold">Quartalsweise</th>
                                     <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
@@ -160,6 +161,9 @@ export function DividendPlanner() {
                                                 <td className="text-right py-3 px-4">{position.shares}</td>
                                                 <td className="text-right py-3 px-4 text-green-600 dark:text-green-400 font-medium">
                                                     {stock.dividendYield?.toFixed(2)}%
+                                                </td>
+                                                <td className="text-right py-3 px-4 font-medium">
+                                                    {stock.dividendAmount ? formatCurrency(stock.dividendAmount, stock.dividendCurrency || stock.currency) : '-'}
                                                 </td>
                                                 <td className="text-right py-3 px-4 font-semibold text-primary">
                                                     {annualDisplay}
