@@ -10,6 +10,7 @@ interface PortfolioContextType {
     deletePosition: (id: string) => void;
     updatePosition: (id: string, updates: Partial<Position>) => void;
     addStock: (stock: Omit<Stock, 'id'>) => string;
+    updateStock: (id: string, updates: Partial<Stock>) => void;
     updateStockPrice: (stockId: string, newPrice: number) => void;
     updateStockDividendYield: (stockId: string, dividendYield: number) => void;
     updateStockDividend: (stockId: string, dividendData: Partial<Pick<Stock, 'dividendYield' | 'dividendAmount' | 'dividendCurrency' | 'dividendExDate' | 'dividendPayDate' | 'dividendDates' | 'dividendFrequency'>>) => void;
@@ -160,6 +161,10 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         setWatchlist((prev) => prev.filter((id) => id !== stockId));
     };
 
+    const updateStock = (id: string, updates: Partial<Stock>) => {
+        setStocks(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+    };
+
     const updateStockPrice = (stockId: string, newPrice: number) => {
         setStocks((prev) =>
             prev.map((s) =>
@@ -210,6 +215,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 deletePosition,
                 updatePosition,
                 addStock,
+                updateStock,
                 updateStockPrice,
                 updateStockDividendYield,
                 updateStockDividend,

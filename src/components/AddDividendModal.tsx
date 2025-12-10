@@ -21,7 +21,7 @@ const getFrequencyFactor = (freq: string) => {
 };
 
 export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendModalProps) {
-    const { stocks, positions, updateStockDividend, updateStockPrice } = usePortfolio();
+    const { stocks, positions, updateStockDividend, updateStockPrice, updateStock } = usePortfolio();
 
     // 1. All Hooks MUST be at the top level
     const [selectedStockId, setSelectedStockId] = useState('');
@@ -29,6 +29,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
     const [amount, setAmount] = useState('');
     const [yieldPercent, setYieldPercent] = useState('');
     const [currency, setCurrency] = useState<Currency>('CHF');
+    const [logoUrl, setLogoUrl] = useState(''); // NEW: Logo URL state
     const [exDate, setExDate] = useState('');
     const [payDate, setPayDate] = useState('');
     const [frequency, setFrequency] = useState<'quarterly' | 'semi-annually' | 'annually' | 'monthly'>('quarterly');
@@ -52,6 +53,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
             setAmount(editingStock.dividendAmount?.toString() || '');
             setYieldPercent(editingStock.dividendYield?.toString() || '');
             setCurrency(editingStock.dividendCurrency || editingStock.currency);
+            setLogoUrl(editingStock.logoUrl || '');
             setExDate(editingStock.dividendExDate || '');
             setPayDate(editingStock.dividendPayDate || '');
             setFrequency(editingStock.dividendFrequency || 'quarterly');
@@ -83,6 +85,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
             setAmount('');
             setYieldPercent('');
             setCurrency('CHF');
+            setLogoUrl('');
             setExDate('');
             setPayDate('');
             setFrequency('quarterly');
@@ -99,6 +102,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                 setYieldPercent(stock.dividendYield?.toString() || '');
                 setAmount(stock.dividendAmount?.toString() || '');
                 setCurrency(stock.dividendCurrency || stock.currency);
+                setLogoUrl(stock.logoUrl || '');
                 setExDate(stock.dividendExDate || '');
                 setPayDate(stock.dividendPayDate || '');
                 setFrequency(stock.dividendFrequency || 'quarterly');
@@ -200,6 +204,11 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
         // NEW: Update Price if changed
         if (price && (!selectedStock || parseFloat(price) !== selectedStock.currentPrice)) {
             updateStockPrice(selectedStockId, parseFloat(price));
+        }
+
+        // NEW: Update Logo if changed
+        if (logoUrl !== undefined && (!selectedStock || logoUrl !== selectedStock.logoUrl)) {
+            updateStock(selectedStockId, { logoUrl });
         }
 
         // Dividends Logic
@@ -332,6 +341,18 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                             <option value="EUR">EUR (Euro)</option>
                             <option value="GBp">GBp (Britische Pence)</option>
                         </select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Logo URL (Optional)</label>
+                        <input
+                            type="url"
+                            placeholder="https://example.com/logo.png"
+                            value={logoUrl}
+                            onChange={(e) => setLogoUrl(e.target.value)}
+                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                        />
+                        <p className="text-xs text-muted-foreground">Tipp: Kopiere eine Bildadresse (z.B. von Google Images oder logo.clearbit.com/domain.com)</p>
                     </div>
 
                     {selectedStock && position && amount && !isNaN(parseFloat(amount)) && (
