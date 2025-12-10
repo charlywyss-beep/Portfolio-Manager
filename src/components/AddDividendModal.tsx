@@ -356,8 +356,9 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                         </select>
                     </div>
 
-                    {frequency === 'quarterly' || frequency === 'semi-annually' ? (
-                        <div className="space-y-3 bg-muted/30 p-3 rounded-lg border border-border">
+                    {/* Date Logic Refactored using toggle */}
+                    {(frequency === 'quarterly' || frequency === 'semi-annually') ? (
+                        <div key={frequency} className="space-y-3 bg-muted/30 p-3 rounded-lg border border-border">
                             <label className="text-sm font-bold block mb-2">
                                 {frequency === 'quarterly' ? 'Auszahlungsdaten (4 Quartale)' : 'Auszahlungsdaten (2 Zahlungen)'}
                             </label>
@@ -389,7 +390,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                             ))}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 gap-4">
+                        <div key="single-date" className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Ex-Datum</label>
                                 <input
