@@ -99,6 +99,7 @@ export function usePortfolioData() {
                         .map(d => ({
                             stock: p.stock,
                             payDate: d.payDate,
+                            exDate: d.exDate,
                             amount: p.stock.dividendAmount ? p.stock.dividendAmount * p.shares : 0,
                             currency: p.stock.dividendCurrency || p.stock.currency
                         }));
@@ -109,6 +110,7 @@ export function usePortfolioData() {
                     return [{
                         stock: p.stock,
                         payDate: p.stock.dividendPayDate,
+                        exDate: p.stock.dividendExDate,
                         amount: p.stock.dividendAmount ? p.stock.dividendAmount * p.shares : 0,
                         currency: p.stock.dividendCurrency || p.stock.currency
                     }];

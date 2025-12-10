@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
-import { ArrowUpRight, ArrowDownRight, DollarSign, Calendar, TrendingUp, BarChart3, Plus, Trash2, Edit } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, DollarSign, Calendar, TrendingUp, BarChart3, Plus, Trash2, Edit, Bell } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -224,25 +224,38 @@ export function Dashboard() {
                         <Calendar className="size-5 text-muted-foreground" />
                     </div>
                     <div className="space-y-4">
-                        {upcomingDividends.map((div, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                                <div className="flex items-center gap-3">
-                                    {div.stock?.logoUrl && (
-                                        <img src={div.stock.logoUrl} alt={div.stock.name} className="size-8 rounded-full bg-white object-contain p-1 border border-border" />
-                                    )}
-                                    <div>
-                                        <p className="font-bold text-lg">{div.stock.symbol}</p>
-                                        <p className="text-base text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
+                        {upcomingDividends.map((div, idx) => {
+                            const daysToEx = div.exDate ? Math.ceil((new Date(div.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                            const showExWarning = daysToEx !== null && daysToEx >= 0 && daysToEx <= 7;
+
+                            return (
+                                <div key={idx} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        {div.stock?.logoUrl && (
+                                            <img src={div.stock.logoUrl} alt={div.stock.name} className="size-8 rounded-full bg-white object-contain p-1 border border-border" />
+                                        )}
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-bold text-lg">{div.stock.symbol}</p>
+                                                {showExWarning && (
+                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
+                                                        <Bell className="size-3" />
+                                                        <span>Ex in {daysToEx} Tagen</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <p className="text-base text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-bold text-xl text-green-600 dark:text-green-400">
+                                            +{formatCurrency(div.amount, div.currency)}
+                                        </p>
+                                        <p className="text-sm font-medium text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="font-bold text-xl text-green-600 dark:text-green-400">
-                                        +{formatCurrency(div.amount, div.currency)}
-                                    </p>
-                                    <p className="text-sm font-medium text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
-                                </div>
-                            </div>
-                        ))}
+                            )
+                        })}
                         {upcomingDividends.length === 0 && <p className="text-sm text-muted-foreground">Keine anstehenden Dividenden.</p>}
                     </div>
                 </div>
