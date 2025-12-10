@@ -304,14 +304,14 @@ export function Dashboard() {
                                                             <span>Ex in {daysToEx} Tagen</span>
                                                         </div>
                                                     </div>
-                                                    <p className="text-sm text-muted-foreground">{item.stock.name}</p>
+                                                    <p className="text-sm text-blue-600 dark:text-blue-300 font-medium">{item.stock.name}</p>
                                                 </div>
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-bold text-green-600 dark:text-green-400">
                                                     {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}%` : '-'}
                                                 </p>
-                                                <p className="text-xs text-muted-foreground">Rendite</p>
+                                                <p className="text-xs text-blue-500 dark:text-blue-400">Rendite</p>
                                             </div>
                                         </div>
                                     );
