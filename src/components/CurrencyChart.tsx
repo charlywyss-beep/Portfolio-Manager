@@ -132,7 +132,7 @@ export function CurrencyChart({ inverse = false }: Props) {
                 )}
             </div>
 
-            <div className="flex-1 w-full min-h-[200px]">
+            <div className="flex-1 w-full h-[300px]">
                 {isLoading ? (
                     <div className="w-full h-full flex items-center justify-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
