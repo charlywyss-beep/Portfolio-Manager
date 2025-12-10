@@ -354,7 +354,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
                     </div>
                 )}
                 {/* Top 5 Performance Chart */}
-                <div className="col-span-1 lg:col-span-5 p-6 rounded-xl bg-card border border-border shadow-sm flex flex-col">
+                <div className="col-span-1 lg:col-span-5 p-6 rounded-xl bg-card border border-border shadow-sm flex flex-col min-h-[400px]">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-bold">Top 5 Performance</h3>
                         <BarChart3 className="size-5 text-muted-foreground" />
