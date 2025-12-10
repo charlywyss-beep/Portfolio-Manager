@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { Eye, Plus, Trash2, Edit, AlertCircle } from 'lucide-react';
+import { Eye, Plus, Trash2, Edit } from 'lucide-react';
 
 import { AddWatchlistStockModal } from '../components/AddWatchlistStockModal';
 import { AddDividendModal } from '../components/AddDividendModal';
@@ -122,41 +122,35 @@ export function Watchlist() {
                                                                 : 'Jährlich'}
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground">
-                                                    <div className="flex flex-col items-end gap-1">
-                                                        {stock.dividendDates && stock.dividendDates.length > 0 ? (
-                                                            <div className="flex flex-col items-end gap-0.5">
-                                                                {stock.dividendDates
-                                                                    .map((d, i) => ({ ...d, label: stock.dividendFrequency === 'semi-annually' ? `${i + 1}.` : `Q${i + 1}` }))
-                                                                    .filter(d => d.exDate)
-                                                                    .sort((a, b) => new Date(a.exDate).getTime() - new Date(b.exDate).getTime())
-                                                                    .map((d, idx) => {
-                                                                        const dateObj = new Date(d.exDate);
-                                                                        const dDays = Math.ceil((dateObj.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                                                                        const dIsSoon = dDays >= 0 && dDays <= 14;
+                                                    {stock.dividendDates && stock.dividendDates.length > 0 ? (
+                                                        <div className="text-xs whitespace-nowrap">
+                                                            {stock.dividendDates
+                                                                .map((d, i) => ({ ...d, label: stock.dividendFrequency === 'semi-annually' ? `${i + 1}.` : `Q${i + 1}` }))
+                                                                .filter(d => d.exDate)
+                                                                .sort((a, b) => new Date(a.exDate).getTime() - new Date(b.exDate).getTime())
+                                                                .map((d, idx) => {
+                                                                    const dateObj = new Date(d.exDate);
+                                                                    const dDays = Math.ceil((dateObj.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                                                                    const dIsSoon = dDays >= 0 && dDays <= 14;
+                                                                    const formattedDate = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
 
-                                                                        return (
-                                                                            <div key={idx} className="flex items-center gap-2">
-                                                                                <span className="text-[10px] text-muted-foreground/70 font-medium w-4 text-right">{d.label}</span>
-                                                                                <span className="text-xs whitespace-nowrap font-medium">{dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span>
-                                                                                {dIsSoon && <AlertCircle className="size-3 text-yellow-500" />}
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                            </div>
-                                                        ) : (
-                                                            <div className="flex items-center justify-end gap-2">
-                                                                {stock.dividendExDate ? new Date(stock.dividendExDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
-                                                                {isExSoon && (
-                                                                    <span title={`Ex-Datum in ${daysToEx} Tagen`} className="text-yellow-600 dark:text-yellow-400">
-                                                                        <AlertCircle className="size-4" />
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                                    return (
+                                                                        <span key={idx}>
+                                                                            {d.label} {formattedDate}
+                                                                            {dIsSoon && ' ⚠️'}
+                                                                            {idx < (stock.dividendDates?.filter(dd => dd.exDate).length ?? 0) - 1 && <br />}
+                                                                        </span>
+                                                                    );
+                                                                })}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-xs whitespace-nowrap">
+                                                            {stock.dividendExDate ? new Date(stock.dividendExDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
+                                                            {isExSoon && ' ⚠️'}
+                                                        </div>
+                                                    )}
                                                 </td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground">
-                                                    {stock.dividendPayDate ? new Date(stock.dividendPayDate).toLocaleDateString('de-DE') : '-'}
+                                                <td className="text-right py-3 px-4 text-muted-foreground text-xs">{stock.dividendPayDate ? new Date(stock.dividendPayDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
                                                 </td>
                                                 <td className="text-right py-3 px-4">
                                                     <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity">
