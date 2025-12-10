@@ -136,8 +136,7 @@ export function Watchlist() {
 
                                                                     return (
                                                                         <span key={idx}>
-                                                                            {d.label} {formattedDate}
-                                                                            {dIsSoon && ' ⚠️'}
+                                                                            {dIsSoon && '⚠️ '}{d.label} {formattedDate}
                                                                             {idx < (stock.dividendDates?.filter(dd => dd.exDate).length ?? 0) - 1 && <br />}
                                                                         </span>
                                                                     );
@@ -145,8 +144,7 @@ export function Watchlist() {
                                                         </div>
                                                     ) : (
                                                         <div className="text-xs whitespace-nowrap">
-                                                            {stock.dividendExDate ? new Date(stock.dividendExDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
-                                                            {isExSoon && ' ⚠️'}
+                                                            {isExSoon && '⚠️ '}{stock.dividendExDate ? new Date(stock.dividendExDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
                                                         </div>
                                                     )}
                                                 </td>
