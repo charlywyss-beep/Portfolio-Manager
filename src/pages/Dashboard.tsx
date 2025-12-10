@@ -28,11 +28,7 @@ export function Dashboard() {
     const [editingHistoryEntry, setEditingHistoryEntry] = useState<any>(null);
     const [watchlistTimeframe, setWatchlistTimeframe] = useState<number>(90); // Default 90 days
 
-    // Filter watchlist opportunities based on selected timeframe
-    const filteredWatchlistDividends = upcomingWatchlistDividends.filter(item => {
-        const daysToEx = Math.ceil((new Date(item.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-        return daysToEx <= watchlistTimeframe;
-    });
+
 
     // Prepare chart data: Top 5 Performers
     const chartData = positions
@@ -61,6 +57,15 @@ export function Dashboard() {
         }
         return null;
     };
+
+    // NEW: Filter by selected timeframe (check if ANY date fits)
+    const filteredWatchlistDividends = upcomingWatchlistDividends.filter(item => {
+        return item.exDates.some(date => {
+            const diffTime = new Date(date).getTime() - new Date().getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays <= watchlistTimeframe;
+        });
+    });
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -287,10 +292,16 @@ export function Dashboard() {
                                 <option value={365}>1 Jahr</option>
                             </select>
                         </div>
-                        <div className="space-y-4">
+                        <div className="space-y-4 flex-1 overflow-y-auto max-h-[400px]">
                             {filteredWatchlistDividends.length > 0 ? (
                                 filteredWatchlistDividends.map((item, idx) => {
-                                    const daysToEx = Math.ceil((new Date(item.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                                    // Filter dates again for display based on selection
+                                    const visibleDates = item.exDates.filter(date => {
+                                        const diffTime = new Date(date).getTime() - new Date().getTime();
+                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                        return diffDays <= watchlistTimeframe;
+                                    });
+
                                     return (
                                         <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50 hover:bg-blue-100/50 transition-colors">
                                             <div className="flex items-center gap-3">
@@ -298,13 +309,23 @@ export function Dashboard() {
                                                     <img src={item.stock.logoUrl} alt={item.stock.name} className="size-8 rounded-full bg-white object-contain p-1 border border-blue-200" />
                                                 )}
                                                 <div>
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-2 mb-1">
                                                         <p className="font-bold text-lg text-foreground">{item.stock.symbol}</p>
-                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow text-blue-600 dark:text-blue-400 text-xs font-bold">
-                                                            <span>Ex in {daysToEx} Tagen</span>
-                                                        </div>
                                                     </div>
-                                                    <div className="mt-1 px-2 py-0.5 w-fit rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow">
+
+                                                    {/* Dates Row - Horizontal Scroll if needed, or wrap */}
+                                                    <div className="flex flex-wrap gap-2 mb-2">
+                                                        {visibleDates.map((date, dIdx) => {
+                                                            const daysToEx = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                                                            return (
+                                                                <div key={dIdx} className="px-2 py-0.5 rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow text-blue-600 dark:text-blue-400 text-xs font-bold whitespace-nowrap">
+                                                                    Ex in {daysToEx} Tagen
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+
+                                                    <div className="px-2 py-0.5 w-fit rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow">
                                                         <p className="text-sm text-blue-600 dark:text-blue-300 font-medium">{item.stock.name}</p>
                                                     </div>
                                                 </div>
@@ -328,10 +349,8 @@ export function Dashboard() {
                         </div>
                     </div>
                 )}
-
-
                 {/* Top 5 Performance Chart */}
-                <div className="p-6 rounded-xl bg-card border border-border shadow-sm flex flex-col">
+                <div className="col-span-1 lg:col-span-5 p-6 rounded-xl bg-card border border-border shadow-sm flex flex-col">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-bold">Top 5 Performance</h3>
                         <BarChart3 className="size-5 text-muted-foreground" />
@@ -373,7 +392,7 @@ export function Dashboard() {
                     <CurrencyChart inverse={false} />
                     <CurrencyChart inverse={true} />
                 </div>
-            </div>
+            </div >
 
             <AddHistoryEntryModal
                 isOpen={isHistoryModalOpen}

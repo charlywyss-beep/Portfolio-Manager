@@ -130,35 +130,34 @@ export function usePortfolioData() {
         futureLimit.setDate(today.getDate() + 365); // Look ahead 1 year (filtering happens in UI)
 
         return watchlistStocks
-            .flatMap(stock => {
-                let nextExDate: string | undefined;
+            .map(stock => {
+                let upcomingDates: string[] = [];
 
                 // Check quarterly dates
                 if (stock.dividendDates && stock.dividendDates.length > 0) {
-                    // Find first upcoming Ex-Date
-                    const upcoming = stock.dividendDates.find(d => d.exDate && new Date(d.exDate) >= today);
-                    if (upcoming) nextExDate = upcoming.exDate;
+                    // Find ALL upcoming Ex-Dates within the next year
+                    upcomingDates = stock.dividendDates
+                        .filter(d => d.exDate && new Date(d.exDate) >= today && new Date(d.exDate) <= futureLimit)
+                        .map(d => d.exDate)
+                        .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
                 }
                 // Fallback to single date
                 else if (stock.dividendExDate) {
-                    if (new Date(stock.dividendExDate) >= today) {
-                        nextExDate = stock.dividendExDate;
+                    if (new Date(stock.dividendExDate) >= today && new Date(stock.dividendExDate) <= futureLimit) {
+                        upcomingDates = [stock.dividendExDate];
                     }
                 }
 
-                if (nextExDate) {
-                    const exDateObj = new Date(nextExDate);
-                    if (exDateObj <= futureLimit) {
-                        return [{
-                            stock,
-                            exDate: nextExDate,
-                            payDate: 'N/A' // Not relevant for opportunity
-                        }];
-                    }
+                if (upcomingDates.length > 0) {
+                    return {
+                        stock,
+                        exDates: upcomingDates // Return array of dates
+                    };
                 }
-                return [];
+                return null;
             })
-            .sort((a, b) => new Date(a.exDate).getTime() - new Date(b.exDate).getTime());
+            .filter((item): item is NonNullable<typeof item> => item !== null)
+            .sort((a, b) => new Date(a.exDates[0]).getTime() - new Date(b.exDates[0]).getTime()); // Sort by earliest date
     }, [stocks, watchlist]);
 
     return {
