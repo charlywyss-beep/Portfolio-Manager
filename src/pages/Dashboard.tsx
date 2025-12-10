@@ -300,11 +300,11 @@ export function Dashboard() {
                                                 <div>
                                                     <div className="flex items-center gap-2">
                                                         <p className="font-bold text-lg text-foreground">{item.stock.symbol}</p>
-                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-800 shadow-sm text-blue-600 dark:text-blue-400 text-xs font-bold">
+                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow text-blue-600 dark:text-blue-400 text-xs font-bold">
                                                             <span>Ex in {daysToEx} Tagen</span>
                                                         </div>
                                                     </div>
-                                                    <div className="mt-1 px-2 py-0.5 w-fit rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-800 shadow-sm">
+                                                    <div className="mt-1 px-2 py-0.5 w-fit rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow">
                                                         <p className="text-sm text-blue-600 dark:text-blue-300 font-medium">{item.stock.name}</p>
                                                     </div>
                                                 </div>
