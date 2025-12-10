@@ -359,7 +359,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
                         <h3 className="text-lg font-bold">Top 5 Performance</h3>
                         <BarChart3 className="size-5 text-muted-foreground" />
                     </div>
-                    <div className="flex-1 w-full h-[300px]">
+                    <div className="w-full h-[300px]">
                         {chartData.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
