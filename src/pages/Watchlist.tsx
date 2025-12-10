@@ -3,8 +3,9 @@ import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
 import { Eye, Plus, Trash2, Edit, AlertCircle } from 'lucide-react';
-import { EditStockDialog } from '../components/EditStockDialog';
+
 import { AddWatchlistStockModal } from '../components/AddWatchlistStockModal';
+import { AddDividendModal } from '../components/AddDividendModal';
 
 export function Watchlist() {
     const { stocks, watchlist, removeFromWatchlist, addToWatchlist } = usePortfolio();
@@ -178,8 +179,8 @@ export function Watchlist() {
             />
 
             {editingStock && (
-                <EditStockDialog
-                    stock={editingStock}
+                <AddDividendModal
+                    editingStock={editingStock}
                     isOpen={!!editingStock}
                     onClose={() => setEditingStock(null)}
                 />

@@ -21,10 +21,11 @@ const getFrequencyFactor = (freq: string) => {
 };
 
 export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendModalProps) {
-    const { stocks, positions, updateStockDividend } = usePortfolio();
+    const { stocks, positions, updateStockDividend, updateStockPrice } = usePortfolio();
 
-    // 1. All Hooks MUST be at the top level, before any return statements
+    // 1. All Hooks MUST be at the top level
     const [selectedStockId, setSelectedStockId] = useState('');
+    const [price, setPrice] = useState(''); // NEW: Price state
     const [amount, setAmount] = useState('');
     const [yieldPercent, setYieldPercent] = useState('');
     const [currency, setCurrency] = useState<Currency>('CHF');
@@ -39,7 +40,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
         { exDate: '', payDate: '' }
     ]);
 
-    // Derived state (safe to have here, but used in effects)
+    // Derived state
     const selectedStock = stocks.find(s => s.id === selectedStockId);
     const position = positions.find(p => p.stockId === selectedStockId);
 
@@ -47,6 +48,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
     useEffect(() => {
         if (editingStock) {
             setSelectedStockId(editingStock.id);
+            setPrice(editingStock.currentPrice?.toString() || ''); // Init Price
             setAmount(editingStock.dividendAmount?.toString() || '');
             setYieldPercent(editingStock.dividendYield?.toString() || '');
             setCurrency(editingStock.dividendCurrency || editingStock.currency);
@@ -55,8 +57,6 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
             setFrequency(editingStock.dividendFrequency || 'quarterly');
 
             if (editingStock.dividendDates && editingStock.dividendDates.length > 0) {
-                // Ensure we always have 4 for the UI if quarterly, even if the data says otherwise (though it should be sync)
-                // But generally just fill with what we have + empties if needed
                 const dates = [...editingStock.dividendDates];
                 while (dates.length < 4) dates.push({ exDate: '', payDate: '' });
                 setQuarterlyDates(dates);
@@ -69,8 +69,9 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                 ]);
             }
         } else if (isOpen && !editingStock) {
-            // Reset form when adding new
+            // Reset form
             setSelectedStockId('');
+            setPrice('');
             setAmount('');
             setYieldPercent('');
             setCurrency('CHF');
@@ -81,11 +82,12 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
         }
     }, [editingStock, isOpen]);
 
-    // Auto-select stock and pre-fill when user selects from dropdown
+    // Auto-select stock and pre-fill
     useEffect(() => {
         if (selectedStockId && !editingStock) {
             const stock = stocks.find(s => s.id === selectedStockId);
             if (stock) {
+                setPrice(stock.currentPrice?.toString() || '');
                 setYieldPercent(stock.dividendYield?.toString() || '');
                 setAmount(stock.dividendAmount?.toString() || '');
                 setCurrency(stock.dividendCurrency || stock.currency);
@@ -103,16 +105,40 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
         }
     }, [selectedStockId, stocks, editingStock]);
 
-    // 2. Helper Logic (Handlers) - Safe to define here
+    // Handlers
 
-    // Auto-calculate between yield% ↔ amount/share (Annualized)
+    // Helper to get effective price
+    const getEffectivePrice = () => {
+        return price ? parseFloat(price) : (selectedStock?.currentPrice || 0);
+    };
+
+    const handlePriceChange = (newPrice: string) => {
+        setPrice(newPrice);
+        // Recalc Amount if Yield is stationary? Or Recalc Yield if Amount is stationary?
+        // Usually: Price changes -> Amount (if constant yield) changes? Or Yield (if constant Amount) changes?
+        // Let's keep Amount constant and update Yield?
+        // Or keep Yield constant and update Amount?
+        // Typically: Dividend Amount is absolute. Yield fluctuates with Price.
+        // So calculate NEW YIELD based on valid Amount and New Price.
+        if (newPrice && !isNaN(parseFloat(newPrice)) && amount && !isNaN(parseFloat(amount))) {
+            const currentP = parseFloat(newPrice);
+            const factor = getFrequencyFactor(frequency);
+            const divAmount = parseFloat(amount);
+            // Yield = (Annual Div / Price) * 100
+            const newYield = ((divAmount * factor) / currentP) * 100;
+            if (isFinite(newYield)) {
+                setYieldPercent(newYield.toFixed(2));
+            }
+        }
+    };
+
     const handleYieldChange = (newYield: string) => {
         setYieldPercent(newYield);
-        if (selectedStock && newYield && !isNaN(parseFloat(newYield))) {
+        const currentP = getEffectivePrice();
+        if (currentP && newYield && !isNaN(parseFloat(newYield))) {
             const yieldValue = parseFloat(newYield);
             const factor = getFrequencyFactor(frequency);
-            // Amount = (Price * Yield) / 100 / Factor
-            const dividendAmount = ((selectedStock.currentPrice * yieldValue) / 100) / factor;
+            const dividendAmount = ((currentP * yieldValue) / 100) / factor;
             if (isFinite(dividendAmount)) {
                 setAmount(dividendAmount.toFixed(4));
             }
@@ -121,24 +147,24 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
 
     const handleAmountChange = (newAmount: string) => {
         setAmount(newAmount);
-        if (selectedStock && newAmount && !isNaN(parseFloat(newAmount))) {
+        const currentP = getEffectivePrice();
+        if (currentP && newAmount && !isNaN(parseFloat(newAmount))) {
             const dividendAmount = parseFloat(newAmount);
             const factor = getFrequencyFactor(frequency);
-            const yieldValue = ((dividendAmount * factor) / selectedStock.currentPrice) * 100;
+            const yieldValue = ((dividendAmount * factor) / currentP) * 100;
             if (isFinite(yieldValue)) {
                 setYieldPercent(yieldValue.toFixed(2));
             }
         }
     };
 
-    // Update yield when frequency changes (instead of useEffect, we do it in the handler)
     const handleFrequencyChange = (newFrequency: 'quarterly' | 'semi-annually' | 'annually' | 'monthly') => {
         setFrequency(newFrequency);
-        // Optional: Recalculate Yield if Amount is present, to keep Amount constant but update Yield logic
-        if (amount && selectedStock && !isNaN(parseFloat(amount))) {
+        const currentP = getEffectivePrice();
+        if (amount && currentP && !isNaN(parseFloat(amount))) {
             const dividendAmount = parseFloat(amount);
             const factor = getFrequencyFactor(newFrequency);
-            const yieldValue = ((dividendAmount * factor) / selectedStock.currentPrice) * 100;
+            const yieldValue = ((dividendAmount * factor) / currentP) * 100;
             if (isFinite(yieldValue)) {
                 setYieldPercent(yieldValue.toFixed(2));
             }
@@ -156,18 +182,20 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
 
         if (!selectedStockId) return;
 
-        // If quarterly, use the array. Otherwise clear the array and use single fields.
+        // NEW: Update Price if changed
+        if (price && (!selectedStock || parseFloat(price) !== selectedStock.currentPrice)) {
+            updateStockPrice(selectedStockId, parseFloat(price));
+        }
+
+        // Dividends Logic
         let submissionDates = undefined;
         let submissionExDate = exDate || undefined;
         let submissionPayDate = payDate || undefined;
 
         if (frequency === 'quarterly') {
-            // Filter out empty entries if desired, or keep them? 
-            // Better to keep valid date pairs.
-            const validDates = quarterlyDates.filter(d => d.payDate); // At least payDate is usually required for calculation
+            const validDates = quarterlyDates.filter(d => d.payDate);
             if (validDates.length > 0) {
                 submissionDates = validDates;
-                // Maybe set single fields to the FIRST date as fallback/display?
                 submissionExDate = validDates[0].exDate;
                 submissionPayDate = validDates[0].payDate;
             }
@@ -229,6 +257,23 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                             </p>
                         )}
                     </div>
+
+
+
+                    {selectedStock && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Aktueller Kurs</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                required
+                                value={price}
+                                onChange={(e) => handlePriceChange(e.target.value)}
+                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                            />
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -363,7 +408,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
