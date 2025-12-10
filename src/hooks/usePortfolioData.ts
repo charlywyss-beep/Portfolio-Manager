@@ -15,7 +15,7 @@ const getFrequencyFactor = (freq?: string) => {
 };
 
 export function usePortfolioData() {
-    const { positions: rawPositions, stocks } = usePortfolio();
+    const { positions: rawPositions, stocks, watchlist } = usePortfolio();
     const { rates } = useExchangeRates();
 
     const positions = useMemo(() => {
@@ -118,14 +118,53 @@ export function usePortfolioData() {
 
                 return [];
             })
-            // Filter out past dates? Or keep them? Usually "upcoming" means future. 
-            // For now, let's just sort them. The Dashboard might filter or show all.
+            // FIlter out past dates? Or keep them? Usually "upcoming" means future. 
             .sort((a, b) => new Date(a.payDate).getTime() - new Date(b.payDate).getTime());
     }, [positions]);
+
+    // NEW: Calculate upcoming watchlist opportunities (Ex-Date relative)
+    const upcomingWatchlistDividends = useMemo(() => {
+        const watchlistStocks = stocks.filter(s => watchlist.includes(s.id));
+        const today = new Date();
+        const futureLimit = new Date();
+        futureLimit.setDate(today.getDate() + 30); // Look ahead 30 days
+
+        return watchlistStocks
+            .flatMap(stock => {
+                let nextExDate: string | undefined;
+
+                // Check quarterly dates
+                if (stock.dividendDates && stock.dividendDates.length > 0) {
+                    // Find first upcoming Ex-Date
+                    const upcoming = stock.dividendDates.find(d => d.exDate && new Date(d.exDate) >= today);
+                    if (upcoming) nextExDate = upcoming.exDate;
+                }
+                // Fallback to single date
+                else if (stock.dividendExDate) {
+                    if (new Date(stock.dividendExDate) >= today) {
+                        nextExDate = stock.dividendExDate;
+                    }
+                }
+
+                if (nextExDate) {
+                    const exDateObj = new Date(nextExDate);
+                    if (exDateObj <= futureLimit) {
+                        return [{
+                            stock,
+                            exDate: nextExDate,
+                            payDate: 'N/A' // Not relevant for opportunity
+                        }];
+                    }
+                }
+                return [];
+            })
+            .sort((a, b) => new Date(a.exDate).getTime() - new Date(b.exDate).getTime());
+    }, [stocks, watchlist]);
 
     return {
         positions,
         totals,
         upcomingDividends,
+        upcomingWatchlistDividends
     };
 }
