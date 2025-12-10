@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, Menu, X } from 'lucide-react';
 import { cn } from './utils';
 import { PortfolioProvider } from './context/PortfolioContext';
 import { ExchangeRateProvider } from './context/ExchangeRateContext';
@@ -14,6 +14,7 @@ import { Watchlist } from './pages/Watchlist';
 function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'watchlist' | 'calculator' | 'dividends' | 'settings'>('dashboard');
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -44,8 +45,20 @@ function App() {
     <ExchangeRateProvider>
       <PortfolioProvider>
         <div className="flex h-screen w-full bg-background text-foreground transition-colors duration-300">
+          {/* Mobile Overlay */}
+          {isSidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
+
           {/* Sidebar */}
-          <aside className="w-64 border-r border-border bg-card shadow-lg flex flex-col">
+          <aside className={cn(
+            "w-64 border-r border-border bg-card shadow-lg flex flex-col transition-transform duration-300 ease-in-out",
+            "fixed md:relative z-50 h-full",
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          )}>
             <div className="p-6 border-b border-border">
               <div className="flex items-center gap-2 mb-1">
                 <div className="size-8 rounded-lg bg-primary flex items-center justify-center">
@@ -58,7 +71,10 @@ function App() {
 
             <nav className="flex-1 p-4 space-y-2">
               <button
-                onClick={() => setActiveTab('dashboard')}
+                onClick={() => {
+                  setActiveTab('dashboard');
+                  setIsSidebarOpen(false);
+                }}
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
                   activeTab === 'dashboard'
@@ -71,7 +87,10 @@ function App() {
               </button>
 
               <button
-                onClick={() => setActiveTab('portfolio')}
+                onClick={() => {
+                  setActiveTab('portfolio');
+                  setIsSidebarOpen(false);
+                }}
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
                   activeTab === 'portfolio'
@@ -84,7 +103,10 @@ function App() {
               </button>
 
               <button
-                onClick={() => setActiveTab('watchlist')}
+                onClick={() => {
+                  setActiveTab('watchlist');
+                  setIsSidebarOpen(false);
+                }}
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
                   activeTab === 'watchlist'
@@ -97,7 +119,10 @@ function App() {
               </button>
 
               <button
-                onClick={() => setActiveTab('calculator')}
+                onClick={() => {
+                  setActiveTab('calculator');
+                  setIsSidebarOpen(false);
+                }}
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
                   activeTab === 'calculator'
@@ -110,7 +135,10 @@ function App() {
               </button>
 
               <button
-                onClick={() => setActiveTab('dividends')}
+                onClick={() => {
+                  setActiveTab('dividends');
+                  setIsSidebarOpen(false);
+                }}
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
                   activeTab === 'dividends'
@@ -124,7 +152,10 @@ function App() {
 
               <div className="pt-4 mt-4 border-t border-border">
                 <button
-                  onClick={() => setActiveTab('settings')}
+                  onClick={() => {
+                    setActiveTab('settings');
+                    setIsSidebarOpen(false);
+                  }}
                   className={cn(
                     "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
                     activeTab === 'settings'
@@ -151,15 +182,25 @@ function App() {
 
           {/* Main Content */}
           <main className="flex-1 overflow-auto bg-background">
-            <header className="h-16 border-b border-border flex items-center justify-between px-8 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-              <h2 className="text-lg font-semibold capitalize">
-                {activeTab === 'dashboard' && 'Portfolio Übersicht'}
-                {activeTab === 'portfolio' && 'Meine Positionen'}
-                {activeTab === 'watchlist' && 'Watchlist'}
-                {activeTab === 'calculator' && 'Performance-Rechner'}
-                {activeTab === 'dividends' && 'Dividenden Planer'}
-                {activeTab === 'settings' && 'Einstellungen'}
-              </h2>
+            <header className="h-16 border-b border-border flex items-center justify-between px-4 md:px-8 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+              <div className="flex items-center gap-4">
+                {/* Mobile Hamburger Menu */}
+                <button
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="md:hidden p-2 hover:bg-accent rounded-md transition-colors"
+                  aria-label="Toggle menu"
+                >
+                  {isSidebarOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+                </button>
+                <h2 className="text-lg font-semibold capitalize">
+                  {activeTab === 'dashboard' && 'Portfolio Übersicht'}
+                  {activeTab === 'portfolio' && 'Meine Positionen'}
+                  {activeTab === 'watchlist' && 'Watchlist'}
+                  {activeTab === 'calculator' && 'Performance-Rechner'}
+                  {activeTab === 'dividends' && 'Dividenden Planer'}
+                  {activeTab === 'settings' && 'Einstellungen'}
+                </h2>
+              </div>
               <div className="flex items-center gap-4">
                 {/* Placeholder for User Profile or other actions */}
                 <div className="size-8 rounded-full bg-accent/50 border border-border" />
