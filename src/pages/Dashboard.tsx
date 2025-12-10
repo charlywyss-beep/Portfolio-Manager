@@ -309,11 +309,13 @@ export function Dashboard() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="font-bold text-green-600 dark:text-green-400">
-                                                    {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}%` : '-'}
-                                                </p>
-                                                <p className="text-xs text-blue-500 dark:text-blue-400">Rendite</p>
+                                            <div className="flex flex-col items-end">
+                                                <div className="px-3 py-1 rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow text-center min-w-[70px]">
+                                                    <p className="font-bold text-green-600 dark:text-green-400">
+                                                        {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}%` : '-'}
+                                                    </p>
+                                                    <p className="text-[10px] text-blue-500 dark:text-blue-400 uppercase tracking-wider">Rendite</p>
+                                                </div>
                                             </div>
                                         </div>
                                     );
