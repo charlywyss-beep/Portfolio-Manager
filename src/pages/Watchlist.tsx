@@ -163,7 +163,6 @@ export function Watchlist() {
                                                         <button
                                                             onClick={() => {
                                                                 setEditingStock(stock);
-                                                                setIsAddStockOpen(true);
                                                             }}
                                                             className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
                                                             title="Bearbeiten"
