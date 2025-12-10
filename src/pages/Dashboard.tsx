@@ -304,7 +304,9 @@ export function Dashboard() {
                                                             <span>Ex in {daysToEx} Tagen</span>
                                                         </div>
                                                     </div>
-                                                    <p className="text-sm text-blue-600 dark:text-blue-300 font-medium">{item.stock.name}</p>
+                                                    <div className="mt-1 px-2 py-0.5 w-fit rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-800 shadow-sm">
+                                                        <p className="text-sm text-blue-600 dark:text-blue-300 font-medium">{item.stock.name}</p>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="text-right">
