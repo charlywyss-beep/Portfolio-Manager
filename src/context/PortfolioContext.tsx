@@ -12,7 +12,7 @@ interface PortfolioContextType {
     addStock: (stock: Omit<Stock, 'id'>) => string;
     updateStockPrice: (stockId: string, newPrice: number) => void;
     updateStockDividendYield: (stockId: string, dividendYield: number) => void;
-    updateStockDividend: (stockId: string, dividendData: Partial<Pick<Stock, 'dividendYield' | 'dividendAmount' | 'dividendCurrency' | 'dividendExDate' | 'dividendPayDate' | 'dividendFrequency'>>) => void;
+    updateStockDividend: (stockId: string, dividendData: Partial<Pick<Stock, 'dividendYield' | 'dividendAmount' | 'dividendCurrency' | 'dividendExDate' | 'dividendPayDate' | 'dividendDates' | 'dividendFrequency'>>) => void;
     addFixedDeposit: (deposit: Omit<import('../types').FixedDeposit, 'id'>) => void;
     deleteFixedDeposit: (id: string) => void;
     updateFixedDeposit: (id: string, updates: Partial<import('../types').FixedDeposit>) => void;
@@ -154,7 +154,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         );
     };
 
-    const updateStockDividend = (stockId: string, dividendData: Partial<Pick<Stock, 'dividendYield' | 'dividendAmount' | 'dividendCurrency' | 'dividendExDate' | 'dividendPayDate' | 'dividendFrequency'>>) => {
+    const updateStockDividend = (stockId: string, dividendData: Partial<Pick<Stock, 'dividendYield' | 'dividendAmount' | 'dividendCurrency' | 'dividendExDate' | 'dividendPayDate' | 'dividendDates' | 'dividendFrequency'>>) => {
         setStocks((prev) =>
             prev.map((s) =>
                 s.id === stockId ? { ...s, ...dividendData } : s

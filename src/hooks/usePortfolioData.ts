@@ -91,13 +91,33 @@ export function usePortfolioData() {
     // Calculate upcoming dividends from stock dividend data
     const upcomingDividends = useMemo(() => {
         return positions
-            .filter(p => p.stock.dividendPayDate)
-            .map(p => ({
-                stock: p.stock,
-                payDate: p.stock.dividendPayDate!,
-                amount: p.stock.dividendAmount ? p.stock.dividendAmount * p.shares : 0,
-                currency: p.stock.dividendCurrency || p.stock.currency
-            }))
+            .flatMap(p => {
+                // If we have explicit multiple dates (e.g. quarterly)
+                if (p.stock.dividendDates && p.stock.dividendDates.length > 0) {
+                    return p.stock.dividendDates
+                        .filter(d => d.payDate) // Only those with payDate
+                        .map(d => ({
+                            stock: p.stock,
+                            payDate: d.payDate,
+                            amount: p.stock.dividendAmount ? p.stock.dividendAmount * p.shares : 0,
+                            currency: p.stock.dividendCurrency || p.stock.currency
+                        }));
+                }
+
+                // Fallback to legacy single date
+                if (p.stock.dividendPayDate) {
+                    return [{
+                        stock: p.stock,
+                        payDate: p.stock.dividendPayDate,
+                        amount: p.stock.dividendAmount ? p.stock.dividendAmount * p.shares : 0,
+                        currency: p.stock.dividendCurrency || p.stock.currency
+                    }];
+                }
+
+                return [];
+            })
+            // Filter out past dates? Or keep them? Usually "upcoming" means future. 
+            // For now, let's just sort them. The Dashboard might filter or show all.
             .sort((a, b) => new Date(a.payDate).getTime() - new Date(b.payDate).getTime());
     }, [positions]);
 

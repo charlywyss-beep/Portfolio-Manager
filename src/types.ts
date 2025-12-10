@@ -18,6 +18,7 @@ export interface Stock {
     dividendCurrency?: Currency; // Currency of dividend payment
     dividendExDate?: string; // Ex-dividend date (ISO format)
     dividendPayDate?: string; // Payment date (ISO format)
+    dividendDates?: { exDate: string; payDate: string }[]; // NEW: Multiple dates support
     dividendFrequency?: 'monthly' | 'quarterly' | 'annually' | 'semi-annually';
     logoUrl?: string;
 }

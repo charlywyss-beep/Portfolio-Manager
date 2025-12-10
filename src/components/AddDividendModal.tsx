@@ -32,6 +32,13 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
     const [payDate, setPayDate] = useState('');
     const [frequency, setFrequency] = useState<'quarterly' | 'semi-annually' | 'annually' | 'monthly'>('quarterly');
 
+    const [quarterlyDates, setQuarterlyDates] = useState<{ exDate: string; payDate: string; }[]>([
+        { exDate: '', payDate: '' },
+        { exDate: '', payDate: '' },
+        { exDate: '', payDate: '' },
+        { exDate: '', payDate: '' }
+    ]);
+
     // Derived state (safe to have here, but used in effects)
     const selectedStock = stocks.find(s => s.id === selectedStockId);
     const position = positions.find(p => p.stockId === selectedStockId);
@@ -46,6 +53,21 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
             setExDate(editingStock.dividendExDate || '');
             setPayDate(editingStock.dividendPayDate || '');
             setFrequency(editingStock.dividendFrequency || 'quarterly');
+
+            if (editingStock.dividendDates && editingStock.dividendDates.length > 0) {
+                // Ensure we always have 4 for the UI if quarterly, even if the data says otherwise (though it should be sync)
+                // But generally just fill with what we have + empties if needed
+                const dates = [...editingStock.dividendDates];
+                while (dates.length < 4) dates.push({ exDate: '', payDate: '' });
+                setQuarterlyDates(dates);
+            } else {
+                setQuarterlyDates([
+                    { exDate: '', payDate: '' },
+                    { exDate: '', payDate: '' },
+                    { exDate: '', payDate: '' },
+                    { exDate: '', payDate: '' }
+                ]);
+            }
         } else if (isOpen && !editingStock) {
             // Reset form when adding new
             setSelectedStockId('');
@@ -55,6 +77,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
             setExDate('');
             setPayDate('');
             setFrequency('quarterly');
+            setQuarterlyDates(Array(4).fill({ exDate: '', payDate: '' }));
         }
     }, [editingStock, isOpen]);
 
@@ -69,6 +92,13 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                 setExDate(stock.dividendExDate || '');
                 setPayDate(stock.dividendPayDate || '');
                 setFrequency(stock.dividendFrequency || 'quarterly');
+                if (stock.dividendDates && stock.dividendDates.length > 0) {
+                    const dates = [...stock.dividendDates];
+                    while (dates.length < 4) dates.push({ exDate: '', payDate: '' });
+                    setQuarterlyDates(dates);
+                } else {
+                    setQuarterlyDates(Array(4).fill({ exDate: '', payDate: '' }));
+                }
             }
         }
     }, [selectedStockId, stocks, editingStock]);
@@ -115,17 +145,41 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
         }
     };
 
+    const handleQuarterlyDateChange = (index: number, field: 'exDate' | 'payDate', value: string) => {
+        const newDates = [...quarterlyDates];
+        newDates[index] = { ...newDates[index], [field]: value };
+        setQuarterlyDates(newDates);
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!selectedStockId) return;
 
+        // If quarterly, use the array. Otherwise clear the array and use single fields.
+        let submissionDates = undefined;
+        let submissionExDate = exDate || undefined;
+        let submissionPayDate = payDate || undefined;
+
+        if (frequency === 'quarterly') {
+            // Filter out empty entries if desired, or keep them? 
+            // Better to keep valid date pairs.
+            const validDates = quarterlyDates.filter(d => d.payDate); // At least payDate is usually required for calculation
+            if (validDates.length > 0) {
+                submissionDates = validDates;
+                // Maybe set single fields to the FIRST date as fallback/display?
+                submissionExDate = validDates[0].exDate;
+                submissionPayDate = validDates[0].payDate;
+            }
+        }
+
         updateStockDividend(selectedStockId, {
             dividendYield: yieldPercent ? parseFloat(yieldPercent) : undefined,
             dividendAmount: amount ? parseFloat(amount) : undefined,
             dividendCurrency: currency,
-            dividendExDate: exDate || undefined,
-            dividendPayDate: payDate || undefined,
+            dividendExDate: submissionExDate,
+            dividendPayDate: submissionPayDate,
+            dividendDates: submissionDates,
             dividendFrequency: frequency
         });
 
@@ -137,9 +191,9 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
+            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-border">
+                <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-card z-10">
                     <div>
                         <h2 className="text-xl font-bold">{editingStock ? 'Dividende bearbeiten' : 'Dividende bearbeiten/hinzufügen'}</h2>
                         <p className="text-sm text-muted-foreground">Dividendendaten erfassen</p>
@@ -227,30 +281,6 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                         </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Ex-Datum</label>
-                            <input
-                                type="date"
-                                value={exDate}
-                                onChange={(e) => setExDate(e.target.value)}
-                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
-                            />
-                            <p className="text-xs text-muted-foreground">Stichtag</p>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Zahldatum</label>
-                            <input
-                                type="date"
-                                value={payDate}
-                                onChange={(e) => setPayDate(e.target.value)}
-                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
-                            />
-                            <p className="text-xs text-muted-foreground">Auszahlung</p>
-                        </div>
-                    </div>
-
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Frequenz</label>
                         <select
@@ -264,6 +294,58 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                             <option value="monthly">Monatlich</option>
                         </select>
                     </div>
+
+                    {frequency === 'quarterly' ? (
+                        <div className="space-y-3 bg-muted/30 p-3 rounded-lg border border-border">
+                            <label className="text-sm font-bold block mb-2">Auszahlungsdaten (4 Quartale)</label>
+                            {quarterlyDates.map((date, idx) => (
+                                <div key={idx} className="grid grid-cols-2 gap-3 pb-2 border-b border-border/50 last:border-0 last:pb-0">
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground font-medium">Q{idx + 1} Ex-Datum</label>
+                                        <input
+                                            type="date"
+                                            value={date.exDate}
+                                            onChange={(e) => handleQuarterlyDateChange(idx, 'exDate', e.target.value)}
+                                            className="w-full px-2 py-1.5 text-sm border rounded bg-background"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground font-medium">Q{idx + 1} Zahldatum</label>
+                                        <input
+                                            type="date"
+                                            value={date.payDate}
+                                            onChange={(e) => handleQuarterlyDateChange(idx, 'payDate', e.target.value)}
+                                            className="w-full px-2 py-1.5 text-sm border rounded bg-background"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Ex-Datum</label>
+                                <input
+                                    type="date"
+                                    value={exDate}
+                                    onChange={(e) => setExDate(e.target.value)}
+                                    className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                />
+                                <p className="text-xs text-muted-foreground">Stichtag</p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Zahldatum</label>
+                                <input
+                                    type="date"
+                                    value={payDate}
+                                    onChange={(e) => setPayDate(e.target.value)}
+                                    className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                />
+                                <p className="text-xs text-muted-foreground">Auszahlung</p>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="flex gap-3 pt-4">
                         <button
