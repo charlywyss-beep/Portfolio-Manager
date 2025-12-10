@@ -60,6 +60,14 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                 const dates = [...editingStock.dividendDates];
                 while (dates.length < 4) dates.push({ exDate: '', payDate: '' });
                 setQuarterlyDates(dates);
+            } else if (editingStock.dividendExDate || editingStock.dividendPayDate) {
+                // Migration: If we have single dates but no array, pre-fill first slot
+                setQuarterlyDates([
+                    { exDate: editingStock.dividendExDate || '', payDate: editingStock.dividendPayDate || '' },
+                    { exDate: '', payDate: '' },
+                    { exDate: '', payDate: '' },
+                    { exDate: '', payDate: '' }
+                ]);
             } else {
                 setQuarterlyDates([
                     { exDate: '', payDate: '' },
@@ -98,6 +106,13 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                     const dates = [...stock.dividendDates];
                     while (dates.length < 4) dates.push({ exDate: '', payDate: '' });
                     setQuarterlyDates(dates);
+                } else if (stock.dividendExDate || stock.dividendPayDate) {
+                    setQuarterlyDates([
+                        { exDate: stock.dividendExDate || '', payDate: stock.dividendPayDate || '' },
+                        { exDate: '', payDate: '' },
+                        { exDate: '', payDate: '' },
+                        { exDate: '', payDate: '' }
+                    ]);
                 } else {
                     setQuarterlyDates(Array(4).fill({ exDate: '', payDate: '' }));
                 }
@@ -193,7 +208,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
         let submissionPayDate = payDate || undefined;
 
         if (frequency === 'quarterly') {
-            const validDates = quarterlyDates.filter(d => d.payDate);
+            const validDates = quarterlyDates.filter(d => d.exDate || d.payDate);
             if (validDates.length > 0) {
                 submissionDates = validDates;
                 submissionExDate = validDates[0].exDate;
