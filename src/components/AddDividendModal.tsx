@@ -207,8 +207,11 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
         let submissionExDate = exDate || undefined;
         let submissionPayDate = payDate || undefined;
 
-        if (frequency === 'quarterly') {
-            const validDates = quarterlyDates.filter(d => d.exDate || d.payDate);
+        if (frequency === 'quarterly' || frequency === 'semi-annually') {
+            // Consider only the relevant dates based on frequency
+            const datesToConsider = frequency === 'quarterly' ? quarterlyDates : quarterlyDates.slice(0, 2);
+            const validDates = datesToConsider.filter(d => d.exDate || d.payDate);
+
             if (validDates.length > 0) {
                 submissionDates = validDates;
                 submissionExDate = validDates[0].exDate;
@@ -350,17 +353,20 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                             <option value="quarterly">Quartalsweise (4x/Jahr)</option>
                             <option value="semi-annually">Halbjährlich (2x/Jahr)</option>
                             <option value="annually">Jährlich (1x/Jahr)</option>
-                            <option value="monthly">Monatlich</option>
                         </select>
                     </div>
 
-                    {frequency === 'quarterly' ? (
+                    {frequency === 'quarterly' || frequency === 'semi-annually' ? (
                         <div className="space-y-3 bg-muted/30 p-3 rounded-lg border border-border">
-                            <label className="text-sm font-bold block mb-2">Auszahlungsdaten (4 Quartale)</label>
-                            {quarterlyDates.map((date, idx) => (
+                            <label className="text-sm font-bold block mb-2">
+                                {frequency === 'quarterly' ? 'Auszahlungsdaten (4 Quartale)' : 'Auszahlungsdaten (2 Zahlungen)'}
+                            </label>
+                            {quarterlyDates.slice(0, frequency === 'semi-annually' ? 2 : 4).map((date, idx) => (
                                 <div key={idx} className="grid grid-cols-2 gap-3 pb-2 border-b border-border/50 last:border-0 last:pb-0">
                                     <div className="space-y-1">
-                                        <label className="text-xs text-muted-foreground font-medium">Q{idx + 1} Ex-Datum</label>
+                                        <label className="text-xs text-muted-foreground font-medium">
+                                            {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Ex-Datum
+                                        </label>
                                         <input
                                             type="date"
                                             value={date.exDate}
@@ -369,7 +375,9 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs text-muted-foreground font-medium">Q{idx + 1} Zahldatum</label>
+                                        <label className="text-xs text-muted-foreground font-medium">
+                                            {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Zahldatum
+                                        </label>
                                         <input
                                             type="date"
                                             value={date.payDate}
