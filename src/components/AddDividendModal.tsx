@@ -244,7 +244,6 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                         >
                             <option value="">Aktie auswählen...</option>
                             {stocks
-                                .filter(stock => positions.some(p => p.stockId === stock.id))
                                 .map((stock) => (
                                     <option key={stock.id} value={stock.id}>
                                         {stock.name} ({stock.symbol})
