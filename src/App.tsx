@@ -66,7 +66,7 @@ function App() {
                 </div>
                 <h1 className="text-xl font-bold tracking-tight">Portfolio</h1>
               </div>
-              <div className="text-xs text-muted-foreground ml-10">v3.5.6</div>
+              <div className="text-xs text-muted-foreground ml-10">v3.5.7</div>
             </div>
 
             <nav className="flex-1 p-4 space-y-2">
@@ -104,6 +104,22 @@ function App() {
 
               <button
                 onClick={() => {
+                  setActiveTab('dividends');
+                  setIsSidebarOpen(false);
+                }}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
+                  activeTab === 'dividends'
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "hover:bg-accent hover:text-accent-foreground"
+                )}
+              >
+                <TrendingUp className="size-5" />
+                <span>Dividenden Planer</span>
+              </button>
+
+              <button
+                onClick={() => {
                   setActiveTab('watchlist');
                   setIsSidebarOpen(false);
                 }}
@@ -134,21 +150,7 @@ function App() {
                 <span>Performance-Rechner</span>
               </button>
 
-              <button
-                onClick={() => {
-                  setActiveTab('dividends');
-                  setIsSidebarOpen(false);
-                }}
-                className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
-                  activeTab === 'dividends'
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "hover:bg-accent hover:text-accent-foreground"
-                )}
-              >
-                <TrendingUp className="size-5" />
-                <span>Dividenden Planer</span>
-              </button>
+
 
               <div className="pt-4 mt-4 border-t border-border">
                 <button
