@@ -166,7 +166,7 @@ export function CurrencyChart({ inverse = false }: Props) {
                                     type="number"
                                     value={baseAmount}
                                     onChange={(e) => handleBaseAmountChange(e.target.value)}
-                                    className="w-full px-4 py-3 text-2xl font-bold rounded-lg bg-white dark:bg-background border-0 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-3 text-2xl font-bold rounded-lg bg-white dark:bg-background text-gray-900 dark:text-white border-0 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="0.00"
                                 />
                             </div>
@@ -176,7 +176,7 @@ export function CurrencyChart({ inverse = false }: Props) {
                                     type="number"
                                     value={convertedAmount}
                                     onChange={(e) => handleConvertedAmountChange(e.target.value)}
-                                    className="w-full px-4 py-3 text-2xl font-bold rounded-lg bg-white dark:bg-background border-0 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                    className="w-full px-4 py-3 text-2xl font-bold rounded-lg bg-white dark:bg-background text-gray-900 dark:text-white border-0 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                                     placeholder="0.00"
                                 />
                             </div>
