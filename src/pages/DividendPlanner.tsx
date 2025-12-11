@@ -79,7 +79,7 @@ export function DividendPlanner() {
                             <Calendar className="size-5 text-blue-600 dark:text-blue-400" />
                             <span className="text-sm font-medium text-blue-900 dark:text-blue-100">Monatlicher Durchschnitt</span>
                         </div>
-                        <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                        <div className="text-3xl font-bold text-blue-800 dark:text-blue-400">
                             CHF {totalMonthly.toFixed(2)}
                         </div>
                     </div>

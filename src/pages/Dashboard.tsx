@@ -279,7 +279,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
                     <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-3">
-                                <h3 className="text-lg font-bold text-blue-600 dark:text-blue-400">Watchlist Chancen</h3>
+                                <h3 className="text-lg font-bold text-blue-800 dark:text-blue-400">Watchlist Chancen</h3>
                                 <Info className="size-5 text-blue-500" />
                             </div>
                             <select
@@ -319,7 +319,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
                                                         {visibleDates.map((date, dIdx) => {
                                                             const daysToEx = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                                                             return (
-                                                                <div key={dIdx} className="px-2 py-0.5 rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow text-blue-600 dark:text-blue-400 text-xs font-bold whitespace-nowrap">
+                                                                <div key={dIdx} className="px-2 py-0.5 rounded-md bg-white dark:bg-blue-950 border border-blue-300 dark:border-blue-700 shadow text-blue-800 dark:text-blue-400 text-xs font-bold whitespace-nowrap">
                                                                     Ex in {daysToEx} Tagen
                                                                 </div>
                                                             );
@@ -330,7 +330,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
                                                         onClick={() => onNavigate('watchlist')}
                                                         className="block mt-1 px-2 py-0.5 w-fit rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors cursor-pointer"
                                                     >
-                                                        <p className="text-sm text-blue-600 dark:text-blue-300 font-medium">{item.stock.name}</p>
+                                                        <p className="text-sm text-blue-900 dark:text-blue-300 font-medium">{item.stock.name}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -339,7 +339,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
                                                     <p className="font-bold text-green-600 dark:text-green-400">
                                                         {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}%` : '-'}
                                                     </p>
-                                                    <p className="text-[10px] text-blue-500 dark:text-blue-400 uppercase tracking-wider">Rendite</p>
+                                                    <p className="text-[10px] text-blue-700 dark:text-blue-400 uppercase tracking-wider">Rendite</p>
                                                 </div>
                                             </div>
                                         </div>

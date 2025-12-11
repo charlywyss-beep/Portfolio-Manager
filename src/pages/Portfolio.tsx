@@ -282,7 +282,7 @@ export function Portfolio() {
                                                 <span className={cn(
                                                     "px-2 py-0.5 rounded-md text-xs font-medium border",
                                                     fd.accountType === 'sparkonto'
-                                                        ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50"
+                                                        ? "bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50"
                                                         : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
                                                 )}>
                                                     {fd.accountType === 'sparkonto' ? 'Sparkonto' : 'Privatkonto'}
