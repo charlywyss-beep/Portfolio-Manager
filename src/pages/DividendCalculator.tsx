@@ -19,6 +19,7 @@ export function DividendCalculator() {
     const projectionData = useMemo(() => {
         let currentCapital = initialCapital;
         let totalInvested = initialCapital;
+        let totalPayouts = 0; // Track payouts (dividends NOT reinvested)
         const data = [];
 
         for (let year = 0; year <= years; year++) {
@@ -31,11 +32,12 @@ export function DividendCalculator() {
                 capital: Math.round(currentCapital),
                 dividend: Math.round(annualDividend),
                 monthlyDividend: Math.round(annualDividend / 12),
+                totalPayouts: Math.round(totalPayouts) // Store cumulative payouts
             });
 
             // Next year calculation
             if (year < years) {
-                // Add yearly contributions (simplified: added at end of year/evenly, but for yearly step we add effectively)
+                // Add yearly contributions
                 const yearlyContribution = monthlyContribution * 12;
 
                 // Capital Gain
@@ -46,6 +48,8 @@ export function DividendCalculator() {
 
                 if (reinvest) {
                     currentCapital += annualDividend;
+                } else {
+                    totalPayouts += annualDividend; // Accumulate payouts if not reinvested
                 }
 
                 totalInvested += yearlyContribution;
@@ -55,6 +59,9 @@ export function DividendCalculator() {
     }, [initialCapital, monthlyContribution, years, dividendYield, priceAppreciation, reinvest]);
 
     const finalYear = projectionData[projectionData.length - 1];
+
+    // Total Profit = (Current Value - Invested) + (Cash Payouts)
+    const totalProfit = (finalYear.capital - finalYear.invested) + finalYear.totalPayouts;
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -246,10 +253,10 @@ export function DividendCalculator() {
                         <div className="p-5 rounded-xl bg-card border border-border shadow-sm flex flex-col">
                             <span className="text-sm text-muted-foreground font-medium mb-1">Gesamtgewinn</span>
                             <span className="text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400">
-                                {(finalYear.capital - finalYear.invested).toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
+                                {totalProfit.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
                             </span>
                             <span className="text-xs text-muted-foreground mt-2">
-                                Davon Zinseszins & Kurseffekt
+                                Davon Zinseszins & Kurseffekt (inkl. Ausschüttungen)
                             </span>
                         </div>
                     </div>
