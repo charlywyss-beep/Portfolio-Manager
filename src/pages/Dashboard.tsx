@@ -242,7 +242,11 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
                             const showExWarning = daysToEx !== null && daysToEx >= 0 && daysToEx <= 7;
 
                             return (
-                                <div key={idx} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                                <div
+                                    key={idx}
+                                    onClick={() => onNavigate('dividends')}
+                                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                                >
                                     <div className="flex items-center gap-3">
                                         {div.stock?.logoUrl && (
                                             <img src={div.stock.logoUrl} alt={div.stock.name} className="size-8 rounded-full bg-white object-contain p-1 border border-border" />
