@@ -150,10 +150,10 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
             </div>
 
             {/* Bottom Section: Dividends & Chart */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
 
                 {/* History Section */}
-                <div className="col-span-1 lg:col-span-2 p-6 rounded-xl bg-card border border-border shadow-sm">
+                <div className="col-span-1 lg:col-span-7 p-6 rounded-xl bg-card border border-border shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-2">
                             <BarChart3 className="size-5 text-muted-foreground" />
@@ -231,7 +231,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
                 </div>
 
                 {/* Upcoming Dividends List */}
-                <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
+                <div className="col-span-1 lg:col-span-3 p-6 rounded-xl bg-card border border-border shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-bold">Nächste Dividenden</h3>
                         <Calendar className="size-5 text-muted-foreground" />
@@ -276,7 +276,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
                 {/* Watchlist Opportunities (Blue Info Cards) */}
                 {/* Watchlist Opportunities (Blue Info Cards) */}
                 {upcomingWatchlistDividends.length > 0 && (
-                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
+                    <div className="col-span-1 lg:col-span-4 p-6 rounded-xl bg-card border border-border shadow-sm">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-3">
                                 <h3 className="text-lg font-bold text-blue-800 dark:text-blue-400">Watchlist Chancen</h3>
@@ -354,7 +354,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
                     </div>
                 )}
                 {/* Top 5 Performance Chart */}
-                <div className="col-span-1 lg:col-span-5 p-6 rounded-xl bg-card border border-border shadow-sm flex flex-col min-h-[400px]">
+                <div className="col-span-1 lg:col-span-7 p-6 rounded-xl bg-card border border-border shadow-sm flex flex-col min-h-[400px]">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-bold">Top 5 Performance</h3>
                         <BarChart3 className="size-5 text-muted-foreground" />
@@ -392,7 +392,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
                 </div>
 
                 {/* Currency Charts */}
-                <div className="col-span-1 lg:col-span-2 flex flex-col gap-6">
+                <div className="col-span-1 lg:col-span-7 grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <CurrencyChart inverse={false} />
                     <CurrencyChart inverse={true} />
                 </div>
