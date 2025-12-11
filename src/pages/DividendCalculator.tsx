@@ -241,14 +241,19 @@ export function DividendCalculator() {
                                 </span>
                             </div>
                         </div>
-                        <div className="p-5 rounded-xl bg-card border border-border shadow-sm flex flex-col">
-                            <span className="text-sm text-muted-foreground font-medium mb-1">Passives Einkommen (Monat)</span>
-                            <span className="text-2xl font-bold tracking-tight text-green-600 dark:text-green-400">
-                                {finalYear.monthlyDividend.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
-                            </span>
-                            <span className="text-xs text-muted-foreground mt-2">
-                                Jährlich: {finalYear.dividend.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
-                            </span>
+                        <div className="p-5 rounded-xl bg-card border border-border shadow-sm flex flex-col justify-between">
+                            <div>
+                                <span className="text-sm text-muted-foreground font-medium mb-1 block">Passives Einkommen (Monat)</span>
+                                <span className="text-2xl font-bold tracking-tight text-green-600 dark:text-green-400">
+                                    {finalYear.monthlyDividend.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
+                                </span>
+                            </div>
+                            <div className="mt-3 pt-3 border-t border-border">
+                                <span className="text-sm text-muted-foreground font-medium mb-1 block">Passives Einkommen (Jährlich)</span>
+                                <span className="text-2xl font-bold tracking-tight text-green-600 dark:text-green-400">
+                                    {finalYear.dividend.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
+                                </span>
+                            </div>
                         </div>
                         <div className="p-5 rounded-xl bg-card border border-border shadow-sm flex flex-col">
                             <span className="text-sm text-muted-foreground font-medium mb-1">Gesamtgewinn</span>
