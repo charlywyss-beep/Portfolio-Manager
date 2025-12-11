@@ -22,6 +22,8 @@ export function CurrencyChart({ inverse = false }: Props) {
     const [historyData, setHistoryData] = useState<RateHistory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [currRate, setCurrRate] = useState<number | null>(null);
+    const [baseAmount, setBaseAmount] = useState<string>('1000');
+    const [convertedAmount, setConvertedAmount] = useState<string>('');
 
     // Derived values based on mode
     const baseCurrency = inverse ? selectedCurrency : 'CHF';
@@ -80,6 +82,33 @@ export function CurrencyChart({ inverse = false }: Props) {
         return ((last - first) / first) * 100;
     }, [historyData]);
 
+    // Update converted amount when rate or base amount changes
+    useState(() => {
+        if (currRate && baseAmount) {
+            const base = parseFloat(baseAmount) || 0;
+            const converted = base * currRate;
+            setConvertedAmount(converted.toFixed(2));
+        }
+    });
+
+    const handleBaseAmountChange = (value: string) => {
+        setBaseAmount(value);
+        if (currRate && value) {
+            const base = parseFloat(value) || 0;
+            const converted = base * currRate;
+            setConvertedAmount(converted.toFixed(2));
+        }
+    };
+
+    const handleConvertedAmountChange = (value: string) => {
+        setConvertedAmount(value);
+        if (currRate && value) {
+            const converted = parseFloat(value) || 0;
+            const base = converted / currRate;
+            setBaseAmount(base.toFixed(2));
+        }
+    };
+
     return (
         <div className="p-6 rounded-xl bg-card border border-border shadow-sm h-full flex flex-col">
             <div className="flex items-center justify-between mb-6">
@@ -112,21 +141,47 @@ export function CurrencyChart({ inverse = false }: Props) {
                 </div>
             </div>
 
-            <div className="mb-6">
+            <div className="mb-4">
                 {currRate ? (
-                    <div className="flex items-baseline gap-3">
-                        <h4 className="text-3xl font-bold tracking-tight">
-                            {currRate.toFixed(4)} <span className="text-lg text-muted-foreground font-medium">{targetCurrency}</span>
-                        </h4>
-                        <span className={cn(
-                            "text-sm font-medium px-2 py-0.5 rounded-full flex items-center",
-                            percentageChange >= 0
-                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                        )}>
-                            {percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}% (1J)
-                        </span>
-                    </div>
+                    <>
+                        <div className="flex items-baseline gap-3 mb-4">
+                            <h4 className="text-2xl font-bold tracking-tight">
+                                {currRate.toFixed(4)} <span className="text-sm text-muted-foreground font-medium">{targetCurrency}</span>
+                            </h4>
+                            <span className={cn(
+                                "text-xs font-medium px-2 py-0.5 rounded-full flex items-center",
+                                percentageChange >= 0
+                                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                    : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                            )}>
+                                {percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}% (1J)
+                            </span>
+                        </div>
+
+                        {/* Currency Converter */}
+                        <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-muted/30 border border-border">
+                            <div>
+                                <label className="text-xs text-muted-foreground mb-1 block">{baseCurrency}</label>
+                                <input
+                                    type="number"
+                                    value={baseAmount}
+                                    onChange={(e) => handleBaseAmountChange(e.target.value)}
+                                    className="w-full px-2 py-1.5 text-sm font-medium rounded-md bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                    placeholder="0.00"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs text-muted-foreground mb-1 block">{targetCurrency}</label>
+                                <input
+                                    type="number"
+                                    value={convertedAmount}
+                                    onChange={(e) => handleConvertedAmountChange(e.target.value)}
+                                    className="w-full px-2 py-1.5 text-sm font-medium rounded-md bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                    placeholder="0.00"
+                                />
+                            </div>
+                        </div>
+                    </>
                 ) : (
                     <div className="h-10 animate-pulse bg-muted rounded-md w-32" />
                 )}
