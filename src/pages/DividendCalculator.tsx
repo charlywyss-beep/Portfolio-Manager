@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calculator, RefreshCw } from 'lucide-react';
+import { Calculator, RefreshCw, Percent } from 'lucide-react';
 
 export function DividendCalculator() {
     // State for inputs
@@ -10,6 +10,10 @@ export function DividendCalculator() {
     const [dividendYield, setDividendYield] = useState(3.5);
     const [priceAppreciation, setPriceAppreciation] = useState(4.0);
     const [reinvest, setReinvest] = useState(true);
+
+    // Helper Calculator State
+    const [calcDividend, setCalcDividend] = useState(3.05);
+    const [calcPrice, setCalcPrice] = useState(90.50);
 
     // Calculation Logic
     const projectionData = useMemo(() => {
@@ -157,6 +161,58 @@ export function DividendCalculator() {
                                         className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all text-right"
                                     />
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Dividend Yield Calculator Helper */}
+                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <div className="flex items-center gap-2 mb-4 text-primary">
+                            <Percent className="size-5" />
+                            <h3 className="font-semibold text-lg">Dividenden-Rendite</h3>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label htmlFor="calc-dividend" className="text-sm font-medium text-muted-foreground">Dividende pro Aktie (jährlich)</label>
+                                <div className="relative">
+                                    <input
+                                        id="calc-dividend"
+                                        type="number"
+                                        step="0.01"
+                                        value={calcDividend}
+                                        onChange={(e) => setCalcDividend(Number(e.target.value))}
+                                        className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all text-right"
+                                        placeholder="z.B. 3.05"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label htmlFor="calc-price" className="text-sm font-medium text-muted-foreground">Aktueller Aktienkurs</label>
+                                <div className="relative">
+                                    <input
+                                        id="calc-price"
+                                        type="number"
+                                        step="0.01"
+                                        value={calcPrice}
+                                        onChange={(e) => setCalcPrice(Number(e.target.value))}
+                                        className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all text-right"
+                                        placeholder="z.B. 90.50"
+                                    />
+                                </div>
+                            </div>
+                            <div className="pt-4 border-t border-border mt-2">
+                                <div className="flex justify-between items-center rounded-lg bg-muted/50 p-3">
+                                    <span className="font-medium text-sm">Berechnete Rendite:</span>
+                                    <span className="text-xl font-bold text-green-600 dark:text-green-400">
+                                        {calcPrice > 0 ? ((calcDividend / calcPrice) * 100).toFixed(2) : '0.00'}%
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={() => setDividendYield(Number((calcPrice > 0 ? (calcDividend / calcPrice) * 100 : 0).toFixed(2)))}
+                                    className="w-full mt-3 text-xs text-primary hover:underline text-center"
+                                >
+                                    Rendite übernehmen
+                                </button>
                             </div>
                         </div>
                     </div>
