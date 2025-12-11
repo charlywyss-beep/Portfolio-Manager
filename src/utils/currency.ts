@@ -46,7 +46,7 @@ export function formatCurrency(amount: number, currency: string, showCHF: boolea
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
         });
-        return `${formatted} (${chfFormatted})`;
+        return `${formatted}\u00A0\u00A0\u00A0-\u00A0\u00A0\u00A0${chfFormatted}`;
     }
 
     return formatted;

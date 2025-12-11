@@ -233,7 +233,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
                 {/* Upcoming Dividends List */}
                 <div className="col-span-1 lg:col-span-3 p-6 rounded-xl bg-card border border-border shadow-sm">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold">Nächste Dividenden</h3>
+                        <h3 className="text-lg font-bold">Nächste Dividenden Auszahlungen</h3>
                         <Calendar className="size-5 text-muted-foreground" />
                     </div>
                     <div className="space-y-4">
