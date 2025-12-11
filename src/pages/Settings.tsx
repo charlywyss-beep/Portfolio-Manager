@@ -3,7 +3,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 
 export function Settings() {
-    const { positions, stocks, fixedDeposits, history, importData } = usePortfolio();
+    const { positions, stocks, fixedDeposits, history, watchlist, importData } = usePortfolio();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [importMessage, setImportMessage] = useState('');
@@ -15,7 +15,8 @@ export function Settings() {
             positions,
             stocks,
             fixedDeposits,
-            history
+            history,
+            watchlist
         };
 
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
