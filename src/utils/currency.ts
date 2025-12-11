@@ -41,11 +41,9 @@ export function formatCurrency(amount: number, currency: string, showCHF: boolea
     if (showCHF && currency !== 'CHF') {
         const chfAmount = convertToCHF(amount, currency, liveRates);
         const chfFormatted = chfAmount.toLocaleString('de-CH', {
-            style: 'currency',
-            currency: 'CHF',
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
-        });
+        }) + ' CHF';
         return `${formatted}\u00A0\u00A0\u00A0-\u00A0\u00A0\u00A0${chfFormatted}`;
     }
 
