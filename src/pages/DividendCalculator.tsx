@@ -261,12 +261,9 @@ export function DividendCalculator() {
                             </div>
                         </div>
                         <div className="p-5 rounded-xl bg-card border border-border shadow-sm flex flex-col">
-                            <span className="text-sm text-muted-foreground font-medium mb-1">Gesamtgewinn</span>
+                            <span className="text-sm text-muted-foreground font-medium mb-1">Gesamtgewinn (nach {years} Jahren)</span>
                             <span className="text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400">
                                 {totalProfit.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
-                            </span>
-                            <span className="text-xs text-muted-foreground mt-2">
-                                Davon Zinseszins & Kurseffekt (inkl. Ausschüttungen)
                             </span>
                         </div>
                     </div>
