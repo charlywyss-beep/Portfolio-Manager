@@ -63,6 +63,11 @@ export function DividendCalculator() {
     // Total Profit = (Current Value - Invested) + (Cash Payouts)
     const totalProfit = (finalYear.capital - finalYear.invested) + finalYear.totalPayouts;
 
+    // For display, use the dividend of the last COMPLETED year (what was paid effectively),
+    // not the projected dividend for the NEXT year (which is what finalYear.dividend is).
+    // If years=1, we want index 0 (Year 1's dividend).
+    const displayDividendYear = years > 0 ? projectionData[years - 1] : projectionData[0];
+
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
 
@@ -245,13 +250,13 @@ export function DividendCalculator() {
                             <div>
                                 <span className="text-sm text-muted-foreground font-medium mb-1 block">Passives Einkommen (Monat)</span>
                                 <span className="text-2xl font-bold tracking-tight text-green-600 dark:text-green-400">
-                                    {finalYear.monthlyDividend.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
+                                    {displayDividendYear.monthlyDividend.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
                                 </span>
                             </div>
                             <div className="mt-3 pt-3 border-t border-border">
                                 <span className="text-sm text-muted-foreground font-medium mb-1 block">Passives Einkommen (Jährlich)</span>
                                 <span className="text-2xl font-bold tracking-tight text-green-600 dark:text-green-400">
-                                    {finalYear.dividend.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
+                                    {displayDividendYear.dividend.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
                                 </span>
                             </div>
                         </div>
