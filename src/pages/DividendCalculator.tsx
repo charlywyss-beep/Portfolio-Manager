@@ -235,7 +235,7 @@ export function DividendCalculator() {
                     {/* Key Stats Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="p-5 rounded-xl bg-card border border-border shadow-sm flex flex-col">
-                            <span className="text-sm text-muted-foreground font-medium mb-1">Endkapital (nach {years} Jahren)</span>
+                            <span className="text-sm text-muted-foreground font-medium mb-1">Endkapital nach {years} Jahren</span>
                             <span className="text-2xl font-bold tracking-tight text-primary">
                                 {finalYear.capital.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
                             </span>
@@ -248,20 +248,20 @@ export function DividendCalculator() {
                         </div>
                         <div className="p-5 rounded-xl bg-card border border-border shadow-sm flex flex-col justify-between">
                             <div>
-                                <span className="text-sm text-muted-foreground font-medium mb-1 block">Passives Einkommen (Monat)</span>
+                                <span className="text-sm text-muted-foreground font-medium mb-1 block">Passives Einkommen monatlich</span>
                                 <span className="text-2xl font-bold tracking-tight text-green-600 dark:text-green-400">
                                     {displayDividendYear.monthlyDividend.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
                                 </span>
                             </div>
                             <div className="mt-3 pt-3 border-t border-border">
-                                <span className="text-sm text-muted-foreground font-medium mb-1 block">Passives Einkommen (Jährlich)</span>
+                                <span className="text-sm text-muted-foreground font-medium mb-1 block">Passives Einkommen jährlich</span>
                                 <span className="text-2xl font-bold tracking-tight text-green-600 dark:text-green-400">
                                     {displayDividendYear.dividend.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
                                 </span>
                             </div>
                         </div>
                         <div className="p-5 rounded-xl bg-card border border-border shadow-sm flex flex-col">
-                            <span className="text-sm text-muted-foreground font-medium mb-1">Gesamtgewinn (nach {years} Jahren)</span>
+                            <span className="text-sm text-muted-foreground font-medium mb-1">Gesamtgewinn nach {years} Jahren</span>
                             <span className="text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400">
                                 {totalProfit.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
                             </span>
