@@ -45,11 +45,11 @@ function App() {
   return (
     <ExchangeRateProvider>
       <PortfolioProvider>
-        <div className="flex h-screen w-full bg-background text-foreground transition-colors duration-300">
-          {/* Mobile Overlay */}
+        <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans antialiased text-sm">
+          {/* Mobile Sidebar Backdrop */}
           {isSidebarOpen && (
             <div
-              className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-200"
               onClick={() => setIsSidebarOpen(false)}
             />
           )}
@@ -71,7 +71,7 @@ function App() {
                 </div>
                 <h1 className="text-xl font-bold tracking-tight">Portfolio</h1>
               </div>
-              <div className="text-xs text-muted-foreground ml-10">v3.8.6</div>
+              <div className="text-xs text-muted-foreground ml-10">v3.8.7</div>
             </div>
 
             <nav className="flex-1 p-4 space-y-2 min-w-[16rem]">
@@ -221,7 +221,7 @@ function App() {
           </main>
         </div>
       </PortfolioProvider>
-    </ExchangeRateProvider>
+    </ExchangeRateProvider >
   );
 }
 
