@@ -9,6 +9,9 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import { HistoryChart } from '../components/HistoryChart';
 import { AddHistoryEntryModal } from '../components/AddHistoryEntryModal';
 import { CurrencyChart } from '../components/CurrencyChart';
+import { DividendCalendarChart } from '../components/DividendCalendarChart';
+import { AssetAllocationChart } from '../components/AssetAllocationChart';
+import { PieChart as PieChartIcon } from 'lucide-react';
 
 // Helper to translate frequency to German
 const translateFrequency = (freq?: string) => {
@@ -148,6 +151,32 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
                     </div>
                 </div>
             </div>
+
+            {/* NEW: Advanced Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Dividend Calendar */}
+                <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-2">
+                            <Calendar className="size-5 text-blue-500" />
+                            <h3 className="text-lg font-bold">Dividenden Kalender</h3>
+                        </div>
+                    </div>
+                    <DividendCalendarChart />
+                </div>
+
+                {/* Asset Allocation */}
+                <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-2">
+                            <PieChartIcon className="size-5 text-purple-500" />
+                            <h3 className="text-lg font-bold">Verteilung nach Sektor</h3>
+                        </div>
+                    </div>
+                    <AssetAllocationChart />
+                </div>
+            </div>
+
 
             {/* Bottom Section: Dividends & Chart */}
             <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
