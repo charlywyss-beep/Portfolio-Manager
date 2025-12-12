@@ -112,26 +112,33 @@ export function Watchlist() {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="text-right py-3 px-4 font-medium">
-                                                    {formatCurrency(stock.currentPrice, stock.currency)}
+                                                <td className="text-right py-3 px-4">
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        <span className="font-medium">{formatCurrency(stock.currentPrice, stock.currency)}</span>
+                                                        {hasTarget && (
+                                                            <div className="flex items-center justify-end gap-1.5 text-xs">
+                                                                {isUndervalued ? (
+                                                                    <>
+                                                                        <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
+                                                                            <div className="size-2 rounded-full bg-green-500 animate-pulse" />
+                                                                            <span>{overvaluationPercent.toFixed(1)}%</span>
+                                                                        </div>
+                                                                        <span className="text-[10px] font-bold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded">
+                                                                            KAUFEN
+                                                                        </span>
+                                                                    </>
+                                                                ) : (
+                                                                    <div className="flex items-center gap-1 text-red-500 font-medium">
+                                                                        <div className="size-2 rounded-full bg-red-500" />
+                                                                        <span>+{overvaluationPercent.toFixed(1)}%</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </td>
-                                                <td className="text-right py-3 px-4 font-medium">
-                                                    {hasTarget ? (
-                                                        <div className="flex flex-col items-end">
-                                                            <span>{formatCurrency(stock.targetPrice || 0, stock.currency)}</span>
-                                                            {isUndervalued ? (
-                                                                <span className="text-xs font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded animate-pulse">
-                                                                    KAUFEN
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-xs text-red-500 font-medium">
-                                                                    +{overvaluationPercent.toFixed(1)}%
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-muted-foreground text-xs">-</span>
-                                                    )}
+                                                <td className="text-right py-3 px-4 font-medium text-muted-foreground">
+                                                    {hasTarget ? formatCurrency(stock.targetPrice || 0, stock.currency) : '-'}
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-green-600 dark:text-green-400 font-medium">
                                                     {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
