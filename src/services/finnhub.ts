@@ -5,12 +5,14 @@ export interface ChartDataPoint {
     value: number;
 }
 
-export type TimeRange = '1M' | '3M' | '6M' | '1Y' | '5Y';
+export type TimeRange = '1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | '5Y';
 
 // Helper to get UNIX timestamp for range start
 const getStartTime = (range: TimeRange): number => {
     const now = new Date();
     switch (range) {
+        case '1D': return Math.floor(now.setHours(0, 0, 0, 0) / 1000); // Start of today
+        case '1W': now.setDate(now.getDate() - 7); break;
         case '1M': now.setMonth(now.getMonth() - 1); break;
         case '3M': now.setMonth(now.getMonth() - 3); break;
         case '6M': now.setMonth(now.getMonth() - 6); break;
@@ -30,9 +32,11 @@ export async function fetchStockHistory(
     try {
         const from = getStartTime(range);
         const to = Math.floor(Date.now() / 1000);
+
         // Resolution: Finnhub supports 1, 5, 15, 30, 60, D, W, M
-        // For 1M/3M use 'D' (Daily), for 1Y+ maybe 'W' (Weekly) to save data points
         let resolution = 'D';
+        if (range === '1D') resolution = '30';
+        if (range === '1W') resolution = '60';
         if (range === '5Y') resolution = 'W';
 
         const url = `https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=${resolution}&from=${from}&to=${to}&token=${apiKey}`;

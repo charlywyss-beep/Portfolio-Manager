@@ -4,7 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 
-type TimeRange = '1M' | '3M' | '6M' | '1Y' | '5Y';
+type TimeRange = '1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | '5Y';
 
 interface PriceHistoryChartProps {
     currentPrice: number;
@@ -39,27 +39,36 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
 
         const points = [];
         const now = new Date();
-        let days = 30;
+        let days = 30; // default for loops
+        let intervalHours = 24; // default for loops
 
         switch (localTimeRange) {
-            case '1M': days = 30; break;
-            case '3M': days = 90; break;
-            case '6M': days = 180; break;
-            case '1Y': days = 365; break;
-            case '5Y': days = 365 * 5; break;
+            case '1D': days = 1; intervalHours = 0.5; break; // 30 min intervals
+            case '1W': days = 7; intervalHours = 4; break; // 4h intervals simulates week well roughly
+            case '1M': days = 30; intervalHours = 24; break;
+            case '3M': days = 90; intervalHours = 24; break;
+            case '6M': days = 180; intervalHours = 24; break;
+            case '1Y': days = 365; intervalHours = 24; break;
+            case '5Y': days = 365 * 5; intervalHours = 24 * 7; break; // Weekly
         }
 
         // Generate mock data backwards from today
         let price = currentPrice;
 
+        // Count iterations based on days and interval
+        const hoursTotal = days * 24;
+        const iterations = Math.ceil(hoursTotal / intervalHours);
+
         // Adjust starting price target based on trend to ensure end price is close to currentPrice
         // This is a naive simulation: we walk backwards
-        for (let i = 0; i < days; i++) {
+        for (let i = 0; i < iterations; i++) {
             const date = new Date(now);
-            date.setDate(date.getDate() - i);
+            date.setTime(date.getTime() - (i * intervalHours * 60 * 60 * 1000));
 
-            // Skip weekends
-            if (date.getDay() === 0 || date.getDay() === 6) continue;
+            // Skip weekends for daily data if interval is >= 24h
+            if (intervalHours >= 24) {
+                if (date.getDay() === 0 || date.getDay() === 6) continue;
+            }
 
             // Random walk
             const change = 1 + (Math.random() * volatility * 2 - volatility);
@@ -84,12 +93,12 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
         }
 
         return points.reverse();
-    }, [currentPrice, localTimeRange, volatility, trend]);
+    }, [currentPrice, localTimeRange, volatility, trend, historyData]);
 
     // Calculate performance for the selected range
     const startPrice = data[0]?.value || 0;
     const endPrice = data[data.length - 1]?.value || 0;
-    const performance = ((endPrice - startPrice) / startPrice) * 100;
+    const performance = startPrice !== 0 ? ((endPrice - startPrice) / startPrice) * 100 : 0;
     const isPositive = performance >= 0;
 
     return (
@@ -103,7 +112,7 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                 </div>
 
                 <div className="flex bg-muted/50 p-1 rounded-lg">
-                    {(['1M', '3M', '6M', '1Y', '5Y'] as TimeRange[]).map((range) => (
+                    {(['1D', '1W', '1M', '3M', '6M', '1Y', '5Y'] as TimeRange[]).map((range) => (
                         <button
                             key={range}
                             onClick={() => handleRangeChange(range)}
