@@ -71,7 +71,7 @@ function App() {
                 </div>
                 <h1 className="text-xl font-bold tracking-tight">Portfolio</h1>
               </div>
-              <div className="text-xs text-muted-foreground ml-10">v3.8.2</div>
+              <div className="text-xs text-muted-foreground ml-10">v3.8.3</div>
             </div>
 
             <nav className="flex-1 p-4 space-y-2 min-w-[16rem]">
@@ -195,11 +195,10 @@ function App() {
                 {/* Responsive Menu Toggle (Always Visible) */}
                 <button
                   onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  className="p-2 hover:bg-accent rounded-md transition-colors"
+                  className="p-2 hover:bg-accent rounded-md transition-colors relative z-50"
                   aria-label="Toggle menu"
                 >
-                  {isSidebarOpen ? <><Menu className="size-5 rotate-90 scale-0 absolute transition-all" /><X className="size-5 transition-all" /></> : <Menu className="size-5 transition-all" />}
-                  {/* Simplification: Just Use Menu icon if closed, specific logic not strictly needed if we just toggle */}
+                  {isSidebarOpen ? <X className="size-5" /> : <Menu className="size-5" />}
                 </button>
                 <h2 className="text-lg font-semibold capitalize">
                   {activeTab === 'dashboard' && 'Portfolio Übersicht'}
