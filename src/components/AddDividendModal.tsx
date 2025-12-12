@@ -311,7 +311,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                                     placeholder="Optional"
                                     value={targetPrice}
                                     onChange={(e) => setTargetPrice(e.target.value)}
-                                    className="w-full px-3 py-2 border border-blue-200 dark:border-blue-800 rounded-md bg-blue-50/50 dark:bg-blue-900/10 text-foreground ring-offset-background focus-visible:ring-2 focus-visible:ring-blue-600/50"
+                                    className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                 />
                             </div>
                         </div>
