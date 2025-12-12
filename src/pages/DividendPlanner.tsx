@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, TrendingUp, Plus, Edit } from 'lucide-react';
 import { AddDividendModal } from '../components/AddDividendModal';
 import { useCurrencyFormatter } from '../utils/currency';
@@ -17,6 +18,7 @@ const translateFrequency = (freq?: string) => {
 };
 
 export function DividendPlanner() {
+    const navigate = useNavigate();
     const { stocks, positions } = usePortfolio();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingStock, setEditingStock] = useState<Stock | null>(null);
@@ -152,7 +154,12 @@ export function DividendPlanner() {
                                     return (
                                         <tr key={position.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
                                             <td className="py-3 px-4">
-                                                <div className="font-semibold">{stock.name}</div>
+                                                <div
+                                                    className="font-semibold cursor-pointer hover:text-primary transition-colors"
+                                                    onClick={() => navigate(`/stock/${stock.id}`)}
+                                                >
+                                                    {stock.name}
+                                                </div>
                                                 <div className="text-xs text-muted-foreground">{stock.symbol}</div>
                                             </td>
                                             <td className="text-right py-3 px-4">{position.shares}</td>
