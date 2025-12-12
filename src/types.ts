@@ -21,6 +21,7 @@ export interface Stock {
     dividendDates?: { exDate: string; payDate: string }[]; // NEW: Multiple dates support
     dividendFrequency?: 'monthly' | 'quarterly' | 'annually' | 'semi-annually';
     logoUrl?: string;
+    targetPrice?: number; // Desired buy price (Fair Value)
 }
 
 export interface Position {

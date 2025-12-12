@@ -25,11 +25,12 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
 
     // 1. All Hooks MUST be at the top level
     const [selectedStockId, setSelectedStockId] = useState('');
-    const [price, setPrice] = useState(''); // NEW: Price state
+    const [price, setPrice] = useState('');
+    const [targetPrice, setTargetPrice] = useState(''); // NEW: Target Price state
     const [amount, setAmount] = useState('');
     const [yieldPercent, setYieldPercent] = useState('');
     const [currency, setCurrency] = useState<Currency>('CHF');
-    const [logoUrl, setLogoUrl] = useState(''); // NEW: Logo URL state
+    const [logoUrl, setLogoUrl] = useState('');
     const [exDate, setExDate] = useState('');
     const [payDate, setPayDate] = useState('');
     const [frequency, setFrequency] = useState<'quarterly' | 'semi-annually' | 'annually' | 'monthly'>('quarterly');
@@ -49,7 +50,8 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
     useEffect(() => {
         if (editingStock) {
             setSelectedStockId(editingStock.id);
-            setPrice(editingStock.currentPrice?.toString() || ''); // Init Price
+            setPrice(editingStock.currentPrice?.toString() || '');
+            setTargetPrice(editingStock.targetPrice?.toString() || ''); // Init Target Price
             setAmount(editingStock.dividendAmount?.toString() || '');
             setYieldPercent(editingStock.dividendYield?.toString() || '');
             setCurrency(editingStock.dividendCurrency || editingStock.currency);
@@ -82,6 +84,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
             // Reset form
             setSelectedStockId('');
             setPrice('');
+            setTargetPrice('');
             setAmount('');
             setYieldPercent('');
             setCurrency('CHF');
@@ -99,6 +102,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
             const stock = stocks.find(s => s.id === selectedStockId);
             if (stock) {
                 setPrice(stock.currentPrice?.toString() || '');
+                setTargetPrice(stock.targetPrice?.toString() || '');
                 setYieldPercent(stock.dividendYield?.toString() || '');
                 setAmount(stock.dividendAmount?.toString() || '');
                 setCurrency(stock.dividendCurrency || stock.currency);
@@ -133,17 +137,10 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
 
     const handlePriceChange = (newPrice: string) => {
         setPrice(newPrice);
-        // Recalc Amount if Yield is stationary? Or Recalc Yield if Amount is stationary?
-        // Usually: Price changes -> Amount (if constant yield) changes? Or Yield (if constant Amount) changes?
-        // Let's keep Amount constant and update Yield?
-        // Or keep Yield constant and update Amount?
-        // Typically: Dividend Amount is absolute. Yield fluctuates with Price.
-        // So calculate NEW YIELD based on valid Amount and New Price.
         if (newPrice && !isNaN(parseFloat(newPrice)) && amount && !isNaN(parseFloat(amount))) {
             const currentP = parseFloat(newPrice);
             const factor = getFrequencyFactor(frequency);
             const divAmount = parseFloat(amount);
-            // Yield = (Annual Div / Price) * 100
             const newYield = ((divAmount * factor) / currentP) * 100;
             if (isFinite(newYield)) {
                 setYieldPercent(newYield.toFixed(2));
@@ -206,9 +203,17 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
             updateStockPrice(selectedStockId, parseFloat(price));
         }
 
-        // NEW: Update Logo if changed
+        // NEW: Update Logo and Target Price if changed
+        const updates: Partial<Stock> = {};
         if (logoUrl !== undefined && (!selectedStock || logoUrl !== selectedStock.logoUrl)) {
-            updateStock(selectedStockId, { logoUrl });
+            updates.logoUrl = logoUrl;
+        }
+        if (targetPrice !== undefined && (!selectedStock || (targetPrice ? parseFloat(targetPrice) : undefined) !== selectedStock.targetPrice)) {
+            updates.targetPrice = targetPrice ? parseFloat(targetPrice) : undefined;
+        }
+
+        if (Object.keys(updates).length > 0) {
+            updateStock(selectedStockId, updates);
         }
 
         // Dividends Logic
@@ -217,7 +222,6 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
         let submissionPayDate = payDate || undefined;
 
         if (frequency === 'quarterly' || frequency === 'semi-annually') {
-            // Consider only the relevant dates based on frequency
             const datesToConsider = frequency === 'quarterly' ? quarterlyDates : quarterlyDates.slice(0, 2);
             const validDates = datesToConsider.filter(d => d.exDate || d.payDate);
 
@@ -284,20 +288,32 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                         )}
                     </div>
 
-
-
                     {selectedStock && (
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Aktueller Kurs</label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                required
-                                value={price}
-                                onChange={(e) => handlePriceChange(e.target.value)}
-                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
-                            />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Aktueller Kurs</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    required
+                                    value={price}
+                                    onChange={(e) => handlePriceChange(e.target.value)}
+                                    className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-blue-600 dark:text-blue-400">Kauflimit (Fair Value)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    placeholder="Optional"
+                                    value={targetPrice}
+                                    onChange={(e) => setTargetPrice(e.target.value)}
+                                    className="w-full px-3 py-2 border border-blue-200 dark:border-blue-800 rounded-md bg-blue-50/50 dark:bg-blue-900/10 text-foreground ring-offset-background focus-visible:ring-2 focus-visible:ring-blue-600/50"
+                                />
+                            </div>
                         </div>
                     )}
 

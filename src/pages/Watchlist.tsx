@@ -58,6 +58,7 @@ export function Watchlist() {
                                 <tr className="border-b border-border">
                                     <th className="text-left py-3 px-4 font-semibold">Aktie</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Aktueller Kurs</th>
+                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Kauflimit (Fair Value)</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Rendite %</th>
                                     <th className="text-right py-3 px-4 font-semibold">Dividende</th>
                                     <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
@@ -69,7 +70,7 @@ export function Watchlist() {
                             <tbody className="divide-y divide-border">
                                 {watchlistStocks.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} className="text-center py-12 text-muted-foreground">
+                                        <td colSpan={9} className="text-center py-12 text-muted-foreground">
                                             <div className="flex flex-col items-center gap-2">
                                                 <div className="p-3 bg-muted rounded-full">
                                                     <Eye className="size-6 opacity-50" />
@@ -88,6 +89,11 @@ export function Watchlist() {
                                     watchlistStocks.map((stock) => {
                                         const daysToEx = stock.dividendExDate ? Math.ceil((new Date(stock.dividendExDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
                                         const isExSoon = daysToEx !== null && daysToEx >= 0 && daysToEx <= 14;
+
+                                        // Valuation Logic
+                                        const hasTarget = !!stock.targetPrice;
+                                        const isUndervalued = hasTarget && stock.currentPrice <= (stock.targetPrice || 0);
+                                        const overvaluationPercent = hasTarget ? ((stock.currentPrice - (stock.targetPrice || 0)) / (stock.targetPrice || 1)) * 100 : 0;
 
                                         return (
                                             <tr key={stock.id} className="hover:bg-muted/50 transition-colors group">
@@ -108,6 +114,24 @@ export function Watchlist() {
                                                 </td>
                                                 <td className="text-right py-3 px-4 font-medium">
                                                     {formatCurrency(stock.currentPrice, stock.currency)}
+                                                </td>
+                                                <td className="text-right py-3 px-4 font-medium">
+                                                    {hasTarget ? (
+                                                        <div className="flex flex-col items-end">
+                                                            <span>{formatCurrency(stock.targetPrice || 0, stock.currency)}</span>
+                                                            {isUndervalued ? (
+                                                                <span className="text-xs font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded animate-pulse">
+                                                                    KAUFEN
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-xs text-red-500 font-medium">
+                                                                    +{overvaluationPercent.toFixed(1)}%
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-muted-foreground text-xs">-</span>
+                                                    )}
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-green-600 dark:text-green-400 font-medium">
                                                     {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
