@@ -322,7 +322,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                             <label className="text-sm font-medium">Rendite %</label>
                             <input
                                 type="number"
-                                step="0.0001"
+                                step="0.01"
                                 min="0"
                                 placeholder="z.B. 3.90"
                                 value={yieldPercent}
@@ -335,9 +335,9 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                             <label className="text-sm font-medium">Dividende/Zahlung</label>
                             <input
                                 type="number"
-                                step="0.0001"
+                                step="0.01"
                                 min="0"
-                                placeholder="z.B. 0.6006"
+                                placeholder="z.B. 0.60"
                                 value={amount}
                                 onChange={(e) => handleAmountChange(e.target.value)}
                                 className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
