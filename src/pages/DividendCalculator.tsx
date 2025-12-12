@@ -69,8 +69,8 @@ export function DividendCalculator() {
     const displayDividendYear = years > 0 ? projectionData[years - 1] : projectionData[0];
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-
+        <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
+            {/* Header */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* Input Section */}
                 <div className="lg:col-span-4 space-y-6">

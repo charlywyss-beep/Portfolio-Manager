@@ -80,8 +80,8 @@ export function Settings() {
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl mx-auto">
-            <div className="space-y-2">
+        <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
+            <div className="flex items-center gap-3 mb-8">
                 <h1 className="text-2xl font-bold tracking-tight">Einstellungen</h1>
                 <p className="text-muted-foreground">Verwalten Sie Ihre Daten-Backups und Systemeinstellungen.</p>
             </div>

@@ -69,8 +69,8 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
     });
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Top Cards: Key Metrics */}
+        <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
+            {/* Top Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Total Value */}
                 <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
@@ -402,6 +402,15 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
                 </div>
             </div >
 
+            {/* Modals */}
+            {editingHistoryEntry && (
+                <AddHistoryEntryModal
+                    isOpen={!!editingHistoryEntry}
+                    onClose={() => setEditingHistoryEntry(null)}
+                    editingEntry={editingHistoryEntry}
+                    mode="edit"
+                />
+            )}
             <AddHistoryEntryModal
                 isOpen={isHistoryModalOpen}
                 onClose={() => {

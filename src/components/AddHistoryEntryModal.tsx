@@ -7,6 +7,7 @@ interface AddHistoryEntryModalProps {
     isOpen: boolean;
     onClose: () => void;
     editingEntry?: PortfolioHistoryEntry | null;
+    mode?: 'add' | 'edit';
 }
 
 export function AddHistoryEntryModal({ isOpen, onClose, editingEntry }: AddHistoryEntryModalProps) {
