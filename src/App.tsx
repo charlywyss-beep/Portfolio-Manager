@@ -71,7 +71,7 @@ function App() {
                 onClick={() => {
                   setActiveTab('dashboard');
                   // Do not auto-close on desktop
-                  if (window.innerWidth < 768) setIsSidebarOpen(false);
+                  if (window.innerWidth < 640) setIsSidebarOpen(false);
                 }}
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
@@ -87,7 +87,7 @@ function App() {
               <button
                 onClick={() => {
                   setActiveTab('portfolio');
-                  if (window.innerWidth < 768) setIsSidebarOpen(false);
+                  if (window.innerWidth < 640) setIsSidebarOpen(false);
                 }}
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
@@ -103,7 +103,7 @@ function App() {
               <button
                 onClick={() => {
                   setActiveTab('dividends');
-                  if (window.innerWidth < 768) setIsSidebarOpen(false);
+                  if (window.innerWidth < 640) setIsSidebarOpen(false);
                 }}
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
@@ -119,7 +119,7 @@ function App() {
               <button
                 onClick={() => {
                   setActiveTab('watchlist');
-                  if (window.innerWidth < 768) setIsSidebarOpen(false);
+                  if (window.innerWidth < 640) setIsSidebarOpen(false);
                 }}
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
@@ -135,7 +135,7 @@ function App() {
               <button
                 onClick={() => {
                   setActiveTab('calculator');
-                  if (window.innerWidth < 768) setIsSidebarOpen(false);
+                  if (window.innerWidth < 640) setIsSidebarOpen(false);
                 }}
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
@@ -154,7 +154,7 @@ function App() {
                 <button
                   onClick={() => {
                     setActiveTab('settings');
-                    if (window.innerWidth < 768) setIsSidebarOpen(false);
+                    if (window.innerWidth < 640) setIsSidebarOpen(false);
                   }}
                   className={cn(
                     "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
