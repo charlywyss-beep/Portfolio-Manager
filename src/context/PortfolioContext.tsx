@@ -25,6 +25,8 @@ interface PortfolioContextType {
     watchlist: string[];
     addToWatchlist: (stockId: string) => void;
     removeFromWatchlist: (stockId: string) => void;
+    finnhubApiKey: string;
+    setFinnhubApiKey: (key: string) => void;
 }
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
@@ -52,9 +54,18 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         return stored ? JSON.parse(stored) : [];
     });
 
+    const [finnhubApiKey, setFinnhubApiKey] = useState<string>(() => {
+        const stored = localStorage.getItem('portfolio_finnhub_api_key');
+        return stored || 'd4u68uhr01qu53ud2c80d4u68uhr01qu53ud2c8g';
+    });
+
     useEffect(() => {
         localStorage.setItem('portfolio_positions', JSON.stringify(positions));
     }, [positions]);
+
+    useEffect(() => {
+        localStorage.setItem('portfolio_finnhub_api_key', finnhubApiKey);
+    }, [finnhubApiKey]);
 
     useEffect(() => {
         localStorage.setItem('portfolio_stocks', JSON.stringify(stocks));
@@ -229,7 +240,9 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 importData,
                 watchlist,
                 addToWatchlist,
-                removeFromWatchlist
+                removeFromWatchlist,
+                finnhubApiKey,
+                setFinnhubApiKey
             }}
         >
             {children}

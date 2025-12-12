@@ -167,6 +167,35 @@ export function Settings() {
                 </div>
             </div>
 
+            {/* API Settings */}
+            <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-4">
+                <div className="flex items-center gap-3">
+                    <h2 className="text-lg font-semibold">Externe Dienste</h2>
+                </div>
+                <div className="space-y-2">
+                    <label htmlFor="finnhub-key" className="text-sm font-medium">Finnhub API Key (für Aktien-Charts)</label>
+                    <div className="flex gap-2">
+                        <input
+                            id="finnhub-key"
+                            type="password"
+                            placeholder="Finnhub API Key hier eingeben"
+                            value={usePortfolio().finnhubApiKey}
+                            onChange={(e) => usePortfolio().setFinnhubApiKey(e.target.value)}
+                            className="flex-1 p-2 border border-border rounded-md bg-background"
+                        />
+                        <button
+                            className="px-3 py-2 bg-muted hover:bg-muted/80 rounded-md text-sm font-medium transition-colors"
+                            onClick={() => window.open('https://finnhub.io/register', '_blank')}
+                        >
+                            Key holen
+                        </button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                        Kostenlos registrieren, um echte Chart-Daten zu erhalten. Ohne Key wird eine Simulation angezeigt.
+                    </p>
+                </div>
+            </div>
+
             {/* Danger Zone */}
             <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/20 rounded-xl p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
                 <div className="space-y-1">

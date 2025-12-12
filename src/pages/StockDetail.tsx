@@ -8,10 +8,12 @@ import { ArrowLeft, Save, TrendingUp } from 'lucide-react';
 import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { cn } from '../utils';
 
+import { fetchStockHistory, type TimeRange, type ChartDataPoint } from '../services/finnhub';
+
 export function StockDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { stocks, updateStock } = usePortfolio();
+    const { stocks, updateStock, finnhubApiKey } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
 
     // Find stock
@@ -19,6 +21,30 @@ export function StockDetail() {
 
     const [notes, setNotes] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+
+    // Chart Data State
+    const [chartData, setChartData] = useState<ChartDataPoint[] | null>(null);
+    const [timeRange, setTimeRange] = useState<TimeRange>('1Y');
+
+    // Fetch History Effect
+    useEffect(() => {
+        if (!stock || !finnhubApiKey) {
+            setChartData(null); // Reset to allow simulation fallback if no key
+            return;
+        }
+
+        const loadData = async () => {
+            // Basic caching could be added here, but for now fetch fresh
+            const data = await fetchStockHistory(stock.symbol, timeRange, finnhubApiKey);
+            if (data) {
+                setChartData(data);
+            } else {
+                setChartData(null); // Fallback to simulation on error/no-data
+            }
+        };
+
+        loadData();
+    }, [stock?.symbol, timeRange, finnhubApiKey]);
 
     // Initialize notes
     useEffect(() => {
@@ -97,6 +123,8 @@ export function StockDetail() {
                             currency={stock.currency}
                             // Simulate trend based on dividend yield for visual fun (Green if > 2%, else neutral)
                             trend={stock.dividendYield && stock.dividendYield > 2 ? 'up' : 'neutral'}
+                            historyData={chartData}
+                            onRangeChange={(range) => setTimeRange(range)}
                         />
                     </div>
 

@@ -9,20 +9,39 @@ type TimeRange = '1M' | '3M' | '6M' | '1Y' | '5Y';
 interface PriceHistoryChartProps {
     currentPrice: number;
     currency: string;
-    volatility?: number; // 0.0 to 1.0, default 0.02 (2%)
+    volatility?: number;
     trend?: 'up' | 'down' | 'neutral';
+    historyData?: { date: string; value: number }[] | null;
+    onRangeChange?: (range: TimeRange) => void;
 }
 
-export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, trend = 'up' }: PriceHistoryChartProps) {
-    const [timeRange, setTimeRange] = useState<TimeRange>('1Y');
+export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, trend = 'up', historyData, onRangeChange }: PriceHistoryChartProps) {
+    const [localTimeRange, setLocalTimeRange] = useState<TimeRange>('1Y');
     const { formatCurrency } = useCurrencyFormatter();
 
+    const handleRangeChange = (range: TimeRange) => {
+        setLocalTimeRange(range);
+        if (onRangeChange) onRangeChange(range);
+    };
+
+    // Use simulated data if no historyData is provided
     const data = useMemo(() => {
+        // If we have real data, we expect the parent to filter/fetch it based on range.
+        // For simplicity, if historyData is filtered by parent, just use it.
+        // If historyData contains ALL points, we might need to filter.
+        // But for this implementation, let's assume parent handles fetching for the range.
+        if (historyData && historyData.length > 0) {
+            return historyData;
+        }
+
+        // ... (mock generation) ...
+
+
         const points = [];
         const now = new Date();
         let days = 30;
 
-        switch (timeRange) {
+        switch (localTimeRange) {
             case '1M': days = 30; break;
             case '3M': days = 90; break;
             case '6M': days = 180; break;
@@ -65,7 +84,7 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
         }
 
         return points.reverse();
-    }, [currentPrice, timeRange, volatility, trend]);
+    }, [currentPrice, localTimeRange, volatility, trend]);
 
     // Calculate performance for the selected range
     const startPrice = data[0]?.value || 0;
@@ -77,7 +96,7 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
         <div className="w-full h-full flex flex-col">
             <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
                 <div>
-                    <p className="text-sm text-muted-foreground">Performance ({timeRange})</p>
+                    <p className="text-sm text-muted-foreground">Performance ({localTimeRange})</p>
                     <div className={cn("font-bold flex items-center gap-1", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
                         <span className="text-xl">{performance > 0 ? '+' : ''}{performance.toFixed(2)}%</span>
                     </div>
@@ -87,10 +106,10 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                     {(['1M', '3M', '6M', '1Y', '5Y'] as TimeRange[]).map((range) => (
                         <button
                             key={range}
-                            onClick={() => setTimeRange(range)}
+                            onClick={() => handleRangeChange(range)}
                             className={cn(
                                 "px-3 py-1 text-xs font-medium rounded-md transition-all",
-                                timeRange === range
+                                localTimeRange === range
                                     ? "bg-background shadow-sm text-foreground"
                                     : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                             )}
