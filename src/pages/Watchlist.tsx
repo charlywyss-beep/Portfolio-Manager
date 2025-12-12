@@ -20,7 +20,7 @@ export function Watchlist() {
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
             {/* Header */}
             <div className="border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 sticky top-0 z-10">
-                <div className="container mx-auto px-4 py-6">
+                <div className="w-full px-4 py-6 md:px-8">
                     <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
                             <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-blue-600 dark:text-blue-400">
@@ -46,8 +46,8 @@ export function Watchlist() {
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 py-6">
-                <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
+            <div className="w-full px-4 py-6 md:px-8">
+                <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
                     <div className="flex items-center justify-between p-4 border-b bg-muted/30">
                         <h2 className="text-lg font-semibold">Beobachtete Aktien</h2>
                     </div>
