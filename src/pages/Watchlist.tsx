@@ -48,8 +48,25 @@ export function Watchlist() {
 
             <div className="w-full px-2 py-4 md:px-4">
                 <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
-                    <div className="flex items-center justify-between p-4 border-b bg-muted/30">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-muted/30 gap-2">
                         <h2 className="text-lg font-semibold">Beobachtete Aktien</h2>
+                        <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground bg-background/50 px-3 py-1.5 rounded-lg border border-border/50">
+                            <span>Aktueller Kurs:</span>
+                            <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                                    <div className="size-2 rounded-full bg-green-500 animate-pulse" />
+                                    <span className="font-bold">KAUFEN</span>
+                                </div>
+                                <span>(Kurs &lt; Limit)</span>
+                            </div>
+                            <div className="w-px h-3 bg-border" />
+                            <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1 text-red-500">
+                                    <div className="size-2 rounded-full bg-red-500" />
+                                </div>
+                                <span>(Kurs &gt; Limit)</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="overflow-x-auto">
