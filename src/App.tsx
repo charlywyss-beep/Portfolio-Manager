@@ -14,8 +14,8 @@ import { Watchlist } from './pages/Watchlist';
 function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'watchlist' | 'calculator' | 'dividends' | 'settings'>('dashboard');
   const [isDarkMode, setIsDarkMode] = useState(true);
-  // Default open on larger screens, closed on mobile
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 768);
+  // Default open on larger screens (tablet+), closed on mobile
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 640);
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -46,23 +46,15 @@ function App() {
     <ExchangeRateProvider>
       <PortfolioProvider>
         <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans antialiased text-sm">
-          {/* Mobile Sidebar Backdrop */}
-          {isSidebarOpen && (
-            <div
-              className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-200"
-              onClick={() => setIsSidebarOpen(false)}
-            />
-          )}
-
           {/* Sidebar */}
           <aside className={cn(
             "border-r border-border bg-card shadow-lg flex flex-col transition-all duration-300 ease-in-out overflow-hidden",
-            "fixed md:relative z-50 h-full",
-            // Mobile: Standard Slide-in
-            // Desktop: Width collapse
+            "fixed sm:relative z-50 h-full",
+            // Mobile (< 640px): Standard Slide-in (fixed)
+            // Tablet/Desktop (>= 640px): Width collapse (relative/push)
             isSidebarOpen
               ? "translate-x-0 w-64"
-              : "-translate-x-full w-64 md:translate-x-0 md:w-0 md:border-r-0"
+              : "-translate-x-full w-64 sm:translate-x-0 sm:w-0 sm:border-r-0"
           )}>
             <div className="p-6 border-b border-border min-w-[16rem]"> {/* min-w ensures content doesn't squash during transition */}
               <div className="flex items-center gap-2 mb-1">
