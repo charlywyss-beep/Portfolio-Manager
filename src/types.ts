@@ -22,6 +22,7 @@ export interface Stock {
     dividendFrequency?: 'monthly' | 'quarterly' | 'annually' | 'semi-annually';
     logoUrl?: string;
     targetPrice?: number; // Desired buy price (Fair Value)
+    notes?: string; // Personal notes about the stock
 }
 
 export interface Position {

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Trash2, ArrowUpRight, ArrowDownRight, PieChart, BarChart3, Edit, Landmark } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
@@ -9,6 +10,7 @@ import { AddFixedDepositModal } from '../components/AddFixedDepositModal';
 import { PriceUpdateDialog } from '../components/PriceUpdateDialog';
 
 export function Portfolio() {
+    const navigate = useNavigate();
     const { positions: rawPositions, stocks, fixedDeposits, addPosition, deletePosition, updatePosition, deleteFixedDeposit } = usePortfolio();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isAddFixedDepositModalOpen, setIsAddFixedDepositModalOpen] = useState(false);
@@ -114,7 +116,12 @@ export function Portfolio() {
                                             )}
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="font-semibold text-foreground truncate">{pos.stock.name}</div>
+                                                    <div
+                                                        className="font-semibold text-foreground truncate cursor-pointer hover:text-primary transition-colors"
+                                                        onClick={() => navigate(`/stock/${pos.stock.id}`)}
+                                                    >
+                                                        {pos.stock.name}
+                                                    </div>
                                                 </div>
                                                 <div className="text-xs text-muted-foreground flex items-center gap-1">
                                                     <span className="font-mono bg-muted px-1 rounded">{pos.stock.symbol}</span>

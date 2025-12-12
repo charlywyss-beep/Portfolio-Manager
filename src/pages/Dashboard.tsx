@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
+import { useState } from 'react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
 import { ArrowUpRight, ArrowDownRight, DollarSign, Calendar, TrendingUp, BarChart3, Plus, Trash2, Edit, Bell, Info } from 'lucide-react';
@@ -24,7 +25,8 @@ const translateFrequency = (freq?: string) => {
     }
 };
 
-export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void }) {
+export function Dashboard() {
+    const navigate = useNavigate();
     const { totals, upcomingDividends, positions, upcomingWatchlistDividends } = usePortfolioData();
     const { history, deleteHistoryEntry } = usePortfolio();
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
@@ -138,7 +140,10 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
                         <p className="text-sm text-muted-foreground font-medium">Top Performer</p>
                         {positions.length > 0 ? (
                             <>
-                                <h3 className="text-xl font-bold mt-1 tracking-tight truncate">
+                                <h3
+                                    className="text-xl font-bold mt-1 tracking-tight truncate cursor-pointer hover:text-primary transition-colors"
+                                    onClick={() => navigate(`/stock/${positions.sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0]?.stock.id}`)}
+                                >
                                     {positions.sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0]?.stock.name}
                                 </h3>
                                 <p className="text-sm text-green-600 dark:text-green-400 mt-2 font-medium">
@@ -273,7 +278,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
                             return (
                                 <div
                                     key={idx}
-                                    onClick={() => onNavigate('dividends')}
+                                    onClick={() => navigate('/dividends')}
                                     className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
                                 >
                                     <div className="flex items-center gap-3">
@@ -360,7 +365,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (tab: string) => void })
                                                     </div>
 
                                                     <div
-                                                        onClick={() => onNavigate('watchlist')}
+                                                        onClick={() => navigate('/watchlist')}
                                                         className="block mt-1 px-2 py-0.5 w-fit rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors cursor-pointer"
                                                     >
                                                         <p className="text-sm text-blue-900 dark:text-blue-300 font-medium">{item.stock.name}</p>

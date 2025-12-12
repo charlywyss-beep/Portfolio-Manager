@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
+import { useNavigate } from 'react-router-dom';
 
 import { useCurrencyFormatter } from '../utils/currency';
 import { Eye, Plus, Trash2, Edit } from 'lucide-react';
@@ -8,6 +9,7 @@ import { AddWatchlistStockModal } from '../components/AddWatchlistStockModal';
 import { AddDividendModal } from '../components/AddDividendModal';
 
 export function Watchlist() {
+    const navigate = useNavigate();
     const { stocks, watchlist, removeFromWatchlist, addToWatchlist } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
     const [isAddStockOpen, setIsAddStockOpen] = useState(false);
@@ -124,7 +126,12 @@ export function Watchlist() {
                                                             </div>
                                                         )}
                                                         <div>
-                                                            <div className="font-semibold">{stock.name}</div>
+                                                            <div
+                                                                className="font-semibold cursor-pointer hover:text-primary transition-colors"
+                                                                onClick={() => navigate(`/stock/${stock.id}`)}
+                                                            >
+                                                                {stock.name}
+                                                            </div>
                                                             <div className="text-xs text-muted-foreground">{stock.symbol}</div>
                                                         </div>
                                                     </div>
@@ -251,7 +258,3 @@ export function Watchlist() {
         </div>
     );
 }
-
-
-
-

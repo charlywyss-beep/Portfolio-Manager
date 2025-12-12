@@ -1,0 +1,168 @@
+
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { usePortfolio } from '../context/PortfolioContext';
+
+import { useCurrencyFormatter } from '../utils/currency';
+import { ArrowLeft, Save, TrendingUp } from 'lucide-react';
+import { PriceHistoryChart } from '../components/PriceHistoryChart';
+import { cn } from '../utils';
+
+export function StockDetail() {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const { stocks, updateStock } = usePortfolio();
+    const { formatCurrency } = useCurrencyFormatter();
+
+    // Find stock
+    const stock = stocks.find(s => s.id === id);
+
+    const [notes, setNotes] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Initialize notes
+    useEffect(() => {
+        if (stock) {
+            setNotes(stock.notes || '');
+        }
+    }, [stock]);
+
+    if (!stock) return <div className="p-8">Aktie nicht gefunden.</div>;
+
+    const handleSaveNotes = async () => {
+        setIsSaving(true);
+        // Simulate small delay for UI feedback
+        await new Promise(r => setTimeout(r, 500));
+        updateStock(stock.id, { notes });
+        setIsSaving(false);
+    };
+
+    return (
+        <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
+            {/* Header / Navigation */}
+            <div>
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center text-muted-foreground hover:text-foreground transition-colors mb-4"
+                >
+                    <ArrowLeft className="size-4 mr-1" />
+                    Zurück
+                </button>
+
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        {stock.logoUrl ? (
+                            <img src={stock.logoUrl} alt={stock.name} className="size-16 rounded-xl border border-border bg-white object-contain p-2" />
+                        ) : (
+                            <div className="size-16 rounded-xl border border-border bg-muted/50 flex items-center justify-center text-2xl font-bold text-muted-foreground">
+                                {stock.symbol.slice(0, 2)}
+                            </div>
+                        )}
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight">{stock.name}</h1>
+                            <div className="flex items-center gap-2 text-muted-foreground mt-1">
+                                <span className="font-bold text-foreground">{stock.symbol}</span>
+                                <span>•</span>
+                                <span>{stock.sector || 'Sektor unbekannt'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Price Card */}
+                    <div className="text-right">
+                        <p className="text-sm text-muted-foreground font-medium">Aktueller Kurs</p>
+                        <h2 className="text-3xl font-bold">
+                            {formatCurrency(stock.currentPrice, stock.currency)}
+                        </h2>
+                        {stock.dividendYield && (
+                            <p className="text-sm text-green-600 dark:text-green-400 font-medium mt-1">
+                                {stock.dividendYield.toFixed(2)}% Div.Rendite
+                            </p>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left Column: Stats & Chart */}
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Price Chart */}
+                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                        <div className="flex items-center gap-2 mb-4">
+                            <TrendingUp className="size-5 text-blue-500" />
+                            <h3 className="font-bold text-lg">Kursverlauf</h3>
+                        </div>
+                        <PriceHistoryChart
+                            currentPrice={stock.currentPrice}
+                            currency={stock.currency}
+                            // Simulate trend based on dividend yield for visual fun (Green if > 2%, else neutral)
+                            trend={stock.dividendYield && stock.dividendYield > 2 ? 'up' : 'neutral'}
+                        />
+                    </div>
+
+                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                            <TrendingUp className="size-5 text-blue-500" />
+                            Stammdaten
+                        </h3>
+                        <div className="space-y-4">
+                            <div className="flex justify-between py-2 border-b border-border/50">
+                                <span className="text-muted-foreground text-sm">ISIN</span>
+                                <span className="font-medium text-sm font-mono">{stock.isin || '-'}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-border/50">
+                                <span className="text-muted-foreground text-sm">Währung</span>
+                                <span className="font-medium text-sm">{stock.currency}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-border/50">
+                                <span className="text-muted-foreground text-sm">Typ</span>
+                                <span className="font-medium text-sm capitalize">{stock.type || 'Aktie'}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-border/50">
+                                <span className="text-muted-foreground text-sm">Frequenz</span>
+                                <span className="font-medium text-sm capitalize">
+                                    {stock.dividendFrequency === 'quarterly' ? 'Quartalsweise' :
+                                        stock.dividendFrequency === 'monthly' ? 'Monatlich' :
+                                            stock.dividendFrequency === 'semi-annually' ? 'Halbjährlich' : 'Jährlich'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Column: Notes & Research */}
+                <div className="lg:col-span-1 space-y-6">
+                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm h-full flex flex-col">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-bold text-lg flex items-center gap-2">
+                                <Save className="size-5 text-purple-500" />
+                                Persönliche Notizen & Analyse
+                            </h3>
+                            <button
+                                onClick={handleSaveNotes}
+                                disabled={isSaving}
+                                className={cn(
+                                    "px-4 py-2 rounded-lg text-sm font-bold transition-all",
+                                    isSaving
+                                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                        : "bg-primary text-primary-foreground hover:opacity-90"
+                                )}
+                            >
+                                {isSaving ? 'Gespeichert!' : 'Speichern'}
+                            </button>
+                        </div>
+                        <textarea
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            placeholder="Schreiben Sie hier Ihre Gedanken zur Aktie (z.B. Kaufgrund, Burggraben, Risiken)..."
+                            className="flex-1 min-h-[300px] w-full p-4 rounded-lg border border-border bg-background/50 resize-y focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        />
+                        <p className="text-xs text-muted-foreground mt-2">
+                            * Notizen werden nur lokal gespeichert.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
