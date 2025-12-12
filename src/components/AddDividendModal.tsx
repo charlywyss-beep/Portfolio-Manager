@@ -303,7 +303,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-blue-600 dark:text-blue-400">Kauflimit (Fair Value)</label>
+                                <label className="text-sm font-medium text-blue-600 dark:text-blue-400">Kauflimit</label>
                                 <input
                                     type="number"
                                     step="0.01"

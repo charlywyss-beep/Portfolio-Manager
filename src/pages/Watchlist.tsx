@@ -58,7 +58,7 @@ export function Watchlist() {
                                 <tr className="border-b border-border">
                                     <th className="text-left py-3 px-4 font-semibold">Aktie</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Aktueller Kurs</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Kauflimit (Fair Value)</th>
+                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Kauflimit</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Rendite %</th>
                                     <th className="text-right py-3 px-4 font-semibold">Dividende</th>
                                     <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
