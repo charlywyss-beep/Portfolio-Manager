@@ -321,15 +321,15 @@ export function DividendCalculator() {
                                 </div>
 
                                 {/* Annual Payout */}
-                                <div className="p-2.5 rounded-lg bg-green-500/10 border border-green-500/20 flex flex-col justify-between">
-                                    <span className="text-[10px] text-green-700 dark:text-green-400 uppercase tracking-wide">Jähliche Ausschüttung</span>
+                                <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 flex flex-col justify-between">
+                                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Jährliche Ausschüttung</span>
                                     <div className="flex flex-col items-end">
-                                        <span className="text-lg font-bold text-green-700 dark:text-green-400 leading-none">
+                                        <span className="text-lg font-bold text-foreground leading-none">
                                             {(shares * dividend).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                                         </span>
                                         {/* Gross Yield Display */}
-                                        <span className="text-[10px] text-green-600/70 dark:text-green-400/70 mt-0.5">
-                                            Brutto: {grossYield.toFixed(2)}%
+                                        <span className="text-[10px] text-muted-foreground mt-0.5">
+                                            Brutto: {grossYield}%
                                         </span>
                                     </div>
                                 </div>
