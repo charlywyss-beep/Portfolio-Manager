@@ -256,9 +256,11 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        // iOS PWA Keyboard Fix: Changed 'fixed' to 'absolute' and added h-full/w-full to ensure
+        // it scrolls correctly with the viewport and doesn't get trapped by the virtual keyboard.
+        <div className="absolute inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 min-h-screen">
             <div
-                className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md overflow-y-auto max-h-[90vh]"
+                className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md overflow-y-auto max-h-[90vh] relative"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
