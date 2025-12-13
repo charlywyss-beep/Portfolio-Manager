@@ -118,7 +118,9 @@ export function CurrencyChart({ inverse = false }: Props) {
                     </div>
                     <div>
                         <h3 className="text-lg font-bold">{inverse ? 'Kurs in CHF' : 'Wechselkurse'}</h3>
-                        <p className="text-xs text-muted-foreground">Basis: 1 {baseCurrency}</p>
+                        <div className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-primary/10 text-primary mt-1">
+                            Basis: 1 {baseCurrency}
+                        </div>
                     </div>
                 </div>
 
