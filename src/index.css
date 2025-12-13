@@ -84,29 +84,7 @@
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground;
-  }
-
-  /* AGGRESSIVE Fix for iOS PWA Input Issues */
-  * {
-    -webkit-user-select: text !important;
-  }
-}
-
-/* GLOBAL PWA FIXES - Outside of Tailwind Layers */
-html,
-body {
-  -webkit-user-select: text !important;
-  user-select: text !important;
-  -webkit-touch-callout: default !important;
-}
-
+/* GLOBAL PWA FIXES - Only apply to inputs */
 input,
 textarea,
 select {
