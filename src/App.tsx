@@ -15,7 +15,7 @@ import { StockDetail } from './pages/StockDetail';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 640);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 1024);
   // const navigate = useNavigate(); // Unused
   const location = useLocation();
 
@@ -48,7 +48,7 @@ function App() {
     <NavLink
       to={to}
       onClick={() => {
-        if (window.innerWidth < 640) setIsSidebarOpen(false);
+        if (window.innerWidth < 1024) setIsSidebarOpen(false);
       }}
       className={({ isActive }) => cn(
         "w-full flex items-center gap-3 px-4 py-3 rounded-md transition-all whitespace-nowrap",
@@ -69,10 +69,10 @@ function App() {
           {/* Sidebar */}
           <aside className={cn(
             "border-r border-border bg-card shadow-lg flex flex-col transition-all duration-300 ease-in-out overflow-hidden",
-            "fixed sm:relative z-50 h-full",
+            "fixed lg:relative z-50 h-full",
             isSidebarOpen
               ? "translate-x-0 w-64"
-              : "-translate-x-full w-64 sm:translate-x-0 sm:w-0 sm:border-r-0"
+              : "-translate-x-full w-64 lg:translate-x-0 lg:w-0 lg:border-r-0"
           )}>
             <div className="p-6 border-b border-border min-w-[16rem]">
               <div className="flex items-center gap-2 mb-1">
@@ -81,7 +81,7 @@ function App() {
                 </div>
                 <h1 className="text-xl font-bold tracking-tight">Portfolio</h1>
               </div>
-              <div className="text-[10px] text-foreground font-bold font-mono mt-1">v3.8.49</div>
+              <div className="text-[10px] text-foreground font-bold font-mono mt-1">v3.8.50</div>
             </div>
 
             <nav className="flex-1 p-4 space-y-2 min-w-[16rem]">
