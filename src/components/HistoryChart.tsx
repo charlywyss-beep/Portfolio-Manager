@@ -138,7 +138,7 @@ export function HistoryChart() {
                             />
                             <Bar
                                 dataKey="cashValue"
-                                name="Bankguthaben"
+                                name="Bank"
                                 stackId="a"
                                 fill="#22c55e" // Green-500
                                 radius={[4, 4, 0, 0]} // Top radius
