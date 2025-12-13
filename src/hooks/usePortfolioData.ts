@@ -40,6 +40,13 @@ export function usePortfolioData() {
     }, [rawPositions, stocks]);
 
     const totals = useMemo(() => {
+        // Separate Stock vs ETF
+        const stockPositions = positions.filter(p => !p.stock.type || p.stock.type === 'stock');
+        const etfPositions = positions.filter(p => p.stock.type === 'etf');
+
+        const totalValueStockOnly = stockPositions.reduce((sum, p) => sum + convertToCHF(p.currentValue, p.stock.currency, rates), 0);
+        const totalValueEtf = etfPositions.reduce((sum, p) => sum + convertToCHF(p.currentValue, p.stock.currency, rates), 0);
+
         const totalValueStock = positions.reduce((sum, p) => sum + convertToCHF(p.currentValue, p.stock.currency, rates), 0);
         const totalCostStock = positions.reduce((sum, p) => sum + convertToCHF(p.costBasis, p.stock.currency, rates), 0);
         const totalGainLossStock = totalValueStock - totalCostStock;
@@ -47,6 +54,9 @@ export function usePortfolioData() {
         // Fixed Deposits Totals
         const { fixedDeposits } = usePortfolio();
         const totalValueFixed = fixedDeposits?.reduce((sum, fd) => sum + convertToCHF(fd.amount, fd.currency, rates), 0) || 0;
+        const totalBankValue = totalValueFixed;
+
+
         const totalInterestFixed = fixedDeposits?.reduce((sum, fd) => {
             const interest = fd.amount * (fd.interestRate / 100);
             return sum + convertToCHF(interest, fd.currency, rates);
@@ -84,7 +94,10 @@ export function usePortfolioData() {
             totalProjectedIncome, // Combined Dividends + Interest
             totalValueStock,
             totalValueFixed,
-            totalInterestFixed
+            totalInterestFixed,
+            stockValue: totalValueStockOnly,
+            etfValue: totalValueEtf,
+            cashValue: totalBankValue
         };
     }, [positions, rates, usePortfolio().fixedDeposits]);
 

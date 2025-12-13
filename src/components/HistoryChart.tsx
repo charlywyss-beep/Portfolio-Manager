@@ -47,15 +47,23 @@ export function HistoryChart() {
             return (
                 <div className="bg-card border border-border p-3 rounded-lg shadow-xl text-sm">
                     <p className="font-bold mb-2">{new Date(label).toLocaleDateString('de-DE')}</p>
-                    {payload.map((entry: any, index: number) => (
-                        <div key={index} className="flex items-center gap-2 mb-1">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                            <span className="text-muted-foreground">{entry.name}:</span>
-                            <span className="font-mono font-medium">
-                                {formatCurrency(entry.value, 'CHF')}
-                            </span>
-                        </div>
-                    ))}
+                    {payload.map((entry: any, index: number) => {
+                        // Skip if value is 0/undefined to keep tooltip clean
+                        if (!entry.value) return null;
+                        return (
+                            <div key={index} className="flex items-center gap-2 mb-1">
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                <span className="text-muted-foreground min-w-[80px]">{entry.name}:</span>
+                                <span className="font-mono font-medium">
+                                    {formatCurrency(entry.value, 'CHF')}
+                                </span>
+                            </div>
+                        );
+                    })}
+                    <div className="mt-2 pt-2 border-t border-border flex justify-between items-center">
+                        <span className="font-bold">Total:</span>
+                        <span className="font-mono font-bold">{formatCurrency((payload[0]?.payload?.totalValue || 0), 'CHF')}</span>
+                    </div>
                 </div>
             );
         }
@@ -114,17 +122,26 @@ export function HistoryChart() {
                             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted)/0.2)' }} />
                             <Legend />
                             <Bar
-                                dataKey="investedCapital"
-                                name="Investiertes Kapital"
-                                fill="hsl(var(--muted))"
-                                radius={[4, 4, 0, 0]}
+                                dataKey="stockValue"
+                                name="Aktien"
+                                stackId="a"
+                                fill="#2563eb" // Blue-600
+                                radius={[0, 0, 4, 4]} // Bottom radius
                                 maxBarSize={50}
                             />
                             <Bar
-                                dataKey="totalValue"
-                                name="Gesamtwert"
-                                fill="hsl(var(--primary))"
-                                radius={[4, 4, 0, 0]}
+                                dataKey="etfValue"
+                                name="ETFs"
+                                stackId="a"
+                                fill="#7c3aed" // Violet-600
+                                maxBarSize={50}
+                            />
+                            <Bar
+                                dataKey="cashValue"
+                                name="Bankguthaben"
+                                stackId="a"
+                                fill="#22c55e" // Green-500
+                                radius={[4, 4, 0, 0]} // Top radius
                                 maxBarSize={50}
                             />
                         </BarChart>

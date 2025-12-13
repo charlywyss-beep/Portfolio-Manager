@@ -215,7 +215,7 @@ export function Dashboard() {
                                     <tr>
                                         <th className="px-3 py-2">Jahr</th>
                                         <th className="px-3 py-2 text-right">Wert</th>
-                                        <th className="px-3 py-2 text-center">Aktion</th>
+                                        <th className="px-3 py-2 text-center w-[80px]"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">
@@ -454,7 +454,9 @@ export function Dashboard() {
                 editingEntry={editingHistoryEntry}
                 currentTotals={{
                     totalValue: totals.totalValue,
-                    totalCost: totals.totalCost
+                    stockValue: totals.stockValue,
+                    etfValue: totals.etfValue,
+                    cashValue: totals.cashValue
                 }}
             />
         </div >

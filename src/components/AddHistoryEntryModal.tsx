@@ -10,7 +10,9 @@ interface AddHistoryEntryModalProps {
     mode?: 'add' | 'edit';
     currentTotals?: {
         totalValue: number;
-        totalCost: number;
+        stockValue?: number;
+        etfValue?: number;
+        cashValue?: number;
     };
 }
 
@@ -18,27 +20,39 @@ export function AddHistoryEntryModal({ isOpen, onClose, editingEntry, currentTot
     const { addHistoryEntry, updateHistoryEntry } = usePortfolio();
 
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-    const [totalValue, setTotalValue] = useState<number | ''>('');
-    const [investedCapital, setInvestedCapital] = useState<number | ''>('');
+
+    // Detailed breakdown
+    const [stockValue, setStockValue] = useState<number | ''>('');
+    const [etfValue, setEtfValue] = useState<number | ''>('');
+    const [cashValue, setCashValue] = useState<number | ''>('');
+
     const [notes, setNotes] = useState('');
+
+    // Computed total for display
+    const calculatedTotal = (Number(stockValue) || 0) + (Number(etfValue) || 0) + (Number(cashValue) || 0);
+
 
     useEffect(() => {
         if (editingEntry) {
             setDate(editingEntry.date);
-            setTotalValue(editingEntry.totalValue);
-            setInvestedCapital(editingEntry.investedCapital || '');
+            setStockValue(editingEntry.stockValue || '');
+            setEtfValue(editingEntry.etfValue || '');
+            setCashValue(editingEntry.cashValue || '');
+            // Fallback: if editing legacy entry with only totalValue, put it in Stock? or Cash? 
+            // Better to leave empty or maybe put in Stock if other two are missing?
+            // Decision: If new fields are missing but totalValue exists, maybe put it all in Stock as default?
+            // Or just leave blank and let user fix it.
+            if (!editingEntry.stockValue && !editingEntry.etfValue && !editingEntry.cashValue && editingEntry.totalValue) {
+                setStockValue(editingEntry.totalValue);
+            }
+
             setNotes(editingEntry.notes || '');
         } else {
-            // Default: if currentTotals provided, don't auto-fill yet (user should click button),
-            // OR auto-fill if date is today?
-            // Let's stick to "User clicks button" pattern for safety.
-            // But default date can be today if not editing.
-
-            // Wait, previous logic was: Default to End of Last Year
             const lastYear = new Date().getFullYear() - 1;
             setDate(`${lastYear}-12-31`);
-            setTotalValue('');
-            setInvestedCapital('');
+            setStockValue('');
+            setEtfValue('');
+            setCashValue('');
             setNotes('');
         }
     }, [editingEntry, isOpen]);
@@ -50,12 +64,15 @@ export function AddHistoryEntryModal({ isOpen, onClose, editingEntry, currentTot
 
         const entryData = {
             date,
-            totalValue: Number(totalValue),
-            investedCapital: investedCapital ? Number(investedCapital) : undefined,
+            totalValue: calculatedTotal,
+            stockValue: Number(stockValue) || 0,
+            etfValue: Number(etfValue) || 0,
+            cashValue: Number(cashValue) || 0,
             notes
         };
 
         if (editingEntry) {
+            // @ts-ignore - investedCapital is optional/removed but might be in type
             updateHistoryEntry(editingEntry.id, entryData);
         } else {
             addHistoryEntry(entryData);
@@ -75,8 +92,9 @@ export function AddHistoryEntryModal({ isOpen, onClose, editingEntry, currentTot
                             <button
                                 onClick={() => {
                                     setDate(new Date().toISOString().split('T')[0]);
-                                    setTotalValue(Number(currentTotals.totalValue.toFixed(2)));
-                                    setInvestedCapital(Number(currentTotals.totalCost.toFixed(2)));
+                                    setStockValue(Number((currentTotals.stockValue || 0).toFixed(2)));
+                                    setEtfValue(Number((currentTotals.etfValue || 0).toFixed(2)));
+                                    setCashValue(Number((currentTotals.cashValue || 0).toFixed(2)));
                                     setNotes('Automatischer Eintrag');
                                 }}
                                 className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors"
@@ -103,31 +121,48 @@ export function AddHistoryEntryModal({ isOpen, onClose, editingEntry, currentTot
                         <p className="text-xs text-muted-foreground">Meistens der 31.12. des Jahres</p>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Gesamtwert Portfolio (CHF)</label>
-                        <input
-                            type="number"
-                            required
-                            min="0"
-                            step="0.01"
-                            placeholder="z.B. 50000.00"
-                            className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono"
-                            value={totalValue}
-                            onChange={(e) => setTotalValue(Number(e.target.value))}
-                        />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Aktien (CHF)</label>
+                            <input
+                                type="number"
+                                required
+                                min="0"
+                                step="0.01"
+                                className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono"
+                                value={stockValue}
+                                onChange={(e) => setStockValue(Number(e.target.value))}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">ETFs (CHF)</label>
+                            <input
+                                type="number"
+                                required
+                                min="0"
+                                step="0.01"
+                                className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono"
+                                value={etfValue}
+                                onChange={(e) => setEtfValue(Number(e.target.value))}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Bank/Bar (CHF)</label>
+                            <input
+                                type="number"
+                                required
+                                min="0"
+                                step="0.01"
+                                className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono"
+                                value={cashValue}
+                                onChange={(e) => setCashValue(Number(e.target.value))}
+                            />
+                        </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Investiertes Kapital (Optional)</label>
-                        <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder="Für korrekte Rendite-Berechnung"
-                            className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono"
-                            value={investedCapital}
-                            onChange={(e) => setInvestedCapital(Number(e.target.value))}
-                        />
+                    <div className="p-3 bg-muted/30 rounded-lg flex justify-between items-center border border-border">
+                        <span className="font-medium text-muted-foreground">Gesamtwert</span>
+                        <span className="font-bold text-lg font-mono">{calculatedTotal.toFixed(2)} CHF</span>
                     </div>
 
                     <div className="space-y-2">

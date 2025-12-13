@@ -51,6 +51,9 @@ export interface PortfolioHistoryEntry {
     id: string;
     date: string; // ISO Date (YYYY-MM-DD or YYYY-12-31)
     totalValue: number;
+    stockValue?: number; // Value of all positions with type 'stock'
+    etfValue?: number;   // Value of all positions with type 'etf'
+    cashValue?: number;  // Bankguthaben (Cash + Fixed Deposits)
     investedCapital?: number; // Optional: to calculate true return
     notes?: string;
 }
