@@ -61,7 +61,8 @@ export function AddWatchlistStockModal({ isOpen, onClose, onAdd }: Props) {
                                 placeholder="Suchen..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full px-3 py-2 border rounded-md"
+
+                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                             />
 
                             <div className="max-h-[200px] overflow-y-auto space-y-2 border rounded-md p-2">
@@ -90,16 +91,16 @@ export function AddWatchlistStockModal({ isOpen, onClose, onAdd }: Props) {
                         <form onSubmit={handleCreate} className="space-y-3">
                             <div>
                                 <label className="text-xs font-medium">Name</label>
-                                <input required value={newName} onChange={e => setNewName(e.target.value)} className="w-full border rounded px-2 py-1" />
+                                <input required value={newName} onChange={e => setNewName(e.target.value)} className="w-full border rounded px-2 py-1 bg-background text-foreground" />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="text-xs font-medium">Symbol</label>
-                                    <input required value={newSymbol} onChange={e => setNewSymbol(e.target.value)} className="w-full border rounded px-2 py-1" />
+                                    <input required value={newSymbol} onChange={e => setNewSymbol(e.target.value)} className="w-full border rounded px-2 py-1 bg-background text-foreground" />
                                 </div>
                                 <div>
                                     <label className="text-xs font-medium">Währung</label>
-                                    <select value={newCurrency} onChange={e => setNewCurrency(e.target.value)} className="w-full border rounded px-2 py-1">
+                                    <select value={newCurrency} onChange={e => setNewCurrency(e.target.value)} className="w-full border rounded px-2 py-1 bg-background text-foreground">
                                         <option value="USD">USD</option>
                                         <option value="EUR">EUR</option>
                                         <option value="CHF">CHF</option>
@@ -109,7 +110,7 @@ export function AddWatchlistStockModal({ isOpen, onClose, onAdd }: Props) {
                             </div>
                             <div>
                                 <label className="text-xs font-medium">Aktueller Preis</label>
-                                <input required type="number" step="0.01" value={newPrice} onChange={e => setNewPrice(e.target.value)} className="w-full border rounded px-2 py-1" />
+                                <input required type="number" step="0.01" value={newPrice} onChange={e => setNewPrice(e.target.value)} className="w-full border rounded px-2 py-1 bg-background text-foreground" />
                             </div>
 
                             <div className="flex gap-2 pt-2">
