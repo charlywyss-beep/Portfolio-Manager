@@ -335,12 +335,17 @@ export function DividendCalculator() {
                                 </div>
                             </div>
 
-                            {/* Net Yield Highlight */}
-                            <div className={`p-3 rounded-lg border flex items-center justify-between ${netYield > 0 ? 'bg-primary text-primary-foreground border-primary shadow-md' : 'bg-muted text-muted-foreground border-transparent'}`}>
-                                <span className="text-xs font-semibold uppercase opacity-90">Netto-Rendite</span>
-                                <span className="text-2xl font-bold tracking-tight">
-                                    {netYield.toFixed(2)}%
-                                </span>
+                            {/* Net Yield Highlight with Gross */}
+                            <div className={`p-3 rounded-lg border flex items-center justify-between gap-4 ${netYield > 0 ? 'bg-primary text-primary-foreground border-primary shadow-md' : 'bg-muted text-muted-foreground border-transparent'}`}>
+                                <div className="flex flex-col items-start">
+                                    <span className="text-[10px] uppercase opacity-80">Brutto-Rendite</span>
+                                    <span className="text-lg font-semibold opacity-90">{grossYield.toFixed(2)}%</span>
+                                </div>
+                                <div className="h-8 w-px bg-current opacity-20"></div>
+                                <div className="flex flex-col items-end">
+                                    <span className="text-xs font-bold uppercase">Netto-Rendite</span>
+                                    <span className="text-2xl font-bold tracking-tight">{netYield.toFixed(2)}%</span>
+                                </div>
                             </div>
 
                             {/* Watchlist Action */}
