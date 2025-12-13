@@ -304,7 +304,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                                 <label className="text-sm font-medium">Aktueller Kurs</label>
                                 <input
                                     type="text"
-                                    inputMode="text"
+                                    inputMode="decimal"
                                     autoComplete="off"
                                     autoCorrect="off"
                                     step="0.01"
@@ -312,7 +312,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                                     required
                                     value={price}
                                     onChange={(e) => handlePriceChange(e.target.value)}
-                                    style={{ WebkitUserSelect: 'text', userSelect: 'text' }}
+                                    // Removed inline user-select hack, browser handles it fine
                                     className="w-full px-3 py-2 border rounded-md bg-background text-foreground touch-manipulation"
                                 />
                             </div>
@@ -320,7 +320,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                                 <label className="text-sm font-medium text-blue-600 dark:text-blue-400">Kauflimit</label>
                                 <input
                                     type="text"
-                                    inputMode="text"
+                                    inputMode="decimal"
                                     autoComplete="off"
                                     autoCorrect="off"
                                     step="0.01"
@@ -328,7 +328,6 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                                     placeholder="Optional"
                                     value={targetPrice}
                                     onChange={(e) => setTargetPrice(e.target.value)}
-                                    style={{ WebkitUserSelect: 'text', userSelect: 'text' }}
                                     className="w-full px-3 py-2 border rounded-md bg-background text-foreground touch-manipulation"
                                 />
                             </div>
@@ -340,7 +339,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                             <label className="text-sm font-medium">Rendite %</label>
                             <input
                                 type="text"
-                                inputMode="text"
+                                inputMode="decimal"
                                 autoComplete="off"
                                 autoCorrect="off"
                                 step="0.01"
@@ -348,7 +347,6 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                                 placeholder="z.B. 3.90"
                                 value={yieldPercent}
                                 onChange={(e) => handleYieldChange(e.target.value)}
-                                style={{ WebkitUserSelect: 'text', userSelect: 'text' }}
                                 className="w-full px-3 py-2 border rounded-md bg-background text-foreground touch-manipulation"
                             />
                         </div>
@@ -357,7 +355,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                             <label className="text-sm font-medium">Dividende/Zahlung</label>
                             <input
                                 type="text"
-                                inputMode="text"
+                                inputMode="decimal"
                                 autoComplete="off"
                                 autoCorrect="off"
                                 step="0.01"
@@ -365,7 +363,6 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                                 placeholder="z.B. 0.60"
                                 value={amount}
                                 onChange={(e) => handleAmountChange(e.target.value)}
-                                style={{ WebkitUserSelect: 'text', userSelect: 'text' }}
                                 className="w-full px-3 py-2 border rounded-md bg-background text-foreground touch-manipulation"
                             />
                         </div>
