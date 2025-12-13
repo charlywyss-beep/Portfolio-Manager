@@ -190,8 +190,9 @@ export function Settings() {
                             Key holen
                         </button>
                     </div>
+                    {/* Simplified feedback for the user */}
                     <p className="text-xs text-muted-foreground">
-                        Kostenlos registrieren, um echte Chart-Daten zu erhalten. Ohne Key wird eine Simulation angezeigt.
+                        Status: {usePortfolio().finnhubApiKey ? <span className="text-green-500">Key eingetragen</span> : "Kein Key"}
                     </p>
                 </div>
             </div>

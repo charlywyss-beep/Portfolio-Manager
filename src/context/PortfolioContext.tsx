@@ -109,7 +109,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
     const [finnhubApiKey, setFinnhubApiKey] = useState<string>(() => {
         const stored = localStorage.getItem('portfolio_finnhub_api_key');
-        return stored || 'd4u68uhr01qu53ud2c80d4u68uhr01qu53ud2c8g';
+        return stored || 'd4uufa9r01qnm7pobnt0d4uufa9r01qnm7pobntg';
     });
 
     useEffect(() => {
@@ -118,6 +118,13 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         localStorage.setItem('portfolio_finnhub_api_key', finnhubApiKey);
+    }, [finnhubApiKey]);
+
+    // Auto-migrate old invalid key to new valid key if found
+    useEffect(() => {
+        if (finnhubApiKey === 'd4u68uhr01qu53ud2c80d4u68uhr01qu53ud2c8g') {
+            setFinnhubApiKey('d4uufa9r01qnm7pobnt0d4uufa9r01qnm7pobntg');
+        }
     }, [finnhubApiKey]);
 
     useEffect(() => {

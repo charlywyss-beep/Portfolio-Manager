@@ -70,24 +70,19 @@
     filter: invert(1);
   }
 
-  /* HIDE spin buttons (arrows) globally for a cleaner UI */
-  input::-webkit-outer-spin-button,
-  input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-
-  /* Firefox */
-  input[type=number] {
-    -moz-appearance: textfield;
-    appearance: textfield;
+  /* Force spin buttons (arrows) to be always visible on number inputs */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button {
+    opacity: 1;
   }
 }
 
-/* GLOBAL PWA FIXES - Only apply to inputs */
-input,
-textarea,
-select {
-  -webkit-user-select: text !important;
-  user-select: text !important;
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
 }
