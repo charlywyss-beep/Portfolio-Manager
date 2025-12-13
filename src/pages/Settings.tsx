@@ -10,6 +10,8 @@ export function Settings() {
     const [importMessage, setImportMessage] = useState('');
     const [showApiKey, setShowApiKey] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [apiTestStatus, setApiTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+    const [apiTestMessage, setApiTestMessage] = useState('');
 
     const handleExport = () => {
         const data = {
@@ -31,6 +33,53 @@ export function Settings() {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+    };
+
+    const testApiKey = async () => {
+        if (!finnhubApiKey) {
+            setApiTestStatus('error');
+            setApiTestMessage('Kein API Key eingetragen');
+            return;
+        }
+
+        setApiTestStatus('testing');
+        setApiTestMessage('Teste Verbindung zu Finnhub...');
+
+        try {
+            // Simple quote request to test the key
+            const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=AAPL&token=${finnhubApiKey}`);
+
+            if (response.status === 403) {
+                setApiTestStatus('error');
+                setApiTestMessage('❌ Key ungültig oder keine Berechtigung');
+                return;
+            }
+
+            if (response.status === 429) {
+                setApiTestStatus('error');
+                setApiTestMessage('⚠️ API Limit erreicht (zu viele Anfragen)');
+                return;
+            }
+
+            if (!response.ok) {
+                setApiTestStatus('error');
+                setApiTestMessage(`❌ API Fehler: ${response.status}`);
+                return;
+            }
+
+            const data = await response.json();
+
+            if (data && data.c !== undefined) {
+                setApiTestStatus('success');
+                setApiTestMessage(`✅ Key ist gültig und aktiv! (AAPL Kurs: $${data.c})`);
+            } else {
+                setApiTestStatus('error');
+                setApiTestMessage('❌ Ungültige Antwort von API');
+            }
+        } catch (error) {
+            setApiTestStatus('error');
+            setApiTestMessage('❌ Netzwerkfehler - API nicht erreichbar');
+        }
     };
 
     const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -229,25 +278,52 @@ export function Settings() {
                         </button>
                     </div>
                     {/* API Status with Test Button */}
-                    <div className="flex items-center justify-between gap-4 p-3 bg-muted/30 rounded-lg">
-                        <div className="flex-1">
-                            <p className="text-xs font-medium text-muted-foreground mb-1">Status:</p>
-                            <p className="text-sm">
-                                {finnhubApiKey ? (
-                                    <>
-                                        <span className="text-green-600 dark:text-green-400 font-medium">✓ Key eingetragen</span>
-                                        <span className="text-muted-foreground ml-2 text-xs">
-                                            ({finnhubApiKey.substring(0, 8)}...)
-                                        </span>
-                                    </>
-                                ) : (
-                                    <span className="text-orange-500 font-medium">⚠ Kein Key (Simulation-Modus)</span>
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-4 p-3 bg-muted/30 rounded-lg">
+                            <div className="flex-1">
+                                <p className="text-xs font-medium text-muted-foreground mb-1">Status:</p>
+                                <p className="text-sm">
+                                    {finnhubApiKey ? (
+                                        <>
+                                            <span className="text-green-600 dark:text-green-400 font-medium">✓ Key eingetragen</span>
+                                            <span className="text-muted-foreground ml-2 text-xs">
+                                                ({finnhubApiKey.substring(0, 8)}...)
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <span className="text-orange-500 font-medium">⚠ Kein Key (Simulation-Modus)</span>
+                                    )}
+                                </p>
+                            </div>
+                            <button
+                                onClick={testApiKey}
+                                disabled={!finnhubApiKey || apiTestStatus === 'testing'}
+                                className={cn(
+                                    "px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap",
+                                    apiTestStatus === 'testing' ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                                        !finnhubApiKey ? "bg-muted text-muted-foreground cursor-not-allowed" :
+                                            "bg-primary text-primary-foreground hover:opacity-90"
                                 )}
-                            </p>
-                            <p className="text-[10px] text-muted-foreground mt-1 italic">
-                                Tipp: Neue Finnhub Keys brauchen oft 5-10 Min. bis sie aktiv sind.
-                            </p>
+                            >
+                                {apiTestStatus === 'testing' ? 'Teste...' : 'Key testen'}
+                            </button>
                         </div>
+
+                        {/* Test Result */}
+                        {apiTestMessage && (
+                            <div className={cn(
+                                "p-3 rounded-lg border text-sm",
+                                apiTestStatus === 'success' ? "bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400" :
+                                    apiTestStatus === 'error' ? "bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400" :
+                                        "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400"
+                            )}>
+                                {apiTestMessage}
+                            </div>
+                        )}
+
+                        <p className="text-[10px] text-muted-foreground italic">
+                            Tipp: Neue Finnhub Keys brauchen oft 5-10 Min. bis sie aktiv sind.
+                        </p>
                     </div>
                 </div>
             </div>
