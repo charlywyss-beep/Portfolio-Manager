@@ -83,9 +83,14 @@ function App() {
               : "-translate-x-full w-64 lg:translate-x-0 lg:w-0 lg:border-r-0"
           )}>
             <div
-              className="p-6 border-b border-border min-w-[16rem] cursor-pointer hover:bg-accent/50 transition-colors group"
-              onClick={() => window.location.reload()}
-              title="App neu laden"
+              className="flex flex-col cursor-pointer group p-6 border-b border-border min-w-[16rem]"
+              onClick={() => {
+                // Force Hard Reload by appending unique timestamp
+                const url = new URL(window.location.href);
+                url.searchParams.set('v', Date.now().toString());
+                window.location.href = url.toString();
+              }}
+              title="App neu laden (Cache leeren)"
             >
               <div className="flex items-center gap-2 mb-1">
                 <div className="size-8 rounded-lg bg-primary flex items-center justify-center group-hover:scale-105 transition-transform shadow-sm">
@@ -94,7 +99,7 @@ function App() {
                 <h1 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">Portfolio</h1>
               </div>
               <div className="text-[10px] text-foreground font-bold font-mono mt-1 flex items-center gap-1">
-                <span>v3.8.58</span>
+                <span>v3.8.60</span>
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
               </div>
             </div>
@@ -152,8 +157,8 @@ function App() {
             </div>
           </main>
         </div>
-      </PortfolioProvider>
-    </ExchangeRateProvider>
+      </PortfolioProvider >
+    </ExchangeRateProvider >
   );
 }
 

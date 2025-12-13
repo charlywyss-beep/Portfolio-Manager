@@ -96,19 +96,20 @@
   /* AGGRESSIVE Fix for iOS PWA Input Issues */
   * {
     -webkit-user-select: text !important;
-    user-select: text !important;
-    -webkit-touch-callout: default !important;
   }
+}
 
-  /* Except for buttons/interactive elements where we might want it off, 
-     but priority is INPUTS working now. */
+/* GLOBAL PWA FIXES - Outside of Tailwind Layers */
+html,
+body {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
+}
 
-  input,
-  textarea,
-  select {
-    -webkit-user-select: text !important;
-    user-select: text !important;
-    touch-action: manipulation !important;
-    /* Prevents double-tap zoom delay and helps focus */
-  }
+input,
+textarea,
+select {
+  -webkit-user-select: text !important;
+  user-select: text !important;
 }
