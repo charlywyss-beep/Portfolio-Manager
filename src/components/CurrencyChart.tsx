@@ -22,12 +22,14 @@ export function CurrencyChart({ inverse = false }: Props) {
     const [historyData, setHistoryData] = useState<RateHistory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [currRate, setCurrRate] = useState<number | null>(null);
-    const [baseAmount, setBaseAmount] = useState<string>('1000');
+    const [baseAmount, setBaseAmount] = useState<string>('1');
     const [convertedAmount, setConvertedAmount] = useState<string>('');
 
     // Derived values based on mode
     const baseCurrency = inverse ? selectedCurrency : 'CHF';
     const targetCurrency = inverse ? 'CHF' : selectedCurrency;
+
+
 
     useEffect(() => {
         const fetchHistory = async () => {
@@ -168,6 +170,7 @@ export function CurrencyChart({ inverse = false }: Props) {
                                     type="number"
                                     value={baseAmount}
                                     onChange={(e) => handleBaseAmountChange(e.target.value)}
+                                    onFocus={(e) => e.target.select()}
                                     className="w-full px-4 py-3 text-2xl font-bold rounded-lg bg-white dark:bg-background text-gray-900 dark:text-white border-0 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="0.00"
                                 />
@@ -178,6 +181,7 @@ export function CurrencyChart({ inverse = false }: Props) {
                                     type="number"
                                     value={convertedAmount}
                                     onChange={(e) => handleConvertedAmountChange(e.target.value)}
+                                    onFocus={(e) => e.target.select()}
                                     className="w-full px-4 py-3 text-2xl font-bold rounded-lg bg-white dark:bg-background text-gray-900 dark:text-white border-0 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                                     placeholder="0.00"
                                 />
