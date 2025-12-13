@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calculator, RefreshCw, Percent } from 'lucide-react';
+import { Calculator, RefreshCw, Percent, Coins } from 'lucide-react';
 
 export function DividendCalculator() {
     // State for inputs
@@ -14,6 +14,10 @@ export function DividendCalculator() {
     // Helper Calculator State
     const [calcDividend, setCalcDividend] = useState(3.05);
     const [calcPrice, setCalcPrice] = useState(90.50);
+
+    // Payout Calculator State
+    const [payoutShares, setPayoutShares] = useState(150);
+    const [payoutDividend, setPayoutDividend] = useState(4.50);
 
     // Calculation Logic
     const projectionData = useMemo(() => {
@@ -225,6 +229,48 @@ export function DividendCalculator() {
                                 >
                                     Rendite übernehmen
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Payout Calculator (Ausschüttungs-Rechner) */}
+                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm animate-in fade-in slide-in-from-bottom-8 duration-700">
+                        <div className="flex items-center gap-2 mb-4 text-primary">
+                            <Coins className="size-5" />
+                            <h3 className="font-semibold text-lg">Ausschüttungs-Rechner</h3>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label htmlFor="payout-shares" className="text-sm font-medium text-muted-foreground">Anzahl Aktien</label>
+                                    <input
+                                        id="payout-shares"
+                                        type="number"
+                                        value={payoutShares}
+                                        onChange={(e) => setPayoutShares(Number(e.target.value))}
+                                        className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all text-right"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label htmlFor="payout-dividend" className="text-sm font-medium text-muted-foreground">Dividende / Aktie</label>
+                                    <input
+                                        id="payout-dividend"
+                                        type="number"
+                                        step="0.01"
+                                        value={payoutDividend}
+                                        onChange={(e) => setPayoutDividend(Number(e.target.value))}
+                                        className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all text-right"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="pt-4 border-t border-border mt-2">
+                                <div className="flex justify-between items-center rounded-lg bg-muted/50 p-3">
+                                    <span className="font-medium text-sm">Jährliche Ausschüttung:</span>
+                                    <span className="text-xl font-bold text-green-600 dark:text-green-400">
+                                        {(payoutShares * payoutDividend).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
