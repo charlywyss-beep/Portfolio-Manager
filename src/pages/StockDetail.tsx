@@ -85,8 +85,8 @@ export function StockDetail() {
                             </div>
                         )}
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight">{stock.name}</h1>
-                            <div className="flex items-center gap-2 text-muted-foreground mt-1">
+                            <h1 className="text-xl md:text-3xl font-bold tracking-tight">{stock.name}</h1>
+                            <div className="flex items-center gap-2 text-muted-foreground mt-1 text-sm md:text-base">
                                 <span className="font-bold text-foreground">{stock.symbol}</span>
                                 <span>•</span>
                                 <span>{stock.sector || 'Sektor unbekannt'}</span>
@@ -96,8 +96,8 @@ export function StockDetail() {
 
                     {/* Price Card */}
                     <div className="text-right">
-                        <p className="text-sm text-muted-foreground font-medium">Aktueller Kurs</p>
-                        <h2 className="text-3xl font-bold">
+                        <p className="text-xs md:text-sm text-muted-foreground font-medium">Aktueller Kurs</p>
+                        <h2 className="text-2xl md:text-3xl font-bold">
                             {formatCurrency(stock.currentPrice, stock.currency)}
                         </h2>
                         {stock.dividendYield && (
