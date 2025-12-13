@@ -137,10 +137,13 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
 
     const handlePriceChange = (newPrice: string) => {
         setPrice(newPrice);
-        if (newPrice && !isNaN(parseFloat(newPrice)) && amount && !isNaN(parseFloat(amount))) {
-            const currentP = parseFloat(newPrice);
+        const p = parseFloat(newPrice.replace(',', '.'));
+        const a = parseFloat(amount.replace(',', '.'));
+
+        if (newPrice && !isNaN(p) && amount && !isNaN(a)) {
+            const currentP = p;
             const factor = getFrequencyFactor(frequency);
-            const divAmount = parseFloat(amount);
+            const divAmount = a;
             const newYield = ((divAmount * factor) / currentP) * 100;
             if (isFinite(newYield)) {
                 setYieldPercent(newYield.toFixed(2));
@@ -151,8 +154,10 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
     const handleYieldChange = (newYield: string) => {
         setYieldPercent(newYield);
         const currentP = getEffectivePrice();
-        if (currentP && newYield && !isNaN(parseFloat(newYield))) {
-            const yieldValue = parseFloat(newYield);
+        const y = parseFloat(newYield.replace(',', '.'));
+
+        if (currentP && newYield && !isNaN(y)) {
+            const yieldValue = y;
             const factor = getFrequencyFactor(frequency);
             const dividendAmount = ((currentP * yieldValue) / 100) / factor;
             if (isFinite(dividendAmount)) {
@@ -164,8 +169,10 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
     const handleAmountChange = (newAmount: string) => {
         setAmount(newAmount);
         const currentP = getEffectivePrice();
-        if (currentP && newAmount && !isNaN(parseFloat(newAmount))) {
-            const dividendAmount = parseFloat(newAmount);
+        const a = parseFloat(newAmount.replace(',', '.'));
+
+        if (currentP && newAmount && !isNaN(a)) {
+            const dividendAmount = a;
             const factor = getFrequencyFactor(frequency);
             const yieldValue = ((dividendAmount * factor) / currentP) * 100;
             if (isFinite(yieldValue)) {
@@ -199,8 +206,8 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
         if (!selectedStockId) return;
 
         // NEW: Update Price if changed
-        if (price && (!selectedStock || parseFloat(price) !== selectedStock.currentPrice)) {
-            updateStockPrice(selectedStockId, parseFloat(price));
+        if (price && (!selectedStock || parseFloat(price.replace(',', '.')) !== selectedStock.currentPrice)) {
+            updateStockPrice(selectedStockId, parseFloat(price.replace(',', '.')));
         }
 
         // NEW: Update Logo and Target Price if changed
@@ -208,8 +215,8 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
         if (logoUrl !== undefined && (!selectedStock || logoUrl !== selectedStock.logoUrl)) {
             updates.logoUrl = logoUrl;
         }
-        if (targetPrice !== undefined && (!selectedStock || (targetPrice ? parseFloat(targetPrice) : undefined) !== selectedStock.targetPrice)) {
-            updates.targetPrice = targetPrice ? parseFloat(targetPrice) : undefined;
+        if (targetPrice !== undefined && (!selectedStock || (targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined) !== selectedStock.targetPrice)) {
+            updates.targetPrice = targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined;
         }
 
         if (Object.keys(updates).length > 0) {
@@ -233,8 +240,8 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
         }
 
         updateStockDividend(selectedStockId, {
-            dividendYield: yieldPercent ? parseFloat(yieldPercent) : undefined,
-            dividendAmount: amount ? parseFloat(amount) : undefined,
+            dividendYield: yieldPercent ? parseFloat(yieldPercent.replace(',', '.')) : undefined,
+            dividendAmount: amount ? parseFloat(amount.replace(',', '.')) : undefined,
             dividendCurrency: currency,
             dividendExDate: submissionExDate,
             dividendPayDate: submissionPayDate,
@@ -293,24 +300,34 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Aktueller Kurs</label>
                                 <input
-                                    type="number"
+                                    type="text"
+                                    inputMode="decimal"
                                     step="0.01"
                                     min="0"
                                     required
                                     value={price}
                                     onChange={(e) => handlePriceChange(e.target.value)}
+                                    onFocus={(e) => {
+                                        const target = e.target;
+                                        setTimeout(() => target.select(), 50);
+                                    }}
                                     className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-blue-600 dark:text-blue-400">Kauflimit</label>
                                 <input
-                                    type="number"
+                                    type="text"
+                                    inputMode="decimal"
                                     step="0.01"
                                     min="0"
                                     placeholder="Optional"
                                     value={targetPrice}
                                     onChange={(e) => setTargetPrice(e.target.value)}
+                                    onFocus={(e) => {
+                                        const target = e.target;
+                                        setTimeout(() => target.select(), 50);
+                                    }}
                                     className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                 />
                             </div>
@@ -321,12 +338,17 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Rendite %</label>
                             <input
-                                type="number"
+                                type="text"
+                                inputMode="decimal"
                                 step="0.01"
                                 min="0"
                                 placeholder="z.B. 3.90"
                                 value={yieldPercent}
                                 onChange={(e) => handleYieldChange(e.target.value)}
+                                onFocus={(e) => {
+                                    const target = e.target;
+                                    setTimeout(() => target.select(), 50);
+                                }}
                                 className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                             />
                         </div>
@@ -334,12 +356,17 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Dividende/Zahlung</label>
                             <input
-                                type="number"
+                                type="text"
+                                inputMode="decimal"
                                 step="0.01"
                                 min="0"
                                 placeholder="z.B. 0.60"
                                 value={amount}
                                 onChange={(e) => handleAmountChange(e.target.value)}
+                                onFocus={(e) => {
+                                    const target = e.target;
+                                    setTimeout(() => target.select(), 50);
+                                }}
                                 className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                             />
                         </div>
@@ -375,7 +402,7 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                         <div className="p-3 bg-muted rounded-lg">
                             <p className="text-sm font-medium">Erwartete Jahresausschüttung</p>
                             <p className="text-lg font-bold text-primary">
-                                {(parseFloat(amount) * position.shares * getFrequencyFactor(frequency)).toFixed(2)} {currency}
+                                {(parseFloat(amount.replace(',', '.')) * position.shares * getFrequencyFactor(frequency)).toFixed(2)} {currency}
                             </p>
                         </div>
                     )}
