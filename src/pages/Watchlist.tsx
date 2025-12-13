@@ -6,14 +6,14 @@ import { useCurrencyFormatter } from '../utils/currency';
 import { Eye, Plus, Trash2, Edit } from 'lucide-react';
 
 import { AddWatchlistStockModal } from '../components/AddWatchlistStockModal';
-import { AddDividendModal } from '../components/AddDividendModal';
+// import { AddDividendModal } from '../components/AddDividendModal';
 
 export function Watchlist() {
     const navigate = useNavigate();
     const { stocks, watchlist, removeFromWatchlist, addToWatchlist } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
     const [isAddStockOpen, setIsAddStockOpen] = useState(false);
-    const [editingStock, setEditingStock] = useState<any>(null);
+    // const [editingStock, setEditingStock] = useState<any>(null);
 
     // Filter stocks that are in the watchlist
     const watchlistStocks = stocks.filter(s => watchlist.includes(s.id));
@@ -36,7 +36,7 @@ export function Watchlist() {
 
                         <button
                             onClick={() => {
-                                setEditingStock(null);
+                                // setEditingStock(null);
                                 setIsAddStockOpen(true);
                             }}
                             className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm"
@@ -208,9 +208,7 @@ export function Watchlist() {
                                                 <td className="text-right py-3 px-4">
                                                     <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity">
                                                         <button
-                                                            onClick={() => {
-                                                                setEditingStock(stock);
-                                                            }}
+                                                            onClick={() => navigate(`/dividends/edit/${stock.id}`)}
                                                             className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
                                                             title="Bearbeiten"
                                                         >
@@ -248,13 +246,7 @@ export function Watchlist() {
                 }}
             />
 
-            {editingStock && (
-                <AddDividendModal
-                    editingStock={editingStock}
-                    isOpen={!!editingStock}
-                    onClose={() => setEditingStock(null)}
-                />
-            )}
+            {/* Dividend Edit Modal removed for PWA compatibility */}
         </div>
     );
 }

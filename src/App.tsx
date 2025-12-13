@@ -8,6 +8,7 @@ import { ExchangeRateProvider } from './context/ExchangeRateContext';
 import { Dashboard } from './pages/Dashboard';
 import { Portfolio } from './pages/Portfolio';
 import { DividendPlanner } from './pages/DividendPlanner';
+import { EditDividendPage } from './pages/EditDividendPage';
 import { DividendCalculator } from './pages/DividendCalculator';
 import { Settings } from './pages/Settings';
 import { Watchlist } from './pages/Watchlist';
@@ -99,7 +100,7 @@ function App() {
                 <h1 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">Portfolio</h1>
               </div>
               <div className="text-[10px] text-foreground font-bold font-mono mt-1 flex items-center gap-1">
-                <span>v3.8.67</span>
+                <span>v3.8.68</span>
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
               </div>
             </div>
@@ -151,8 +152,10 @@ function App() {
                 <Route path="/watchlist" element={<Watchlist />} />
                 <Route path="/calculator" element={<DividendCalculator />} />
                 <Route path="/dividends" element={<DividendPlanner />} />
-                <Route path="/settings" element={<Settings />} />
+                <Route path="/dividends/add" element={<EditDividendPage />} />
+                <Route path="/dividends/edit/:stockId" element={<EditDividendPage />} />
                 <Route path="/stock/:id" element={<StockDetail />} />
+                <Route path="/settings" element={<Settings />} />
               </Routes>
             </div>
           </main>

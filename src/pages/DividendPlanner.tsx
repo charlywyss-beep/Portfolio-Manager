@@ -1,10 +1,9 @@
-import { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, TrendingUp, Plus, Edit } from 'lucide-react';
-import { AddDividendModal } from '../components/AddDividendModal';
+// import { AddDividendModal } from '../components/AddDividendModal';
 import { useCurrencyFormatter } from '../utils/currency';
-import type { Stock } from '../types';
+// import type { Stock } from '../types';
 
 // Helper to translate frequency to German
 const translateFrequency = (freq?: string) => {
@@ -20,8 +19,8 @@ const translateFrequency = (freq?: string) => {
 export function DividendPlanner() {
     const navigate = useNavigate();
     const { stocks, positions } = usePortfolio();
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [editingStock, setEditingStock] = useState<Stock | null>(null);
+    // const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    // const [editingStock, setEditingStock] = useState<Stock | null>(null);
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
 
     // Calculate projected dividends from yield
@@ -89,7 +88,7 @@ export function DividendPlanner() {
                 <div className="flex items-center justify-between p-4 border-b bg-muted/30">
                     <h2 className="text-lg font-semibold">Erwartete Dividenden</h2>
                     <button
-                        onClick={() => setIsAddModalOpen(true)}
+                        onClick={() => navigate('/dividends/add')}
                         className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium transition-colors"
                     >
                         <Plus className="size-4" />
@@ -190,7 +189,7 @@ export function DividendPlanner() {
                                             </td>
                                             <td className="text-right py-3 px-4">
                                                 <button
-                                                    onClick={() => setEditingStock(stock)}
+                                                    onClick={() => navigate(`/dividends/edit/${stock.id}`)}
                                                     className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
                                                     title="Bearbeiten"
                                                 >
@@ -206,14 +205,7 @@ export function DividendPlanner() {
                 </div>
             </div>
 
-            <AddDividendModal
-                isOpen={isAddModalOpen || !!editingStock}
-                onClose={() => {
-                    setIsAddModalOpen(false);
-                    setEditingStock(null);
-                }}
-                editingStock={editingStock}
-            />
+            {/* Modal removed for PWA compatibility */}
         </div>
     );
 }
