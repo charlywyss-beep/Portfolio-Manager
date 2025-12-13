@@ -34,11 +34,15 @@ export function StockDetail() {
         }
 
         const loadData = async () => {
+            console.log('[StockDetail] Fetching data for:', stock.symbol, 'Range:', timeRange, 'Has Key:', !!finnhubApiKey);
             const response = await fetchStockHistory(stock.symbol, timeRange, finnhubApiKey);
+            console.log('[StockDetail] API Response:', response);
 
             if (response.error) {
+                console.warn('[StockDetail] Error from API:', response.error);
                 setChartData(null); // Fallback to simulation
             } else {
+                console.log('[StockDetail] Success! Data points:', response.data?.length || 0);
                 setChartData(response.data);
             }
         };
