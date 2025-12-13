@@ -329,7 +329,7 @@ export function DividendCalculator() {
                                         </span>
                                         {/* Gross Yield Display */}
                                         <span className="text-[10px] text-muted-foreground mt-0.5">
-                                            Brutto: {grossYield}%
+                                            Brutto: {grossYield.toFixed(2)}%
                                         </span>
                                     </div>
                                 </div>
