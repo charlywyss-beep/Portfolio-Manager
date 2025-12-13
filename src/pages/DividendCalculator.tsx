@@ -1,8 +1,12 @@
 import { useState, useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calculator, RefreshCw, Percent, Coins } from 'lucide-react';
+import { Calculator, RefreshCw, Coins } from 'lucide-react';
+
+import { usePortfolio } from '../context/PortfolioContext';
 
 export function DividendCalculator() {
+    const { stocks } = usePortfolio();
+
     // State for inputs
     const [initialCapital, setInitialCapital] = useState(10000);
     const [monthlyContribution, setMonthlyContribution] = useState(500);
@@ -11,13 +15,11 @@ export function DividendCalculator() {
     const [priceAppreciation, setPriceAppreciation] = useState(4.0);
     const [reinvest, setReinvest] = useState(true);
 
-    // Helper Calculator State
-    const [calcDividend, setCalcDividend] = useState(3.05);
-    const [calcPrice, setCalcPrice] = useState(90.50);
-
-    // Payout Calculator State
-    const [payoutShares, setPayoutShares] = useState(150);
-    const [payoutDividend, setPayoutDividend] = useState(4.50);
+    // Integrated Simulator State
+    const [simShares, setSimShares] = useState(150);
+    const [simPrice, setSimPrice] = useState(90.50);
+    const [simFees, setSimFees] = useState(9.00);
+    const [simDividend, setSimDividend] = useState(3.05);
 
     // Calculation Logic
     const projectionData = useMemo(() => {
@@ -181,94 +183,108 @@ export function DividendCalculator() {
                         </div>
                     </div>
 
-                    {/* Dividend Yield Calculator Helper */}
-                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <div className="flex items-center gap-2 mb-4 text-primary">
-                            <Percent className="size-5" />
-                            <h3 className="font-semibold text-lg">Dividenden-Rendite</h3>
+
+
+                    {/* Integrated Investment Simulator */}
+                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm animate-in fade-in slide-in-from-bottom-8 duration-700">
+                        <div className="flex items-center gap-2 mb-6 text-primary">
+                            <Coins className="size-5" />
+                            <h3 className="font-semibold text-lg">Investitions-Rechner</h3>
                         </div>
-                        <div className="space-y-4">
+
+                        <div className="space-y-6">
+                            {/* Stock Selector */}
                             <div className="space-y-2">
-                                <label htmlFor="calc-dividend" className="text-sm font-medium text-muted-foreground">Dividende pro Aktie (jährlich)</label>
-                                <div className="relative">
+                                <label className="text-sm font-medium text-muted-foreground">Aktie aus Watchlist wählen (Optional)</label>
+                                <select
+                                    className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all"
+                                    onChange={(e) => {
+                                        const stock = stocks.find(s => s.id === e.target.value);
+                                        if (stock) {
+                                            setSimPrice(stock.currentPrice);
+                                            setSimDividend(stock.dividendAmount || 0);
+                                        }
+                                    }}
+                                    defaultValue=""
+                                >
+                                    <option value="" disabled>-- Aktie wählen --</option>
+                                    {stocks.map(stock => (
+                                        <option key={stock.id} value={stock.id}>
+                                            {stock.name} ({stock.symbol})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {/* Inputs Row 1 */}
+                                <div className="space-y-2">
+                                    <label htmlFor="sim-shares" className="text-sm font-medium text-muted-foreground">Anzahl Aktien</label>
                                     <input
-                                        id="calc-dividend"
+                                        id="sim-shares"
+                                        type="number"
+                                        value={simShares}
+                                        onChange={(e) => setSimShares(Number(e.target.value))}
+                                        className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all text-right"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label htmlFor="sim-price" className="text-sm font-medium text-muted-foreground">Kaufkurs / Aktie</label>
+                                    <input
+                                        id="sim-price"
                                         type="number"
                                         step="0.01"
-                                        value={calcDividend}
-                                        onChange={(e) => setCalcDividend(Number(e.target.value))}
+                                        value={simPrice}
+                                        onChange={(e) => setSimPrice(Number(e.target.value))}
                                         className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all text-right"
-                                        placeholder="z.B. 3.05"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label htmlFor="sim-fees" className="text-sm font-medium text-muted-foreground">Gebühren (Total)</label>
+                                    <input
+                                        id="sim-fees"
+                                        type="number"
+                                        step="0.01"
+                                        value={simFees}
+                                        onChange={(e) => setSimFees(Number(e.target.value))}
+                                        className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all text-right"
                                     />
                                 </div>
                             </div>
+
+                            {/* Inputs Row 2 */}
                             <div className="space-y-2">
-                                <label htmlFor="calc-price" className="text-sm font-medium text-muted-foreground">Aktueller Aktienkurs</label>
-                                <div className="relative">
-                                    <input
-                                        id="calc-price"
-                                        type="number"
-                                        step="0.01"
-                                        value={calcPrice}
-                                        onChange={(e) => setCalcPrice(Number(e.target.value))}
-                                        className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all text-right"
-                                        placeholder="z.B. 90.50"
-                                    />
-                                </div>
+                                <label htmlFor="sim-dividend" className="text-sm font-medium text-muted-foreground">Dividende pro Aktie (jährlich)</label>
+                                <input
+                                    id="sim-dividend"
+                                    type="number"
+                                    step="0.01"
+                                    value={simDividend}
+                                    onChange={(e) => setSimDividend(Number(e.target.value))}
+                                    className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all text-right"
+                                />
                             </div>
-                            <div className="pt-4 border-t border-border mt-2">
-                                <div className="flex justify-between items-center rounded-lg bg-muted/50 p-3">
-                                    <span className="font-medium text-sm">Berechnete Rendite:</span>
-                                    <span className="text-xl font-bold text-green-600 dark:text-green-400">
-                                        {calcPrice > 0 ? ((calcDividend / calcPrice) * 100).toFixed(2) : '0.00'}%
+
+                            {/* Results Grid */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-border mt-4">
+                                <div className="p-3 rounded-lg bg-muted/30 flex flex-col items-center justify-center text-center">
+                                    <span className="text-xs font-medium text-muted-foreground mb-1">Investition (inkl. Gebühren)</span>
+                                    <span className="text-lg font-bold text-foreground">
+                                        {((simShares * simPrice) + simFees).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                                     </span>
                                 </div>
-                                <button
-                                    onClick={() => setDividendYield(Number((calcPrice > 0 ? (calcDividend / calcPrice) * 100 : 0).toFixed(2)))}
-                                    className="w-full mt-3 text-xs text-primary hover:underline text-center"
-                                >
-                                    Rendite übernehmen
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Payout Calculator (Ausschüttungs-Rechner) */}
-                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm animate-in fade-in slide-in-from-bottom-8 duration-700">
-                        <div className="flex items-center gap-2 mb-4 text-primary">
-                            <Coins className="size-5" />
-                            <h3 className="font-semibold text-lg">Ausschüttungs-Rechner</h3>
-                        </div>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label htmlFor="payout-shares" className="text-sm font-medium text-muted-foreground">Anzahl Aktien</label>
-                                    <input
-                                        id="payout-shares"
-                                        type="number"
-                                        value={payoutShares}
-                                        onChange={(e) => setPayoutShares(Number(e.target.value))}
-                                        className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all text-right"
-                                    />
+                                <div className="p-3 rounded-lg bg-muted/30 flex flex-col items-center justify-center text-center">
+                                    <span className="text-xs font-medium text-muted-foreground mb-1">Jähliche Ausschüttung</span>
+                                    <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                                        {(simShares * simDividend).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
+                                    </span>
                                 </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="payout-dividend" className="text-sm font-medium text-muted-foreground">Dividende / Aktie</label>
-                                    <input
-                                        id="payout-dividend"
-                                        type="number"
-                                        step="0.01"
-                                        value={payoutDividend}
-                                        onChange={(e) => setPayoutDividend(Number(e.target.value))}
-                                        className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all text-right"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="pt-4 border-t border-border mt-2">
-                                <div className="flex justify-between items-center rounded-lg bg-muted/50 p-3">
-                                    <span className="font-medium text-sm">Jährliche Ausschüttung:</span>
-                                    <span className="text-xl font-bold text-green-600 dark:text-green-400">
-                                        {(payoutShares * payoutDividend).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
+                                <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 flex flex-col items-center justify-center text-center">
+                                    <span className="text-xs font-medium text-primary mb-1">Netto-Rendite</span>
+                                    <span className="text-xl font-bold text-primary">
+                                        {((simShares * simPrice) + simFees) > 0
+                                            ? (((simShares * simDividend) / ((simShares * simPrice) + simFees)) * 100).toFixed(2)
+                                            : '0.00'}%
                                     </span>
                                 </div>
                             </div>
