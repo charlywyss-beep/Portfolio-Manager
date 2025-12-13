@@ -257,21 +257,32 @@ export function DividendCalculator() {
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={() => updateSimulatorState({ fees: { ...fees, stampDutyPercent: 0.075 } })}
-                                                className={`flex-1 py-1 text-xs border rounded transition-colors ${fees.stampDutyPercent === 0.075
-                                                    ? 'bg-red-600 text-white border-red-700 font-bold shadow-sm' // Swiss Flag Style HIGH CONTRAST
+                                                className={`flex-1 py-1.5 text-xs border rounded transition-colors flex items-center justify-center gap-2 ${fees.stampDutyPercent === 0.075
+                                                    ? 'bg-red-600 text-white border-red-700 font-bold shadow-sm'
                                                     : 'bg-background hover:bg-muted text-foreground border-input'
                                                     }`}
                                             >
-                                                🇨🇭 Schweiz (0.075%)
+                                                {/* Swiss Cross SVG */}
+                                                <svg width="14" height="14" viewBox="0 0 32 32" className="shrink-0">
+                                                    {fees.stampDutyPercent !== 0.075 && <rect width="32" height="32" fill="#D52B1E" rx="4" />}
+                                                    <path d="M13 6h6v7h7v6h-7v7h-6v-7h-7v-6h7z" fill={fees.stampDutyPercent === 0.075 ? "currentColor" : "white"} />
+                                                </svg>
+                                                Schweiz (0.075%)
                                             </button>
                                             <button
                                                 onClick={() => updateSimulatorState({ fees: { ...fees, stampDutyPercent: 0.15 } })}
-                                                className={`flex-1 py-1 text-xs border rounded transition-colors ${fees.stampDutyPercent === 0.15
-                                                    ? 'bg-blue-600 text-white border-blue-700 font-bold shadow-sm' // Global Style HIGH CONTRAST
+                                                className={`flex-1 py-1.5 text-xs border rounded transition-colors flex items-center justify-center gap-2 ${fees.stampDutyPercent === 0.15
+                                                    ? 'bg-blue-600 text-white border-blue-700 font-bold shadow-sm'
                                                     : 'bg-background hover:bg-muted text-foreground border-input'
                                                     }`}
                                             >
-                                                🌍 Ausland (0.15%)
+                                                {/* Earth Icon (SVG) */}
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                                                </svg>
+                                                Ausland (0.15%)
                                             </button>
                                         </div>
                                     </div>
