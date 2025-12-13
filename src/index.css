@@ -92,4 +92,13 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Fix for iOS PWA input focus/selection issues */
+  input,
+  textarea,
+  [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
+    /* Optional: prevent auto-zoom on focus if font-size < 16px, but normally 14px+ is fine or handled by viewport meta */
+  }
 }
