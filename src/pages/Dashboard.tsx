@@ -214,28 +214,28 @@ export function Dashboard() {
                                 <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border">
                                     <tr>
                                         <tr>
-                                            <th className="px-2 py-2 text-xs">Datum</th>
-                                            <th className="px-2 py-2 text-right text-xs">Aktien</th>
-                                            <th className="px-2 py-2 text-right text-xs">ETFs</th>
-                                            <th className="px-2 py-2 text-right text-xs">Bank</th>
-                                            <th className="px-2 py-2 text-right text-xs">Gesamt</th>
-                                            <th className="px-2 py-2 text-center w-[60px]"></th>
+                                            <th className="px-3 py-2 text-xs w-[120px]">Datum</th>
+                                            <th className="px-2 py-2 text-right text-xs text-blue-500 font-bold">Aktien</th>
+                                            <th className="px-2 py-2 text-right text-xs text-violet-500 font-bold">ETFs</th>
+                                            <th className="px-2 py-2 text-right text-xs text-green-500 font-bold">Bank</th>
+                                            <th className="px-2 py-2 text-right text-xs font-bold">Gesamt</th>
+                                            <th className="px-3 py-2 text-center w-[60px]"></th>
                                         </tr>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">
                                     {history.map((entry) => (
                                         <tr key={entry.id} className="hover:bg-muted/30 transition-colors group">
-                                            <td className="px-2 py-2 font-medium text-xs whitespace-nowrap">
+                                            <td className="px-3 py-2 font-medium text-xs whitespace-nowrap">
                                                 {new Date(entry.date).toLocaleDateString('de-DE')}
                                             </td>
-                                            <td className="px-2 py-2 text-right text-xs text-muted-foreground">
+                                            <td className="px-2 py-2 text-right text-xs text-blue-500 font-medium">
                                                 {entry.stockValue ? formatCurrency(entry.stockValue, 'CHF').replace('CHF', '') : '-'}
                                             </td>
-                                            <td className="px-2 py-2 text-right text-xs text-muted-foreground">
+                                            <td className="px-2 py-2 text-right text-xs text-violet-500 font-medium">
                                                 {entry.etfValue ? formatCurrency(entry.etfValue, 'CHF').replace('CHF', '') : '-'}
                                             </td>
-                                            <td className="px-2 py-2 text-right text-xs text-muted-foreground">
+                                            <td className="px-2 py-2 text-right text-xs text-green-500 font-medium">
                                                 {entry.cashValue ? formatCurrency(entry.cashValue, 'CHF').replace('CHF', '') : '-'}
                                             </td>
                                             <td className="px-2 py-2 text-right font-bold text-xs text-foreground whitespace-nowrap">
