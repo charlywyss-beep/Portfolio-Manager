@@ -191,7 +191,7 @@ export function Dashboard() {
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-2">
                             <BarChart3 className="size-5 text-muted-foreground" />
-                            <h3 className="text-lg font-bold">Depot Entwicklung (Jahr zu Jahr)</h3>
+                            <h3 className="text-lg font-bold">Depot Entwicklung</h3>
                         </div>
                         <button
                             onClick={() => setIsHistoryModalOpen(true)}
