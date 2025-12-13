@@ -161,7 +161,7 @@ export function DividendCalculator() {
                                     <optgroup label="Meine Watchlist & Portfolio">
                                         {stocks.map(stock => (
                                             <option key={stock.id} value={stock.id}>
-                                                {stock.name} ({stock.symbol}) - {stock.currency} {stock.currentPrice}
+                                                {stock.name} {stock.symbol} - {stock.currency} {stock.currentPrice}
                                             </option>
                                         ))}
                                     </optgroup>
@@ -267,11 +267,11 @@ export function DividendCalculator() {
                                                     {fees.stampDutyPercent !== 0.075 && <rect width="32" height="32" fill="#D52B1E" rx="4" />}
                                                     <path d="M13 6h6v7h7v6h-7v7h-6v-7h-7v-6h7z" fill={fees.stampDutyPercent === 0.075 ? "currentColor" : "white"} />
                                                 </svg>
-                                                Schweiz (0.075%)
+                                                Schweiz 0.075%
                                             </button>
                                             <button
                                                 onClick={() => updateSimulatorState({ fees: { ...fees, stampDutyPercent: 0.15 } })}
-                                                className={`flex-1 py-1.5 text-xs border rounded transition-colors flex items-center justify-center gap-2 ${fees.stampDutyPercent === 0.15
+                                                className={`flex-1 py-1.5 text-xs border rounded transition-colors ${fees.stampDutyPercent === 0.15
                                                     ? 'bg-blue-600 text-white border-blue-700 font-bold shadow-sm'
                                                     : 'bg-background hover:bg-muted text-foreground border-input'
                                                     }`}
@@ -282,7 +282,7 @@ export function DividendCalculator() {
                                                     <line x1="2" y1="12" x2="22" y2="12"></line>
                                                     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
                                                 </svg>
-                                                Ausland (0.15%)
+                                                Ausland 0.15%
                                             </button>
                                         </div>
                                     </div>
@@ -309,7 +309,7 @@ export function DividendCalculator() {
                             <div className="grid grid-cols-2 gap-3 pt-2">
                                 {/* Total Invest */}
                                 <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 flex flex-col justify-between">
-                                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Investition (Total)</span>
+                                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Investition Total</span>
                                     <div className="flex flex-col items-end">
                                         <span className="text-lg font-bold text-foreground leading-none">
                                             {totalInvest.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
