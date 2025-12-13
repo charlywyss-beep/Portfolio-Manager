@@ -3,7 +3,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 
 export function Settings() {
-    const { positions, stocks, fixedDeposits, history, watchlist, importData } = usePortfolio();
+    const { positions, stocks, fixedDeposits, history, watchlist, importData, finnhubApiKey, setFinnhubApiKey } = usePortfolio();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [importMessage, setImportMessage] = useState('');
@@ -179,8 +179,8 @@ export function Settings() {
                             id="finnhub-key"
                             type="password"
                             placeholder="Finnhub API Key hier eingeben"
-                            value={usePortfolio().finnhubApiKey}
-                            onChange={(e) => usePortfolio().setFinnhubApiKey(e.target.value)}
+                            value={finnhubApiKey}
+                            onChange={(e) => setFinnhubApiKey(e.target.value)}
                             className="flex-1 p-2 border border-border rounded-md bg-background"
                         />
                         <button
@@ -192,7 +192,7 @@ export function Settings() {
                     </div>
                     {/* Simplified feedback for the user */}
                     <p className="text-xs text-muted-foreground">
-                        Status: {usePortfolio().finnhubApiKey ? <span className="text-green-500">Key eingetragen</span> : "Kein Key"}
+                        Status: {finnhubApiKey ? <span className="text-green-500">Key eingetragen</span> : "Kein Key"}
                     </p>
                 </div>
             </div>
