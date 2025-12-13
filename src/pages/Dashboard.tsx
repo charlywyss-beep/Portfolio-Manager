@@ -213,14 +213,12 @@ export function Dashboard() {
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border">
                                     <tr>
-                                        <tr>
-                                            <th className="px-3 py-2 text-xs w-[120px]">Datum</th>
-                                            <th className="px-2 py-2 text-right text-xs text-blue-500 font-bold">Aktien</th>
-                                            <th className="px-2 py-2 text-right text-xs text-violet-500 font-bold">ETFs</th>
-                                            <th className="px-2 py-2 text-right text-xs text-green-500 font-bold">Bank</th>
-                                            <th className="px-2 py-2 text-right text-xs font-bold">Gesamt</th>
-                                            <th className="px-3 py-2 text-center w-[60px]"></th>
-                                        </tr>
+                                        <th className="px-3 py-2 text-xs w-[100px]">Datum</th>
+                                        <th className="px-2 py-2 text-right text-xs text-blue-500 font-bold w-[18%]">Aktien</th>
+                                        <th className="px-2 py-2 text-right text-xs text-violet-500 font-bold w-[18%]">ETFs</th>
+                                        <th className="px-2 py-2 text-right text-xs text-green-500 font-bold w-[18%]">Bank</th>
+                                        <th className="px-2 py-2 text-right text-xs font-bold w-[18%]">Gesamt</th>
+                                        <th className="px-3 py-2 text-center w-[60px]"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">
