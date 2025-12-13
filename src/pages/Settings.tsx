@@ -228,10 +228,27 @@ export function Settings() {
                             Key holen
                         </button>
                     </div>
-                    {/* Simplified feedback for the user */}
-                    <p className="text-xs text-muted-foreground">
-                        Status: {finnhubApiKey ? <span className="text-green-500">Key eingetragen</span> : "Kein Key"}
-                    </p>
+                    {/* API Status with Test Button */}
+                    <div className="flex items-center justify-between gap-4 p-3 bg-muted/30 rounded-lg">
+                        <div className="flex-1">
+                            <p className="text-xs font-medium text-muted-foreground mb-1">Status:</p>
+                            <p className="text-sm">
+                                {finnhubApiKey ? (
+                                    <>
+                                        <span className="text-green-600 dark:text-green-400 font-medium">✓ Key eingetragen</span>
+                                        <span className="text-muted-foreground ml-2 text-xs">
+                                            ({finnhubApiKey.substring(0, 8)}...)
+                                        </span>
+                                    </>
+                                ) : (
+                                    <span className="text-orange-500 font-medium">⚠ Kein Key (Simulation-Modus)</span>
+                                )}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground mt-1 italic">
+                                Tipp: Neue Finnhub Keys brauchen oft 5-10 Min. bis sie aktiv sind.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
