@@ -25,10 +25,43 @@ interface PortfolioContextType {
     watchlist: string[];
     addToWatchlist: (stockId: string) => void;
     removeFromWatchlist: (stockId: string) => void;
+
+    // Simulator Persistence
+    simulatorState: {
+        shares: number;
+        price: number;
+        dividend: number;
+        selectedStockId: string;
+        simName: string;
+        simSymbol: string;
+        fees: {
+            courtagePercent: number;
+            courtageMin: number;
+            stampDutyPercent: number;
+            exchangeFee: number;
+            showAdvanced: boolean;
+        }
+    };
+    updateSimulatorState: (newState: Partial<PortfolioContextType['simulatorState']>) => void;
     finnhubApiKey: string;
     setFinnhubApiKey: (key: string) => void;
 }
 
+const defaultSimulatorState = {
+    shares: 150,
+    price: 90.50,
+    dividend: 3.05,
+    selectedStockId: '',
+    simName: '',
+    simSymbol: '',
+    fees: {
+        courtagePercent: 0.5,
+        courtageMin: 40,
+        stampDutyPercent: 0.075,
+        exchangeFee: 2.00,
+        showAdvanced: true
+    }
+};
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
@@ -216,6 +249,19 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const [simulatorState, setSimulatorState] = useState<PortfolioContextType['simulatorState']>(defaultSimulatorState);
+
+    const updateSimulatorState = (newState: Partial<PortfolioContextType['simulatorState']>) => {
+        setSimulatorState(prev => ({
+            ...prev,
+            ...newState,
+            fees: {
+                ...prev.fees,
+                ...(newState.fees || {})
+            }
+        }));
+    };
+
     return (
         <PortfolioContext.Provider
             value={{
@@ -242,7 +288,9 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 addToWatchlist,
                 removeFromWatchlist,
                 finnhubApiKey,
-                setFinnhubApiKey
+                setFinnhubApiKey,
+                simulatorState,
+                updateSimulatorState
             }}
         >
             {children}
