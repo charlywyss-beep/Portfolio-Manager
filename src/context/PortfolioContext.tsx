@@ -62,7 +62,27 @@ const defaultSimulatorState = {
         showAdvanced: true
     }
 };
+
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
+
+// Helper to load simulator default
+const getInitialSimulatorState = () => {
+    try {
+        const stored = localStorage.getItem('portfolio_simulator_state');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            // Merge with default to ensure new fields (like fees) exist
+            return {
+                ...defaultSimulatorState,
+                ...parsed,
+                fees: { ...defaultSimulatorState.fees, ...parsed.fees }
+            };
+        }
+    } catch (e) {
+        console.error("Failed to load simulator state", e);
+    }
+    return defaultSimulatorState;
+};
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
     const [positions, setPositions] = useState<Position[]>(() => {
@@ -249,7 +269,11 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const [simulatorState, setSimulatorState] = useState<PortfolioContextType['simulatorState']>(defaultSimulatorState);
+    const [simulatorState, setSimulatorState] = useState<PortfolioContextType['simulatorState']>(getInitialSimulatorState);
+
+    useEffect(() => {
+        localStorage.setItem('portfolio_simulator_state', JSON.stringify(simulatorState));
+    }, [simulatorState]);
 
     const updateSimulatorState = (newState: Partial<PortfolioContextType['simulatorState']>) => {
         setSimulatorState(prev => ({

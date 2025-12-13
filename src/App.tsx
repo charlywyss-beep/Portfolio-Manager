@@ -66,6 +66,14 @@ function App() {
     <ExchangeRateProvider>
       <PortfolioProvider>
         <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans antialiased text-sm">
+          {/* Mobile Sidebar Overlay */}
+          {isSidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-[2px]"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
+
           {/* Sidebar */}
           <aside className={cn(
             "border-r border-border bg-card shadow-lg flex flex-col transition-all duration-300 ease-in-out overflow-hidden",
@@ -81,7 +89,7 @@ function App() {
                 </div>
                 <h1 className="text-xl font-bold tracking-tight">Portfolio</h1>
               </div>
-              <div className="text-[10px] text-foreground font-bold font-mono mt-1">v3.8.50</div>
+              <div className="text-[10px] text-foreground font-bold font-mono mt-1">v3.8.51</div>
             </div>
 
             <nav className="flex-1 p-4 space-y-2 min-w-[16rem]">
