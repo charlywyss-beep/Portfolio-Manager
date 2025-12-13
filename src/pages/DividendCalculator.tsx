@@ -327,10 +327,6 @@ export function DividendCalculator() {
                                         <span className="text-lg font-bold text-foreground leading-none">
                                             {(shares * dividend).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                                         </span>
-                                        {/* Gross Yield Display */}
-                                        <span className="text-[10px] text-muted-foreground mt-0.5">
-                                            Brutto: {grossYield.toFixed(2)}%
-                                        </span>
                                     </div>
                                 </div>
                             </div>
