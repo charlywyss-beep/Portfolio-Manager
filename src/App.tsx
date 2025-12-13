@@ -82,14 +82,21 @@ function App() {
               ? "translate-x-0 w-64"
               : "-translate-x-full w-64 lg:translate-x-0 lg:w-0 lg:border-r-0"
           )}>
-            <div className="p-6 border-b border-border min-w-[16rem]">
+            <div
+              className="p-6 border-b border-border min-w-[16rem] cursor-pointer hover:bg-accent/50 transition-colors group"
+              onClick={() => window.location.reload()}
+              title="App neu laden"
+            >
               <div className="flex items-center gap-2 mb-1">
-                <div className="size-8 rounded-lg bg-primary flex items-center justify-center">
+                <div className="size-8 rounded-lg bg-primary flex items-center justify-center group-hover:scale-105 transition-transform shadow-sm">
                   <Wallet className="text-primary-foreground size-5" />
                 </div>
-                <h1 className="text-xl font-bold tracking-tight">Portfolio</h1>
+                <h1 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">Portfolio</h1>
               </div>
-              <div className="text-[10px] text-foreground font-bold font-mono mt-1">v3.8.54</div>
+              <div className="text-[10px] text-foreground font-bold font-mono mt-1 flex items-center gap-1">
+                <span>v3.8.55</span>
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
+              </div>
             </div>
 
             <nav className="flex-1 p-4 space-y-2 min-w-[16rem]">
