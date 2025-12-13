@@ -203,7 +203,6 @@ export function DividendCalculator() {
                                         value={shares}
                                         onChange={(e) => updateSimulatorState({ shares: Number(e.target.value) })}
                                         className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary"
-                                        style={{ paddingRight: '70px' }}
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -214,7 +213,6 @@ export function DividendCalculator() {
                                         value={price}
                                         onChange={(e) => updateSimulatorState({ price: Number(e.target.value) })}
                                         className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary"
-                                        style={{ paddingRight: '70px' }}
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -225,7 +223,6 @@ export function DividendCalculator() {
                                         value={dividend}
                                         onChange={(e) => updateSimulatorState({ dividend: Number(e.target.value) })}
                                         className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary"
-                                        style={{ paddingRight: '70px' }}
                                     />
                                 </div>
                             </div>
@@ -242,7 +239,6 @@ export function DividendCalculator() {
                                                 value={fees.courtagePercent}
                                                 onChange={(e) => updateSimulatorState({ fees: { ...fees, courtagePercent: Number(e.target.value) } })}
                                                 className="w-full px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right"
-                                                style={{ paddingRight: '70px' }}
                                             />
                                         </div>
                                         <div className="space-y-1">
@@ -252,7 +248,6 @@ export function DividendCalculator() {
                                                 value={fees.courtageMin}
                                                 onChange={(e) => updateSimulatorState({ fees: { ...fees, courtageMin: Number(e.target.value) } })}
                                                 className="w-full px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right"
-                                                style={{ paddingRight: '70px' }}
                                             />
                                         </div>
                                     </div>

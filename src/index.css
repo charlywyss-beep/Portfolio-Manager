@@ -70,10 +70,17 @@
     filter: invert(1);
   }
 
-  /* Force spin buttons (arrows) to be always visible on number inputs */
-  input[type=number]::-webkit-inner-spin-button, 
-  input[type=number]::-webkit-outer-spin-button { 
-    opacity: 1;
+  /* HIDE spin buttons (arrows) globally for a cleaner UI */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Firefox */
+  input[type=number] {
+    -moz-appearance: textfield;
+    appearance: textfield;
   }
 }
 
