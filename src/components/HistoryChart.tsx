@@ -61,7 +61,7 @@ export function HistoryChart() {
                         );
                     })}
                     <div className="mt-2 pt-2 border-t border-border flex justify-between items-center">
-                        <span className="font-bold">Total:</span>
+                        <span className="font-bold">Gesamt:</span>
                         <span className="font-mono font-bold">{formatCurrency((payload[0]?.payload?.totalValue || 0), 'CHF')}</span>
                     </div>
                 </div>
@@ -120,7 +120,29 @@ export function HistoryChart() {
                                 tickFormatter={(value) => `CHF ${(value / 1000).toFixed(0)}k`}
                             />
                             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted)/0.2)' }} />
-                            <Legend />
+                            <Legend
+                                content={({ payload }) => {
+                                    if (!payload) return null;
+                                    // Enforce order: Aktien (Blue), ETFs (Violet), Bank (Green)
+                                    // Use the payload values but verify strictly
+                                    const customOrder = [
+                                        { id: 'stockValue', label: 'Aktien', color: '#2563eb' },
+                                        { id: 'etfValue', label: 'ETFs', color: '#7c3aed' },
+                                        { id: 'cashValue', label: 'Bank', color: '#22c55e' }
+                                    ];
+
+                                    return (
+                                        <div className="flex justify-center gap-6 mt-2">
+                                            {customOrder.map((item) => (
+                                                <div key={item.id} className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                                                    <div className="w-3 h-3 rounded-[2px]" style={{ backgroundColor: item.color }} />
+                                                    <span>{item.label}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                }}
+                            />
                             <Bar
                                 dataKey="stockValue"
                                 name="Aktien"
