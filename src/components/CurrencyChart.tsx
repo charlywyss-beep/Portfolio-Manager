@@ -83,13 +83,13 @@ export function CurrencyChart({ inverse = false }: Props) {
     }, [historyData]);
 
     // Update converted amount when rate or base amount changes
-    useState(() => {
+    useEffect(() => {
         if (currRate && baseAmount) {
             const base = parseFloat(baseAmount) || 0;
             const converted = base * currRate;
             setConvertedAmount(converted.toFixed(2));
         }
-    });
+    }, [currRate, baseAmount]);
 
     const handleBaseAmountChange = (value: string) => {
         setBaseAmount(value);
