@@ -13,10 +13,9 @@ interface PriceHistoryChartProps {
     trend?: 'up' | 'down' | 'neutral';
     historyData?: { date: string; value: number }[] | null;
     onRangeChange?: (range: TimeRange) => void;
-    error?: string | null;
 }
 
-export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, trend = 'up', historyData, onRangeChange, error }: PriceHistoryChartProps) {
+export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, trend = 'up', historyData, onRangeChange }: PriceHistoryChartProps) {
     const [localTimeRange, setLocalTimeRange] = useState<TimeRange>('1Y');
     const { formatCurrency } = useCurrencyFormatter();
 
@@ -182,16 +181,9 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                     </AreaChart>
                 </ResponsiveContainer>
             </div>
-            {error && (
-                <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-destructive/10 text-destructive border border-destructive/20 p-4 rounded-lg text-sm font-medium text-center">
-                        <p className="font-bold mb-1">Chart konnte nicht geladen werden</p>
-                        <p>{error}</p>
-                    </div>
-                </div>
-            )}
+            {/* Error overlay removed - we now gracefully fallback to simulation */}
             <p className="text-[10px] text-muted-foreground text-center mt-2 italic">
-                {error ? '' : (historyData ? '* Reale Marktdaten von Finnhub' : '* Simulierter Chartverlauf basierend auf aktuellem Kurs und Volatilität (Demo).')}
+                {historyData && historyData.length > 0 ? '* Reale Marktdaten von Finnhub' : '* Simulierter Chartverlauf (Demo-Modus)'}
             </p>
         </div>
     );

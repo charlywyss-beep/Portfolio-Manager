@@ -24,7 +24,6 @@ export function StockDetail() {
 
     // Chart Data State
     const [chartData, setChartData] = useState<ChartDataPoint[] | null>(null);
-    const [chartError, setChartError] = useState<string | null>(null);
     const [timeRange, setTimeRange] = useState<TimeRange>('1Y');
 
     // Fetch History Effect
@@ -35,13 +34,10 @@ export function StockDetail() {
         }
 
         const loadData = async () => {
-            // Basic caching could be added here, but for now fetch fresh
-            setChartError(null);
             const response = await fetchStockHistory(stock.symbol, timeRange, finnhubApiKey);
 
             if (response.error) {
-                setChartError(response.error);
-                setChartData(null);
+                setChartData(null); // Fallback to simulation
             } else {
                 setChartData(response.data);
             }
@@ -129,7 +125,6 @@ export function StockDetail() {
                             trend={stock.dividendYield && stock.dividendYield > 2 ? 'up' : 'neutral'}
                             historyData={chartData}
                             onRangeChange={(range) => setTimeRange(range)}
-                            error={chartError}
                         />
                     </div>
 
