@@ -31,18 +31,26 @@ export function CurrencyChart({ inverse = false }: Props) {
 
 
 
+
+    const [timeRange, setTimeRange] = useState<'1W' | '1M' | '6M' | '1Y' | '5Y'>('1Y');
+
     useEffect(() => {
         const fetchHistory = async () => {
             setIsLoading(true);
             try {
-                // Get start date (1 year ago)
+                // Determine start date based on range
                 const startDate = new Date();
-                startDate.setFullYear(startDate.getFullYear() - 1);
+                switch (timeRange) {
+                    case '1W': startDate.setDate(startDate.getDate() - 7); break;
+                    case '1M': startDate.setMonth(startDate.getMonth() - 1); break;
+                    case '6M': startDate.setMonth(startDate.getMonth() - 6); break;
+                    case '1Y': startDate.setFullYear(startDate.getFullYear() - 1); break;
+                    case '5Y': startDate.setFullYear(startDate.getFullYear() - 5); break;
+                    default: startDate.setFullYear(startDate.getFullYear() - 1);
+                }
 
                 const startStr = formatDate(startDate);
                 // frankfurter.app API
-                // Standard: from=CHF&to=EUR -> Returns rates relative to 1 CHF
-                // Inverse: from=EUR&to=CHF -> Returns rates relative to 1 EUR
                 const response = await fetch(`https://api.frankfurter.app/${startStr}..?from=${baseCurrency}&to=${targetCurrency}`);
                 const data = await response.json();
 
@@ -50,10 +58,16 @@ export function CurrencyChart({ inverse = false }: Props) {
                 if (data.rates) {
                     const transformed = Object.entries(data.rates).map(([date, rates]: [string, any]) => ({
                         date,
-                        rate: rates[targetCurrency] // Always get the rate of the target
+                        rate: rates[targetCurrency]
                     }));
                     setHistoryData(transformed);
-                    // Set current rate (last entry)
+
+                    // We DO NOT update currRate from history here anymore, 
+                    // because history might be 5 years ago ending yesterday.
+                    // Ideally we want the LATEST rate for the conversion input always.
+                    // But Frankfurter '..' range query ends at 'latest' available data usually.
+                    // Let's ensure we have the very latest rate separately or treat the last history point as current if close enough.
+                    // For now, keeping existing logic:
                     if (transformed.length > 0) {
                         setCurrRate(transformed[transformed.length - 1].rate);
                     }
@@ -66,7 +80,7 @@ export function CurrencyChart({ inverse = false }: Props) {
         };
 
         fetchHistory();
-    }, [selectedCurrency, inverse]);
+    }, [selectedCurrency, inverse, timeRange]);
 
     // Calculate min/max for Y-Axis domain to make chart look dynamic
     const domain = useMemo(() => {
@@ -148,22 +162,8 @@ export function CurrencyChart({ inverse = false }: Props) {
             <div className="mb-4">
                 {currRate ? (
                     <>
-                        <div className="flex items-baseline gap-3 mb-4">
-                            <h4 className="text-2xl font-bold tracking-tight">
-                                {currRate.toFixed(4)} <span className="text-sm text-muted-foreground font-medium">{targetCurrency}</span>
-                            </h4>
-                            <span className={cn(
-                                "text-xs font-medium px-2 py-0.5 rounded-full flex items-center",
-                                percentageChange >= 0
-                                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                    : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                            )}>
-                                {percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}% (1J)
-                            </span>
-                        </div>
-
                         {/* Currency Converter */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 rounded-xl p-6 border border-indigo-200 dark:border-indigo-800">
                                 <label className="text-sm font-medium text-indigo-900 dark:text-indigo-100 mb-2 block">{baseCurrency}</label>
                                 <input
@@ -185,6 +185,41 @@ export function CurrencyChart({ inverse = false }: Props) {
                                     className="w-full px-4 py-3 text-2xl font-bold rounded-lg bg-white dark:bg-background text-gray-900 dark:text-white border-0 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                                     placeholder="0.00"
                                 />
+                            </div>
+                        </div>
+
+                        {/* Chart Header & Info */}
+                        <div className="flex flex-col md:flex-row md:items-end justify-between mb-4 gap-4">
+                            <div>
+                                <h4 className="text-2xl font-bold tracking-tight mb-1">
+                                    {currRate.toFixed(4)} <span className="text-sm text-muted-foreground font-medium">{targetCurrency}</span>
+                                </h4>
+                                <div className={cn(
+                                    "inline-flex items-center text-sm font-bold",
+                                    percentageChange >= 0
+                                        ? "text-green-600 dark:text-green-400"
+                                        : "text-red-600 dark:text-red-400"
+                                )}>
+                                    {percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}% <span className="text-muted-foreground ml-1 font-normal">({timeRange})</span>
+                                </div>
+                            </div>
+
+                            {/* Timeframe Selector */}
+                            <div className="flex bg-muted/50 p-1 rounded-lg">
+                                {(['1W', '1M', '6M', '1Y', '5Y'] as const).map((range) => (
+                                    <button
+                                        key={range}
+                                        onClick={() => setTimeRange(range)}
+                                        className={cn(
+                                            "px-3 py-1 text-xs font-medium rounded-md transition-all",
+                                            timeRange === range
+                                                ? "bg-background shadow-sm text-foreground"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                                        )}
+                                    >
+                                        {range}
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     </>
@@ -239,7 +274,7 @@ export function CurrencyChart({ inverse = false }: Props) {
                                 strokeWidth={2}
                                 fillOpacity={1}
                                 fill="url(#colorRate)"
-                                animationDuration={1000}
+                                animationDuration={500}
                             />
                         </AreaChart>
                     </ResponsiveContainer>
