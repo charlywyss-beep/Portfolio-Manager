@@ -1,12 +1,15 @@
 import { useState, useRef } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
+import { Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, RotateCcw, Eye, EyeOff, Save } from 'lucide-react';
+import { cn } from '../utils';
 
 export function Settings() {
     const { positions, stocks, fixedDeposits, history, watchlist, importData, finnhubApiKey, setFinnhubApiKey } = usePortfolio();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [importMessage, setImportMessage] = useState('');
+    const [showApiKey, setShowApiKey] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
 
     const handleExport = () => {
         const data = {
@@ -175,14 +178,49 @@ export function Settings() {
                 <div className="space-y-2">
                     <label htmlFor="finnhub-key" className="text-sm font-medium">Finnhub API Key (für Aktien-Charts)</label>
                     <div className="flex gap-2">
-                        <input
-                            id="finnhub-key"
-                            type="password"
-                            placeholder="Finnhub API Key hier eingeben"
-                            value={finnhubApiKey}
-                            onChange={(e) => setFinnhubApiKey(e.target.value)}
-                            className="flex-1 p-2 border border-border rounded-md bg-background"
-                        />
+                        <div className="relative flex-1">
+                            <input
+                                id="finnhub-key"
+                                type={showApiKey ? "text" : "password"}
+                                placeholder="Finnhub API Key hier eingeben"
+                                value={finnhubApiKey}
+                                onChange={(e) => {
+                                    setFinnhubApiKey(e.target.value);
+                                    setSaveSuccess(false);
+                                }}
+                                className="w-full p-2 pr-10 border border-border rounded-md bg-background"
+                            />
+                            <button
+                                onClick={() => setShowApiKey(!showApiKey)}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                                title={showApiKey ? "Verbergen" : "Anzeigen"}
+                            >
+                                {showApiKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                            </button>
+                        </div>
+                        <button
+                            className={cn(
+                                "px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
+                                saveSuccess ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-primary text-primary-foreground hover:opacity-90"
+                            )}
+                            onClick={() => {
+                                // Simulate save feedback (it's already saved by hook, but explicit feedback is good)
+                                setSaveSuccess(true);
+                                setTimeout(() => setSaveSuccess(false), 2000);
+                            }}
+                        >
+                            {saveSuccess ? (
+                                <>
+                                    <CheckCircle className="size-4" />
+                                    Gespeichert
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="size-4" />
+                                    Speichern
+                                </>
+                            )}
+                        </button>
                         <button
                             className="px-3 py-2 bg-muted hover:bg-muted/80 rounded-md text-sm font-medium transition-colors"
                             onClick={() => window.open('https://finnhub.io/register', '_blank')}
