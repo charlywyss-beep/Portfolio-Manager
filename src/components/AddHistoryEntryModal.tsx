@@ -35,9 +35,9 @@ export function AddHistoryEntryModal({ isOpen, onClose, editingEntry, currentTot
     useEffect(() => {
         if (editingEntry) {
             setDate(editingEntry.date);
-            setStockValue(editingEntry.stockValue || '');
-            setEtfValue(editingEntry.etfValue || '');
-            setCashValue(editingEntry.cashValue || '');
+            setStockValue(editingEntry.stockValue ?? '');
+            setEtfValue(editingEntry.etfValue ?? '');
+            setCashValue(editingEntry.cashValue ?? '');
             // Fallback: if editing legacy entry with only totalValue, put it in Stock? or Cash? 
             // Better to leave empty or maybe put in Stock if other two are missing?
             // Decision: If new fields are missing but totalValue exists, maybe put it all in Stock as default?
@@ -126,7 +126,6 @@ export function AddHistoryEntryModal({ isOpen, onClose, editingEntry, currentTot
                             <label className="text-sm font-medium">Aktien (CHF)</label>
                             <input
                                 type="number"
-                                required
                                 min="0"
                                 step="0.01"
                                 className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono"
@@ -138,7 +137,6 @@ export function AddHistoryEntryModal({ isOpen, onClose, editingEntry, currentTot
                             <label className="text-sm font-medium">ETFs (CHF)</label>
                             <input
                                 type="number"
-                                required
                                 min="0"
                                 step="0.01"
                                 className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono"
@@ -150,7 +148,6 @@ export function AddHistoryEntryModal({ isOpen, onClose, editingEntry, currentTot
                             <label className="text-sm font-medium">Bank/Bar (CHF)</label>
                             <input
                                 type="number"
-                                required
                                 min="0"
                                 step="0.01"
                                 className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono"
