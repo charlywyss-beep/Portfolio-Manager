@@ -8,9 +8,13 @@ interface AddHistoryEntryModalProps {
     onClose: () => void;
     editingEntry?: PortfolioHistoryEntry | null;
     mode?: 'add' | 'edit';
+    currentTotals?: {
+        totalValue: number;
+        totalCost: number;
+    };
 }
 
-export function AddHistoryEntryModal({ isOpen, onClose, editingEntry }: AddHistoryEntryModalProps) {
+export function AddHistoryEntryModal({ isOpen, onClose, editingEntry, currentTotals }: AddHistoryEntryModalProps) {
     const { addHistoryEntry, updateHistoryEntry } = usePortfolio();
 
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -25,7 +29,12 @@ export function AddHistoryEntryModal({ isOpen, onClose, editingEntry }: AddHisto
             setInvestedCapital(editingEntry.investedCapital || '');
             setNotes(editingEntry.notes || '');
         } else {
-            // Default to End of Last Year
+            // Default: if currentTotals provided, don't auto-fill yet (user should click button),
+            // OR auto-fill if date is today?
+            // Let's stick to "User clicks button" pattern for safety.
+            // But default date can be today if not editing.
+
+            // Wait, previous logic was: Default to End of Last Year
             const lastYear = new Date().getFullYear() - 1;
             setDate(`${lastYear}-12-31`);
             setTotalValue('');
@@ -61,9 +70,24 @@ export function AddHistoryEntryModal({ isOpen, onClose, editingEntry }: AddHisto
                     <h2 className="text-xl font-bold">
                         {editingEntry ? 'Eintrag bearbeiten' : 'Historischen Wert erfassen'}
                     </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-secondary rounded-full transition-colors">
-                        <X className="size-5" />
-                    </button>
+                    <div className="flex gap-2">
+                        {!editingEntry && currentTotals && (
+                            <button
+                                onClick={() => {
+                                    setDate(new Date().toISOString().split('T')[0]);
+                                    setTotalValue(currentTotals.totalValue);
+                                    setInvestedCapital(currentTotals.totalCost);
+                                    setNotes('Automatischer Eintrag');
+                                }}
+                                className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors"
+                            >
+                                Aktuelle Werte übernehmen
+                            </button>
+                        )}
+                        <button onClick={onClose} className="p-2 hover:bg-secondary rounded-full transition-colors">
+                            <X className="size-5" />
+                        </button>
+                    </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">

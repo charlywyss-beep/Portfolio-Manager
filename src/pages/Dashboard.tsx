@@ -452,6 +452,10 @@ export function Dashboard() {
                     setEditingHistoryEntry(null);
                 }}
                 editingEntry={editingHistoryEntry}
+                currentTotals={{
+                    totalValue: totals.totalValue,
+                    totalCost: totals.totalCost
+                }}
             />
         </div >
     );
