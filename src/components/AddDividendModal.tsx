@@ -307,10 +307,6 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                                     required
                                     value={price}
                                     onChange={(e) => handlePriceChange(e.target.value)}
-                                    onFocus={(e) => {
-                                        const target = e.target;
-                                        setTimeout(() => target.select(), 50);
-                                    }}
                                     className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                 />
                             </div>
@@ -324,10 +320,6 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                                     placeholder="Optional"
                                     value={targetPrice}
                                     onChange={(e) => setTargetPrice(e.target.value)}
-                                    onFocus={(e) => {
-                                        const target = e.target;
-                                        setTimeout(() => target.select(), 50);
-                                    }}
                                     className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                 />
                             </div>
@@ -345,10 +337,6 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                                 placeholder="z.B. 3.90"
                                 value={yieldPercent}
                                 onChange={(e) => handleYieldChange(e.target.value)}
-                                onFocus={(e) => {
-                                    const target = e.target;
-                                    setTimeout(() => target.select(), 50);
-                                }}
                                 className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                             />
                         </div>
@@ -363,10 +351,6 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                                 placeholder="z.B. 0.60"
                                 value={amount}
                                 onChange={(e) => handleAmountChange(e.target.value)}
-                                onFocus={(e) => {
-                                    const target = e.target;
-                                    setTimeout(() => target.select(), 50);
-                                }}
                                 className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                             />
                         </div>
