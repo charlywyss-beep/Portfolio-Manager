@@ -202,6 +202,7 @@ export function DividendCalculator() {
                                         type="number"
                                         value={shares}
                                         onChange={(e) => updateSimulatorState({ shares: Number(e.target.value) })}
+                                        onFocus={(e) => e.target.select()}
                                         className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary"
                                     />
                                 </div>
@@ -212,6 +213,7 @@ export function DividendCalculator() {
                                         step="0.01"
                                         value={price}
                                         onChange={(e) => updateSimulatorState({ price: Number(e.target.value) })}
+                                        onFocus={(e) => e.target.select()}
                                         className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary"
                                     />
                                 </div>
@@ -222,6 +224,7 @@ export function DividendCalculator() {
                                         step="0.01"
                                         value={dividend}
                                         onChange={(e) => updateSimulatorState({ dividend: Number(e.target.value) })}
+                                        onFocus={(e) => e.target.select()}
                                         className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary"
                                     />
                                 </div>
@@ -238,6 +241,7 @@ export function DividendCalculator() {
                                                 step="0.01"
                                                 value={fees.courtagePercent}
                                                 onChange={(e) => updateSimulatorState({ fees: { ...fees, courtagePercent: Number(e.target.value) } })}
+                                                onFocus={(e) => e.target.select()}
                                                 className="w-full px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right"
                                             />
                                         </div>
@@ -247,6 +251,7 @@ export function DividendCalculator() {
                                                 type="number"
                                                 value={fees.courtageMin}
                                                 onChange={(e) => updateSimulatorState({ fees: { ...fees, courtageMin: Number(e.target.value) } })}
+                                                onFocus={(e) => e.target.select()}
                                                 className="w-full px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right"
                                             />
                                         </div>
@@ -294,6 +299,7 @@ export function DividendCalculator() {
                                             step="0.01"
                                             value={fees.exchangeFee}
                                             onChange={(e) => updateSimulatorState({ fees: { ...fees, exchangeFee: Number(e.target.value) } })}
+                                            onFocus={(e) => e.target.select()}
                                             className="w-24 px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right"
                                         />
                                     </div>
