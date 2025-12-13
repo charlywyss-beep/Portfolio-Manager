@@ -26,8 +26,8 @@ export async function fetchStockHistory(
     symbol: string,
     range: TimeRange,
     apiKey: string
-): Promise<ChartDataPoint[] | null> {
-    if (!apiKey) return null; // Fallback to mock
+): Promise<{ data: ChartDataPoint[] | null, error?: string }> {
+    if (!apiKey) return { data: null, error: 'Kein API Key konfiguriert' };
 
     try {
         const from = getStartTime(range);
@@ -42,26 +42,36 @@ export async function fetchStockHistory(
         const url = `https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=${resolution}&from=${from}&to=${to}&token=${apiKey}`;
 
         const response = await fetch(url);
-        if (!response.ok) throw new Error(`API Error: ${response.status}`);
+
+        if (response.status === 403) {
+            return { data: null, error: 'API Key ungültig oder keine Berechtigung.' };
+        }
+        if (response.status === 429) {
+            return { data: null, error: 'API Limit erreicht (max. 30/Sek oder Tageslimit).' };
+        }
+        if (!response.ok) {
+            return { data: null, error: `API Fehler: ${response.status}` };
+        }
 
         const data = await response.json();
 
         if (data.s === 'no_data') {
-            return null; // Handle no data
+            return { data: null, error: 'Keine Daten für diesen Zeitraum verfügbar.' };
         }
 
         if (data.s === 'ok' && data.c && data.t) {
             // Transform { c: [close_prices], t: [timestamps], ... } to [{date, value}]
-            return data.t.map((timestamp: number, index: number) => ({
+            const points = data.t.map((timestamp: number, index: number) => ({
                 date: new Date(timestamp * 1000).toISOString(),
                 value: data.c[index]
             }));
+            return { data: points };
         }
 
-        return null;
+        return { data: null, error: 'Ungültiges Datenformat empfangen.' };
 
     } catch (error) {
         console.error("Finnhub Fetch Error:", error);
-        return null; // Fallback to mock on error
+        return { data: null, error: 'Netzwerkfehler oder API nicht erreichbar.' };
     }
 }

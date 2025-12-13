@@ -13,9 +13,10 @@ interface PriceHistoryChartProps {
     trend?: 'up' | 'down' | 'neutral';
     historyData?: { date: string; value: number }[] | null;
     onRangeChange?: (range: TimeRange) => void;
+    error?: string | null;
 }
 
-export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, trend = 'up', historyData, onRangeChange }: PriceHistoryChartProps) {
+export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, trend = 'up', historyData, onRangeChange, error }: PriceHistoryChartProps) {
     const [localTimeRange, setLocalTimeRange] = useState<TimeRange>('1Y');
     const { formatCurrency } = useCurrencyFormatter();
 
@@ -102,7 +103,7 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
     const isPositive = performance >= 0;
 
     return (
-        <div className="w-full h-full flex flex-col">
+        <div className="w-full h-full flex flex-col relative">
             <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
                 <div>
                     <p className="text-sm text-muted-foreground">Performance ({localTimeRange})</p>
@@ -181,8 +182,16 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                     </AreaChart>
                 </ResponsiveContainer>
             </div>
+            {error && (
+                <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-destructive/10 text-destructive border border-destructive/20 p-4 rounded-lg text-sm font-medium text-center">
+                        <p className="font-bold mb-1">Chart konnte nicht geladen werden</p>
+                        <p>{error}</p>
+                    </div>
+                </div>
+            )}
             <p className="text-[10px] text-muted-foreground text-center mt-2 italic">
-                * Simulierter Chartverlauf basierend auf aktuellem Kurs und Volatilität (Demo).
+                {error ? '' : (historyData ? '* Reale Marktdaten von Finnhub' : '* Simulierter Chartverlauf basierend auf aktuellem Kurs und Volatilität (Demo).')}
             </p>
         </div>
     );
