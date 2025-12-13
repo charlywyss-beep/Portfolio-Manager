@@ -202,7 +202,7 @@ export function DividendCalculator() {
                                         type="number"
                                         value={shares}
                                         onChange={(e) => updateSimulatorState({ shares: Number(e.target.value) })}
-                                        className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary"
+                                        className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary pr-8"
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -212,7 +212,7 @@ export function DividendCalculator() {
                                         step="0.01"
                                         value={price}
                                         onChange={(e) => updateSimulatorState({ price: Number(e.target.value) })}
-                                        className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary"
+                                        className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary pr-8"
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -222,7 +222,7 @@ export function DividendCalculator() {
                                         step="0.01"
                                         value={dividend}
                                         onChange={(e) => updateSimulatorState({ dividend: Number(e.target.value) })}
-                                        className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary"
+                                        className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary pr-8"
                                     />
                                 </div>
                             </div>
@@ -238,7 +238,7 @@ export function DividendCalculator() {
                                                 step="0.01"
                                                 value={fees.courtagePercent}
                                                 onChange={(e) => updateSimulatorState({ fees: { ...fees, courtagePercent: Number(e.target.value) } })}
-                                                className="w-full px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right"
+                                                className="w-full px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right pr-8"
                                             />
                                         </div>
                                         <div className="space-y-1">
@@ -247,7 +247,7 @@ export function DividendCalculator() {
                                                 type="number"
                                                 value={fees.courtageMin}
                                                 onChange={(e) => updateSimulatorState({ fees: { ...fees, courtageMin: Number(e.target.value) } })}
-                                                className="w-full px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right"
+                                                className="w-full px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right pr-8"
                                             />
                                         </div>
                                     </div>
@@ -334,8 +334,8 @@ export function DividendCalculator() {
                             {/* Net Yield Highlight with Gross */}
                             <div className={`p-3 rounded-lg border flex items-center justify-between gap-4 ${netYield > 0 ? 'bg-primary text-primary-foreground border-primary shadow-md' : 'bg-muted text-muted-foreground border-transparent'}`}>
                                 <div className="flex flex-col items-start">
-                                    <span className="text-[10px] uppercase opacity-80">Brutto-Rendite</span>
-                                    <span className="text-lg font-semibold opacity-90">{grossYield.toFixed(2)}%</span>
+                                    <span className="text-xs font-bold uppercase">Brutto-Rendite</span>
+                                    <span className="text-2xl font-bold tracking-tight">{grossYield.toFixed(2)}%</span>
                                 </div>
                                 <div className="h-8 w-px bg-current opacity-20"></div>
                                 <div className="flex flex-col items-end">
