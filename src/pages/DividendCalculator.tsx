@@ -271,7 +271,7 @@ export function DividendCalculator() {
                                             </button>
                                             <button
                                                 onClick={() => updateSimulatorState({ fees: { ...fees, stampDutyPercent: 0.15 } })}
-                                                className={`flex-1 py-1.5 text-xs border rounded transition-colors ${fees.stampDutyPercent === 0.15
+                                                className={`flex-1 py-1.5 text-xs border rounded transition-colors flex items-center justify-center gap-2 ${fees.stampDutyPercent === 0.15
                                                     ? 'bg-blue-600 text-white border-blue-700 font-bold shadow-sm'
                                                     : 'bg-background hover:bg-muted text-foreground border-input'
                                                     }`}
