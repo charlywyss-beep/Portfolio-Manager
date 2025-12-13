@@ -152,13 +152,13 @@ export function DividendCalculator() {
                             <div className="space-y-1">
                                 <label className="text-xs font-medium text-muted-foreground">Aktie / Simulation</label>
                                 <select
-                                    className="w-full px-3 py-1.5 text-sm rounded-md border border-input bg-background/50 text-foreground focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+                                    className="w-full px-3 py-2 text-sm rounded-md border border-input bg-card text-foreground focus:ring-1 focus:ring-primary focus:border-primary transition-all appearance-none"
                                     onChange={(e) => handleStockSelect(e.target.value)}
                                     value={selectedStockId}
                                 >
-                                    <option value="" disabled>-- Wähle Aktie oder Neu --</option>
-                                    <option value="new">+ Neue Simulation (Manuell)</option>
-                                    <optgroup label="Meine Watchlist & Portfolio">
+                                    <option value="" disabled className="bg-card text-muted-foreground">-- Wähle Aktie oder Neu --</option>
+                                    <option value="new" className="bg-card text-foreground">+ Neue Simulation (Manuell)</option>
+                                    <optgroup label="Meine Watchlist & Portfolio" className="bg-card text-foreground">
                                         {stocks.map(stock => (
                                             <option key={stock.id} value={stock.id}>
                                                 {stock.name} {stock.symbol} - {stock.currency} {stock.currentPrice}
