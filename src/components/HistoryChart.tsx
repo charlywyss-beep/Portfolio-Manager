@@ -40,16 +40,7 @@ export function HistoryChart() {
         return date.getFullYear().toString();
     };
 
-    if (history.length === 0) {
-        return (
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground border border-dashed border-border rounded-xl bg-card/50">
-                <div className="text-center">
-                    <p>Keine historischen Daten verfügbar.</p>
-                    <p className="text-sm">Fügen Sie Einträge hinzu, um die Entwicklung zu sehen.</p>
-                </div>
-            </div>
-        );
-    }
+
 
     const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
@@ -93,7 +84,14 @@ export function HistoryChart() {
             </div>
 
             <div className="h-[300px] w-full">
-                {filteredData.length > 0 ? (
+                {history.length === 0 ? (
+                    <div className="h-full flex items-center justify-center text-muted-foreground border border-dashed border-border rounded-xl bg-card/50">
+                        <div className="text-center">
+                            <p>Keine historischen Daten verfügbar.</p>
+                            <p className="text-sm">Fügen Sie Einträge hinzu, um die Entwicklung zu sehen.</p>
+                        </div>
+                    </div>
+                ) : filteredData.length > 0 ? (
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={filteredData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />

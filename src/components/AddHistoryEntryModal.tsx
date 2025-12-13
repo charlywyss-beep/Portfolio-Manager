@@ -75,8 +75,8 @@ export function AddHistoryEntryModal({ isOpen, onClose, editingEntry, currentTot
                             <button
                                 onClick={() => {
                                     setDate(new Date().toISOString().split('T')[0]);
-                                    setTotalValue(currentTotals.totalValue);
-                                    setInvestedCapital(currentTotals.totalCost);
+                                    setTotalValue(Number(currentTotals.totalValue.toFixed(2)));
+                                    setInvestedCapital(Number(currentTotals.totalCost.toFixed(2)));
                                     setNotes('Automatischer Eintrag');
                                 }}
                                 className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors"
