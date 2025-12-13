@@ -111,21 +111,21 @@ export function CurrencyChart({ inverse = false }: Props) {
 
     return (
         <div className="p-6 rounded-xl bg-card border border-border shadow-sm h-full flex flex-col">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 md:gap-0">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+                    <div className="p-2 rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 shrink-0">
                         <RefreshCcw className="size-6" />
                     </div>
                     <div>
                         <h3 className="text-lg font-bold">{inverse ? 'Kurs in CHF' : 'Wechselkurse'}</h3>
-                        <div className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-primary/10 text-primary mt-1">
+                        <div className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-primary/10 text-primary mt-1 whitespace-nowrap">
                             Basis: 1 {baseCurrency}
                         </div>
                     </div>
                 </div>
 
                 {/* Currency Tabs */}
-                <div className="flex bg-muted/50 rounded-lg p-1">
+                <div className="flex bg-muted/50 rounded-lg p-1 self-start md:self-auto">
                     {(['EUR', 'USD', 'GBP'] as Currency[]).map((cur) => (
                         <button
                             key={cur}
