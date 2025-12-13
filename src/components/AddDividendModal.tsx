@@ -257,7 +257,10 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
+            <div
+                className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]"
+                onClick={(e) => e.stopPropagation()}
+            >
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-card z-10">
                     <div>
@@ -301,26 +304,32 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                                 <label className="text-sm font-medium">Aktueller Kurs</label>
                                 <input
                                     type="text"
-                                    inputMode="decimal"
+                                    inputMode="text"
+                                    autoComplete="off"
+                                    autoCorrect="off"
                                     step="0.01"
                                     min="0"
                                     required
                                     value={price}
                                     onChange={(e) => handlePriceChange(e.target.value)}
-                                    className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                    style={{ WebkitUserSelect: 'text', userSelect: 'text' }}
+                                    className="w-full px-3 py-2 border rounded-md bg-background text-foreground touch-manipulation"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-blue-600 dark:text-blue-400">Kauflimit</label>
                                 <input
                                     type="text"
-                                    inputMode="decimal"
+                                    inputMode="text"
+                                    autoComplete="off"
+                                    autoCorrect="off"
                                     step="0.01"
                                     min="0"
                                     placeholder="Optional"
                                     value={targetPrice}
                                     onChange={(e) => setTargetPrice(e.target.value)}
-                                    className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                    style={{ WebkitUserSelect: 'text', userSelect: 'text' }}
+                                    className="w-full px-3 py-2 border rounded-md bg-background text-foreground touch-manipulation"
                                 />
                             </div>
                         </div>
@@ -331,13 +340,16 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                             <label className="text-sm font-medium">Rendite %</label>
                             <input
                                 type="text"
-                                inputMode="decimal"
+                                inputMode="text"
+                                autoComplete="off"
+                                autoCorrect="off"
                                 step="0.01"
                                 min="0"
                                 placeholder="z.B. 3.90"
                                 value={yieldPercent}
                                 onChange={(e) => handleYieldChange(e.target.value)}
-                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                style={{ WebkitUserSelect: 'text', userSelect: 'text' }}
+                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground touch-manipulation"
                             />
                         </div>
 
@@ -345,13 +357,16 @@ export function AddDividendModal({ isOpen, onClose, editingStock }: AddDividendM
                             <label className="text-sm font-medium">Dividende/Zahlung</label>
                             <input
                                 type="text"
-                                inputMode="decimal"
+                                inputMode="text"
+                                autoComplete="off"
+                                autoCorrect="off"
                                 step="0.01"
                                 min="0"
                                 placeholder="z.B. 0.60"
                                 value={amount}
                                 onChange={(e) => handleAmountChange(e.target.value)}
-                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                style={{ WebkitUserSelect: 'text', userSelect: 'text' }}
+                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground touch-manipulation"
                             />
                         </div>
                     </div>
