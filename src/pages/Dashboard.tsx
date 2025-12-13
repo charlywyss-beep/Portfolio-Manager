@@ -209,8 +209,8 @@ export function Dashboard() {
                         </div>
 
                         {/* History Table */}
-                        <div className="overflow-hidden border border-border rounded-lg bg-background/50">
-                            <table className="w-full text-sm text-left">
+                        <div className="overflow-hidden border border-border rounded-lg bg-background/50 overflow-x-auto">
+                            <table className="w-full text-sm text-left min-w-[500px]">
                                 <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border">
                                     <tr>
                                         <th className="px-3 py-2 text-xs w-[100px]">Datum</th>
