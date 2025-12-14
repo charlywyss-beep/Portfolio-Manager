@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, TrendingDown, TrendingUp } from 'lucide-react';
+import { X, TrendingDown, TrendingUp, Edit } from 'lucide-react';
 import type { Stock } from '../types';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
@@ -19,7 +19,7 @@ interface EditPositionModalProps {
 }
 
 export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelete }: EditPositionModalProps) {
-    const [tab, setTab] = useState<'sell' | 'buy'>('sell');
+    const [tab, setTab] = useState<'sell' | 'buy' | 'correct'>('correct');
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
 
     // Sell state
@@ -28,6 +28,10 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     // Buy state
     const [buyShares, setBuyShares] = useState('');
     const [buyPrice, setBuyPrice] = useState(position.stock.currentPrice.toFixed(2));
+
+    // Correction state
+    const [correctShares, setCorrectShares] = useState(position.shares.toString());
+    const [correctPrice, setCorrectPrice] = useState(position.buyPriceAvg.toString());
 
     // Transaction success state
     const [showSuccessDialog, setShowSuccessDialog] = useState(false);
@@ -97,10 +101,25 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
             newAvgPrice: newAvgPrice,
         });
 
-        onUpdate(position.id, newTotalShares, newAvgPrice);
-
         // Don't close yet - show success dialog first
         setShowSuccessDialog(true);
+    };
+
+    const handleCorrection = (e: React.FormEvent) => {
+        e.preventDefault();
+        const newShares = parseFloat(correctShares);
+        const newPrice = parseFloat(correctPrice);
+
+        if (newShares <= 0) {
+            if (confirm("Bestand auf 0 setzen löscht die Position. Fortfahren?")) {
+                onDelete(position.id);
+                onClose();
+            }
+            return;
+        }
+
+        onUpdate(position.id, newShares, newPrice);
+        onClose();
     };
 
     const sellValue = sellShares ? parseFloat(sellShares) * position.stock.currentPrice : 0;
@@ -145,6 +164,18 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                     >
                         <TrendingUp className="size-4" />
                         Kaufen
+                    </button>
+                    <button
+                        onClick={() => setTab('correct')}
+                        className={cn(
+                            "flex-1 px-4 py-3 font-medium transition-colors flex items-center justify-center gap-2",
+                            tab === 'correct'
+                                ? "bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400"
+                                : "text-muted-foreground hover:bg-muted"
+                        )}
+                    >
+                        <Edit className="size-4" />
+                        Korrektur
                     </button>
                 </div>
 
@@ -375,6 +406,70 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                     )}
                                 >
                                     Kaufen
+                                </button>
+                            </div>
+                        </form>
+                    )}
+
+                    {/* Correction Form */}
+                    {tab === 'correct' && (
+                        <form onSubmit={handleCorrection} className="space-y-4">
+                            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-700 dark:text-blue-300 mb-4">
+                                Hier kannst du Schreibfehler korrigieren. Diese Änderung wird <strong>nicht</strong> als Kauf/Verkauf in der Historie gespeichert.
+                            </div>
+
+                            <div className="space-y-2">
+                                <label htmlFor="correctShares" className="text-sm font-medium">
+                                    Aktueller Bestand (Stück)
+                                </label>
+                                <input
+                                    id="correctShares"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    placeholder="z.B. 10"
+                                    value={correctShares}
+                                    onChange={(e) => setCorrectShares(e.target.value)}
+                                    className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                    required
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label htmlFor="correctPrice" className="text-sm font-medium">
+                                    Durchschnittlicher Kaufpreis ({position.stock.currency})
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        id="correctPrice"
+                                        type="number"
+                                        step="0.01"
+                                        min="0.01"
+                                        placeholder="z.B. 150.00"
+                                        value={correctPrice}
+                                        onChange={(e) => setCorrectPrice(e.target.value)}
+                                        className="w-full px-4 py-2 pr-12 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                        required
+                                    />
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">
+                                        {position.stock.currency}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors font-medium"
+                                >
+                                    Abbrechen
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                                >
+                                    Speichern
                                 </button>
                             </div>
                         </form>

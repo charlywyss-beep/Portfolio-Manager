@@ -208,12 +208,14 @@ export function EditDividendPage() {
 
         if (frequency === 'quarterly' || frequency === 'semi-annually') {
             const datesToConsider = frequency === 'quarterly' ? quarterlyDates : quarterlyDates.slice(0, 2);
-            const validDates = datesToConsider.filter(d => d.exDate || d.payDate);
+            // Fix: Do not filter empty dates to preserve Q1/Q2/Q3/Q4 slots!
+            submissionDates = datesToConsider;
 
-            if (validDates.length > 0) {
-                submissionDates = validDates;
-                submissionExDate = validDates[0].exDate;
-                submissionPayDate = validDates[0].payDate;
+            // Set exDate/payDate from the first available one for display/sorting (optional)
+            const firstValid = datesToConsider.find(d => d.exDate || d.payDate);
+            if (firstValid) {
+                submissionExDate = firstValid.exDate;
+                submissionPayDate = firstValid.payDate;
             }
         }
 
