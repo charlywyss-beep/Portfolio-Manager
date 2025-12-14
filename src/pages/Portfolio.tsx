@@ -280,9 +280,20 @@ export function Portfolio() {
                                     return (
                                         <tr key={fd.id} className="group hover:bg-muted/30 transition-colors">
                                             <td className="px-4 py-3 font-medium">
-                                                <div className="flex flex-col">
-                                                    <span>{fd.bankName}</span>
-                                                    {fd.notes && <span className="text-xs text-muted-foreground">{fd.notes}</span>}
+                                                <div className="flex items-center gap-3">
+                                                    {fd.logoUrl ? (
+                                                        <div className="size-8 rounded-lg bg-white p-1 border border-border shadow-sm flex items-center justify-center shrink-0">
+                                                            <img src={fd.logoUrl} alt={fd.bankName} className="object-contain max-h-full max-w-full" />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 text-xs shrink-0">
+                                                            {fd.bankName.slice(0, 2).toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                    <div className="flex flex-col">
+                                                        <span>{fd.bankName}</span>
+                                                        {fd.notes && <span className="text-xs text-muted-foreground">{fd.notes}</span>}
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3">

@@ -18,6 +18,8 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
     const [currency, setCurrency] = useState<Currency>('CHF');
     const [notes, setNotes] = useState('');
     const [accountType, setAccountType] = useState<BankAccountType>('sparkonto');
+    const [logoUrl, setLogoUrl] = useState(''); // NEW
+    const [domain, setDomain] = useState(''); // NEW: For generator
 
     useEffect(() => {
         if (editingDeposit) {
@@ -26,7 +28,9 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             setInterestRate(editingDeposit.interestRate);
             setCurrency(editingDeposit.currency);
             setNotes(editingDeposit.notes || '');
+            setNotes(editingDeposit.notes || '');
             setAccountType(editingDeposit.accountType || 'sparkonto');
+            setLogoUrl(editingDeposit.logoUrl || '');
         } else {
             // Reset form for new entry
             setBankName('');
@@ -35,6 +39,8 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             setCurrency('CHF');
             setNotes('');
             setAccountType('sparkonto');
+            setLogoUrl('');
+            setDomain('');
         }
     }, [editingDeposit, isOpen]);
 
@@ -50,6 +56,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             currency,
             notes,
             accountType,
+            logoUrl,
             startDate: new Date().toISOString(), // Internal timestamp
             maturityDate: new Date().toISOString() // Internal timestamp (irrelevant for open end)
         };
@@ -60,6 +67,16 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             addFixedDeposit(depositData);
         }
         onClose();
+    };
+
+    const generateLogo = () => {
+        if (!domain) return;
+        // Clean domain
+        let cleanDomain = domain.toLowerCase().replace('https://', '').replace('http://', '').replace('www.', '');
+        if (cleanDomain.includes('/')) cleanDomain = cleanDomain.split('/')[0];
+
+        const generatedUrl = `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128`;
+        setLogoUrl(generatedUrl);
     };
 
     return (
@@ -113,6 +130,44 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                             onChange={(e) => setBankName(e.target.value)}
                             placeholder="z.B. UBS, PostFinance"
                         />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Logo URL</label>
+                        <div className="flex gap-2">
+                            <input
+                                type="url"
+                                placeholder="https://example.com/logo.png"
+                                value={logoUrl}
+                                onChange={(e) => setLogoUrl(e.target.value)}
+                                className="flex-1 h-9 px-3 rounded-md border border-input bg-background/50 text-xs focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                            />
+                            {logoUrl && (
+                                <img src={logoUrl} alt="Preview" className="size-9 rounded-md border border-border bg-white object-contain p-1" />
+                            )}
+                        </div>
+
+                        {/* Logo Generator */}
+                        <div className="pt-1 flex gap-2 items-end">
+                            <div className="flex-1 space-y-1">
+                                <label className="text-[10px] text-muted-foreground uppercase font-semibold">Oder generieren via Website</label>
+                                <input
+                                    type="text"
+                                    placeholder="z.B. postfinance.ch"
+                                    value={domain}
+                                    onChange={(e) => setDomain(e.target.value)}
+                                    className="w-full h-9 px-3 rounded-md border border-input bg-background/50 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                onClick={generateLogo}
+                                disabled={!domain}
+                                className="px-3 h-9 bg-secondary text-secondary-foreground text-sm font-medium rounded-md hover:bg-secondary/80 disabled:opacity-50 border border-border"
+                            >
+                                Generieren
+                            </button>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

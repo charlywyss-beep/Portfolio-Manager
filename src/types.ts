@@ -45,6 +45,7 @@ export interface FixedDeposit {
     currency: Currency;
     notes?: string;
     accountType?: BankAccountType; // New field
+    logoUrl?: string; // NEW: Logo URL
 }
 
 export interface PortfolioHistoryEntry {
