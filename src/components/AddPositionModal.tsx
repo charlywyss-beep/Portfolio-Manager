@@ -3,6 +3,7 @@ import { X, Search, PlusCircle, BarChart3, PieChart } from 'lucide-react';
 import type { Stock } from '../types';
 import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
+import { useCurrencyFormatter } from '../utils/currency';
 
 interface AddPositionModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ interface AddPositionModalProps {
 
 export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedStock }: AddPositionModalProps) {
     const { addStock } = usePortfolio();
+    const { formatCurrency } = useCurrencyFormatter();
     const [activeTab, setActiveTab] = useState<'search' | 'manual'>('search');
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -364,7 +366,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                                 <span>Erw. Dividende (Jahr):</span>
                                                 <div className="text-right">
                                                     <span className="font-medium block text-green-600 dark:text-green-400">
-                                                        {annualDividend.toLocaleString('de-DE', { style: 'currency', currency })}
+                                                        {formatCurrency(annualDividend, currency, true)}
                                                     </span>
                                                     <span className="text-xs text-muted-foreground block">
                                                         {yieldOnCost.toFixed(2)}% vom Kaufpreis
