@@ -297,7 +297,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                 </div>
                                 <div className="space-y-2 col-span-2">
                                     <label className="text-sm font-medium">Aktueller Marktpreis</label>
-                                    <input required type="number" step="0.001" placeholder="z.B. 98.50" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                    <input required type="number" step="0.01" placeholder="z.B. 98.50" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                         value={newStock.currentPrice}
                                         onChange={e => {
                                             setNewStock({ ...newStock, currentPrice: e.target.value });
@@ -325,7 +325,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Kaufpreis</label>
-                                <input required type="number" step="0.001" min="0" placeholder="z.B. 150.00" className="w-full px-3 py-2 border rounded-md bg-background text-foreground" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} />
+                                <input required type="number" step="0.01" min="0" placeholder="z.B. 150.00" className="w-full px-3 py-2 border rounded-md bg-background text-foreground" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} />
                             </div>
                         </div>
 
@@ -338,6 +338,43 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                         {(parseFloat(shares) * parseFloat(buyPrice)).toLocaleString('de-DE', { style: 'currency', currency: activeTab === 'manual' ? newStock.currency : (selectedStock?.currency || 'USD') })}
                                     </span>
                                 </div>
+                                {(() => {
+                                    const numShares = parseFloat(shares);
+                                    let annualDividend = 0;
+                                    let currency = activeTab === 'manual' ? newStock.currency : (selectedStock?.currency || 'USD');
+
+                                    if (activeTab === 'search' && selectedStock) {
+                                        if (selectedStock.dividendAmount) {
+                                            const factor = selectedStock.dividendFrequency === 'quarterly' ? 4 :
+                                                selectedStock.dividendFrequency === 'semi-annually' ? 2 :
+                                                    selectedStock.dividendFrequency === 'monthly' ? 12 : 1;
+                                            annualDividend = numShares * selectedStock.dividendAmount * factor;
+                                        } else if (selectedStock.dividendYield) {
+                                            annualDividend = numShares * selectedStock.currentPrice * (selectedStock.dividendYield / 100);
+                                        }
+                                    } else if (activeTab === 'manual' && newStock.dividendYield && newStock.currentPrice) {
+                                        annualDividend = numShares * parseFloat(newStock.currentPrice) * (parseFloat(newStock.dividendYield) / 100);
+                                    }
+
+                                    if (annualDividend > 0) {
+                                        const totalInvest = parseFloat(shares) * parseFloat(buyPrice);
+                                        const yieldOnCost = (annualDividend / totalInvest) * 100;
+                                        return (
+                                            <div className="flex justify-between text-sm items-center pt-2 border-t border-border/50">
+                                                <span>Erw. Dividende (Jahr):</span>
+                                                <div className="text-right">
+                                                    <span className="font-medium block text-green-600 dark:text-green-400">
+                                                        {annualDividend.toLocaleString('de-DE', { style: 'currency', currency })}
+                                                    </span>
+                                                    <span className="text-xs text-muted-foreground block">
+                                                        {yieldOnCost.toFixed(2)}% vom Kaufpreis
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                    return null;
+                                })()}
                             </div>
                         )}
 
