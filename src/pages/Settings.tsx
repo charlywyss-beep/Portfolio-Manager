@@ -1,17 +1,13 @@
 import { useState, useRef } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, RotateCcw, Eye, EyeOff, Save } from 'lucide-react';
-import { cn } from '../utils';
+import { Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
+
 
 export function Settings() {
-    const { positions, stocks, fixedDeposits, history, watchlist, importData, finnhubApiKey, setFinnhubApiKey } = usePortfolio();
+    const { positions, stocks, fixedDeposits, history, watchlist, importData } = usePortfolio();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [importMessage, setImportMessage] = useState('');
-    const [showApiKey, setShowApiKey] = useState(false);
-    const [saveSuccess, setSaveSuccess] = useState(false);
-    const [apiTestStatus, setApiTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
-    const [apiTestMessage, setApiTestMessage] = useState('');
 
     const handleExport = () => {
         const data = {
@@ -33,53 +29,6 @@ export function Settings() {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-    };
-
-    const testApiKey = async () => {
-        if (!finnhubApiKey) {
-            setApiTestStatus('error');
-            setApiTestMessage('Kein API Key eingetragen');
-            return;
-        }
-
-        setApiTestStatus('testing');
-        setApiTestMessage('Teste Verbindung zu Finnhub...');
-
-        try {
-            // Simple quote request to test the key
-            const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=AAPL&token=${finnhubApiKey}`);
-
-            if (response.status === 403) {
-                setApiTestStatus('error');
-                setApiTestMessage('❌ Key ungültig oder keine Berechtigung');
-                return;
-            }
-
-            if (response.status === 429) {
-                setApiTestStatus('error');
-                setApiTestMessage('⚠️ API Limit erreicht (zu viele Anfragen)');
-                return;
-            }
-
-            if (!response.ok) {
-                setApiTestStatus('error');
-                setApiTestMessage(`❌ API Fehler: ${response.status}`);
-                return;
-            }
-
-            const data = await response.json();
-
-            if (data && data.c !== undefined) {
-                setApiTestStatus('success');
-                setApiTestMessage(`✅ Key ist gültig und aktiv! (AAPL Kurs: $${data.c})`);
-            } else {
-                setApiTestStatus('error');
-                setApiTestMessage('❌ Ungültige Antwort von API');
-            }
-        } catch (error) {
-            setApiTestStatus('error');
-            setApiTestMessage('❌ Netzwerkfehler - API nicht erreichbar');
-        }
     };
 
     const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
