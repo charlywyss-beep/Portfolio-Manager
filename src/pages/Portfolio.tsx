@@ -84,18 +84,18 @@ export function Portfolio() {
             </div>
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
+                    <table className="w-full text-xs text-left">
                         <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border">
                             <tr>
                                 <th className="px-2 py-3 min-w-[150px]">Name</th>
-                                <th className="px-2 py-3 min-w-[100px]">Valor / ISIN</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap">Anzahl</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap">Kauf Kurs</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap">Kauf Wert</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap">Aktueller Kurs</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap">Aktueller Wert</th>
-                                <th className="px-2 py-3 text-right whitespace-nowrap">Gesamt +/-</th>
-                                <th className="px-2 py-3 text-right whitespace-nowrap">Gesamt % +/-</th>
+                                <th className="px-2 py-3 min-w-[80px]">ISIN</th>
+                                <th className="px-2 py-3 text-right whitespace-nowrap">Anzahl</th>
+                                <th className="px-2 py-3 text-right whitespace-nowrap">Ø Kauf</th>
+                                <th className="px-2 py-3 text-right whitespace-nowrap">Invest</th>
+                                <th className="px-2 py-3 text-right whitespace-nowrap">Kurs</th>
+                                <th className="px-2 py-3 text-right whitespace-nowrap">Wert</th>
+                                <th className="px-2 py-3 text-right whitespace-nowrap">+/-</th>
+                                <th className="px-2 py-3 text-right whitespace-nowrap">%</th>
                                 <th className="px-2 py-3 text-center sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
                             </tr>
                         </thead>
@@ -126,7 +126,6 @@ export function Portfolio() {
                                                 <div className="text-xs text-muted-foreground flex items-center gap-1">
                                                     <span className="font-mono bg-muted px-1 rounded">{pos.stock.symbol}</span>
                                                     <span>• {pos.stock.sector}</span>
-                                                    {pos.stock.dividendYield && <span>• {pos.stock.dividendYield.toFixed(2)}% Div.</span>}
                                                 </div>
                                             </div>
                                         </div>
