@@ -16,8 +16,13 @@ export function convertToCHF(amount: number, fromCurrency: string, liveRates?: R
 
     if (fromCurrency === 'CHF') return amount;
 
-    // Frankfurter returns rates FROM CHF, so we need to invert
-    const rate = rates[fromCurrency];
+    let rate = rates[fromCurrency];
+
+    // Special handling for GBp (Pence) if not in rates
+    if (!rate && fromCurrency === 'GBp' && rates['GBP']) {
+        rate = rates['GBP'] * 100;
+    }
+
     if (!rate) return amount; // Unknown currency, return as-is
 
     return amount / rate; // Convert to CHF
