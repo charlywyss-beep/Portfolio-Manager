@@ -193,6 +193,9 @@ export function EditDividendPage() {
         if (targetPrice !== undefined && (!stock || (targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined) !== stock.targetPrice)) {
             updates.targetPrice = targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined;
         }
+        if (currency && (!stock || currency !== stock.currency)) {
+            updates.currency = currency;
+        }
 
         if (Object.keys(updates).length > 0) {
             updateStock(targetId, updates);
