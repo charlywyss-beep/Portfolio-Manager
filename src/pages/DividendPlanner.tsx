@@ -140,7 +140,7 @@ export function DividendPlanner() {
                                         annualDisplay = (
                                             <div className="flex flex-col items-end">
                                                 <span>{originalFormatted}</span>
-                                                <span className="text-xs text-muted-foreground font-normal">({chfFormatted})</span>
+                                                <span className="text-xs text-muted-foreground font-normal">{chfFormatted}</span>
                                             </div>
                                         );
                                     } else {
@@ -169,7 +169,7 @@ export function DividendPlanner() {
                                                 {annualDisplay}
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
-                                                CHF {quarterlyDividend.toFixed(2)}
+                                                CHF {convertToCHF(quarterlyDividend, stock.currency).toFixed(2)}
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
                                                 {translateFrequency(stock.dividendFrequency)}
