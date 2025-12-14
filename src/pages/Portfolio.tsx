@@ -89,14 +89,14 @@ export function Portfolio() {
                             <tr>
                                 <th className="px-4 py-3 min-w-[200px]">Name</th>
                                 <th className="px-4 py-3 min-w-[120px]">Valor / ISIN</th>
-                                <th className="px-4 py-3 text-right">Anzahl</th>
-                                <th className="px-4 py-3 text-right">Kauf Kurs</th>
-                                <th className="px-4 py-3 text-right">Kauf Wert</th>
-                                <th className="px-4 py-3 text-right">Aktueller Kurs</th>
-                                <th className="px-4 py-3 text-right">Aktueller Wert</th>
-                                <th className="px-4 py-3 text-right">Gesamt +/-</th>
-                                <th className="px-4 py-3 text-right">Gesamt % +/-</th>
-                                <th className="px-4 py-3 text-center sticky right-0 bg-muted/50 backdrop-blur-sm z-10 shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.1)]">Aktionen</th>
+                                <th className="px-4 py-3 text-right whitespace-nowrap">Anzahl</th>
+                                <th className="px-4 py-3 text-right whitespace-nowrap">Kauf Kurs</th>
+                                <th className="px-4 py-3 text-right whitespace-nowrap">Kauf Wert</th>
+                                <th className="px-4 py-3 text-right whitespace-nowrap">Aktueller Kurs</th>
+                                <th className="px-4 py-3 text-right whitespace-nowrap">Aktueller Wert</th>
+                                <th className="px-4 py-3 text-right whitespace-nowrap">Gesamt +/-</th>
+                                <th className="px-4 py-3 text-right whitespace-nowrap">Gesamt % +/-</th>
+                                <th className="px-4 py-3 text-center sticky right-0 bg-muted z-10 shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.1)]">Aktionen</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
