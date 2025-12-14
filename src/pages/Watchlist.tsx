@@ -3,17 +3,18 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { useNavigate } from 'react-router-dom';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { Eye, Plus, Trash2, Edit } from 'lucide-react';
+import { Eye, Plus, Trash2, Edit, ShoppingBag } from 'lucide-react';
 
 import { AddWatchlistStockModal } from '../components/AddWatchlistStockModal';
-// import { AddDividendModal } from '../components/AddDividendModal';
+import { AddPositionModal } from '../components/AddPositionModal'; // Import AddPositionModal
+import type { Stock } from '../types';
 
 export function Watchlist() {
     const navigate = useNavigate();
-    const { stocks, watchlist, removeFromWatchlist, addToWatchlist } = usePortfolio();
+    const { stocks, watchlist, removeFromWatchlist, addToWatchlist, addPosition } = usePortfolio(); // Get addPosition
     const { formatCurrency } = useCurrencyFormatter();
     const [isAddStockOpen, setIsAddStockOpen] = useState(false);
-    // const [editingStock, setEditingStock] = useState<any>(null);
+    const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
 
     // Filter stocks that are in the watchlist
     const watchlistStocks = stocks.filter(s => watchlist.includes(s.id));
@@ -208,6 +209,13 @@ export function Watchlist() {
                                                 <td className="text-right py-3 px-4">
                                                     <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity">
                                                         <button
+                                                            onClick={() => setBuyStock(stock)}
+                                                            className="p-2 hover:bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg transition-colors"
+                                                            title="Kaufen (ins Depot übernehmen)"
+                                                        >
+                                                            <ShoppingBag className="size-4" />
+                                                        </button>
+                                                        <button
                                                             onClick={() => navigate(`/dividends/edit/${stock.id}`)}
                                                             className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
                                                             title="Bearbeiten"
@@ -246,7 +254,23 @@ export function Watchlist() {
                 }}
             />
 
-            {/* Dividend Edit Modal removed for PWA compatibility */}
+            {/* Buy Modal */}
+            <AddPositionModal
+                isOpen={!!buyStock}
+                onClose={() => setBuyStock(null)}
+                stocks={stocks}
+                preSelectedStock={buyStock}
+                onAdd={(pos) => {
+                    addPosition(pos);
+                    // Remove from watchlist after buying
+                    if (buyStock) {
+                        removeFromWatchlist(buyStock.id);
+                    }
+                    setBuyStock(null);
+                    // Optional: Navigate to portfolio or show success
+                    // navigate('/portfolio');
+                }}
+            />
         </div>
     );
 }
