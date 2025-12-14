@@ -87,23 +87,23 @@ export function Portfolio() {
                     <table className="w-full text-sm text-left">
                         <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border">
                             <tr>
-                                <th className="px-4 py-3 min-w-[200px]">Name</th>
-                                <th className="px-4 py-3 min-w-[120px]">Valor / ISIN</th>
+                                <th className="px-2 py-3 min-w-[150px]">Name</th>
+                                <th className="px-2 py-3 min-w-[100px]">Valor / ISIN</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap">Anzahl</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap">Kauf Kurs</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap">Kauf Wert</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap">Aktueller Kurs</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap">Aktueller Wert</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap">Gesamt +/-</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap">Gesamt % +/-</th>
-                                <th className="px-4 py-3 text-center sticky right-0 bg-muted z-10 shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.1)]">Aktionen</th>
+                                <th className="px-2 py-3 text-right whitespace-nowrap">Gesamt +/-</th>
+                                <th className="px-2 py-3 text-right whitespace-nowrap">Gesamt % +/-</th>
+                                <th className="px-2 py-3 text-center sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
                             {data.map((pos) => (
                                 <tr key={pos.id} className="group hover:bg-muted/30 transition-colors">
                                     {/* Name */}
-                                    <td className="px-4 py-3">
+                                    <td className="px-2 py-3">
                                         <div className="flex items-center gap-3">
                                             {pos.stock.logoUrl ? (
                                                 <div className="size-8 rounded-lg bg-white p-1 border border-border shadow-sm flex items-center justify-center shrink-0">
@@ -133,7 +133,7 @@ export function Portfolio() {
                                     </td>
 
                                     {/* Valor / ISIN */}
-                                    <td className="px-4 py-3">
+                                    <td className="px-2 py-3">
                                         <div className="text-xs space-y-0.5">
                                             {pos.stock.valor && (
                                                 <div className="font-mono">
@@ -203,7 +203,7 @@ export function Portfolio() {
                                     </td>
 
                                     {/* Aktionen */}
-                                    <td className="px-4 py-3 sticky right-0 bg-card group-hover:bg-muted/30 transition-colors shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.1)]">
+                                    <td className="px-2 py-3 sticky right-0 bg-card group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                         <div className="flex items-center justify-center gap-1">
                                             <button
                                                 onClick={() => handleEdit(pos)}
@@ -266,8 +266,8 @@ export function Portfolio() {
                         <table className="w-full text-sm text-left">
                             <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border">
                                 <tr>
-                                    <th className="px-4 py-3">Bank / Institut</th>
-                                    <th className="px-4 py-3">Konto-Typ</th>
+                                    <th className="px-2 py-3">Bank / Institut</th>
+                                    <th className="px-2 py-3">Konto-Typ</th>
                                     <th className="px-4 py-3 text-right">Betrag</th>
                                     <th className="px-4 py-3 text-right">Zins p.a.</th>
                                     <th className="px-4 py-3 text-right">Jährlicher Ertrag</th>
@@ -296,7 +296,7 @@ export function Portfolio() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3">
+                                            <td className="px-2 py-3">
                                                 <span className={cn(
                                                     "px-2 py-0.5 rounded-md text-xs font-medium border",
                                                     fd.accountType === 'sparkonto'
@@ -322,7 +322,7 @@ export function Portfolio() {
                                             <td className="px-4 py-3 text-right font-medium text-green-600 dark:text-green-400">
                                                 +{formatCurrency(interestAmount, fd.currency)}
                                             </td>
-                                            <td className="px-4 py-3">
+                                            <td className="px-2 py-3">
                                                 <div className="flex items-center justify-center gap-1">
                                                     <button
                                                         onClick={() => {
