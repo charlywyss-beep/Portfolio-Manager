@@ -25,6 +25,7 @@ export function EditDividendPage() {
     const [symbol, setSymbol] = useState(''); // NEW: Allow editing symbol
     const [isin, setIsin] = useState(''); // NEW: Allow editing ISIN
     const [sector, setSector] = useState(''); // NEW: Allow editing Sector
+    const [domain, setDomain] = useState(''); // NEW: For logo generation
     const [price, setPrice] = useState('');
     const [targetPrice, setTargetPrice] = useState('');
     const [amount, setAmount] = useState('');
@@ -149,6 +150,16 @@ export function EditDividendPage() {
         const newDates = [...quarterlyDates];
         newDates[index] = { ...newDates[index], [field]: value };
         setQuarterlyDates(newDates);
+    };
+
+    const generateLogo = () => {
+        if (!domain) return;
+        // Clean domain
+        let cleanDomain = domain.toLowerCase().replace('https://', '').replace('http://', '').replace('www.', '');
+        if (cleanDomain.includes('/')) cleanDomain = cleanDomain.split('/')[0];
+
+        const generatedUrl = `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128`;
+        setLogoUrl(generatedUrl);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -299,13 +310,40 @@ export function EditDividendPage() {
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">Logo URL</label>
-                                        <input
-                                            type="url"
-                                            placeholder="https://example.com/logo.png"
-                                            value={logoUrl}
-                                            onChange={(e) => setLogoUrl(e.target.value)}
-                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-xs"
-                                        />
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="url"
+                                                placeholder="https://example.com/logo.png"
+                                                value={logoUrl}
+                                                onChange={(e) => setLogoUrl(e.target.value)}
+                                                className="flex-1 px-3 py-2 border rounded-md bg-background text-foreground text-xs"
+                                            />
+                                            {logoUrl && (
+                                                <img src={logoUrl} alt="Preview" className="size-9 rounded-md border border-border bg-white object-contain p-1" />
+                                            )}
+                                        </div>
+
+                                        {/* Logo Generator */}
+                                        <div className="pt-2 flex gap-2 items-end">
+                                            <div className="flex-1 space-y-1">
+                                                <label className="text-[10px] text-muted-foreground uppercase font-semibold">Oder generieren via Website</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="z.B. novartis.com"
+                                                    value={domain}
+                                                    onChange={(e) => setDomain(e.target.value)}
+                                                    className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-sm"
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={generateLogo}
+                                                disabled={!domain}
+                                                className="px-3 py-2 bg-secondary text-secondary-foreground text-sm font-medium rounded-md hover:bg-secondary/80 mb-[1px] disabled:opacity-50"
+                                            >
+                                                Generieren
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
