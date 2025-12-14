@@ -19,7 +19,7 @@ const getFrequencyFactor = (freq: string) => {
 export function EditDividendPage() {
     const { stockId } = useParams();
     const navigate = useNavigate();
-    const { stocks, positions, updateStockDividend, updateStockPrice, updateStock } = usePortfolio();
+    const { stocks, updateStockDividend, updateStockPrice, updateStock } = usePortfolio();
 
     const [selectedStockId, setSelectedStockId] = useState(''); // Local state for selection
     const [symbol, setSymbol] = useState(''); // NEW: Allow editing symbol
@@ -46,7 +46,7 @@ export function EditDividendPage() {
     // Derived state
     const currentStockId = stockId || selectedStockId;
     const stock = stocks.find(s => s.id === currentStockId);
-    const position = positions.find(p => p.stockId === currentStockId);
+
 
     // Pre-fill fields
     useEffect(() => {
@@ -447,11 +447,11 @@ export function EditDividendPage() {
                                     </select>
                                 </div>
 
-                                {position && amount && !isNaN(parseFloat(amount)) && (
+                                {amount && !isNaN(parseFloat(amount)) && (
                                     <div className="p-4 bg-muted/50 rounded-lg text-center border border-border">
                                         <p className="text-sm font-medium text-muted-foreground">Erwartete Jahresausschüttung</p>
                                         <p className="text-2xl font-bold text-primary mt-1">
-                                            {(parseFloat(amount.replace(',', '.')) * position.shares * getFrequencyFactor(frequency)).toFixed(2)} {currency}
+                                            {(parseFloat(amount.replace(',', '.')) * getFrequencyFactor(frequency)).toFixed(2)} {currency}
                                         </p>
                                     </div>
                                 )}
