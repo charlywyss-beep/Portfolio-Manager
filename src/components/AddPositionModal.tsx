@@ -337,7 +337,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                 <div className="flex justify-between text-sm">
                                     <span>Gesamtinvestition:</span>
                                     <span className="font-medium">
-                                        {(parseFloat(shares) * parseFloat(buyPrice)).toLocaleString('de-DE', { style: 'currency', currency: activeTab === 'manual' ? newStock.currency : (selectedStock?.currency || 'USD') })}
+                                        {formatCurrency(parseFloat(shares) * parseFloat(buyPrice), activeTab === 'manual' ? newStock.currency : (selectedStock?.currency || 'USD'), true)}
                                     </span>
                                 </div>
                                 {(() => {
