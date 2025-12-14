@@ -181,9 +181,8 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                     </AreaChart>
                 </ResponsiveContainer>
             </div>
-            {/* Error overlay removed - we now gracefully fallback to simulation */}
             <p className="text-[10px] text-muted-foreground text-center mt-2 italic">
-                {historyData && historyData.length > 0 ? '* Reale Marktdaten von Finnhub' : '* Simulierter Chartverlauf (Demo-Modus)'}
+                {historyData && historyData.length > 0 ? '* Reale Marktdaten von Yahoo Finance' : '* Simulierter Chartverlauf (Demo-Modus)'}
             </p>
         </div>
     );

@@ -13,7 +13,7 @@ import { fetchStockHistory, type TimeRange, type ChartDataPoint } from '../servi
 export function StockDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { stocks, updateStock, finnhubApiKey } = usePortfolio();
+    const { stocks, updateStock } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
 
     // Find stock
@@ -21,25 +21,23 @@ export function StockDetail() {
 
     const [notes, setNotes] = useState('');
     const [isSaving, setIsSaving] = useState(false);
-
-    // Chart Data State
-    const [chartData, setChartData] = useState<ChartDataPoint[] | null>(null);
     const [timeRange, setTimeRange] = useState<TimeRange>('1Y');
+    const [chartData, setChartData] = useState<ChartDataPoint[] | null>(null);
 
-    // Fetch History Effect
+    // Fetch History Effect - Now using Yahoo Finance
     useEffect(() => {
-        if (!stock || !finnhubApiKey) {
-            setChartData(null); // Reset to allow simulation fallback if no key
+        if (!stock) {
+            setChartData(null);
             return;
         }
 
         const loadData = async () => {
-            console.log('[StockDetail] Fetching data for:', stock.symbol, 'Range:', timeRange, 'Has Key:', !!finnhubApiKey);
-            const response = await fetchStockHistory(stock.symbol, timeRange, finnhubApiKey);
-            console.log('[StockDetail] API Response:', response);
+            console.log('[StockDetail] Fetching Yahoo Finance data for:', stock.symbol, 'Range:', timeRange);
+            const response = await fetchStockHistory(stock.symbol, timeRange);
+            console.log('[Stock Detail] Yahoo Response:', response);
 
             if (response.error) {
-                console.warn('[StockDetail] Error from API:', response.error);
+                console.warn('[StockDetail] Error from Yahoo:', response.error);
                 setChartData(null); // Fallback to simulation
             } else {
                 console.log('[StockDetail] Success! Data points:', response.data?.length || 0);
@@ -48,7 +46,7 @@ export function StockDetail() {
         };
 
         loadData();
-    }, [stock?.symbol, timeRange, finnhubApiKey]);
+    }, [stock?.symbol, timeRange]);
 
     // Initialize notes
     useEffect(() => {
@@ -125,7 +123,6 @@ export function StockDetail() {
                         <PriceHistoryChart
                             currentPrice={stock.currentPrice}
                             currency={stock.currency}
-                            // Simulate trend based on dividend yield for visual fun (Green if > 2%, else neutral)
                             trend={stock.dividendYield && stock.dividendYield > 2 ? 'up' : 'neutral'}
                             historyData={chartData}
                             onRangeChange={(range) => setTimeRange(range)}

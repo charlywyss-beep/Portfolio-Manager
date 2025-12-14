@@ -7,71 +7,71 @@ export interface ChartDataPoint {
 
 export type TimeRange = '1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | '5Y';
 
-// Helper to get UNIX timestamp for range start
-const getStartTime = (range: TimeRange): number => {
-    const now = new Date();
+// Helper to get period and interval for Yahoo Finance
+const getYahooParams = (range: TimeRange): { period: string; interval: string } => {
     switch (range) {
-        case '1D': return Math.floor(now.setHours(0, 0, 0, 0) / 1000); // Start of today
-        case '1W': now.setDate(now.getDate() - 7); break;
-        case '1M': now.setMonth(now.getMonth() - 1); break;
-        case '3M': now.setMonth(now.getMonth() - 3); break;
-        case '6M': now.setMonth(now.getMonth() - 6); break;
-        case '1Y': now.setFullYear(now.getFullYear() - 1); break;
-        case '5Y': now.setFullYear(now.getFullYear() - 5); break;
+        case '1D': return { period: '1d', interval: '5m' };
+        case '1W': return { period: '5d', interval: '15m' };
+        case '1M': return { period: '1mo', interval: '1d' };
+        case '3M': return { period: '3mo', interval: '1d' };
+        case '6M': return { period: '6mo', interval: '1d' };
+        case '1Y': return { period: '1y', interval: '1d' };
+        case '5Y': return { period: '5y', interval: '1wk' };
     }
-    return Math.floor(now.getTime() / 1000);
 };
 
 export async function fetchStockHistory(
     symbol: string,
     range: TimeRange,
-    apiKey: string
+    _apiKey?: string // Not used for Yahoo Finance
 ): Promise<{ data: ChartDataPoint[] | null, error?: string }> {
-    if (!apiKey) return { data: null, error: 'Kein API Key konfiguriert' };
-
     try {
-        const from = getStartTime(range);
-        const to = Math.floor(Date.now() / 1000);
+        const { period, interval } = getYahooParams(range);
 
-        // Resolution: Finnhub supports 1, 5, 15, 30, 60, D, W, M
-        let resolution = 'D';
-        if (range === '1D') resolution = '30';
-        if (range === '1W') resolution = '60';
-        if (range === '5Y') resolution = 'W';
+        // Using Yahoo Finance API v8 (no auth required)
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${period}&interval=${interval}`;
 
-        const url = `https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=${resolution}&from=${from}&to=${to}&token=${apiKey}`;
+        console.log('[Yahoo Finance] Fetching:', symbol, 'Period:', period, 'Interval:', interval);
 
         const response = await fetch(url);
+        console.log('[Yahoo Finance] Response status:', response.status);
 
-        if (response.status === 403) {
-            return { data: null, error: 'API Key ungültig oder keine Berechtigung.' };
-        }
-        if (response.status === 429) {
-            return { data: null, error: 'API Limit erreicht (max. 30/Sek oder Tageslimit).' };
-        }
         if (!response.ok) {
             return { data: null, error: `API Fehler: ${response.status}` };
         }
 
         const data = await response.json();
+        console.log('[Yahoo Finance] Response data:', data);
 
-        if (data.s === 'no_data') {
-            return { data: null, error: 'Keine Daten für diesen Zeitraum verfügbar.' };
+        if (data.chart?.error) {
+            return { data: null, error: `Yahoo Finance: ${data.chart.error.description}` };
         }
 
-        if (data.s === 'ok' && data.c && data.t) {
-            // Transform { c: [close_prices], t: [timestamps], ... } to [{date, value}]
-            const points = data.t.map((timestamp: number, index: number) => ({
-                date: new Date(timestamp * 1000).toISOString(),
-                value: data.c[index]
-            }));
-            return { data: points };
+        const result = data.chart?.result?.[0];
+        if (!result || !result.timestamp || !result.indicators?.quote?.[0]?.close) {
+            return { data: null, error: 'Keine Daten verfügbar' };
         }
 
-        return { data: null, error: 'Ungültiges Datenformat empfangen.' };
+        const timestamps = result.timestamp;
+        const closes = result.indicators.quote[0].close;
+
+        // Transform to our format
+        const points: ChartDataPoint[] = timestamps
+            .map((timestamp: number, index: number) => {
+                const close = closes[index];
+                if (close === null || close === undefined) return null;
+                return {
+                    date: new Date(timestamp * 1000).toISOString(),
+                    value: close
+                };
+            })
+            .filter((p: ChartDataPoint | null): p is ChartDataPoint => p !== null);
+
+        console.log('[Yahoo Finance] Returning', points.length, 'data points');
+        return { data: points.length > 0 ? points : null };
 
     } catch (error) {
-        console.error("Finnhub Fetch Error:", error);
+        console.error("Yahoo Finance Fetch Error:", error);
         return { data: null, error: 'Netzwerkfehler oder API nicht erreichbar.' };
     }
 }
