@@ -153,18 +153,18 @@ export function Portfolio() {
 
                                     {/* Kauf Kurs */}
                                     <td className="px-4 py-3 text-right">
-                                        {pos.buyPriceAvg.toLocaleString('de-DE', { style: 'currency', currency: pos.stock.currency })}
+                                        {formatCurrency(pos.buyPriceAvg, pos.stock.currency, false)}
                                     </td>
 
                                     {/* Kauf Wert */}
                                     <td className="px-4 py-3 text-right font-medium">
-                                        {pos.buyValue.toLocaleString('de-DE', { style: 'currency', currency: pos.stock.currency })}
+                                        {formatCurrency(pos.buyValue, pos.stock.currency, false)}
                                     </td>
 
                                     {/* Aktueller Kurs */}
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            <span>{pos.stock.currentPrice.toLocaleString('de-DE', { style: 'currency', currency: pos.stock.currency })}</span>
+                                            <span>{formatCurrency(pos.stock.currentPrice, pos.stock.currency, false)}</span>
                                             <button
                                                 onClick={() => setPriceEditStock(pos.stock)}
                                                 className="text-muted-foreground hover:text-primary p-1 rounded transition-colors"
