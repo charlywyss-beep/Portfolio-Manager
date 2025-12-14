@@ -22,6 +22,7 @@ export function EditDividendPage() {
     const { stocks, positions, updateStockDividend, updateStockPrice, updateStock } = usePortfolio();
 
     const [selectedStockId, setSelectedStockId] = useState(''); // Local state for selection
+    const [symbol, setSymbol] = useState(''); // NEW: Allow editing symbol
     const [price, setPrice] = useState('');
     const [targetPrice, setTargetPrice] = useState('');
     const [amount, setAmount] = useState('');
@@ -40,21 +41,14 @@ export function EditDividendPage() {
     ]);
 
     // Derived state
-    // Use param stockId if available, otherwise fallback to local selectedStockId state
     const currentStockId = stockId || selectedStockId;
     const stock = stocks.find(s => s.id === currentStockId);
     const position = positions.find(p => p.stockId === currentStockId);
 
-    // Redirect if invalid stock
-    // useEffect(() => {
-    //     if (!stock && stockId) {
-    //         // Wait for load? Or redirect?
-    //     }
-    // }, [stock, stockId]);
-
     // Pre-fill fields
     useEffect(() => {
         if (stock) {
+            setSymbol(stock.symbol || ''); // Pre-fill symbol
             setPrice(stock.currentPrice?.toString() || '');
             setTargetPrice(stock.targetPrice?.toString() || '');
             setAmount(stock.dividendAmount?.toString() || '');
@@ -80,7 +74,7 @@ export function EditDividendPage() {
                 setQuarterlyDates(Array(4).fill({ exDate: '', payDate: '' }));
             }
         }
-    }, [stock]); // Depend on stock change
+    }, [stock]);
 
 
     // Handlers
@@ -164,8 +158,14 @@ export function EditDividendPage() {
             updateStockPrice(targetId, parseFloat(price.replace(',', '.')));
         }
 
-        // Update Logo and Target Price
+        // Update Stock Details (Symbol, Logo, Target Price)
         const updates: Partial<Stock> = {};
+
+        // Symbol update
+        if (symbol && (!stock || symbol !== stock.symbol)) {
+            updates.symbol = symbol.toUpperCase(); // Ensure uppercase
+        }
+
         if (logoUrl !== undefined && (!stock || logoUrl !== stock.logoUrl)) {
             updates.logoUrl = logoUrl;
         }
@@ -206,24 +206,20 @@ export function EditDividendPage() {
         navigate(-1); // Go back
     };
 
-    // if (!stock) {
-    //     return <div className="p-8 text-center">Aktie nicht gefunden...</div>;
-    // }
-
     return (
         <div className="min-h-screen bg-background pb-20">
             {/* Header */}
-            <div className="flex items-center gap-4 p-4 border-b border-border bg-card sticky top-0 z-10">
+            <div className="flex items-center gap-4 p-4 border-b border-border bg-card sticky top-0 z-10 w-full">
                 <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-muted rounded-full">
                     <ArrowLeft className="size-6" />
                 </button>
-                <div>
+                <div className="flex-1">
                     <h1 className="text-xl font-bold">{stock ? stock.name : 'Dividende hinzufügen'}</h1>
                     <p className="text-sm text-muted-foreground">{stock ? stock.symbol : 'Neue Erfassung'}</p>
                 </div>
             </div>
 
-            <div className="p-4 max-w-lg mx-auto">
+            <div className="p-4 max-w-lg mx-auto w-full">
                 <form onSubmit={handleSubmit} className="space-y-6">
 
                     {/* Stock Selection if no ID passed */}
@@ -254,6 +250,36 @@ export function EditDividendPage() {
                         </div>
                     ) : (
                         <>
+                            {/* Stock Definition Section (Symbol & Logo) */}
+                            <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4">
+                                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Stammdaten</h3>
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Symbol (Ticker) <span className="text-xs text-muted-foreground">(für Charts)</span></label>
+                                        <input
+                                            type="text"
+                                            value={symbol}
+                                            onChange={(e) => setSymbol(e.target.value)}
+                                            placeholder="z.B. AAPL oder NESN.SW"
+                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground font-mono uppercase"
+                                        />
+                                        <p className="text-[10px] text-muted-foreground">
+                                            Nutze Yahoo Finance Symbole (z.B. <b>NESN.SW</b> für Nestle, <b>BATS.L</b> für BAT)
+                                        </p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Logo URL</label>
+                                        <input
+                                            type="url"
+                                            placeholder="https://example.com/logo.png"
+                                            value={logoUrl}
+                                            onChange={(e) => setLogoUrl(e.target.value)}
+                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-xs"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Price Section */}
                             <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4">
                                 <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Kursdaten</h3>
@@ -413,20 +439,6 @@ export function EditDividendPage() {
                                         </div>
                                     </div>
                                 )}
-                            </div>
-
-                            {/* Logo Section */}
-                            <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Logo URL</label>
-                                    <input
-                                        type="url"
-                                        placeholder="https://example.com/logo.png"
-                                        value={logoUrl}
-                                        onChange={(e) => setLogoUrl(e.target.value)}
-                                        className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
-                                    />
-                                </div>
                             </div>
 
                             <div className="pt-4 pb-8">
