@@ -150,11 +150,28 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     };
 
     const addPosition = (position: Omit<Position, 'id'>) => {
-        const newPosition: Position = {
-            ...position,
-            id: `pos_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        };
-        setPositions((prev) => [...prev, newPosition]);
+        setPositions((prev) => {
+            const existingPosition = prev.find(p => p.stockId === position.stockId);
+
+            if (existingPosition) {
+                // Merge with existing position (Calculate weighted average price)
+                const totalShares = existingPosition.shares + position.shares;
+                const totalCost = (existingPosition.shares * existingPosition.buyPriceAvg) + (position.shares * position.buyPriceAvg);
+                const newAvgPrice = totalCost / totalShares;
+
+                return prev.map(p => p.id === existingPosition.id
+                    ? { ...p, shares: totalShares, buyPriceAvg: newAvgPrice }
+                    : p
+                );
+            }
+
+            // Create new position
+            const newPosition: Position = {
+                ...position,
+                id: `pos_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            };
+            return [...prev, newPosition];
+        });
     };
 
     const deletePosition = (id: string) => {
