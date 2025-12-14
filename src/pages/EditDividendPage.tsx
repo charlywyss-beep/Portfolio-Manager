@@ -21,10 +21,10 @@ export function EditDividendPage() {
     const navigate = useNavigate();
     const { stocks, positions, updateStockDividend, updateStockPrice, updateStock } = usePortfolio();
 
+    const [selectedStockId, setSelectedStockId] = useState(''); // Local state for selection
     const [symbol, setSymbol] = useState(''); // NEW: Allow editing symbol
     const [isin, setIsin] = useState(''); // NEW: Allow editing ISIN
     const [sector, setSector] = useState(''); // NEW: Allow editing Sector
-    const [isin, setIsin] = useState(''); // NEW: Allow editing ISIN
     const [price, setPrice] = useState('');
     const [targetPrice, setTargetPrice] = useState('');
     const [amount, setAmount] = useState('');
