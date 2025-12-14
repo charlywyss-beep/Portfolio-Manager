@@ -101,6 +101,8 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
             newAvgPrice: newAvgPrice,
         });
 
+        onUpdate(position.id, newTotalShares, newAvgPrice);
+
         // Don't close yet - show success dialog first
         setShowSuccessDialog(true);
     };
