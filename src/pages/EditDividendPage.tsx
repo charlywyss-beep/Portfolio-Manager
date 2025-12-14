@@ -69,12 +69,22 @@ export function EditDividendPage() {
                 while (dates.length < 4) dates.push({ exDate: '', payDate: '' });
                 setQuarterlyDates(dates);
             } else if (stock.dividendExDate || stock.dividendPayDate) {
-                setQuarterlyDates([
-                    { exDate: stock.dividendExDate || '', payDate: stock.dividendPayDate || '' },
-                    { exDate: '', payDate: '' },
-                    { exDate: '', payDate: '' },
-                    { exDate: '', payDate: '' }
-                ]);
+                // Heuristic: Try to determine quarter from date to prevent shifting to Q1
+                let targetIndex = 0;
+                if ((stock.dividendFrequency === 'quarterly' || !stock.dividendFrequency) && stock.dividendExDate) {
+                    const month = new Date(stock.dividendExDate).getMonth(); // 0-11
+                    targetIndex = Math.floor(month / 3); // 0=Q1, 1=Q2, 2=Q3, 3=Q4
+                } else if (stock.dividendFrequency === 'semi-annually' && stock.dividendExDate) {
+                    const month = new Date(stock.dividendExDate).getMonth();
+                    targetIndex = month >= 6 ? 1 : 0;
+                }
+
+                const newDates = Array(4).fill(null).map(() => ({ exDate: '', payDate: '' }));
+                newDates[targetIndex] = {
+                    exDate: stock.dividendExDate || '',
+                    payDate: stock.dividendPayDate || ''
+                };
+                setQuarterlyDates(newDates);
             } else {
                 setQuarterlyDates(Array(4).fill({ exDate: '', payDate: '' }));
             }
