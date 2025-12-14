@@ -23,6 +23,7 @@ export function EditDividendPage() {
 
     const [selectedStockId, setSelectedStockId] = useState(''); // Local state for selection
     const [symbol, setSymbol] = useState(''); // NEW: Allow editing symbol
+    const [isin, setIsin] = useState(''); // NEW: Allow editing ISIN
     const [price, setPrice] = useState('');
     const [targetPrice, setTargetPrice] = useState('');
     const [amount, setAmount] = useState('');
@@ -49,6 +50,7 @@ export function EditDividendPage() {
     useEffect(() => {
         if (stock) {
             setSymbol(stock.symbol || ''); // Pre-fill symbol
+            setIsin(stock.isin || ''); // Pre-fill ISIN
             setPrice(stock.currentPrice?.toString() || '');
             setTargetPrice(stock.targetPrice?.toString() || '');
             setAmount(stock.dividendAmount?.toString() || '');
@@ -169,6 +171,9 @@ export function EditDividendPage() {
         if (logoUrl !== undefined && (!stock || logoUrl !== stock.logoUrl)) {
             updates.logoUrl = logoUrl;
         }
+        if (isin !== undefined && (!stock || isin !== stock.isin)) {
+            updates.isin = isin;
+        }
         if (targetPrice !== undefined && (!stock || (targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined) !== stock.targetPrice)) {
             updates.targetPrice = targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined;
         }
@@ -266,6 +271,16 @@ export function EditDividendPage() {
                                         <p className="text-[10px] text-muted-foreground">
                                             Nutze Yahoo Finance Symbole (z.B. <b>NESN.SW</b> für Nestle, <b>BATS.L</b> für BAT)
                                         </p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">ISIN</label>
+                                        <input
+                                            type="text"
+                                            value={isin}
+                                            onChange={(e) => setIsin(e.target.value)}
+                                            placeholder="z.B. CH0038863350"
+                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground font-mono uppercase"
+                                        />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">Logo URL</label>
