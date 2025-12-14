@@ -28,20 +28,20 @@ export async function fetchStockHistory(
     try {
         const { period, interval } = getYahooParams(range);
 
-        // Using Yahoo Finance API v8 (no auth required)
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${period}&interval=${interval}`;
+        // Use Vercel API proxy to bypass CORS
+        const url = `/api/yahoo-finance?symbol=${symbol}&period=${period}&interval=${interval}`;
 
-        console.log('[Yahoo Finance] Fetching:', symbol, 'Period:', period, 'Interval:', interval);
+        console.log('[Yahoo Finance Proxy] Fetching:', symbol, 'Period:', period, 'Interval:', interval);
 
         const response = await fetch(url);
-        console.log('[Yahoo Finance] Response status:', response.status);
+        console.log('[Yahoo Finance Proxy] Response status:', response.status);
 
         if (!response.ok) {
             return { data: null, error: `API Fehler: ${response.status}` };
         }
 
         const data = await response.json();
-        console.log('[Yahoo Finance] Response data:', data);
+        console.log('[Yahoo Finance Proxy] Response data:', data);
 
         if (data.chart?.error) {
             return { data: null, error: `Yahoo Finance: ${data.chart.error.description}` };
@@ -67,11 +67,11 @@ export async function fetchStockHistory(
             })
             .filter((p: ChartDataPoint | null): p is ChartDataPoint => p !== null);
 
-        console.log('[Yahoo Finance] Returning', points.length, 'data points');
+        console.log('[Yahoo Finance Proxy] Returning', points.length, 'data points');
         return { data: points.length > 0 ? points : null };
 
     } catch (error) {
-        console.error("Yahoo Finance Fetch Error:", error);
+        console.error("Yahoo Finance Proxy Error:", error);
         return { data: null, error: 'Netzwerkfehler oder API nicht erreichbar.' };
     }
 }
