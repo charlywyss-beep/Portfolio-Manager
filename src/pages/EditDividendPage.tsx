@@ -21,8 +21,9 @@ export function EditDividendPage() {
     const navigate = useNavigate();
     const { stocks, positions, updateStockDividend, updateStockPrice, updateStock } = usePortfolio();
 
-    const [selectedStockId, setSelectedStockId] = useState(''); // Local state for selection
     const [symbol, setSymbol] = useState(''); // NEW: Allow editing symbol
+    const [isin, setIsin] = useState(''); // NEW: Allow editing ISIN
+    const [sector, setSector] = useState(''); // NEW: Allow editing Sector
     const [isin, setIsin] = useState(''); // NEW: Allow editing ISIN
     const [price, setPrice] = useState('');
     const [targetPrice, setTargetPrice] = useState('');
@@ -51,6 +52,7 @@ export function EditDividendPage() {
         if (stock) {
             setSymbol(stock.symbol || ''); // Pre-fill symbol
             setIsin(stock.isin || ''); // Pre-fill ISIN
+            setSector(stock.sector || ''); // Pre-fill Sector
             setPrice(stock.currentPrice?.toString() || '');
             setTargetPrice(stock.targetPrice?.toString() || '');
             setAmount(stock.dividendAmount?.toString() || '');
@@ -174,6 +176,9 @@ export function EditDividendPage() {
         if (isin !== undefined && (!stock || isin !== stock.isin)) {
             updates.isin = isin;
         }
+        if (sector !== undefined && (!stock || sector !== stock.sector)) {
+            updates.sector = sector;
+        }
         if (targetPrice !== undefined && (!stock || (targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined) !== stock.targetPrice)) {
             updates.targetPrice = targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined;
         }
@@ -280,6 +285,16 @@ export function EditDividendPage() {
                                             onChange={(e) => setIsin(e.target.value)}
                                             placeholder="z.B. CH0038863350"
                                             className="w-full px-3 py-2 border rounded-md bg-background text-foreground font-mono uppercase"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Sektor</label>
+                                        <input
+                                            type="text"
+                                            value={sector}
+                                            onChange={(e) => setSector(e.target.value)}
+                                            placeholder="z.B. Technologie oder Konsumgüter"
+                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                         />
                                     </div>
                                     <div className="space-y-2">
