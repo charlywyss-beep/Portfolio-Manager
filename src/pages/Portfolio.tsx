@@ -96,7 +96,7 @@ export function Portfolio() {
                                 <th className="px-4 py-3 text-right">Aktueller Wert</th>
                                 <th className="px-4 py-3 text-right">Gesamt +/-</th>
                                 <th className="px-4 py-3 text-right">Gesamt % +/-</th>
-                                <th className="px-4 py-3 text-center">Aktionen</th>
+                                <th className="px-4 py-3 text-center sticky right-0 bg-muted/50 backdrop-blur-sm z-10 shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.1)]">Aktionen</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -203,7 +203,7 @@ export function Portfolio() {
                                     </td>
 
                                     {/* Aktionen */}
-                                    <td className="px-4 py-3">
+                                    <td className="px-4 py-3 sticky right-0 bg-card group-hover:bg-muted/30 transition-colors shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.1)]">
                                         <div className="flex items-center justify-center gap-1">
                                             <button
                                                 onClick={() => handleEdit(pos)}
