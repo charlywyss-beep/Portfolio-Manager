@@ -165,8 +165,17 @@ export function Watchlist() {
                                                 <td className="text-right py-3 px-4 font-medium text-muted-foreground">
                                                     {hasTarget ? formatCurrency(stock.targetPrice || 0, stock.currency) : '-'}
                                                 </td>
-                                                <td className="text-right py-3 px-4 text-green-600 dark:text-green-400 font-medium">
-                                                    {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
+                                                <td className="text-right py-3 px-4">
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="text-green-600 dark:text-green-400 font-medium">
+                                                            {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
+                                                        </span>
+                                                        {hasTarget && stock.dividendYield && stock.targetPrice && (
+                                                            <span className="text-[10px] text-muted-foreground" title="Rendite bei Kauflimit">
+                                                                Ziel: {((stock.dividendYield * stock.currentPrice) / stock.targetPrice).toFixed(2)}%
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="text-right py-3 px-4">
                                                     {stock.dividendAmount ? formatCurrency(stock.dividendAmount, stock.dividendCurrency || stock.currency) : '-'}
