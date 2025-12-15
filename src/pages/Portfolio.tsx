@@ -114,19 +114,15 @@ export function Portfolio() {
                                                     {pos.stock.symbol.slice(0, 2)}
                                                 </div>
                                             )}
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex items-center gap-2">
-                                                    <div
-                                                        className="font-semibold text-foreground truncate cursor-pointer hover:text-primary transition-colors"
-                                                        onClick={() => navigate(`/stock/${pos.stock.id}`)}
-                                                    >
-                                                        {pos.stock.name}
-                                                    </div>
+                                            <div className="min-w-0 flex-1 flex flex-col items-start gap-0.5">
+                                                <div
+                                                    className="font-semibold text-foreground truncate cursor-pointer hover:text-primary transition-colors text-sm"
+                                                    onClick={() => navigate(`/stock/${pos.stock.id}`)}
+                                                >
+                                                    {pos.stock.name}
                                                 </div>
-                                                <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                                    <span className="font-mono bg-muted px-1 rounded">{pos.stock.symbol}</span>
-                                                    <span>• {pos.stock.sector}</span>
-                                                </div>
+                                                <div className="text-xs font-mono text-muted-foreground">{pos.stock.symbol}</div>
+                                                <div className="text-[10px] text-muted-foreground/80">{pos.stock.sector}</div>
                                             </div>
                                         </div>
                                     </td>
