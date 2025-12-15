@@ -153,15 +153,15 @@ export function Portfolio() {
 
                                     {/* Kauf Kurs */}
                                     <td className="px-4 py-3 text-right">
-                                        {formatCurrency(pos.buyPriceAvg, pos.stock.currency, false)}
+                                        <span className="whitespace-nowrap">{formatCurrency(pos.buyPriceAvg, pos.stock.currency, false)}</span>
                                     </td>
 
                                     {/* Kauf Wert */}
                                     <td className="px-4 py-3 text-right font-medium">
                                         <div className="flex flex-col items-end">
-                                            <span>{formatCurrency(pos.buyValue, pos.stock.currency, false)}</span>
+                                            <span className="whitespace-nowrap">{formatCurrency(pos.buyValue, pos.stock.currency, false)}</span>
                                             {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-[10px] text-muted-foreground font-normal">
+                                                <span className="text-[10px] text-muted-foreground font-normal whitespace-nowrap">
                                                     {formatCurrency(convertToCHF(pos.buyValue, pos.stock.currency), 'CHF', false)}
                                                 </span>
                                             )}
@@ -171,7 +171,7 @@ export function Portfolio() {
                                     {/* Aktueller Kurs */}
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            <span>{formatCurrency(pos.stock.currentPrice, pos.stock.currency, false)}</span>
+                                            <span className="whitespace-nowrap">{formatCurrency(pos.stock.currentPrice, pos.stock.currency, false)}</span>
                                             <button
                                                 onClick={() => setPriceEditStock(pos.stock)}
                                                 className="text-muted-foreground hover:text-primary p-1 rounded transition-colors"
@@ -185,9 +185,9 @@ export function Portfolio() {
                                     {/* Aktueller Wert */}
                                     <td className="px-4 py-3 text-right font-bold">
                                         <div className="flex flex-col items-end">
-                                            <span>{formatCurrency(pos.currentValue, pos.stock.currency, false)}</span>
+                                            <span className="whitespace-nowrap">{formatCurrency(pos.currentValue, pos.stock.currency, false)}</span>
                                             {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-[10px] text-muted-foreground font-normal">
+                                                <span className="text-[10px] text-muted-foreground font-normal whitespace-nowrap">
                                                     {formatCurrency(convertToCHF(pos.currentValue, pos.stock.currency), 'CHF', false)}
                                                 </span>
                                             )}
@@ -198,14 +198,14 @@ export function Portfolio() {
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex flex-col items-end">
                                             <span className={cn(
-                                                "font-medium",
+                                                "font-medium whitespace-nowrap",
                                                 pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                             )}>
                                                 {pos.gainLossTotal >= 0 ? '+' : ''}{formatCurrency(pos.gainLossTotal, pos.stock.currency, false)}
                                             </span>
                                             {pos.stock.currency !== 'CHF' && (
                                                 <span className={cn(
-                                                    "text-[10px]",
+                                                    "text-[10px] whitespace-nowrap",
                                                     pos.gainLossTotal >= 0 ? "text-green-600/70 dark:text-green-400/70" : "text-red-600/70 dark:text-red-400/70"
                                                 )}>
                                                     {pos.gainLossTotal >= 0 ? '+' : ''}{formatCurrency(convertToCHF(pos.gainLossTotal, pos.stock.currency), 'CHF', false)}
