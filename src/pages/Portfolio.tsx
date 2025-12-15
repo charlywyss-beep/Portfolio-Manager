@@ -7,7 +7,7 @@ import { useCurrencyFormatter } from '../utils/currency';
 import { AddPositionModal } from '../components/AddPositionModal';
 import { EditPositionModal } from '../components/EditPositionModal';
 import { AddFixedDepositModal } from '../components/AddFixedDepositModal';
-import { PriceUpdateDialog } from '../components/PriceUpdateDialog';
+
 
 export function Portfolio() {
     const navigate = useNavigate();
@@ -18,7 +18,6 @@ export function Portfolio() {
     const [selectedPosition, setSelectedPosition] = useState<any>(null);
     const [editingFixedDeposit, setEditingFixedDeposit] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [priceEditStock, setPriceEditStock] = useState<any>(null);
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
 
     // Enrich positions with stock data and calculations
@@ -168,13 +167,6 @@ export function Portfolio() {
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <span className="whitespace-nowrap">{formatCurrency(pos.stock.currentPrice, pos.stock.currency, false)}</span>
-                                            <button
-                                                onClick={() => setPriceEditStock(pos.stock)}
-                                                className="text-muted-foreground hover:text-primary p-1 rounded transition-colors"
-                                                title="Kurs aktualisieren"
-                                            >
-                                                <Edit className="size-3" />
-                                            </button>
                                         </div>
                                     </td>
 
@@ -464,13 +456,7 @@ export function Portfolio() {
                 />
             )}
 
-            {priceEditStock && (
-                <PriceUpdateDialog
-                    isOpen={true}
-                    onClose={() => setPriceEditStock(null)}
-                    stock={priceEditStock}
-                />
-            )}
+
         </div>
     );
 }

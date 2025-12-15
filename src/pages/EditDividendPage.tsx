@@ -250,8 +250,8 @@ export function EditDividendPage() {
                     <ArrowLeft className="size-6" />
                 </button>
                 <div className="flex-1">
-                    <h1 className="text-xl font-bold">{stock ? stock.name : 'Dividende hinzufügen'}</h1>
-                    <p className="text-sm text-muted-foreground">{stock ? stock.symbol : 'Neue Erfassung'}</p>
+                    <h1 className="text-xl font-bold">{stock ? 'Daten bearbeiten' : 'Daten erfassen'}</h1>
+                    <p className="text-sm text-muted-foreground">{stock ? `${stock.name} (${stock.symbol})` : 'Position manuell hinzufügen'}</p>
                 </div>
             </div>
 
