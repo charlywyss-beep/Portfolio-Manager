@@ -6,8 +6,8 @@ export const FALLBACK_EXCHANGE_RATES: Record<string, number> = {
     CHF: 1.0,
     USD: 1.12, // 1 CHF = ~1.12 USD
     EUR: 1.06, // 1 CHF = ~1.06 EUR
-    GBP: 0.9365, // 1 CHF = ~1.0678 GBP (Inverse of 1.0678)
-    GBp: 93.65, // 1 CHF = ~93.65 GBp (Pence)
+    GBP: 0.9365, // 1 CHF = ~1.0678 GBP
+    GBp: 0.9365, // User Override: Treat GBp exactly like GBP (Pounds)
 };
 
 // Convert any currency to CHF using live rates
@@ -18,9 +18,9 @@ export function convertToCHF(amount: number, fromCurrency: string, liveRates?: R
 
     let rate = rates[fromCurrency];
 
-    // Special handling for GBp (Pence) if not in rates
-    if (!rate && fromCurrency === 'GBp' && rates['GBP']) {
-        rate = rates['GBP'] * 100;
+    // Override: Use GBP rate for GBp input if user inputs Pounds
+    if (fromCurrency === 'GBp' && rates['GBP']) {
+        rate = rates['GBP']; // Use Pound rate, not Pence rate
     }
 
     if (!rate) return amount; // Unknown currency, return as-is
@@ -30,18 +30,17 @@ export function convertToCHF(amount: number, fromCurrency: string, liveRates?: R
 
 // Format currency with optional CHF conversion
 export function formatCurrency(amount: number, currency: string, showCHF: boolean = true, liveRates?: Record<string, number>): string {
-    // Special handling for GBp (not a standard ISO currency code)
     let formatted: string;
-    if (currency === 'GBp') {
-        formatted = `${amount.toFixed(3)} GBp`;
-    } else {
-        formatted = amount.toLocaleString('de-DE', {
-            style: 'currency',
-            currency,
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        });
-    }
+
+    // User Request: Always display "GBP" even for "GBp" codes
+    const displayCurrency = currency === 'GBp' ? 'GBP' : currency;
+
+    formatted = amount.toLocaleString('de-DE', {
+        style: 'currency',
+        currency: displayCurrency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
 
     if (showCHF && currency !== 'CHF') {
         const chfAmount = convertToCHF(amount, currency, liveRates);
