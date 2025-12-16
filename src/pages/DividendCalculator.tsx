@@ -185,11 +185,6 @@ export function DividendCalculator() {
     const volumeNative = shares * price;
 
     // 2. Convert to CHF for Fees & Total Display
-    // Determine conversion rate
-    const conversionRate = (simCurrency && simCurrency !== 'CHF') 
-        ? convertToCHF(1, simCurrency, rates) 
-        : 1;
-    
     // Helper to get CHF value
     const getCHF = (val: number, currency: string) => {
         if (!currency || currency === 'CHF') return val;
@@ -199,7 +194,7 @@ export function DividendCalculator() {
     };
 
     const volumeCHF = getCHF(volumeNative, simCurrency || 'CHF');
-    
+
     // Fees are calculated on CHF Volume usually? Or Native? 
     // Usually broker fees are defined in CHF/Base Currency or calculated on value.
     // Let's assume fees are calculated on the CHF value of the transaction.
@@ -208,7 +203,7 @@ export function DividendCalculator() {
     const totalFees = calcCourtage + calcStamp + fees.exchangeFee;
 
     // Totals in CHF
-    const totalInvestCHF = mode === 'buy' ? volumeCHF + totalFees : 0; 
+    const totalInvestCHF = mode === 'buy' ? volumeCHF + totalFees : 0;
     const totalProceedsCHF = mode === 'sell' ? volumeCHF - totalFees : 0;
 
     const grossYield = price > 0 ? (dividend / price) * 100 : 0;
@@ -255,113 +250,6 @@ export function DividendCalculator() {
         }
     };
 
-    // Helper for Display Suffix
-    const getCurrencyLabel = (curr: string) => {
-        if (curr === 'GBp') return 'GBp'; // Input expects Pence for GBp stocks
-        return curr; 
-    };
-    
-    // Helper to format values for PDF/View
-    const formatNative = (val: number, curr: string) => {
-        if (curr === 'GBp') {
-             // Display as Penny
-             return `${val.toFixed(2)} GBp`;
-        }
-        return new Intl.NumberFormat('de-CH', { style: 'currency', currency: curr }).format(val);
-    };
-
-    return (
-        // ... (Outer div omitted, focusing on Logic/Render block)
-        <div className="p-4 md:p-6 space-y-6 animate-in fade-in duration-500">
-             {/* Header Section Omitted - assuming it stays similar */}   
-             {/* ... */}
-             
-                        <div className="space-y-4">
-                            {/* Stock Selector */}
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-muted-foreground">Aktie / Simulation</label>
-                                <select
-                                    className="w-full px-3 py-2 text-sm rounded-md border border-input bg-background text-foreground focus:ring-1 focus:ring-primary focus:border-primary transition-all appearance-none"
-                                    onChange={(e) => handleStockSelect(e.target.value)}
-                                    value={selectedStockId}
-                                >
-                                    <option value="" disabled className="bg-card text-muted-foreground">-- Wähle Aktie oder Neu --</option>
-                                    <option value="new" className="bg-card text-foreground">+ Neue Simulation (Manuell)</option>
-                                    <optgroup label="Meine Watchlist & Portfolio" className="bg-card text-foreground">
-                                        {stocks.map(stock => (
-                                            <option key={stock.id} value={stock.id}>
-                                                {stock.name} {stock.symbol} - {stock.currency} {stock.currentPrice}
-                                            </option>
-                                        ))}
-                                    </optgroup>
-                                </select>
-                                {selectedStockId && selectedStockId !== 'new' && (
-                                    <div className="text-[10px] text-muted-foreground px-1 flex justify-between">
-                                        <span>ISIN: {stocks.find(s => s.id === selectedStockId)?.isin || '-'}</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Current Position Info & Edit */}
-                            {(() => {
-                                const currentPos = positions.find(p => p.stockId === selectedStockId);
-                                if (!currentPos) return null;
-                                
-                                // Fix GBp display: If stock is GBp, buyPriceAvg is key.
-                                const stock = stocks.find(s => s.id === selectedStockId);
-                                let displayAvgPrice = currentPos.buyPriceAvg;
-                                let displayCurrency = stock?.currency || 'CHF';
-                                
-                                // Handling GBp Display specifically for "Ø Kauf"
-                                if (displayCurrency === 'GBp') {
-                                    // If raw value is > 200 (likely Pence), divide by 100 for GBP view?
-                                    // Or display as 'p'? FormatCurrency usually displays GBP.
-                                    displayCurrency = 'GBP'; 
-                                    displayAvgPrice = currentPos.buyPriceAvg / 100; // Correct scaling: 2800p -> 28.00 £
-                                }
-
-                                return (
-                                    <div className="flex items-center justify-between p-3 bg-muted/40 rounded-lg border border-border/50 text-xs mb-4">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-muted-foreground">Dein Bestand:</span>
-                                            <span className="font-bold">{currentPos.shares} Stk.</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-muted-foreground">Ø Kauf:</span>
-                                            {isEditingPrice ? (
-                                                <div className="flex items-center gap-1 animate-in fade-in zoom-in-95 duration-200">
-                                                    {/* ... Input stays same, assumes user knows what they input ... */}
-                                                    { /* Simplified for brevity - use original logic */ }
-                                                    <input
-                                                        type="number"
-                                                        step="0.01"
-                                                        className="w-20 px-2 py-0.5 text-right border rounded bg-background text-foreground text-xs focus:ring-1 focus:ring-primary no-spinner"
-                                                        value={editPriceVal}
-                                                        onChange={(e) => setEditPriceVal(e.target.value)} // ...
-                                                        // ...
-                                                    />
-                                                     {/* ... buttons ... */}
-                                                </div>
-                                            ) : ( // Display Mode
-                                                <div
-                                                    className="flex items-center gap-1 group cursor-pointer hover:text-primary transition-colors px-1 py-0.5 rounded hover:bg-primary/5"
-                                                    onClick={() => {
-                                                        setEditPriceVal(currentPos.buyPriceAvg.toString());
-                                                        setIsEditingPrice(true);
-                                                    }}
-                                                    title="Ø Kaufkurs korrigieren"
-                                                >
-                                                    <span className="font-bold border-b border-dotted border-muted-foreground/50 group-hover:border-primary">
-                                                        {displayAvgPrice.toLocaleString('de-CH', { style: 'currency', currency: displayCurrency })} (Orig.)
-                                                    </span>
-                                                    <Pencil size={12} className="opacity-40 group-hover:opacity-100 transition-opacity" />
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })()}
-
     // Refined Execute Handler
     const onExecute = () => {
         if (mode === 'buy') {
@@ -372,7 +260,7 @@ export function DividendCalculator() {
                 targetStockId = addStock({
                     symbol: simSymbol,
                     name: simName,
-                    currency: 'CHF',
+                    currency: (simCurrency as any) || 'CHF',
                     currentPrice: price,
                     previousClose: price,
                     sector: 'Unbekannt',
@@ -384,7 +272,15 @@ export function DividendCalculator() {
                 updateSimulatorState({ selectedStockId: targetStockId });
             }
 
-            const effectivePrice = totalInvest / shares;
+            // Calculate effective price in NATIVE currency
+            // If we have fees in CHF, we need to approximate them in Native or just use Price.
+            // For now, simpler to just use the Execution Price (Native) as the Average Price foundation.
+            // If we want to include fees: effectivePrice = price + (totalFees / volumeCHF * price)
+            let effectivePrice = price;
+            if (volumeCHF > 0) {
+                const feeRatio = totalFees / volumeCHF;
+                effectivePrice = price * (1 + feeRatio);
+            }
             addPosition({
                 stockId: targetStockId,
                 shares: shares,
@@ -692,11 +588,11 @@ export function DividendCalculator() {
                                     />
                                 </div>
                             </div>
-                            
+
                             {/* Manual Currency Select - Only show if New Simulation */}
                             {(selectedStockId === 'new' || !selectedStockId) && (
                                 <div className="flex items-center justify-end">
-                                    <select 
+                                    <select
                                         value={simCurrency || 'CHF'}
                                         onChange={(e) => updateSimulatorState({ simCurrency: e.target.value })}
                                         className="text-xs border rounded px-1 py-0.5"
