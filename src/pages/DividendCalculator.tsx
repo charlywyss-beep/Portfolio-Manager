@@ -62,12 +62,18 @@ export function DividendCalculator() {
             let newStamp = 0.075; // Default CH
             if (stock.currency !== 'CHF') newStamp = 0.15; // Foreign
 
+            // Calculate Annual Dividend based on Frequency
+            let annualDiv = stock.dividendAmount || 0;
+            if (stock.dividendFrequency === 'quarterly') annualDiv *= 4;
+            else if (stock.dividendFrequency === 'monthly') annualDiv *= 12;
+            else if (stock.dividendFrequency === 'semi-annually') annualDiv *= 2;
+
             updateSimulatorState({
                 selectedStockId: stock.id,
                 simName: stock.name,
                 simSymbol: stock.symbol,
                 price: stock.currentPrice,
-                dividend: stock.dividendAmount || 0,
+                dividend: annualDiv, // Use calculated annual dividend
                 fees: { ...fees, stampDutyPercent: newStamp },
                 // If user owns it, they might want to sell, but keep previous mode or default to buy?
                 // Use existing mode
