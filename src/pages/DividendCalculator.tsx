@@ -501,26 +501,32 @@ export function DividendCalculator() {
                                             <span className="text-muted-foreground">Dein Bestand:</span>
                                             <span className="font-bold">{currentPos.shares} Stk.</span>
                                         </div>
-                                        <div className="flex items-center justify-between p-3 bg-muted/40 rounded-lg border border-border/50 text-xs mb-4">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-muted-foreground">Dein Bestand:</span>
-                                                <span className="font-bold">{currentPos.shares} Stk.</span>
+                                        {/* Position Header - Clean 3-Item Layout */}
+                                        <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border/50 mb-6">
+                                            {/* Shares */}
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Bestand</span>
+                                                <span className="text-xl font-bold">{currentPos.shares} Stk.</span>
                                             </div>
-                                            <div className="flex items-center gap-8">
-                                                {/* Avg Price Display - Large, Clean */}
+
+                                            {/* Divider */}
+                                            <div className="h-8 w-px bg-border/50"></div>
+
+                                            {/* Avg Price */}
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Ø Einstieg</span>
                                                 <div className="flex items-center gap-2 group cursor-pointer"
                                                     onClick={() => {
                                                         setEditPriceVal(currentPos.buyPriceAvg.toString());
                                                         setIsEditingPrice(true);
                                                     }}
-                                                    title="Ø Kaufkurs korrigieren"
                                                 >
                                                     {isEditingPrice ? (
                                                         <div className="flex items-center gap-1 animate-in fade-in zoom-in-95 duration-200">
                                                             <input
                                                                 type="number"
                                                                 step="0.01"
-                                                                className="w-24 px-2 py-0.5 text-right border rounded bg-background text-foreground text-sm font-bold focus:ring-1 focus:ring-primary no-spinner"
+                                                                className="w-24 px-2 py-0.5 text-center border rounded bg-background text-foreground text-lg font-bold focus:ring-1 focus:ring-primary no-spinner"
                                                                 value={editPriceVal}
                                                                 onChange={(e) => setEditPriceVal(e.target.value)}
                                                                 onFocus={(e) => e.target.select()}
@@ -551,18 +557,22 @@ export function DividendCalculator() {
                                                         </div>
                                                     ) : (
                                                         <span className="text-xl font-bold group-hover:text-primary transition-colors flex items-center gap-2">
-                                                            {displayAvgPrice.toLocaleString('de-CH', { style: 'currency', currency: displayCurrency })}
+                                                            {displayAvgPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {simCurrency === 'GBp' ? '£' : (simCurrency || 'CHF')}
                                                             <Pencil size={12} className="opacity-0 group-hover:opacity-50 text-muted-foreground" />
                                                         </span>
                                                     )}
                                                 </div>
+                                            </div>
 
-                                                {/* Total Value Display - Large, Clean */}
-                                                <div>
-                                                    <span className="text-xl font-bold">
-                                                        {(displayAvgPrice * currentPos.shares).toLocaleString('de-CH', { style: 'currency', currency: displayCurrency })}
-                                                    </span>
-                                                </div>
+                                            {/* Divider */}
+                                            <div className="h-8 w-px bg-border/50"></div>
+
+                                            {/* Total Value */}
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Gesamtwert</span>
+                                                <span className="text-xl font-bold">
+                                                    {(displayAvgPrice * currentPos.shares).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {simCurrency === 'GBp' ? '£' : (simCurrency || 'CHF')}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -748,15 +758,15 @@ export function DividendCalculator() {
                                     <div className="space-y-1 text-xs">
                                         <div className="flex justify-between">
                                             <span>Courtage:</span>
-                                            <span className="text-red-500 font-mono">- {calcCourtage.toFixed(2)} CHF</span>
+                                            <span className="text-red-500 font-mono">{mode === 'buy' ? '+' : '-'} {calcCourtage.toFixed(2)} CHF</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Stempelsteuer:</span>
-                                            <span className="text-red-500 font-mono">- {calcStamp.toFixed(2)} CHF</span>
+                                            <span className="text-red-500 font-mono">{mode === 'buy' ? '+' : '-'} {calcStamp.toFixed(2)} CHF</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Börsengebühr:</span>
-                                            <span className="text-red-500 font-mono">- {fees.exchangeFee.toFixed(2)} CHF</span>
+                                            <span className="text-red-500 font-mono">{mode === 'buy' ? '+' : '-'} {fees.exchangeFee.toFixed(2)} CHF</span>
                                         </div>
                                     </div>
                                     <div className="h-px bg-border my-2" />
