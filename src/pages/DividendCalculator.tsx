@@ -282,7 +282,7 @@ export function DividendCalculator() {
                                             const target = e.target;
                                             setTimeout(() => target.select(), 50);
                                         }}
-                                        className="w-full pl-2 pr-7 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary"
+                                        className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -296,7 +296,7 @@ export function DividendCalculator() {
                                             const target = e.target;
                                             setTimeout(() => target.select(), 50);
                                         }}
-                                        className="w-full pl-2 pr-7 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary"
+                                        className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -310,7 +310,7 @@ export function DividendCalculator() {
                                             const target = e.target;
                                             setTimeout(() => target.select(), 50);
                                         }}
-                                        className="w-full pl-2 pr-7 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary"
+                                        className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                     />
                                 </div>
                             </div>
@@ -330,7 +330,7 @@ export function DividendCalculator() {
                                                     const target = e.target;
                                                     setTimeout(() => target.select(), 50);
                                                 }}
-                                                className="w-full pl-2 pr-7 py-1 text-sm rounded border border-input bg-background text-foreground text-right"
+                                                className="w-full px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right no-spinner"
                                             />
                                         </div>
                                         <div className="space-y-1">
@@ -343,7 +343,7 @@ export function DividendCalculator() {
                                                     const target = e.target;
                                                     setTimeout(() => target.select(), 50);
                                                 }}
-                                                className="w-full pl-2 pr-7 py-1 text-sm rounded border border-input bg-background text-foreground text-right"
+                                                className="w-full px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right no-spinner"
                                             />
                                         </div>
                                     </div>
@@ -391,7 +391,7 @@ export function DividendCalculator() {
                                             value={fees.exchangeFee}
                                             onChange={(e) => updateSimulatorState({ fees: { ...fees, exchangeFee: Number(e.target.value) } })}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-24 pl-2 pr-7 py-1 text-sm rounded border border-input bg-background text-foreground text-right"
+                                            className="w-24 px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right no-spinner"
                                         />
                                     </div>
 
@@ -500,7 +500,8 @@ export function DividendCalculator() {
                                     type="number"
                                     value={initialCapital}
                                     onChange={(e) => setInitialCapital(Number(e.target.value))}
-                                    className="w-full pl-2 pr-7 py-1.5 text-sm rounded border border-input bg-background/50 text-right"
+                                    onFocus={(e) => e.target.select()}
+                                    className="w-full px-2 py-1.5 text-sm rounded border border-input bg-background/50 text-right no-spinner"
                                 />
                             </div>
                             <div className="space-y-1">
@@ -509,7 +510,8 @@ export function DividendCalculator() {
                                     type="number"
                                     value={monthlyContribution}
                                     onChange={(e) => setMonthlyContribution(Number(e.target.value))}
-                                    className="w-full pl-2 pr-7 py-1.5 text-sm rounded border border-input bg-background/50 text-right"
+                                    onFocus={(e) => e.target.select()}
+                                    className="w-full px-2 py-1.5 text-sm rounded border border-input bg-background/50 text-right no-spinner"
                                 />
                             </div>
                             <div className="space-y-1">
@@ -518,7 +520,8 @@ export function DividendCalculator() {
                                     type="number"
                                     value={years}
                                     onChange={(e) => setYears(Number(e.target.value))}
-                                    className="w-full pl-2 pr-7 py-1.5 text-sm rounded border border-input bg-background/50 text-right"
+                                    onFocus={(e) => e.target.select()}
+                                    className="w-full px-2 py-1.5 text-sm rounded border border-input bg-background/50 text-right no-spinner"
                                 />
                             </div>
                             <div className="space-y-1">
@@ -528,7 +531,8 @@ export function DividendCalculator() {
                                     step="0.1"
                                     value={dividendYield}
                                     onChange={(e) => setDividendYield(Number(e.target.value))}
-                                    className="w-full pl-2 pr-7 py-1.5 text-sm rounded border border-input bg-background/50 text-right"
+                                    onFocus={(e) => e.target.select()}
+                                    className="w-full px-2 py-1.5 text-sm rounded border border-input bg-background/50 text-right no-spinner"
                                 />
                             </div>
                             <div className="space-y-1">
@@ -538,7 +542,8 @@ export function DividendCalculator() {
                                     step="0.1"
                                     value={priceAppreciation}
                                     onChange={(e) => setPriceAppreciation(Number(e.target.value))}
-                                    className="w-full pl-2 pr-7 py-1.5 text-sm rounded border border-input bg-background/50 text-right"
+                                    onFocus={(e) => e.target.select()}
+                                    className="w-full px-2 py-1.5 text-sm rounded border border-input bg-background/50 text-right no-spinner"
                                 />
                             </div>
                             <div className="space-y-1">
