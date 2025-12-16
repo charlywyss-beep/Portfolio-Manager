@@ -180,6 +180,34 @@ export function DividendCalculator() {
         setIsEditingPrice(false);
     }, [selectedStockId]);
 
+    // FIX: Sync Simulator State when navigating to this page with a pre-selected stock
+    // This ensures simCurrency is correctly set to e.g. 'GBp' instead of staying 'CHF'
+    useEffect(() => {
+        if (selectedStockId && selectedStockId !== 'new') {
+            const stock = stocks.find(s => s.id === selectedStockId);
+            if (stock && stock.currency !== simCurrency) {
+                // Determine Stamp Duty
+                let newStamp = 0.075;
+                if (stock.currency !== 'CHF') newStamp = 0.15;
+
+                // Calculate Annual Dividend
+                let annualDiv = stock.dividendAmount || 0;
+                if (stock.dividendFrequency === 'quarterly') annualDiv *= 4;
+                else if (stock.dividendFrequency === 'monthly') annualDiv *= 12;
+                else if (stock.dividendFrequency === 'semi-annually') annualDiv *= 2;
+
+                updateSimulatorState({
+                    simName: stock.name,
+                    simSymbol: stock.symbol,
+                    simCurrency: stock.currency,
+                    price: stock.currentPrice,
+                    dividend: annualDiv,
+                    fees: { ...fees, stampDutyPercent: newStamp },
+                });
+            }
+        }
+    }, [selectedStockId, stocks, simCurrency]);
+
     // Derived Logic & Currency Conversion for TOTALS only
     // 1. Calculate Volume in Native Currency
     const volumeNative = shares * price;
