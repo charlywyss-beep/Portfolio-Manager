@@ -228,7 +228,7 @@ export function DividendCalculator() {
                             <div className="space-y-1">
                                 <label className="text-xs font-medium text-muted-foreground">Aktie / Simulation</label>
                                 <select
-                                    className="w-full px-3 py-2 text-sm rounded-md border border-input bg-card text-foreground focus:ring-1 focus:ring-primary focus:border-primary transition-all appearance-none"
+                                    className="w-full px-3 py-2 text-sm rounded-md border border-input bg-background text-foreground focus:ring-1 focus:ring-primary focus:border-primary transition-all appearance-none"
                                     onChange={(e) => handleStockSelect(e.target.value)}
                                     value={selectedStockId}
                                 >
