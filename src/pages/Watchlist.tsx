@@ -12,7 +12,7 @@ import type { Stock } from '../types';
 export function Watchlist() {
     const navigate = useNavigate();
     const { stocks, watchlist, removeFromWatchlist, addToWatchlist, addPosition } = usePortfolio(); // Get addPosition
-    const { formatCurrency } = useCurrencyFormatter();
+    const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [isAddStockOpen, setIsAddStockOpen] = useState(false);
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
 
@@ -163,7 +163,16 @@ export function Watchlist() {
                                                     </div>
                                                 </td>
                                                 <td className="text-right py-3 px-4 font-medium text-muted-foreground">
-                                                    {hasTarget ? formatCurrency(stock.targetPrice || 0, stock.currency) : '-'}
+                                                    {hasTarget ? (
+                                                        <div className="flex flex-col items-end">
+                                                            <span className="whitespace-nowrap">{formatCurrency(stock.targetPrice || 0, stock.currency, false)}</span>
+                                                            {stock.currency !== 'CHF' && (
+                                                                <span className="text-[10px] text-muted-foreground font-normal whitespace-nowrap">
+                                                                    {formatCurrency(convertToCHF(stock.targetPrice || 0, stock.currency), 'CHF', false)}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ) : '-'}
                                                 </td>
                                                 <td className="text-right py-3 px-4">
                                                     <div className="flex flex-col items-end">
@@ -178,7 +187,16 @@ export function Watchlist() {
                                                     </div>
                                                 </td>
                                                 <td className="text-right py-3 px-4">
-                                                    {stock.dividendAmount ? formatCurrency(stock.dividendAmount, stock.dividendCurrency || stock.currency) : '-'}
+                                                    {stock.dividendAmount ? (
+                                                        <div className="flex flex-col items-end">
+                                                            <span className="whitespace-nowrap">{formatCurrency(stock.dividendAmount, stock.dividendCurrency || stock.currency, false)}</span>
+                                                            {stock.currency !== 'CHF' && (
+                                                                <span className="text-[10px] text-muted-foreground font-normal whitespace-nowrap">
+                                                                    {formatCurrency(convertToCHF(stock.dividendAmount, stock.dividendCurrency || stock.currency), 'CHF', false)}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ) : '-'}
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground">
                                                     {stock.dividendFrequency === 'quarterly' ? 'Quartalsweise'
