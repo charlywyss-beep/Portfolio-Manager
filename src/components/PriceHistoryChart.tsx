@@ -101,6 +101,12 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
     const performance = startPrice !== 0 ? ((endPrice - startPrice) / startPrice) * 100 : 0;
     const isPositive = performance >= 0;
 
+    // Calculate CHF Difference
+    const { convertToCHF } = useCurrencyFormatter();
+    const diffNative = endPrice - startPrice;
+    const diffCHF = currency !== 'CHF' ? convertToCHF(diffNative, currency) : diffNative;
+    const diffCHFFormatted = (diffCHF > 0 ? '+' : '') + diffCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' CHF';
+
     return (
         <div className="w-full h-full flex flex-col relative">
             <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
@@ -172,7 +178,8 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                                                     <span className="text-muted-foreground text-xs">Aktuell:</span>
                                                     <div className="flex items-center gap-2">
                                                         <span className={cn("text-xs font-medium", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
-                                                            ({performance > 0 ? '+' : ''}{performance.toFixed(2)}%)
+                                                            {performance > 0 ? '+' : ''}{performance.toFixed(2)}%
+                                                            {currency !== 'CHF' && <span className="ml-1 opacity-80">({diffCHFFormatted})</span>}
                                                         </span>
                                                         <span className="font-bold text-primary">
                                                             {formatCurrency(currentPrice, currency)}
