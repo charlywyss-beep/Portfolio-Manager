@@ -468,17 +468,18 @@ export function DividendCalculator() {
                                     }
                                 </button>
 
-                                {/* Watchlist Backup */}
-                                {mode === 'buy' && (
-                                    <button
-                                        onClick={handleAddToWatchlist}
-                                        className="py-2 px-3 rounded-md border border-border hover:bg-accent text-foreground"
-                                        title="Nur in Watchlist speichern"
-                                    >
-                                        <Eye size={16} />
-                                    </button>
-                                )}
                             </div>
+
+                            {/* Watchlist Action (Full Width) */}
+                            {mode === 'buy' && (
+                                <button
+                                    onClick={handleAddToWatchlist}
+                                    className="w-full py-2 rounded-md font-medium text-sm border border-border bg-background hover:bg-accent text-foreground flex items-center justify-center gap-2 transition-colors"
+                                >
+                                    <Eye size={16} />
+                                    In Watchlist speichern
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
