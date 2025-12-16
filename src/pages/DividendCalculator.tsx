@@ -63,7 +63,6 @@ export function DividendCalculator() {
         // Table Data
         const startY = 60;
         const col1 = 20;
-        const col2 = 120;
         const rowHeight = 10;
 
         doc.setFontSize(11);
