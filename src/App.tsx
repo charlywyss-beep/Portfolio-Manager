@@ -38,7 +38,7 @@ function App() {
     if (pathname === '/') return 'Portfolio Übersicht';
     if (pathname === '/portfolio') return 'Meine Positionen';
     if (pathname === '/watchlist') return 'Watchlist';
-    if (pathname === '/calculator') return 'Performance-Rechner';
+    if (pathname === '/calculator') return 'Simulator Kauf / Verkauf';
     if (pathname === '/dividends') return 'Dividenden Planer';
     if (pathname === '/settings') return 'Einstellungen';
     if (pathname.startsWith('/stock/')) return 'Aktien Details';
@@ -100,7 +100,7 @@ function App() {
                 <h1 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">Portfolio</h1>
               </div>
               <div className="text-[10px] text-foreground font-bold font-mono mt-1 flex items-center gap-1">
-                <span>v3.9.40</span>
+                <span>v3.9.41</span>
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
               </div>
             </div>
@@ -110,7 +110,7 @@ function App() {
               <NavItem to="/portfolio" icon={Wallet} label="Meine Positionen" />
               <NavItem to="/dividends" icon={TrendingUp} label="Dividenden Planer" />
               <NavItem to="/watchlist" icon={Eye} label="Watchlist" />
-              <NavItem to="/calculator" icon={Calculator} label="Performance-Rechner" />
+              <NavItem to="/calculator" icon={Calculator} label="Simulator Kauf / Verkauf" />
 
               <div className="pt-4 mt-4 border-t border-border">
                 <NavItem to="/settings" icon={SettingsIcon} label="Einstellungen" />

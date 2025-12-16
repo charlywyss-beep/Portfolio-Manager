@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calculator, Coins, Settings2, Plus, Check } from 'lucide-react';
+import { Calculator, Coins, Settings2, Plus, Check, Eye } from 'lucide-react';
 
 import { usePortfolio } from '../context/PortfolioContext';
 
 export function DividendCalculator() {
-    const { stocks, addStock, addToWatchlist, simulatorState, updateSimulatorState } = usePortfolio();
+    const { stocks, addStock, addToWatchlist, simulatorState, updateSimulatorState, positions, addPosition, updatePosition, deletePosition } = usePortfolio();
 
     // State for inputs (Projection) - Keeping local as these are temporary "playground" values usually
     const [initialCapital, setInitialCapital] = useState(10000);
@@ -19,16 +19,20 @@ export function DividendCalculator() {
     const [showSuccess, setShowSuccess] = useState(false);
 
     // Destructure Simulator State
-    const { shares, price, dividend, selectedStockId, simName, simSymbol, fees } = simulatorState;
+    const { shares, price, dividend, selectedStockId, simName, simSymbol, fees, mode } = simulatorState;
 
-    // Fee Logic
+    // Derived Logic
     const volume = shares * price;
     const calcCourtage = Math.max(volume * (fees.courtagePercent / 100), fees.courtageMin);
     const calcStamp = volume * (fees.stampDutyPercent / 100);
     const totalFees = calcCourtage + calcStamp + fees.exchangeFee;
-    const totalInvest = volume + totalFees;
+
+    // Mode-specific Value
+    const totalInvest = mode === 'buy' ? volume + totalFees : 0; // Cost to Buy
+    const totalProceeds = mode === 'sell' ? volume - totalFees : 0; // Net payout from Sell
 
     const grossYield = price > 0 ? (dividend / price) * 100 : 0;
+    // Net yield only makes sense for BUY (yield on cost)
     const netYield = totalInvest > 0 ? ((shares * dividend) / totalInvest) * 100 : 0;
 
     // Handle Stock Selection
@@ -39,7 +43,8 @@ export function DividendCalculator() {
                 simName: '',
                 simSymbol: '',
                 price: 0,
-                dividend: 0
+                dividend: 0,
+                mode: 'buy' // Default to buy for new
             });
             return;
         }
@@ -54,26 +59,74 @@ export function DividendCalculator() {
                 simSymbol: stock.symbol,
                 price: stock.currentPrice,
                 dividend: stock.dividendAmount || 0,
-                fees: { ...fees, stampDutyPercent: newStamp }
+                fees: { ...fees, stampDutyPercent: newStamp },
+                // If user owns it, they might want to sell, but keep previous mode or default to buy?
+                // Use existing mode
             });
         }
     };
 
+    // Refined Execute Handler
+    const onExecute = () => {
+        if (mode === 'buy') {
+            let targetStockId = selectedStockId;
+
+            if (selectedStockId === 'new') {
+                if (!simName || !simSymbol) return;
+                targetStockId = addStock({
+                    symbol: simSymbol,
+                    name: simName,
+                    currency: 'CHF',
+                    currentPrice: price,
+                    previousClose: price,
+                    sector: 'Unbekannt',
+                    dividendAmount: dividend,
+                    dividendYield: price > 0 ? (dividend / price) * 100 : 0,
+                    dividendFrequency: 'annually'
+                });
+                addToWatchlist(targetStockId);
+                updateSimulatorState({ selectedStockId: targetStockId });
+            }
+
+            const effectivePrice = totalInvest / shares;
+            addPosition({
+                stockId: targetStockId,
+                shares: shares,
+                buyPriceAvg: effectivePrice
+            });
+        }
+        else if (mode === 'sell') {
+            const position = positions.find(p => p.stockId === selectedStockId);
+            if (!position) return; // Cannot sell what you don't have
+
+            const remainingShares = position.shares - shares;
+            if (remainingShares <= 0) {
+                deletePosition(position.id);
+            } else {
+                updatePosition(position.id, { shares: remainingShares });
+            }
+        }
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+    };
+
+
     const handleAddToWatchlist = () => {
+        // Legacy: "Result to Watchlist" - kept for "Watchlist" button
         if (selectedStockId && selectedStockId !== 'new') {
             addToWatchlist(selectedStockId);
             setShowSuccess(true);
             setTimeout(() => setShowSuccess(false), 3000);
         } else {
             // Create New Stock
-            if (!simName || !simSymbol) return; // Validation
+            if (!simName || !simSymbol) return;
             const newId = addStock({
                 symbol: simSymbol,
                 name: simName,
-                currency: 'CHF', // Default for now
+                currency: 'CHF',
                 currentPrice: price,
                 previousClose: price,
-                sector: 'Unbekannt',
+                sector: 'Simuliert',
                 dividendAmount: dividend,
                 dividendYield: price > 0 ? (dividend / price) * 100 : 0,
                 dividendFrequency: 'annually'
@@ -133,18 +186,41 @@ export function DividendCalculator() {
                         <div className="flex items-center justify-between mb-4 text-primary">
                             <div className="flex items-center gap-2">
                                 <Coins className="size-5" />
-                                <h3 className="font-semibold text-lg">Profi-Simulator</h3>
+                                <h3 className="font-semibold text-lg">Simulator Kauf / Verkauf</h3>
                             </div>
-                            <button
-                                onClick={() => updateSimulatorState({ fees: { ...fees, showAdvanced: !fees.showAdvanced } })}
-                                className={`text-xs flex items-center gap-1 border px-2 py-1 rounded transition-colors ${fees.showAdvanced
-                                    ? 'bg-primary/10 border-primary text-primary font-medium'
-                                    : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
-                                    }`}
-                            >
-                                <Settings2 size={12} />
-                                {fees.showAdvanced ? 'Gebühren' : 'Gebühren'}
-                            </button>
+                            <div className="flex items-center gap-2">
+                                {/* Buy/Sell Switch */}
+                                <div className="flex bg-muted rounded-lg p-1 border border-border/50">
+                                    <button
+                                        onClick={() => updateSimulatorState({ mode: 'buy' })}
+                                        className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${mode === 'buy'
+                                            ? 'bg-green-600 text-white shadow-sm'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                            }`}
+                                    >
+                                        Kaufen
+                                    </button>
+                                    <button
+                                        onClick={() => updateSimulatorState({ mode: 'sell' })}
+                                        className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${mode === 'sell'
+                                            ? 'bg-red-600 text-white shadow-sm'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                            }`}
+                                    >
+                                        Verkaufen
+                                    </button>
+                                </div>
+                                <button
+                                    onClick={() => updateSimulatorState({ fees: { ...fees, showAdvanced: !fees.showAdvanced } })}
+                                    className={`text-xs flex items-center gap-1 border px-2 py-1.5 rounded transition-colors ${fees.showAdvanced
+                                        ? 'bg-primary/10 border-primary text-primary font-medium'
+                                        : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
+                                        }`}
+                                >
+                                    <Settings2 size={12} />
+                                    {fees.showAdvanced ? 'Gebühren' : 'Gebühren'}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="space-y-4">
@@ -328,55 +404,81 @@ export function DividendCalculator() {
 
                             {/* Results Grid - Compact 2x2 */}
                             <div className="grid grid-cols-2 gap-3 pt-2">
-                                {/* Total Invest */}
+                                {/* Total Invest / Proceeds */}
                                 <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 flex flex-col justify-between">
-                                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Investition Total</span>
+                                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                                        {mode === 'buy' ? 'Investition Total' : 'Netto Erlös'}
+                                    </span>
                                     <div className="flex flex-col items-end">
-                                        <span className="text-lg font-bold text-foreground leading-none">
-                                            {totalInvest.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
+                                        <span className={`text-lg font-bold leading-none ${mode === 'sell' ? 'text-green-600' : 'text-foreground'}`}>
+                                            {(mode === 'buy' ? totalInvest : totalProceeds).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                                         </span>
                                         <span className="text-[10px] text-muted-foreground mt-0.5">
-                                            {volume.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })} + {totalFees.toFixed(0)} Geb.
+                                            {volume.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
+                                            {mode === 'buy' ? ' + ' : ' - '}{totalFees.toFixed(0)} Geb.
                                         </span>
                                     </div>
                                 </div>
 
                                 {/* Annual Payout */}
                                 <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 flex flex-col justify-between">
-                                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Jährliche Ausschüttung</span>
+                                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Jäh. Ausschüttung</span>
                                     <div className="flex flex-col items-end">
                                         <span className="text-lg font-bold text-foreground leading-none">
                                             {(shares * dividend).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                                         </span>
+                                        {mode === 'sell' && <span className="text-[10px] text-red-500 font-medium">Verlust an Div.</span>}
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Net Yield Highlight with Gross */}
-                            <div className={`p-3 rounded-lg border flex items-center justify-between gap-4 ${netYield > 0 ? 'bg-primary text-primary-foreground border-primary shadow-md' : 'bg-muted text-muted-foreground border-transparent'}`}>
-                                <div className="flex flex-col items-start">
-                                    <span className="text-xs font-bold uppercase">Brutto-Rendite</span>
-                                    <span className="text-2xl font-bold tracking-tight">{grossYield.toFixed(2)}%</span>
+                            {/* Net Yield Highlight with Gross (Only for Buy) */}
+                            {mode === 'buy' && (
+                                <div className={`p-3 rounded-lg border flex items-center justify-between gap-4 ${netYield > 0 ? 'bg-primary text-primary-foreground border-primary shadow-md' : 'bg-muted text-muted-foreground border-transparent'}`}>
+                                    <div className="flex flex-col items-start">
+                                        <span className="text-xs font-bold uppercase">Brutto-Rendite</span>
+                                        <span className="text-2xl font-bold tracking-tight">{grossYield.toFixed(2)}%</span>
+                                    </div>
+                                    <div className="h-8 w-px bg-current opacity-20"></div>
+                                    <div className="flex flex-col items-end">
+                                        <span className="text-xs font-bold uppercase">Netto-Rendite</span>
+                                        <span className="text-2xl font-bold tracking-tight">{netYield.toFixed(2)}%</span>
+                                    </div>
                                 </div>
-                                <div className="h-8 w-px bg-current opacity-20"></div>
-                                <div className="flex flex-col items-end">
-                                    <span className="text-xs font-bold uppercase">Netto-Rendite</span>
-                                    <span className="text-2xl font-bold tracking-tight">{netYield.toFixed(2)}%</span>
-                                </div>
-                            </div>
+                            )}
 
-                            {/* Watchlist Action */}
-                            <button
-                                onClick={handleAddToWatchlist}
-                                disabled={shares <= 0 || price <= 0 || (selectedStockId === 'new' && (!simName || !simSymbol))}
-                                className={`w-full py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2 transition-all ${showSuccess
-                                    ? 'bg-green-600 text-white hover:bg-green-700'
-                                    : 'bg-background border border-border hover:bg-accent text-foreground'
-                                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                            >
-                                {showSuccess ? <Check size={16} /> : <Plus size={16} />}
-                                {showSuccess ? 'Gespeichert!' : 'In Watchlist speichern'}
-                            </button>
+                            {/* Execute Action */}
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={onExecute}
+                                    disabled={shares <= 0 || price <= 0 || (mode === 'buy' && selectedStockId === 'new' && (!simName || !simSymbol))}
+                                    className={`flex-1 py-2 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-sm ${showSuccess
+                                        ? 'bg-green-600 text-white hover:bg-green-700'
+                                        : mode === 'buy'
+                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                            : 'bg-red-600 text-white hover:bg-red-700'
+                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                >
+                                    {showSuccess ? <Check size={16} /> : (mode === 'buy' ? <Plus size={16} /> : <Coins size={16} />)}
+                                    {showSuccess
+                                        ? 'Ausgeführt!'
+                                        : mode === 'buy'
+                                            ? 'Kaufen & Ins Depot übernehmen'
+                                            : 'Verkaufen & Ausbuchen'
+                                    }
+                                </button>
+
+                                {/* Watchlist Backup */}
+                                {mode === 'buy' && (
+                                    <button
+                                        onClick={handleAddToWatchlist}
+                                        className="py-2 px-3 rounded-md border border-border hover:bg-accent text-foreground"
+                                        title="Nur in Watchlist speichern"
+                                    >
+                                        <Eye size={16} />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { usePortfolio } from '../context/PortfolioContext';
 import { useNavigate } from 'react-router-dom';
+import { usePortfolio } from '../context/PortfolioContext';
 import { Plus, Search, Trash2, ArrowUpRight, ArrowDownRight, PieChart, BarChart3, Edit, Landmark } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
@@ -10,8 +10,8 @@ import { AddFixedDepositModal } from '../components/AddFixedDepositModal';
 
 
 export function Portfolio() {
+    const { positions: rawPositions, stocks, fixedDeposits, addPosition, deletePosition, updatePosition, deleteFixedDeposit, updateSimulatorState } = usePortfolio();
     const navigate = useNavigate();
-    const { positions: rawPositions, stocks, fixedDeposits, addPosition, deletePosition, updatePosition, deleteFixedDeposit } = usePortfolio();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isAddFixedDepositModalOpen, setIsAddFixedDepositModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -229,11 +229,22 @@ export function Portfolio() {
                                     <td className="px-2 py-3 sticky right-0 bg-card group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                         <div className="flex items-center justify-center gap-1">
                                             <button
-                                                onClick={() => handleEdit(pos)}
-                                                className="text-muted-foreground hover:text-primary p-2 rounded-md hover:bg-primary/10 transition-colors"
-                                                title="Position bearbeiten"
+                                                onClick={() => {
+                                                    // Redirect to Simulator for Buy/Sell/Edit
+                                                    updateSimulatorState({
+                                                        selectedStockId: pos.stock.id,
+                                                        simName: pos.stock.name,
+                                                        simSymbol: pos.stock.symbol,
+                                                        price: pos.stock.currentPrice,
+                                                        dividend: pos.stock.dividendAmount || 0,
+                                                        mode: 'buy' // Default to buy
+                                                    });
+                                                    navigate('/calculator');
+                                                }}
+                                                className="p-1 hover:bg-muted rounded text-primary transition-colors"
+                                                title="Kauf / Verkauf / Korrektur (Im Simulator)"
                                             >
-                                                <Edit className="size-4" />
+                                                <Edit className="size-3.5" />
                                             </button>
                                             <button
                                                 onClick={() => {

@@ -34,6 +34,7 @@ interface PortfolioContextType {
         selectedStockId: string;
         simName: string;
         simSymbol: string;
+        mode: 'buy' | 'sell'; // NEW: Buy/Sell Switch
         fees: {
             courtagePercent: number;
             courtageMin: number;
@@ -54,6 +55,7 @@ const defaultSimulatorState = {
     selectedStockId: '',
     simName: '',
     simSymbol: '',
+    mode: 'buy',
     fees: {
         courtagePercent: 0.5,
         courtageMin: 40,
