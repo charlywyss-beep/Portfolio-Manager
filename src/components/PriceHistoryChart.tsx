@@ -113,7 +113,10 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                 <div>
                     <p className="text-sm text-muted-foreground">Performance ({selectedRange})</p>
                     <div className={cn("font-bold flex items-center gap-1", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
-                        <span className="text-xl">{performance > 0 ? '+' : ''}{performance.toFixed(2)}%</span>
+                        <span className="text-xl">
+                            {performance > 0 ? '+' : ''}{performance.toFixed(2)}%
+                            {currency !== 'CHF' && <span className="ml-1 opacity-80 text-lg">({diffCHFFormatted})</span>}
+                        </span>
                     </div>
                 </div>
 
@@ -169,22 +172,10 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                                             </p>
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2 justify-between">
-                                                    <span className="text-muted-foreground text-xs">Historisch:</span>
+                                                    <span className="text-muted-foreground text-xs">Kurs:</span>
                                                     <span className="font-bold text-foreground">
                                                         {formatCurrency(payload[0].value as number, currency)}
                                                     </span>
-                                                </div>
-                                                <div className="flex items-center gap-2 justify-between border-t border-border pt-1 mt-1">
-                                                    <span className="text-muted-foreground text-xs">Aktuell:</span>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={cn("text-xs font-medium", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
-                                                            {performance > 0 ? '+' : ''}{performance.toFixed(2)}%
-                                                            {currency !== 'CHF' && <span className="ml-1 opacity-80">({diffCHFFormatted})</span>}
-                                                        </span>
-                                                        <span className="font-bold text-primary">
-                                                            {formatCurrency(currentPrice, currency)}
-                                                        </span>
-                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
