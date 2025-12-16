@@ -729,7 +729,7 @@ export function DividendCalculator() {
                                     <div className="h-px bg-border my-2" />
                                     <div className="flex justify-between items-center font-bold">
                                         <span>{mode === 'buy' ? 'Investition Total' : 'Netto Erlös'} (CHF):</span>
-                                        <span className={mode === 'buy' ? 'text-emerald-600' : 'text-blue-600 font-mono'}>
+                                        <span className={mode === 'buy' ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400 font-mono'}>
                                             {mode === 'buy' ? totalInvestCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' }) : totalProceedsCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                                         </span>
                                     </div>
@@ -740,7 +740,7 @@ export function DividendCalculator() {
                                     <div className="p-3 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 rounded-md space-y-2 text-sm">
                                         <div className="flex justify-between items-center">
                                             <span className="text-muted-foreground">Erw. Jährliche Dividende:</span>
-                                            <span className="font-medium text-emerald-600">
+                                            <span className="font-medium text-emerald-600 dark:text-emerald-400">
                                                 {(() => {
                                                     const annualDivNative = shares * dividend;
                                                     if (simCurrency === 'GBp') {
