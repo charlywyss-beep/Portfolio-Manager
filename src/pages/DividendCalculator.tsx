@@ -322,7 +322,7 @@ export function DividendCalculator() {
                                                     title="Ø Kaufkurs korrigieren"
                                                 >
                                                     <span className="font-bold border-b border-dotted border-muted-foreground/50 group-hover:border-primary">
-                                                        {currentPos.buyPriceAvg.toLocaleString('de-CH', { style: 'currency', currency: currentPos.stock.currency })}
+                                                        {currentPos.buyPriceAvg.toLocaleString('de-CH', { style: 'currency', currency: stocks.find(s => s.id === currentPos.stockId)?.currency || 'CHF' })}
                                                     </span>
                                                     <Pencil size={12} className="opacity-40 group-hover:opacity-100 transition-opacity" />
                                                 </div>
