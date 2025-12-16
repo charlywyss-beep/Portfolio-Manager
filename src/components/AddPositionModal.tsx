@@ -211,7 +211,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                                     </div>
                                                     <div className="text-right">
                                                         <div className="font-medium">
-                                                            {stock.currentPrice.toLocaleString('de-DE', { style: 'currency', currency: stock.currency })}
+                                                            {stock.currentPrice.toLocaleString('de-DE', { style: 'currency', currency: stock.currency === 'GBp' ? 'GBP' : stock.currency })}
                                                         </div>
                                                     </div>
                                                 </button>
@@ -226,7 +226,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                         <div className="flex-1">
                                             <div className="font-semibold">{selectedStock.name}</div>
                                             <div className="text-sm text-muted-foreground">
-                                                {selectedStock.symbol} • {selectedStock.currentPrice.toLocaleString('de-DE', { style: 'currency', currency: selectedStock.currency })}
+                                                {selectedStock.symbol} • {selectedStock.currentPrice.toLocaleString('de-DE', { style: 'currency', currency: selectedStock.currency === 'GBp' ? 'GBP' : selectedStock.currency })}
                                             </div>
                                         </div>
                                         <button type="button" onClick={() => setSelectedStock(null)} className="text-muted-foreground hover:text-foreground">

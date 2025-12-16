@@ -328,7 +328,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
                             <div className="space-y-2">
                                 <label htmlFor="buyPrice" className="text-sm font-medium">
-                                    Kaufpreis pro Stück ({position.stock.currency})
+                                    Kaufpreis pro Stück ({position.stock.currency === 'GBp' ? 'GBP' : position.stock.currency})
                                 </label>
                                 <div className="relative">
                                     <input
@@ -343,7 +343,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                         required
                                     />
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">
-                                        {position.stock.currency}
+                                        {position.stock.currency === 'GBp' ? 'GBP' : position.stock.currency}
                                     </div>
                                 </div>
                                 <button
@@ -351,7 +351,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                     onClick={() => setBuyPrice(position.stock.currentPrice.toString())}
                                     className="text-xs text-primary hover:underline"
                                 >
-                                    Aktuellen Kurs übernehmen ({position.stock.currentPrice.toLocaleString('de-DE', { style: 'currency', currency: position.stock.currency })})
+                                    Aktuellen Kurs übernehmen ({position.stock.currentPrice.toLocaleString('de-DE', { style: 'currency', currency: position.stock.currency === 'GBp' ? 'GBP' : position.stock.currency })})
                                 </button>
                             </div>
 
@@ -439,7 +439,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
                             <div className="space-y-2">
                                 <label htmlFor="correctPrice" className="text-sm font-medium">
-                                    Durchschnittlicher Kaufpreis ({position.stock.currency})
+                                    Durchschnittlicher Kaufpreis ({position.stock.currency === 'GBp' ? 'GBP' : position.stock.currency})
                                 </label>
                                 <div className="relative">
                                     <input
@@ -454,7 +454,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                         required
                                     />
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">
-                                        {position.stock.currency}
+                                        {position.stock.currency === 'GBp' ? 'GBP' : position.stock.currency}
                                     </div>
                                 </div>
                             </div>
