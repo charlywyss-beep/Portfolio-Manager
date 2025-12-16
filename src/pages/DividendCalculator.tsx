@@ -600,7 +600,7 @@ export function DividendCalculator() {
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] uppercase font-bold text-muted-foreground">
+                                    <label className="text-[10px] font-bold text-muted-foreground">
                                         Kurs ({simCurrency || 'CHF'})
                                     </label>
                                     <input
@@ -612,7 +612,7 @@ export function DividendCalculator() {
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] uppercase font-bold text-muted-foreground">
+                                    <label className="text-[10px] font-bold text-muted-foreground">
                                         Div. ({simCurrency || 'CHF'})
                                     </label>
                                     <input
