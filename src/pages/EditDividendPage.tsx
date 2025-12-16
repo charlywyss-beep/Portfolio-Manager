@@ -69,22 +69,12 @@ export function EditDividendPage() {
                 while (dates.length < 4) dates.push({ exDate: '', payDate: '' });
                 setQuarterlyDates(dates);
             } else if (stock.dividendExDate || stock.dividendPayDate) {
-                // Heuristic: Try to determine quarter from date to prevent shifting to Q1
-                let targetIndex = 0;
-                if ((stock.dividendFrequency === 'quarterly' || !stock.dividendFrequency) && stock.dividendExDate) {
-                    const month = new Date(stock.dividendExDate).getMonth(); // 0-11
-                    targetIndex = Math.floor(month / 3); // 0=Q1, 1=Q2, 2=Q3, 3=Q4
-                } else if (stock.dividendFrequency === 'semi-annually' && stock.dividendExDate) {
-                    const month = new Date(stock.dividendExDate).getMonth();
-                    targetIndex = month >= 6 ? 1 : 0;
-                }
-
-                const newDates = Array(4).fill(null).map(() => ({ exDate: '', payDate: '' }));
-                newDates[targetIndex] = {
-                    exDate: stock.dividendExDate || '',
-                    payDate: stock.dividendPayDate || ''
-                };
-                setQuarterlyDates(newDates);
+                setQuarterlyDates([
+                    { exDate: stock.dividendExDate || '', payDate: stock.dividendPayDate || '' },
+                    { exDate: '', payDate: '' },
+                    { exDate: '', payDate: '' },
+                    { exDate: '', payDate: '' }
+                ]);
             } else {
                 setQuarterlyDates(Array(4).fill({ exDate: '', payDate: '' }));
             }
@@ -250,8 +240,8 @@ export function EditDividendPage() {
                     <ArrowLeft className="size-6" />
                 </button>
                 <div className="flex-1">
-                    <h1 className="text-xl font-bold">{stock ? 'Daten bearbeiten' : 'Daten erfassen'}</h1>
-                    <p className="text-sm text-muted-foreground">{stock ? `${stock.name} (${stock.symbol})` : 'Position manuell hinzufügen'}</p>
+                    <h1 className="text-xl font-bold">{stock ? stock.name : 'Dividende hinzufügen'}</h1>
+                    <p className="text-sm text-muted-foreground">{stock ? stock.symbol : 'Neue Erfassung'}</p>
                 </div>
             </div>
 
@@ -368,7 +358,7 @@ export function EditDividendPage() {
                                 <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Kursdaten</h3>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Aktueller Kurs <span className="text-xs text-muted-foreground">({currency === 'GBp' ? 'GBp (Pence)' : currency})</span></label>
+                                        <label className="text-sm font-medium">Aktueller Kurs</label>
                                         <input
                                             type="text"
                                             inputMode="decimal"
@@ -416,7 +406,7 @@ export function EditDividendPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Betrag <span className="text-xs text-muted-foreground">({currency === 'GBp' ? 'GBp (Pence)' : currency})</span></label>
+                                        <label className="text-sm font-medium">Betrag</label>
                                         <input
                                             type="text"
                                             inputMode="decimal"
@@ -438,7 +428,6 @@ export function EditDividendPage() {
                                         className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                     >
                                         <option value="CHF">CHF (Schweizer Franken)</option>
-                                        <option value="GBP">GBP (Britische Pfund)</option>
                                         <option value="USD">USD (US Dollar)</option>
                                         <option value="EUR">EUR (Euro)</option>
                                         <option value="GBp">GBp (Britische Pence)</option>
@@ -462,7 +451,7 @@ export function EditDividendPage() {
                                     <div className="p-4 bg-muted/50 rounded-lg text-center border border-border">
                                         <p className="text-sm font-medium text-muted-foreground">Erwartete Jahresausschüttung</p>
                                         <p className="text-2xl font-bold text-primary mt-1">
-                                            {(parseFloat(amount.replace(',', '.')) * getFrequencyFactor(frequency)).toFixed(2)} {currency === 'GBp' ? 'GBP' : currency}
+                                            {(parseFloat(amount.replace(',', '.')) * getFrequencyFactor(frequency)).toFixed(2)} {currency}
                                         </p>
                                     </div>
                                 )}
