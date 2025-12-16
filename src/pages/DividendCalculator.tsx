@@ -201,7 +201,7 @@ export function DividendCalculator() {
                         <div className="flex items-center justify-between mb-4 text-primary">
                             <div className="flex items-center gap-2">
                                 <Coins className="size-5" />
-                                <h3 className="font-semibold text-lg">Simulator Kauf / Verkauf</h3>
+                                <h3 className="font-semibold text-lg">Kauf / Verkauf</h3>
                             </div>
                             <div className="flex items-center gap-2">
                                 {/* Buy/Sell Switch */}
