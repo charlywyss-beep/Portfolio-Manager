@@ -692,6 +692,68 @@ export function DividendCalculator() {
                                 </div>
                             )}
 
+                            {/* Results / Breakdown */}
+                            <div className="space-y-3 pt-2">
+                                <div className="p-3 bg-muted rounded-md space-y-2 text-sm">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-muted-foreground">Volumen ({simCurrency}):</span>
+                                        <span className="font-mono font-medium">
+                                            {(() => {
+                                                if (simCurrency === 'GBp') {
+                                                    // Display GBp Volume in GBP for readability
+                                                    return (volumeNative / 100).toLocaleString('de-CH', { style: 'currency', currency: 'GBP' });
+                                                }
+                                                return volumeNative.toLocaleString('de-CH', { style: 'currency', currency: simCurrency || 'CHF' });
+                                            })()}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs text-muted-foreground">
+                                        <span>Volumen (CHF):</span>
+                                        <span>{volumeCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}</span>
+                                    </div>
+                                    <div className="h-px bg-border my-2" />
+                                    <div className="space-y-1 text-xs">
+                                        <div className="flex justify-between">
+                                            <span>Courtage:</span>
+                                            <span className="text-red-500 font-mono">- {calcCourtage.toFixed(2)} CHF</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Stempelsteuer:</span>
+                                            <span className="text-red-500 font-mono">- {calcStamp.toFixed(2)} CHF</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Börsengebühr:</span>
+                                            <span className="text-red-500 font-mono">- {fees.exchangeFee.toFixed(2)} CHF</span>
+                                        </div>
+                                    </div>
+                                    <div className="h-px bg-border my-2" />
+                                    <div className="flex justify-between items-center font-bold">
+                                        <span>{mode === 'buy' ? 'Investition Total' : 'Netto Erlös'} (CHF):</span>
+                                        <span className={mode === 'buy' ? 'text-emerald-600' : 'text-blue-600 font-mono'}>
+                                            {mode === 'buy' ? totalInvestCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' }) : totalProceedsCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Yield Info (Buy Mode) */}
+                                {mode === 'buy' && (
+                                    <div className="p-3 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 rounded-md space-y-2 text-sm">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-muted-foreground">Erw. Jährliche Dividende:</span>
+                                            <span className="font-medium text-emerald-600">
+                                                {(() => {
+                                                    const annualDivNative = shares * dividend;
+                                                    if (simCurrency === 'GBp') {
+                                                        return (annualDivNative / 100).toLocaleString('de-CH', { style: 'currency', currency: 'GBP' });
+                                                    }
+                                                    return annualDivNative.toLocaleString('de-CH', { style: 'currency', currency: simCurrency || 'CHF' });
+                                                })()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Results Grid - Compact 2x2 */}
                             <div className="grid grid-cols-2 gap-3 pt-2">
                                 {/* Total Invest / Proceeds */}
