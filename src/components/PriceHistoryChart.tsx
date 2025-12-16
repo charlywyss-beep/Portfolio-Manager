@@ -12,15 +12,14 @@ interface PriceHistoryChartProps {
     volatility?: number;
     trend?: 'up' | 'down' | 'neutral';
     historyData?: { date: string; value: number }[] | null;
+    selectedRange?: TimeRange;
     onRangeChange?: (range: TimeRange) => void;
 }
 
-export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, trend = 'up', historyData, onRangeChange }: PriceHistoryChartProps) {
-    const [localTimeRange, setLocalTimeRange] = useState<TimeRange>('1Y');
+export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, trend = 'up', historyData, selectedRange = '1Y', onRangeChange }: PriceHistoryChartProps) {
     const { formatCurrency } = useCurrencyFormatter();
 
     const handleRangeChange = (range: TimeRange) => {
-        setLocalTimeRange(range);
         if (onRangeChange) onRangeChange(range);
     };
 
@@ -42,7 +41,12 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
         let days = 30; // default for loops
         let intervalHours = 24; // default for loops
 
-        switch (localTimeRange) {
+        const points = [];
+        const now = new Date();
+        let days = 30; // default for loops
+        let intervalHours = 24; // default for loops
+
+        switch (selectedRange) {
             case '1D': days = 1; intervalHours = 0.5; break; // 30 min intervals
             case '1W': days = 7; intervalHours = 4; break; // 4h intervals simulates week well roughly
             case '1M': days = 30; intervalHours = 24; break;
@@ -93,7 +97,7 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
         }
 
         return points.reverse();
-    }, [currentPrice, localTimeRange, volatility, trend, historyData]);
+    }, [currentPrice, selectedRange, volatility, trend, historyData]);
 
     // Calculate performance for the selected range
     const startPrice = data[0]?.value || 0;
@@ -105,7 +109,7 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
         <div className="w-full h-full flex flex-col relative">
             <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
                 <div>
-                    <p className="text-sm text-muted-foreground">Performance ({localTimeRange})</p>
+                    <p className="text-sm text-muted-foreground">Performance ({selectedRange})</p>
                     <div className={cn("font-bold flex items-center gap-1", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
                         <span className="text-xl">{performance > 0 ? '+' : ''}{performance.toFixed(2)}%</span>
                     </div>
@@ -118,7 +122,7 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                             onClick={() => handleRangeChange(range)}
                             className={cn(
                                 "px-3 py-1 text-xs font-medium rounded-md transition-all",
-                                localTimeRange === range
+                                selectedRange === range
                                     ? "bg-background shadow-sm text-foreground"
                                     : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                             )}
