@@ -107,16 +107,34 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
     const diffCHF = currency !== 'CHF' ? convertToCHF(diffNative, currency) : diffNative;
     const diffCHFFormatted = (diffCHF > 0 ? '+' : '') + diffCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' CHF';
 
+    // Calculate Min/Max for the current range
+    const prices = data.map(d => d.value);
+    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+
     return (
         <div className="w-full h-full flex flex-col relative">
             <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
-                <div>
-                    <p className="text-sm text-muted-foreground">Performance ({selectedRange})</p>
-                    <div className={cn("font-bold flex items-center gap-1", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
-                        <span className="text-xl">
-                            {performance > 0 ? '+' : ''}{performance.toFixed(2)}%
-                            {currency !== 'CHF' && <span className="ml-1 opacity-80 text-lg">({diffCHFFormatted})</span>}
-                        </span>
+                <div className="flex flex-col gap-1">
+                    <div>
+                        <p className="text-sm text-muted-foreground">Performance ({selectedRange})</p>
+                        <div className={cn("font-bold flex items-center gap-1", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
+                            <span className="text-xl">
+                                {performance > 0 ? '+' : ''}{performance.toFixed(2)}%
+                                {currency !== 'CHF' && <span className="ml-1 opacity-80 text-lg">({diffCHFFormatted})</span>}
+                            </span>
+                        </div>
+                    </div>
+                    {/* High/Low Indicators */}
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                        <div className="flex items-center gap-1">
+                            <span className="font-medium text-foreground">H:</span>
+                            <span>{formatCurrency(maxPrice, currency)}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <span className="font-medium text-foreground">T:</span>
+                            <span>{formatCurrency(minPrice, currency)}</span>
+                        </div>
                     </div>
                 </div>
 
@@ -150,7 +168,20 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                         <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
                         <XAxis
                             dataKey="date"
-                            hide={true}
+                            hide={false}
+                            tick={{ fontSize: 10, fill: '#888' }}
+                            tickLine={false}
+                            axisLine={false}
+                            minTickGap={30}
+                            tickFormatter={(value) => {
+                                const date = new Date(value);
+                                if (selectedRange === '1D') {
+                                    return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                                } else if (selectedRange === '5Y') {
+                                    return date.getFullYear().toString();
+                                }
+                                return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+                            }}
                         />
                         <YAxis
                             domain={['auto', 'auto']}
