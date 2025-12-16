@@ -17,25 +17,36 @@ export function convertToCHF(amount: number, fromCurrency: string, liveRates?: R
     if (fromCurrency === 'CHF') return amount;
 
     let rate = rates[fromCurrency];
+    let workingAmount = amount;
 
-    // Override: Use GBP rate for GBp input if user inputs Pounds
-    if (fromCurrency === 'GBp' && rates['GBP']) {
-        rate = rates['GBP']; // Use Pound rate, not Pence rate
+    // Handle GBp (Pence) -> GBP (Pound) conversion
+    // Rate is usually for GBP. So convert Pence to Pounds first ( / 100)
+    // Then use GBP rate.
+    if (fromCurrency === 'GBp') {
+        workingAmount = amount / 100;
+        rate = rates['GBP'];
     }
 
-    if (!rate) return amount; // Unknown currency, return as-is
+    if (!rate) return amount; // Unknown currency
 
-    return amount / rate; // Convert to CHF
+    return workingAmount / rate;
 }
 
 // Format currency with optional CHF conversion
 export function formatCurrency(amount: number, currency: string, showCHF: boolean = true, liveRates?: Record<string, number>): string {
     let formatted: string;
+    let displayAmount = amount;
 
-    // User Request: Always display "GBP" even for "GBp" codes
-    const displayCurrency = currency === 'GBp' ? 'GBP' : currency;
+    // User Request: Always display "GBP" (Pounds) even for "GBp" (Pence) codes
+    // But MUST scale down by 100 if it is Pence!
+    let displayCurrency = currency;
 
-    formatted = amount.toLocaleString('de-DE', {
+    if (currency === 'GBp') {
+        displayCurrency = 'GBP';
+        displayAmount = amount / 100;
+    }
+
+    formatted = displayAmount.toLocaleString('de-DE', {
         style: 'currency',
         currency: displayCurrency,
         minimumFractionDigits: 2,
