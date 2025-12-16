@@ -458,6 +458,11 @@ export function EditDividendPage() {
                                         <p className="text-2xl font-bold text-primary mt-1">
                                             {(parseFloat(amount.replace(',', '.')) * getFrequencyFactor(frequency)).toFixed(2)} {currency === 'GBp' ? 'GBp (Pence)' : currency}
                                         </p>
+                                        {currency === 'GBp' && (
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                                ≈ {((parseFloat(amount.replace(',', '.')) * getFrequencyFactor(frequency)) / 100).toFixed(2)} GBP (Pfund)
+                                            </p>
+                                        )}
                                     </div>
                                 )}
                             </div>
