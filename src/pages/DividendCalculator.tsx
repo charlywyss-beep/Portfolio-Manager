@@ -785,15 +785,16 @@ export function DividendCalculator() {
                             {/* Results Grid - Compact 2x2 */}
                             <div className="grid grid-cols-2 gap-3 pt-2">
                                 {/* Total Invest / Proceeds */}
-                                <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 flex flex-col justify-between">
-                                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                                {/* Total Invest / Proceeds */}
+                                <div className={`p-3 rounded-lg flex flex-col justify-between shadow-sm ${mode === 'buy' ? 'bg-primary text-primary-foreground' : 'bg-green-600 text-white'}`}>
+                                    <span className="text-[10px] uppercase tracking-wide opacity-90">
                                         {mode === 'buy' ? 'Investition Total' : 'Netto Erlös'} (CHF)
                                     </span>
                                     <div className="flex flex-col items-end">
-                                        <span className={`text-lg font-bold leading-none ${mode === 'sell' ? 'text-green-600' : 'text-foreground'}`}>
+                                        <span className="text-xl font-bold leading-none">
                                             {(mode === 'buy' ? totalInvestCHF : totalProceedsCHF).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                                         </span>
-                                        <span className="text-[10px] text-muted-foreground mt-0.5">
+                                        <span className="text-[10px] opacity-80 mt-0.5 font-medium">
                                             {volumeCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
                                             {mode === 'buy' ? ' + ' : ' - '}{totalFees.toFixed(0)} Geb.
                                         </span>
