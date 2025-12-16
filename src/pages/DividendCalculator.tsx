@@ -423,6 +423,11 @@ export function DividendCalculator() {
                                         ))}
                                     </optgroup>
                                 </select>
+                                {selectedStockId && selectedStockId !== 'new' && (
+                                    <div className="text-[10px] text-muted-foreground px-1 flex justify-between">
+                                        <span>ISIN: {stocks.find(s => s.id === selectedStockId)?.isin || '-'}</span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Current Position Info & Edit */}
