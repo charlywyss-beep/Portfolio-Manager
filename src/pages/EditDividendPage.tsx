@@ -368,7 +368,7 @@ export function EditDividendPage() {
                                 <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Kursdaten</h3>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Aktueller Kurs</label>
+                                        <label className="text-sm font-medium">Aktueller Kurs <span className="text-xs text-muted-foreground">({currency === 'GBp' ? 'GBp (Pence)' : currency})</span></label>
                                         <input
                                             type="text"
                                             inputMode="decimal"
@@ -416,7 +416,7 @@ export function EditDividendPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Betrag</label>
+                                        <label className="text-sm font-medium">Betrag <span className="text-xs text-muted-foreground">({currency === 'GBp' ? 'GBp (Pence)' : currency})</span></label>
                                         <input
                                             type="text"
                                             inputMode="decimal"
@@ -440,9 +440,8 @@ export function EditDividendPage() {
                                         <option value="CHF">CHF (Schweizer Franken)</option>
                                         <option value="GBP">GBP (Britische Pfund)</option>
                                         <option value="USD">USD (US Dollar)</option>
-                                        <option value="CHF">CHF (Schweizer Franken)</option>
                                         <option value="EUR">EUR (Euro)</option>
-                                        <option value="GBp">GBp (System-Intern: Pfund)</option>
+                                        <option value="GBp">GBp (Britische Pence)</option>
                                     </select>
                                 </div>
 
