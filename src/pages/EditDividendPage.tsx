@@ -442,7 +442,7 @@ export function EditDividendPage() {
                                         <option value="USD">USD (US Dollar)</option>
                                         <option value="CHF">CHF (Schweizer Franken)</option>
                                         <option value="EUR">EUR (Euro)</option>
-                                        <option value="GBp">GBp (Britische Pence - x100)</option>
+                                        <option value="GBp">GBp (System-Intern: Pfund)</option>
                                     </select>
                                 </div>
 
@@ -463,7 +463,7 @@ export function EditDividendPage() {
                                     <div className="p-4 bg-muted/50 rounded-lg text-center border border-border">
                                         <p className="text-sm font-medium text-muted-foreground">Erwartete Jahresausschüttung</p>
                                         <p className="text-2xl font-bold text-primary mt-1">
-                                            {(parseFloat(amount.replace(',', '.')) * getFrequencyFactor(frequency)).toFixed(2)} {currency}
+                                            {(parseFloat(amount.replace(',', '.')) * getFrequencyFactor(frequency)).toFixed(2)} {currency === 'GBp' ? 'GBP' : currency}
                                         </p>
                                     </div>
                                 )}

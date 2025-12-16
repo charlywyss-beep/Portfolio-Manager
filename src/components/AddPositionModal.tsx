@@ -285,7 +285,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                         <option value="USD">USD</option>
                                         <option value="CHF">CHF</option>
                                         <option value="EUR">EUR</option>
-                                        <option value="GBp">GBp (Pence - x100)</option>
+                                        <option value="GBp">GBp (System-Intern: Pfund)</option>
                                     </select>
                                 </div>
                                 <div className="space-y-2">
