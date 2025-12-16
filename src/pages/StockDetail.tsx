@@ -21,7 +21,7 @@ export function StockDetail() {
 
     const [notes, setNotes] = useState('');
     const [isSaving, setIsSaving] = useState(false);
-    const [timeRange, setTimeRange] = useState<TimeRange>('1Y');
+    const [timeRange, setTimeRange] = useState<TimeRange>('1D');
     const [chartData, setChartData] = useState<ChartDataPoint[] | null>(null);
 
     // Fetch History Effect - Now using Yahoo Finance

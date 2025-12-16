@@ -170,9 +170,14 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                                                 </div>
                                                 <div className="flex items-center gap-2 justify-between border-t border-border pt-1 mt-1">
                                                     <span className="text-muted-foreground text-xs">Aktuell:</span>
-                                                    <span className="font-bold text-primary">
-                                                        {formatCurrency(currentPrice, currency)}
-                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={cn("text-xs font-medium", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
+                                                            ({performance > 0 ? '+' : ''}{performance.toFixed(2)}%)
+                                                        </span>
+                                                        <span className="font-bold text-primary">
+                                                            {formatCurrency(currentPrice, currency)}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
