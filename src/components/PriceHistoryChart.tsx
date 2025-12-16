@@ -36,10 +36,6 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
         // ... (mock generation) ...
 
 
-        const points = [];
-        const now = new Date();
-        let days = 30; // default for loops
-        let intervalHours = 24; // default for loops
 
         const points = [];
         const now = new Date();
