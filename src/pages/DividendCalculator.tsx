@@ -766,9 +766,9 @@ export function DividendCalculator() {
                                 {/* Yield Info (Buy Mode) */}
                                 {mode === 'buy' && (
                                     <div className="p-3 bg-primary text-primary-foreground rounded-md space-y-2 text-sm shadow-sm flex items-center justify-between">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-muted-foreground">Erw. Jährliche Dividende:</span>
-                                            <span className="font-medium text-xl">
+                                        <div className="flex justify-between items-center w-full">
+                                            <span className="opacity-90">Erw. Jährliche Dividende:</span>
+                                            <span className="font-medium text-xl text-primary-foreground">
                                                 {(() => {
                                                     const annualDivNative = shares * dividend;
                                                     if (simCurrency === 'GBp') {
@@ -818,13 +818,13 @@ export function DividendCalculator() {
                             {mode === 'buy' && (
                                 <div className={`p-3 rounded-lg border flex items-center justify-between gap-4 ${netYield > 0 ? 'bg-primary text-primary-foreground border-primary shadow-md' : 'bg-muted text-muted-foreground border-transparent'}`}>
                                     <div className="flex flex-col items-start">
-                                        <span className="text-xs font-bold uppercase">Brutto-Rendite</span>
-                                        <span className="text-2xl font-bold tracking-tight">{grossYield.toFixed(2)}%</span>
+                                        <span className="text-xs font-bold uppercase opacity-90">Brutto-Rendite</span>
+                                        <span className="text-2xl font-bold tracking-tight text-primary-foreground">{grossYield.toFixed(2)}%</span>
                                     </div>
                                     <div className="h-8 w-px bg-current opacity-20"></div>
                                     <div className="flex flex-col items-end">
-                                        <span className="text-xs font-bold uppercase">Netto-Rendite</span>
-                                        <span className="text-2xl font-bold tracking-tight">{netYield.toFixed(2)}%</span>
+                                        <span className="text-xs font-bold uppercase opacity-90">Netto-Rendite</span>
+                                        <span className="text-2xl font-bold tracking-tight text-primary-foreground">{netYield.toFixed(2)}%</span>
                                     </div>
                                 </div>
                             )}
@@ -940,7 +940,7 @@ export function DividendCalculator() {
                         </div>
 
                         <div className="h-[300px] w-full min-w-0">
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height="100%" minHeight={100} minWidth={100}>
                                 <AreaChart data={projectionData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorCapital" x1="0" y1="0" x2="0" y2="1">
