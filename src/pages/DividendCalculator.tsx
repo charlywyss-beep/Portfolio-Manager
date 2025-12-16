@@ -4,14 +4,26 @@ import { Calculator, Coins, Settings2, Plus, Check, Eye, Pencil, X, FileText } f
 
 import { jsPDF } from 'jspdf';
 import { usePortfolio } from '../context/PortfolioContext';
+import { useExchangeRates } from '../context/ExchangeRateContext';
+import { convertToCHF } from '../utils/currency';
 
 export function DividendCalculator() {
     const { stocks, addStock, addToWatchlist, simulatorState, updateSimulatorState, positions, addPosition, updatePosition, deletePosition } = usePortfolio();
+    const { rates } = useExchangeRates();
 
     // PDF Export Handler
     const handleExportPDF = () => {
         const doc = new jsPDF();
         const { shares, price, dividend, selectedStockId, simName, simSymbol, fees, mode } = simulatorState;
+
+        // Find Stock for ISIN/Details
+        let stockIsin = '';
+        if (selectedStockId && selectedStockId !== 'new') {
+            const stock = stocks.find(s => s.id === selectedStockId);
+            if (stock) {
+                stockIsin = stock.isin || '';
+            }
+        }
 
         // Colors
         const primaryColor = '#0f172a'; // Slate 900
@@ -49,9 +61,15 @@ export function DividendCalculator() {
             }
         }
 
-        doc.text(`${stockName} (${stockSymbol})`, 20, 50);
+        doc.text(`${stockName} (${stockSymbol})`, 20, 48);
 
-        // Calculation Data
+        if (stockIsin) {
+            doc.setFontSize(10);
+            doc.setTextColor('#64748b');
+            doc.text(`ISIN: ${stockIsin}`, 20, 54);
+        }
+
+        // Calculation Data (Already CHF from State)
         const volume = shares * price;
         const calcCourtage = Math.max(volume * (fees.courtagePercent / 100), fees.courtageMin);
         const calcStamp = volume * (fees.stampDutyPercent / 100);
@@ -61,7 +79,7 @@ export function DividendCalculator() {
         const grossYield = price > 0 ? (dividend / price) * 100 : 0;
 
         // Table Data
-        const startY = 60;
+        const startY = 65;
         const col1 = 20;
         const rowHeight = 10;
 
@@ -200,15 +218,23 @@ export function DividendCalculator() {
             else if (stock.dividendFrequency === 'monthly') annualDiv *= 12;
             else if (stock.dividendFrequency === 'semi-annually') annualDiv *= 2;
 
+            // NEW: Auto-Convert to CHF using live rates
+            // If currency is NOT CHF, convert it.
+            let convertedPrice = stock.currentPrice;
+            let convertedDiv = annualDiv;
+
+            if (stock.currency !== 'CHF') {
+                convertedPrice = convertToCHF(stock.currentPrice, stock.currency, rates);
+                convertedDiv = convertToCHF(annualDiv, stock.currency, rates);
+            }
+
             updateSimulatorState({
                 selectedStockId: stock.id,
                 simName: stock.name,
                 simSymbol: stock.symbol,
-                price: stock.currentPrice,
-                dividend: annualDiv, // Use calculated annual dividend
+                price: convertedPrice, // Store CHF price
+                dividend: convertedDiv, // Store CHF dividend
                 fees: { ...fees, stampDutyPercent: newStamp },
-                // If user owns it, they might want to sell, but keep previous mode or default to buy?
-                // Use existing mode
             });
         }
     };
