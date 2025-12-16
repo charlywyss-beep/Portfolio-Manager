@@ -796,7 +796,7 @@ export function DividendCalculator() {
                                 {/* Total Invest / Proceeds */}
                                 {/* Total Invest / Proceeds */}
                                 {/* Total Invest / Proceeds */}
-                                <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 flex flex-col justify-between">
+                                <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 flex flex-col gap-1">
                                     <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
                                         {mode === 'buy' ? 'Investition Total' : 'Netto Erlös'} (CHF)
                                     </span>
@@ -812,7 +812,7 @@ export function DividendCalculator() {
                                 </div>
 
                                 {/* Annual Payout */}
-                                <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 flex flex-col justify-between">
+                                <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 flex flex-col gap-1">
                                     <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Jäh. Ausschüttung (CHF)</span>
                                     <div className="flex flex-col items-end">
                                         <span className="text-lg font-bold text-foreground leading-none">
