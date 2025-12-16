@@ -501,64 +501,69 @@ export function DividendCalculator() {
                                             <span className="text-muted-foreground">Dein Bestand:</span>
                                             <span className="font-bold">{currentPos.shares} Stk.</span>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-muted-foreground">Ø Kauf:</span>
-                                            {isEditingPrice ? (
-                                                <div className="flex items-center gap-1 animate-in fade-in zoom-in-95 duration-200">
-                                                    <input
-                                                        type="number"
-                                                        step="0.01"
-                                                        className="w-20 px-2 py-0.5 text-right border rounded bg-background text-foreground text-xs focus:ring-1 focus:ring-primary no-spinner"
-                                                        value={editPriceVal}
-                                                        onChange={(e) => setEditPriceVal(e.target.value)}
-                                                        onFocus={(e) => e.target.select()}
-                                                        autoFocus
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === 'Enter') {
-                                                                if (editPriceVal && !isNaN(Number(editPriceVal))) {
-                                                                    updatePosition(currentPos.id, { buyPriceAvg: Number(editPriceVal) });
-                                                                    setIsEditingPrice(false);
-                                                                }
-                                                            } else if (e.key === 'Escape') {
-                                                                setIsEditingPrice(false);
-                                                            }
-                                                        }}
-                                                    />
-                                                    <button
-                                                        onClick={() => {
-                                                            if (editPriceVal && !isNaN(Number(editPriceVal))) {
-                                                                updatePosition(currentPos.id, { buyPriceAvg: Number(editPriceVal) });
-                                                                setIsEditingPrice(false);
-                                                            }
-                                                        }}
-                                                        className="p-1 hover:bg-green-500/20 text-green-600 rounded"
-                                                        title="Speichern"
-                                                    >
-                                                        <Check size={14} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setIsEditingPrice(false)}
-                                                        className="p-1 hover:bg-red-500/20 text-red-600 rounded"
-                                                        title="Abbrechen"
-                                                    >
-                                                        <X size={14} />
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <div
-                                                    className="flex items-center gap-1 group cursor-pointer hover:text-primary transition-colors px-1 py-0.5 rounded hover:bg-primary/5"
+                                        <div className="flex items-center justify-between p-3 bg-muted/40 rounded-lg border border-border/50 text-xs mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-muted-foreground">Dein Bestand:</span>
+                                                <span className="font-bold">{currentPos.shares} Stk.</span>
+                                            </div>
+                                            <div className="flex items-center gap-8">
+                                                {/* Avg Price Display - Large, Clean */}
+                                                <div className="flex items-center gap-2 group cursor-pointer"
                                                     onClick={() => {
                                                         setEditPriceVal(currentPos.buyPriceAvg.toString());
                                                         setIsEditingPrice(true);
                                                     }}
                                                     title="Ø Kaufkurs korrigieren"
                                                 >
-                                                    <span className="font-bold border-b border-dotted border-muted-foreground/50 group-hover:border-primary">
-                                                        {displayAvgPrice.toLocaleString('de-CH', { style: 'currency', currency: displayCurrency })} (Orig.)
-                                                    </span>
-                                                    <Pencil size={12} className="opacity-40 group-hover:opacity-100 transition-opacity" />
+                                                    {isEditingPrice ? (
+                                                        <div className="flex items-center gap-1 animate-in fade-in zoom-in-95 duration-200">
+                                                            <input
+                                                                type="number"
+                                                                step="0.01"
+                                                                className="w-24 px-2 py-0.5 text-right border rounded bg-background text-foreground text-sm font-bold focus:ring-1 focus:ring-primary no-spinner"
+                                                                value={editPriceVal}
+                                                                onChange={(e) => setEditPriceVal(e.target.value)}
+                                                                onFocus={(e) => e.target.select()}
+                                                                autoFocus
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') {
+                                                                        if (editPriceVal && !isNaN(Number(editPriceVal))) {
+                                                                            updatePosition(currentPos.id, { buyPriceAvg: Number(editPriceVal) });
+                                                                            setIsEditingPrice(false);
+                                                                        }
+                                                                    } else if (e.key === 'Escape') {
+                                                                        setIsEditingPrice(false);
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (editPriceVal && !isNaN(Number(editPriceVal))) {
+                                                                        updatePosition(currentPos.id, { buyPriceAvg: Number(editPriceVal) });
+                                                                        setIsEditingPrice(false);
+                                                                    }
+                                                                }}
+                                                                className="p-1 hover:bg-green-500/20 text-green-600 rounded"
+                                                            >
+                                                                <Check size={16} />
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xl font-bold group-hover:text-primary transition-colors flex items-center gap-2">
+                                                            {displayAvgPrice.toLocaleString('de-CH', { style: 'currency', currency: displayCurrency })}
+                                                            <Pencil size={12} className="opacity-0 group-hover:opacity-50 text-muted-foreground" />
+                                                        </span>
+                                                    )}
                                                 </div>
-                                            )}
+
+                                                {/* Total Value Display - Large, Clean */}
+                                                <div>
+                                                    <span className="text-xl font-bold">
+                                                        {(displayAvgPrice * currentPos.shares).toLocaleString('de-CH', { style: 'currency', currency: displayCurrency })}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 );
