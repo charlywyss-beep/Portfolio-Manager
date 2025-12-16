@@ -367,6 +367,7 @@ export function EditDividendPage() {
                                             required
                                             value={price}
                                             onChange={(e) => handlePriceChange(e.target.value)}
+                                            onFocus={(e) => e.target.select()}
                                             className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg"
                                         />
                                     </div>
@@ -380,6 +381,7 @@ export function EditDividendPage() {
                                             placeholder="Optional"
                                             value={targetPrice}
                                             onChange={(e) => setTargetPrice(e.target.value)}
+                                            onFocus={(e) => e.target.select()}
                                             className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg"
                                         />
                                     </div>
@@ -401,6 +403,7 @@ export function EditDividendPage() {
                                             placeholder="z.B. 3.90"
                                             value={yieldPercent}
                                             onChange={(e) => handleYieldChange(e.target.value)}
+                                            onFocus={(e) => e.target.select()}
                                             className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg"
                                         />
                                     </div>
@@ -415,6 +418,7 @@ export function EditDividendPage() {
                                             placeholder="z.B. 0.60"
                                             value={amount}
                                             onChange={(e) => handleAmountChange(e.target.value)}
+                                            onFocus={(e) => e.target.select()}
                                             className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg"
                                         />
                                     </div>
