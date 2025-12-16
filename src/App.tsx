@@ -80,11 +80,11 @@ function App() {
             "border-r border-border bg-card shadow-lg flex flex-col transition-all duration-300 ease-in-out overflow-hidden",
             "fixed lg:relative z-50 h-full",
             isSidebarOpen
-              ? "translate-x-0 w-64"
-              : "-translate-x-full w-64 lg:translate-x-0 lg:w-0 lg:border-r-0"
+              ? "translate-x-0 w-fit"
+              : "-translate-x-full w-fit lg:translate-x-0 lg:w-0 lg:border-r-0"
           )}>
             <div
-              className="flex flex-col cursor-pointer group p-6 border-b border-border min-w-[16rem]"
+              className="flex flex-col cursor-pointer group p-6 border-b border-border"
               onClick={() => {
                 // Force Hard Reload by appending unique timestamp
                 const url = new URL(window.location.href);
@@ -100,7 +100,7 @@ function App() {
                 <h1 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">Portfolio</h1>
               </div>
               <div className="text-[10px] text-foreground font-bold font-mono mt-1 flex items-center gap-1">
-                <span>v3.9.77</span>
+                <span>v3.9.78</span>
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
               </div>
             </div>
@@ -117,7 +117,7 @@ function App() {
               </div>
             </nav>
 
-            <div className="p-4 border-t border-border min-w-[16rem]">
+            <div className="p-4 border-t border-border">
               <button
                 onClick={toggleDarkMode}
                 className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
