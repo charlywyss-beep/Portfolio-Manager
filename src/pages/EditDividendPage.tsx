@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
+import { useCurrencyFormatter } from '../utils/currency';
 
 // Helper to get annual factor
 const getFrequencyFactor = (freq: string) => {
@@ -232,6 +233,51 @@ export function EditDividendPage() {
         navigate(-1); // Go back
     };
 
+    const { rates } = useCurrencyFormatter();
+
+    const convertAmount = (val: number, from: Currency | string, to: Currency | string) => {
+        if (!rates || from === to) return val;
+
+        // 1. Convert to CHF (Base)
+        // Handle GBp (Pence) special case: Divide by 100 to get Pounds
+        let amountInCHF = 0;
+        let rateFrom = rates[from === 'GBp' ? 'GBP' : from] || 1;
+
+        let normalizedFromVal = val;
+        if (from === 'GBp') normalizedFromVal = val / 100;
+
+        // If from is CHF, amount is already CHF. Else divide by rate (Currency per CHF)
+        if (from === 'CHF') amountInCHF = normalizedFromVal;
+        else amountInCHF = normalizedFromVal / rateFrom;
+
+        // 2. Convert CHF to target
+        let rateTo = rates[to === 'GBp' ? 'GBP' : to] || 1;
+        let result = 0;
+
+        if (to === 'CHF') result = amountInCHF;
+        else result = amountInCHF * rateTo;
+
+        // Handle GBp (Pence) target: Multiply by 100
+        if (to === 'GBp') result = result * 100;
+
+        return result;
+    };
+
+    const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newCurrency = e.target.value as Currency;
+        const oldCurrency = currency;
+        setCurrency(newCurrency);
+
+        // Auto-Convert Dividend Amount if present
+        if (amount && !isNaN(parseFloat(amount))) {
+            const currentVal = parseFloat(amount.replace(',', '.'));
+            const newVal = convertAmount(currentVal, oldCurrency, newCurrency);
+            if (isFinite(newVal)) {
+                setAmount(newVal.toFixed(4));
+            }
+        }
+    };
+
     return (
         <div className="min-h-screen bg-background pb-20">
             {/* Header */}
@@ -428,7 +474,7 @@ export function EditDividendPage() {
                                     <label className="text-sm font-medium">Währung</label>
                                     <select
                                         value={currency}
-                                        onChange={(e) => setCurrency(e.target.value as Currency)}
+                                        onChange={handleCurrencyChange}
                                         className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                     >
                                         <option value="CHF">CHF (Schweizer Franken)</option>
