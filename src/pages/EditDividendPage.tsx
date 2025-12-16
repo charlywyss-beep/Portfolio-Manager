@@ -441,6 +441,7 @@ export function EditDividendPage() {
                                         <option value="USD">USD (US Dollar)</option>
                                         <option value="EUR">EUR (Euro)</option>
                                         <option value="GBp">GBp (Britische Pence)</option>
+                                        <option value="GBP">GBP (Britische Pfund)</option>
                                     </select>
                                 </div>
 

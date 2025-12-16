@@ -148,7 +148,14 @@ export function Portfolio() {
 
                                     {/* Kauf Kurs */}
                                     <td className="px-4 py-3 text-right">
-                                        <span className="whitespace-nowrap">{formatCurrency(pos.buyPriceAvg, pos.stock.currency, false)}</span>
+                                        <div className="flex flex-col items-end">
+                                            <span className="whitespace-nowrap">{formatCurrency(pos.buyPriceAvg, pos.stock.currency, false)}</span>
+                                            {pos.stock.currency !== 'CHF' && (
+                                                <span className="text-[10px] text-muted-foreground font-normal whitespace-nowrap">
+                                                    {formatCurrency(convertToCHF(pos.buyPriceAvg, pos.stock.currency), 'CHF', false)}
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
 
                                     {/* Kauf Wert */}
@@ -165,8 +172,13 @@ export function Portfolio() {
 
                                     {/* Aktueller Kurs */}
                                     <td className="px-4 py-3 text-right">
-                                        <div className="flex items-center justify-end gap-2">
+                                        <div className="flex flex-col items-end">
                                             <span className="whitespace-nowrap">{formatCurrency(pos.stock.currentPrice, pos.stock.currency, false)}</span>
+                                            {pos.stock.currency !== 'CHF' && (
+                                                <span className="text-[10px] text-muted-foreground font-normal whitespace-nowrap">
+                                                    {formatCurrency(convertToCHF(pos.stock.currentPrice, pos.stock.currency), 'CHF', false)}
+                                                </span>
+                                            )}
                                         </div>
                                     </td>
 
