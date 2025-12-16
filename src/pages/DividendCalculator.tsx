@@ -454,11 +454,19 @@ export function DividendCalculator() {
                                 const currentPos = positions.find(p => p.stockId === selectedStockId);
                                 if (!currentPos) return null;
 
-                                // Reset edit state if stock changes (using key approach or simple effect)
-                                // Since we are inside render, let's use a useEffect hook at top level, OR just handle it via the key/selection change handler.
-                                // Better: Put the logic in the main body and just render here. But since I can't easily jump to main body, I will use an IIFE for render, 
-                                // BUT I need the handlers. 
-                                // Let's rewrite this block to just BE the UI, and I'll add the handlers/useEffect via a separate tool call to the top of the file/component.
+                                // Fix GBp display: If stock is GBp, buyPriceAvg is key.
+                                const stock = stocks.find(s => s.id === selectedStockId);
+                                let displayAvgPrice = currentPos.buyPriceAvg;
+                                let displayCurrency: string = stock?.currency || 'CHF';
+
+                                // Handling GBp Display specifically for "Ø Kauf"
+                                if (displayCurrency === 'GBp') {
+                                    // If raw value is > 200 (likely Pence), divide by 100 for GBP view?
+                                    // Or display as 'p'? FormatCurrency usually displays GBP.
+                                    displayCurrency = 'GBP';
+                                    displayAvgPrice = currentPos.buyPriceAvg / 100; // Correct scaling: 2800p -> 28.00 £
+                                }
+
                                 return (
                                     <div className="flex items-center justify-between p-3 bg-muted/40 rounded-lg border border-border/50 text-xs mb-4">
                                         <div className="flex items-center gap-2">
@@ -518,7 +526,7 @@ export function DividendCalculator() {
                                                     title="Ø Kaufkurs korrigieren"
                                                 >
                                                     <span className="font-bold border-b border-dotted border-muted-foreground/50 group-hover:border-primary">
-                                                        {currentPos.buyPriceAvg.toLocaleString('de-CH', { style: 'currency', currency: stocks.find(s => s.id === currentPos.stockId)?.currency || 'CHF' })}
+                                                        {displayAvgPrice.toLocaleString('de-CH', { style: 'currency', currency: displayCurrency })} (Orig.)
                                                     </span>
                                                     <Pencil size={12} className="opacity-40 group-hover:opacity-100 transition-opacity" />
                                                 </div>
