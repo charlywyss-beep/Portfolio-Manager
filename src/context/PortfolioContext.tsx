@@ -34,6 +34,7 @@ interface PortfolioContextType {
         selectedStockId: string;
         simName: string;
         simSymbol: string;
+        simCurrency: string; // NEW: Track currency of the simulation inputs
         mode: 'buy' | 'sell'; // NEW: Buy/Sell Switch
         fees: {
             courtagePercent: number;
@@ -55,6 +56,7 @@ const defaultSimulatorState = {
     selectedStockId: '',
     simName: '',
     simSymbol: '',
+    simCurrency: 'CHF',
     mode: 'buy',
     fees: {
         courtagePercent: 0.5,
