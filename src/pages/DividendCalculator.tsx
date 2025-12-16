@@ -765,10 +765,10 @@ export function DividendCalculator() {
 
                                 {/* Yield Info (Buy Mode) */}
                                 {mode === 'buy' && (
-                                    <div className="p-3 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 rounded-md space-y-2 text-sm">
+                                    <div className="p-3 bg-primary text-primary-foreground rounded-md space-y-2 text-sm shadow-sm flex items-center justify-between">
                                         <div className="flex justify-between items-center">
                                             <span className="text-muted-foreground">Erw. Jährliche Dividende:</span>
-                                            <span className="font-medium text-green-500 dark:text-green-400">
+                                            <span className="font-medium text-xl">
                                                 {(() => {
                                                     const annualDivNative = shares * dividend;
                                                     if (simCurrency === 'GBp') {
@@ -786,15 +786,16 @@ export function DividendCalculator() {
                             <div className="grid grid-cols-2 gap-3 pt-2">
                                 {/* Total Invest / Proceeds */}
                                 {/* Total Invest / Proceeds */}
-                                <div className={`p-3 rounded-lg flex flex-col justify-between shadow-sm ${mode === 'buy' ? 'bg-primary text-primary-foreground' : 'bg-green-600 text-white'}`}>
-                                    <span className="text-[10px] uppercase tracking-wide opacity-90">
+                                {/* Total Invest / Proceeds */}
+                                <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 flex flex-col justify-between">
+                                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
                                         {mode === 'buy' ? 'Investition Total' : 'Netto Erlös'} (CHF)
                                     </span>
                                     <div className="flex flex-col items-end">
-                                        <span className="text-xl font-bold leading-none">
+                                        <span className={`text-lg font-bold leading-none ${mode === 'sell' ? 'text-green-600' : 'text-foreground'}`}>
                                             {(mode === 'buy' ? totalInvestCHF : totalProceedsCHF).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                                         </span>
-                                        <span className="text-[10px] opacity-80 mt-0.5 font-medium">
+                                        <span className="text-[10px] text-muted-foreground mt-0.5">
                                             {volumeCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
                                             {mode === 'buy' ? ' + ' : ' - '}{totalFees.toFixed(0)} Geb.
                                         </span>
