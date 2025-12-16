@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calculator, Coins, Settings2, Plus, Check, Eye, Pencil, X, FileText } from 'lucide-react';
+import { Calculator, Coins, Settings2, Plus, Check, Eye, Pencil, FileText } from 'lucide-react';
 
 import { jsPDF } from 'jspdf';
 import { usePortfolio } from '../context/PortfolioContext';
