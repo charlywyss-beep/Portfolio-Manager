@@ -1,11 +1,144 @@
 import { useState, useMemo, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calculator, Coins, Settings2, Plus, Check, Eye, Pencil, X } from 'lucide-react';
+import { Calculator, Coins, Settings2, Plus, Check, Eye, Pencil, X, FileText } from 'lucide-react';
 
+import { jsPDF } from 'jspdf';
 import { usePortfolio } from '../context/PortfolioContext';
 
 export function DividendCalculator() {
     const { stocks, addStock, addToWatchlist, simulatorState, updateSimulatorState, positions, addPosition, updatePosition, deletePosition } = usePortfolio();
+
+    // PDF Export Handler
+    const handleExportPDF = () => {
+        const doc = new jsPDF();
+        const { shares, price, dividend, selectedStockId, simName, simSymbol, fees, mode } = simulatorState;
+
+        // Colors
+        const primaryColor = '#0f172a'; // Slate 900
+        const accentColor = mode === 'buy' ? '#16a34a' : '#dc2626'; // Green or Red
+
+        // Header
+        doc.setFontSize(22);
+        doc.setTextColor(primaryColor);
+        doc.text('Kauf / Verkauf Abrechnung', 20, 25);
+
+        doc.setFontSize(10);
+        doc.setTextColor('#64748b'); // Slate 500
+        doc.text(`Erstellt am: ${new Date().toLocaleDateString('de-DE')} ${new Date().toLocaleTimeString('de-DE')}`, 20, 32);
+
+        // Transaction Type Badge
+        doc.setFillColor(accentColor);
+        doc.roundedRect(150, 18, 40, 12, 2, 2, 'F');
+        doc.setTextColor('#ffffff');
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(mode === 'buy' ? 'KAUF' : 'VERKAUF', 170, 26, { align: 'center' });
+
+        // Stock Details
+        doc.setTextColor(primaryColor);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(14);
+        let stockName = simName || 'Unbekannte Aktie';
+        let stockSymbol = simSymbol || 'N/A';
+
+        if (selectedStockId && selectedStockId !== 'new') {
+            const stock = stocks.find(s => s.id === selectedStockId);
+            if (stock) {
+                stockName = stock.name;
+                stockSymbol = stock.symbol;
+            }
+        }
+
+        doc.text(`${stockName} (${stockSymbol})`, 20, 50);
+
+        // Calculation Data
+        const volume = shares * price;
+        const calcCourtage = Math.max(volume * (fees.courtagePercent / 100), fees.courtageMin);
+        const calcStamp = volume * (fees.stampDutyPercent / 100);
+        const totalFees = calcCourtage + calcStamp + fees.exchangeFee;
+        const totalInvest = mode === 'buy' ? volume + totalFees : 0;
+        const totalProceeds = mode === 'sell' ? volume - totalFees : 0;
+        const grossYield = price > 0 ? (dividend / price) * 100 : 0;
+
+        // Table Data
+        const startY = 60;
+        const col1 = 20;
+        const col2 = 120;
+        const rowHeight = 10;
+
+        doc.setFontSize(11);
+
+        // Rows
+        const drawRow = (label: string, value: string, y: number, boldValue = false) => {
+            doc.setTextColor('#64748b');
+            doc.setFont('helvetica', 'normal');
+            doc.text(label, col1, y);
+
+            doc.setTextColor(primaryColor);
+            if (boldValue) doc.setFont('helvetica', 'bold');
+            else doc.setFont('helvetica', 'normal');
+            doc.text(value, 190, y, { align: 'right' });
+
+            // Dotted line
+            doc.setDrawColor('#e2e8f0');
+            doc.setLineWidth(0.1);
+            doc.line(col1 + doc.getTextWidth(label) + 2, y - 1, 188 - doc.getTextWidth(value), y - 1);
+        };
+
+        drawRow('Anzahl', `${shares} Stk.`, startY);
+        drawRow('Kurs', `CHF ${price.toFixed(2)}`, startY + rowHeight);
+        drawRow('Volumen', `CHF ${volume.toFixed(2)}`, startY + rowHeight * 2);
+
+        // Fees Block
+        let currentY = startY + rowHeight * 3 + 5;
+        doc.setFontSize(10);
+        doc.setTextColor(primaryColor);
+        doc.text('Gebührenaufstellung', col1, currentY);
+        currentY += 8;
+
+        drawRow('Courtage', `CHF ${calcCourtage.toFixed(2)}`, currentY);
+        drawRow('Stempelsteuer', `CHF ${calcStamp.toFixed(2)}`, currentY + rowHeight);
+        drawRow('Börsengebühr', `CHF ${fees.exchangeFee.toFixed(2)}`, currentY + rowHeight * 2);
+        drawRow('Total Gebühren', `CHF ${totalFees.toFixed(2)}`, currentY + rowHeight * 3, true);
+
+        // Total Block
+        currentY += rowHeight * 4 + 10;
+        doc.setFillColor('#f1f5f9'); // Slate 100
+        doc.rect(15, currentY - 8, 180, 20, 'F');
+
+        doc.setFontSize(14);
+        doc.setTextColor(primaryColor);
+        doc.setFont('helvetica', 'bold');
+        const totalLabel = mode === 'buy' ? 'INVESTITION TOTAL' : 'NETTO ERLÖS';
+        const totalValue = mode === 'buy' ? totalInvest : totalProceeds;
+
+        doc.text(totalLabel, 25, currentY + 5);
+        doc.text(`CHF ${totalValue.toFixed(2)}`, 185, currentY + 5, { align: 'right' });
+
+        // Yield Info (Buy Only)
+        if (mode === 'buy') {
+            currentY += 25;
+            doc.setFontSize(11);
+            doc.setTextColor('#64748b');
+            doc.setFont('helvetica', 'normal');
+            doc.text('Erwartete Jährliche Dividende:', 20, currentY);
+            doc.setTextColor(primaryColor);
+            doc.text(`CHF ${(shares * dividend).toFixed(2)}`, 190, currentY, { align: 'right' });
+
+            currentY += 8;
+            doc.setTextColor('#64748b');
+            doc.text('Brutto-Rendite:', 20, currentY);
+            doc.setTextColor(primaryColor);
+            doc.text(`${grossYield.toFixed(2)}%`, 190, currentY, { align: 'right' });
+        }
+
+        // Footer
+        doc.setFontSize(8);
+        doc.setTextColor('#94a3b8');
+        doc.text('Portfolio Manager - Simulation', 105, 290, { align: 'center' });
+
+        doc.save(`Simulation_${stockName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+    };
 
     // State for inputs (Projection) - Keeping local as these are temporary "playground" values usually
     const [initialCapital, setInitialCapital] = useState(10000);
@@ -225,6 +358,14 @@ export function DividendCalculator() {
                                         Verkaufen
                                     </button>
                                 </div>
+                                <button
+                                    onClick={handleExportPDF}
+                                    title="Als PDF speichern"
+                                    className="text-xs flex items-center gap-1 border border-border px-2 py-1.5 rounded text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                                >
+                                    <FileText size={12} />
+                                    PDF
+                                </button>
                                 <button
                                     onClick={() => updateSimulatorState({ fees: { ...fees, showAdvanced: !fees.showAdvanced } })}
                                     className={`text-xs flex items-center gap-1 border px-2 py-1.5 rounded transition-colors ${fees.showAdvanced
