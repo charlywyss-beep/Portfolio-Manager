@@ -557,7 +557,7 @@ export function DividendCalculator() {
                             </div>
                         </div>
 
-                        <div className="h-[300px]">
+                        <div className="h-[300px] w-full min-w-0">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={projectionData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
                                     <defs>
