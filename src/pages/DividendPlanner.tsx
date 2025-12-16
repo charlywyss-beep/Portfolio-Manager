@@ -58,24 +58,52 @@ export function DividendPlanner() {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl p-6 border border-green-200 dark:border-green-800">
-                    <div className="flex items-center gap-3 mb-2">
-                        <TrendingUp className="size-5 text-green-600 dark:text-green-400" />
-                        <span className="text-sm font-medium text-green-900 dark:text-green-100">Jährliche Gesamtdividende</span>
-                    </div>
-                    <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                        CHF {totalAnnual.toFixed(2)}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl p-4 border border-green-200 dark:border-green-800">
+                    <div className="flex flex-col">
+                        <span className="text-xs font-medium text-green-900 dark:text-green-100 flex items-center gap-2 mb-1">
+                            <TrendingUp className="size-3" />
+                            Gesamtdividende (Jahr)
+                        </span>
+                        <div className="text-xl font-bold text-green-600 dark:text-green-400">
+                            CHF {totalAnnual.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
                     </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
-                    <div className="flex items-center gap-3 mb-2">
-                        <Calendar className="size-5 text-blue-600 dark:text-blue-400" />
-                        <span className="text-sm font-medium text-blue-900 dark:text-blue-100">Monatlicher Durchschnitt</span>
+                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+                    <div className="flex flex-col">
+                        <span className="text-xs font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2 mb-1">
+                            <Calendar className="size-3" />
+                            Ø Monatlich
+                        </span>
+                        <div className="text-xl font-bold text-blue-800 dark:text-blue-400">
+                            CHF {totalMonthly.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
                     </div>
-                    <div className="text-3xl font-bold text-blue-800 dark:text-blue-400">
-                        CHF {totalMonthly.toFixed(2)}
+                </div>
+
+                <div className="bg-card rounded-xl p-4 border border-border shadow-sm">
+                    <div className="flex flex-col">
+                        <span className="text-xs font-medium text-muted-foreground flex items-center gap-2 mb-1">
+                            <TrendingUp className="size-3" />
+                            Ø Dividenden-Rendite
+                        </span>
+                        <div className="text-xl font-bold text-foreground">
+                            {(projectedDividends.reduce((acc, curr) => acc + (curr?.stock.dividendYield || 0), 0) / (projectedDividends.length || 1)).toFixed(2)}%
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-card rounded-xl p-4 border border-border shadow-sm">
+                    <div className="flex flex-col">
+                        <span className="text-xs font-medium text-muted-foreground flex items-center gap-2 mb-1">
+                            <Calendar className="size-3" />
+                            Zahler
+                        </span>
+                        <div className="text-xl font-bold text-foreground">
+                            {projectedDividends.length} <span className="text-xs font-normal text-muted-foreground">Positionen</span>
+                        </div>
                     </div>
                 </div>
             </div>
