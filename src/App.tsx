@@ -52,14 +52,14 @@ function App() {
         if (window.innerWidth < 1024) setIsSidebarOpen(false);
       }}
       className={({ isActive }) => cn(
-        "flex items-center gap-4 px-4 py-2.5 rounded-md transition-all whitespace-nowrap mx-2 mb-1",
+        "flex items-center gap-6 px-4 py-2.5 rounded-md transition-all whitespace-nowrap mx-2 mb-1",
         isActive
           ? "bg-primary text-primary-foreground shadow-sm"
           : "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
       )}
     >
-      <Icon className="size-5" />
-      <span>{label}</span>
+      <Icon className="size-5 shrink-0" />
+      <span className="font-medium">{label}</span>
     </NavLink>
   );
 
@@ -100,12 +100,12 @@ function App() {
                 <h1 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">Portfolio</h1>
               </div>
               <div className="text-[10px] text-foreground font-bold font-mono mt-1 flex items-center gap-1">
-                <span>v3.9.75</span>
+                <span>v3.9.77</span>
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
               </div>
             </div>
 
-            <nav className="flex-1 p-4 space-y-2 min-w-[16rem]">
+            <nav className="flex-1 p-4 space-y-2 w-fit">
               <NavItem to="/" icon={LayoutDashboard} label="Übersicht" />
               <NavItem to="/portfolio" icon={Wallet} label="Meine Positionen" />
               <NavItem to="/dividends" icon={TrendingUp} label="Dividenden Planer" />
