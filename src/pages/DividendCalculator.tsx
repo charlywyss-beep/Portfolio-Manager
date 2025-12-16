@@ -232,8 +232,8 @@ export function DividendCalculator() {
                 selectedStockId: stock.id,
                 simName: stock.name,
                 simSymbol: stock.symbol,
-                price: convertedPrice, // Store CHF price
-                dividend: convertedDiv, // Store CHF dividend
+                price: Number(convertedPrice.toFixed(2)), // Store CHF price rounded to 2 decimals
+                dividend: Number(convertedDiv.toFixed(2)), // Store CHF dividend rounded to 2 decimals
                 fees: { ...fees, stampDutyPercent: newStamp },
             });
         }
