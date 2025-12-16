@@ -61,10 +61,7 @@ export function Portfolio() {
     const stockPositions = filteredPositions.filter(p => !p.stock.type || p.stock.type === 'stock');
     const etfPositions = filteredPositions.filter(p => p.stock.type === 'etf');
 
-    const handleEdit = (pos: any) => {
-        setSelectedPosition(pos);
-        setIsEditModalOpen(true);
-    };
+
 
     const handleUpdate = (id: string, newShares: number, newAvgPrice?: number) => {
         const updates: any = { shares: newShares };
