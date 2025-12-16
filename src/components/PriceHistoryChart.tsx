@@ -161,9 +161,20 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                                             <p className="text-muted-foreground mb-1">
                                                 {new Date(payload[0].payload.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                             </p>
-                                            <p className="font-bold text-foreground">
-                                                {formatCurrency(payload[0].value as number, currency)}
-                                            </p>
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2 justify-between">
+                                                    <span className="text-muted-foreground text-xs">Historisch:</span>
+                                                    <span className="font-bold text-foreground">
+                                                        {formatCurrency(payload[0].value as number, currency)}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-2 justify-between border-t border-border pt-1 mt-1">
+                                                    <span className="text-muted-foreground text-xs">Aktuell:</span>
+                                                    <span className="font-bold text-primary">
+                                                        {formatCurrency(currentPrice, currency)}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                     );
                                 }
