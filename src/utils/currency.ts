@@ -6,8 +6,8 @@ export const FALLBACK_EXCHANGE_RATES: Record<string, number> = {
     CHF: 1.0,
     USD: 1.12, // 1 CHF = ~1.12 USD
     EUR: 1.06, // 1 CHF = ~1.06 EUR
-    GBP: 0.88, // 1 CHF = ~0.88 GBP
-    GBp: 88.0, // 1 CHF = ~88.0 GBp (Pence)
+    GBP: 0.9365, // 1 CHF = ~1.0678 GBP (Inverse of 1.0678)
+    GBp: 93.65, // 1 CHF = ~93.65 GBp (Pence)
 };
 
 // Convert any currency to CHF using live rates

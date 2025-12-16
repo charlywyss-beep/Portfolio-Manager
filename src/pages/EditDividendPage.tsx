@@ -438,10 +438,11 @@ export function EditDividendPage() {
                                         className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                     >
                                         <option value="CHF">CHF (Schweizer Franken)</option>
-                                        <option value="USD">USD (US Dollar)</option>
-                                        <option value="EUR">EUR (Euro)</option>
-                                        <option value="GBp">GBp (Britische Pence)</option>
                                         <option value="GBP">GBP (Britische Pfund)</option>
+                                        <option value="USD">USD (US Dollar)</option>
+                                        <option value="CHF">CHF (Schweizer Franken)</option>
+                                        <option value="EUR">EUR (Euro)</option>
+                                        <option value="GBp">GBp (Britische Pence - x100)</option>
                                     </select>
                                 </div>
 

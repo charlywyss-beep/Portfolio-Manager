@@ -281,11 +281,11 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                     <label className="text-sm font-medium">Währung</label>
                                     <select className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                         value={newStock.currency} onChange={e => setNewStock({ ...newStock, currency: e.target.value })}>
+                                        <option value="GBP">GBP (Pfund)</option>
                                         <option value="USD">USD</option>
                                         <option value="CHF">CHF</option>
                                         <option value="EUR">EUR</option>
-                                        <option value="GBp">GBp</option>
-                                        <option value="GBP">GBP</option>
+                                        <option value="GBp">GBp (Pence - x100)</option>
                                     </select>
                                 </div>
                                 <div className="space-y-2">
