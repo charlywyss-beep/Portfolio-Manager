@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calculator, Coins, Settings2, Plus, Check, Eye } from 'lucide-react';
+import { Calculator, Coins, Settings2, Plus, Check, Eye, Pencil, X } from 'lucide-react';
 
 import { usePortfolio } from '../context/PortfolioContext';
 
@@ -18,8 +18,17 @@ export function DividendCalculator() {
     // Watchlist Feedback
     const [showSuccess, setShowSuccess] = useState(false);
 
+    // Price Editing State
+    const [isEditingPrice, setIsEditingPrice] = useState(false);
+    const [editPriceVal, setEditPriceVal] = useState('');
+
     // Destructure Simulator State
     const { shares, price, dividend, selectedStockId, simName, simSymbol, fees, mode } = simulatorState;
+
+    // Reset edit mode when stock changes
+    useEffect(() => {
+        setIsEditingPrice(false);
+    }, [selectedStockId]);
 
     // Derived Logic
     const volume = shares * price;
@@ -244,7 +253,84 @@ export function DividendCalculator() {
                                 </select>
                             </div>
 
-                            {/* Manual Name Inputs */}
+                            {/* Current Position Info & Edit */}
+                            {(() => {
+                                const currentPos = positions.find(p => p.stockId === selectedStockId);
+                                if (!currentPos) return null;
+
+                                // Reset edit state if stock changes (using key approach or simple effect)
+                                // Since we are inside render, let's use a useEffect hook at top level, OR just handle it via the key/selection change handler.
+                                // Better: Put the logic in the main body and just render here. But since I can't easily jump to main body, I will use an IIFE for render, 
+                                // BUT I need the handlers. 
+                                // Let's rewrite this block to just BE the UI, and I'll add the handlers/useEffect via a separate tool call to the top of the file/component.
+                                return (
+                                    <div className="flex items-center justify-between p-3 bg-muted/40 rounded-lg border border-border/50 text-xs mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-muted-foreground">Dein Bestand:</span>
+                                            <span className="font-bold">{currentPos.shares} Stk.</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-muted-foreground">Ø Kauf:</span>
+                                            {isEditingPrice ? (
+                                                <div className="flex items-center gap-1 animate-in fade-in zoom-in-95 duration-200">
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        className="w-20 px-2 py-0.5 text-right border rounded bg-background text-foreground text-xs focus:ring-1 focus:ring-primary no-spinner"
+                                                        value={editPriceVal}
+                                                        onChange={(e) => setEditPriceVal(e.target.value)}
+                                                        onFocus={(e) => e.target.select()}
+                                                        autoFocus
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                if (editPriceVal && !isNaN(Number(editPriceVal))) {
+                                                                    updatePosition(currentPos.id, { buyPriceAvg: Number(editPriceVal) });
+                                                                    setIsEditingPrice(false);
+                                                                }
+                                                            } else if (e.key === 'Escape') {
+                                                                setIsEditingPrice(false);
+                                                            }
+                                                        }}
+                                                    />
+                                                    <button
+                                                        onClick={() => {
+                                                            if (editPriceVal && !isNaN(Number(editPriceVal))) {
+                                                                updatePosition(currentPos.id, { buyPriceAvg: Number(editPriceVal) });
+                                                                setIsEditingPrice(false);
+                                                            }
+                                                        }}
+                                                        className="p-1 hover:bg-green-500/20 text-green-600 rounded"
+                                                        title="Speichern"
+                                                    >
+                                                        <Check size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setIsEditingPrice(false)}
+                                                        className="p-1 hover:bg-red-500/20 text-red-600 rounded"
+                                                        title="Abbrechen"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div
+                                                    className="flex items-center gap-1 group cursor-pointer hover:text-primary transition-colors px-1 py-0.5 rounded hover:bg-primary/5"
+                                                    onClick={() => {
+                                                        setEditPriceVal(currentPos.buyPriceAvg.toString());
+                                                        setIsEditingPrice(true);
+                                                    }}
+                                                    title="Ø Kaufkurs korrigieren"
+                                                >
+                                                    <span className="font-bold border-b border-dotted border-muted-foreground/50 group-hover:border-primary">
+                                                        {currentPos.buyPriceAvg.toLocaleString('de-CH', { style: 'currency', currency: currentPos.stock.currency })}
+                                                    </span>
+                                                    <Pencil size={12} className="opacity-40 group-hover:opacity-100 transition-opacity" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                             {(selectedStockId === 'new' || !selectedStockId) && (
                                 <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2">
                                     <div className="space-y-1">
