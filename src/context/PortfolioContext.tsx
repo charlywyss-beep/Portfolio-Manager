@@ -151,6 +151,50 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('portfolio_watchlist', JSON.stringify(watchlist));
     }, [watchlist]);
 
+    // Data Sanitization: Replace legacy logo URLs with Clearbit (v3.9.114)
+    useEffect(() => {
+        let hasChanges = false;
+
+        const sanitizeUrl = (url: string | undefined): string | undefined => {
+            if (!url) return url;
+            if (url.includes('gstatic.com') || url.includes('google.com/s2/favicons')) {
+                // Try to extract domain
+                const match = url.match(/domain=([^&]+)/);
+                if (match && match[1]) {
+                    hasChanges = true;
+                    return `https://logo.clearbit.com/${match[1]}`;
+                }
+                // If it's a direct gstatic favicon URL without domain param (unlikely here but for safety)
+                // Just keep it or hide it. Here we just flag for change.
+            }
+            return url;
+        };
+
+        const sanitizedStocks = stocks.map(s => {
+            const newUrl = sanitizeUrl(s.logoUrl);
+            if (newUrl !== s.logoUrl) {
+                hasChanges = true;
+                return { ...s, logoUrl: newUrl };
+            }
+            return s;
+        });
+
+        const sanitizedDeposits = fixedDeposits.map(fd => {
+            const newUrl = sanitizeUrl(fd.logoUrl);
+            if (newUrl !== fd.logoUrl) {
+                hasChanges = true;
+                return { ...fd, logoUrl: newUrl };
+            }
+            return fd;
+        });
+
+        if (hasChanges) {
+            setStocks(sanitizedStocks);
+            setFixedDeposits(sanitizedDeposits);
+            console.log("v3.9.114: Sanitized legacy logo URLs found in storage.");
+        }
+    }, [stocks, fixedDeposits]);
+
     const addStock = (stockData: Omit<Stock, 'id'>) => {
         const newId = `stock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const newStock: Stock = {

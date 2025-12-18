@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { useExchangeRates } from '../context/ExchangeRateContext';
@@ -6,6 +6,11 @@ import { convertToCHF, useCurrencyFormatter } from '../utils/currency';
 
 export function AssetAllocationChart() {
     const { positions } = usePortfolioData();
+    const [hasMounted, setHasMounted] = useState(false);
+
+    useEffect(() => {
+        setHasMounted(true);
+    }, []);
     const { rates } = useExchangeRates();
     const { formatCurrency } = useCurrencyFormatter();
 
@@ -53,8 +58,8 @@ export function AssetAllocationChart() {
     };
 
     return (
-        <div className="h-[300px] w-full flex flex-col items-center">
-            {data.length > 0 ? (
+        <div className="h-[300px] w-full min-h-[300px] min-w-0 flex flex-col items-center">
+            {hasMounted && data.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
                     <PieChart>
                         <Pie

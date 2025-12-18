@@ -21,6 +21,11 @@ export function CurrencyChart({ inverse = false }: Props) {
     const [selectedCurrency, setSelectedCurrency] = useState<Currency>('EUR');
     const [historyData, setHistoryData] = useState<RateHistory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [hasMounted, setHasMounted] = useState(false);
+
+    useEffect(() => {
+        setHasMounted(true);
+    }, []);
     const [currRate, setCurrRate] = useState<number | null>(null);
     const [baseAmount, setBaseAmount] = useState<string>('1');
     const [convertedAmount, setConvertedAmount] = useState<string>('');
@@ -234,50 +239,52 @@ export function CurrencyChart({ inverse = false }: Props) {
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     </div>
                 ) : (
-                    <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
-                        <AreaChart data={historyData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
-                            <defs>
-                                <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
-                                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
-                            <XAxis
-                                dataKey="date"
-                                tickFormatter={(date) => {
-                                    const d = new Date(date);
-                                    return d.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
-                                }}
-                                tick={{ fontSize: 11, fill: 'currentColor', opacity: 0.5 }}
-                                minTickGap={30}
-                                tickLine={false}
-                                axisLine={false}
-                            />
-                            <YAxis
-                                domain={domain}
-                                tick={{ fontSize: 11, fill: 'currentColor', opacity: 0.5 }}
-                                tickFormatter={(val) => val.toFixed(2)}
-                                tickLine={false}
-                                axisLine={false}
-                            />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
-                                itemStyle={{ color: 'hsl(var(--foreground))' }}
-                                labelFormatter={(date) => new Date(date).toLocaleDateString('de-DE')}
-                                formatter={(value: number) => [value.toFixed(4), targetCurrency]}
-                            />
-                            <Area
-                                type="monotone"
-                                dataKey="rate"
-                                stroke="hsl(var(--primary))"
-                                strokeWidth={2}
-                                fillOpacity={1}
-                                fill="url(#colorRate)"
-                                animationDuration={500}
-                            />
-                        </AreaChart>
-                    </ResponsiveContainer>
+                    hasMounted && (
+                        <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
+                            <AreaChart data={historyData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
+                                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                                <XAxis
+                                    dataKey="date"
+                                    tickFormatter={(date) => {
+                                        const d = new Date(date);
+                                        return d.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
+                                    }}
+                                    tick={{ fontSize: 11, fill: 'currentColor', opacity: 0.5 }}
+                                    minTickGap={30}
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
+                                <YAxis
+                                    domain={domain}
+                                    tick={{ fontSize: 11, fill: 'currentColor', opacity: 0.5 }}
+                                    tickFormatter={(val) => val.toFixed(2)}
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                                    itemStyle={{ color: 'hsl(var(--foreground))' }}
+                                    labelFormatter={(date) => new Date(date).toLocaleDateString('de-DE')}
+                                    formatter={(value: number) => [value.toFixed(4), targetCurrency]}
+                                />
+                                <Area
+                                    type="monotone"
+                                    dataKey="rate"
+                                    stroke="hsl(var(--primary))"
+                                    strokeWidth={2}
+                                    fillOpacity={1}
+                                    fill="url(#colorRate)"
+                                    animationDuration={500}
+                                />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    )
                 )}
             </div>
         </div>

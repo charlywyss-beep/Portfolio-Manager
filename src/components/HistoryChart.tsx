@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useCurrencyFormatter } from '../utils/currency';
@@ -10,25 +10,29 @@ export function HistoryChart() {
     const { history } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
     const [timeRange, setTimeRange] = useState<TimeRange>('MAX');
+    const [hasMounted, setHasMounted] = useState(false);
+
+    useEffect(() => {
+        setHasMounted(true);
+    }, []);
 
     // Filter data based on range
     const filteredData = useMemo(() => {
-        const sorted = [...history].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        if (timeRange === 'MAX') return sorted;
+        if (!history || history.length === 0) return [];
+
+        const sortedData = [...history].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        if (timeRange === 'MAX') return sortedData;
 
         const now = new Date();
-        const cutoff = new Date();
+        let cutoff = new Date();
 
-        switch (timeRange) {
-            case '1W': cutoff.setDate(now.getDate() - 7); break;
-            case '1M': cutoff.setMonth(now.getMonth() - 1); break;
-            case '6M': cutoff.setMonth(now.getMonth() - 6); break;
-            case '1Y': cutoff.setFullYear(now.getFullYear() - 1); break;
-            case '5Y': cutoff.setFullYear(now.getFullYear() - 5); break;
-            case '10Y': cutoff.setFullYear(now.getFullYear() - 10); break;
-        }
+        if (timeRange === '1W') cutoff.setDate(now.getDate() - 7);
+        else if (timeRange === '1M') cutoff.setMonth(now.getMonth() - 1);
+        else if (timeRange === '6M') cutoff.setMonth(now.getMonth() - 6);
+        else if (timeRange === '1Y') cutoff.setFullYear(now.getFullYear() - 1);
 
-        return sorted.filter(entry => new Date(entry.date) >= cutoff);
+        return sortedData.filter(d => new Date(d.date) >= cutoff);
     }, [history, timeRange]);
 
     // Dynamic X-Axis Formatter
@@ -99,7 +103,7 @@ export function HistoryChart() {
                             <p className="text-sm">Fügen Sie Einträge hinzu, um die Entwicklung zu sehen.</p>
                         </div>
                     </div>
-                ) : filteredData.length > 0 ? (
+                ) : hasMounted && filteredData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
                         <BarChart data={filteredData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />

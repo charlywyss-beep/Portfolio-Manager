@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { useCurrencyFormatter } from '../utils/currency';
@@ -7,6 +7,11 @@ import { convertToCHF } from '../utils/currency';
 
 export function DividendCalendarChart() {
     const { positions } = usePortfolioData();
+    const [hasMounted, setHasMounted] = useState(false);
+
+    useEffect(() => {
+        setHasMounted(true);
+    }, []);
     const { rates } = useExchangeRates();
     const { formatCurrency } = useCurrencyFormatter();
 
@@ -109,31 +114,33 @@ export function DividendCalendarChart() {
     };
 
     return (
-        <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
-                <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" opacity={0.1} />
-                    <XAxis
-                        dataKey="name"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: 'currentColor', fontSize: 12, opacity: 0.7 }}
-                        dy={10}
-                    />
-                    <YAxis
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: 'currentColor', fontSize: 12, opacity: 0.7 }}
-                        tickFormatter={(val) => val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val}
-                    />
-                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'currentColor', opacity: 0.05 }} />
-                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                        {monthlyData.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill="hsl(var(--primary))" opacity={0.8} />
-                        ))}
-                    </Bar>
-                </BarChart>
-            </ResponsiveContainer>
+        <div className="h-[300px] w-full min-h-[300px] min-w-0">
+            {hasMounted && (
+                <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
+                    <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" opacity={0.1} />
+                        <XAxis
+                            dataKey="name"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: 'currentColor', fontSize: 12, opacity: 0.7 }}
+                            dy={10}
+                        />
+                        <YAxis
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: 'currentColor', fontSize: 12, opacity: 0.7 }}
+                            tickFormatter={(val) => val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val}
+                        />
+                        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'currentColor', opacity: 0.05 }} />
+                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                            {monthlyData.map((_, index) => (
+                                <Cell key={`cell-${index}`} fill="hsl(var(--primary))" opacity={0.8} />
+                            ))}
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+            )}
         </div>
     );
 }

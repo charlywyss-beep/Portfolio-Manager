@@ -1,5 +1,5 @@
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
@@ -17,6 +17,11 @@ interface PriceHistoryChartProps {
 }
 
 export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, trend = 'up', historyData, selectedRange = '1Y', onRangeChange }: PriceHistoryChartProps) {
+    const [hasMounted, setHasMounted] = useState(false);
+
+    useEffect(() => {
+        setHasMounted(true);
+    }, []);
     const { formatCurrency } = useCurrencyFormatter();
 
     const handleRangeChange = (range: TimeRange) => {
@@ -156,75 +161,77 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                 </div>
             </div>
 
-            <div className="h-[300px] w-full -ml-2">
-                <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
-                    <AreaChart data={data}>
-                        <defs>
-                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor={isPositive ? "#22c55e" : "#ef4444"} stopOpacity={0.1} />
-                                <stop offset="95%" stopColor={isPositive ? "#22c55e" : "#ef4444"} stopOpacity={0} />
-                            </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
-                        <XAxis
-                            dataKey="date"
-                            hide={false}
-                            tick={{ fontSize: 10, fill: '#888' }}
-                            tickLine={false}
-                            axisLine={false}
-                            minTickGap={30}
-                            tickFormatter={(value) => {
-                                const date = new Date(value);
-                                if (selectedRange === '1D') {
-                                    return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                                } else if (selectedRange === '5Y') {
-                                    return date.getFullYear().toString();
-                                }
-                                return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
-                            }}
-                        />
-                        <YAxis
-                            domain={['auto', 'auto']}
-                            hide={false}
-                            orientation="right"
-                            tick={{ fontSize: 10, fill: '#888' }}
-                            tickFormatter={(val) => formatCurrency(val, currency)}
-                            axisLine={false}
-                            tickLine={false}
-                            width={50}
-                        />
-                        <Tooltip
-                            content={({ active, payload }) => {
-                                if (active && payload && payload.length) {
-                                    return (
-                                        <div className="bg-popover border border-border p-3 rounded-lg shadow-lg text-sm">
-                                            <p className="text-muted-foreground mb-1">
-                                                {new Date(payload[0].payload.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                                            </p>
-                                            <div className="space-y-1">
-                                                <div className="flex items-center gap-2 justify-between">
-                                                    <span className="text-muted-foreground text-xs">Kurs:</span>
-                                                    <span className="font-bold text-foreground">
-                                                        {formatCurrency(payload[0].value as number, currency)}
-                                                    </span>
+            <div className="h-[300px] w-full -ml-2 min-h-[300px] min-w-0">
+                {hasMounted && (
+                    <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
+                        <AreaChart data={data}>
+                            <defs>
+                                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={isPositive ? "#22c55e" : "#ef4444"} stopOpacity={0.1} />
+                                    <stop offset="95%" stopColor={isPositive ? "#22c55e" : "#ef4444"} stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
+                            <XAxis
+                                dataKey="date"
+                                hide={false}
+                                tick={{ fontSize: 10, fill: '#888' }}
+                                tickLine={false}
+                                axisLine={false}
+                                minTickGap={30}
+                                tickFormatter={(value) => {
+                                    const date = new Date(value);
+                                    if (selectedRange === '1D') {
+                                        return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                                    } else if (selectedRange === '5Y') {
+                                        return date.getFullYear().toString();
+                                    }
+                                    return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+                                }}
+                            />
+                            <YAxis
+                                domain={['auto', 'auto']}
+                                hide={false}
+                                orientation="right"
+                                tick={{ fontSize: 10, fill: '#888' }}
+                                tickFormatter={(val) => formatCurrency(val, currency)}
+                                axisLine={false}
+                                tickLine={false}
+                                width={50}
+                            />
+                            <Tooltip
+                                content={({ active, payload }) => {
+                                    if (active && payload && payload.length) {
+                                        return (
+                                            <div className="bg-popover border border-border p-3 rounded-lg shadow-lg text-sm">
+                                                <p className="text-muted-foreground mb-1">
+                                                    {new Date(payload[0].payload.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                                </p>
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-2 justify-between">
+                                                        <span className="text-muted-foreground text-xs">Kurs:</span>
+                                                        <span className="font-bold text-foreground">
+                                                            {formatCurrency(payload[0].value as number, currency)}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    );
-                                }
-                                return null;
-                            }}
-                        />
-                        <Area
-                            type="monotone"
-                            dataKey="value"
-                            stroke={isPositive ? "#22c55e" : "#ef4444"}
-                            strokeWidth={2}
-                            fillOpacity={1}
-                            fill="url(#colorValue)"
-                        />
-                    </AreaChart>
-                </ResponsiveContainer>
+                                        );
+                                    }
+                                    return null;
+                                }}
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="value"
+                                stroke={isPositive ? "#22c55e" : "#ef4444"}
+                                strokeWidth={2}
+                                fillOpacity={1}
+                                fill="url(#colorValue)"
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                )}
             </div>
             <p className="text-[10px] text-muted-foreground text-center mt-2 italic">
                 {historyData && historyData.length > 0 ? '* Reale Marktdaten von Yahoo Finance' : '* Simulierter Chartverlauf (Demo-Modus)'}

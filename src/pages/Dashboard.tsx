@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
 import { ArrowUpRight, ArrowDownRight, DollarSign, Calendar, TrendingUp, BarChart3, Plus, Trash2, Edit, Bell, Info } from 'lucide-react';
@@ -32,6 +32,11 @@ export function Dashboard() {
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [editingHistoryEntry, setEditingHistoryEntry] = useState<any>(null);
+    const [hasMounted, setHasMounted] = useState(false);
+
+    useEffect(() => {
+        setHasMounted(true);
+    }, []);
     const [watchlistTimeframe, setWatchlistTimeframe] = useState<number>(90); // Default 90 days
 
 
@@ -424,8 +429,8 @@ export function Dashboard() {
                         <h3 className="text-lg font-bold">Top 5 Performance</h3>
                         <BarChart3 className="size-5 text-muted-foreground" />
                     </div>
-                    <div className="w-full h-[300px]">
-                        {chartData.length > 0 ? (
+                    <div className="w-full h-[300px] min-h-[300px] min-w-0">
+                        {hasMounted && chartData.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
                                 <BarChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
                                     <XAxis

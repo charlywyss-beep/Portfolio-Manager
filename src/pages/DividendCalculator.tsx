@@ -179,6 +179,11 @@ export function DividendCalculator() {
     const [activeTab, setActiveTab] = useState<'search' | 'manual'>(selectedStockId === 'new' ? 'manual' : 'search');
     const [searchTerm, setSearchTerm] = useState('');
     const [showStockList, setShowStockList] = useState(false);
+    const [hasMounted, setHasMounted] = useState(false);
+
+    useEffect(() => {
+        setHasMounted(true);
+    }, []);
     const [isEditingPrice, setIsEditingPrice] = useState(false);
     const [editPriceVal, setEditPriceVal] = useState('');
 
@@ -973,7 +978,7 @@ export function DividendCalculator() {
                                     <div className="p-3 bg-primary text-primary-foreground rounded-md space-y-2 text-sm shadow-sm flex items-center justify-between">
                                         <div className="flex justify-between items-center w-full">
                                             <span className="opacity-90">Erw. Jährliche Dividende:</span>
-                                            <span className="font-medium text-xl text-primary-foreground">
+                                            <span className="text-xl font-bold text-primary-foreground">
                                                 {(() => {
                                                     const annualDivNative = shares * dividend;
                                                     if (simCurrency === 'GBp') {
@@ -1146,25 +1151,27 @@ export function DividendCalculator() {
                             </div>
                         </div>
 
-                        <div className="h-[300px] w-full min-h-[300px]">
-                            <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
-                                <AreaChart data={projectionData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
-                                    <defs>
-                                        <linearGradient id="colorCapital" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                                    <XAxis dataKey="year" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`} />
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
-                                        formatter={(val: number) => val.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
-                                    />
-                                    <Area type="monotone" dataKey="capital" stroke="hsl(var(--primary))" fill="url(#colorCapital)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                        <div className="h-[300px] w-full min-h-[300px] min-w-0">
+                            {hasMounted && (
+                                <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
+                                    <AreaChart data={projectionData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="colorCapital" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                                        <XAxis dataKey="year" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`} />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
+                                            formatter={(val: number) => val.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
+                                        />
+                                        <Area type="monotone" dataKey="capital" stroke="hsl(var(--primary))" fill="url(#colorCapital)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            )}
                         </div>
 
                         {/* Stats Footer */}
