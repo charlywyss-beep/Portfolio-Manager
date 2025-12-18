@@ -75,7 +75,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
         let cleanDomain = domain.toLowerCase().replace('https://', '').replace('http://', '').replace('www.', '');
         if (cleanDomain.includes('/')) cleanDomain = cleanDomain.split('/')[0];
 
-        const generatedUrl = `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128`;
+        const generatedUrl = `https://logo.clearbit.com/${cleanDomain}`;
         setLogoUrl(generatedUrl);
     };
 
@@ -86,7 +86,12 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                     <h2 className="text-xl font-bold">
                         {editingDeposit ? 'Konto bearbeiten' : 'Neues Bankkonto'}
                     </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-secondary rounded-full transition-colors">
+                    <button
+                        onClick={onClose}
+                        className="p-1 hover:bg-muted rounded-md transition-colors"
+                        title="Schließen"
+                        aria-label="Schließen"
+                    >
                         <X className="size-5" />
                     </button>
                 </div>
@@ -128,7 +133,8 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                             className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                             value={bankName}
                             onChange={(e) => setBankName(e.target.value)}
-                            placeholder="z.B. UBS, PostFinance"
+                            placeholder="z.B. UBS, Credit Suisse..."
+                            title="Bank Name"
                         />
                     </div>
 

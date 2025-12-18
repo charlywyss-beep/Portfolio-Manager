@@ -159,7 +159,7 @@ export function EditDividendPage() {
         let cleanDomain = domain.toLowerCase().replace('https://', '').replace('http://', '').replace('www.', '');
         if (cleanDomain.includes('/')) cleanDomain = cleanDomain.split('/')[0];
 
-        const generatedUrl = `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128`;
+        const generatedUrl = `https://logo.clearbit.com/${cleanDomain}`;
         setLogoUrl(generatedUrl);
     };
 
