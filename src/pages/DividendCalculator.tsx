@@ -366,7 +366,12 @@ export function DividendCalculator() {
             }
         }
         setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 3000);
+        setTimeout(() => {
+            setShowSuccess(false);
+            if (searchParams.get('from') === 'portfolio') {
+                navigate('/portfolio');
+            }
+        }, 1500);
     };
 
 
@@ -672,7 +677,7 @@ export function DividendCalculator() {
                                                 value={simIsin} onChange={e => updateSimulatorState({ simIsin: e.target.value })} />
                                         </div>
                                         <div className="space-y-2 col-span-2">
-                                            <label className="text-sm font-medium">Aktueller Marktpreis</label>
+                                            <label className="text-sm font-medium">Kaufpreis</label>
                                             <input required type="number" step="0.01" placeholder="z.B. 98.50" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                                 value={price}
                                                 onChange={e => updateSimulatorState({ price: parseFloat(e.target.value) || 0 })} />
@@ -781,7 +786,7 @@ export function DividendCalculator() {
                             {/* Core Inputs - Compact Grid */}
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] uppercase font-bold text-muted-foreground">Anzahl</label>
+                                    <label className="text-[10px] uppercase font-bold text-muted-foreground">Anzahl Anteile</label>
                                     <input
                                         type="number"
                                         value={shares}
@@ -791,7 +796,7 @@ export function DividendCalculator() {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-muted-foreground">
-                                        Kurs ({simCurrency || 'CHF'})
+                                        Kaufpreis ({simCurrency || 'CHF'})
                                     </label>
                                     <input
                                         type="number"
@@ -1034,9 +1039,11 @@ export function DividendCalculator() {
                                     {showSuccess ? <Check size={16} /> : (mode === 'buy' ? <Plus size={16} /> : <Coins size={16} />)}
                                     {showSuccess
                                         ? 'Ausgeführt!'
-                                        : mode === 'buy'
-                                            ? 'Kaufen & Ins Depot übernehmen'
-                                            : 'Verkaufen & Ausbuchen'
+                                        : searchParams.get('from') === 'portfolio'
+                                            ? 'Position hinzufügen'
+                                            : mode === 'buy'
+                                                ? 'Kaufen & Ins Depot übernehmen'
+                                                : 'Verkaufen & Ausbuchen'
                                     }
                                 </button>
 

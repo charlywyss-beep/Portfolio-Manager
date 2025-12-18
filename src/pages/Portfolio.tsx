@@ -4,15 +4,13 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { Plus, Search, Trash2, ArrowUpRight, ArrowDownRight, PieChart, BarChart3, Edit, Landmark } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
-import { AddPositionModal } from '../components/AddPositionModal';
 import { EditPositionModal } from '../components/EditPositionModal';
 import { AddFixedDepositModal } from '../components/AddFixedDepositModal';
 
 
 export function Portfolio() {
-    const { positions: rawPositions, stocks, fixedDeposits, addPosition, deletePosition, updatePosition, deleteFixedDeposit, updateSimulatorState } = usePortfolio();
+    const { positions: rawPositions, stocks, fixedDeposits, deletePosition, updatePosition, deleteFixedDeposit, updateSimulatorState } = usePortfolio();
     const navigate = useNavigate();
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isAddFixedDepositModalOpen, setIsAddFixedDepositModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedPosition, setSelectedPosition] = useState<any>(null);
@@ -419,7 +417,7 @@ export function Portfolio() {
                         <span>Bankkonto</span>
                     </button>
                     <button
-                        onClick={() => setIsAddModalOpen(true)}
+                        onClick={() => navigate('/calculator?mode=buy&from=portfolio')}
                         className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium text-sm"
                     >
                         <Plus className="size-4" />
@@ -446,13 +444,6 @@ export function Portfolio() {
 
             {/* Fixed Deposits Table */}
             <FixedDepositTable />
-
-            <AddPositionModal
-                isOpen={isAddModalOpen}
-                onClose={() => setIsAddModalOpen(false)}
-                stocks={stocks}
-                onAdd={addPosition}
-            />
 
             <AddFixedDepositModal
                 isOpen={isAddFixedDepositModalOpen}
