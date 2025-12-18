@@ -176,7 +176,7 @@ export function DividendCalculator() {
     const [editPriceVal, setEditPriceVal] = useState('');
 
     // Destructure Simulator State
-    const { shares, price, dividend, selectedStockId, simName, simSymbol, simCurrency, fees, mode } = simulatorState; // Added simCurrency
+    const { shares, price, dividend, selectedStockId, simName, simSymbol, simIsin, simCurrency, fees, mode } = simulatorState; // Added simIsin
 
     // Reset edit mode when stock changes
     useEffect(() => {
@@ -216,6 +216,7 @@ export function DividendCalculator() {
                 updateSimulatorState({
                     simName: stock.name,
                     simSymbol: stock.symbol,
+                    simIsin: stock.isin || '',
                     simCurrency: stock.currency,
                     price: stock.currentPrice,
                     dividend: annualDiv,
@@ -264,6 +265,7 @@ export function DividendCalculator() {
                 selectedStockId: 'new',
                 simName: '',
                 simSymbol: '',
+                simIsin: '',
                 simCurrency: 'CHF', // Default new
                 price: 0,
                 dividend: 0,
@@ -287,6 +289,7 @@ export function DividendCalculator() {
                 selectedStockId: stock.id,
                 simName: stock.name,
                 simSymbol: stock.symbol,
+                simIsin: stock.isin || '',
                 simCurrency: stock.currency, // Store Currency
                 price: stock.currentPrice,   // Store Native Price (e.g. 4238 GBp)
                 dividend: annualDiv,         // Store Native Div (e.g. 250 GBp)
@@ -305,6 +308,7 @@ export function DividendCalculator() {
                 targetStockId = addStock({
                     symbol: simSymbol,
                     name: simName,
+                    isin: simIsin,
                     currency: (simCurrency as any) || 'CHF',
                     currentPrice: price,
                     previousClose: price,
@@ -364,6 +368,7 @@ export function DividendCalculator() {
             const newId = addStock({
                 symbol: simSymbol,
                 name: simName,
+                isin: simIsin,
                 currency: simCurrency as any || 'CHF',
                 currentPrice: price,
                 previousClose: price,
@@ -597,8 +602,8 @@ export function DividendCalculator() {
                                 );
                             })()}
                             {(selectedStockId === 'new' || !selectedStockId) && (
-                                <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2">
-                                    <div className="space-y-1">
+                                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 animate-in fade-in slide-in-from-top-2">
+                                    <div className="sm:col-span-5 space-y-1">
                                         <label className="text-[10px] uppercase font-bold text-muted-foreground">Name</label>
                                         <input
                                             type="text"
@@ -608,13 +613,23 @@ export function DividendCalculator() {
                                             className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground focus:ring-1 focus:ring-primary"
                                         />
                                     </div>
-                                    <div className="space-y-1">
+                                    <div className="sm:col-span-3 space-y-1">
                                         <label className="text-[10px] uppercase font-bold text-muted-foreground">Symbol</label>
                                         <input
                                             type="text"
                                             value={simSymbol}
                                             onChange={(e) => updateSimulatorState({ simSymbol: e.target.value })}
                                             placeholder="z.B. NESN"
+                                            className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground focus:ring-1 focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="sm:col-span-4 space-y-1">
+                                        <label className="text-[10px] uppercase font-bold text-muted-foreground">ISIN</label>
+                                        <input
+                                            type="text"
+                                            value={simIsin}
+                                            onChange={(e) => updateSimulatorState({ simIsin: e.target.value })}
+                                            placeholder="z.B. CH0038863350"
                                             className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground focus:ring-1 focus:ring-primary"
                                         />
                                     </div>

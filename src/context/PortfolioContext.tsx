@@ -34,6 +34,7 @@ interface PortfolioContextType {
         selectedStockId: string;
         simName: string;
         simSymbol: string;
+        simIsin: string; // NEW: Track ISIN
         simCurrency: string; // NEW: Track currency of the simulation inputs
         mode: 'buy' | 'sell'; // NEW: Buy/Sell Switch
         fees: {
@@ -56,6 +57,7 @@ const defaultSimulatorState = {
     selectedStockId: '',
     simName: '',
     simSymbol: '',
+    simIsin: '',
     simCurrency: 'CHF',
     mode: 'buy',
     fees: {
