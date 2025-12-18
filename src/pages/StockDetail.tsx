@@ -7,6 +7,7 @@ import { useCurrencyFormatter } from '../utils/currency';
 import { ArrowLeft, Save, TrendingUp } from 'lucide-react';
 import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { cn } from '../utils';
+import { Logo } from '../components/Logo';
 
 import { fetchStockHistory, type TimeRange, type ChartDataPoint } from '../services/finnhub';
 
@@ -79,18 +80,15 @@ export function StockDetail() {
 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
-                        {stock.logoUrl ? (
-                            <img
-                                src={stock.logoUrl}
-                                alt={stock.name}
-                                className="size-16 rounded-xl border border-border bg-white object-contain p-2"
-                                onError={(e) => (e.currentTarget.style.display = 'none')}
-                            />
-                        ) : (
-                            <div className="size-16 rounded-xl border border-border bg-muted/50 flex items-center justify-center text-2xl font-bold text-muted-foreground">
-                                {stock.symbol.slice(0, 2)}
-                            </div>
-                        )}
+                        <Logo
+                            url={stock.logoUrl}
+                            alt={stock.name}
+                            size="size-16"
+                            fallback={
+                                <span className="text-2xl">{stock.symbol.slice(0, 2)}</span>
+                            }
+                            className="text-2xl"
+                        />
                         <div>
                             <div className="flex items-center gap-3">
                                 <h1 className="text-xl md:text-3xl font-bold tracking-tight">{stock.name}</h1>
@@ -129,19 +127,21 @@ export function StockDetail() {
                 {/* Left Column: Stats & Chart */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Price Chart */}
-                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                        <div className="flex items-center gap-2 mb-4">
+                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm min-h-[450px] flex flex-col">
+                        <div className="flex items-center gap-2 mb-4 shrink-0">
                             <TrendingUp className="size-5 text-blue-500" />
                             <h3 className="font-bold text-lg">Kursverlauf</h3>
                         </div>
-                        <PriceHistoryChart
-                            currentPrice={stock.currentPrice}
-                            currency={stock.currency}
-                            trend={stock.dividendYield && stock.dividendYield > 2 ? 'up' : 'neutral'}
-                            historyData={chartData}
-                            selectedRange={timeRange}
-                            onRangeChange={(range) => setTimeRange(range)}
-                        />
+                        <div className="flex-1 w-full min-h-0">
+                            <PriceHistoryChart
+                                currentPrice={stock.currentPrice}
+                                currency={stock.currency}
+                                trend={stock.dividendYield && stock.dividendYield > 2 ? 'up' : 'neutral'}
+                                historyData={chartData}
+                                selectedRange={timeRange}
+                                onRangeChange={(range) => setTimeRange(range)}
+                            />
+                        </div>
                     </div>
 
                     <div className="bg-card border border-border rounded-xl p-6 shadow-sm">

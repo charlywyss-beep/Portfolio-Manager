@@ -6,6 +6,9 @@ import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
 import { EditPositionModal } from '../components/EditPositionModal';
 import { AddFixedDepositModal } from '../components/AddFixedDepositModal';
+import { Logo } from '../components/Logo';
+
+
 
 
 export function Portfolio() {
@@ -99,20 +102,11 @@ export function Portfolio() {
                                     {/* Name */}
                                     <td className="px-2 py-3">
                                         <div className="flex items-center gap-3">
-                                            {pos.stock.logoUrl ? (
-                                                <div className="size-8 rounded-lg bg-white p-1 border border-border shadow-sm flex items-center justify-center shrink-0">
-                                                    <img
-                                                        src={pos.stock.logoUrl}
-                                                        alt={pos.stock.name}
-                                                        className="object-contain max-h-full max-w-full"
-                                                        onError={(e) => (e.currentTarget.style.display = 'none')}
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 text-xs shrink-0">
-                                                    {pos.stock.symbol.slice(0, 2)}
-                                                </div>
-                                            )}
+                                            <Logo
+                                                url={pos.stock.logoUrl}
+                                                alt={pos.stock.name}
+                                                fallback={pos.stock.symbol.slice(0, 2)}
+                                            />
                                             <div className="min-w-0 flex-1 flex flex-col items-start gap-0.5">
                                                 <div
                                                     className="font-semibold text-foreground truncate cursor-pointer hover:text-primary transition-colors text-sm"
@@ -320,15 +314,15 @@ export function Portfolio() {
                                 <div key={fd.id} className="group relative">
                                     <div className="flex justify-between items-start mb-2">
                                         <div className="flex items-center gap-3">
-                                            {fd.logoUrl ? (
-                                                <div className="size-10 rounded-lg bg-white p-1 border border-border shadow-sm flex items-center justify-center shrink-0">
-                                                    <img src={fd.logoUrl} alt={fd.bankName} className="object-contain max-h-full max-w-full" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                                                </div>
-                                            ) : (
-                                                <div className="size-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-700 font-bold border border-blue-200 shrink-0">
-                                                    3a
-                                                </div>
-                                            )}
+                                            <Logo
+                                                url={fd.logoUrl}
+                                                alt={fd.bankName}
+                                                size="size-10"
+                                                fallback={
+                                                    fd.accountType === 'vorsorge' ? '3a' : fd.bankName.slice(0, 2).toUpperCase()
+                                                }
+                                                className={fd.accountType === 'vorsorge' ? "bg-blue-100 text-blue-700 border-blue-200" : undefined}
+                                            />
                                             <div>
                                                 <h4 className="font-bold text-lg">{fd.bankName}</h4>
                                                 {fd.notes && <p className="text-xs text-muted-foreground">{fd.notes}</p>}
@@ -430,20 +424,11 @@ export function Portfolio() {
                                         <tr key={fd.id} className="group hover:bg-muted/30 transition-colors">
                                             <td className="px-4 py-3 font-medium">
                                                 <div className="flex items-center gap-3">
-                                                    {fd.logoUrl ? (
-                                                        <div className="size-8 rounded-lg bg-white p-1 border border-border shadow-sm flex items-center justify-center shrink-0">
-                                                            <img
-                                                                src={fd.logoUrl}
-                                                                alt={fd.bankName}
-                                                                className="object-contain max-h-full max-w-full"
-                                                                onError={(e) => (e.currentTarget.style.display = 'none')}
-                                                            />
-                                                        </div>
-                                                    ) : (
-                                                        <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 text-xs shrink-0">
-                                                            {fd.bankName.slice(0, 2).toUpperCase()}
-                                                        </div>
-                                                    )}
+                                                    <Logo
+                                                        url={fd.logoUrl}
+                                                        alt={fd.bankName}
+                                                        fallback={fd.bankName.slice(0, 2).toUpperCase()}
+                                                    />
                                                     <div className="flex flex-col">
                                                         <span>{fd.bankName}</span>
                                                         {fd.notes && <span className="text-xs text-muted-foreground">{fd.notes}</span>}
