@@ -100,7 +100,7 @@ export function HistoryChart() {
                         </div>
                     </div>
                 ) : filteredData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height="100%" debounce={100}>
                         <BarChart data={filteredData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                             <XAxis

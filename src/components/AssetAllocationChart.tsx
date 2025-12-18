@@ -55,7 +55,7 @@ export function AssetAllocationChart() {
     return (
         <div className="h-[300px] w-full flex flex-col items-center">
             {data.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" debounce={100}>
                     <PieChart>
                         <Pie
                             data={data}

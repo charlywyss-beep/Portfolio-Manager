@@ -157,7 +157,7 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
             </div>
 
             <div className="h-[300px] w-full -ml-2">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" debounce={100}>
                     <AreaChart data={data}>
                         <defs>
                             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">

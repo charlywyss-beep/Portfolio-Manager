@@ -1146,8 +1146,8 @@ export function DividendCalculator() {
                             </div>
                         </div>
 
-                        <div className="h-[300px] w-full min-w-0">
-                            <ResponsiveContainer width="100%" height="100%" minHeight={100} minWidth={100}>
+                        <div className="h-[300px] w-full min-h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%" debounce={100}>
                                 <AreaChart data={projectionData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorCapital" x1="0" y1="0" x2="0" y2="1">

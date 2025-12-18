@@ -247,6 +247,8 @@ export function Dashboard() {
                                                             setIsHistoryModalOpen(true);
                                                         }}
                                                         className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
+                                                        title="Eintrag bearbeiten"
+                                                        aria-label="Eintrag bearbeiten"
                                                     >
                                                         <Edit className="size-3" />
                                                     </button>
@@ -255,6 +257,8 @@ export function Dashboard() {
                                                             if (confirm('Historischen Eintrag löschen?')) deleteHistoryEntry(entry.id);
                                                         }}
                                                         className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                                                        title="Eintrag löschen"
+                                                        aria-label="Eintrag löschen"
                                                     >
                                                         <Trash2 className="size-3" />
                                                     </button>
@@ -294,7 +298,12 @@ export function Dashboard() {
                                 >
                                     <div className="flex items-center gap-3">
                                         {div.stock?.logoUrl && (
-                                            <img src={div.stock.logoUrl} alt={div.stock.name} className="size-8 rounded-full bg-white object-contain p-1 border border-border" />
+                                            <img
+                                                src={div.stock.logoUrl}
+                                                alt={div.stock.name}
+                                                className="size-8 rounded-full bg-white object-contain p-1 border border-border"
+                                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                                            />
                                         )}
                                         <div>
                                             <div className="flex items-center gap-2">
@@ -335,6 +344,8 @@ export function Dashboard() {
                                 value={watchlistTimeframe}
                                 onChange={(e) => setWatchlistTimeframe(Number(e.target.value))}
                                 className="text-xs px-2 py-1 rounded border border-border bg-background"
+                                title="Zeitraum auswählen"
+                                aria-label="Zeitraum auswählen"
                             >
                                 <option value={90}>3 Monate</option>
                                 <option value={180}>6 Monate</option>
@@ -356,7 +367,12 @@ export function Dashboard() {
                                         <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50 hover:bg-blue-100/50 transition-colors">
                                             <div className="flex items-center gap-3">
                                                 {item.stock.logoUrl && (
-                                                    <img src={item.stock.logoUrl} alt={item.stock.name} className="size-8 rounded-full bg-white object-contain p-1 border border-blue-200" />
+                                                    <img
+                                                        src={item.stock.logoUrl}
+                                                        alt={item.stock.name}
+                                                        className="size-8 rounded-full bg-white object-contain p-1 border border-blue-200"
+                                                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                                                    />
                                                 )}
                                                 <div>
                                                     <div className="flex items-center gap-2 mb-1">
@@ -410,7 +426,7 @@ export function Dashboard() {
                     </div>
                     <div className="w-full h-[300px]">
                         {chartData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={300} minWidth={100} minHeight={100}>
+                            <ResponsiveContainer width="100%" height="100%" debounce={100}>
                                 <BarChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
                                     <XAxis
                                         dataKey="name"
