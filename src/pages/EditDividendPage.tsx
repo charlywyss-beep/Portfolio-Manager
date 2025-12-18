@@ -370,7 +370,12 @@ export function EditDividendPage() {
                                                 className="flex-1 px-3 py-2 border rounded-md bg-background text-foreground text-xs"
                                             />
                                             {logoUrl && (
-                                                <img src={logoUrl} alt="Preview" className="size-9 rounded-md border border-border bg-white object-contain p-1" />
+                                                <img
+                                                    src={logoUrl}
+                                                    alt="Preview"
+                                                    className="size-9 rounded-md border border-border bg-white object-contain p-1"
+                                                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                                                />
                                             )}
                                         </div>
 

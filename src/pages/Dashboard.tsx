@@ -426,7 +426,7 @@ export function Dashboard() {
                     </div>
                     <div className="w-full h-[300px]">
                         {chartData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%" debounce={100}>
+                            <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={0} minHeight={0}>
                                 <BarChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
                                     <XAxis
                                         dataKey="name"

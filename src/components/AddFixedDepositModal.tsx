@@ -143,7 +143,12 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                 className="flex-1 h-9 px-3 rounded-md border border-input bg-background/50 text-xs focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                             />
                             {logoUrl && (
-                                <img src={logoUrl} alt="Preview" className="size-9 rounded-md border border-border bg-white object-contain p-1" />
+                                <img
+                                    src={logoUrl}
+                                    alt="Preview"
+                                    className="size-9 rounded-md border border-border bg-white object-contain p-1"
+                                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                                />
                             )}
                         </div>
 

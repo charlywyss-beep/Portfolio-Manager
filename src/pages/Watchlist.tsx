@@ -117,7 +117,12 @@ export function Watchlist() {
                                                 <td className="py-3 px-4">
                                                     <div className="flex items-center gap-3">
                                                         {stock.logoUrl ? (
-                                                            <img src={stock.logoUrl} alt={stock.symbol} className="size-8 rounded-full bg-white object-contain p-1 border border-border" />
+                                                            <img
+                                                                src={stock.logoUrl}
+                                                                alt={stock.symbol}
+                                                                className="size-8 rounded-full bg-white object-contain p-1 border border-border"
+                                                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                                                            />
                                                         ) : (
                                                             <div className="size-8 rounded-full bg-muted flex items-center justify-center">
                                                                 <span className="font-bold text-xs">{stock.symbol.slice(0, 2)}</span>

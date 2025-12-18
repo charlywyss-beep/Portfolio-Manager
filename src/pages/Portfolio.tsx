@@ -101,7 +101,12 @@ export function Portfolio() {
                                         <div className="flex items-center gap-3">
                                             {pos.stock.logoUrl ? (
                                                 <div className="size-8 rounded-lg bg-white p-1 border border-border shadow-sm flex items-center justify-center shrink-0">
-                                                    <img src={pos.stock.logoUrl} alt={pos.stock.name} className="object-contain max-h-full max-w-full" />
+                                                    <img
+                                                        src={pos.stock.logoUrl}
+                                                        alt={pos.stock.name}
+                                                        className="object-contain max-h-full max-w-full"
+                                                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                                                    />
                                                 </div>
                                             ) : (
                                                 <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 text-xs shrink-0">
@@ -312,7 +317,12 @@ export function Portfolio() {
                                                 <div className="flex items-center gap-3">
                                                     {fd.logoUrl ? (
                                                         <div className="size-8 rounded-lg bg-white p-1 border border-border shadow-sm flex items-center justify-center shrink-0">
-                                                            <img src={fd.logoUrl} alt={fd.bankName} className="object-contain max-h-full max-w-full" />
+                                                            <img
+                                                                src={fd.logoUrl}
+                                                                alt={fd.bankName}
+                                                                className="object-contain max-h-full max-w-full"
+                                                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                                                            />
                                                         </div>
                                                     ) : (
                                                         <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 text-xs shrink-0">

@@ -80,7 +80,12 @@ export function StockDetail() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                         {stock.logoUrl ? (
-                            <img src={stock.logoUrl} alt={stock.name} className="size-16 rounded-xl border border-border bg-white object-contain p-2" />
+                            <img
+                                src={stock.logoUrl}
+                                alt={stock.name}
+                                className="size-16 rounded-xl border border-border bg-white object-contain p-2"
+                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                            />
                         ) : (
                             <div className="size-16 rounded-xl border border-border bg-muted/50 flex items-center justify-center text-2xl font-bold text-muted-foreground">
                                 {stock.symbol.slice(0, 2)}
