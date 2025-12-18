@@ -34,9 +34,12 @@ interface PortfolioContextType {
         selectedStockId: string;
         simName: string;
         simSymbol: string;
-        simIsin: string; // NEW: Track ISIN
-        simCurrency: string; // NEW: Track currency of the simulation inputs
-        mode: 'buy' | 'sell'; // NEW: Buy/Sell Switch
+        simIsin: string;
+        simCurrency: string;
+        simType: 'stock' | 'etf';
+        simSector: string;
+        simValor: string;
+        mode: 'buy' | 'sell';
         fees: {
             courtagePercent: number;
             courtageMin: number;
@@ -59,6 +62,9 @@ const defaultSimulatorState = {
     simSymbol: '',
     simIsin: '',
     simCurrency: 'CHF',
+    simType: 'stock',
+    simSector: '',
+    simValor: '',
     mode: 'buy',
     fees: {
         courtagePercent: 0.5,
