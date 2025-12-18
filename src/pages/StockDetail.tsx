@@ -14,7 +14,7 @@ import { fetchStockHistory, type TimeRange, type ChartDataPoint } from '../servi
 export function StockDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { stocks, updateStock } = usePortfolio();
+    const { stocks, updateStock, updateStockPrice } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
 
     // Find stock
@@ -43,6 +43,15 @@ export function StockDetail() {
             } else {
                 console.log('[StockDetail] Success! Data points:', response.data?.length || 0);
                 setChartData(response.data);
+
+                // Sync current price with latest chart data
+                if (response.data && response.data.length > 0) {
+                    const latestPrice = response.data[response.data.length - 1].value;
+                    if (Math.abs(stock.currentPrice - latestPrice) > 0.01) {
+                        // Update price but don't trigger re-fetch (dependency is stock.symbol)
+                        updateStockPrice(stock.id, latestPrice);
+                    }
+                }
             }
         };
 
