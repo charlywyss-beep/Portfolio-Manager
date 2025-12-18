@@ -664,7 +664,7 @@ export function DividendCalculator() {
                                     <select
                                         value={simCurrency || 'CHF'}
                                         onChange={(e) => updateSimulatorState({ simCurrency: e.target.value })}
-                                        className="text-xs border rounded px-1 py-0.5"
+                                        className="text-xs border border-input bg-background text-foreground rounded px-2 py-1 focus:ring-1 focus:ring-primary transition-all"
                                     >
                                         <option value="CHF">CHF</option>
                                         <option value="USD">USD</option>
