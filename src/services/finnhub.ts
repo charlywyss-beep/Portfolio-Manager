@@ -75,3 +75,19 @@ export async function fetchStockHistory(
         return { data: null, error: 'Netzwerkfehler oder API nicht erreichbar.' };
     }
 }
+
+// Helper to find logo via Clearbit Autocomplete
+export async function fetchCompanyLogo(query: string): Promise<string | null> {
+    try {
+        const response = await fetch(`https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(query)}`);
+        if (!response.ok) return null;
+        const data = await response.json();
+        if (data && data.length > 0) {
+            return data[0].logo;
+        }
+        return null;
+    } catch (e) {
+        console.warn("Logo fetch failed", e);
+        return null;
+    }
+}

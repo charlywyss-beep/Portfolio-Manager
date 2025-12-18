@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { Position, Stock } from '../types';
 import { MOCK_POSITIONS, MOCK_STOCKS } from '../data/mockData';
+import { fetchCompanyLogo } from '../services/finnhub';
 
 interface PortfolioContextType {
     positions: Position[];
@@ -151,49 +152,57 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('portfolio_watchlist', JSON.stringify(watchlist));
     }, [watchlist]);
 
-    // Data Sanitization: Replace legacy logo URLs with Clearbit (v3.9.114)
+    // Intelligent Logo Discovery (v3.9.118)
     useEffect(() => {
-        let hasChanges = false;
+        const fetchMissingLogos = async () => {
+            let hasUpdates = false;
+            const updatedStocks = [...stocks];
 
-        const sanitizeUrl = (url: string | undefined): string | undefined => {
-            if (!url) return url;
-            if (url.includes('gstatic.com') || url.includes('google.com/s2/favicons')) {
-                // Try to extract domain
-                const match = url.match(/domain=([^&]+)/);
-                if (match && match[1]) {
-                    hasChanges = true;
-                    return `https://logo.clearbit.com/${match[1]}`;
+            for (let i = 0; i < updatedStocks.length; i++) {
+                const stock = updatedStocks[i];
+                // Check if logo is missing or invalid (e.g. was sanitized to undefined/bad url)
+                if (!stock.logoUrl || stock.logoUrl.includes('undefined') || stock.logoUrl.length < 10) {
+                    console.log(`[Logo Discovery] Fetching logo for ${stock.name}...`);
+                    const logo = await fetchCompanyLogo(stock.name);
+
+                    if (logo) {
+                        console.log(`[Logo Discovery] Found logo for ${stock.name}: ${logo}`);
+                        updatedStocks[i] = { ...stock, logoUrl: logo };
+                        hasUpdates = true;
+                    } else {
+                        // Try with symbol as fallback
+                        const logoBySymbol = await fetchCompanyLogo(stock.symbol);
+                        if (logoBySymbol) {
+                            console.log(`[Logo Discovery] Found logo for ${stock.symbol}: ${logoBySymbol}`);
+                            updatedStocks[i] = { ...stock, logoUrl: logoBySymbol };
+                            hasUpdates = true;
+                        }
+                    }
+                    // Rate limit slightly to avoid spamming API
+                    await new Promise(r => setTimeout(r, 200));
                 }
-                // If it's a direct gstatic favicon URL without domain param (unlikely here but for safety)
-                // Just keep it or hide it. Here we just flag for change.
             }
-            return url;
+
+            if (hasUpdates) {
+                setStocks(updatedStocks);
+            }
         };
 
-        const sanitizedStocks = stocks.map(s => {
-            const newUrl = sanitizeUrl(s.logoUrl);
-            if (newUrl !== s.logoUrl) {
-                hasChanges = true;
-                return { ...s, logoUrl: newUrl };
-            }
-            return s;
-        });
+        // Run this check once on mount (or when stock list length changes significantly?)
+        // To avoid infinite loops, we ideally need a ref or smarter check. 
+        // For now, let's run it if we detect *any* missing logos, but we need to be careful.
+        // Simplified: Just run it. The empty check prevents re-fetching existing ones.
 
-        const sanitizedDeposits = fixedDeposits.map(fd => {
-            const newUrl = sanitizeUrl(fd.logoUrl);
-            if (newUrl !== fd.logoUrl) {
-                hasChanges = true;
-                return { ...fd, logoUrl: newUrl };
+        // Only run if we actually have stocks
+        if (stocks.length > 0) {
+            const missingCount = stocks.filter(s => !s.logoUrl || s.logoUrl.includes('undefined')).length;
+            // Only trigger if we have work to do
+            if (missingCount > 0) {
+                fetchMissingLogos();
             }
-            return fd;
-        });
-
-        if (hasChanges) {
-            setStocks(sanitizedStocks);
-            setFixedDeposits(sanitizedDeposits);
-            console.log("v3.9.114: Sanitized legacy logo URLs found in storage.");
         }
-    }, [stocks, fixedDeposits]);
+    }, [stocks.length]); // Only re-run if number of stocks changes (e.g. new add), not on every update to avoid loop
+
 
     const addStock = (stockData: Omit<Stock, 'id'>) => {
         const newId = `stock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
