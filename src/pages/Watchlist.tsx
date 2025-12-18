@@ -10,7 +10,7 @@ import type { Stock } from '../types';
 
 export function Watchlist() {
     const navigate = useNavigate();
-    const { stocks, watchlist, removeFromWatchlist, addToWatchlist, addPosition } = usePortfolio(); // Get addPosition
+    const { stocks, watchlist, removeFromWatchlist, addPosition } = usePortfolio(); // Get addPosition
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
 
