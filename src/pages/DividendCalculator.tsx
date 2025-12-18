@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Calculator, Coins, Settings2, Plus, Check, Eye, Pencil, FileText } from 'lucide-react';
 
@@ -8,6 +9,8 @@ import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
 
 export function DividendCalculator() {
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { stocks, addStock, addToWatchlist, simulatorState, updateSimulatorState, positions, addPosition, updatePosition, deletePosition } = usePortfolio();
     const { rates } = useExchangeRates();
 
@@ -183,6 +186,20 @@ export function DividendCalculator() {
     // FIX: Sync Simulator State when navigating to this page with a pre-selected stock
     // This ensures simCurrency is correctly set to e.g. 'GBp' instead of staying 'CHF'
     useEffect(() => {
+        const queryMode = searchParams.get('mode');
+        if (queryMode === 'new') {
+            updateSimulatorState({
+                selectedStockId: 'new',
+                simName: '',
+                simSymbol: '',
+                simCurrency: 'CHF',
+                price: 0,
+                dividend: 0,
+                mode: 'buy'
+            });
+            return;
+        }
+
         if (selectedStockId && selectedStockId !== 'new') {
             const stock = stocks.find(s => s.id === selectedStockId);
             if (stock && stock.currency !== simCurrency) {
@@ -206,7 +223,7 @@ export function DividendCalculator() {
                 });
             }
         }
-    }, [selectedStockId, stocks, simCurrency]);
+    }, [selectedStockId, stocks, simCurrency, searchParams]);
 
     // Derived Logic & Currency Conversion for TOTALS only
     // 1. Calculate Volume in Native Currency
@@ -332,18 +349,22 @@ export function DividendCalculator() {
 
 
     const handleAddToWatchlist = () => {
-        // Legacy: "Result to Watchlist" - kept for "Watchlist" button
+        const fromWatchlist = searchParams.get('from') === 'watchlist';
+
         if (selectedStockId && selectedStockId !== 'new') {
             addToWatchlist(selectedStockId);
             setShowSuccess(true);
-            setTimeout(() => setShowSuccess(false), 3000);
+            setTimeout(() => {
+                setShowSuccess(false);
+                if (fromWatchlist) navigate('/watchlist');
+            }, 1000);
         } else {
             // Create New Stock
             if (!simName || !simSymbol) return;
             const newId = addStock({
                 symbol: simSymbol,
                 name: simName,
-                currency: 'CHF',
+                currency: simCurrency as any || 'CHF',
                 currentPrice: price,
                 previousClose: price,
                 sector: 'Simuliert',
@@ -354,7 +375,10 @@ export function DividendCalculator() {
             addToWatchlist(newId);
             updateSimulatorState({ selectedStockId: newId });
             setShowSuccess(true);
-            setTimeout(() => setShowSuccess(false), 3000);
+            setTimeout(() => {
+                setShowSuccess(false);
+                if (fromWatchlist) navigate('/watchlist');
+            }, 1000);
         }
     };
 

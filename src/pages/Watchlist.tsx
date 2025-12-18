@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { useCurrencyFormatter } from '../utils/currency';
 import { Eye, Plus, Trash2, Edit, ShoppingBag } from 'lucide-react';
 
-import { AddWatchlistStockModal } from '../components/AddWatchlistStockModal';
 import { AddPositionModal } from '../components/AddPositionModal'; // Import AddPositionModal
 import type { Stock } from '../types';
 
@@ -13,7 +12,6 @@ export function Watchlist() {
     const navigate = useNavigate();
     const { stocks, watchlist, removeFromWatchlist, addToWatchlist, addPosition } = usePortfolio(); // Get addPosition
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
-    const [isAddStockOpen, setIsAddStockOpen] = useState(false);
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
 
     // Filter stocks that are in the watchlist
@@ -37,8 +35,7 @@ export function Watchlist() {
 
                         <button
                             onClick={() => {
-                                // setEditingStock(null);
-                                setIsAddStockOpen(true);
+                                navigate('/calculator?mode=new&from=watchlist');
                             }}
                             className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm"
                         >
@@ -97,7 +94,7 @@ export function Watchlist() {
                                                 </div>
                                                 <p className="font-medium">Noch keine Aktien auf der Watchlist.</p>
                                                 <button
-                                                    onClick={() => setIsAddStockOpen(true)}
+                                                    onClick={() => navigate('/calculator?mode=new&from=watchlist')}
                                                     className="text-primary hover:underline text-sm"
                                                 >
                                                     Jetzt hinzufügen
@@ -272,14 +269,7 @@ export function Watchlist() {
                 </div>
             </div>
 
-            <AddWatchlistStockModal
-                isOpen={isAddStockOpen}
-                onClose={() => setIsAddStockOpen(false)}
-                onAdd={(stockId) => {
-                    addToWatchlist(stockId);
-                    setIsAddStockOpen(false);
-                }}
-            />
+            {/* Removed AddWatchlistStockModal as it's superseded by the calculator */}
 
             {/* Buy Modal */}
             <AddPositionModal
