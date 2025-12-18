@@ -33,7 +33,7 @@ export interface Position {
 }
 
 // Bankguthaben (e.g. Sparkonto / Privatkonto)
-export type BankAccountType = 'sparkonto' | 'privatkonto';
+export type BankAccountType = 'sparkonto' | 'privatkonto' | 'vorsorge';
 
 export interface FixedDeposit {
     id: string;
@@ -46,6 +46,7 @@ export interface FixedDeposit {
     notes?: string;
     accountType?: BankAccountType; // New field
     logoUrl?: string; // NEW: Logo URL
+    currentYearContribution?: number; // NEW: For Vorsorge account progress
 }
 
 export interface PortfolioHistoryEntry {

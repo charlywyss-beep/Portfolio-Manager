@@ -19,6 +19,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
     const [notes, setNotes] = useState('');
     const [accountType, setAccountType] = useState<BankAccountType>('sparkonto');
     const [logoUrl, setLogoUrl] = useState(''); // NEW
+    const [currentYearContribution, setCurrentYearContribution] = useState<number | ''>(''); // NEW
     const [domain, setDomain] = useState(''); // NEW: For generator
 
     useEffect(() => {
@@ -31,6 +32,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             setNotes(editingDeposit.notes || '');
             setAccountType(editingDeposit.accountType || 'sparkonto');
             setLogoUrl(editingDeposit.logoUrl || '');
+            setCurrentYearContribution(editingDeposit.currentYearContribution || '');
         } else {
             // Reset form for new entry
             setBankName('');
@@ -40,6 +42,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             setNotes('');
             setAccountType('sparkonto');
             setLogoUrl('');
+            setCurrentYearContribution('');
             setDomain('');
         }
     }, [editingDeposit, isOpen]);
@@ -57,6 +60,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             notes,
             accountType,
             logoUrl,
+            currentYearContribution: accountType === 'vorsorge' ? (currentYearContribution === '' ? 0 : Number(currentYearContribution)) : undefined,
             startDate: new Date().toISOString(), // Internal timestamp
             maturityDate: new Date().toISOString() // Internal timestamp (irrelevant for open end)
         };
@@ -121,6 +125,17 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                     className="w-4 h-4 text-primary focus:ring-primary"
                                 />
                                 <span>Privatkonto</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="accountType"
+                                    value="vorsorge"
+                                    checked={accountType === 'vorsorge'}
+                                    onChange={() => setAccountType('vorsorge')}
+                                    className="w-4 h-4 text-primary focus:ring-primary"
+                                />
+                                <span>Vorsorge 3a</span>
                             </label>
                         </div>
                     </div>

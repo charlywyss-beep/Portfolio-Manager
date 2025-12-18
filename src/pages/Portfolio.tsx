@@ -275,11 +275,126 @@ export function Portfolio() {
         </div>
     );
 
-    const FixedDepositTable = () => {
-        const filteredFixedDeposits = fixedDeposits?.filter(fd =>
+    const VorsorgeSection = () => {
+        const vorsorgeDeposits = fixedDeposits?.filter(fd => fd.accountType === 'vorsorge') || [];
+
+        if (vorsorgeDeposits.length === 0 && !searchTerm) return null;
+
+        const filteredVorsorge = vorsorgeDeposits.filter(fd =>
             fd.bankName.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (fd.notes && fd.notes.toLowerCase().includes(searchTerm.toLowerCase()))
-        ) || [];
+        );
+
+        if (filteredVorsorge.length === 0 && searchTerm) return null;
+
+        const totalVorsorge = vorsorgeDeposits.reduce((sum, fd) => sum + fd.amount, 0);
+
+        return (
+            <div className="space-y-4 mb-8">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-2xl font-bold text-slate-700 dark:text-slate-200">Vorsorge</h2>
+                    </div>
+                </div>
+
+                <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                    <div className="flex justify-between items-end mb-6 border-b border-border pb-4">
+                        <div>
+                            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Vorsorgevermögen</h3>
+                            <p className="text-xs text-muted-foreground mt-1">Total über alle 3a Konten</p>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-2xl font-bold text-foreground block">
+                                {formatCurrency(totalVorsorge, 'CHF')}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        {filteredVorsorge.map(fd => {
+                            const limit = 7258;
+                            const current = fd.currentYearContribution || 0;
+                            const percent = Math.min((current / limit) * 100, 100);
+
+                            return (
+                                <div key={fd.id} className="group relative">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="flex items-center gap-3">
+                                            {fd.logoUrl ? (
+                                                <div className="size-10 rounded-lg bg-white p-1 border border-border shadow-sm flex items-center justify-center shrink-0">
+                                                    <img src={fd.logoUrl} alt={fd.bankName} className="object-contain max-h-full max-w-full" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                                </div>
+                                            ) : (
+                                                <div className="size-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-700 font-bold border border-blue-200 shrink-0">
+                                                    3a
+                                                </div>
+                                            )}
+                                            <div>
+                                                <h4 className="font-bold text-lg">{fd.bankName}</h4>
+                                                {fd.notes && <p className="text-xs text-muted-foreground">{fd.notes}</p>}
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-xl font-medium text-slate-600 dark:text-slate-300">
+                                                {formatCurrency(fd.amount, fd.currency)}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Progress Bar Section */}
+                                    <div className="ml-[52px]">
+                                        <div className="flex justify-between text-xs mb-1.5 font-medium">
+                                            <span className="text-slate-500 dark:text-slate-400">
+                                                {current.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[10px] uppercase text-muted-foreground ml-1">von {limit.toLocaleString('de-CH', { minimumFractionDigits: 2 })} (2025)</span>
+                                            </span>
+                                        </div>
+                                        <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
+                                            <div
+                                                className="h-full bg-slate-700 dark:bg-slate-400 rounded-full transition-all duration-500"
+                                                style={{ width: `${percent}%` }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Actions (Absolute or hover) */}
+                                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-card/80 backdrop-blur-sm p-1 rounded-bl-lg">
+                                        <button
+                                            onClick={() => {
+                                                setEditingFixedDeposit(fd);
+                                                setIsAddFixedDepositModalOpen(true);
+                                            }}
+                                            className="p-1.5 hover:bg-muted rounded text-primary transition-colors"
+                                        >
+                                            <Edit className="size-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (confirm(`Konto bei "${fd.bankName}" wirklich löschen?`)) deleteFixedDeposit(fd.id);
+                                            }}
+                                            className="p-1.5 hover:bg-red-50 hover:text-red-600 rounded text-muted-foreground transition-colors"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const FixedDepositTable = () => {
+        const filteredFixedDeposits = fixedDeposits?.filter(fd =>
+            fd.accountType !== 'vorsorge' && (
+                fd.bankName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (fd.notes && fd.notes.toLowerCase().includes(searchTerm.toLowerCase()))
+            )) || [];
+
+        // If filtering hides everything but there ARE header items, we might want to just show empty state inside the table
+        // But if there are NO non-vorsorge deposits at all, and no search term, maybe hide the whole section? 
+        // User asked for "Bankguthaben" implementation, usually implies the list exists.
 
         return (
             <div className="space-y-3">
@@ -452,7 +567,10 @@ export function Portfolio() {
                 emptyMessage={searchTerm ? 'Keine ETFs gefunden.' : 'Noch keine ETFs im Depot.'}
             />
 
-            {/* Fixed Deposits Table */}
+            {/* Vorsorge Section */}
+            <VorsorgeSection />
+
+            {/* Bankguthaben Table */}
             <FixedDepositTable />
 
             <AddFixedDepositModal
