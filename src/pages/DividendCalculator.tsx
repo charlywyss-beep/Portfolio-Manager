@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Calculator, Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart } from 'lucide-react';
@@ -187,9 +187,13 @@ export function DividendCalculator() {
         setIsEditingPrice(false);
     }, [selectedStockId]);
 
-    // FIX: Sync Simulator State when navigating to this page with a pre-selected stock
-    // This ensures simCurrency is correctly set to e.g. 'GBp' instead of staying 'CHF'
+    // Flag to prevent double-initialization or reset-loops from URL
+    const isInitialized = useRef(false);
+
+    // Initial URL-based logic (Reset only once)
     useEffect(() => {
+        if (isInitialized.current) return;
+
         const queryMode = searchParams.get('mode');
         if (queryMode === 'new') {
             updateSimulatorState({
@@ -201,22 +205,28 @@ export function DividendCalculator() {
                 dividend: 0,
                 mode: 'buy'
             });
-            return;
         }
+        isInitialized.current = true;
+    }, [searchParams]);
 
-        if (selectedStockId && selectedStockId !== 'new') {
-            const stock = stocks.find(s => s.id === selectedStockId);
-            if (stock && stock.currency !== simCurrency) {
-                // Determine Stamp Duty
-                let newStamp = 0.075;
-                if (stock.currency !== 'CHF') newStamp = 0.15;
+    // Reactive synchronization when stock ID changes
+    useEffect(() => {
+        if (!selectedStockId || selectedStockId === 'new') return;
 
-                // Calculate Annual Dividend
-                let annualDiv = stock.dividendAmount || 0;
-                if (stock.dividendFrequency === 'quarterly') annualDiv *= 4;
-                else if (stock.dividendFrequency === 'monthly') annualDiv *= 12;
-                else if (stock.dividendFrequency === 'semi-annually') annualDiv *= 2;
+        const stock = stocks.find(s => s.id === selectedStockId);
+        if (stock) {
+            // Determine Stamp Duty
+            let newStamp = 0.075;
+            if (stock.currency !== 'CHF') newStamp = 0.15;
 
+            // Calculate Annual Dividend
+            let annualDiv = stock.dividendAmount || 0;
+            if (stock.dividendFrequency === 'quarterly') annualDiv *= 4;
+            else if (stock.dividendFrequency === 'monthly') annualDiv *= 12;
+            else if (stock.dividendFrequency === 'semi-annually') annualDiv *= 2;
+
+            // Update state ONLY if it's different to prevent loops
+            if (stock.currency !== simCurrency || stock.symbol !== simSymbol) {
                 updateSimulatorState({
                     simName: stock.name,
                     simSymbol: stock.symbol,
@@ -228,7 +238,7 @@ export function DividendCalculator() {
                 });
             }
         }
-    }, [selectedStockId, stocks, simCurrency, searchParams]);
+    }, [selectedStockId, stocks]);
 
     // Derived Logic & Currency Conversion for TOTALS only
     // 1. Calculate Volume in Native Currency
