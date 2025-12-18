@@ -5,6 +5,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
 import { useCurrencyFormatter } from '../utils/currency';
+import { cn } from '../utils';
 
 // Helper to get annual factor
 const getFrequencyFactor = (freq: string) => {
@@ -320,13 +321,28 @@ export function EditDividendPage() {
                                 <div className="space-y-4">
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">Symbol (Ticker) <span className="text-xs text-muted-foreground">(für Charts)</span></label>
-                                        <input
-                                            type="text"
-                                            value={symbol}
-                                            onChange={(e) => setSymbol(e.target.value)}
-                                            placeholder="z.B. AAPL oder NESN.SW"
-                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground font-mono uppercase"
-                                        />
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                value={symbol}
+                                                onChange={(e) => setSymbol(e.target.value)}
+                                                placeholder="z.B. AAPL oder NESN.SW"
+                                                className={cn(
+                                                    "w-full px-3 py-2 border rounded-md bg-background text-foreground font-mono uppercase",
+                                                    (currency === 'CHF' && symbol && !symbol.toUpperCase().endsWith('.SW')) ? "border-amber-500 focus:ring-amber-500" : ""
+                                                )}
+                                            />
+                                            {currency === 'CHF' && symbol && !symbol.toUpperCase().endsWith('.SW') && (
+                                                <div className="absolute right-3 top-2 text-amber-500 animate-pulse">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-alert-triangle"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {currency === 'CHF' && symbol && !symbol.toUpperCase().endsWith('.SW') && (
+                                            <p className="text-xs text-amber-500 font-medium">
+                                                Hinweis: Für <b>CHF</b> Aktien an der Schweizer Börse fehlt meist die Endung <b>.SW</b> (z.B. {symbol}.SW)
+                                            </p>
+                                        )}
                                         <p className="text-[10px] text-muted-foreground">
                                             Nutze Yahoo Finance Symbole (z.B. <b>NESN.SW</b> für Nestle, <b>BATS.L</b> für BAT)
                                         </p>
