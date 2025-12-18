@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calculator, Coins, Settings2, Plus, Check, Eye, Pencil, FileText } from 'lucide-react';
+import { Calculator, Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X } from 'lucide-react';
 
 import { jsPDF } from 'jspdf';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
+import { cn } from '../utils';
 
 export function DividendCalculator() {
     const navigate = useNavigate();
@@ -168,15 +169,18 @@ export function DividendCalculator() {
     const [priceAppreciation, setPriceAppreciation] = useState(4.0);
     const [reinvest, setReinvest] = useState(true);
 
+    // Destructure Simulator State
+    const { shares, price, dividend, selectedStockId, simName, simSymbol, simIsin, simCurrency, fees, mode } = simulatorState;
+
     // Watchlist Feedback
     const [showSuccess, setShowSuccess] = useState(false);
 
     // Price Editing State
+    const [activeTab, setActiveTab] = useState<'search' | 'manual'>(selectedStockId === 'new' ? 'manual' : 'search');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [showStockList, setShowStockList] = useState(false);
     const [isEditingPrice, setIsEditingPrice] = useState(false);
     const [editPriceVal, setEditPriceVal] = useState('');
-
-    // Destructure Simulator State
-    const { shares, price, dividend, selectedStockId, simName, simSymbol, simIsin, simCurrency, fees, mode } = simulatorState; // Added simIsin
 
     // Reset edit mode when stock changes
     useEffect(() => {
@@ -260,7 +264,11 @@ export function DividendCalculator() {
 
     // Handle Stock Selection
     const handleStockSelect = (stockId: string) => {
+        setShowStockList(false);
+        setSearchTerm('');
+
         if (stockId === 'new') {
+            setActiveTab('manual');
             updateSimulatorState({
                 selectedStockId: 'new',
                 simName: '',
@@ -275,6 +283,7 @@ export function DividendCalculator() {
         }
         const stock = stocks.find(s => s.id === stockId);
         if (stock) {
+            setActiveTab('search');
             let newStamp = 0.075; // Default CH
             if (stock.currency !== 'CHF') newStamp = 0.15; // Foreign
 
@@ -481,30 +490,137 @@ export function DividendCalculator() {
                         </div>
 
                         <div className="space-y-4">
-                            {/* Stock Selector */}
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-muted-foreground">Aktie / Simulation</label>
-                                <select
-                                    className="w-full px-3 py-2 text-sm rounded-md border border-input bg-background text-foreground focus:ring-1 focus:ring-primary focus:border-primary transition-all appearance-none"
-                                    onChange={(e) => handleStockSelect(e.target.value)}
-                                    value={selectedStockId}
+                            {/* Tabs Selection */}
+                            <div className="flex border-b border-border mb-4">
+                                <button
+                                    onClick={() => {
+                                        setActiveTab('search');
+                                        if (selectedStockId === 'new') updateSimulatorState({ selectedStockId: '' });
+                                    }}
+                                    className={cn(
+                                        "flex-1 py-2 text-xs font-medium border-b-2 transition-colors flex items-center justify-center gap-2",
+                                        activeTab === 'search'
+                                            ? "border-primary text-primary"
+                                            : "border-transparent text-muted-foreground hover:text-foreground"
+                                    )}
                                 >
-                                    <option value="" disabled className="bg-card text-muted-foreground">-- Wähle Aktie oder Neu --</option>
-                                    <option value="new" className="bg-card text-foreground">+ Neue Simulation (Manuell)</option>
-                                    <optgroup label="Meine Watchlist & Portfolio" className="bg-card text-foreground">
-                                        {stocks.map(stock => (
-                                            <option key={stock.id} value={stock.id}>
-                                                {stock.name} {stock.symbol} - {stock.currency} {stock.currentPrice}
-                                            </option>
-                                        ))}
-                                    </optgroup>
-                                </select>
-                                {selectedStockId && selectedStockId !== 'new' && (
-                                    <div className="text-[10px] text-muted-foreground px-1 flex justify-between">
-                                        <span>ISIN: {stocks.find(s => s.id === selectedStockId)?.isin || '-'}</span>
-                                    </div>
-                                )}
+                                    <Search size={14} /> Suche
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setActiveTab('manual');
+                                        handleStockSelect('new');
+                                    }}
+                                    className={cn(
+                                        "flex-1 py-2 text-xs font-medium border-b-2 transition-colors flex items-center justify-center gap-2",
+                                        activeTab === 'manual'
+                                            ? "border-primary text-primary"
+                                            : "border-transparent text-muted-foreground hover:text-foreground"
+                                    )}
+                                >
+                                    <PlusCircle size={14} /> Manuell
+                                </button>
                             </div>
+
+                            {activeTab === 'search' ? (
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Aktie suchen</label>
+                                    {!selectedStockId || selectedStockId === 'new' ? (
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                                            <input
+                                                type="text"
+                                                placeholder="Name oder Symbol..."
+                                                value={searchTerm}
+                                                onChange={(e) => {
+                                                    setSearchTerm(e.target.value);
+                                                    setShowStockList(true);
+                                                }}
+                                                onFocus={() => setShowStockList(true)}
+                                                className="w-full pl-9 pr-4 py-2 border border-input rounded-lg bg-background text-sm focus:ring-1 focus:ring-primary"
+                                            />
+                                            {showStockList && searchTerm && (
+                                                <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto divide-y divide-border">
+                                                    {stocks
+                                                        .filter(s =>
+                                                            s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                            s.symbol.toLowerCase().includes(searchTerm.toLowerCase())
+                                                        )
+                                                        .map(stock => (
+                                                            <button
+                                                                key={stock.id}
+                                                                onClick={() => handleStockSelect(stock.id)}
+                                                                className="w-full p-3 hover:bg-muted text-left flex items-center gap-3 transition-colors"
+                                                            >
+                                                                <div className="size-8 rounded bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 text-xs">
+                                                                    {stock.symbol.slice(0, 2)}
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="font-semibold text-sm truncate">{stock.name}</div>
+                                                                    <div className="text-[10px] text-muted-foreground truncate">{stock.symbol} • {stock.currency}</div>
+                                                                </div>
+                                                                <div className="text-xs font-mono">{stock.currentPrice}</div>
+                                                            </button>
+                                                        ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="p-3 border border-primary/30 bg-primary/5 rounded-lg flex items-center gap-3 animate-in fade-in zoom-in-95">
+                                            <div className="size-10 rounded bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
+                                                {stocks.find(s => s.id === selectedStockId)?.symbol.slice(0, 2)}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-semibold truncate text-sm">
+                                                    {stocks.find(s => s.id === selectedStockId)?.name}
+                                                </div>
+                                                <div className="text-[10px] text-muted-foreground truncate">
+                                                    {stocks.find(s => s.id === selectedStockId)?.symbol} • ISIN: {stocks.find(s => s.id === selectedStockId)?.isin || '-'}
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => updateSimulatorState({ selectedStockId: '' })}
+                                                className="p-1 hover:bg-muted rounded-full text-muted-foreground transition-colors"
+                                            >
+                                                <X className="size-4" />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 animate-in fade-in slide-in-from-right-2">
+                                    <div className="sm:col-span-5 space-y-1">
+                                        <label className="text-[10px] uppercase font-bold text-muted-foreground">Name</label>
+                                        <input
+                                            type="text"
+                                            value={simName}
+                                            onChange={(e) => updateSimulatorState({ simName: e.target.value })}
+                                            placeholder="z.B. Nestlé"
+                                            className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground focus:ring-1 focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="sm:col-span-3 space-y-1">
+                                        <label className="text-[10px] uppercase font-bold text-muted-foreground">Symbol</label>
+                                        <input
+                                            type="text"
+                                            value={simSymbol}
+                                            onChange={(e) => updateSimulatorState({ simSymbol: e.target.value })}
+                                            placeholder="z.B. NESN"
+                                            className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground focus:ring-1 focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div className="sm:col-span-4 space-y-1">
+                                        <label className="text-[10px] uppercase font-bold text-muted-foreground">ISIN</label>
+                                        <input
+                                            type="text"
+                                            value={simIsin}
+                                            onChange={(e) => updateSimulatorState({ simIsin: e.target.value })}
+                                            placeholder="z.B. CH00..."
+                                            className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground focus:ring-1 focus:ring-primary"
+                                        />
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Current Position Info & Edit */}
                             {(() => {
@@ -601,40 +717,7 @@ export function DividendCalculator() {
 
                                 );
                             })()}
-                            {(selectedStockId === 'new' || !selectedStockId) && (
-                                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 animate-in fade-in slide-in-from-top-2">
-                                    <div className="sm:col-span-5 space-y-1">
-                                        <label className="text-[10px] uppercase font-bold text-muted-foreground">Name</label>
-                                        <input
-                                            type="text"
-                                            value={simName}
-                                            onChange={(e) => updateSimulatorState({ simName: e.target.value })}
-                                            placeholder="z.B. Nestlé"
-                                            className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground focus:ring-1 focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="sm:col-span-3 space-y-1">
-                                        <label className="text-[10px] uppercase font-bold text-muted-foreground">Symbol</label>
-                                        <input
-                                            type="text"
-                                            value={simSymbol}
-                                            onChange={(e) => updateSimulatorState({ simSymbol: e.target.value })}
-                                            placeholder="z.B. NESN"
-                                            className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground focus:ring-1 focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div className="sm:col-span-4 space-y-1">
-                                        <label className="text-[10px] uppercase font-bold text-muted-foreground">ISIN</label>
-                                        <input
-                                            type="text"
-                                            value={simIsin}
-                                            onChange={(e) => updateSimulatorState({ simIsin: e.target.value })}
-                                            placeholder="z.B. CH0038863350"
-                                            className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground focus:ring-1 focus:ring-primary"
-                                        />
-                                    </div>
-                                </div>
-                            )}
+                            {/* Transaction details below selector always visible */}
 
                             {/* Core Inputs - Compact Grid */}
                             <div className="grid grid-cols-3 gap-3">
