@@ -24,22 +24,40 @@ export function DividendPlanner() {
     const projectedDividends = positions
         .map((pos) => {
             const stock = stocks.find((s) => s.id === pos.stockId);
-            if (!stock || !stock.dividendYield) return null;
+            if (!stock) return null;
 
-            const currentValue = pos.shares * stock.currentPrice;
-            const annualDividend = currentValue * (stock.dividendYield / 100);
-            const quarterlyDividend = annualDividend / 4;
+            // Frequency factor
+            const factor = stock.dividendFrequency === 'quarterly' ? 4
+                : stock.dividendFrequency === 'semi-annually' ? 2
+                    : stock.dividendFrequency === 'monthly' ? 12
+                        : 1;
+
+            // Preferred: Precise payout amount. Fallback: Calculation via yield
+            let annualDividendNative = 0;
+            if (stock.dividendAmount) {
+                annualDividendNative = stock.dividendAmount * pos.shares * factor;
+            } else if (stock.dividendYield) {
+                annualDividendNative = (pos.shares * stock.currentPrice) * (stock.dividendYield / 100);
+            }
+
+            if (annualDividendNative === 0) return null;
+
+            const divCurrency = stock.dividendCurrency || stock.currency;
+            const annualDividendCHF = convertToCHF(annualDividendNative, divCurrency);
+            const quarterlyDividendCHF = annualDividendCHF / 4;
 
             return {
                 position: pos,
                 stock,
-                annualDividend,
-                quarterlyDividend,
+                annualDividendNative,
+                annualDividendCHF,
+                quarterlyDividendCHF,
+                divCurrency
             };
         })
         .filter(Boolean);
 
-    const totalAnnual = projectedDividends.reduce((sum, d) => sum + d!.annualDividend, 0);
+    const totalAnnual = projectedDividends.reduce((sum, d) => sum + d!.annualDividendCHF, 0);
     const totalMonthly = totalAnnual / 12;
 
     return (
@@ -146,33 +164,22 @@ export function DividendPlanner() {
                                 </tr>
                             ) : (
                                 projectedDividends.map((data) => {
-                                    const { position, stock, annualDividend, quarterlyDividend } = data!;
+                                    const { position, stock, annualDividendNative, annualDividendCHF, quarterlyDividendCHF, divCurrency } = data!;
 
-                                    // Format currency with dual display if needed
+                                    // Annual Display Logic
                                     let annualDisplay: React.ReactNode;
-                                    if (stock.dividendCurrency && stock.dividendCurrency !== 'CHF') {
-                                        const factor = stock.dividendFrequency === 'quarterly' ? 4
-                                            : stock.dividendFrequency === 'semi-annually' ? 2
-                                                : stock.dividendFrequency === 'monthly' ? 12
-                                                    : 1;
-
-                                        // Annual Amount = Payment Amount * Shares * Frequency
-                                        const originalAnnualAmount = stock.dividendAmount
-                                            ? stock.dividendAmount * position.shares * factor
-                                            : annualDividend;
-
-                                        const originalFormatted = formatCurrency(originalAnnualAmount, stock.dividendCurrency, false);
-                                        const chfValue = convertToCHF(originalAnnualAmount, stock.dividendCurrency);
-                                        const chfFormatted = formatCurrency(chfValue, 'CHF', false);
+                                    if (divCurrency !== 'CHF') {
+                                        const nativeFormatted = formatCurrency(annualDividendNative, divCurrency, false);
+                                        const chfFormatted = formatCurrency(annualDividendCHF, 'CHF', false);
 
                                         annualDisplay = (
                                             <div className="flex flex-col items-end">
-                                                <span>{originalFormatted}</span>
+                                                <span>{nativeFormatted}</span>
                                                 <span className="text-xs text-muted-foreground font-normal">{chfFormatted}</span>
                                             </div>
                                         );
                                     } else {
-                                        annualDisplay = `CHF ${annualDividend.toFixed(2)}`;
+                                        annualDisplay = formatCurrency(annualDividendCHF, 'CHF', false);
                                     }
 
                                     return (
@@ -191,13 +198,13 @@ export function DividendPlanner() {
                                                 {stock.dividendYield?.toFixed(2)}%
                                             </td>
                                             <td className="text-right py-3 px-4 font-medium">
-                                                {stock.dividendAmount ? formatCurrency(stock.dividendAmount, stock.dividendCurrency || stock.currency) : '-'}
+                                                {stock.dividendAmount ? formatCurrency(stock.dividendAmount, divCurrency) : '-'}
                                             </td>
                                             <td className="text-right py-3 px-4 font-semibold text-primary">
                                                 {annualDisplay}
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
-                                                CHF {convertToCHF(quarterlyDividend, stock.currency).toFixed(2)}
+                                                CHF {quarterlyDividendCHF.toFixed(2)}
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
                                                 {translateFrequency(stock.dividendFrequency)}
