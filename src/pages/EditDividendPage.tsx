@@ -153,15 +153,7 @@ export function EditDividendPage() {
         setQuarterlyDates(newDates);
     };
 
-    const generateLogo = () => {
-        if (!domain) return;
-        // Clean domain
-        let cleanDomain = domain.toLowerCase().replace('https://', '').replace('http://', '').replace('www.', '');
-        if (cleanDomain.includes('/')) cleanDomain = cleanDomain.split('/')[0];
 
-        const generatedUrl = `https://logo.clearbit.com/${cleanDomain}`;
-        setLogoUrl(generatedUrl);
-    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -379,26 +371,47 @@ export function EditDividendPage() {
                                             )}
                                         </div>
 
-                                        {/* Logo Generator */}
-                                        <div className="pt-2 flex gap-2 items-end">
-                                            <div className="flex-1 space-y-1">
-                                                <label className="text-[10px] text-muted-foreground uppercase font-semibold">Oder generieren via Website</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="z.B. novartis.com"
-                                                    value={domain}
-                                                    onChange={(e) => setDomain(e.target.value)}
-                                                    className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-sm"
-                                                />
+                                        <div className="pt-2 flex flex-col gap-2">
+                                            <div className="flex gap-2 items-end">
+                                                <div className="flex-1 space-y-1">
+                                                    <label className="text-[10px] text-muted-foreground uppercase font-semibold">Domain für Logo</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="z.B. novartis.com"
+                                                        value={domain}
+                                                        onChange={(e) => setDomain(e.target.value)}
+                                                        className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-sm"
+                                                    />
+                                                </div>
                                             </div>
-                                            <button
-                                                type="button"
-                                                onClick={generateLogo}
-                                                disabled={!domain}
-                                                className="px-3 py-2 bg-secondary text-secondary-foreground text-sm font-medium rounded-md hover:bg-secondary/80 mb-[1px] disabled:opacity-50"
-                                            >
-                                                Generieren
-                                            </button>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (!domain) return;
+                                                        let clean = domain.toLowerCase().replace('https://', '').replace('http://', '').replace('www.', '');
+                                                        if (clean.includes('/')) clean = clean.split('/')[0];
+                                                        setLogoUrl(`https://logo.clearbit.com/${clean}`);
+                                                    }}
+                                                    disabled={!domain}
+                                                    className="flex-1 px-3 py-2 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border disabled:opacity-50"
+                                                >
+                                                    Clearbit Logo
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (!domain) return;
+                                                        let clean = domain.toLowerCase().replace('https://', '').replace('http://', '').replace('www.', '');
+                                                        if (clean.includes('/')) clean = clean.split('/')[0];
+                                                        setLogoUrl(`https://www.google.com/s2/favicons?domain=${clean}&sz=128`);
+                                                    }}
+                                                    disabled={!domain}
+                                                    className="flex-1 px-3 py-2 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border disabled:opacity-50"
+                                                >
+                                                    Google Icon
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

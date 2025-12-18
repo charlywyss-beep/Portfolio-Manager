@@ -73,15 +73,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
         onClose();
     };
 
-    const generateLogo = () => {
-        if (!domain) return;
-        // Clean domain
-        let cleanDomain = domain.toLowerCase().replace('https://', '').replace('http://', '').replace('www.', '');
-        if (cleanDomain.includes('/')) cleanDomain = cleanDomain.split('/')[0];
 
-        const generatedUrl = `https://logo.clearbit.com/${cleanDomain}`;
-        setLogoUrl(generatedUrl);
-    };
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -174,25 +166,47 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                         </div>
 
                         {/* Logo Generator */}
-                        <div className="pt-1 flex gap-2 items-end">
-                            <div className="flex-1 space-y-1">
-                                <label className="text-[10px] text-muted-foreground uppercase font-semibold">Oder generieren via Website</label>
-                                <input
-                                    type="text"
-                                    placeholder="z.B. postfinance.ch"
-                                    value={domain}
-                                    onChange={(e) => setDomain(e.target.value)}
-                                    className="w-full h-9 px-3 rounded-md border border-input bg-background/50 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                                />
+                        <div className="pt-1 flex flex-col gap-2">
+                            <div className="flex gap-2 items-end">
+                                <div className="flex-1 space-y-1">
+                                    <label className="text-[10px] text-muted-foreground uppercase font-semibold">Oder generieren via Website</label>
+                                    <input
+                                        type="text"
+                                        placeholder="z.B. postfinance.ch"
+                                        value={domain}
+                                        onChange={(e) => setDomain(e.target.value)}
+                                        className="w-full h-9 px-3 rounded-md border border-input bg-background/50 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                    />
+                                </div>
                             </div>
-                            <button
-                                type="button"
-                                onClick={generateLogo}
-                                disabled={!domain}
-                                className="px-3 h-9 bg-secondary text-secondary-foreground text-sm font-medium rounded-md hover:bg-secondary/80 disabled:opacity-50 border border-border"
-                            >
-                                Generieren
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (!domain) return;
+                                        let clean = domain.toLowerCase().replace('https://', '').replace('http://', '').replace('www.', '');
+                                        if (clean.includes('/')) clean = clean.split('/')[0];
+                                        setLogoUrl(`https://logo.clearbit.com/${clean}`);
+                                    }}
+                                    disabled={!domain}
+                                    className="flex-1 h-8 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 disabled:opacity-50 border border-border"
+                                >
+                                    Clearbit Logo
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (!domain) return;
+                                        let clean = domain.toLowerCase().replace('https://', '').replace('http://', '').replace('www.', '');
+                                        if (clean.includes('/')) clean = clean.split('/')[0];
+                                        setLogoUrl(`https://www.google.com/s2/favicons?domain=${clean}&sz=128`);
+                                    }}
+                                    disabled={!domain}
+                                    className="flex-1 h-8 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 disabled:opacity-50 border border-border"
+                                >
+                                    Google Icon
+                                </button>
+                            </div>
                         </div>
                     </div>
 
