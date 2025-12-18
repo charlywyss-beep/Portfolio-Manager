@@ -332,16 +332,14 @@ export function EditDividendPage() {
                                                     (currency === 'CHF' && symbol && !symbol.toUpperCase().endsWith('.SW')) ? "border-amber-500 focus:ring-amber-500" : ""
                                                 )}
                                             />
-                                            {currency === 'CHF' && symbol && !symbol.toUpperCase().endsWith('.SW') && (
-                                                <div className="absolute right-3 top-2 text-amber-500 animate-pulse">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-alert-triangle"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
-                                                </div>
-                                            )}
                                         </div>
                                         {currency === 'CHF' && symbol && !symbol.toUpperCase().endsWith('.SW') && (
-                                            <p className="text-xs text-amber-500 font-medium">
-                                                Hinweis: Für <b>CHF</b> Aktien an der Schweizer Börse fehlt meist die Endung <b>.SW</b> (z.B. {symbol}.SW)
-                                            </p>
+                                            <div className="flex items-center gap-2 text-amber-500 animate-pulse mt-1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-alert-triangle shrink-0"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+                                                <p className="text-xs font-medium">
+                                                    Hinweis: Für <b>CHF</b> Aktien an der Schweizer Börse fehlt meist die Endung <b>.SW</b> (z.B. {symbol}.SW)
+                                                </p>
+                                            </div>
                                         )}
                                         <p className="text-[10px] text-muted-foreground">
                                             Nutze Yahoo Finance Symbole (z.B. <b>NESN.SW</b> für Nestle, <b>BATS.L</b> für BAT)
