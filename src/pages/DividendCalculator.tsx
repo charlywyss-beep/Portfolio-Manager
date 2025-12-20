@@ -1151,10 +1151,16 @@ export function DividendCalculator() {
                                         </div>
                                         {/* Show Total Fees in CHF if Native is selected */}
                                         {fees.feeCurrency === 'NATIVE' && (
-                                            <div className="flex justify-between pt-1 border-t border-border/50 mt-1">
-                                                <span>Total Gebühren (CHF):</span>
-                                                <span className="text-red-500 font-mono">-{totalFees.toFixed(2)} CHF</span>
-                                            </div>
+                                            <>
+                                                <div className="flex justify-between pt-1 border-t border-border/50 mt-1">
+                                                    <span>Total Gebühren ({displayFeeCurrency}):</span>
+                                                    <span className="text-red-500 font-mono">-{totalFeesInFeeCurrency.toFixed(2)} {displayFeeCurrency}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Total Gebühren (CHF):</span>
+                                                    <span className="text-red-500 font-mono">-{totalFees.toFixed(2)} CHF</span>
+                                                </div>
+                                            </>
                                         )}
                                     </div>
                                     <div className="h-px bg-border my-2" />
