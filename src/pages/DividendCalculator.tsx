@@ -1072,6 +1072,8 @@ export function DividendCalculator() {
                                         />
                                     </div>
 
+                                    {/* Removed redundant 'Total Gebühren' display as per user request (lower breakdown is sufficient) */}
+                                    {/* 
                                     <div className="pt-2 border-t border-border/50 flex justify-between items-center">
                                         <span className="text-xs text-muted-foreground">Total Gebühren</span>
                                         <div className="text-right">
@@ -1082,7 +1084,8 @@ export function DividendCalculator() {
                                             )}
                                             <span className="text-sm font-bold text-red-500">-{totalFees.toFixed(2)} CHF</span>
                                         </div>
-                                    </div>
+                                    </div> 
+                                    */}
                                 </div>
                             )}
 
