@@ -13,12 +13,14 @@ const LocalNumberInput = ({ value, onChange, className, step = "any", title, pla
     placeholder?: string;
 }) => {
     const [localValue, setLocalValue] = useState(value?.toString() || '');
+    const lastEmitted = useRef(value);
 
     useEffect(() => {
-        // Sync with prop if it changes externally significantly (avoid cursor jumping if possible, but simple sync is safer for now)
-        // Only sync if prop value is different from parsed local value to allow typing
-        if (value !== undefined && parseFloat(localValue.replace(',', '.')) !== value) {
+        // Only sync if the external value is different from what we last emitted
+        // This prevents cursor jumping and overwriting valid intermediate states (like "1." or "")
+        if (value !== undefined && value !== lastEmitted.current) {
             setLocalValue(value.toString());
+            lastEmitted.current = value;
         }
     }, [value]);
 
@@ -31,8 +33,10 @@ const LocalNumberInput = ({ value, onChange, className, step = "any", title, pla
         const parsed = parseFloat(normalized);
 
         if (!isNaN(parsed)) {
+            lastEmitted.current = parsed;
             onChange(parsed);
         } else if (newVal === '') {
+            lastEmitted.current = 0;
             onChange(0);
         }
     };
