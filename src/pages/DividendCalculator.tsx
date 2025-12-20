@@ -136,31 +136,7 @@ export function DividendCalculator() {
             doc.text(`ISIN: ${stockIsin}`, 20, 54);
         }
 
-        // Display Exchange Rate if applicable
-        if (simCurrency && simCurrency !== 'CHF') {
-            const displayBaseCurr = simCurrency === 'GBp' ? 'GBP' : simCurrency;
-            const baseRate = rates[displayBaseCurr]; // e.g. 0.93 for GBP
 
-            if (baseRate) {
-                // Calculate effective rate (1 Unit Foreign = X CHF)
-                // convertToCHF logic: CHF = Foreign / Rate => Foreign = CHF * Rate
-                // So 1 CHF = [Rate] Foreign.
-                // So 1 Foreign = 1 / [Rate] CHF.
-
-                // Apply Markup
-                const markup = (fees.fxMarkupPercent || 0) / 100;
-                // Buy: Pay more CHF => Rate (CHF per Unit) increases => Multiply by (1+Markup)
-                // Sell: Receive less CHF => Rate decreases => Multiply by (1-Markup)
-
-                let effectiveRate = (1 / baseRate);
-                if (mode === 'buy') effectiveRate *= (1 + markup);
-                else effectiveRate *= (1 - markup);
-
-                doc.setFontSize(9);
-                doc.setTextColor('#64748b');
-                doc.text(`Wechselkurs: 1 ${displayBaseCurr} = ${effectiveRate.toFixed(4)} CHF`, 20, 59);
-            }
-        }
 
         // Helper for currency formatting
         const fmtMoney = (val: number, curr: string) => {
@@ -305,6 +281,37 @@ export function DividendCalculator() {
         drawRow('Stempelsteuer', fmtMoney(calcStamp, displayFeeCurrency), currentY + rowHeight);
         drawRow('Börsengebühr', fmtMoney(fees.exchangeFee, displayFeeCurrency), currentY + rowHeight * 2);
         drawRow('Total Gebühren', fmtMoney(totalFeesInFeeCurrency, displayFeeCurrency), currentY + rowHeight * 3, true);
+
+        // Exchange Rate (Moved below Total Gebühren as per user request)
+        if (simCurrency && simCurrency !== 'CHF') {
+            const displayBaseCurr = simCurrency === 'GBp' ? 'GBP' : simCurrency;
+            const baseRate = rates[displayBaseCurr]; // e.g. 0.93 for GBP
+
+            if (baseRate) {
+                const markup = (fees.fxMarkupPercent || 0) / 100;
+                let effectiveRate = (1 / baseRate);
+                if (mode === 'buy') effectiveRate *= (1 + markup);
+                else effectiveRate *= (1 - markup);
+
+                currentY += rowHeight; // Spacing
+                doc.setFontSize(9);
+                doc.setTextColor('#64748b');
+                doc.text(`Wechselkurs: 1 ${displayBaseCurr} = ${effectiveRate.toFixed(4)} CHF`, 20, currentY + rowHeight * 3 + 8);
+                // Note: 'currentY' above was 'startY + rowHeight * 3 + 5'.
+                // We need to be careful with Y coordinates.
+                // let currentY = startY + rowHeight * 3 + 5; (Line ~290)
+                // Then we drew 4 rows: Y, Y+H, Y+2H, Y+3H.
+                // Total Fees is at Y+3H.
+                // We want to print below that.
+                // Let's rely on relative spacing.
+
+                const yPos = currentY + rowHeight * 4;
+                doc.text(`Wechselkurs: 1 ${displayBaseCurr} = ${effectiveRate.toFixed(4)} CHF`, 20, yPos);
+
+                // Push everything down
+                currentY += 10;
+            }
+        }
 
         // Total Block (Always CHF as per logic)
         currentY += rowHeight * 4 + 10;
@@ -1053,7 +1060,7 @@ export function DividendCalculator() {
                                     <LocalNumberInput
                                         value={shares}
                                         onChange={(val) => updateSimulatorState({ shares: val })}
-                                        className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
+                                        className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                     />
                                     {price > 0 && dividend > 0 && (
                                         <div className="text-sm font-bold text-green-600 font-medium text-right mt-1">
@@ -1062,25 +1069,25 @@ export function DividendCalculator() {
                                     )}
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-muted-foreground">
+                                    <label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">
                                         Kaufpreis ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
                                     </label>
                                     <LocalNumberInput
                                         step="0.01"
                                         value={price}
                                         onChange={(val) => updateSimulatorState({ price: val })}
-                                        className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
+                                        className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-muted-foreground whitespace-nowrap">
+                                    <label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">
                                         Dividende ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
                                     </label>
                                     <LocalNumberInput
                                         step="0.01"
                                         value={dividend}
                                         onChange={(val) => updateSimulatorState({ dividend: val })}
-                                        className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
+                                        className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                     />
                                 </div>
                             </div>
