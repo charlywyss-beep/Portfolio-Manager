@@ -136,6 +136,32 @@ export function DividendCalculator() {
             doc.text(`ISIN: ${stockIsin}`, 20, 54);
         }
 
+        // Display Exchange Rate if applicable
+        if (simCurrency && simCurrency !== 'CHF') {
+            const displayBaseCurr = simCurrency === 'GBp' ? 'GBP' : simCurrency;
+            const baseRate = rates[displayBaseCurr]; // e.g. 0.93 for GBP
+
+            if (baseRate) {
+                // Calculate effective rate (1 Unit Foreign = X CHF)
+                // convertToCHF logic: CHF = Foreign / Rate => Foreign = CHF * Rate
+                // So 1 CHF = [Rate] Foreign.
+                // So 1 Foreign = 1 / [Rate] CHF.
+
+                // Apply Markup
+                const markup = (fees.fxMarkupPercent || 0) / 100;
+                // Buy: Pay more CHF => Rate (CHF per Unit) increases => Multiply by (1+Markup)
+                // Sell: Receive less CHF => Rate decreases => Multiply by (1-Markup)
+
+                let effectiveRate = (1 / baseRate);
+                if (mode === 'buy') effectiveRate *= (1 + markup);
+                else effectiveRate *= (1 - markup);
+
+                doc.setFontSize(9);
+                doc.setTextColor('#64748b');
+                doc.text(`Wechselkurs: 1 ${displayBaseCurr} = ${effectiveRate.toFixed(4)} CHF`, 20, 59);
+            }
+        }
+
         // Helper for currency formatting
         const fmtMoney = (val: number, curr: string) => {
             return new Intl.NumberFormat('de-CH', { style: 'currency', currency: curr }).format(val);
