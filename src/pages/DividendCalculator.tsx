@@ -919,10 +919,9 @@ export function DividendCalculator() {
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="space-y-1">
                                     <label className="text-[10px] uppercase font-bold text-muted-foreground">Anzahl Anteile</label>
-                                    <input
-                                        type="number"
+                                    <LocalNumberInput
                                         value={shares}
-                                        onChange={(e) => updateSimulatorState({ shares: Number(e.target.value) })}
+                                        onChange={(val) => updateSimulatorState({ shares: val })}
                                         className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                     />
                                 </div>
@@ -930,11 +929,10 @@ export function DividendCalculator() {
                                     <label className="text-[10px] font-bold text-muted-foreground">
                                         Kaufpreis ({simCurrency || 'CHF'})
                                     </label>
-                                    <input
-                                        type="number"
+                                    <LocalNumberInput
                                         step="0.01"
                                         value={price}
-                                        onChange={(e) => updateSimulatorState({ price: Number(e.target.value) })}
+                                        onChange={(val) => updateSimulatorState({ price: val })}
                                         className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                     />
                                 </div>
@@ -942,11 +940,10 @@ export function DividendCalculator() {
                                     <label className="text-[10px] font-bold text-muted-foreground">
                                         Div. ({simCurrency || 'CHF'})
                                     </label>
-                                    <input
-                                        type="number"
+                                    <LocalNumberInput
                                         step="0.01"
                                         value={dividend}
-                                        onChange={(e) => updateSimulatorState({ dividend: Number(e.target.value) })}
+                                        onChange={(val) => updateSimulatorState({ dividend: val })}
                                         className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                     />
                                 </div>
