@@ -81,7 +81,7 @@ export function DividendCalculator() {
     // PDF Export Handler
     const handleExportPDF = () => {
         const doc = new jsPDF();
-        const { shares, price, dividend, selectedStockId, simName, simSymbol, fees, mode } = simulatorState;
+        const { shares, price, dividend, selectedStockId, simName, simSymbol, fees, mode, simCurrency } = simulatorState;
 
         // Find Stock for ISIN/Details
         let stockIsin = '';
@@ -136,14 +136,107 @@ export function DividendCalculator() {
             doc.text(`ISIN: ${stockIsin}`, 20, 54);
         }
 
-        // Calculation Data (Already CHF from State)
-        const volume = shares * price;
-        const calcCourtage = Math.max(volume * (fees.courtagePercent / 100), fees.courtageMin);
-        const calcStamp = volume * (fees.stampDutyPercent / 100);
-        const totalFees = calcCourtage + calcStamp + fees.exchangeFee;
-        const totalInvest = mode === 'buy' ? volume + totalFees : 0;
-        const totalProceeds = mode === 'sell' ? volume - totalFees : 0;
+        // Helper for currency formatting
+        const fmtMoney = (val: number, curr: string) => {
+            return new Intl.NumberFormat('de-CH', { style: 'currency', currency: curr }).format(val);
+        };
+
+        // Derived Logic & Currency Conversion for TOTALS only
+        // 1. Calculate Volume in Native Currency
+        const volumeNative = shares * price;
+
+        // 2. Convert to CHF for Fees & Total Display
+        // Helper to get CHF value
+        const getCHF = (val: number, currency: string) => {
+            if (!currency || currency === 'CHF') return val;
+
+            // Base conversion
+            const baseCHF = convertToCHF(val, currency, rates);
+
+            // Apply FX Markup (Bank Fee)
+            // BUY: You pay MORE CHF => Rate increases (Multiply by 1 + markup)
+            // SELL: You receive LESS CHF => Rate decreases (Multiply by 1 - markup)
+            const markup = (fees.fxMarkupPercent || 0) / 100;
+
+            if (mode === 'buy') {
+                return baseCHF * (1 + markup);
+            } else {
+                return baseCHF * (1 - markup);
+            }
+        };
+
+        const volumeCHF = getCHF(volumeNative, simCurrency || 'CHF');
+
+        // Usually broker fees are defined in CHF/Base Currency or calculated on value.
+        // Let's assume fees are calculated on the CHF value of the transaction.
+        // Fees Calculation
+        const feeCurrency = fees.feeCurrency || 'CHF';
+        const isNativeFees = feeCurrency === 'NATIVE';
+        // Special handling for GBp (Pence) -> treat Native Fees as GBP (Pounds)
+        const isGBp = simCurrency === 'GBp';
+        const displayFeeCurrency = (isNativeFees && isGBp) ? 'GBP' : (isNativeFees ? simCurrency : 'CHF');
+
+        // Calculate Fees
+        let calcCourtage = 0;
+        let calcStamp = 0;
+        let totalFeesInFeeCurrency = 0;
+
+        if (isNativeFees) {
+            // NATIVE CURRENCY LOGIC
+            if (isGBp) {
+                // Treat as GBP (Pounds)
+                // Volume is in Pence.
+                // Courtage % is of Volume => Result in Pence. Need directly in Pounds (/100).
+                const volPence = volumeNative;
+                const courtagePence = volPence * (fees.courtagePercent / 100);
+                const courtagePoundsDerived = courtagePence / 100;
+
+                // Min is in Pounds
+                calcCourtage = Math.max(courtagePoundsDerived, fees.courtageMin);
+
+                // Stamp % of Volume => Result in Pence. Need in Pounds (/100).
+                const stampPence = volPence * (fees.stampDutyPercent / 100);
+                calcStamp = stampPence / 100;
+
+                // Exchange Fee is in Pounds (Input)
+                // Total in Pounds
+                totalFeesInFeeCurrency = calcCourtage + calcStamp + fees.exchangeFee;
+
+            } else {
+                // Standard Native (e.g. USD, EUR)
+                const feeBaseVolume = volumeNative;
+                calcCourtage = Math.max(feeBaseVolume * (fees.courtagePercent / 100), fees.courtageMin);
+                calcStamp = feeBaseVolume * (fees.stampDutyPercent / 100);
+                totalFeesInFeeCurrency = calcCourtage + calcStamp + fees.exchangeFee;
+            }
+        } else {
+            // CHF BASE LOGIC (Default)
+            // Everything calculated based on volumeCHF
+            calcCourtage = Math.max(volumeCHF * (fees.courtagePercent / 100), fees.courtageMin);
+            calcStamp = volumeCHF * (fees.stampDutyPercent / 100);
+            totalFeesInFeeCurrency = calcCourtage + calcStamp + fees.exchangeFee;
+        }
+
+        // Convert Total Fees to CHF for final summation
+        let totalFeesCHF = totalFeesInFeeCurrency;
+        if (isNativeFees) {
+            // If GBp, we effectively already converted to GBP (Pounds). So convert GBP -> CHF.
+            // If other, convert SimCurrency -> CHF.
+            const conversionSourceCurrency = isGBp ? 'GBP' : simCurrency;
+            totalFeesCHF = convertToCHF(totalFeesInFeeCurrency, conversionSourceCurrency, rates);
+        }
+
+        const totalFees = totalFeesCHF;
+
+        // Totals in CHF
+        const totalInvestCHF = mode === 'buy' ? volumeCHF + totalFees : 0;
+        const totalProceedsCHF = mode === 'sell' ? volumeCHF - totalFees : 0;
+
         const grossYield = price > 0 ? (dividend / price) * 100 : 0;
+        // Net yield: (Annual Dividend * Shares) / Total Invested (CHF)
+        // Annual Dividend in CHF
+        const annualDividendCHF = getCHF(shares * dividend, simCurrency || 'CHF');
+        // const netYield = totalInvestCHF > 0 ? (annualDividendCHF / totalInvestCHF) * 100 : 0; // Not used in PDF
 
         // Table Data
         const startY = 65;
@@ -169,9 +262,11 @@ export function DividendCalculator() {
             doc.line(col1 + doc.getTextWidth(label) + 2, y - 1, 188 - doc.getTextWidth(value), y - 1);
         };
 
+        const displayCurr = simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF');
+
         drawRow('Anzahl', `${shares} Stk.`, startY);
-        drawRow('Kurs', `CHF ${price.toFixed(2)}`, startY + rowHeight);
-        drawRow('Volumen', `CHF ${volume.toFixed(2)}`, startY + rowHeight * 2);
+        drawRow('Kurs', fmtMoney(price, displayCurr), startY + rowHeight);
+        drawRow('Volumen', fmtMoney(volumeNative, displayCurr), startY + rowHeight * 2);
 
         // Fees Block
         let currentY = startY + rowHeight * 3 + 5;
@@ -180,12 +275,12 @@ export function DividendCalculator() {
         doc.text('Gebührenaufstellung', col1, currentY);
         currentY += 8;
 
-        drawRow('Courtage', `CHF ${calcCourtage.toFixed(2)}`, currentY);
-        drawRow('Stempelsteuer', `CHF ${calcStamp.toFixed(2)}`, currentY + rowHeight);
-        drawRow('Börsengebühr', `CHF ${fees.exchangeFee.toFixed(2)}`, currentY + rowHeight * 2);
-        drawRow('Total Gebühren', `CHF ${totalFees.toFixed(2)}`, currentY + rowHeight * 3, true);
+        drawRow('Courtage', fmtMoney(calcCourtage, displayFeeCurrency), currentY);
+        drawRow('Stempelsteuer', fmtMoney(calcStamp, displayFeeCurrency), currentY + rowHeight);
+        drawRow('Börsengebühr', fmtMoney(fees.exchangeFee, displayFeeCurrency), currentY + rowHeight * 2);
+        drawRow('Total Gebühren', fmtMoney(totalFeesInFeeCurrency, displayFeeCurrency), currentY + rowHeight * 3, true);
 
-        // Total Block
+        // Total Block (Always CHF as per logic)
         currentY += rowHeight * 4 + 10;
         doc.setFillColor('#f1f5f9'); // Slate 100
         doc.rect(15, currentY - 8, 180, 20, 'F');
@@ -194,10 +289,11 @@ export function DividendCalculator() {
         doc.setTextColor(primaryColor);
         doc.setFont('helvetica', 'bold');
         const totalLabel = mode === 'buy' ? 'INVESTITION TOTAL' : 'NETTO ERLÖS';
-        const totalValue = mode === 'buy' ? totalInvest : totalProceeds;
+        const totalValue = mode === 'buy' ? totalInvestCHF : totalProceedsCHF;
 
         doc.text(totalLabel, 25, currentY + 5);
-        doc.text(`CHF ${totalValue.toFixed(2)}`, 185, currentY + 5, { align: 'right' });
+        // Always display Total in CHF
+        doc.text(fmtMoney(totalValue, 'CHF'), 185, currentY + 5, { align: 'right' });
 
         // Yield Info (Buy Only)
         if (mode === 'buy') {
@@ -205,9 +301,10 @@ export function DividendCalculator() {
             doc.setFontSize(11);
             doc.setTextColor('#64748b');
             doc.setFont('helvetica', 'normal');
-            doc.text('Erwartete Jährliche Dividende:', 20, currentY);
+            doc.text('Jährl. Ausschüttung:', 20, currentY);
             doc.setTextColor(primaryColor);
-            doc.text(`CHF ${(shares * dividend).toFixed(2)}`, 190, currentY, { align: 'right' });
+
+            doc.text(fmtMoney(annualDividendCHF, 'CHF'), 190, currentY, { align: 'right' });
 
             currentY += 8;
             doc.setTextColor('#64748b');
