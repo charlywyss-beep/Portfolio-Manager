@@ -434,13 +434,13 @@ export function DividendCalculator() {
                 simName: stock.name,
                 simSymbol: stock.symbol,
                 simIsin: stock.isin || '',
-                simCurrency: stock.currency,
+                simCurrency: stock.currency === 'GBp' ? 'GBP' : stock.currency,
                 simType: stock.type || 'stock',
                 simSector: stock.sector || '',
                 simValor: stock.valor || '',
-                price: stock.currentPrice,
-                // Store Native Price (e.g. 4238 GBp)
-                dividend: annualDiv,         // Store Native Div (e.g. 250 GBp)
+                price: stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice,
+                // Store Native Price (e.g. 4238 GBp -> 42.38 GBP)
+                dividend: stock.currency === 'GBp' ? annualDiv / 100 : annualDiv,         // Store Native Div (e.g. 250 GBp -> 2.50 GBP)
                 fees: { ...fees, stampDutyPercent: newStamp },
             });
         }
@@ -795,7 +795,6 @@ export function DividendCalculator() {
                                                 <option value="CHF">CHF</option>
                                                 <option value="EUR">EUR</option>
                                                 <option value="GBP">GBP (Pfund)</option>
-                                                <option value="GBp">GBp (Pence)</option>
                                             </select>
                                         </div>
                                         <div className="space-y-2">
@@ -828,12 +827,10 @@ export function DividendCalculator() {
                                 let displayAvgPrice = currentPos.buyPriceAvg;
                                 let displayCurrency: string = stock?.currency || 'CHF';
 
-                                // Handling GBp Display specifically for "Ø Kauf"
+                                // GBp is now auto-converted to GBP in state, so we just check for GBP
                                 if (displayCurrency === 'GBp') {
-                                    // If raw value is > 200 (likely Pence), divide by 100 for GBP view?
-                                    // Or display as 'p'? FormatCurrency usually displays GBP.
                                     displayCurrency = 'GBP';
-                                    displayAvgPrice = currentPos.buyPriceAvg / 100; // Correct scaling: 2800p -> 28.00 £
+                                    displayAvgPrice = currentPos.buyPriceAvg / 100;
                                 }
 
                                 return (
