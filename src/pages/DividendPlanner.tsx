@@ -3,6 +3,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { Calendar, TrendingUp, Plus, Edit } from 'lucide-react';
 
 import { useCurrencyFormatter } from '../utils/currency';
+import { getCurrentDividendPeriod } from '../utils/dividend';
 
 // Helper to translate frequency to German
 const translateFrequency = (freq?: string) => {
@@ -182,6 +183,8 @@ export function DividendPlanner() {
                                         annualDisplay = formatCurrency(annualDividendCHF, 'CHF', false);
                                     }
 
+                                    const currentDiv = getCurrentDividendPeriod(stock);
+
                                     return (
                                         <tr key={position.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
                                             <td className="py-3 px-4">
@@ -208,16 +211,39 @@ export function DividendPlanner() {
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
                                                 {translateFrequency(stock.dividendFrequency)}
+                                                {currentDiv.periodLabel && (
+                                                    <span className="ml-2 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-muted rounded">
+                                                        {currentDiv.periodLabel}
+                                                    </span>
+                                                )}
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
-                                                {stock.dividendExDate
-                                                    ? new Date(stock.dividendExDate).toLocaleDateString('de-DE')
-                                                    : '-'}
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span>
+                                                        {currentDiv.exDate
+                                                            ? new Date(currentDiv.exDate).toLocaleDateString('de-DE')
+                                                            : '-'}
+                                                    </span>
+                                                    {currentDiv.status === 'ex-dividend' && (
+                                                        <span className="text-[10px] font-bold text-orange-500 bg-orange-100 dark:bg-orange-950/50 px-1.5 py-0.5 rounded">
+                                                            Ex-Div
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
-                                                {stock.dividendPayDate
-                                                    ? new Date(stock.dividendPayDate).toLocaleDateString('de-DE')
-                                                    : '-'}
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span>
+                                                        {currentDiv.payDate
+                                                            ? new Date(currentDiv.payDate).toLocaleDateString('de-DE')
+                                                            : '-'}
+                                                    </span>
+                                                    {currentDiv.status === 'paid' && (
+                                                        <span className="text-[10px] font-bold text-green-600 bg-green-100 dark:bg-green-950/50 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                            Bezahlt
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="text-right py-3 px-4">
                                                 <button

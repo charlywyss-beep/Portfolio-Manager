@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Trash2 } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
@@ -554,9 +554,21 @@ export function EditDividendPage() {
                                         {quarterlyDates.slice(0, frequency === 'semi-annually' ? 2 : 4).map((date, idx) => (
                                             <div key={idx} className="grid grid-cols-2 gap-4 pb-4 border-b border-border/50 last:border-0 last:pb-0">
                                                 <div className="space-y-1">
-                                                    <label className="text-xs text-muted-foreground font-medium uppercase">
-                                                        {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Ex-Datum
-                                                    </label>
+                                                    <div className="flex justify-between items-center">
+                                                        <label className="text-xs text-muted-foreground font-medium uppercase">
+                                                            {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Ex-Datum
+                                                        </label>
+                                                        {date.exDate && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleQuarterlyDateChange(idx, 'exDate', '')}
+                                                                className="text-muted-foreground hover:text-red-500 transition-colors p-0.5"
+                                                                title="Datum löschen"
+                                                            >
+                                                                <Trash2 className="size-3" />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                     <input
                                                         type="date"
                                                         value={date.exDate}
@@ -565,9 +577,21 @@ export function EditDividendPage() {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-xs text-muted-foreground font-medium uppercase">
-                                                        {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Zahldatum
-                                                    </label>
+                                                    <div className="flex justify-between items-center">
+                                                        <label className="text-xs text-muted-foreground font-medium uppercase">
+                                                            {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Zahldatum
+                                                        </label>
+                                                        {date.payDate && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleQuarterlyDateChange(idx, 'payDate', '')}
+                                                                className="text-muted-foreground hover:text-red-500 transition-colors p-0.5"
+                                                                title="Datum löschen"
+                                                            >
+                                                                <Trash2 className="size-3" />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                     <input
                                                         type="date"
                                                         value={date.payDate}
@@ -581,7 +605,19 @@ export function EditDividendPage() {
                                 ) : (
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium">Ex-Datum</label>
+                                            <div className="flex justify-between items-center">
+                                                <label className="text-sm font-medium">Ex-Datum</label>
+                                                {exDate && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setExDate('')}
+                                                        className="text-muted-foreground hover:text-red-500 transition-colors p-0.5"
+                                                        title="Datum löschen"
+                                                    >
+                                                        <Trash2 className="size-3" />
+                                                    </button>
+                                                )}
+                                            </div>
                                             <input
                                                 type="date"
                                                 value={exDate}
@@ -590,7 +626,19 @@ export function EditDividendPage() {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium">Zahldatum</label>
+                                            <div className="flex justify-between items-center">
+                                                <label className="text-sm font-medium">Zahldatum</label>
+                                                {payDate && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setPayDate('')}
+                                                        className="text-muted-foreground hover:text-red-500 transition-colors p-0.5"
+                                                        title="Datum löschen"
+                                                    >
+                                                        <Trash2 className="size-3" />
+                                                    </button>
+                                                )}
+                                            </div>
                                             <input
                                                 type="date"
                                                 value={payDate}
