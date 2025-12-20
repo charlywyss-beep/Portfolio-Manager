@@ -981,7 +981,7 @@ export function DividendCalculator() {
                                                     onClick={() => updateSimulatorState({ fees: { ...fees, feeCurrency: 'NATIVE' } })}
                                                     className={`px-2 py-0.5 text-[10px] rounded transition-colors ${fees.feeCurrency === 'NATIVE' ? 'bg-primary text-primary-foreground font-bold' : 'text-muted-foreground hover:text-foreground'}`}
                                                 >
-                                                    {simCurrency}
+                                                    {simCurrency === 'GBp' ? 'GBP' : simCurrency}
                                                 </button>
                                             </div>
                                         </div>
