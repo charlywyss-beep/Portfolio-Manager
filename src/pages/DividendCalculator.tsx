@@ -3,6 +3,54 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Calculator, Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart } from 'lucide-react';
 
+// Helper component for comma-friendly number input
+const LocalNumberInput = ({ value, onChange, className, step = "any", title, placeholder }: {
+    value: number | undefined;
+    onChange: (val: number) => void;
+    className?: string;
+    step?: string;
+    title?: string;
+    placeholder?: string;
+}) => {
+    const [localValue, setLocalValue] = useState(value?.toString() || '');
+
+    useEffect(() => {
+        // Sync with prop if it changes externally significantly (avoid cursor jumping if possible, but simple sync is safer for now)
+        // Only sync if prop value is different from parsed local value to allow typing
+        if (value !== undefined && parseFloat(localValue.replace(',', '.')) !== value) {
+            setLocalValue(value.toString());
+        }
+    }, [value]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newVal = e.target.value;
+        setLocalValue(newVal);
+
+        // Replace comma with dot for parsing
+        const normalized = newVal.replace(',', '.');
+        const parsed = parseFloat(normalized);
+
+        if (!isNaN(parsed)) {
+            onChange(parsed);
+        } else if (newVal === '') {
+            onChange(0);
+        }
+    };
+
+    return (
+        <input
+            type="text"
+            inputMode="decimal"
+            step={step}
+            value={localValue}
+            onChange={handleChange}
+            className={className}
+            title={title}
+            placeholder={placeholder}
+        />
+    );
+};
+
 import { jsPDF } from 'jspdf';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useExchangeRates } from '../context/ExchangeRateContext';
@@ -271,28 +319,63 @@ export function DividendCalculator() {
 
     const volumeCHF = getCHF(volumeNative, simCurrency || 'CHF');
 
-    // Fees are calculated on CHF Volume usually? Or Native? 
     // Usually broker fees are defined in CHF/Base Currency or calculated on value.
     // Let's assume fees are calculated on the CHF value of the transaction.
     // Fees Calculation
     const feeCurrency = fees.feeCurrency || 'CHF';
     const isNativeFees = feeCurrency === 'NATIVE';
+    // Special handling for GBp (Pence) -> treat Native Fees as GBP (Pounds)
+    const isGBp = simCurrency === 'GBp';
+    const displayFeeCurrency = (isNativeFees && isGBp) ? 'GBP' : (isNativeFees ? simCurrency : 'CHF');
 
-    // Calculate Fees in the chosen currency
-    // If Native: Scale on volumeNative. If CHF: Scale on volumeCHF.
-    const feeBaseVolume = isNativeFees ? volumeNative : volumeCHF;
+    // Calculate Fees
+    let calcCourtage = 0;
+    let calcStamp = 0;
+    let totalFeesInFeeCurrency = 0;
 
-    const calcCourtage = Math.max(feeBaseVolume * (fees.courtagePercent / 100), fees.courtageMin);
-    const calcStamp = feeBaseVolume * (fees.stampDutyPercent / 100);
-    const totalFeesInFeeCurrency = calcCourtage + calcStamp + fees.exchangeFee;
+    if (isNativeFees) {
+        // NATIVE CURRENCY LOGIC
+        if (isGBp) {
+            // Treat as GBP (Pounds)
+            // Volume is in Pence. 
+            // Courtage % is of Volume => Result in Pence. Need directly in Pounds (/100).
+            const volPence = volumeNative;
+            const courtagePence = volPence * (fees.courtagePercent / 100);
+            const courtagePoundsDerived = courtagePence / 100;
+
+            // Min is in Pounds
+            calcCourtage = Math.max(courtagePoundsDerived, fees.courtageMin);
+
+            // Stamp % of Volume => Result in Pence. Need in Pounds (/100).
+            const stampPence = volPence * (fees.stampDutyPercent / 100);
+            calcStamp = stampPence / 100;
+
+            // Exchange Fee is in Pounds (Input)
+            // Total in Pounds
+            totalFeesInFeeCurrency = calcCourtage + calcStamp + fees.exchangeFee;
+
+        } else {
+            // Standard Native (e.g. USD, EUR)
+            const feeBaseVolume = volumeNative;
+            calcCourtage = Math.max(feeBaseVolume * (fees.courtagePercent / 100), fees.courtageMin);
+            calcStamp = feeBaseVolume * (fees.stampDutyPercent / 100);
+            totalFeesInFeeCurrency = calcCourtage + calcStamp + fees.exchangeFee;
+        }
+    } else {
+        // CHF BASE LOGIC (Default)
+        // Everything calculated based on volumeCHF
+        calcCourtage = Math.max(volumeCHF * (fees.courtagePercent / 100), fees.courtageMin);
+        calcStamp = volumeCHF * (fees.stampDutyPercent / 100);
+        totalFeesInFeeCurrency = calcCourtage + calcStamp + fees.exchangeFee;
+    }
 
     // Convert Total Fees to CHF for final summation
-    // If fees are in Native, convert to CHF using BASE rate (no markup on fees usually)
-    // Or should we use the markup rate? Usually fees are deducted from the gross amount.
-    // Let's use Base Rate for fee conversion to be safe/standard.
     let totalFeesCHF = totalFeesInFeeCurrency;
     if (isNativeFees) {
-        totalFeesCHF = convertToCHF(totalFeesInFeeCurrency, simCurrency, rates);
+        // If GBp, we effectively already converted to GBP (Pounds). So convert GBP -> CHF.
+        // If other, convert SimCurrency -> CHF.
+        const conversionSourceCurrency = isGBp ? 'GBP' : simCurrency;
+        totalFeesCHF = convertToCHF(totalFeesInFeeCurrency, conversionSourceCurrency, rates);
     }
 
     const totalFees = totalFeesCHF;
@@ -908,20 +991,18 @@ export function DividendCalculator() {
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-1">
                                             <label className="text-[10px] uppercase text-muted-foreground">Courtage %</label>
-                                            <input
-                                                type="number"
+                                            <LocalNumberInput
                                                 step="0.01"
                                                 value={fees.courtagePercent}
-                                                onChange={(e) => updateSimulatorState({ fees: { ...fees, courtagePercent: Number(e.target.value) } })}
+                                                onChange={(val) => updateSimulatorState({ fees: { ...fees, courtagePercent: val } })}
                                                 className="w-full px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right no-spinner"
                                             />
                                         </div>
                                         <div className="space-y-1">
-                                            <label className="text-[10px] uppercase text-muted-foreground">Min. ({fees.feeCurrency === 'NATIVE' ? simCurrency : 'CHF'})</label>
-                                            <input
-                                                type="number"
+                                            <label className="text-[10px] uppercase text-muted-foreground">Min. ({displayFeeCurrency})</label>
+                                            <LocalNumberInput
                                                 value={fees.courtageMin}
-                                                onChange={(e) => updateSimulatorState({ fees: { ...fees, courtageMin: Number(e.target.value) } })}
+                                                onChange={(val) => updateSimulatorState({ fees: { ...fees, courtageMin: val } })}
                                                 className="w-full px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right no-spinner"
                                             />
                                         </div>
@@ -974,22 +1055,20 @@ export function DividendCalculator() {
 
                                     <div className="flex items-center justify-between gap-4">
                                         <label className="text-[10px] uppercase text-muted-foreground whitespace-nowrap">Börsengebühren</label>
-                                        <input
-                                            type="number"
+                                        <LocalNumberInput
                                             step="0.01"
                                             value={fees.exchangeFee}
-                                            onChange={(e) => updateSimulatorState({ fees: { ...fees, exchangeFee: Number(e.target.value) } })}
+                                            onChange={(val) => updateSimulatorState({ fees: { ...fees, exchangeFee: val } })}
                                             className="w-24 px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right no-spinner"
                                         />
                                     </div>
 
                                     <div className="flex items-center justify-between gap-4">
                                         <label className="text-[10px] uppercase text-muted-foreground whitespace-nowrap">FX Marge %</label>
-                                        <input
-                                            type="number"
+                                        <LocalNumberInput
                                             step="0.01"
                                             value={fees.fxMarkupPercent || 0}
-                                            onChange={(e) => updateSimulatorState({ fees: { ...fees, fxMarkupPercent: Number(e.target.value) } })}
+                                            onChange={(val) => updateSimulatorState({ fees: { ...fees, fxMarkupPercent: val } })}
                                             className="w-24 px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right no-spinner"
                                             title="Wechselkurs-Aufschlag der Bank (typisch 1.5%)"
                                         />
@@ -1000,7 +1079,7 @@ export function DividendCalculator() {
                                         <div className="text-right">
                                             {fees.feeCurrency === 'NATIVE' && (
                                                 <div className="text-xs font-mono text-muted-foreground mb-1">
-                                                    -{(totalFeesInFeeCurrency).toFixed(2)} {simCurrency}
+                                                    -{(totalFeesInFeeCurrency).toFixed(2)} {displayFeeCurrency}
                                                 </div>
                                             )}
                                             <span className="text-sm font-bold text-red-500">-{totalFees.toFixed(2)} CHF</span>
@@ -1051,19 +1130,19 @@ export function DividendCalculator() {
                                             <span>Courtage:</span>
                                             <span>Courtage:</span>
                                             <span className="text-red-500 font-mono">
-                                                {mode === 'buy' ? '+' : '-'} {calcCourtage.toFixed(2)} {fees.feeCurrency === 'NATIVE' ? simCurrency : 'CHF'}
+                                                {mode === 'buy' ? '+' : '-'} {calcCourtage.toFixed(2)} {displayFeeCurrency}
                                             </span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Stempelsteuer:</span>
                                             <span className="text-red-500 font-mono">
-                                                {mode === 'buy' ? '+' : '-'} {calcStamp.toFixed(2)} {fees.feeCurrency === 'NATIVE' ? simCurrency : 'CHF'}
+                                                {mode === 'buy' ? '+' : '-'} {calcStamp.toFixed(2)} {displayFeeCurrency}
                                             </span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Börsengebühr:</span>
                                             <span className="text-red-500 font-mono">
-                                                {mode === 'buy' ? '+' : '-'} {fees.exchangeFee.toFixed(2)} {fees.feeCurrency === 'NATIVE' ? simCurrency : 'CHF'}
+                                                {mode === 'buy' ? '+' : '-'} {fees.exchangeFee.toFixed(2)} {displayFeeCurrency}
                                             </span>
                                         </div>
                                         {/* Show Total Fees in CHF if Native is selected */}
