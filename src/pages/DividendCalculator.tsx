@@ -932,6 +932,11 @@ export function DividendCalculator() {
                                         onChange={(val) => updateSimulatorState({ shares: val })}
                                         className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                     />
+                                    {price > 0 && dividend > 0 && (
+                                        <div className="text-[10px] text-green-600 font-medium text-right mt-1">
+                                            {((dividend / price) * 100).toFixed(2)}% Brutto
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-muted-foreground">
@@ -945,8 +950,8 @@ export function DividendCalculator() {
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-muted-foreground">
-                                        Div. ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
+                                    <label className="text-[10px] font-bold text-muted-foreground whitespace-nowrap">
+                                        Dividende ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
                                     </label>
                                     <LocalNumberInput
                                         step="0.01"
