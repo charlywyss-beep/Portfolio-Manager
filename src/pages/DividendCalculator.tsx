@@ -281,7 +281,7 @@ export function DividendCalculator() {
     // Calculate Fees in the chosen currency
     // If Native: Scale on volumeNative. If CHF: Scale on volumeCHF.
     const feeBaseVolume = isNativeFees ? volumeNative : volumeCHF;
-    
+
     const calcCourtage = Math.max(feeBaseVolume * (fees.courtagePercent / 100), fees.courtageMin);
     const calcStamp = feeBaseVolume * (fees.stampDutyPercent / 100);
     const totalFeesInFeeCurrency = calcCourtage + calcStamp + fees.exchangeFee;
@@ -959,6 +959,16 @@ export function DividendCalculator() {
                                                 </svg>
                                                 Ausland 0.15%
                                             </button>
+                                            <button
+                                                onClick={() => updateSimulatorState({ fees: { ...fees, stampDutyPercent: 0.50 } })}
+                                                className={`flex-1 py-1.5 text-xs border rounded transition-colors flex items-center justify-center gap-2 ${fees.stampDutyPercent === 0.50
+                                                    ? 'bg-indigo-600 text-white border-indigo-700 font-bold shadow-sm'
+                                                    : 'bg-background hover:bg-muted text-foreground border-input'
+                                                    }`}
+                                                title="UK Stamp Duty Reserve Tax (SDRT)"
+                                            >
+                                                🇬🇧 UK 0.50%
+                                            </button>
                                         </div>
                                     </div>
 
@@ -977,7 +987,7 @@ export function DividendCalculator() {
                                         <label className="text-[10px] uppercase text-muted-foreground whitespace-nowrap">FX Marge %</label>
                                         <input
                                             type="number"
-                                            step="0.1"
+                                            step="0.01"
                                             value={fees.fxMarkupPercent || 0}
                                             onChange={(e) => updateSimulatorState({ fees: { ...fees, fxMarkupPercent: Number(e.target.value) } })}
                                             className="w-24 px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right no-spinner"
@@ -987,7 +997,14 @@ export function DividendCalculator() {
 
                                     <div className="pt-2 border-t border-border/50 flex justify-between items-center">
                                         <span className="text-xs text-muted-foreground">Total Gebühren</span>
-                                        <span className="text-sm font-bold text-red-500">-{totalFees.toFixed(2)} CHF</span>
+                                        <div className="text-right">
+                                            {fees.feeCurrency === 'NATIVE' && (
+                                                <div className="text-xs font-mono text-muted-foreground mb-1">
+                                                    -{(totalFeesInFeeCurrency).toFixed(2)} {simCurrency}
+                                                </div>
+                                            )}
+                                            <span className="text-sm font-bold text-red-500">-{totalFees.toFixed(2)} CHF</span>
+                                        </div>
                                     </div>
                                 </div>
                             )}
