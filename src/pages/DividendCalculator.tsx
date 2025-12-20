@@ -933,7 +933,7 @@ export function DividendCalculator() {
                                         className="w-full px-2 py-1.5 text-sm rounded-md border border-input bg-background text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                     />
                                     {price > 0 && dividend > 0 && (
-                                        <div className="text-[10px] text-green-600 font-medium text-right mt-1">
+                                        <div className="text-sm font-bold text-green-600 font-medium text-right mt-1">
                                             {((dividend / price) * 100).toFixed(2)}% Brutto
                                         </div>
                                     )}
