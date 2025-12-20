@@ -253,9 +253,20 @@ export function DividendCalculator() {
     // Helper to get CHF value
     const getCHF = (val: number, currency: string) => {
         if (!currency || currency === 'CHF') return val;
-        // Special case for GBp: Price is in Pence, but convertToCHF handles it if passed 'GBp'
-        // But if we have a raw value like 4238 (Pence), convertToCHF(4238, 'GBp') returns ~47 CHF. Correct.
-        return convertToCHF(val, currency, rates);
+
+        // Base conversion
+        const baseCHF = convertToCHF(val, currency, rates);
+
+        // Apply FX Markup (Bank Fee)
+        // BUY: You pay MORE CHF => Rate increases (Multiply by 1 + markup)
+        // SELL: You receive LESS CHF => Rate decreases (Multiply by 1 - markup)
+        const markup = (fees.fxMarkupPercent || 0) / 100;
+
+        if (mode === 'buy') {
+            return baseCHF * (1 + markup);
+        } else {
+            return baseCHF * (1 - markup);
+        }
     };
 
     const volumeCHF = getCHF(volumeNative, simCurrency || 'CHF');
@@ -923,6 +934,18 @@ export function DividendCalculator() {
                                         />
                                     </div>
 
+                                    <div className="flex items-center justify-between gap-4">
+                                        <label className="text-[10px] uppercase text-muted-foreground whitespace-nowrap">FX Marge %</label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            value={fees.fxMarkupPercent || 0}
+                                            onChange={(e) => updateSimulatorState({ fees: { ...fees, fxMarkupPercent: Number(e.target.value) } })}
+                                            className="w-24 px-2 py-1 text-sm rounded border border-input bg-background text-foreground text-right no-spinner"
+                                            title="Wechselkurs-Aufschlag der Bank (typisch 1.5%)"
+                                        />
+                                    </div>
+
                                     <div className="pt-2 border-t border-border/50 flex justify-between items-center">
                                         <span className="text-xs text-muted-foreground">Total Gebühren</span>
                                         <span className="text-sm font-bold text-red-500">-{totalFees.toFixed(2)} CHF</span>
@@ -949,6 +972,23 @@ export function DividendCalculator() {
                                         <span>Volumen (CHF):</span>
                                         <span>{volumeCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}</span>
                                     </div>
+
+                                    {/* FX Rate Info */}
+                                    {simCurrency !== 'CHF' && (
+                                        <div className="flex justify-between items-center text-xs text-muted-foreground pt-1">
+                                            <span>Wechselkurs:</span>
+                                            <div className="flex flex-col items-end">
+                                                <span className="line-through opacity-50 text-[10px]">
+                                                    {convertToCHF(1, simCurrency, rates).toFixed(4)}
+                                                </span>
+                                                <span className={mode === 'buy' ? 'text-red-400' : 'text-orange-400'}>
+                                                    {(getCHF(1, simCurrency)).toFixed(4)}
+                                                    <span className="text-[9px] ml-1">({fees.fxMarkupPercent || 0}%)</span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="h-px bg-border my-2" />
                                     <div className="space-y-1 text-xs">
                                         <div className="flex justify-between">
@@ -1188,6 +1228,7 @@ export function DividendCalculator() {
                     </div>
                 </div>
             </div >
-        </div >
+        </div>
+
     );
 }

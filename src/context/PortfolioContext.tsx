@@ -46,6 +46,7 @@ interface PortfolioContextType {
             stampDutyPercent: number;
             exchangeFee: number;
             showAdvanced: boolean;
+            fxMarkupPercent?: number; // New FX Margin
         }
     };
     updateSimulatorState: (newState: Partial<PortfolioContextType['simulatorState']>) => void;
@@ -71,7 +72,8 @@ const defaultSimulatorState = {
         courtageMin: 40,
         stampDutyPercent: 0.075,
         exchangeFee: 2.00,
-        showAdvanced: true
+        showAdvanced: true,
+        fxMarkupPercent: 1.5
     }
 };
 
