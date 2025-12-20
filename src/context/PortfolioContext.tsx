@@ -47,6 +47,7 @@ interface PortfolioContextType {
             exchangeFee: number;
             showAdvanced: boolean;
             fxMarkupPercent?: number; // New FX Margin
+            feeCurrency: 'CHF' | 'NATIVE'; // New: Fee Currency Toggle
         }
     };
     updateSimulatorState: (newState: Partial<PortfolioContextType['simulatorState']>) => void;
@@ -73,7 +74,8 @@ const defaultSimulatorState = {
         stampDutyPercent: 0.075,
         exchangeFee: 2.00,
         showAdvanced: true,
-        fxMarkupPercent: 1.5
+        fxMarkupPercent: 1.5,
+        feeCurrency: 'CHF'
     }
 };
 

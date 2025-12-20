@@ -274,9 +274,28 @@ export function DividendCalculator() {
     // Fees are calculated on CHF Volume usually? Or Native? 
     // Usually broker fees are defined in CHF/Base Currency or calculated on value.
     // Let's assume fees are calculated on the CHF value of the transaction.
-    const calcCourtage = Math.max(volumeCHF * (fees.courtagePercent / 100), fees.courtageMin);
-    const calcStamp = volumeCHF * (fees.stampDutyPercent / 100);
-    const totalFees = calcCourtage + calcStamp + fees.exchangeFee;
+    // Fees Calculation
+    const feeCurrency = fees.feeCurrency || 'CHF';
+    const isNativeFees = feeCurrency === 'NATIVE';
+
+    // Calculate Fees in the chosen currency
+    // If Native: Scale on volumeNative. If CHF: Scale on volumeCHF.
+    const feeBaseVolume = isNativeFees ? volumeNative : volumeCHF;
+    
+    const calcCourtage = Math.max(feeBaseVolume * (fees.courtagePercent / 100), fees.courtageMin);
+    const calcStamp = feeBaseVolume * (fees.stampDutyPercent / 100);
+    const totalFeesInFeeCurrency = calcCourtage + calcStamp + fees.exchangeFee;
+
+    // Convert Total Fees to CHF for final summation
+    // If fees are in Native, convert to CHF using BASE rate (no markup on fees usually)
+    // Or should we use the markup rate? Usually fees are deducted from the gross amount.
+    // Let's use Base Rate for fee conversion to be safe/standard.
+    let totalFeesCHF = totalFeesInFeeCurrency;
+    if (isNativeFees) {
+        totalFeesCHF = convertToCHF(totalFeesInFeeCurrency, simCurrency, rates);
+    }
+
+    const totalFees = totalFeesCHF;
 
     // Totals in CHF
     const totalInvestCHF = mode === 'buy' ? volumeCHF + totalFees : 0;
@@ -866,6 +885,26 @@ export function DividendCalculator() {
                             {/* Advanced Fees Section */}
                             {fees.showAdvanced && (
                                 <div className="bg-muted/40 p-3 rounded-md space-y-3 border border-border/50 animate-in fade-in slide-in-from-top-2">
+                                    {/* Fee Currency Toggle - Only if foreign stock */}
+                                    {simCurrency !== 'CHF' && (
+                                        <div className="flex justify-end items-center gap-2 mb-2">
+                                            <span className="text-[10px] uppercase text-muted-foreground mr-1">Gebühren in:</span>
+                                            <div className="flex bg-background border border-input rounded p-0.5">
+                                                <button
+                                                    onClick={() => updateSimulatorState({ fees: { ...fees, feeCurrency: 'CHF' } })}
+                                                    className={`px-2 py-0.5 text-[10px] rounded transition-colors ${!fees.feeCurrency || fees.feeCurrency === 'CHF' ? 'bg-primary text-primary-foreground font-bold' : 'text-muted-foreground hover:text-foreground'}`}
+                                                >
+                                                    CHF
+                                                </button>
+                                                <button
+                                                    onClick={() => updateSimulatorState({ fees: { ...fees, feeCurrency: 'NATIVE' } })}
+                                                    className={`px-2 py-0.5 text-[10px] rounded transition-colors ${fees.feeCurrency === 'NATIVE' ? 'bg-primary text-primary-foreground font-bold' : 'text-muted-foreground hover:text-foreground'}`}
+                                                >
+                                                    {simCurrency}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-1">
                                             <label className="text-[10px] uppercase text-muted-foreground">Courtage %</label>
@@ -878,7 +917,7 @@ export function DividendCalculator() {
                                             />
                                         </div>
                                         <div className="space-y-1">
-                                            <label className="text-[10px] uppercase text-muted-foreground">Min. (CHF)</label>
+                                            <label className="text-[10px] uppercase text-muted-foreground">Min. ({fees.feeCurrency === 'NATIVE' ? simCurrency : 'CHF'})</label>
                                             <input
                                                 type="number"
                                                 value={fees.courtageMin}
@@ -993,16 +1032,30 @@ export function DividendCalculator() {
                                     <div className="space-y-1 text-xs">
                                         <div className="flex justify-between">
                                             <span>Courtage:</span>
-                                            <span className="text-red-500 font-mono">{mode === 'buy' ? '+' : '-'} {calcCourtage.toFixed(2)} CHF</span>
+                                            <span>Courtage:</span>
+                                            <span className="text-red-500 font-mono">
+                                                {mode === 'buy' ? '+' : '-'} {calcCourtage.toFixed(2)} {fees.feeCurrency === 'NATIVE' ? simCurrency : 'CHF'}
+                                            </span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Stempelsteuer:</span>
-                                            <span className="text-red-500 font-mono">{mode === 'buy' ? '+' : '-'} {calcStamp.toFixed(2)} CHF</span>
+                                            <span className="text-red-500 font-mono">
+                                                {mode === 'buy' ? '+' : '-'} {calcStamp.toFixed(2)} {fees.feeCurrency === 'NATIVE' ? simCurrency : 'CHF'}
+                                            </span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Börsengebühr:</span>
-                                            <span className="text-red-500 font-mono">{mode === 'buy' ? '+' : '-'} {fees.exchangeFee.toFixed(2)} CHF</span>
+                                            <span className="text-red-500 font-mono">
+                                                {mode === 'buy' ? '+' : '-'} {fees.exchangeFee.toFixed(2)} {fees.feeCurrency === 'NATIVE' ? simCurrency : 'CHF'}
+                                            </span>
                                         </div>
+                                        {/* Show Total Fees in CHF if Native is selected */}
+                                        {fees.feeCurrency === 'NATIVE' && (
+                                            <div className="flex justify-between pt-1 border-t border-border/50 mt-1">
+                                                <span>Total Gebühren (CHF):</span>
+                                                <span className="text-red-500 font-mono">-{totalFees.toFixed(2)} CHF</span>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="h-px bg-border my-2" />
                                     <div className="flex justify-between items-center font-bold">
