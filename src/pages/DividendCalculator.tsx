@@ -1225,7 +1225,7 @@ export function DividendCalculator() {
 
                                 {/* Annual Payout */}
                                 <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 flex flex-col gap-1">
-                                    <span className="text-sm font-bold text-foreground">Jäh. Ausschüttung (CHF):</span>
+                                    <span className="text-sm font-bold text-foreground">Jährl. Ausschüttung (CHF):</span>
                                     <div className="flex flex-col items-end">
                                         <span className="text-lg font-bold text-foreground leading-none">
                                             {annualDividendCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
