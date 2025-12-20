@@ -229,8 +229,9 @@ export function Portfolio() {
                                                         selectedStockId: pos.stock.id,
                                                         simName: pos.stock.name,
                                                         simSymbol: pos.stock.symbol,
-                                                        price: pos.stock.currentPrice,
-                                                        dividend: pos.stock.dividendAmount || 0,
+                                                        simCurrency: pos.stock.currency === 'GBp' ? 'GBP' : pos.stock.currency,
+                                                        price: pos.stock.currency === 'GBp' ? pos.stock.currentPrice / 100 : pos.stock.currentPrice,
+                                                        dividend: pos.stock.currency === 'GBp' ? (pos.stock.dividendAmount || 0) / 100 : (pos.stock.dividendAmount || 0),
                                                         mode: 'buy' // Default to buy
                                                     });
                                                     navigate('/calculator');
