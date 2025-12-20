@@ -280,7 +280,11 @@ export function DividendCalculator() {
         drawRow('Courtage', fmtMoney(calcCourtage, displayFeeCurrency), currentY);
         drawRow('Stempelsteuer', fmtMoney(calcStamp, displayFeeCurrency), currentY + rowHeight);
         drawRow('Börsengebühr', fmtMoney(fees.exchangeFee, displayFeeCurrency), currentY + rowHeight * 2);
-        drawRow('Total Gebühren', fmtMoney(totalFeesInFeeCurrency, displayFeeCurrency), currentY + rowHeight * 3, true);
+        let totalFeesStr = fmtMoney(totalFeesInFeeCurrency, displayFeeCurrency);
+        if (displayFeeCurrency !== 'CHF') {
+            totalFeesStr += ` (${fmtMoney(totalFeesCHF, 'CHF')})`;
+        }
+        drawRow('Total Gebühren', totalFeesStr, currentY + rowHeight * 3, true);
 
         // Exchange Rate (Moved below Total Gebühren as per user request)
         if (simCurrency && simCurrency !== 'CHF') {
@@ -337,6 +341,15 @@ export function DividendCalculator() {
             doc.setTextColor(primaryColor);
 
             doc.text(fmtMoney(annualDividendCHF, 'CHF'), 190, currentY, { align: 'right' });
+
+            // Quarterly (Derived)
+            currentY += 6;
+            doc.setFontSize(9);
+            doc.setTextColor('#94a3b8'); // Lighter / smaller
+            doc.text('Ø Quartals-Ausschüttung:', 20, currentY);
+            doc.text(fmtMoney(annualDividendCHF / 4, 'CHF'), 190, currentY, { align: 'right' });
+
+            currentY += 4; // Extra spacing before Yield
 
             currentY += 8;
             doc.setTextColor('#64748b');
