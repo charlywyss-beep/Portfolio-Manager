@@ -67,6 +67,17 @@ export function DividendCalculator() {
     const { stocks, addStock, addToWatchlist, simulatorState, updateSimulatorState, positions, addPosition, updatePosition, deletePosition } = usePortfolio();
     const { rates } = useExchangeRates();
 
+    // Catch-all: Ensure GBp is always converted to GBP on mount/update
+    useEffect(() => {
+        if (simulatorState.simCurrency === 'GBp') {
+            updateSimulatorState({
+                simCurrency: 'GBP',
+                price: simulatorState.price / 100,
+                dividend: simulatorState.dividend / 100
+            });
+        }
+    }, [simulatorState.simCurrency, simulatorState.price, simulatorState.dividend, updateSimulatorState]);
+
     // PDF Export Handler
     const handleExportPDF = () => {
         const doc = new jsPDF();
@@ -889,7 +900,7 @@ export function DividendCalculator() {
                                                     </div>
                                                 ) : (
                                                     <span className="text-xl font-bold group-hover:text-primary transition-colors flex items-center gap-2">
-                                                        {displayAvgPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {simCurrency === 'GBp' ? '£' : (simCurrency || 'CHF')}
+                                                        {displayAvgPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')}
                                                         <Pencil size={12} className="opacity-0 group-hover:opacity-50 text-muted-foreground" />
                                                     </span>
                                                 )}
@@ -903,7 +914,7 @@ export function DividendCalculator() {
                                         <div className="flex flex-col items-center gap-1">
                                             <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Gesamtwert</span>
                                             <span className="text-xl font-bold">
-                                                {(displayAvgPrice * currentPos.shares).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {simCurrency === 'GBp' ? '£' : (simCurrency || 'CHF')}
+                                                {(displayAvgPrice * currentPos.shares).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')}
                                             </span>
                                         </div>
                                     </div>
@@ -924,7 +935,7 @@ export function DividendCalculator() {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-muted-foreground">
-                                        Kaufpreis ({simCurrency || 'CHF'})
+                                        Kaufpreis ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
                                     </label>
                                     <LocalNumberInput
                                         step="0.01"
@@ -935,7 +946,7 @@ export function DividendCalculator() {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-muted-foreground">
-                                        Div. ({simCurrency || 'CHF'})
+                                        Div. ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
                                     </label>
                                     <LocalNumberInput
                                         step="0.01"
