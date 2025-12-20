@@ -296,20 +296,19 @@ export function DividendCalculator() {
                 currentY += rowHeight; // Spacing
                 doc.setFontSize(9);
                 doc.setTextColor('#64748b');
-                doc.text(`Wechselkurs: 1 ${displayBaseCurr} = ${effectiveRate.toFixed(4)} CHF`, 20, currentY + rowHeight * 3 + 8);
-                // Note: 'currentY' above was 'startY + rowHeight * 3 + 5'.
-                // We need to be careful with Y coordinates.
-                // let currentY = startY + rowHeight * 3 + 5; (Line ~290)
-                // Then we drew 4 rows: Y, Y+H, Y+2H, Y+3H.
-                // Total Fees is at Y+3H.
-                // We want to print below that.
-                // Let's rely on relative spacing.
 
-                const yPos = currentY + rowHeight * 4;
-                doc.text(`Wechselkurs: 1 ${displayBaseCurr} = ${effectiveRate.toFixed(4)} CHF`, 20, yPos);
+                // Adjust Y position relative to Total Fees line
+                // currentY was incremented for spacing.
+                // We want to be below the last fee line.
+                // The last fee line was at: (old currentY) + rowHeight * 3.
+                // Reset/Recalc for clarity:
+                const feesBlockEndY = (startY + rowHeight * 3 + 5 + 8) + rowHeight * 3;
+                const exchangeRateY = feesBlockEndY + 8;
 
-                // Push everything down
-                currentY += 10;
+                doc.text(`Wechselkurs: 1 ${displayBaseCurr} = ${effectiveRate.toFixed(4)} CHF`, 20, exchangeRateY);
+
+                // Push block down for Total Sum
+                currentY += 5; // Minimal push, main spacing handled by next block
             }
         }
 
