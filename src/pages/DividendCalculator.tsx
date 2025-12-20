@@ -1042,14 +1042,14 @@ export function DividendCalculator() {
                                                 Ausland 0.15%
                                             </button>
                                             <button
-                                                onClick={() => updateSimulatorState({ fees: { ...fees, stampDutyPercent: 0.50 } })}
-                                                className={`flex-1 py-1.5 text-xs border rounded transition-colors flex items-center justify-center gap-2 ${fees.stampDutyPercent === 0.50
+                                                onClick={() => updateSimulatorState({ fees: { ...fees, stampDutyPercent: 0.65 } })}
+                                                className={`flex-1 py-1.5 text-xs border rounded transition-colors flex items-center justify-center gap-2 ${fees.stampDutyPercent === 0.65
                                                     ? 'bg-indigo-600 text-white border-indigo-700 font-bold shadow-sm'
                                                     : 'bg-background hover:bg-muted text-foreground border-input'
                                                     }`}
-                                                title="UK Stamp Duty Reserve Tax (SDRT)"
+                                                title="UK SDRT (0.50%) + CH Stempel (0.15%)"
                                             >
-                                                🇬🇧 UK 0.50%
+                                                🇬🇧 UK+CH 0.65%
                                             </button>
                                         </div>
                                     </div>
@@ -1128,7 +1128,6 @@ export function DividendCalculator() {
                                     <div className="h-px bg-border my-2" />
                                     <div className="space-y-1 text-xs">
                                         <div className="flex justify-between">
-                                            <span>Courtage:</span>
                                             <span>Courtage:</span>
                                             <span className="text-red-500 font-mono">
                                                 {mode === 'buy' ? '+' : '-'} {calcCourtage.toFixed(2)} {displayFeeCurrency}
