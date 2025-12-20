@@ -102,7 +102,7 @@ export function DividendCalculator() {
         doc.text('Kauf / Verkauf Abrechnung', 20, 25);
 
         doc.setFontSize(10);
-        doc.setTextColor('#64748b'); // Slate 500
+        doc.setTextColor('#1e293b'); // Dark Slate for Timestamp
         doc.text(`Erstellt am: ${new Date().toLocaleDateString('de-DE')} ${new Date().toLocaleTimeString('de-DE')}`, 20, 32);
 
         // Transaction Type Badge
@@ -132,7 +132,7 @@ export function DividendCalculator() {
 
         if (stockIsin) {
             doc.setFontSize(10);
-            doc.setTextColor('#64748b');
+            doc.setTextColor('#1e293b');
             doc.text(`ISIN: ${stockIsin}`, 20, 54);
         }
 
@@ -249,7 +249,7 @@ export function DividendCalculator() {
 
         // Rows
         const drawRow = (label: string, value: string, y: number, boldValue = false) => {
-            doc.setTextColor('#64748b');
+            doc.setTextColor('#1e293b');
             doc.setFont('helvetica', 'normal');
             doc.text(label, col1, y);
 
@@ -259,7 +259,7 @@ export function DividendCalculator() {
             doc.text(value, 190, y, { align: 'right' });
 
             // Dotted line
-            doc.setDrawColor('#e2e8f0');
+            doc.setDrawColor('#94a3b8');
             doc.setLineWidth(0.1);
             doc.line(col1 + doc.getTextWidth(label) + 2, y - 1, 188 - doc.getTextWidth(value), y - 1);
         };
@@ -304,7 +304,7 @@ export function DividendCalculator() {
                 const exchangeRateY = feesBlockY + 8; // Bit of spacing below the last fee line
 
                 doc.setFontSize(9);
-                doc.setTextColor('#64748b');
+                doc.setTextColor('#1e293b');
                 doc.text(`Wechselkurs: 1 ${displayBaseCurr} = ${effectiveRate.toFixed(4)} CHF`, 20, exchangeRateY);
 
                 // Push block down for Total Sum
@@ -344,7 +344,7 @@ export function DividendCalculator() {
         if (mode === 'buy') {
             currentY += 25;
             doc.setFontSize(11);
-            doc.setTextColor('#64748b');
+            doc.setTextColor('#1e293b');
             doc.setFont('helvetica', 'normal');
             doc.text('Jährl. Ausschüttung:', 20, currentY);
             doc.setTextColor(primaryColor);
@@ -354,14 +354,14 @@ export function DividendCalculator() {
             // Quarterly (Derived)
             currentY += 6;
             doc.setFontSize(9);
-            doc.setTextColor('#94a3b8'); // Lighter / smaller
+            doc.setTextColor('#52525b'); // Darker gray for quarterly
             doc.text('Ø Quartals-Ausschüttung:', 20, currentY);
             doc.text(fmtMoney(annualDividendCHF / 4, 'CHF'), 190, currentY, { align: 'right' });
 
             currentY += 4; // Extra spacing before Yield
 
             currentY += 8;
-            doc.setTextColor('#64748b');
+            doc.setTextColor('#1e293b');
             doc.text('Brutto-Rendite:', 20, currentY);
             doc.setTextColor(primaryColor);
             doc.text(`${grossYield.toFixed(2)}%`, 190, currentY, { align: 'right' });
@@ -369,7 +369,7 @@ export function DividendCalculator() {
 
         // Footer
         doc.setFontSize(8);
-        doc.setTextColor('#94a3b8');
+        doc.setTextColor('#52525b');
         doc.text('Portfolio Manager - Simulation', 105, 290, { align: 'center' });
 
         doc.save(`Simulation_${stockName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
