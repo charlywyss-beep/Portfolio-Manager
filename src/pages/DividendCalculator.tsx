@@ -280,11 +280,15 @@ export function DividendCalculator() {
         drawRow('Courtage', fmtMoney(calcCourtage, displayFeeCurrency), currentY);
         drawRow('Stempelsteuer', fmtMoney(calcStamp, displayFeeCurrency), currentY + rowHeight);
         drawRow('Börsengebühr', fmtMoney(fees.exchangeFee, displayFeeCurrency), currentY + rowHeight * 2);
-        let totalFeesStr = fmtMoney(totalFeesInFeeCurrency, displayFeeCurrency);
+        drawRow('Total Gebühren', fmtMoney(totalFeesInFeeCurrency, displayFeeCurrency), currentY + rowHeight * 3, true);
+
+        let feesBlockY = currentY + rowHeight * 3;
+
+        // If Fee Currency is NOT CHF, show Total Fees in CHF on a new line below
         if (displayFeeCurrency !== 'CHF') {
-            totalFeesStr += ` (${fmtMoney(totalFeesCHF, 'CHF')})`;
+            feesBlockY += rowHeight;
+            drawRow('Total Gebühren (CHF)', fmtMoney(totalFeesCHF, 'CHF'), feesBlockY, true);
         }
-        drawRow('Total Gebühren', totalFeesStr, currentY + rowHeight * 3, true);
 
         // Exchange Rate (Moved below Total Gebühren as per user request)
         if (simCurrency && simCurrency !== 'CHF') {
@@ -297,27 +301,32 @@ export function DividendCalculator() {
                 if (mode === 'buy') effectiveRate *= (1 + markup);
                 else effectiveRate *= (1 - markup);
 
-                currentY += rowHeight; // Spacing
+                const exchangeRateY = feesBlockY + 8; // Bit of spacing below the last fee line
+
                 doc.setFontSize(9);
                 doc.setTextColor('#64748b');
-
-                // Adjust Y position relative to Total Fees line
-                // currentY was incremented for spacing.
-                // We want to be below the last fee line.
-                // The last fee line was at: (old currentY) + rowHeight * 3.
-                // Reset/Recalc for clarity:
-                const feesBlockEndY = (startY + rowHeight * 3 + 5 + 8) + rowHeight * 3;
-                const exchangeRateY = feesBlockEndY + 8;
-
                 doc.text(`Wechselkurs: 1 ${displayBaseCurr} = ${effectiveRate.toFixed(4)} CHF`, 20, exchangeRateY);
 
                 // Push block down for Total Sum
-                currentY += 5; // Minimal push, main spacing handled by next block
+                // We used `currentY` to track broad sections, but we drifted with `feesBlockY`.
+                // Let's reset `currentY` to be consistent with where we ended.
+                // We ended at `exchangeRateY`.
+                // The next block (Total Block) starts at `currentY`.
+                // The original code did `currentY += rowHeight * 4 + 10;` which was static.
+                // We need to be dynamic now.
+                currentY = exchangeRateY;
+            } else {
+                // No exchange rate printed, but maybe extra fee line was printed.
+                currentY = feesBlockY;
             }
+        } else {
+            // No exchange rate, maybe extra fee line? (Unlikely if CHF, but logic holds)
+            currentY = feesBlockY;
         }
 
         // Total Block (Always CHF as per logic)
-        currentY += rowHeight * 4 + 10;
+        // Add some breathing room before the gray box
+        currentY += 15;
         doc.setFillColor('#f1f5f9'); // Slate 100
         doc.rect(15, currentY - 8, 180, 20, 'F');
 
