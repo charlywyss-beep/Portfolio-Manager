@@ -130,9 +130,9 @@ export function Dashboard() {
 
                         <div className="mt-4 pt-4 border-t border-border flex flex-col gap-1">
                             <div className="flex items-center justify-between gap-4 text-sm">
-                                <span className="text-muted-foreground">Investiert (Aktien/ETF):</span>
+                                <span className="text-muted-foreground">Aktien/ETF (Aktuell):</span>
                                 <span className="font-medium text-foreground">
-                                    {formatCurrency(totals.totalCostStock, 'CHF')}
+                                    {formatCurrency(totals.totalValueStock, 'CHF')}
                                 </span>
                             </div>
                             <div className="flex items-center justify-between gap-4 text-sm">
@@ -149,9 +149,9 @@ export function Dashboard() {
                             </div>
                             <div className="h-px bg-border my-0.5 opacity-50" />
                             <div className="flex items-center justify-between gap-4 text-sm opacity-75">
-                                <span className="text-muted-foreground">Rechnerisch (Basis):</span>
+                                <span className="text-muted-foreground">Rechnerisch (Total):</span>
                                 <span className="font-medium text-foreground">
-                                    {formatCurrency(totals.totalCostStock + totals.totalValueBank + totals.totalValueVorsorge, 'CHF')}
+                                    {formatCurrency(totals.totalValueStock + totals.totalValueBank + totals.totalValueVorsorge, 'CHF')}
                                 </span>
                             </div>
                         </div>
