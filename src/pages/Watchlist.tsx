@@ -81,7 +81,7 @@ export function Watchlist() {
                                     <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">EX-Tag</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zahl-Tag</th>
-                                    <th className="text-right py-3 px-4 w-24">Aktionen</th>
+                                    <th className="text-right py-3 px-4 w-24 sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -235,7 +235,7 @@ export function Watchlist() {
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground text-xs">{stock.dividendPayDate ? new Date(stock.dividendPayDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
                                                 </td>
-                                                <td className="text-right py-3 px-4">
+                                                <td className="text-right py-3 px-4 sticky right-0 bg-card group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                     <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity">
                                                         <button
                                                             onClick={() => setBuyStock(stock)}

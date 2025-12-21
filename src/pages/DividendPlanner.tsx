@@ -153,7 +153,7 @@ export function DividendPlanner() {
                                 <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
                                 <th className="text-right py-3 px-4 font-semibold">Ex-Date</th>
                                 <th className="text-right py-3 px-4 font-semibold">Pay-Date</th>
-                                <th className="text-right py-3 px-4 w-24">Aktionen</th>
+                                <th className="text-right py-3 px-4 w-24 sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -186,7 +186,7 @@ export function DividendPlanner() {
                                     const currentDiv = getCurrentDividendPeriod(stock);
 
                                     return (
-                                        <tr key={position.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
+                                        <tr key={position.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group">
                                             <td className="py-3 px-4">
                                                 <div
                                                     className="font-semibold cursor-pointer hover:text-primary transition-colors"
@@ -245,7 +245,7 @@ export function DividendPlanner() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="text-right py-3 px-4">
+                                            <td className="text-right py-3 px-4 sticky right-0 bg-card group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                 <button
                                                     onClick={() => navigate(`/dividends/edit/${stock.id}`)}
                                                     className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
