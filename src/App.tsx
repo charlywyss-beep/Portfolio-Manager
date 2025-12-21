@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, NavLink } from 'react-router-dom';
-import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, Menu, X } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, Menu, X, ArrowLeftRight } from 'lucide-react';
 import { cn } from './utils';
 import { PortfolioProvider } from './context/PortfolioContext';
 import { ExchangeRateProvider } from './context/ExchangeRateContext';
@@ -13,6 +13,7 @@ import { DividendCalculator } from './pages/DividendCalculator';
 import { Settings } from './pages/Settings';
 import { Watchlist } from './pages/Watchlist';
 import { StockDetail } from './pages/StockDetail';
+import { ExchangeRates } from './pages/ExchangeRates';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -40,6 +41,7 @@ function App() {
     if (pathname === '/watchlist') return 'Watchlist';
     if (pathname === '/calculator') return 'Kauf / Verkauf';
     if (pathname === '/dividends') return 'Dividenden Planer';
+    if (pathname === '/exchange-rates') return 'Wechselkurse';
     if (pathname === '/settings') return 'Einstellungen';
     if (pathname.startsWith('/stock/')) return 'Aktien Details';
     return 'Portfolio Manager';
@@ -100,7 +102,7 @@ function App() {
                 <h1 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">Portfolio</h1>
               </div>
               <div className="text-[10px] text-foreground font-bold font-mono mt-1 flex items-center gap-1">
-                <span>v3.9.153</span>
+                <span>v3.9.154</span>
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
               </div>
             </div>
@@ -112,7 +114,10 @@ function App() {
               <NavItem to="/watchlist" icon={Eye} label="Watchlist" />
               <NavItem to="/calculator" icon={Calculator} label="Kauf / Verkauf" />
 
+              <NavItem to="/calculator" icon={Calculator} label="Kauf / Verkauf" />
+
               <div className="pt-4 mt-4 border-t border-border">
+                <NavItem to="/exchange-rates" icon={ArrowLeftRight} label="Wechselkurse" />
                 <NavItem to="/settings" icon={SettingsIcon} label="Einstellungen" />
               </div>
             </nav>
@@ -155,6 +160,7 @@ function App() {
                 <Route path="/dividends/add" element={<EditDividendPage />} />
                 <Route path="/dividends/edit/:stockId" element={<EditDividendPage />} />
                 <Route path="/stock/:id" element={<StockDetail />} />
+                <Route path="/exchange-rates" element={<ExchangeRates />} />
                 <Route path="/settings" element={<Settings />} />
               </Routes>
             </div>

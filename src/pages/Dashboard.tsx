@@ -9,7 +9,7 @@ import { useCurrencyFormatter } from '../utils/currency';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { HistoryChart } from '../components/HistoryChart';
 import { AddHistoryEntryModal } from '../components/AddHistoryEntryModal';
-import { CurrencyChart } from '../components/CurrencyChart';
+// import { CurrencyChart } from '../components/CurrencyChart'; // Removed from dashboard
 import { DividendCalendarChart } from '../components/DividendCalendarChart';
 import { AssetAllocationChart } from '../components/AssetAllocationChart';
 import { PieChart as PieChartIcon } from 'lucide-react';
@@ -467,11 +467,7 @@ export function Dashboard() {
                     </div>
                 </div>
 
-                {/* Currency Charts */}
-                <div className="col-span-1 lg:col-span-7 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <CurrencyChart inverse={false} />
-                    <CurrencyChart inverse={true} />
-                </div>
+
             </div >
 
             {/* Modals */}
