@@ -9,7 +9,7 @@ import { getCurrentDividendPeriod } from '../utils/dividend';
 // Helper to translate frequency to German
 const translateFrequency = (freq?: string) => {
     switch (freq) {
-        case 'quarterly': return 'Quartalsweise';
+        case 'quarterly': return 'p.Q.';
         case 'semi-annually': return 'Halbjährlich';
         case 'annually': return 'Jährlich';
         case 'monthly': return 'Monatlich';
@@ -149,9 +149,9 @@ export function DividendPlanner() {
                                 <th className="text-right py-3 px-4 font-semibold">Anteile</th>
                                 <th className="text-right py-3 px-4 font-semibold">Rendite %</th>
                                 <th className="text-right py-3 px-4 font-semibold">Betrag/Aktie</th>
-                                <th className="text-right py-3 px-4 font-semibold">Jährlich</th>
-                                <th className="text-right py-3 px-4 font-semibold">Quartalsweise</th>
                                 <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
+                                <th className="text-right py-3 px-4 font-semibold">p.Q.</th>
+                                <th className="text-right py-3 px-4 font-semibold">Jährlich</th>
                                 <th className="text-right py-3 px-4 font-semibold">Ex-Date</th>
                                 <th className="text-right py-3 px-4 font-semibold">Pay-Date</th>
                                 <th className="text-right py-3 px-4 w-24 sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
@@ -213,12 +213,6 @@ export function DividendPlanner() {
                                             <td className="text-right py-3 px-4 font-medium">
                                                 {stock.dividendAmount ? formatCurrency(stock.dividendAmount, divCurrency) : '-'}
                                             </td>
-                                            <td className="text-right py-3 px-4 font-semibold text-primary">
-                                                {annualDisplay}
-                                            </td>
-                                            <td className="text-right py-3 px-4 text-muted-foreground">
-                                                CHF {quarterlyDividendCHF.toFixed(2)}
-                                            </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
                                                 {translateFrequency(stock.dividendFrequency)}
                                                 {currentDiv.periodLabel && (
@@ -226,6 +220,12 @@ export function DividendPlanner() {
                                                         {currentDiv.periodLabel}
                                                     </span>
                                                 )}
+                                            </td>
+                                            <td className="text-right py-3 px-4 text-muted-foreground">
+                                                {stock.dividendFrequency !== 'annually' ? `CHF ${quarterlyDividendCHF.toFixed(2)}` : ''}
+                                            </td>
+                                            <td className="text-right py-3 px-4 font-semibold text-primary">
+                                                {annualDisplay}
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
                                                 <div className="flex flex-col items-end gap-1">
