@@ -58,16 +58,16 @@ export function AssetAllocationChart() {
     };
 
     return (
-        <div className="h-[300px] w-full min-h-[300px] min-w-0 flex flex-col items-center">
+        <div className="h-[400px] w-full min-h-[300px] min-w-0 flex flex-col items-center">
             {hasMounted && data.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
                     <PieChart>
                         <Pie
                             data={data}
-                            cx="50%"
+                            cx="40%"
                             cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
+                            innerRadius="55%"
+                            outerRadius="85%"
                             paddingAngle={5}
                             dataKey="value"
                         >
@@ -80,7 +80,8 @@ export function AssetAllocationChart() {
                             layout="vertical"
                             verticalAlign="middle"
                             align="right"
-                            wrapperStyle={{ fontSize: '12px', opacity: 0.8 }}
+                            wrapperStyle={{ fontSize: '14px', opacity: 0.9, paddingLeft: '20px' }}
+                            iconSize={14}
                         />
                     </PieChart>
                 </ResponsiveContainer>
