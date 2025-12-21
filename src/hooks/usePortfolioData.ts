@@ -93,6 +93,7 @@ export function usePortfolioData() {
             projectedYearlyDividends,
             totalProjectedIncome, // Combined Dividends + Interest
             totalValueStock,
+            totalCostStock,
             totalValueFixed,
             totalInterestFixed,
             stockValue: totalValueStockOnly,

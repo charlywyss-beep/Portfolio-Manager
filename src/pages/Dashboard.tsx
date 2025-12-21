@@ -336,9 +336,11 @@ export function Dashboard() {
                 {/* History Section */}
                 <div className="col-span-1 lg:col-span-7 p-6 rounded-xl bg-card border border-border shadow-sm">
                     <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-2">
-                            <BarChart3 className="size-5 text-muted-foreground" />
-                            <h3 className="text-lg font-bold">Depot Entwicklung</h3>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-muted-foreground">Investiert (Aktien/ETF):</span>
+                            <span className="text-xs font-medium text-foreground">
+                                {formatCurrency(totals.totalCostStock, 'CHF')}
+                            </span>
                         </div>
                         <button
                             onClick={() => setIsHistoryModalOpen(true)}
