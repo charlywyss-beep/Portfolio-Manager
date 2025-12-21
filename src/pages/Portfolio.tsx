@@ -312,7 +312,16 @@ export function Portfolio() {
                     <div className="space-y-6">
                         {filteredVorsorge.map(fd => {
                             const limit = 7258;
-                            const current = fd.currentYearContribution || 0;
+                            // Calculate current based on manual or auto
+                            const currentMonth = new Date().getMonth() + 1;
+                            const calculatedAuto = fd.autoContribution && fd.monthlyContribution 
+                                ? fd.monthlyContribution * currentMonth
+                                : 0;
+                            
+                            const current = fd.autoContribution 
+                                ? Math.min(limit, calculatedAuto) 
+                                : (fd.currentYearContribution || 0);
+
                             const percent = Math.min((current / limit) * 100, 100);
 
                             return (

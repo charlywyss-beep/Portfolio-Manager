@@ -47,6 +47,8 @@ export interface FixedDeposit {
     accountType?: BankAccountType; // New field
     logoUrl?: string; // NEW: Logo URL
     currentYearContribution?: number; // NEW: For Vorsorge account progress
+    autoContribution?: boolean; // NEW: If true, calculate contribution based on monthly amount
+    monthlyContribution?: number; // NEW: Monthly amount to be extrapolated
 }
 
 export interface PortfolioHistoryEntry {

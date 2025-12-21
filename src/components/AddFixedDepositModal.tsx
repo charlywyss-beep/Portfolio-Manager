@@ -18,9 +18,11 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
     const [currency, setCurrency] = useState<Currency>('CHF');
     const [notes, setNotes] = useState('');
     const [accountType, setAccountType] = useState<BankAccountType>('sparkonto');
-    const [logoUrl, setLogoUrl] = useState(''); // NEW
-    const [currentYearContribution, setCurrentYearContribution] = useState<number | ''>(''); // NEW
-    const [domain, setDomain] = useState(''); // NEW: For generator
+    const [logoUrl, setLogoUrl] = useState('');
+    const [currentYearContribution, setCurrentYearContribution] = useState<number | ''>('');
+    const [domain, setDomain] = useState('');
+    const [isAutoContribution, setIsAutoContribution] = useState(false); // NEW
+    const [monthlyContribution, setMonthlyContribution] = useState<number | ''>(''); // NEW
 
     useEffect(() => {
         if (editingDeposit) {
@@ -29,10 +31,11 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             setInterestRate(editingDeposit.interestRate);
             setCurrency(editingDeposit.currency);
             setNotes(editingDeposit.notes || '');
-            setNotes(editingDeposit.notes || '');
             setAccountType(editingDeposit.accountType || 'sparkonto');
             setLogoUrl(editingDeposit.logoUrl || '');
             setCurrentYearContribution(editingDeposit.currentYearContribution || '');
+            setIsAutoContribution(!!editingDeposit.autoContribution);
+            setMonthlyContribution(editingDeposit.monthlyContribution || '');
         } else {
             // Reset form for new entry
             setBankName('');
@@ -44,6 +47,8 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             setLogoUrl('');
             setCurrentYearContribution('');
             setDomain('');
+            setIsAutoContribution(false);
+            setMonthlyContribution('');
         }
     }, [editingDeposit, isOpen]);
 
@@ -60,9 +65,11 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             notes,
             accountType,
             logoUrl,
-            currentYearContribution: accountType === 'vorsorge' ? (currentYearContribution === '' ? 0 : Number(currentYearContribution)) : undefined,
-            startDate: new Date().toISOString(), // Internal timestamp
-            maturityDate: new Date().toISOString() // Internal timestamp (irrelevant for open end)
+            currentYearContribution: accountType === 'vorsorge' && !isAutoContribution ? (currentYearContribution === '' ? 0 : Number(currentYearContribution)) : undefined,
+            autoContribution: accountType === 'vorsorge' ? isAutoContribution : undefined,
+            monthlyContribution: accountType === 'vorsorge' && isAutoContribution ? (monthlyContribution === '' ? 0 : Number(monthlyContribution)) : undefined,
+            startDate: new Date().toISOString(),
+            maturityDate: new Date().toISOString()
         };
 
         if (editingDeposit) {
