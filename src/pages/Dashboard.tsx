@@ -162,6 +162,148 @@ export function Dashboard() {
                 </div>
             </div>
 
+            {/* Reordered: Dividends & Watchlist */}
+            <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
+                {/* Upcoming Dividends List */}
+                <div className="col-span-1 lg:col-span-3 p-6 rounded-xl bg-card border border-border shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-bold">Nächste Dividenden Auszahlungen</h3>
+                        <Calendar className="size-5 text-muted-foreground" />
+                    </div>
+                    <div className="space-y-4">
+                        {upcomingDividends.map((div, idx) => {
+                            const daysToEx = div.exDate ? Math.ceil((new Date(div.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                            const showExWarning = daysToEx !== null && daysToEx >= 0 && daysToEx <= 7;
+
+                            return (
+                                <div
+                                    key={idx}
+                                    onClick={() => navigate('/dividends')}
+                                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        {div.stock?.logoUrl && (
+                                            <img
+                                                src={div.stock.logoUrl}
+                                                alt={div.stock.name}
+                                                className="size-8 rounded-full bg-white object-contain p-1 border border-border"
+                                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                                            />
+                                        )}
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-bold text-lg">{div.stock.symbol}</p>
+                                                {showExWarning && (
+                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
+                                                        <Bell className="size-3" />
+                                                        <span>Ex in {daysToEx} Tagen</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <p className="text-base text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-bold text-xl text-green-600 dark:text-green-400">
+                                            +{formatCurrency(div.amount, div.currency)}
+                                        </p>
+                                        <p className="text-sm font-medium text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                        {upcomingDividends.length === 0 && <p className="text-sm text-muted-foreground">Keine anstehenden Dividenden.</p>}
+                    </div>
+                </div>
+
+                {/* Watchlist Opportunities (Blue Info Cards) */}
+                {upcomingWatchlistDividends.length > 0 && (
+                    <div className="col-span-1 lg:col-span-4 p-6 rounded-xl bg-card border border-border shadow-sm">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                                <h3 className="text-lg font-bold text-blue-800 dark:text-blue-400">Watchlist Chancen</h3>
+                                <Info className="size-5 text-blue-500" />
+                            </div>
+                            <select
+                                value={watchlistTimeframe}
+                                onChange={(e) => setWatchlistTimeframe(Number(e.target.value))}
+                                className="text-xs px-2 py-1 rounded border border-border bg-background"
+                                title="Zeitraum auswählen"
+                                aria-label="Zeitraum auswählen"
+                            >
+                                <option value={90}>3 Monate</option>
+                                <option value={180}>6 Monate</option>
+                                <option value={270}>9 Monate</option>
+                                <option value={365}>1 Jahr</option>
+                            </select>
+                        </div>
+                        <div className="space-y-4 flex-1 overflow-y-auto max-h-[400px]">
+                            {filteredWatchlistDividends.length > 0 ? (
+                                filteredWatchlistDividends.map((item, idx) => {
+                                    // Filter dates again for display based on selection
+                                    const visibleDates = item.exDates.filter(date => {
+                                        const diffTime = new Date(date).getTime() - new Date().getTime();
+                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                        return diffDays <= watchlistTimeframe;
+                                    });
+
+                                    return (
+                                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50 hover:bg-blue-100/50 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                {item.stock.logoUrl && (
+                                                    <img
+                                                        src={item.stock.logoUrl}
+                                                        alt={item.stock.name}
+                                                        className="size-8 rounded-full bg-white object-contain p-1 border border-blue-200"
+                                                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                                                    />
+                                                )}
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <p className="font-bold text-lg text-foreground">{item.stock.symbol}</p>
+                                                    </div>
+
+                                                    {/* Dates Row - Horizontal Scroll if needed, or wrap */}
+                                                    <div className="flex flex-wrap gap-2 mb-2">
+                                                        {visibleDates.map((date, dIdx) => {
+                                                            const daysToEx = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                                                            return (
+                                                                <div key={dIdx} className="px-2 py-0.5 rounded-md bg-white dark:bg-blue-950 border border-blue-300 dark:border-blue-700 shadow text-blue-800 dark:text-blue-400 text-xs font-bold whitespace-nowrap">
+                                                                    Ex in {daysToEx} Tagen
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+
+                                                    <div
+                                                        onClick={() => navigate('/watchlist')}
+                                                        className="block mt-1 px-2 py-0.5 w-fit rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors cursor-pointer"
+                                                    >
+                                                        <p className="text-sm text-blue-900 dark:text-blue-300 font-medium">{item.stock.name}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col items-end">
+                                                <div className="px-3 py-1 rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow text-center min-w-[70px]">
+                                                    <p className="font-bold text-green-600 dark:text-green-400">
+                                                        {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}%` : '-'}
+                                                    </p>
+                                                    <p className="text-[10px] text-blue-700 dark:text-blue-400 uppercase tracking-wider">Rendite</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4">
+                                    Keine Chancen im gewählten Zeitraum.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
             {/* NEW: Advanced Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Dividend Calendar */}
@@ -284,145 +426,9 @@ export function Dashboard() {
                     </div>
                 </div>
 
-                {/* Upcoming Dividends List */}
-                <div className="col-span-1 lg:col-span-3 p-6 rounded-xl bg-card border border-border shadow-sm">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold">Nächste Dividenden Auszahlungen</h3>
-                        <Calendar className="size-5 text-muted-foreground" />
-                    </div>
-                    <div className="space-y-4">
-                        {upcomingDividends.map((div, idx) => {
-                            const daysToEx = div.exDate ? Math.ceil((new Date(div.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                            const showExWarning = daysToEx !== null && daysToEx >= 0 && daysToEx <= 7;
 
-                            return (
-                                <div
-                                    key={idx}
-                                    onClick={() => navigate('/dividends')}
-                                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        {div.stock?.logoUrl && (
-                                            <img
-                                                src={div.stock.logoUrl}
-                                                alt={div.stock.name}
-                                                className="size-8 rounded-full bg-white object-contain p-1 border border-border"
-                                                onError={(e) => (e.currentTarget.style.display = 'none')}
-                                            />
-                                        )}
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <p className="font-bold text-lg">{div.stock.symbol}</p>
-                                                {showExWarning && (
-                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
-                                                        <Bell className="size-3" />
-                                                        <span>Ex in {daysToEx} Tagen</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <p className="text-base text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="font-bold text-xl text-green-600 dark:text-green-400">
-                                            +{formatCurrency(div.amount, div.currency)}
-                                        </p>
-                                        <p className="text-sm font-medium text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
-                                    </div>
-                                </div>
-                            )
-                        })}
-                        {upcomingDividends.length === 0 && <p className="text-sm text-muted-foreground">Keine anstehenden Dividenden.</p>}
-                    </div>
-                </div>
 
-                {/* Watchlist Opportunities (Blue Info Cards) */}
-                {/* Watchlist Opportunities (Blue Info Cards) */}
-                {upcomingWatchlistDividends.length > 0 && (
-                    <div className="col-span-1 lg:col-span-4 p-6 rounded-xl bg-card border border-border shadow-sm">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <h3 className="text-lg font-bold text-blue-800 dark:text-blue-400">Watchlist Chancen</h3>
-                                <Info className="size-5 text-blue-500" />
-                            </div>
-                            <select
-                                value={watchlistTimeframe}
-                                onChange={(e) => setWatchlistTimeframe(Number(e.target.value))}
-                                className="text-xs px-2 py-1 rounded border border-border bg-background"
-                                title="Zeitraum auswählen"
-                                aria-label="Zeitraum auswählen"
-                            >
-                                <option value={90}>3 Monate</option>
-                                <option value={180}>6 Monate</option>
-                                <option value={270}>9 Monate</option>
-                                <option value={365}>1 Jahr</option>
-                            </select>
-                        </div>
-                        <div className="space-y-4 flex-1 overflow-y-auto max-h-[400px]">
-                            {filteredWatchlistDividends.length > 0 ? (
-                                filteredWatchlistDividends.map((item, idx) => {
-                                    // Filter dates again for display based on selection
-                                    const visibleDates = item.exDates.filter(date => {
-                                        const diffTime = new Date(date).getTime() - new Date().getTime();
-                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                        return diffDays <= watchlistTimeframe;
-                                    });
 
-                                    return (
-                                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50 hover:bg-blue-100/50 transition-colors">
-                                            <div className="flex items-center gap-3">
-                                                {item.stock.logoUrl && (
-                                                    <img
-                                                        src={item.stock.logoUrl}
-                                                        alt={item.stock.name}
-                                                        className="size-8 rounded-full bg-white object-contain p-1 border border-blue-200"
-                                                        onError={(e) => (e.currentTarget.style.display = 'none')}
-                                                    />
-                                                )}
-                                                <div>
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <p className="font-bold text-lg text-foreground">{item.stock.symbol}</p>
-                                                    </div>
-
-                                                    {/* Dates Row - Horizontal Scroll if needed, or wrap */}
-                                                    <div className="flex flex-wrap gap-2 mb-2">
-                                                        {visibleDates.map((date, dIdx) => {
-                                                            const daysToEx = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                                                            return (
-                                                                <div key={dIdx} className="px-2 py-0.5 rounded-md bg-white dark:bg-blue-950 border border-blue-300 dark:border-blue-700 shadow text-blue-800 dark:text-blue-400 text-xs font-bold whitespace-nowrap">
-                                                                    Ex in {daysToEx} Tagen
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-
-                                                    <div
-                                                        onClick={() => navigate('/watchlist')}
-                                                        className="block mt-1 px-2 py-0.5 w-fit rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors cursor-pointer"
-                                                    >
-                                                        <p className="text-sm text-blue-900 dark:text-blue-300 font-medium">{item.stock.name}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-col items-end">
-                                                <div className="px-3 py-1 rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow text-center min-w-[70px]">
-                                                    <p className="font-bold text-green-600 dark:text-green-400">
-                                                        {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}%` : '-'}
-                                                    </p>
-                                                    <p className="text-[10px] text-blue-700 dark:text-blue-400 uppercase tracking-wider">Rendite</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })
-                            ) : (
-                                <p className="text-sm text-muted-foreground text-center py-4">
-                                    Keine Chancen im gewählten Zeitraum.
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                )}
                 {/* Top 5 Performance Chart */}
                 <div className="col-span-1 lg:col-span-7 p-6 rounded-xl bg-card border border-border shadow-sm flex flex-col min-h-[400px]">
                     <div className="flex items-center justify-between mb-6">
