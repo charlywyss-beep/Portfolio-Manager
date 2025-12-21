@@ -81,9 +81,9 @@ export function AssetAllocationChart() {
                             data={data}
                             cx="40%"
                             cy="50%"
-                            innerRadius="55%"
-                            outerRadius="85%"
-                            paddingAngle={5}
+                            innerRadius="50%"
+                            outerRadius="90%"
+                            paddingAngle={2}
                             dataKey="value"
                         >
                             {data.map((_, index) => (
