@@ -346,12 +346,12 @@ export function DividendPlanner() {
                             <thead>
                                 <tr className="border-b border-border">
                                     <th className="text-left py-3 px-4 font-semibold">Bank / Institut</th>
-                                    <th className="text-right py-3 px-4 font-semibold">Betrag</th>
-                                    <th className="text-right py-3 px-4 font-semibold">Zins %</th>
-                                    <th className="text-right py-3 px-4 font-semibold">Ø Monatlich</th>
-                                    <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
-                                    <th className="text-right py-3 px-4 font-semibold">Quartalsweise</th>
-                                    <th className="text-right py-3 px-4 font-semibold">Jährlich</th>
+                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Betrag</th>
+                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zins %</th>
+                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Ø Monatlich</th>
+                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Frequenz</th>
+                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Quartalsweise</th>
+                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
                                     <th className="text-right py-3 px-4 w-24 sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
                                 </tr>
                             </thead>
@@ -375,22 +375,22 @@ export function DividendPlanner() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="text-right py-3 px-4 text-muted-foreground">
+                                            <td className="text-right py-3 px-4 text-muted-foreground whitespace-nowrap">
                                                 CHF {data.depositAmount?.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
                                                 {data.yield > 0 ? `${data.yield.toFixed(2)}%` : '-'}
                                             </td>
-                                            <td className={`text-right py-3 px-4 font-medium ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                            <td className={`text-right py-3 px-4 font-medium whitespace-nowrap ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                                                 {isNegative ? '-' : '+'} {Math.abs(data.annual / 12).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
                                                 Jährlich
                                             </td>
-                                            <td className={`text-right py-3 px-4 ${isNegative ? 'text-red-600/70' : 'text-green-600/70'}`}>
+                                            <td className={`text-right py-3 px-4 whitespace-nowrap ${isNegative ? 'text-red-600/70' : 'text-green-600/70'}`}>
                                                 {isNegative ? '-' : '+'} CHF {Math.abs(data.quarterly).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </td>
-                                            <td className={`text-right py-3 px-4 font-semibold ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                            <td className={`text-right py-3 px-4 font-semibold whitespace-nowrap ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                                                 {isNegative ? '-' : '+'} CHF {Math.abs(data.annual).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </td>
                                             <td className="text-right py-3 px-4 sticky right-0 bg-card group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
