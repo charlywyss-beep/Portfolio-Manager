@@ -136,6 +136,35 @@ export function usePortfolioData() {
             .sort((a, b) => new Date(a.payDate).getTime() - new Date(b.payDate).getTime());
     }, [positions]);
 
+    // NEW: Calculate Bank Risk (Deposit Protection > 100k)
+    const bankRisks = useMemo(() => {
+        const { fixedDeposits } = usePortfolio();
+        if (!fixedDeposits) return [];
+
+        const bankTotals: Record<string, number> = {};
+
+        fixedDeposits.forEach(fd => {
+            // Skip Vorsorge (separate protection scheme) and small amounts
+            if (fd.accountType === 'vorsorge') return;
+
+            // Normalize bank name to group correctly (simple normalization)
+            const bankName = fd.bankName.trim();
+            if (!bankTotals[bankName]) bankTotals[bankName] = 0;
+
+            // Convert to CHF for consistent limit check
+            bankTotals[bankName] += convertToCHF(fd.amount, fd.currency, rates);
+        });
+
+        // Filter for > 100k (Esisuisse Limit)
+        return Object.entries(bankTotals)
+            .filter(([_, total]) => total > 100000)
+            .map(([bankName, total]) => ({
+                bankName,
+                total,
+                excess: total - 100000
+            }));
+    }, [usePortfolio().fixedDeposits, rates]);
+
     // NEW: Calculate upcoming watchlist opportunities (Ex-Date relative)
     const upcomingWatchlistDividends = useMemo(() => {
         const watchlistStocks = stocks.filter(s => watchlist.includes(s.id));
@@ -178,6 +207,7 @@ export function usePortfolioData() {
         positions,
         totals,
         upcomingDividends,
-        upcomingWatchlistDividends
+        upcomingWatchlistDividends,
+        bankRisks
     };
 }

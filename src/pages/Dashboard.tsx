@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
-import { ArrowUpRight, ArrowDownRight, DollarSign, Calendar, TrendingUp, BarChart3, Plus, Trash2, Edit, Bell, Info } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, BarChart3, Calendar, Info, Plus, Trash2, Edit, Bell } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -27,7 +27,7 @@ const translateFrequency = (freq?: string) => {
 
 export function Dashboard() {
     const navigate = useNavigate();
-    const { totals, upcomingDividends, positions, upcomingWatchlistDividends } = usePortfolioData();
+    const { totals, upcomingDividends, positions, upcomingWatchlistDividends, bankRisks } = usePortfolioData();
     const { history, deleteHistoryEntry } = usePortfolio();
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -80,6 +80,27 @@ export function Dashboard() {
 
     return (
         <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
+            {/* Risk Warnings */}
+            {bankRisks.length > 0 && (
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-xl p-4 flex items-start gap-3">
+                    <Info className="size-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                    <div className="space-y-1">
+                        <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                            Einlagensicherung Limit überschritten
+                        </h3>
+                        {bankRisks.map(risk => (
+                            <p key={risk.bankName} className="text-xs text-amber-800 dark:text-amber-300">
+                                <strong>{risk.bankName}</strong>: {formatCurrency(risk.total, 'CHF')}
+                                <span className="opacity-75"> (Limit: 100'000 CHF)</span>
+                            </p>
+                        ))}
+                        <p className="text-[10px] text-amber-700 dark:text-amber-400 pt-1">
+                            Guthaben über 100'000 CHF pro Bank sind möglicherweise nicht durch die Einlagensicherung geschützt.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* Top Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Total Value */}
