@@ -151,6 +151,12 @@ export function EditDividendPage() {
     const handleQuarterlyDateChange = (index: number, field: 'exDate' | 'payDate', value: string) => {
         const newDates = [...quarterlyDates];
         newDates[index] = { ...newDates[index], [field]: value };
+
+        // Auto-set PayDate if ExDate is set and PayDate is empty
+        if (field === 'exDate' && value && !newDates[index].payDate) {
+            newDates[index].payDate = value;
+        }
+
         setQuarterlyDates(newDates);
     };
 
@@ -634,7 +640,13 @@ export function EditDividendPage() {
                                             <input
                                                 type="date"
                                                 value={exDate}
-                                                onChange={(e) => setExDate(e.target.value)}
+                                                onChange={(e) => {
+                                                    const newVal = e.target.value;
+                                                    setExDate(newVal);
+                                                    if (newVal && !payDate) {
+                                                        setPayDate(newVal);
+                                                    }
+                                                }}
                                                 className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                             />
                                         </div>
