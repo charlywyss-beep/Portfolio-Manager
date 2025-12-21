@@ -145,7 +145,7 @@ export function Portfolio() {
                                         <div className="flex flex-col items-end">
                                             <span className="whitespace-nowrap">{formatCurrency(pos.buyPriceAvg, pos.stock.currency, false)}</span>
                                             {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-[10px] text-muted-foreground font-normal whitespace-nowrap">
+                                                <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
                                                     {formatCurrency(convertToCHF(pos.buyPriceAvg, pos.stock.currency), 'CHF', false)}
                                                 </span>
                                             )}
