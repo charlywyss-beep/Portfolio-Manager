@@ -357,11 +357,32 @@ export function Dashboard() {
                 {/* History Section */}
                 <div className="col-span-1 lg:col-span-7 p-6 rounded-xl bg-card border border-border shadow-sm">
                     <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-muted-foreground">Investiert (Aktien/ETF):</span>
-                            <span className="text-xs font-medium text-foreground">
-                                {formatCurrency(totals.totalCostStock, 'CHF')}
-                            </span>
+                        <div className="flex flex-col gap-1 mt-2">
+                            <div className="flex items-center justify-between gap-4 text-xs">
+                                <span className="text-muted-foreground">Investiert (Aktien/ETF):</span>
+                                <span className="font-medium text-foreground">
+                                    {formatCurrency(totals.totalCostStock, 'CHF')}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4 text-xs">
+                                <span className="text-muted-foreground">+ Bankguthaben:</span>
+                                <span className="font-medium text-foreground">
+                                    {formatCurrency(totals.totalValueBank, 'CHF')}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4 text-xs">
+                                <span className="text-muted-foreground">+ Vorsorgekapital:</span>
+                                <span className="font-medium text-foreground">
+                                    {formatCurrency(totals.totalValueVorsorge, 'CHF')}
+                                </span>
+                            </div>
+                            <div className="h-px bg-border my-0.5 opacity-50" />
+                            <div className="flex items-center justify-between gap-4 text-xs opacity-75">
+                                <span className="text-muted-foreground">Rechnerisch (Basis):</span>
+                                <span className="font-medium text-foreground">
+                                    {formatCurrency(totals.totalCostStock + totals.totalValueBank + totals.totalValueVorsorge, 'CHF')}
+                                </span>
+                            </div>
                         </div>
                         <button
                             onClick={() => setIsHistoryModalOpen(true)}

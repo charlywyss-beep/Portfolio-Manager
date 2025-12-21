@@ -53,8 +53,22 @@ export function usePortfolioData() {
 
         // Fixed Deposits Totals
         const { fixedDeposits } = usePortfolio();
-        const totalValueFixed = fixedDeposits?.reduce((sum, fd) => sum + convertToCHF(fd.amount, fd.currency, rates), 0) || 0;
-        const totalBankValue = totalValueFixed;
+
+        const totalValueVorsorge = fixedDeposits?.reduce((sum, fd) => {
+            if (fd.accountType === 'vorsorge') {
+                return sum + convertToCHF(fd.amount, fd.currency, rates);
+            }
+            return sum;
+        }, 0) || 0;
+
+        const totalValueBank = fixedDeposits?.reduce((sum, fd) => {
+            if (fd.accountType !== 'vorsorge') { // Default to bank if undefined
+                return sum + convertToCHF(fd.amount, fd.currency, rates);
+            }
+            return sum;
+        }, 0) || 0;
+
+        const totalValueFixed = totalValueBank + totalValueVorsorge;
 
 
         const totalInterestFixed = fixedDeposits?.reduce((sum, fd) => {
@@ -95,10 +109,13 @@ export function usePortfolioData() {
             totalValueStock,
             totalCostStock,
             totalValueFixed,
+            totalValueBank,      // NEW
+            totalValueVorsorge,  // NEW
             totalInterestFixed,
             stockValue: totalValueStockOnly,
             etfValue: totalValueEtf,
-            cashValue: totalBankValue
+            cashValue: totalValueBank,
+            vorsorgeValue: totalValueVorsorge // Also exposing this if needed explicitly
         };
     }, [positions, rates, usePortfolio().fixedDeposits]);
 
