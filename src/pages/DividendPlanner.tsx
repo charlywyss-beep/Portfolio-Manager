@@ -61,7 +61,13 @@ export function DividendPlanner() {
 
     // Calculate Annual Bank Fees
     const annualBankFees = fixedDeposits.reduce((sum, deposit) => {
-        return sum + ((deposit.monthlyFee || 0) * 12);
+        let annualFee = 0;
+        if (deposit.monthlyFee && deposit.monthlyFee > 0) {
+            if (deposit.feeFrequency === 'annually') annualFee = deposit.monthlyFee;
+            else if (deposit.feeFrequency === 'quarterly') annualFee = deposit.monthlyFee * 4;
+            else annualFee = deposit.monthlyFee * 12;
+        }
+        return sum + annualFee;
     }, 0);
 
     const totalAnnualDividends = projectedDividends.reduce((sum, d) => sum + d!.annualDividendCHF, 0);
@@ -176,20 +182,27 @@ export function DividendPlanner() {
                                     </td>
                                 </tr>
                             ) : (
-                                [...projectedDividends, ...fixedDeposits.filter(d => d.monthlyFee && d.monthlyFee > 0).map(deposit => ({
-                                    type: 'fee',
-                                    id: deposit.id,
-                                    name: deposit.bankName,
-                                    symbol: 'Gebühr',
-                                    logoUrl: deposit.logoUrl,
-                                    shares: 1,
-                                    yield: 0,
-                                    amount: -(deposit.monthlyFee!),
-                                    frequency: 'monthly',
-                                    quarterly: -(deposit.monthlyFee! * 3),
-                                    annual: -(deposit.monthlyFee! * 12),
-                                    currency: 'CHF'
-                                }))].map((data: any) => {
+                                [...projectedDividends, ...fixedDeposits.filter(d => d.monthlyFee && d.monthlyFee > 0).map(deposit => {
+                                    let annualFee = 0;
+                                    if (deposit.feeFrequency === 'annually') annualFee = deposit.monthlyFee!;
+                                    else if (deposit.feeFrequency === 'quarterly') annualFee = deposit.monthlyFee! * 4;
+                                    else annualFee = deposit.monthlyFee! * 12; // Default to monthly
+
+                                    return {
+                                        type: 'fee',
+                                        id: deposit.id,
+                                        name: deposit.bankName,
+                                        symbol: 'Gebühr',
+                                        logoUrl: deposit.logoUrl,
+                                        shares: 1,
+                                        yield: 0,
+                                        amount: -(deposit.monthlyFee!),
+                                        frequency: deposit.feeFrequency || 'monthly',
+                                        quarterly: -(annualFee / 4),
+                                        annual: -(annualFee),
+                                        currency: 'CHF'
+                                    };
+                                })].map((data: any) => {
                                     if (data.type === 'fee') {
                                         return (
                                             <tr key={data.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group bg-red-50/30 dark:bg-red-950/10">
@@ -211,7 +224,9 @@ export function DividendPlanner() {
                                                 <td className="text-right py-3 px-4 font-medium text-red-600 dark:text-red-400">
                                                     {data.amount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                                 </td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground">Monatlich</td>
+                                                <td className="text-right py-3 px-4 text-muted-foreground">
+                                                    {translateFrequency(data.frequency)}
+                                                </td>
                                                 <td className="text-right py-3 px-4 text-red-600/70">
                                                     CHF {data.quarterly.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>

@@ -24,6 +24,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
     const [isAutoContribution, setIsAutoContribution] = useState(false); // NEW
     const [monthlyContribution, setMonthlyContribution] = useState<number | ''>(''); // NEW
     const [monthlyFee, setMonthlyFee] = useState<number | ''>(''); // NEW
+    const [feeFrequency, setFeeFrequency] = useState<'monthly' | 'quarterly' | 'annually'>('monthly'); // NEW
 
     useEffect(() => {
         if (editingDeposit) {
@@ -38,6 +39,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             setIsAutoContribution(!!editingDeposit.autoContribution);
             setMonthlyContribution(editingDeposit.monthlyContribution || '');
             setMonthlyFee(editingDeposit.monthlyFee || '');
+            setFeeFrequency(editingDeposit.feeFrequency || 'monthly');
         } else {
             // Reset form for new entry
             setBankName('');
@@ -52,6 +54,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             setIsAutoContribution(false);
             setMonthlyContribution('');
             setMonthlyFee('');
+            setFeeFrequency('monthly');
         }
     }, [editingDeposit, isOpen]);
 
@@ -72,6 +75,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             autoContribution: accountType === 'vorsorge' ? isAutoContribution : undefined,
             monthlyContribution: accountType === 'vorsorge' && isAutoContribution ? (monthlyContribution === '' ? 0 : Number(monthlyContribution)) : undefined,
             monthlyFee: monthlyFee === '' ? undefined : Number(monthlyFee),
+            feeFrequency,
             startDate: new Date().toISOString(),
             maturityDate: new Date().toISOString()
         };
@@ -330,20 +334,31 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Gebühr (Monatlich)</label>
-                            <div className="relative">
-                                <input
-                                    type="number"
-                                    min="0"
-                                    step="0.05"
-                                    placeholder="Optional (CHF)"
-                                    className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                                    value={monthlyFee}
-                                    onChange={(e) => setMonthlyFee(e.target.value === '' ? '' : Number(e.target.value))}
-                                />
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-                                    CHF
+                            <label className="text-sm font-medium">Gebühr</label>
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.05"
+                                        placeholder="Optional"
+                                        className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                        value={monthlyFee}
+                                        onChange={(e) => setMonthlyFee(e.target.value === '' ? '' : Number(e.target.value))}
+                                    />
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                                        CHF
+                                    </div>
                                 </div>
+                                <select
+                                    className="w-32 h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all cursor-pointer"
+                                    value={feeFrequency}
+                                    onChange={(e) => setFeeFrequency(e.target.value as any)}
+                                >
+                                    <option value="monthly">Monatlich</option>
+                                    <option value="quarterly">Quartalsweise</option>
+                                    <option value="annually">Jährlich</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -374,7 +389,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

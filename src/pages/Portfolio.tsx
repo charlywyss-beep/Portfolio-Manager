@@ -434,6 +434,18 @@ export function Portfolio() {
                             <tbody className="divide-y divide-border">
                                 {filteredFixedDeposits.map((fd) => {
                                     const interestAmount = fd.amount * (fd.interestRate / 100);
+
+                                    // Calculate Annual Fee
+                                    let annualFee = 0;
+                                    if (fd.monthlyFee && fd.monthlyFee > 0) {
+                                        if (fd.feeFrequency === 'annually') annualFee = fd.monthlyFee;
+                                        else if (fd.feeFrequency === 'quarterly') annualFee = fd.monthlyFee * 4;
+                                        else annualFee = fd.monthlyFee * 12; // Default to monthly
+                                    }
+
+                                    const netAnnualReturn = interestAmount - annualFee;
+                                    const isNegative = netAnnualReturn < 0;
+
                                     return (
                                         <tr key={fd.id} className="group hover:bg-muted/30 transition-colors">
                                             <td className="px-4 py-3 font-medium">
@@ -472,8 +484,8 @@ export function Portfolio() {
                                                     {fd.interestRate.toFixed(2)}%
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 text-right font-medium text-green-600 dark:text-green-400">
-                                                +{formatCurrency(interestAmount, fd.currency)}
+                                            <td className={`px-4 py-3 text-right font-medium ${isNegative ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
+                                                {isNegative ? '-' : '+'}CHF {Math.abs(netAnnualReturn).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </td>
                                             <td className="px-2 py-3">
                                                 <div className="flex items-center justify-center gap-1">
