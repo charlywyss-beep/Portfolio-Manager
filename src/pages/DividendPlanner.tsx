@@ -360,7 +360,7 @@ export function DividendPlanner() {
                                 {bankRows.map((data: any) => {
                                     const isNegative = data.isNegative;
                                     return (
-                                        <tr key={data.id} className={`border-b border-border last:border-0 hover:bg-muted/50 transition-colors group ${isNegative ? 'bg-red-50/30 dark:bg-red-950/10' : 'bg-green-50/30 dark:bg-green-950/10'}`}>
+                                        <tr key={data.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group">
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center gap-3">
                                                     <Logo
