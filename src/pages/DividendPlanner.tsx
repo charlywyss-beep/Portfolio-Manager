@@ -169,14 +169,70 @@ export function DividendPlanner() {
                             </tr>
                         </thead>
                         <tbody>
-                            {projectedDividends.length === 0 ? (
+                            {(projectedDividends.length === 0 && fixedDeposits.filter(d => d.monthlyFee).length === 0) ? (
                                 <tr>
                                     <td colSpan={10} className="text-center py-8 text-muted-foreground">
-                                        Keine Dividenden-Aktien im Portfolio
+                                        Keine Dividenden-Aktien oder gebührenpflichtigen Konten im Portfolio
                                     </td>
                                 </tr>
                             ) : (
-                                projectedDividends.map((data) => {
+                                [...projectedDividends, ...fixedDeposits.filter(d => d.monthlyFee && d.monthlyFee > 0).map(deposit => ({
+                                    type: 'fee',
+                                    id: deposit.id,
+                                    name: deposit.bankName,
+                                    symbol: 'Gebühr',
+                                    logoUrl: deposit.logoUrl,
+                                    shares: 1,
+                                    yield: 0,
+                                    amount: -(deposit.monthlyFee!),
+                                    frequency: 'monthly',
+                                    quarterly: -(deposit.monthlyFee! * 3),
+                                    annual: -(deposit.monthlyFee! * 12),
+                                    currency: 'CHF'
+                                }))].map((data: any) => {
+                                    if (data.type === 'fee') {
+                                        return (
+                                            <tr key={data.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group bg-red-50/30 dark:bg-red-950/10">
+                                                <td className="py-3 px-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <Logo
+                                                            url={data.logoUrl}
+                                                            alt={data.name}
+                                                            fallback="BK"
+                                                        />
+                                                        <div>
+                                                            <div className="font-semibold">{data.name}</div>
+                                                            <div className="text-xs text-red-500 font-medium">Konto-Gebühren</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="text-right py-3 px-4 text-muted-foreground">-</td>
+                                                <td className="text-right py-3 px-4 text-muted-foreground">-</td>
+                                                <td className="text-right py-3 px-4 font-medium text-red-600 dark:text-red-400">
+                                                    {data.amount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                                </td>
+                                                <td className="text-right py-3 px-4 text-muted-foreground">Monatlich</td>
+                                                <td className="text-right py-3 px-4 text-red-600/70">
+                                                    CHF {data.quarterly.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </td>
+                                                <td className="text-right py-3 px-4 font-semibold text-red-600 dark:text-red-400">
+                                                    CHF {data.annual.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </td>
+                                                <td className="text-right py-3 px-4 text-muted-foreground">-</td>
+                                                <td className="text-right py-3 px-4 text-muted-foreground">-</td>
+                                                <td className="text-right py-3 px-4">
+                                                    <button
+                                                        onClick={() => navigate('/portfolio')}
+                                                        className="p-2 hover:bg-background rounded-md transition-colors text-muted-foreground hover:text-foreground"
+                                                        title="Zu den Konten"
+                                                    >
+                                                        <Edit className="size-4" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    }
+
                                     const { position, stock, annualDividendNative, annualDividendCHF, quarterlyDividendCHF, divCurrency } = data!;
 
                                     // Annual Display Logic
