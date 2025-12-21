@@ -218,7 +218,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                     </div>
 
                     {accountType === 'vorsorge' && (
-                        <div className="bg-muted/30 p-3 rounded-lg space-y-3 border border-border/50">
+                        <div className="space-y-3">
                             <h3 className="text-sm font-semibold flex items-center gap-2">
                                 <span>Beitrags-Modus</span>
                             </h3>
@@ -259,7 +259,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                             value={monthlyContribution}
                                             onChange={(e) => setMonthlyContribution(e.target.value === '' ? '' : Number(e.target.value))}
                                         />
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                                        <div className="absolute right-10 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
                                             × {new Date().getMonth() + 1} Monate
                                         </div>
                                     </div>
