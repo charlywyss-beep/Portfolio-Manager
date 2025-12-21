@@ -24,7 +24,7 @@ export async function fetchStockHistory(
     symbol: string,
     range: TimeRange,
     _apiKey?: string // Not used for Yahoo Finance
-): Promise<{ data: ChartDataPoint[] | null, error?: string }> {
+): Promise<{ data: ChartDataPoint[] | null, currency?: string, error?: string }> {
     try {
         const { period, interval } = getYahooParams(range);
 
@@ -68,7 +68,10 @@ export async function fetchStockHistory(
             .filter((p: ChartDataPoint | null): p is ChartDataPoint => p !== null);
 
         console.log('[Yahoo Finance Proxy] Returning', points.length, 'data points');
-        return { data: points.length > 0 ? points : null };
+        return {
+            data: points.length > 0 ? points : null,
+            currency: result.meta?.currency
+        };
 
     } catch (error) {
         console.error("Yahoo Finance Proxy Error:", error);
