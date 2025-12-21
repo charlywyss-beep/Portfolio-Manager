@@ -217,6 +217,73 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                         </div>
                     </div>
 
+                    {accountType === 'vorsorge' && (
+                        <div className="bg-muted/30 p-3 rounded-lg space-y-3 border border-border/50">
+                            <h3 className="text-sm font-semibold flex items-center gap-2">
+                                <span>Beitrags-Modus</span>
+                            </h3>
+
+                            <div className="flex gap-4">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="contribMode"
+                                        checked={!isAutoContribution}
+                                        onChange={() => setIsAutoContribution(false)}
+                                        className="w-4 h-4 text-primary focus:ring-primary"
+                                    />
+                                    <span className="text-sm">Manuell</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="contribMode"
+                                        checked={isAutoContribution}
+                                        onChange={() => setIsAutoContribution(true)}
+                                        className="w-4 h-4 text-primary focus:ring-primary"
+                                    />
+                                    <span className="text-sm">Monatlich (Automatisch)</span>
+                                </label>
+                            </div>
+
+                            {isAutoContribution ? (
+                                <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
+                                    <label className="text-sm font-medium">Monatlicher Beitrag</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            placeholder="z.B. 588.00"
+                                            className="w-full h-10 px-3 rounded-md border border-input bg-background focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                            value={monthlyContribution}
+                                            onChange={(e) => setMonthlyContribution(e.target.value === '' ? '' : Number(e.target.value))}
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                                            × {new Date().getMonth() + 1} Monate
+                                        </div>
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground">
+                                        Total {new Date().getFullYear()}: <strong>{(Number(monthlyContribution) * (new Date().getMonth() + 1)).toLocaleString('de-CH', { minimumFractionDigits: 2 })}</strong> (wird automatisch jeden Monat angepasst)
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
+                                    <label className="text-sm font-medium">Bereits eingezahlt ({new Date().getFullYear()})</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="0.00"
+                                        className="w-full h-10 px-3 rounded-md border border-input bg-background focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                        value={currentYearContribution}
+                                        onChange={(e) => setCurrentYearContribution(e.target.value === '' ? '' : Number(e.target.value))}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Betrag</label>
