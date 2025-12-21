@@ -23,6 +23,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
     const [domain, setDomain] = useState('');
     const [isAutoContribution, setIsAutoContribution] = useState(false); // NEW
     const [monthlyContribution, setMonthlyContribution] = useState<number | ''>(''); // NEW
+    const [monthlyFee, setMonthlyFee] = useState<number | ''>(''); // NEW
 
     useEffect(() => {
         if (editingDeposit) {
@@ -36,6 +37,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             setCurrentYearContribution(editingDeposit.currentYearContribution || '');
             setIsAutoContribution(!!editingDeposit.autoContribution);
             setMonthlyContribution(editingDeposit.monthlyContribution || '');
+            setMonthlyFee(editingDeposit.monthlyFee || '');
         } else {
             // Reset form for new entry
             setBankName('');
@@ -49,6 +51,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             setDomain('');
             setIsAutoContribution(false);
             setMonthlyContribution('');
+            setMonthlyFee('');
         }
     }, [editingDeposit, isOpen]);
 
@@ -68,6 +71,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             currentYearContribution: accountType === 'vorsorge' && !isAutoContribution ? (currentYearContribution === '' ? 0 : Number(currentYearContribution)) : undefined,
             autoContribution: accountType === 'vorsorge' ? isAutoContribution : undefined,
             monthlyContribution: accountType === 'vorsorge' && isAutoContribution ? (monthlyContribution === '' ? 0 : Number(monthlyContribution)) : undefined,
+            monthlyFee: monthlyFee === '' ? undefined : Number(monthlyFee),
             startDate: new Date().toISOString(),
             maturityDate: new Date().toISOString()
         };
@@ -324,6 +328,23 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                 value={interestRate}
                                 onChange={(e) => setInterestRate(e.target.value === '' ? '' : Number(e.target.value))}
                             />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Gebühr (Monatlich)</label>
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.05"
+                                    placeholder="Optional (CHF)"
+                                    className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                    value={monthlyFee}
+                                    onChange={(e) => setMonthlyFee(e.target.value === '' ? '' : Number(e.target.value))}
+                                />
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                                    CHF
+                                </div>
+                            </div>
                         </div>
                     </div>
 

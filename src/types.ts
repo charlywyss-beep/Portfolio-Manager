@@ -49,6 +49,7 @@ export interface FixedDeposit {
     currentYearContribution?: number; // NEW: For Vorsorge account progress
     autoContribution?: boolean; // NEW: If true, calculate contribution based on monthly amount
     monthlyContribution?: number; // NEW: Monthly amount to be extrapolated
+    monthlyFee?: number; // NEW: Monthly account fee (e.g. 5.00 CHF)
 }
 
 export interface PortfolioHistoryEntry {

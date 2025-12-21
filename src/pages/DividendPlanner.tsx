@@ -19,7 +19,7 @@ const translateFrequency = (freq?: string) => {
 
 export function DividendPlanner() {
     const navigate = useNavigate();
-    const { stocks, positions } = usePortfolio();
+    const { stocks, positions, fixedDeposits } = usePortfolio();
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
 
     // Calculate projected dividends from yield
@@ -59,8 +59,14 @@ export function DividendPlanner() {
         })
         .filter(Boolean);
 
-    const totalAnnual = projectedDividends.reduce((sum, d) => sum + d!.annualDividendCHF, 0);
-    const totalMonthly = totalAnnual / 12;
+    // Calculate Annual Bank Fees
+    const annualBankFees = fixedDeposits.reduce((sum, deposit) => {
+        return sum + ((deposit.monthlyFee || 0) * 12);
+    }, 0);
+
+    const totalAnnualDividends = projectedDividends.reduce((sum, d) => sum + d!.annualDividendCHF, 0);
+    const totalAnnualNet = totalAnnualDividends - annualBankFees; // Deduct fees
+    const totalMonthly = totalAnnualNet / 12;
 
     return (
         <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
@@ -86,8 +92,13 @@ export function DividendPlanner() {
                             Gesamtdividende (Jahr)
                         </span>
                         <div className="text-xl font-bold text-green-600 dark:text-green-400">
-                            CHF {totalAnnual.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            CHF {totalAnnualNet.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
+                        {annualBankFees > 0 && (
+                            <span className="text-[10px] text-muted-foreground mt-1">
+                                (Nach Abzug von CHF {annualBankFees.toFixed(0)} Gebühren)
+                            </span>
+                        )}
                     </div>
                 </div>
 
