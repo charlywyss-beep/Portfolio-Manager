@@ -558,7 +558,10 @@ export function EditDividendPage() {
                                     {symbol && (
                                         <button
                                             type="button"
-                                            onClick={() => window.open(`https://www.google.com/search?q=${symbol}+dividend+dates+${new Date().getFullYear()}`, '_blank')}
+                                            onClick={() => {
+                                                const year = new Date().getFullYear();
+                                                window.open(`https://www.google.com/search?q=${symbol}+dividend+dates+${year}+${year + 1}`, '_blank');
+                                            }}
                                             className="text-xs text-primary hover:text-primary/80 flex items-center gap-1.5 px-2 py-1 bg-primary/10 rounded-md transition-colors"
                                             title="Auf Google nach Dividenden-Terminen suchen"
                                         >
