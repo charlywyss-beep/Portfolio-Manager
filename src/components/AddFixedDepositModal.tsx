@@ -253,8 +253,8 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                         <input
                                             type="number"
                                             min="0"
-                                            step="0.01"
-                                            placeholder="z.B. 588.00"
+                                            step="1"
+                                            placeholder="z.B. 588"
                                             className="w-full h-10 px-3 rounded-md border border-input bg-background focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                                             value={monthlyContribution}
                                             onChange={(e) => setMonthlyContribution(e.target.value === '' ? '' : Number(e.target.value))}
@@ -273,8 +273,8 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                     <input
                                         type="number"
                                         min="0"
-                                        step="0.01"
-                                        placeholder="0.00"
+                                        step="1"
+                                        placeholder="0"
                                         className="w-full h-10 px-3 rounded-md border border-input bg-background focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                                         value={currentYearContribution}
                                         onChange={(e) => setCurrentYearContribution(e.target.value === '' ? '' : Number(e.target.value))}
@@ -291,7 +291,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                 type="number"
                                 required
                                 min="0"
-                                step="0.01"
+                                step="1"
                                 className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                                 value={amount}
                                 onChange={(e) => setAmount(Number(e.target.value))}
