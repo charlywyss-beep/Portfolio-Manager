@@ -103,6 +103,7 @@ export function DividendPlanner() {
             shares: 1,
             yield: deposit.interestRate,
             amount: netAnnual >= 0 ? (annualInterest / 12) : -(annualFee / 12), // Monthly approx
+            depositAmount: deposit.amount,
             frequency: 'annual',
             quarterly: netAnnual / 4,
             annual: netAnnual,
@@ -345,7 +346,7 @@ export function DividendPlanner() {
                             <thead>
                                 <tr className="border-b border-border">
                                     <th className="text-left py-3 px-4 font-semibold">Bank / Institut</th>
-                                    <th className="text-right py-3 px-4 font-semibold"></th>
+                                    <th className="text-right py-3 px-4 font-semibold">Betrag</th>
                                     <th className="text-right py-3 px-4 font-semibold">Zins %</th>
                                     <th className="text-right py-3 px-4 font-semibold">Ø Monatlich</th>
                                     <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
@@ -376,7 +377,9 @@ export function DividendPlanner() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="text-right py-3 px-4 text-muted-foreground">-</td>
+                                            <td className="text-right py-3 px-4 text-muted-foreground">
+                                                CHF {data.depositAmount?.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
                                                 {data.yield > 0 ? `${data.yield.toFixed(2)}%` : '-'}
                                             </td>
