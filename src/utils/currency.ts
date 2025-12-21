@@ -46,7 +46,7 @@ export function formatCurrency(amount: number, currency: string, showCHF: boolea
         displayAmount = amount / 100;
     }
 
-    formatted = displayAmount.toLocaleString('de-DE', {
+    formatted = displayAmount.toLocaleString('de-CH', {
         style: 'currency',
         currency: displayCurrency,
         minimumFractionDigits: 2,
