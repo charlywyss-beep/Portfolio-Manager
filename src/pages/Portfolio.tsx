@@ -303,8 +303,8 @@ export function Portfolio() {
                             <p className="text-xs text-muted-foreground mt-1">Total über alle 3a Konten</p>
                         </div>
                         <div className="text-right">
-                            <span className="text-2xl font-bold text-foreground block">
-                                {formatCurrency(totalVorsorge, 'CHF')}
+                            <span className="text-xl font-bold text-primary block">
+                                {totalVorsorge.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
                             </span>
                         </div>
                     </div>
@@ -314,12 +314,12 @@ export function Portfolio() {
                             const limit = 7258;
                             // Calculate current based on manual or auto
                             const currentMonth = new Date().getMonth() + 1;
-                            const calculatedAuto = fd.autoContribution && fd.monthlyContribution 
+                            const calculatedAuto = fd.autoContribution && fd.monthlyContribution
                                 ? fd.monthlyContribution * currentMonth
                                 : 0;
-                            
-                            const current = fd.autoContribution 
-                                ? Math.min(limit, calculatedAuto) 
+
+                            const current = fd.autoContribution
+                                ? Math.min(limit, calculatedAuto)
                                 : (fd.currentYearContribution || 0);
 
                             const percent = Math.min((current / limit) * 100, 100);
