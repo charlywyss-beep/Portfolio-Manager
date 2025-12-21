@@ -56,8 +56,8 @@ export function EditDividendPage() {
             setSymbol(stock.symbol || ''); // Pre-fill symbol
             setIsin(stock.isin || ''); // Pre-fill ISIN
             setSector(stock.sector || ''); // Pre-fill Sector
-            setPrice(stock.currentPrice?.toString() || '');
-            setTargetPrice(stock.targetPrice?.toString() || '');
+            setPrice(stock.currentPrice ? stock.currentPrice.toFixed(2) : '');
+            setTargetPrice(stock.targetPrice ? stock.targetPrice.toFixed(2) : '');
             setAmount(stock.dividendAmount?.toString() || '');
             setYieldPercent(stock.dividendYield?.toString() || '');
             setCurrency(stock.dividendCurrency || stock.currency);
