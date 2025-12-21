@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Calendar, TrendingUp, Plus, Edit } from 'lucide-react';
+import { Calendar, TrendingUp, Plus, Edit, Trash2 } from 'lucide-react';
 import { Logo } from '../components/Logo';
 
 import { useCurrencyFormatter } from '../utils/currency';
@@ -19,7 +19,7 @@ const translateFrequency = (freq?: string) => {
 
 export function DividendPlanner() {
     const navigate = useNavigate();
-    const { stocks, positions, fixedDeposits } = usePortfolio();
+    const { stocks, positions, fixedDeposits, deleteFixedDeposit } = usePortfolio();
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
 
     // Calculate projected dividends from yield
@@ -78,6 +78,38 @@ export function DividendPlanner() {
     const totalAnnualDividends = projectedDividends.reduce((sum, d) => sum + d!.annualDividendCHF, 0);
     const totalAnnualNet = totalAnnualDividends + annualBankNet; // Sum of Dividends + Net Bank Impact
     const totalMonthly = totalAnnualNet / 12;
+
+    // Prepare Bank Rows Data
+    const bankRows = fixedDeposits.map(deposit => {
+        // Calculate Annual Interest
+        const annualInterest = deposit.amount * (deposit.interestRate / 100);
+
+        // Calculate Annual Fee
+        let annualFee = 0;
+        if (deposit.monthlyFee && deposit.monthlyFee > 0) {
+            if (deposit.feeFrequency === 'annually') annualFee = deposit.monthlyFee;
+            else if (deposit.feeFrequency === 'quarterly') annualFee = deposit.monthlyFee * 4;
+            else annualFee = deposit.monthlyFee * 12; // Default to monthly
+        }
+
+        const netAnnual = annualInterest - annualFee;
+
+        return {
+            type: 'bank',
+            id: deposit.id,
+            name: deposit.bankName,
+            symbol: netAnnual >= 0 ? 'Zins' : 'Gebühr',
+            logoUrl: deposit.logoUrl,
+            shares: 1,
+            yield: deposit.interestRate,
+            amount: netAnnual >= 0 ? (annualInterest / 12) : -(annualFee / 12), // Monthly approx
+            frequency: 'annual',
+            quarterly: netAnnual / 4,
+            annual: netAnnual,
+            currency: 'CHF',
+            isNegative: netAnnual < 0
+        };
+    }).filter((d: any) => d && Math.abs(d.annual) > 0.01);
 
     return (
         <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
@@ -145,7 +177,7 @@ export function DividendPlanner() {
                 </div>
             </div>
 
-            {/* Table */}
+            {/* Main Dividend Table */}
             <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b bg-muted/30">
                     <h2 className="text-lg font-semibold">Erwartete Dividenden</h2>
@@ -175,93 +207,14 @@ export function DividendPlanner() {
                             </tr>
                         </thead>
                         <tbody>
-                            {(projectedDividends.length === 0 && fixedDeposits.length === 0) ? (
+                            {projectedDividends.length === 0 ? (
                                 <tr>
                                     <td colSpan={10} className="text-center py-8 text-muted-foreground">
-                                        Keine Dividenden-Aktien oder Bankkonten im Portfolio
+                                        Keine Dividenden-Aktien im Portfolio
                                     </td>
                                 </tr>
                             ) : (
-                                [...projectedDividends, ...fixedDeposits.map(deposit => {
-                                    // Calculate Annual Interest
-                                    const annualInterest = deposit.amount * (deposit.interestRate / 100);
-
-                                    // Calculate Annual Fee
-                                    let annualFee = 0;
-                                    if (deposit.monthlyFee && deposit.monthlyFee > 0) {
-                                        if (deposit.feeFrequency === 'annually') annualFee = deposit.monthlyFee;
-                                        else if (deposit.feeFrequency === 'quarterly') annualFee = deposit.monthlyFee * 4;
-                                        else annualFee = deposit.monthlyFee * 12; // Default to monthly
-                                    }
-
-                                    const netAnnual = annualInterest - annualFee;
-
-                                    return {
-                                        type: 'bank',
-                                        id: deposit.id,
-                                        name: deposit.bankName,
-                                        symbol: netAnnual >= 0 ? 'Zins' : 'Gebühr',
-                                        logoUrl: deposit.logoUrl,
-                                        shares: 1,
-                                        yield: deposit.interestRate,
-                                        amount: netAnnual >= 0 ? (annualInterest / 12) : -(annualFee / 12), // Monthly approx
-                                        frequency: 'annual',
-                                        quarterly: netAnnual / 4,
-                                        annual: netAnnual,
-                                        currency: 'CHF',
-                                        isNegative: netAnnual < 0
-                                    };
-                                }).filter((d: any) => d && Math.abs(d.annual) > 0.01)].map((data: any) => {
-                                    if (data.type === 'bank') {
-                                        const isNegative = data.isNegative;
-                                        return (
-                                            <tr key={data.id} className={`border-b border-border last:border-0 hover:bg-muted/50 transition-colors group ${isNegative ? 'bg-red-50/30 dark:bg-red-950/10' : 'bg-green-50/30 dark:bg-green-950/10'}`}>
-                                                <td className="py-3 px-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <Logo
-                                                            url={data.logoUrl}
-                                                            alt={data.name}
-                                                            fallback="BK"
-                                                        />
-                                                        <div>
-                                                            <div className="font-semibold">{data.name}</div>
-                                                            <div className={`text-xs font-medium ${isNegative ? 'text-red-500' : 'text-green-600'}`}>
-                                                                {isNegative ? 'Konto-Gebühren' : 'Bank-Zinsen'}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground">-</td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground">
-                                                    {data.yield > 0 ? `${data.yield.toFixed(2)}%` : '-'}
-                                                </td>
-                                                <td className={`text-right py-3 px-4 font-medium ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                                                    {isNegative ? '-' : '+'} {Math.abs(data.annual / 12).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
-                                                </td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground">
-                                                    Jährlich
-                                                </td>
-                                                <td className={`text-right py-3 px-4 ${isNegative ? 'text-red-600/70' : 'text-green-600/70'}`}>
-                                                    {isNegative ? '-' : '+'} CHF {Math.abs(data.quarterly).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                </td>
-                                                <td className={`text-right py-3 px-4 font-semibold ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                                                    {isNegative ? '-' : '+'} CHF {Math.abs(data.annual).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                </td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground">-</td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground">-</td>
-                                                <td className="text-right py-3 px-4">
-                                                    <button
-                                                        onClick={() => navigate('/portfolio')}
-                                                        className="p-2 hover:bg-background rounded-md transition-colors text-muted-foreground hover:text-foreground"
-                                                        title="Zu den Konten"
-                                                    >
-                                                        <Edit className="size-4" />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        );
-                                    }
-
+                                projectedDividends.map((data: any) => {
                                     const { position, stock, annualDividendNative, annualDividendCHF, quarterlyDividendCHF, divCurrency } = data!;
 
                                     // Annual Display Logic
@@ -316,7 +269,6 @@ export function DividendPlanner() {
                                                             </span>
                                                         </div>
                                                     ) : (
-                                                        // Manual override to put CHF at the end: "3.05 CHF" instead of "CHF 3.05"
                                                         `${stock.dividendAmount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`
                                                     )
                                                 ) : '-'}
@@ -380,6 +332,98 @@ export function DividendPlanner() {
                     </table>
                 </div>
             </div>
+
+            {/* Bank Accounts Section */}
+            {bankRows.length > 0 && (
+                <div className="bg-card rounded-xl border shadow-sm overflow-hidden animate-in slide-in-from-bottom-4 duration-700">
+                    <div className="flex items-center justify-between p-4 border-b bg-muted/30">
+                        <h2 className="text-lg font-semibold">Bank Erträge & Gebühren</h2>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-border">
+                                    <th className="text-left py-3 px-4 font-semibold">Bank / Institut</th>
+                                    <th className="text-right py-3 px-4 font-semibold"></th>
+                                    <th className="text-right py-3 px-4 font-semibold">Zins %</th>
+                                    <th className="text-right py-3 px-4 font-semibold">Ø Monatlich</th>
+                                    <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
+                                    <th className="text-right py-3 px-4 font-semibold">Quartalsweise</th>
+                                    <th className="text-right py-3 px-4 font-semibold">Jährlich</th>
+                                    <th className="text-right py-3 px-4 font-semibold"></th>
+                                    <th className="text-right py-3 px-4 font-semibold"></th>
+                                    <th className="text-right py-3 px-4 w-24 sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {bankRows.map((data: any) => {
+                                    const isNegative = data.isNegative;
+                                    return (
+                                        <tr key={data.id} className={`border-b border-border last:border-0 hover:bg-muted/50 transition-colors group ${isNegative ? 'bg-red-50/30 dark:bg-red-950/10' : 'bg-green-50/30 dark:bg-green-950/10'}`}>
+                                            <td className="py-3 px-4">
+                                                <div className="flex items-center gap-3">
+                                                    <Logo
+                                                        url={data.logoUrl}
+                                                        alt={data.name}
+                                                        fallback="BK"
+                                                    />
+                                                    <div>
+                                                        <div className="font-semibold">{data.name}</div>
+                                                        <div className={`text-xs font-medium ${isNegative ? 'text-red-500' : 'text-green-600'}`}>
+                                                            {isNegative ? 'Konto-Gebühren' : 'Bank-Zinsen'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="text-right py-3 px-4 text-muted-foreground">-</td>
+                                            <td className="text-right py-3 px-4 text-muted-foreground">
+                                                {data.yield > 0 ? `${data.yield.toFixed(2)}%` : '-'}
+                                            </td>
+                                            <td className={`text-right py-3 px-4 font-medium ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                                {isNegative ? '-' : '+'} {Math.abs(data.annual / 12).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                            </td>
+                                            <td className="text-right py-3 px-4 text-muted-foreground">
+                                                Jährlich
+                                            </td>
+                                            <td className={`text-right py-3 px-4 ${isNegative ? 'text-red-600/70' : 'text-green-600/70'}`}>
+                                                {isNegative ? '-' : '+'} CHF {Math.abs(data.quarterly).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </td>
+                                            <td className={`text-right py-3 px-4 font-semibold ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                                {isNegative ? '-' : '+'} CHF {Math.abs(data.annual).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </td>
+                                            <td className="text-right py-3 px-4 text-muted-foreground">-</td>
+                                            <td className="text-right py-3 px-4 text-muted-foreground">-</td>
+                                            <td className="text-right py-3 px-4 sticky right-0 bg-card group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <button
+                                                        onClick={() => navigate('/portfolio')}
+                                                        className="p-2 hover:bg-background rounded-md transition-colors text-muted-foreground hover:text-foreground"
+                                                        title="Zu den Konten"
+                                                    >
+                                                        <Edit className="size-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            if (window.confirm('Wollen Sie dieses Bankkonto wirklich löschen?')) {
+                                                                deleteFixedDeposit(data.id);
+                                                            }
+                                                        }}
+                                                        className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 rounded-md transition-colors"
+                                                        title="Löschen"
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
