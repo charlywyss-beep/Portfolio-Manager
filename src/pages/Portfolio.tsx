@@ -288,11 +288,15 @@ export function Portfolio() {
             <div className="space-y-4 mb-8">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <h2 className="text-2xl font-bold text-slate-700 dark:text-slate-200">Vorsorge</h2>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-lg font-bold">Vorsorge</h2>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
                     <div className="flex justify-between items-end mb-6 border-b border-border pb-4">
                         <div>
                             <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Vorsorgevermögen</h3>
@@ -340,7 +344,7 @@ export function Portfolio() {
                                     <div className="ml-[52px]">
                                         <div className="flex justify-between text-xs mb-1.5 font-medium">
                                             <span className="text-slate-500 dark:text-slate-400">
-                                                {current.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[10px] uppercase text-muted-foreground ml-1">von {limit.toLocaleString('de-CH', { minimumFractionDigits: 2 })} (2025)</span>
+                                                {current.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[10px] uppercase text-muted-foreground ml-1">von {limit.toLocaleString('de-CH', { minimumFractionDigits: 2 })} Limit 2025</span>
                                             </span>
                                         </div>
                                         <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
@@ -351,8 +355,8 @@ export function Portfolio() {
                                         </div>
                                     </div>
 
-                                    {/* Actions (Absolute or hover) */}
-                                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-card/80 backdrop-blur-sm p-1 rounded-bl-lg">
+                                    {/* Actions (Always visible) */}
+                                    <div className="absolute top-0 right-0 flex gap-1 bg-card/80 backdrop-blur-sm p-1 rounded-bl-lg border-l border-b border-border shadow-sm">
                                         <button
                                             onClick={() => {
                                                 setEditingFixedDeposit(fd);

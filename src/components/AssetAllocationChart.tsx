@@ -1,33 +1,46 @@
 import { useMemo, useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { usePortfolioData } from '../hooks/usePortfolioData';
+import { usePortfolio } from '../context/PortfolioContext';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF, useCurrencyFormatter } from '../utils/currency';
 
 export function AssetAllocationChart() {
-    const { positions } = usePortfolioData();
+    const { positions } = usePortfolioData(); // Use enriched positions
+    const { fixedDeposits: contextFixedDeposits } = usePortfolio(); // Use raw fixed deposits
+    const { rates } = useExchangeRates();
+    const { formatCurrency } = useCurrencyFormatter();
     const [hasMounted, setHasMounted] = useState(false);
 
     useEffect(() => {
         setHasMounted(true);
     }, []);
-    const { rates } = useExchangeRates();
-    const { formatCurrency } = useCurrencyFormatter();
 
     const data = useMemo(() => {
         const sectorMap = new Map<string, number>();
 
+        // 1. Add Stocks/ETFs
         positions.forEach(pos => {
             const sector = pos.stock.sector || 'Andere';
             const valCHF = convertToCHF(pos.currentValue, pos.stock.currency, rates);
             sectorMap.set(sector, (sectorMap.get(sector) || 0) + valCHF);
         });
 
+        // 2. Add Fixed Deposits (Cash & Vorsorge)
+        if (contextFixedDeposits) {
+            contextFixedDeposits.forEach(fd => {
+                const isVorsorge = fd.accountType === 'vorsorge';
+                const sector = isVorsorge ? 'Vorsorge' : 'Liquidität';
+                const valCHF = convertToCHF(fd.amount, fd.currency, rates);
+                sectorMap.set(sector, (sectorMap.get(sector) || 0) + valCHF);
+            });
+        }
+
         // Convert to array and sort
         return Array.from(sectorMap.entries())
             .map(([name, value]) => ({ name, value }))
             .sort((a, b) => b.value - a.value);
-    }, [positions, rates]);
+    }, [positions, contextFixedDeposits, rates]);
 
     const COLORS = [
         '#3b82f6', // blue-500
@@ -38,6 +51,8 @@ export function AssetAllocationChart() {
         '#ec4899', // pink-500
         '#06b6d4', // cyan-500
         '#6366f1', // indigo-500
+        '#84cc16', // lime-500 (Liquidität?)
+        '#14b8a6', // teal-500 (Vorsorge?)
     ];
 
     const CustomTooltip = ({ active, payload }: any) => {
