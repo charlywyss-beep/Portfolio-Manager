@@ -198,12 +198,12 @@ export function DividendPlanner() {
                                 <th className="text-left py-3 px-4 font-semibold">Aktie</th>
                                 <th className="text-right py-3 px-4 font-semibold">Anteile</th>
                                 <th className="text-right py-3 px-4 font-semibold">Rendite %</th>
-                                <th className="text-right py-3 px-4 font-semibold">Betrag/Aktie</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Betrag/Aktie</th>
                                 <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
-                                <th className="text-right py-3 px-4 font-semibold">Quartalsweise</th>
-                                <th className="text-right py-3 px-4 font-semibold">Jährlich</th>
-                                <th className="text-right py-3 px-4 font-semibold">Ex-Date</th>
-                                <th className="text-right py-3 px-4 font-semibold">Pay-Date</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Quartalsweise</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Ex-Date</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Pay-Date</th>
                                 <th className="text-right py-3 px-4 w-24 sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
                             </tr>
                         </thead>
@@ -225,7 +225,7 @@ export function DividendPlanner() {
                                         const chfFormatted = formatCurrency(annualDividendCHF, 'CHF', false);
 
                                         annualDisplay = (
-                                            <div className="flex flex-col items-end">
+                                            <div className="flex flex-col items-end whitespace-nowrap">
                                                 <span>{nativeFormatted}</span>
                                                 <span className="text-xs text-muted-foreground font-normal">{chfFormatted}</span>
                                             </div>
@@ -263,14 +263,16 @@ export function DividendPlanner() {
                                             <td className="text-right py-3 px-4 font-medium">
                                                 {stock.dividendAmount ? (
                                                     divCurrency !== 'CHF' ? (
-                                                        <div className="flex flex-col items-end">
+                                                        <div className="flex items-center gap-1 whitespace-nowrap">
                                                             <span>{formatCurrency(stock.dividendAmount, divCurrency)}</span>
                                                             <span className="text-xs text-muted-foreground font-normal">
-                                                                {formatCurrency(convertToCHF(stock.dividendAmount, divCurrency), 'CHF')}
+                                                                - {formatCurrency(convertToCHF(stock.dividendAmount, divCurrency), 'CHF')}
                                                             </span>
                                                         </div>
                                                     ) : (
-                                                        `${stock.dividendAmount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`
+                                                        <span className="whitespace-nowrap">
+                                                            {stock.dividendAmount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                                        </span>
                                                     )
                                                 ) : '-'}
                                             </td>
@@ -282,10 +284,10 @@ export function DividendPlanner() {
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="text-right py-3 px-4 text-muted-foreground">
+                                            <td className="text-right py-3 px-4 text-muted-foreground whitespace-nowrap">
                                                 {stock.dividendFrequency !== 'annually' ? `CHF ${quarterlyDividendCHF.toFixed(2)}` : ''}
                                             </td>
-                                            <td className="text-right py-3 px-4 font-semibold text-primary">
+                                            <td className="text-right py-3 px-4 font-semibold text-primary whitespace-nowrap">
                                                 {annualDisplay}
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
