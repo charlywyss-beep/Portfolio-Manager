@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 import { Calendar, TrendingUp, Plus, Edit } from 'lucide-react';
+import { Logo } from '../components/Logo';
 
 import { useCurrencyFormatter } from '../utils/currency';
 import { getCurrentDividendPeriod } from '../utils/dividend';
@@ -188,13 +189,22 @@ export function DividendPlanner() {
                                     return (
                                         <tr key={position.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group">
                                             <td className="py-3 px-4">
-                                                <div
-                                                    className="font-semibold cursor-pointer hover:text-primary transition-colors"
-                                                    onClick={() => navigate(`/stock/${stock.id}`)}
-                                                >
-                                                    {stock.name}
+                                                <div className="flex items-center gap-3">
+                                                    <Logo
+                                                        url={stock.logoUrl}
+                                                        alt={stock.name}
+                                                        fallback={stock.symbol.slice(0, 2)}
+                                                    />
+                                                    <div>
+                                                        <div
+                                                            className="font-semibold cursor-pointer hover:text-primary transition-colors"
+                                                            onClick={() => navigate(`/stock/${stock.id}`)}
+                                                        >
+                                                            {stock.name}
+                                                        </div>
+                                                        <div className="text-xs text-muted-foreground">{stock.symbol}</div>
+                                                    </div>
                                                 </div>
-                                                <div className="text-xs text-muted-foreground">{stock.symbol}</div>
                                             </td>
                                             <td className="text-right py-3 px-4">{position.shares}</td>
                                             <td className="text-right py-3 px-4 text-green-600 dark:text-green-400 font-medium">
