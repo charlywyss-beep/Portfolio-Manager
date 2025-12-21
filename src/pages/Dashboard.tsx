@@ -128,11 +128,32 @@ export function Dashboard() {
                             {totals.gainLoss >= 0 ? '+' : ''}{totals.gainLoss.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })} Gewinn/Verlust
                         </p>
 
-                        <div className="mt-4 pt-4 border-t border-border flex flex-col items-start gap-1 xl:flex-row xl:items-center xl:justify-between">
-                            <span className="text-sm text-muted-foreground font-medium">Investiertes Kapital</span>
-                            <span className="font-bold text-base tracking-tight">
-                                {totals.totalCost.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
-                            </span>
+                        <div className="mt-4 pt-4 border-t border-border flex flex-col gap-1">
+                            <div className="flex items-center justify-between gap-4 text-xs">
+                                <span className="text-muted-foreground">Investiert (Aktien/ETF):</span>
+                                <span className="font-medium text-foreground">
+                                    {formatCurrency(totals.totalCostStock, 'CHF')}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4 text-xs">
+                                <span className="text-muted-foreground">+ Bankguthaben:</span>
+                                <span className="font-medium text-foreground">
+                                    {formatCurrency(totals.totalValueBank, 'CHF')}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4 text-xs">
+                                <span className="text-muted-foreground">+ Vorsorgekapital:</span>
+                                <span className="font-medium text-foreground">
+                                    {formatCurrency(totals.totalValueVorsorge, 'CHF')}
+                                </span>
+                            </div>
+                            <div className="h-px bg-border my-0.5 opacity-50" />
+                            <div className="flex items-center justify-between gap-4 text-xs opacity-75">
+                                <span className="text-muted-foreground">Rechnerisch (Basis):</span>
+                                <span className="font-medium text-foreground">
+                                    {formatCurrency(totals.totalCostStock + totals.totalValueBank + totals.totalValueVorsorge, 'CHF')}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -354,35 +375,13 @@ export function Dashboard() {
             {/* Bottom Section: Dividends & Chart */}
             <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
 
-                {/* History Section */}
                 <div className="col-span-1 lg:col-span-7 p-6 rounded-xl bg-card border border-border shadow-sm">
                     <div className="flex items-center justify-between mb-6">
-                        <div className="flex flex-col gap-1 mt-2">
-                            <div className="flex items-center justify-between gap-4 text-xs">
-                                <span className="text-muted-foreground">Investiert (Aktien/ETF):</span>
-                                <span className="font-medium text-foreground">
-                                    {formatCurrency(totals.totalCostStock, 'CHF')}
-                                </span>
-                            </div>
-                            <div className="flex items-center justify-between gap-4 text-xs">
-                                <span className="text-muted-foreground">+ Bankguthaben:</span>
-                                <span className="font-medium text-foreground">
-                                    {formatCurrency(totals.totalValueBank, 'CHF')}
-                                </span>
-                            </div>
-                            <div className="flex items-center justify-between gap-4 text-xs">
-                                <span className="text-muted-foreground">+ Vorsorgekapital:</span>
-                                <span className="font-medium text-foreground">
-                                    {formatCurrency(totals.totalValueVorsorge, 'CHF')}
-                                </span>
-                            </div>
-                            <div className="h-px bg-border my-0.5 opacity-50" />
-                            <div className="flex items-center justify-between gap-4 text-xs opacity-75">
-                                <span className="text-muted-foreground">Rechnerisch (Basis):</span>
-                                <span className="font-medium text-foreground">
-                                    {formatCurrency(totals.totalCostStock + totals.totalValueBank + totals.totalValueVorsorge, 'CHF')}
-                                </span>
-                            </div>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-muted-foreground">Investiert (Aktien/ETF):</span>
+                            <span className="text-xs font-medium text-foreground">
+                                {formatCurrency(totals.totalCostStock, 'CHF')}
+                            </span>
                         </div>
                         <button
                             onClick={() => setIsHistoryModalOpen(true)}
