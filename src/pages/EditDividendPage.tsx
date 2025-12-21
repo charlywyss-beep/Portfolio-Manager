@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2, Search } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
@@ -547,7 +547,20 @@ export function EditDividendPage() {
 
                             {/* Dates Section */}
                             <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4">
-                                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Termine</h3>
+                                <div className="flex justify-between items-center">
+                                    <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Termine</h3>
+                                    {symbol && (
+                                        <button
+                                            type="button"
+                                            onClick={() => window.open(`https://www.google.com/search?q=${symbol}+dividend+dates+${new Date().getFullYear()}`, '_blank')}
+                                            className="text-xs text-primary hover:text-primary/80 flex items-center gap-1.5 px-2 py-1 bg-primary/10 rounded-md transition-colors"
+                                            title="Auf Google nach Dividenden-Terminen suchen"
+                                        >
+                                            <Search className="size-3.5" />
+                                            <span className="font-medium">Termine suchen</span>
+                                        </button>
+                                    )}
+                                </div>
 
                                 {(frequency === 'quarterly' || frequency === 'semi-annually') ? (
                                     <div className="space-y-4">
