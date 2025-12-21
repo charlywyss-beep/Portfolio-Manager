@@ -129,26 +129,26 @@ export function Dashboard() {
                         </p>
 
                         <div className="mt-4 pt-4 border-t border-border flex flex-col gap-1">
-                            <div className="flex items-center justify-between gap-4 text-xs">
+                            <div className="flex items-center justify-between gap-4 text-sm">
                                 <span className="text-muted-foreground">Investiert (Aktien/ETF):</span>
                                 <span className="font-medium text-foreground">
                                     {formatCurrency(totals.totalCostStock, 'CHF')}
                                 </span>
                             </div>
-                            <div className="flex items-center justify-between gap-4 text-xs">
+                            <div className="flex items-center justify-between gap-4 text-sm">
                                 <span className="text-muted-foreground">+ Bankguthaben:</span>
                                 <span className="font-medium text-foreground">
                                     {formatCurrency(totals.totalValueBank, 'CHF')}
                                 </span>
                             </div>
-                            <div className="flex items-center justify-between gap-4 text-xs">
+                            <div className="flex items-center justify-between gap-4 text-sm">
                                 <span className="text-muted-foreground">+ Vorsorgekapital:</span>
                                 <span className="font-medium text-foreground">
                                     {formatCurrency(totals.totalValueVorsorge, 'CHF')}
                                 </span>
                             </div>
                             <div className="h-px bg-border my-0.5 opacity-50" />
-                            <div className="flex items-center justify-between gap-4 text-xs opacity-75">
+                            <div className="flex items-center justify-between gap-4 text-sm opacity-75">
                                 <span className="text-muted-foreground">Rechnerisch (Basis):</span>
                                 <span className="font-medium text-foreground">
                                     {formatCurrency(totals.totalCostStock + totals.totalValueBank + totals.totalValueVorsorge, 'CHF')}

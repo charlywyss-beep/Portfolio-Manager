@@ -157,7 +157,7 @@ export function Portfolio() {
                                         <div className="flex flex-col items-end">
                                             <span className="whitespace-nowrap">{formatCurrency(pos.buyValue, pos.stock.currency, false)}</span>
                                             {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-[10px] text-muted-foreground font-normal whitespace-nowrap">
+                                                <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
                                                     {formatCurrency(convertToCHF(pos.buyValue, pos.stock.currency), 'CHF', false)}
                                                 </span>
                                             )}
@@ -169,7 +169,7 @@ export function Portfolio() {
                                         <div className="flex flex-col items-end">
                                             <span className="whitespace-nowrap">{formatCurrency(pos.stock.currentPrice, pos.stock.currency, false)}</span>
                                             {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-[10px] text-muted-foreground font-normal whitespace-nowrap">
+                                                <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
                                                     {formatCurrency(convertToCHF(pos.stock.currentPrice, pos.stock.currency), 'CHF', false)}
                                                 </span>
                                             )}
@@ -181,7 +181,7 @@ export function Portfolio() {
                                         <div className="flex flex-col items-end">
                                             <span className="whitespace-nowrap">{formatCurrency(pos.currentValue, pos.stock.currency, false)}</span>
                                             {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-[10px] text-muted-foreground font-normal whitespace-nowrap">
+                                                <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
                                                     {formatCurrency(convertToCHF(pos.currentValue, pos.stock.currency), 'CHF', false)}
                                                 </span>
                                             )}
@@ -199,8 +199,8 @@ export function Portfolio() {
                                             </span>
                                             {pos.stock.currency !== 'CHF' && (
                                                 <span className={cn(
-                                                    "text-[10px] whitespace-nowrap",
-                                                    pos.gainLossTotal >= 0 ? "text-green-600/70 dark:text-green-400/70" : "text-red-600/70 dark:text-red-400/70"
+                                                    "text-xs font-medium whitespace-nowrap mt-0.5",
+                                                    pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                                 )}>
                                                     {pos.gainLossTotal >= 0 ? '+' : ''}{formatCurrency(convertToCHF(pos.gainLossTotal, pos.stock.currency), 'CHF', false)}
                                                 </span>
