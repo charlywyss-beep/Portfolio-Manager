@@ -5,6 +5,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
 import { useCurrencyFormatter } from '../utils/currency';
+import { fetchStockHistory } from '../services/finnhub';
 import { cn } from '../utils';
 
 // Helper to get annual factor
@@ -442,7 +443,32 @@ export function EditDividendPage() {
                                 <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Kursdaten</h3>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Aktueller Kurs <span className="text-xs text-muted-foreground">({currency === 'GBp' ? 'GBp (Pence)' : currency})</span></label>
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-sm font-medium">Aktueller Kurs <span className="text-xs text-muted-foreground">({currency === 'GBp' ? 'GBp (Pence)' : currency})</span></label>
+                                            {symbol && (
+                                                <button
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        const res = await fetchStockHistory(symbol, '1D');
+                                                        if (res.data && res.data.length > 0) {
+                                                            let val = res.data[res.data.length - 1].value;
+                                                            // Normalize GBp
+                                                            if (res.currency === 'GBp') {
+                                                                val = val / 100;
+                                                                // If current currency is NOT GBp/GBP, maybe suggestion?
+                                                                // For now just set the value correctly
+                                                            }
+                                                            setPrice(val.toFixed(2));
+                                                        }
+                                                    }}
+                                                    className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded transition-colors"
+                                                    title="Kurs von Yahoo Finance laden"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-refresh-cw"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M3 21v-5h5" /></svg>
+                                                    Kurs laden
+                                                </button>
+                                            )}
+                                        </div>
                                         <input
                                             type="text"
                                             inputMode="decimal"

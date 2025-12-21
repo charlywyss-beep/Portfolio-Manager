@@ -46,7 +46,13 @@ export function StockDetail() {
 
                 // Sync current price with latest chart data
                 if (response.data && response.data.length > 0) {
-                    const latestPrice = response.data[response.data.length - 1].value;
+                    let latestPrice = response.data[response.data.length - 1].value;
+
+                    // Fix: If API returns GBp (Pence), convert to GBP (divide by 100)
+                    if (response.currency === 'GBp') {
+                        latestPrice = latestPrice / 100;
+                    }
+
                     if (Math.abs(stock.currentPrice - latestPrice) > 0.01) {
                         // Update price but don't trigger re-fetch (dependency is stock.symbol)
                         updateStockPrice(stock.id, latestPrice);
