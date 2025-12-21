@@ -150,7 +150,7 @@ export function DividendPlanner() {
                                 <th className="text-right py-3 px-4 font-semibold">Rendite %</th>
                                 <th className="text-right py-3 px-4 font-semibold">Betrag/Aktie</th>
                                 <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
-                                <th className="text-right py-3 px-4 font-semibold">p.Q.</th>
+                                <th className="text-right py-3 px-4 font-semibold">Quartalsweise</th>
                                 <th className="text-right py-3 px-4 font-semibold">Jährlich</th>
                                 <th className="text-right py-3 px-4 font-semibold">Ex-Date</th>
                                 <th className="text-right py-3 px-4 font-semibold">Pay-Date</th>
@@ -211,12 +211,23 @@ export function DividendPlanner() {
                                                 {stock.dividendYield?.toFixed(2)}%
                                             </td>
                                             <td className="text-right py-3 px-4 font-medium">
-                                                {stock.dividendAmount ? formatCurrency(stock.dividendAmount, divCurrency) : '-'}
+                                                {stock.dividendAmount ? (
+                                                    divCurrency !== 'CHF' ? (
+                                                        <div className="flex flex-col items-end">
+                                                            <span>{formatCurrency(stock.dividendAmount, divCurrency)}</span>
+                                                            <span className="text-xs text-muted-foreground font-normal">
+                                                                {formatCurrency(convertToCHF(stock.dividendAmount, divCurrency), 'CHF')}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        formatCurrency(stock.dividendAmount, divCurrency)
+                                                    )
+                                                ) : '-'}
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
                                                 {translateFrequency(stock.dividendFrequency)}
                                                 {currentDiv.periodLabel && (
-                                                    <span className="ml-2 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-muted rounded">
+                                                    <span className="ml-2 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded">
                                                         {currentDiv.periodLabel}
                                                     </span>
                                                 )}
