@@ -263,11 +263,8 @@ export function DividendPlanner() {
                                             <td className="text-right py-3 px-4 font-medium">
                                                 {stock.dividendAmount ? (
                                                     divCurrency !== 'CHF' ? (
-                                                        <div className="flex items-center gap-1 whitespace-nowrap">
-                                                            <span>{formatCurrency(stock.dividendAmount, divCurrency, false)}</span>
-                                                            <span className="text-xs text-muted-foreground font-normal">
-                                                                - {formatCurrency(convertToCHF(stock.dividendAmount, divCurrency), 'CHF', false)}
-                                                            </span>
+                                                        <div className="flex items-center justify-end whitespace-nowrap">
+                                                            <span>{formatCurrency(stock.dividendAmount, divCurrency)}</span>
                                                         </div>
                                                     ) : (
                                                         <span className="whitespace-nowrap">
