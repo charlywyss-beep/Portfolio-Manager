@@ -59,19 +59,24 @@ export function DividendPlanner() {
         })
         .filter(Boolean);
 
-    // Calculate Annual Bank Fees
-    const annualBankFees = fixedDeposits.reduce((sum, deposit) => {
-        let annualFee = 0;
+    // Calculate Annual Net Bank Impact (Interest - Fees)
+    const annualBankNet = fixedDeposits.reduce((sum, deposit) => {
+        // Interest
+        const interest = deposit.amount * (deposit.interestRate / 100);
+
+        // Fee
+        let fee = 0;
         if (deposit.monthlyFee && deposit.monthlyFee > 0) {
-            if (deposit.feeFrequency === 'annually') annualFee = deposit.monthlyFee;
-            else if (deposit.feeFrequency === 'quarterly') annualFee = deposit.monthlyFee * 4;
-            else annualFee = deposit.monthlyFee * 12;
+            if (deposit.feeFrequency === 'annually') fee = deposit.monthlyFee;
+            else if (deposit.feeFrequency === 'quarterly') fee = deposit.monthlyFee * 4;
+            else fee = deposit.monthlyFee * 12;
         }
-        return sum + annualFee;
+
+        return sum + (interest - fee);
     }, 0);
 
     const totalAnnualDividends = projectedDividends.reduce((sum, d) => sum + d!.annualDividendCHF, 0);
-    const totalAnnualNet = totalAnnualDividends - annualBankFees; // Deduct fees
+    const totalAnnualNet = totalAnnualDividends + annualBankNet; // Sum of Dividends + Net Bank Impact
     const totalMonthly = totalAnnualNet / 12;
 
     return (
@@ -100,11 +105,6 @@ export function DividendPlanner() {
                         <div className="text-xl font-bold text-green-600 dark:text-green-400">
                             CHF {totalAnnualNet.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
-                        {annualBankFees > 0 && (
-                            <span className="text-[10px] text-muted-foreground mt-1">
-                                (Nach Abzug von CHF {annualBankFees.toFixed(0)} Gebühren)
-                            </span>
-                        )}
                     </div>
                 </div>
 
@@ -175,37 +175,47 @@ export function DividendPlanner() {
                             </tr>
                         </thead>
                         <tbody>
-                            {(projectedDividends.length === 0 && fixedDeposits.filter(d => d.monthlyFee).length === 0) ? (
+                            {(projectedDividends.length === 0 && fixedDeposits.length === 0) ? (
                                 <tr>
                                     <td colSpan={10} className="text-center py-8 text-muted-foreground">
-                                        Keine Dividenden-Aktien oder gebührenpflichtigen Konten im Portfolio
+                                        Keine Dividenden-Aktien oder Bankkonten im Portfolio
                                     </td>
                                 </tr>
                             ) : (
-                                [...projectedDividends, ...fixedDeposits.filter(d => d.monthlyFee && d.monthlyFee > 0).map(deposit => {
+                                [...projectedDividends, ...fixedDeposits.map(deposit => {
+                                    // Calculate Annual Interest
+                                    const annualInterest = deposit.amount * (deposit.interestRate / 100);
+
+                                    // Calculate Annual Fee
                                     let annualFee = 0;
-                                    if (deposit.feeFrequency === 'annually') annualFee = deposit.monthlyFee!;
-                                    else if (deposit.feeFrequency === 'quarterly') annualFee = deposit.monthlyFee! * 4;
-                                    else annualFee = deposit.monthlyFee! * 12; // Default to monthly
+                                    if (deposit.monthlyFee && deposit.monthlyFee > 0) {
+                                        if (deposit.feeFrequency === 'annually') annualFee = deposit.monthlyFee;
+                                        else if (deposit.feeFrequency === 'quarterly') annualFee = deposit.monthlyFee * 4;
+                                        else annualFee = deposit.monthlyFee * 12; // Default to monthly
+                                    }
+
+                                    const netAnnual = annualInterest - annualFee;
 
                                     return {
-                                        type: 'fee',
+                                        type: 'bank',
                                         id: deposit.id,
                                         name: deposit.bankName,
-                                        symbol: 'Gebühr',
+                                        symbol: netAnnual >= 0 ? 'Zins' : 'Gebühr',
                                         logoUrl: deposit.logoUrl,
                                         shares: 1,
-                                        yield: 0,
-                                        amount: -(deposit.monthlyFee!),
-                                        frequency: deposit.feeFrequency || 'monthly',
-                                        quarterly: -(annualFee / 4),
-                                        annual: -(annualFee),
-                                        currency: 'CHF'
+                                        yield: deposit.interestRate,
+                                        amount: netAnnual >= 0 ? (annualInterest / 12) : -(annualFee / 12), // Monthly approx
+                                        frequency: 'annual',
+                                        quarterly: netAnnual / 4,
+                                        annual: netAnnual,
+                                        currency: 'CHF',
+                                        isNegative: netAnnual < 0
                                     };
-                                })].map((data: any) => {
-                                    if (data.type === 'fee') {
+                                }).filter((d: any) => d && Math.abs(d.annual) > 0.01)].map((data: any) => {
+                                    if (data.type === 'bank') {
+                                        const isNegative = data.isNegative;
                                         return (
-                                            <tr key={data.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group bg-red-50/30 dark:bg-red-950/10">
+                                            <tr key={data.id} className={`border-b border-border last:border-0 hover:bg-muted/50 transition-colors group ${isNegative ? 'bg-red-50/30 dark:bg-red-950/10' : 'bg-green-50/30 dark:bg-green-950/10'}`}>
                                                 <td className="py-3 px-4">
                                                     <div className="flex items-center gap-3">
                                                         <Logo
@@ -215,23 +225,27 @@ export function DividendPlanner() {
                                                         />
                                                         <div>
                                                             <div className="font-semibold">{data.name}</div>
-                                                            <div className="text-xs text-red-500 font-medium">Konto-Gebühren</div>
+                                                            <div className={`text-xs font-medium ${isNegative ? 'text-red-500' : 'text-green-600'}`}>
+                                                                {isNegative ? 'Konto-Gebühren' : 'Bank-Zinsen'}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground">-</td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground">-</td>
-                                                <td className="text-right py-3 px-4 font-medium text-red-600 dark:text-red-400">
-                                                    {data.amount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                                <td className="text-right py-3 px-4 text-muted-foreground">
+                                                    {data.yield > 0 ? `${data.yield.toFixed(2)}%` : '-'}
+                                                </td>
+                                                <td className={`text-right py-3 px-4 font-medium ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                                    {isNegative ? '-' : '+'} {Math.abs(data.annual / 12).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground">
-                                                    {translateFrequency(data.frequency)}
+                                                    Jährlich
                                                 </td>
-                                                <td className="text-right py-3 px-4 text-red-600/70">
-                                                    CHF {data.quarterly.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                <td className={`text-right py-3 px-4 ${isNegative ? 'text-red-600/70' : 'text-green-600/70'}`}>
+                                                    {isNegative ? '-' : '+'} CHF {Math.abs(data.quarterly).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
-                                                <td className="text-right py-3 px-4 font-semibold text-red-600 dark:text-red-400">
-                                                    CHF {data.annual.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                <td className={`text-right py-3 px-4 font-semibold ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                                    {isNegative ? '-' : '+'} CHF {Math.abs(data.annual).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground">-</td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground">-</td>
