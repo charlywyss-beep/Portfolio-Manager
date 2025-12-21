@@ -643,7 +643,8 @@ export function EditDividendPage() {
                                                 onChange={(e) => {
                                                     const newVal = e.target.value;
                                                     setExDate(newVal);
-                                                    if (newVal && !payDate) {
+                                                    // Only auto-fill if date is complete (YYYY-MM-DD)
+                                                    if (newVal && newVal.length === 10 && !payDate) {
                                                         setPayDate(newVal);
                                                     }
                                                 }}
