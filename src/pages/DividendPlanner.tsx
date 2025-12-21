@@ -220,7 +220,8 @@ export function DividendPlanner() {
                                                             </span>
                                                         </div>
                                                     ) : (
-                                                        formatCurrency(stock.dividendAmount, divCurrency)
+                                                        // Manual override to put CHF at the end: "3.05 CHF" instead of "CHF 3.05"
+                                                        `${stock.dividendAmount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`
                                                     )
                                                 ) : '-'}
                                             </td>
