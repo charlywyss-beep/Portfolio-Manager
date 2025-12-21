@@ -197,7 +197,7 @@ export function DividendPlanner() {
                             <tr className="border-b border-border">
                                 <th className="text-left py-3 px-4 font-semibold">Aktie</th>
                                 <th className="text-right py-3 px-4 font-semibold">Anteile</th>
-                                <th className="text-right py-3 px-4 font-semibold">Rendite %</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Rendite %</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Betrag/Aktie</th>
                                 <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Quartalsweise</th>
