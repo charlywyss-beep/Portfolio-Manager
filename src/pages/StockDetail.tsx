@@ -17,8 +17,11 @@ export function StockDetail() {
     const { stocks, updateStock, updateStockPrice } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
 
-    // Find stock
-    const stock = stocks.find(s => s.id === id);
+    // Find stock by ID or Symbol (case-insensitive)
+    const stock = stocks.find(s =>
+        s.id === id ||
+        s.symbol.toLowerCase() === id?.toLowerCase()
+    );
 
     const [notes, setNotes] = useState('');
     const [isSaving, setIsSaving] = useState(false);
