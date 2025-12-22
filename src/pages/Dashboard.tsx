@@ -367,7 +367,8 @@ export function Dashboard() {
                                                     <img
                                                         src={item.stock.logoUrl}
                                                         alt={item.stock.name}
-                                                        className="size-8 rounded-full bg-white object-contain p-1 border border-border"
+                                                        className="size-8 rounded-full bg-white object-contain p-1 border border-border cursor-pointer hover:opacity-80 transition-opacity"
+                                                        onClick={() => navigate('/watchlist')}
                                                         onError={(e) => (e.currentTarget.style.display = 'none')}
                                                     />
                                                 )}
