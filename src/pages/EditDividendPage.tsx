@@ -432,6 +432,31 @@ export function EditDividendPage() {
                                                 >
                                                     Google Icon
                                                 </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (!domain) return;
+                                                        let clean = domain.toLowerCase().replace('https://', '').replace('http://', '').replace('www.', '');
+                                                        if (clean.includes('/')) clean = clean.split('/')[0];
+                                                        setLogoUrl(`https://icons.duckduckgo.com/ip3/${clean}.ico`);
+                                                    }}
+                                                    disabled={!domain}
+                                                    className="flex-1 px-3 py-2 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border disabled:opacity-50"
+                                                >
+                                                    DDG Icon
+                                                </button>
+                                            </div>
+                                            <div className="pt-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const query = stock ? `${stock.name} logo transparent` : `${symbol || domain} logo transparent`;
+                                                        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch`, '_blank');
+                                                    }}
+                                                    className="w-full text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center justify-center gap-1"
+                                                >
+                                                    <Search className="size-3" /> Logo auf Google suchen
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
