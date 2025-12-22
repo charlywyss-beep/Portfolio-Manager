@@ -279,7 +279,7 @@ export function Dashboard() {
                                         )}
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <p className="font-bold text-lg">{smartWrap(div.stock.symbol)}</p>
+                                                <p className="font-bold text-lg">{smartWrap(div.stock.name)}</p>
                                                 {showExWarning && (
                                                     <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
                                                         <Bell className="size-3" />
@@ -346,7 +346,7 @@ export function Dashboard() {
                                                     <img
                                                         src={item.stock.logoUrl}
                                                         alt={item.stock.name}
-                                                        className="size-8 rounded-full bg-background object-contain p-1 border border-border"
+                                                        className="size-8 rounded-full bg-white object-contain p-1 border border-border"
                                                         onError={(e) => (e.currentTarget.style.display = 'none')}
                                                     />
                                                 )}
@@ -360,8 +360,9 @@ export function Dashboard() {
                                                         {visibleDates.map((date, dIdx) => {
                                                             const daysToEx = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                                                             return (
-                                                                <div key={dIdx} className="px-2 py-0.5 rounded-md bg-muted border border-border shadow-sm text-foreground text-xs font-bold whitespace-nowrap">
-                                                                    Ex in {daysToEx} Tagen
+                                                                <div key={dIdx} className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium shadow-sm whitespace-nowrap">
+                                                                    <Bell className="size-3" />
+                                                                    <span>Ex in {daysToEx} Tagen</span>
                                                                 </div>
                                                             );
                                                         })}
