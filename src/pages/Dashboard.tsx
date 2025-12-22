@@ -299,16 +299,16 @@ export function Dashboard() {
                                                 />
                                             )}
                                             <div>
-                                                <div className="flex items-center gap-2">
-                                                    <p className="font-bold text-lg">{smartWrap(div.stock.name)}</p>
+                                                <p className="font-bold text-lg leading-tight mb-1">{smartWrap(div.stock.name)}</p>
+                                                <div className="flex flex-wrap items-center gap-2">
                                                     {showExWarning && (
-                                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium shadow-sm" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
+                                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium shadow-sm whitespace-nowrap" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
                                                             <Bell className="size-3" />
                                                             <span>Ex in {daysToEx} Tagen</span>
                                                         </div>
                                                     )}
+                                                    <p className="text-sm text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
                                                 </div>
-                                                <p className="text-base text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
                                             </div>
                                         </div>
                                         <div className="text-right flex flex-col items-end gap-0.5">
@@ -372,21 +372,23 @@ export function Dashboard() {
                                                     />
                                                 )}
                                                 <div>
-                                                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                                                        <p className="font-bold text-lg text-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => navigate('/watchlist')}>
-                                                            {item.stock.name}
-                                                        </p>
+                                                    <p className="font-bold text-lg text-foreground cursor-pointer hover:text-primary transition-colors leading-tight mb-1" onClick={() => navigate('/watchlist')}>
+                                                        {item.stock.name}
+                                                    </p>
+                                                    <div className="flex flex-wrap flex-col items-start gap-1">
                                                         {visibleDates.map((date, dIdx) => {
                                                             const daysToEx = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                                                             return (
-                                                                <div key={dIdx} className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium shadow-sm whitespace-nowrap">
-                                                                    <Bell className="size-3" />
-                                                                    <span>Ex in {daysToEx} Tagen</span>
+                                                                <div key={dIdx} className="flex items-center gap-2">
+                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium shadow-sm whitespace-nowrap">
+                                                                        <Bell className="size-3" />
+                                                                        <span>Ex in {daysToEx} Tagen</span>
+                                                                    </div>
+                                                                    <span className="text-sm text-muted-foreground">{new Date(date).toLocaleDateString('de-DE')}</span>
                                                                 </div>
                                                             );
                                                         })}
                                                     </div>
-                                                    <p className="text-sm text-muted-foreground">{item.stock.symbol}</p>
                                                 </div>
                                             </div>
                                             <div className="flex flex-col items-end">
