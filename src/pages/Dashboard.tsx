@@ -102,7 +102,7 @@ export function Dashboard() {
             )}
 
             {/* Top Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Total Value */}
                 <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
                     <div className="flex justify-between items-start mb-4">
@@ -176,7 +176,7 @@ export function Dashboard() {
                     </div>
                 </div>
 
-                {/* Top Performer (Stats) */}
+                {/* Top Performer Stock */}
                 <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
                     <div className="flex justify-between items-start mb-4">
                         <div className="p-2 rounded-lg bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
@@ -184,19 +184,62 @@ export function Dashboard() {
                         </div>
                     </div>
                     <div>
-                        <p className="text-sm text-muted-foreground font-medium">Top Performer</p>
-                        {positions.length > 0 ? (
-                            <>
-                                <h3
-                                    className="text-xl font-bold mt-1 tracking-tight truncate cursor-pointer hover:text-primary transition-colors"
-                                    onClick={() => navigate(`/stock/${positions.sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0]?.stock.id}`)}
-                                >
-                                    {positions.sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0]?.stock.name}
-                                </h3>
-                                <p className="text-sm text-green-600 dark:text-green-400 mt-2 font-medium">
-                                    +{positions.sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0]?.gainLossPercent.toFixed(2)}% ({convertToCHF(positions.sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0]?.gainLoss, positions.sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0]?.stock.currency).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })})
-                                </p>
-                            </>
+                        <p className="text-sm text-muted-foreground font-medium">Top Performer Aktie</p>
+                        {positions.filter(p => !p.stock.type || p.stock.type === 'stock').length > 0 ? (
+                            (() => {
+                                const topStock = positions
+                                    .filter(p => !p.stock.type || p.stock.type === 'stock')
+                                    .sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0];
+                                return (
+                                    <>
+                                        <h3
+                                            className="text-xl font-bold mt-1 tracking-tight truncate cursor-pointer hover:text-primary transition-colors"
+                                            onClick={() => navigate(`/stock/${topStock.stock.id}`)}
+                                            title={topStock.stock.name}
+                                        >
+                                            {topStock.stock.name}
+                                        </h3>
+                                        <p className="text-sm text-green-600 dark:text-green-400 mt-2 font-medium">
+                                            +{topStock.gainLossPercent.toFixed(2)}% ({convertToCHF(topStock.gainLoss, topStock.stock.currency).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })})
+                                        </p>
+                                    </>
+                                );
+                            })()
+                        ) : (
+                            <span className="text-sm text-muted-foreground">Keine Daten</span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Top Performer ETF */}
+                <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-2 rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                            <TrendingUp className="size-6" />
+                        </div>
+                    </div>
+                    <div>
+                        <p className="text-sm text-muted-foreground font-medium">Top Performer ETF</p>
+                        {positions.filter(p => p.stock.type === 'etf').length > 0 ? (
+                            (() => {
+                                const topEtf = positions
+                                    .filter(p => p.stock.type === 'etf')
+                                    .sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0];
+                                return (
+                                    <>
+                                        <h3
+                                            className="text-xl font-bold mt-1 tracking-tight truncate cursor-pointer hover:text-primary transition-colors"
+                                            onClick={() => navigate(`/stock/${topEtf.stock.id}`)}
+                                            title={topEtf.stock.name}
+                                        >
+                                            {topEtf.stock.name}
+                                        </h3>
+                                        <p className="text-sm text-green-600 dark:text-green-400 mt-2 font-medium">
+                                            +{topEtf.gainLossPercent.toFixed(2)}% ({convertToCHF(topEtf.gainLoss, topEtf.stock.currency).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })})
+                                        </p>
+                                    </>
+                                );
+                            })()
                         ) : (
                             <span className="text-sm text-muted-foreground">Keine Daten</span>
                         )}
