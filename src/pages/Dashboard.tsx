@@ -340,7 +340,7 @@ export function Dashboard() {
                                     });
 
                                     return (
-                                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-blue-50/50 dark:bg-transparent border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100/50 dark:hover:bg-muted/10 transition-colors">
+                                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-blue-50/50 dark:bg-transparent border border-blue-100 dark:border-none hover:bg-blue-100/50 dark:hover:bg-muted/10 transition-colors">
                                             <div className="flex items-center gap-3">
                                                 {item.stock.logoUrl && (
                                                     <img
@@ -360,7 +360,7 @@ export function Dashboard() {
                                                         {visibleDates.map((date, dIdx) => {
                                                             const daysToEx = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                                                             return (
-                                                                <div key={dIdx} className="px-2 py-0.5 rounded-md bg-white dark:bg-blue-950 border border-blue-300 dark:border-blue-700 shadow text-blue-800 dark:text-blue-400 text-xs font-bold whitespace-nowrap">
+                                                                <div key={dIdx} className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-900/50 border border-blue-300 dark:border-slate-800 shadow text-blue-800 dark:text-blue-300 text-xs font-bold whitespace-nowrap">
                                                                     Ex in {daysToEx} Tagen
                                                                 </div>
                                                             );
@@ -369,18 +369,18 @@ export function Dashboard() {
 
                                                     <div
                                                         onClick={() => navigate('/watchlist')}
-                                                        className="block mt-1 px-2 py-0.5 w-fit rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors cursor-pointer"
+                                                        className="block mt-1 px-2 py-0.5 w-fit rounded-md bg-white dark:bg-slate-900/50 border border-blue-200 dark:border-slate-800 shadow hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                                                     >
-                                                        <p className="text-sm text-blue-900 dark:text-blue-300 font-medium">{item.stock.name}</p>
+                                                        <p className="text-sm text-blue-900 dark:text-gray-300 font-medium">{item.stock.name}</p>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="flex flex-col items-end">
-                                                <div className="px-3 py-1 rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow text-center min-w-[70px]">
+                                                <div className="px-3 py-1 rounded-md bg-white dark:bg-slate-900/50 border border-blue-200 dark:border-slate-800 shadow text-center min-w-[70px]">
                                                     <p className="font-bold text-green-600 dark:text-green-400">
                                                         {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}% ` : '-'}
                                                     </p>
-                                                    <p className="text-[10px] text-blue-700 dark:text-blue-400 uppercase tracking-wider">Rendite</p>
+                                                    <p className="text-[10px] text-blue-700 dark:text-gray-400 uppercase tracking-wider">Rendite</p>
                                                 </div>
                                             </div>
                                         </div>
