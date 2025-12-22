@@ -29,8 +29,13 @@ export function getCurrentDividendPeriod(stock: Stock): CurrentDividendInfo {
         // Find the "current" relevant period based on the rule: 
         // Switch to next period only if (PayDate + 7 days) < Today.
 
-        // Sort dates by payDate just in case (assuming ISO strings sort correctly)
-        const sortedDates = [...stock.dividendDates].sort((a, b) =>
+        // Map to preserve original index/label, then sort
+        const periods = stock.dividendDates.map((d, i) => ({
+            ...d,
+            originalIndex: i
+        }));
+
+        const sortedDates = periods.sort((a, b) =>
             (a.payDate || '').localeCompare(b.payDate || '')
         );
 
@@ -54,10 +59,10 @@ export function getCurrentDividendPeriod(stock: Stock): CurrentDividendInfo {
                     status = 'ex-dividend';
                 }
 
-                // Determine Label (Q1, Q2 etc based on index or frequency)
+                // Determine Label based on ORIGINAL index
                 let label = '';
-                if (stock.dividendFrequency === 'quarterly') label = `Q${i + 1}`;
-                else if (stock.dividendFrequency === 'semi-annually') label = `H${i + 1}`;
+                if (stock.dividendFrequency === 'quarterly') label = `Q${period.originalIndex + 1}`;
+                else if (stock.dividendFrequency === 'semi-annually') label = `H${period.originalIndex + 1}`;
                 else if (stock.dividendFrequency === 'annually') label = 'Jahr';
 
                 return {
