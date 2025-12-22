@@ -526,7 +526,7 @@ export function EditDividendPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center">
-                                            <label className="text-sm font-medium">Aktueller Kurs <span className="text-xs text-muted-foreground">({currency === 'GBp' ? 'GBp (Pence)' : currency})</span></label>
+                                            <label className="text-sm font-medium">Aktueller Kurs <span className="text-xs text-muted-foreground">({currency === 'GBp' ? 'GBP' : currency})</span></label>
                                             {symbol && (
                                                 <button
                                                     type="button"
@@ -601,7 +601,7 @@ export function EditDividendPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Betrag <span className="text-xs text-muted-foreground">({currency === 'GBp' ? 'GBp (Pence)' : currency})</span></label>
+                                        <label className="text-sm font-medium">Betrag <span className="text-xs text-muted-foreground">({currency === 'GBp' ? 'GBP' : currency})</span></label>
                                         <input
                                             type="text"
                                             inputMode="decimal"
@@ -648,7 +648,7 @@ export function EditDividendPage() {
                                     <div className="p-4 bg-muted/50 rounded-lg text-center border border-border">
                                         <p className="text-sm font-medium text-muted-foreground">Erwartete Jahresausschüttung</p>
                                         <p className="text-2xl font-bold text-primary mt-1">
-                                            {(parseFloat(amount.replace(',', '.')) * getFrequencyFactor(frequency)).toFixed(2)} {currency === 'GBp' ? 'GBp (Pence)' : currency}
+                                            {(parseFloat(amount.replace(',', '.')) * getFrequencyFactor(frequency)).toFixed(2)} {currency === 'GBp' ? 'GBP' : currency}
                                         </p>
                                         {currency === 'GBp' && (
                                             <p className="text-sm text-muted-foreground mt-1">
