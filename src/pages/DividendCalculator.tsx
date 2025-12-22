@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calculator, Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart } from 'lucide-react';
+import { Calculator, Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw } from 'lucide-react';
+import { fetchStockHistory } from '../services/finnhub';
 
 // Helper component for comma-friendly number input
 const LocalNumberInput = ({ value, onChange, className, step = "any", title, placeholder }: {
@@ -981,9 +982,32 @@ export function DividendCalculator() {
                                                 value={simIsin} onChange={e => updateSimulatorState({ simIsin: e.target.value })} />
                                         </div>
                                         <div className="space-y-2 col-span-2">
-                                            <label className="text-sm font-medium">Kaufpreis</label>
+                                            <div className="flex justify-between items-center">
+                                                <label className="text-sm font-medium">Kaufpreis</label>
+                                                {(simSymbol || simName) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={async () => {
+                                                            const s = simSymbol || simName;
+                                                            if (!s) return;
+                                                            const res = await fetchStockHistory(s, '1D');
+                                                            if (res.data && res.data.length > 0) {
+                                                                let val = res.data[res.data.length - 1].value;
+                                                                if (simCurrency === 'GBP') {
+                                                                    const isLSE = s.toUpperCase().endsWith('.L') || (simIsin && simIsin.startsWith('GB'));
+                                                                    if (isLSE && val > 50) val /= 100;
+                                                                }
+                                                                updateSimulatorState({ price: val });
+                                                            }
+                                                        }}
+                                                        className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded transition-colors"
+                                                    >
+                                                        <RefreshCw className="size-3" /> Kurs laden
+                                                    </button>
+                                                )}
+                                            </div>
                                             <input required type="number" step="0.01" placeholder="z.B. 98.50" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
-                                                value={price}
+                                                value={simCurrency === 'GBP' ? parseFloat(price.toFixed(4)) : parseFloat(price.toFixed(2))}
                                                 onChange={e => updateSimulatorState({ price: parseFloat(e.target.value) || 0 })} />
                                         </div>
                                     </div>
@@ -1101,12 +1125,40 @@ export function DividendCalculator() {
                                     )}
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">
-                                        Kaufpreis ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
-                                    </label>
+                                    <div className="flex justify-between items-center">
+                                        <label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">
+                                            Kaufpreis ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
+                                        </label>
+                                        {(stocks.find(s => s.id === selectedStockId)?.symbol) && (
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    const stock = stocks.find(s => s.id === selectedStockId);
+                                                    if (!stock?.symbol) return;
+                                                    const res = await fetchStockHistory(stock.symbol, '1D');
+                                                    if (res.data && res.data.length > 0) {
+                                                        let val = res.data[res.data.length - 1].value;
+                                                        // Use simulator currency for check (should be synced with stock typically, but simulator allows override?)
+                                                        // Actually simCurrency is used for display.
+                                                        const targetCurr = simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF');
+                                                        
+                                                        if (targetCurr === 'GBP') {
+                                                            const isLSE = stock.symbol.toUpperCase().endsWith('.L') || (stock.isin && stock.isin.startsWith('GB'));
+                                                            if (isLSE && val > 50) val /= 100;
+                                                        }
+                                                        updateSimulatorState({ price: val });
+                                                    }
+                                                }}
+                                                className="text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded transition-colors -mr-1"
+                                                title="Aktuellen Kurs laden"
+                                            >
+                                                <RefreshCw className="size-3" />
+                                            </button>
+                                        )}
+                                    </div>
                                     <LocalNumberInput
                                         step="0.01"
-                                        value={price}
+                                        value={simCurrency === 'GBp' || simCurrency === 'GBP' ? parseFloat(price.toFixed(4)) : parseFloat(price.toFixed(2))}
                                         onChange={(val) => updateSimulatorState({ price: val })}
                                         className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                     />
