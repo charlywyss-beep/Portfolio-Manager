@@ -75,14 +75,14 @@ export function Watchlist() {
                             <thead>
                                 <tr className="border-b border-border">
                                     <th className="text-left py-3 px-4 font-semibold">Aktie</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Aktueller Kurs</th>
+                                    <th className="text-right py-3 px-2 sm:px-4 font-semibold whitespace-nowrap">Aktueller Kurs</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Kauflimit</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Rendite %</th>
                                     <th className="text-right py-3 px-4 font-semibold">Dividende</th>
                                     <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">EX-Tag</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zahl-Tag</th>
-                                    <th className="text-right py-3 px-4 w-24 sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
+                                    <th className="text-right py-3 px-1 sm:px-4 w-20 sm:w-24 sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -141,7 +141,7 @@ export function Watchlist() {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="text-right py-3 px-4">
+                                                <td className="text-right py-3 px-2 sm:px-4">
                                                     <div className="flex flex-col items-end gap-1">
                                                         <span className="font-medium">{formatCurrency(stock.currentPrice, stock.currency)}</span>
                                                         {hasTarget && (
@@ -237,30 +237,26 @@ export function Watchlist() {
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground text-xs">{stock.dividendPayDate ? new Date(stock.dividendPayDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
                                                 </td>
-                                                <td className="text-right py-3 px-4 sticky right-0 bg-card group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                                    <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity">
+                                                <td className="text-right py-3 px-1 sm:px-4 sticky right-0 bg-card group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                    <div className="flex items-center justify-end gap-0 sm:gap-1 opacity-100 transition-opacity">
                                                         <button
                                                             onClick={() => setBuyStock(stock)}
-                                                            className="p-2 hover:bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg transition-colors"
+                                                            className="p-1.5 sm:p-2 hover:bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg transition-colors"
                                                             title="Kaufen (ins Depot übernehmen)"
                                                         >
                                                             <ShoppingBag className="size-4" />
                                                         </button>
                                                         <button
                                                             onClick={() => navigate(`/dividends/edit/${stock.id}`)}
-                                                            className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
+                                                            className="p-1.5 sm:p-2 hover:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg transition-colors"
                                                             title="Bearbeiten"
                                                         >
-                                                            <Edit className="size-4" />
+                                                            <Edit2 className="size-4" />
                                                         </button>
                                                         <button
-                                                            onClick={() => {
-                                                                if (confirm(`${stock.name} von der Watchlist entfernen?`)) {
-                                                                    removeFromWatchlist(stock.id);
-                                                                }
-                                                            }}
-                                                            className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors"
-                                                            title="Entfernen"
+                                                            onClick={() => handleDelete(stock)}
+                                                            className="p-1.5 sm:p-2 hover:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg transition-colors"
+                                                            title="Aus Watchlist entfernen"
                                                         >
                                                             <Trash2 className="size-4" />
                                                         </button>
