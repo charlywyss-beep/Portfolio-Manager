@@ -46,17 +46,26 @@ export function StockDetail() {
 
                 // Sync current price with latest chart data
                 if (response.data && response.data.length > 0) {
-                    let latestPrice = response.data[response.data.length - 1].value;
+                    let chartData = response.data;
+                    let latestPrice = chartData[chartData.length - 1].value;
 
-                    // Fix: If API returns GBp (Pence), convert to GBP (divide by 100)
+                    // Fix: If API returns GBp (Pence), convert ENTIRE dataset to GBP (divide by 100)
                     if (response.currency === 'GBp') {
+                        chartData = chartData.map(point => ({
+                            ...point,
+                            value: point.value / 100
+                        }));
                         latestPrice = latestPrice / 100;
                     }
+
+                    setChartData(chartData);
 
                     if (Math.abs(stock.currentPrice - latestPrice) > 0.01) {
                         // Update price but don't trigger re-fetch (dependency is stock.symbol)
                         updateStockPrice(stock.id, latestPrice);
                     }
+                } else {
+                    setChartData(response.data);
                 }
             }
         };
