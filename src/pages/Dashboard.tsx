@@ -351,12 +351,10 @@ export function Dashboard() {
                                                     />
                                                 )}
                                                 <div>
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <p className="font-bold text-lg text-foreground">{item.stock.symbol}</p>
-                                                    </div>
-
-                                                    {/* Dates Row - Horizontal Scroll if needed, or wrap */}
-                                                    <div className="flex flex-wrap gap-2 mb-2">
+                                                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                                                        <p className="font-bold text-lg text-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => navigate('/watchlist')}>
+                                                            {item.stock.name}
+                                                        </p>
                                                         {visibleDates.map((date, dIdx) => {
                                                             const daysToEx = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                                                             return (
@@ -367,13 +365,7 @@ export function Dashboard() {
                                                             );
                                                         })}
                                                     </div>
-
-                                                    <div
-                                                        onClick={() => navigate('/watchlist')}
-                                                        className="block mt-1 px-2 py-0.5 w-fit rounded-md bg-muted border border-border shadow-sm hover:bg-accent transition-colors cursor-pointer"
-                                                    >
-                                                        <p className="text-sm text-foreground font-medium">{item.stock.name}</p>
-                                                    </div>
+                                                    <p className="text-sm text-muted-foreground">{item.stock.symbol}</p>
                                                 </div>
                                             </div>
                                             <div className="flex flex-col items-end">
