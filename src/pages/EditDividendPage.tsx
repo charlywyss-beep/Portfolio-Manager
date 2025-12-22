@@ -534,7 +534,19 @@ export function EditDividendPage() {
                                                         const res = await fetchStockHistory(symbol, '1D');
                                                         if (res.data && res.data.length > 0) {
                                                             let val = res.data[res.data.length - 1].value;
-                                                            // Note: Raw value used directly (GBp treated as GBP units)
+
+                                                            // Auto-detect GBp (Pence) to GBP (Pound) conversion
+                                                            // LSE stocks (.L) are typically quoted in Pence (e.g. 4215 GBp)
+                                                            // If user selected GBP (Pounds), we must divide by 100.
+                                                            if (currency === 'GBP') {
+                                                                const isLSE = symbol.toUpperCase().endsWith('.L') || isin.startsWith('GB');
+                                                                // Threshold check: If price is > 200, it's almost certainly Pence for a typical stock,
+                                                                // or if we are sure it's an LSE stock.
+                                                                if (isLSE && val > 50) {
+                                                                    val = val / 100;
+                                                                }
+                                                            }
+
                                                             setPrice(val.toFixed(2));
                                                         }
                                                     }}
