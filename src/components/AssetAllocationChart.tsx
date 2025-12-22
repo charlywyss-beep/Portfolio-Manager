@@ -72,6 +72,18 @@ export function AssetAllocationChart() {
         return null;
     };
 
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
     return (
         <div className="h-[400px] w-full min-h-[300px] min-w-0 flex flex-col items-center">
             {hasMounted && data.length > 0 ? (
@@ -79,8 +91,8 @@ export function AssetAllocationChart() {
                     <PieChart>
                         <Pie
                             data={data}
-                            cx="40%"
-                            cy="50%"
+                            cx={isMobile ? "50%" : "40%"}
+                            cy={isMobile ? "40%" : "50%"}
                             innerRadius="50%"
                             outerRadius="90%"
                             paddingAngle={2}
@@ -92,11 +104,11 @@ export function AssetAllocationChart() {
                         </Pie>
                         <Tooltip content={<CustomTooltip />} />
                         <Legend
-                            layout="vertical"
-                            verticalAlign="middle"
-                            align="right"
-                            wrapperStyle={{ fontSize: '14px', opacity: 0.9, paddingLeft: '20px' }}
-                            iconSize={14}
+                            layout={isMobile ? "horizontal" : "vertical"}
+                            verticalAlign={isMobile ? "bottom" : "middle"}
+                            align={isMobile ? "center" : "right"}
+                            wrapperStyle={isMobile ? { fontSize: '12px', paddingTop: '20px' } : { fontSize: '14px', opacity: 0.9, paddingLeft: '20px' }}
+                            iconSize={isMobile ? 12 : 14}
                         />
                     </PieChart>
                 </ResponsiveContainer>
