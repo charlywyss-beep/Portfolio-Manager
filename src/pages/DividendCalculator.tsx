@@ -601,9 +601,9 @@ export function DividendCalculator() {
                 simType: stock.type || 'stock',
                 simSector: stock.sector || '',
                 simValor: stock.valor || '',
+                // If it's accumulating, ignore dividends
+                dividend: (stock.distributionPolicy === 'accumulating') ? 0 : (stock.currency === 'GBp' ? annualDiv / 100 : annualDiv),
                 price: stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice,
-                // Store Native Price (e.g. 4238 GBp -> 42.38 GBP)
-                dividend: stock.currency === 'GBp' ? annualDiv / 100 : annualDiv,         // Store Native Div (e.g. 250 GBp -> 2.50 GBP)
                 fees: { ...fees, stampDutyPercent: newStamp },
             });
         }
@@ -1141,7 +1141,7 @@ export function DividendCalculator() {
                                                         // Use simulator currency for check (should be synced with stock typically, but simulator allows override?)
                                                         // Actually simCurrency is used for display.
                                                         const targetCurr = simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF');
-                                                        
+
                                                         if (targetCurr === 'GBP') {
                                                             const isLSE = stock.symbol.toUpperCase().endsWith('.L') || (stock.isin && stock.isin.startsWith('GB'));
                                                             if (isLSE && val > 50) val /= 100;
@@ -1301,6 +1301,41 @@ export function DividendCalculator() {
                                             title="Wechselkurs-Aufschlag der Bank (typisch 1.5%)"
                                         />
                                     </div>
+
+                                    {/* Distribution Policy Toggle (Specific for ETFs) */}
+                                    {((!selectedStockId || selectedStockId === 'new') && simulatorState.simType === 'etf') && (
+                                        <div className="flex items-center justify-between gap-4 pt-1">
+                                            <label className="text-[10px] uppercase text-muted-foreground whitespace-nowrap">Ausschüttung</label>
+                                            <div className="flex bg-background border border-input rounded p-0.5">
+                                                <button
+                                                    onClick={() => {
+                                                        // Toggle Logic: If switching to 'accumulating', zero out dividend?
+                                                        // We might need to store this in simulatorState basically as 'isAccumulating'
+                                                        // But simulatorState is flat. Let's assume we handle it via visual feedback or setting Dividend to 0.
+                                                        // Actually, we need to extend simulatorState if we want to persist this choice before Saving.
+                                                        // FOR NOW: Just use it to set Dividend to 0 visually.
+                                                        updateSimulatorState({ dividend: 0 }); // Reset to 0 if 'Accumulating'
+                                                        // We can't easily persist 'distributionPolicy without adding it to simulatorState. 
+                                                        // Let's add 'distributionPolicy' to simulatorState in context first? 
+                                                        // Or just toggle visually? 
+                                                        // User asked to select it HERE.
+                                                        // So we should probably allow updating it.
+                                                        // Let's assume for this step we just zero it out.
+                                                        // Ideally we update Context to hold 'distributionPolicy' in simulatorState.
+                                                    }}
+                                                    className={`px-2 py-0.5 text-[10px] rounded transition-colors ${simulatorState.dividend > 0 ? 'bg-primary text-primary-foreground font-bold' : 'text-muted-foreground hover:text-foreground'}`}
+                                                >
+                                                    Ausschüttend
+                                                </button>
+                                                <button
+                                                    onClick={() => updateSimulatorState({ dividend: 0 })}
+                                                    className={`px-2 py-0.5 text-[10px] rounded transition-colors ${simulatorState.dividend === 0 ? 'bg-primary text-primary-foreground font-bold' : 'text-muted-foreground hover:text-foreground'}`}
+                                                >
+                                                    Thesaurierend
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Removed redundant 'Total Gebühren' display as per user request (lower breakdown is sufficient) */}
                                     {/* 

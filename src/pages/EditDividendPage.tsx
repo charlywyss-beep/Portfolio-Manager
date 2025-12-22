@@ -639,7 +639,6 @@ export function EditDividendPage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Frequenz</label>
                                     <select
                                         value={frequency}
                                         onChange={(e) => handleFrequencyChange(e.target.value as any)}
@@ -648,7 +647,42 @@ export function EditDividendPage() {
                                         <option value="quarterly">Quartalsweise (4x/Jahr)</option>
                                         <option value="semi-annually">Halbjährlich (2x/Jahr)</option>
                                         <option value="annually">Jährlich (1x/Jahr)</option>
+                                        <option value="monthly">Monatlich (12x/Jahr)</option>
                                     </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Ausschüttung</label>
+                                    <div className="flex bg-muted rounded-lg p-1 border border-border">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                // If switching to distributing, maybe keep as is
+                                                updateStock(currentStockId!, { distributionPolicy: 'distributing' });
+                                            }}
+                                            className={cn(
+                                                "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
+                                                stock?.distributionPolicy !== 'accumulating'
+                                                    ? "bg-background text-foreground shadow-sm"
+                                                    : "text-muted-foreground hover:text-foreground"
+                                            )}
+                                        >
+                                            Ausschüttend
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                updateStock(currentStockId!, { distributionPolicy: 'accumulating' });
+                                            }}
+                                            className={cn(
+                                                "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
+                                                stock?.distributionPolicy === 'accumulating'
+                                                    ? "bg-background text-foreground shadow-sm"
+                                                    : "text-muted-foreground hover:text-foreground"
+                                            )}
+                                        >
+                                            Thesaurierend
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {amount && !isNaN(parseFloat(amount)) && (

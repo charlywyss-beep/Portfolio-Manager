@@ -23,6 +23,7 @@ export interface Stock {
     logoUrl?: string;
     targetPrice?: number; // Desired buy price (Fair Value)
     notes?: string; // Personal notes about the stock
+    distributionPolicy?: 'distributing' | 'accumulating'; // NEW: Thesaurierend vs Ausschüttend
 }
 
 export interface Position {

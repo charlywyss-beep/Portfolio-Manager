@@ -174,7 +174,11 @@ export function StockDetail() {
                         <h2 className="text-2xl md:text-3xl font-bold">
                             {formatCurrency(stock.currentPrice, stock.currency)}
                         </h2>
-                        {stock.dividendYield && (
+                        {stock.distributionPolicy === 'accumulating' ? (
+                            <p className="text-sm text-blue-600 dark:text-blue-400 font-medium mt-1 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded inline-block">
+                                Thesaurierend
+                            </p>
+                        ) : stock.dividendYield && (
                             <p className="text-sm text-green-600 dark:text-green-400 font-medium mt-1">
                                 {stock.dividendYield.toFixed(2)}% Div.Rendite
                             </p>
