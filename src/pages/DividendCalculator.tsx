@@ -836,14 +836,14 @@ export function DividendCalculator() {
                             {activeTab === 'search' ? (
                                 <div className="space-y-4 pt-2">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Aktie auswählen</label>
+                                        <label className="text-sm font-medium">Aktie / ETF auswählen</label>
                                         {!selectedStockId || selectedStockId === 'new' ? (
                                             <>
                                                 <div className="relative">
                                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                                     <input
                                                         type="text"
-                                                        placeholder="Aktienname oder Symbol suchen..."
+                                                        placeholder="Name oder Symbol suchen..."
                                                         value={searchTerm}
                                                         onChange={(e) => {
                                                             setSearchTerm(e.target.value);
