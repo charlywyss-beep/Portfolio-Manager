@@ -534,12 +534,7 @@ export function EditDividendPage() {
                                                         const res = await fetchStockHistory(symbol, '1D');
                                                         if (res.data && res.data.length > 0) {
                                                             let val = res.data[res.data.length - 1].value;
-                                                            // Normalize GBp
-                                                            if (res.currency === 'GBp') {
-                                                                val = val / 100;
-                                                                // If current currency is NOT GBp/GBP, maybe suggestion?
-                                                                // For now just set the value correctly
-                                                            }
+                                                            // Note: Raw value used directly (GBp treated as GBP units)
                                                             setPrice(val.toFixed(2));
                                                         }
                                                     }}
