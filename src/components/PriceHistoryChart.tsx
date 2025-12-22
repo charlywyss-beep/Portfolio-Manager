@@ -155,7 +155,7 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                                     : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                             )}
                         >
-                            {range}
+                            {range === 'BUY' ? 'Seit Kauf' : range}
                         </button>
                     ))}
                 </div>
