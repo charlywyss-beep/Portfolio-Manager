@@ -300,14 +300,14 @@ export function Dashboard() {
                                             )}
                                             <div>
                                                 <p className="font-bold text-lg leading-tight mb-1">{smartWrap(div.stock.name)}</p>
-                                                <div className="flex flex-wrap items-center gap-2">
+                                                <div className="flex flex-wrap items-center gap-2 mt-0.5">
                                                     {showExWarning && (
-                                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium shadow-sm whitespace-nowrap" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
+                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold shadow-sm whitespace-nowrap min-w-[100px] justify-center" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
                                                             <Bell className="size-3" />
                                                             <span>Ex in {daysToEx} Tagen</span>
                                                         </div>
                                                     )}
-                                                    <p className="text-sm text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
+                                                    <p className="text-xs font-medium text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -375,16 +375,16 @@ export function Dashboard() {
                                                     <p className="font-bold text-lg text-foreground cursor-pointer hover:text-primary transition-colors leading-tight mb-1" onClick={() => navigate('/watchlist')}>
                                                         {item.stock.name}
                                                     </p>
-                                                    <div className="flex flex-wrap flex-col items-start gap-1">
+                                                    <div className="flex flex-wrap flex-col items-start gap-1 mt-0.5">
                                                         {visibleDates.map((date, dIdx) => {
                                                             const daysToEx = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                                                             return (
                                                                 <div key={dIdx} className="flex items-center gap-2">
-                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium shadow-sm whitespace-nowrap">
+                                                                    <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold shadow-sm whitespace-nowrap min-w-[100px] justify-center">
                                                                         <Bell className="size-3" />
                                                                         <span>Ex in {daysToEx} Tagen</span>
                                                                     </div>
-                                                                    <span className="text-sm text-muted-foreground">{new Date(date).toLocaleDateString('de-DE')}</span>
+                                                                    <span className="text-xs font-medium text-muted-foreground">{new Date(date).toLocaleDateString('de-DE')}</span>
                                                                 </div>
                                                             );
                                                         })}
@@ -392,11 +392,11 @@ export function Dashboard() {
                                                 </div>
                                             </div>
                                             <div className="flex flex-col items-end">
-                                                <div className="px-3 py-1 rounded-md bg-muted border border-border shadow-sm text-center min-w-[70px]">
-                                                    <p className="font-bold text-green-600 dark:text-green-400">
+                                                <div className="px-3 py-1 text-center min-w-[80px]">
+                                                    <p className="font-bold text-xl md:text-2xl text-green-600 dark:text-green-400">
                                                         {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}% ` : '-'}
                                                     </p>
-                                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Rendite</p>
+                                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mt-0.5">Rendite</p>
                                                 </div>
                                             </div>
                                         </div>
