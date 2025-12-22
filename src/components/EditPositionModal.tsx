@@ -193,7 +193,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                 </div>
 
                 {/* Content */}
-                <div className="p-6 overflow-y-auto">
+                <div className="p-6 overflow-y-auto flex-1">
                     {/* Stock Info */}
                     <div className="p-4 border border-border rounded-lg bg-muted/30 mb-6">
                         <div className="font-semibold">{position.stock.name}</div>
