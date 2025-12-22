@@ -1,4 +1,4 @@
-```javascript
+
 import { useNavigate } from 'react-router-dom';
 
 import { useState, useEffect } from 'react';
@@ -196,7 +196,7 @@ export function Dashboard() {
                                     <>
                                         <h3
                                             className="text-xl font-bold mt-1 tracking-tight truncate cursor-pointer hover:text-primary transition-colors"
-                                            onClick={() => navigate(`/ stock / ${ topStock.stock.id } `)}
+                                            onClick={() => navigate(`/stock/${topStock.stock.id}`)}
                                             title={topStock.stock.name}
                                         >
                                             {topStock.stock.name}
@@ -231,10 +231,10 @@ export function Dashboard() {
                                     <>
                                         <h3
                                             className="text-xl font-bold mt-1 tracking-tight truncate cursor-pointer hover:text-primary transition-colors"
-                                            onClick={() => navigate(`/ stock / ${ topEtf.stock.id } `)}
+                                            onClick={() => navigate(`/stock/${topEtf.stock.id}`)}
                                             title={topEtf.stock.name}
                                         >
-                                            {topEtf.stock.name}
+                                            {smartWrap(topEtf.stock.name)}
                                         </h3>
                                         <p className="text-sm text-green-600 dark:text-green-400 mt-2 font-medium">
                                             +{topEtf.gainLossPercent.toFixed(2)}% ({convertToCHF(topEtf.gainLoss, topEtf.stock.currency).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })})
@@ -279,9 +279,9 @@ export function Dashboard() {
                                         )}
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <p className="font-bold text-lg">{div.stock.symbol}</p>
+                                                <p className="font-bold text-lg">{smartWrap(div.stock.symbol)}</p>
                                                 {showExWarning && (
-                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium" title={`Ex - Datum am ${ new Date(div.exDate!).toLocaleDateString('de-DE') } `}>
+                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
                                                         <Bell className="size-3" />
                                                         <span>Ex in {daysToEx} Tagen</span>
                                                     </div>
@@ -378,7 +378,7 @@ export function Dashboard() {
                                             <div className="flex flex-col items-end">
                                                 <div className="px-3 py-1 rounded-md bg-white dark:bg-blue-950 border border-blue-200 dark:border-blue-700 shadow text-center min-w-[70px]">
                                                     <p className="font-bold text-green-600 dark:text-green-400">
-                                                        {item.stock.dividendYield ? `${ item.stock.dividendYield.toFixed(2) }% ` : '-'}
+                                                        {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}% ` : '-'}
                                                     </p>
                                                     <p className="text-[10px] text-blue-700 dark:text-blue-400 uppercase tracking-wider">Rendite</p>
                                                 </div>
@@ -543,12 +543,12 @@ export function Dashboard() {
                                         tick={{ fill: 'currentColor', fontSize: 13, opacity: 0.7 }}
                                         tickLine={false}
                                         axisLine={false}
-                                        tickFormatter={(value) => `${ value }% `}
+                                        tickFormatter={(value) => `${value}%`}
                                     />
                                     <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent', opacity: 0.1 }} />
                                     <Bar dataKey="gain" radius={[4, 4, 0, 0]}>
                                         {chartData.map((entry, index) => (
-                                            <Cell key={`cell - ${ index } `} fill={entry.gain >= 0 ? '#22c55e' : '#ef4444'} />
+                                            <Cell key={`cell-${index}`} fill={entry.gain >= 0 ? '#22c55e' : '#ef4444'} />
                                         ))}
                                     </Bar>
                                 </BarChart>
