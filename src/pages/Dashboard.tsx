@@ -302,8 +302,8 @@ export function Dashboard() {
                                                 <p className="font-bold text-lg leading-tight mb-1">{smartWrap(div.stock.name)}</p>
                                                 <div className="flex flex-wrap items-center gap-2 mt-0.5">
                                                     {showExWarning && (
-                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold shadow-sm whitespace-nowrap min-w-[100px] justify-center" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
-                                                            <Bell className="size-3" />
+                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold shadow-sm whitespace-nowrap w-[110px] justify-center text-center flex-shrink-0" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
+                                                            <Bell className="size-3 flex-shrink-0" />
                                                             <span>Ex in {daysToEx} Tagen</span>
                                                         </div>
                                                     )}
@@ -380,8 +380,8 @@ export function Dashboard() {
                                                             const daysToEx = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                                                             return (
                                                                 <div key={dIdx} className="flex items-center gap-2">
-                                                                    <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold shadow-sm whitespace-nowrap min-w-[100px] justify-center">
-                                                                        <Bell className="size-3" />
+                                                                    <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold shadow-sm whitespace-nowrap w-[110px] justify-center text-center flex-shrink-0">
+                                                                        <Bell className="size-3 flex-shrink-0" />
                                                                         <span>Ex in {daysToEx} Tagen</span>
                                                                     </div>
                                                                     <span className="text-xs font-medium text-muted-foreground">{new Date(date).toLocaleDateString('de-DE')}</span>
