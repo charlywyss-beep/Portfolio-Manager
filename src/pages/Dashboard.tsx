@@ -179,38 +179,28 @@ export function Dashboard() {
                     </div>
                 </div>
 
-                {/* Top Performer Stock */}
+                {/* Daily Performance (Replaces Top Performer Stock) */}
                 <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
                     <div className="flex justify-between items-start mb-4">
                         <div className="p-2 rounded-lg bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
                             <TrendingUp className="size-6" />
                         </div>
+                        <span className={cn(
+                            "flex items-center text-sm font-medium px-2 py-1 rounded-full",
+                            totals.dailyGain >= 0 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        )}>
+                            {totals.dailyGain >= 0 ? <ArrowUpRight className="size-4 mr-1" /> : <ArrowDownRight className="size-4 mr-1" />}
+                            {Math.abs(totals.dailyGainPercent).toFixed(2)}%
+                        </span>
                     </div>
                     <div>
-                        <p className="text-sm text-muted-foreground font-medium">Top Performer Aktie</p>
-                        {positions.filter(p => !p.stock.type || p.stock.type === 'stock').length > 0 ? (
-                            (() => {
-                                const topStock = positions
-                                    .filter(p => !p.stock.type || p.stock.type === 'stock')
-                                    .sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0];
-                                return (
-                                    <>
-                                        <h3
-                                            className="text-xl font-bold mt-1 tracking-tight cursor-pointer hover:text-primary transition-colors"
-                                            onClick={() => navigate(`/stock/${topStock.stock.id}`)}
-                                            title={topStock.stock.name}
-                                        >
-                                            {topStock.stock.name}
-                                        </h3>
-                                        <p className="text-sm text-green-600 dark:text-green-400 mt-2 font-medium">
-                                            +{topStock.gainLossPercent.toFixed(2)}% ({convertToCHF(topStock.gainLoss, topStock.stock.currency).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })})
-                                        </p>
-                                    </>
-                                );
-                            })()
-                        ) : (
-                            <span className="text-sm text-muted-foreground">Keine Daten</span>
-                        )}
+                        <p className="text-sm text-muted-foreground font-medium">Tagesperformance</p>
+                        <h3 className={cn("text-xl lg:text-2xl font-bold mt-1 tracking-tight", totals.dailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                            {totals.dailyGain >= 0 ? '+' : ''}{totals.dailyGain.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-2">
+                            seit gestern
+                        </p>
                     </div>
                 </div>
 

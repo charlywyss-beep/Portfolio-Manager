@@ -99,6 +99,24 @@ export function usePortfolioData() {
 
         const totalProjectedIncome = projectedYearlyDividends + totalInterestFixed;
 
+        // NEW: Calculate Daily Performance (Sum of (Price - PrevClose) * Shares)
+        const totalDailyGainForStocks = positions.reduce((sum, p) => {
+            // Ensure previousClose exists and is valid
+            const prevClose = p.stock.previousClose || p.stock.currentPrice; // Fallback to 0 change if missing
+            const dailyChangePerShare = p.stock.currentPrice - prevClose;
+            const dailyChangeTotal = dailyChangePerShare * p.shares;
+
+            return sum + convertToCHF(dailyChangeTotal, p.stock.currency, rates);
+        }, 0);
+
+        // Daily Gain Percent = Daily Gain / (Total Value - Daily Gain) * 100
+        // (Total Value - Daily Gain) approximates the "Previous Close Value" of the portfolio
+        const previousTotalValueStock = totalValueStock - totalDailyGainForStocks;
+        const totalDailyGainPercent = previousTotalValueStock > 0
+            ? (totalDailyGainForStocks / previousTotalValueStock) * 100
+            : 0;
+
+
         return {
             totalValue,
             totalCost,
@@ -115,7 +133,12 @@ export function usePortfolioData() {
             stockValue: totalValueStockOnly,
             etfValue: totalValueEtf,
             cashValue: totalValueBank,
-            vorsorgeValue: totalValueVorsorge // Also exposing this if needed explicitly
+            stockValue: totalValueStockOnly,
+            etfValue: totalValueEtf,
+            cashValue: totalValueBank,
+            vorsorgeValue: totalValueVorsorge, // Also exposing this if needed explicitly
+            dailyGain: totalDailyGainForStocks, // NEW
+            dailyGainPercent: totalDailyGainPercent // NEW
         };
     }, [positions, rates, usePortfolio().fixedDeposits]);
 
