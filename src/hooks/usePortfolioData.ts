@@ -133,9 +133,6 @@ export function usePortfolioData() {
             stockValue: totalValueStockOnly,
             etfValue: totalValueEtf,
             cashValue: totalValueBank,
-            stockValue: totalValueStockOnly,
-            etfValue: totalValueEtf,
-            cashValue: totalValueBank,
             vorsorgeValue: totalValueVorsorge, // Also exposing this if needed explicitly
             dailyGain: totalDailyGainForStocks, // NEW
             dailyGainPercent: totalDailyGainPercent // NEW
