@@ -4,6 +4,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { Plus, Search, Trash2, ArrowUpRight, ArrowDownRight, PieChart, BarChart3, Edit, Landmark } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
+import { smartWrap } from '../utils/text';
 import { EditPositionModal } from '../components/EditPositionModal';
 import { AddFixedDepositModal } from '../components/AddFixedDepositModal';
 import { Logo } from '../components/Logo';
@@ -112,7 +113,7 @@ export function Portfolio() {
                                                     className="font-semibold text-foreground truncate cursor-pointer hover:text-primary transition-colors text-sm"
                                                     onClick={() => navigate(`/stock/${pos.stock.id}`)}
                                                 >
-                                                    {pos.stock.name}
+                                                    {smartWrap(pos.stock.name)}
                                                 </div>
                                                 <div className="text-xs font-mono text-muted-foreground">{pos.stock.symbol}</div>
                                                 <div className="text-[10px] text-muted-foreground/80">{pos.stock.sector}</div>

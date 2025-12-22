@@ -3,6 +3,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { useNavigate } from 'react-router-dom';
 
 import { useCurrencyFormatter } from '../utils/currency';
+import { smartWrap } from '../utils/text';
 import { Eye, Plus, Trash2, Edit, ShoppingBag } from 'lucide-react';
 
 import { AddPositionModal } from '../components/AddPositionModal'; // Import AddPositionModal
@@ -134,7 +135,7 @@ export function Watchlist() {
                                                                 onClick={() => navigate(`/stock/${stock.id}`)}
                                                             >
                                                                 {/* Smart Wrap: Prevent wrapping for short names (e.g. Swiss Re), allow for long names */}
-                                                                {stock.name.length < 15 ? stock.name.replace(/\s+/g, '\u00A0') : stock.name}
+                                                                {smartWrap(stock.name)}
                                                             </div>
                                                             <div className="text-xs text-muted-foreground">{stock.symbol}</div>
                                                         </div>
