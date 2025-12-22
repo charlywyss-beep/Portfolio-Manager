@@ -890,9 +890,19 @@ export function DividendCalculator() {
                                             </>
                                         ) : (
                                             <div className="p-4 border border-border rounded-lg bg-muted/30 flex items-center gap-3 animate-in fade-in zoom-in-95">
-                                                <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
-                                                    {stocks.find(s => s.id === selectedStockId)?.symbol.slice(0, 2)}
-                                                </div>
+                                                {stocks.find(s => s.id === selectedStockId)?.logoUrl ? (
+                                                    <div className="size-12 rounded-lg p-1 bg-white border border-border flex items-center justify-center overflow-hidden">
+                                                        <img
+                                                            src={stocks.find(s => s.id === selectedStockId)?.logoUrl}
+                                                            alt="Logo"
+                                                            className="w-full h-full object-contain"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
+                                                        {stocks.find(s => s.id === selectedStockId)?.symbol.slice(0, 2)}
+                                                    </div>
+                                                )}
                                                 <div className="flex-1">
                                                     <div className="font-semibold">{stocks.find(s => s.id === selectedStockId)?.name}</div>
                                                     <div className="text-sm text-muted-foreground">
@@ -902,6 +912,7 @@ export function DividendCalculator() {
                                                 <button
                                                     onClick={() => updateSimulatorState({ selectedStockId: '' })}
                                                     className="text-muted-foreground hover:text-foreground p-1"
+                                                    title="Auswahl entfernen"
                                                 >
                                                     <X className="size-5" />
                                                 </button>
