@@ -140,24 +140,48 @@ export function StockDetail() {
                             </p>
                         )}
 
-                        {/* Position Gain/Loss Information */}
+                        {/* Dynamic Position Performance based on Chart Range */}
                         {(() => {
                             const position = positions.find(p => p.stockId === stock.id);
                             if (!position) return null;
 
-                            const currentValue = position.shares * stock.currentPrice;
-                            const costBasis = position.shares * position.buyPriceAvg;
-                            const gainLoss = currentValue - costBasis;
-                            const gainLossPercent = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
-                            const isPositive = gainLoss >= 0;
+                            // Determine start price for the period
+                            // For 1D, we ideally want previousClose, but chartData[0] is a good proxy if prevClose is missing/same
+                            let referencePrice = stock.previousClose;
+
+                            if (timeRange !== '1D' && chartData && chartData.length > 0) {
+                                referencePrice = chartData[0].value;
+                            } else if (timeRange === '1D') {
+                                // Fallback for 1D if chart data exists but previousClose might be off? 
+                                // Actually Stick to previousClose for 1D as per standard "Day Change" definition.
+                                // But if we want to match the Chart's visual "Start", chartData[0] is often used.
+                                // Let's use chartData[0] for consistency with the chart visual, UNLESS it's 1D where Previous Close is the standard anchor.
+                                // However, user asked for "Performance to Yesterday, Week etc".
+                                // If 1D chart starts at 09:00, and previous Close was 17:30 yesterday.
+                                referencePrice = stock.previousClose || (chartData && chartData.length > 0 ? chartData[0].value : stock.currentPrice);
+                            } else if (chartData && chartData.length > 0) {
+                                referencePrice = chartData[0].value;
+                            }
+
+                            // If we switched ranges and chartData is updating, we might have a mismatch briefly. 
+                            // Ensure we have chartData for non-1D ranges or use valid fallback.
+                            if (timeRange !== '1D' && (!chartData || chartData.length === 0)) return null;
+
+                            const diffPerShare = stock.currentPrice - referencePrice;
+                            const totalDiff = diffPerShare * position.shares;
+                            const percentChange = referencePrice > 0 ? (diffPerShare / referencePrice) * 100 : 0;
+                            const isPositive = totalDiff >= 0;
 
                             return (
-                                <p className={cn(
-                                    "text-sm font-bold mt-1",
-                                    isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                )}>
-                                    {isPositive ? '+' : ''}{gainLossPercent.toFixed(2)}% ({formatCurrency(gainLoss, stock.currency)})
-                                </p>
+                                <div className="mt-2 text-right">
+                                    <p className="text-xs text-muted-foreground">Performance ({timeRange})</p>
+                                    <p className={cn(
+                                        "text-sm font-bold",
+                                        isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                    )}>
+                                        {isPositive ? '+' : ''}{percentChange.toFixed(2)}% ({formatCurrency(totalDiff, stock.currency)})
+                                    </p>
+                                </div>
                             );
                         })()}
                     </div>
