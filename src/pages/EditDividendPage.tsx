@@ -352,6 +352,58 @@ export function EditDividendPage() {
                                             Nutze Yahoo Finance Symbole (z.B. <b>NESN.SW</b> für Nestle, <b>BATS.L</b> für BAT)
                                         </p>
                                     </div>
+                                    <div className="pt-2 flex flex-wrap gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const query = `${stock?.name || symbol} Yahoo Finance Symbol`;
+                                                window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+                                            }}
+                                            className="flex-1 px-3 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border whitespace-nowrap"
+                                        >
+                                            Global (US/UK)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const query = `${stock?.name || symbol} Frankfurt Yahoo Finance Symbol`;
+                                                window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+                                            }}
+                                            className="flex-1 px-3 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border whitespace-nowrap"
+                                        >
+                                            Frankfurt (.F)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const query = `${stock?.name || symbol} Xetra Yahoo Finance Symbol`;
+                                                window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+                                            }}
+                                            className="flex-1 px-3 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border whitespace-nowrap"
+                                        >
+                                            Xetra (.DE)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const query = `${stock?.name || symbol} SIX Swiss Exchange Yahoo Finance Symbol`;
+                                                window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+                                            }}
+                                            className="flex-1 px-3 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border whitespace-nowrap"
+                                        >
+                                            Schweiz (.SW)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const query = `${stock?.name || symbol} London Stock Exchange Yahoo Finance Symbol`;
+                                                window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+                                            }}
+                                            className="flex-1 px-3 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border whitespace-nowrap"
+                                        >
+                                            London (.L)
+                                        </button>
+                                    </div>
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">ISIN</label>
                                         <input
