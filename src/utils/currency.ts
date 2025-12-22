@@ -46,12 +46,11 @@ export function formatCurrency(amount: number, currency: string, showCHF: boolea
         displayAmount = amount / 100;
     }
 
+    // Custom Suffix Formatting for all currencies (e.g. 420.50 EUR)
     formatted = displayAmount.toLocaleString('de-CH', {
-        style: 'currency',
-        currency: displayCurrency,
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-    });
+    }) + ' ' + displayCurrency;
 
     if (showCHF && currency !== 'CHF') {
         const chfAmount = convertToCHF(amount, currency, liveRates);
@@ -59,7 +58,9 @@ export function formatCurrency(amount: number, currency: string, showCHF: boolea
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
         }) + ' CHF';
-        return `${formatted}\u00A0\u00A0\u00A0-\u00A0\u00A0\u00A0${chfFormatted}`;
+
+        // On mobile we might want a line break, but for now standard string
+        return `${formatted} - ${chfFormatted}`;
     }
 
     return formatted;

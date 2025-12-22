@@ -288,10 +288,10 @@ export function Dashboard() {
                                             <p className="text-base text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="font-bold text-xl text-green-600 dark:text-green-400">
+                                    <div className="text-right flex flex-col items-end">
+                                        <div className="font-bold text-base sm:text-lg md:text-xl text-green-600 dark:text-green-400 whitespace-pre-wrap text-right leading-tight">
                                             {formatCurrency(div.amount, div.currency)}
-                                        </p>
+                                        </div>
                                         <p className="text-sm font-medium text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
                                     </div>
                                 </div>
