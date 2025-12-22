@@ -40,6 +40,7 @@ export function Dashboard() {
         setHasMounted(true);
     }, []);
     const [watchlistTimeframe, setWatchlistTimeframe] = useState<number>(90); // Default 90 days
+    const [upcomingTimeframe, setUpcomingTimeframe] = useState<number>(90); // Default 90 days
 
 
 
@@ -254,56 +255,76 @@ export function Dashboard() {
                 {/* Upcoming Dividends List */}
                 <div className="col-span-1 lg:col-span-3 p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm">
                     <div className="flex items-center justify-between mb-4 md:mb-6">
-                        <h3 className="text-lg font-bold">Nächste Dividenden Auszahlungen</h3>
-                        <Calendar className="size-5 text-muted-foreground" />
+                        <div className="flex items-center gap-3">
+                            <h3 className="text-lg font-bold">Nächste Dividenden Auszahlungen</h3>
+                            <Calendar className="size-5 text-muted-foreground" />
+                        </div>
+                        <select
+                            value={upcomingTimeframe}
+                            onChange={(e) => setUpcomingTimeframe(Number(e.target.value))}
+                            className="text-xs px-2 py-1 rounded border border-border bg-background"
+                            title="Zeitraum auswählen"
+                            aria-label="Zeitraum auswählen"
+                        >
+                            <option value={90}>3 Monate</option>
+                            <option value={180}>6 Monate</option>
+                            <option value={270}>9 Monate</option>
+                            <option value={365}>1 Jahr</option>
+                        </select>
                     </div>
                     <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1 md:pr-2">
-                        {upcomingDividends.map((div, idx) => {
-                            const daysToEx = div.exDate ? Math.ceil((new Date(div.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                            const showExWarning = daysToEx !== null && daysToEx >= 0;
+                        {upcomingDividends
+                            .filter(div => {
+                                const diffTime = new Date(div.payDate).getTime() - new Date().getTime();
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                return diffDays <= upcomingTimeframe;
+                            })
+                            .map((div, idx) => {
+                                const daysToEx = div.exDate ? Math.ceil((new Date(div.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                                const showExWarning = daysToEx !== null && daysToEx >= 0;
 
-                            return (
-                                <div
-                                    key={idx}
-                                    onClick={() => navigate('/dividends')}
-                                    className="flex items-center justify-between p-2 md:p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                                >
-                                    <div className="flex items-center gap-2 md:gap-3">
-                                        {div.stock?.logoUrl && (
-                                            <img
-                                                src={div.stock.logoUrl}
-                                                alt={div.stock.name}
-                                                className="size-8 rounded-full bg-white object-contain p-1 border border-border"
-                                                onError={(e) => (e.currentTarget.style.display = 'none')}
-                                            />
-                                        )}
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <p className="font-bold text-lg">{smartWrap(div.stock.name)}</p>
-                                                {showExWarning && (
-                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium shadow-sm" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
-                                                        <Bell className="size-3" />
-                                                        <span>Ex in {daysToEx} Tagen</span>
-                                                    </div>
-                                                )}
+                                return (
+                                    <div
+                                        key={idx}
+                                        onClick={() => navigate('/dividends')}
+                                        className="flex items-center justify-between p-2 md:p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                                    >
+                                        <div className="flex items-center gap-2 md:gap-3">
+                                            {div.stock?.logoUrl && (
+                                                <img
+                                                    src={div.stock.logoUrl}
+                                                    alt={div.stock.name}
+                                                    className="size-8 rounded-full bg-white object-contain p-1 border border-border"
+                                                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                                                />
+                                            )}
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-bold text-lg">{smartWrap(div.stock.name)}</p>
+                                                    {showExWarning && (
+                                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium shadow-sm" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
+                                                            <Bell className="size-3" />
+                                                            <span>Ex in {daysToEx} Tagen</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <p className="text-base text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
                                             </div>
-                                            <p className="text-base text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
+                                        </div>
+                                        <div className="text-right flex flex-col items-end gap-0.5">
+                                            <div className="font-bold text-base sm:text-lg md:text-xl text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
+                                                {formatCurrency(div.amount, div.currency, false)}
+                                            </div>
+                                            {div.currency !== 'CHF' && (
+                                                <div className="font-bold text-sm sm:text-base md:text-lg text-green-600 dark:text-green-400 whitespace-nowrap leading-tight opacity-90">
+                                                    {formatCurrency(convertToCHF(div.amount, div.currency), 'CHF', false)}
+                                                </div>
+                                            )}
+                                            <p className="text-sm font-medium text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
                                         </div>
                                     </div>
-                                    <div className="text-right flex flex-col items-end gap-0.5">
-                                        <div className="font-bold text-base sm:text-lg md:text-xl text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
-                                            {formatCurrency(div.amount, div.currency, false)}
-                                        </div>
-                                        {div.currency !== 'CHF' && (
-                                            <div className="font-bold text-sm sm:text-base md:text-lg text-green-600 dark:text-green-400 whitespace-nowrap leading-tight opacity-90">
-                                                {formatCurrency(convertToCHF(div.amount, div.currency), 'CHF', false)}
-                                            </div>
-                                        )}
-                                        <p className="text-sm font-medium text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
-                                    </div>
-                                </div>
-                            )
-                        })}
+                                )
+                            })}
                         {upcomingDividends.length === 0 && <p className="text-sm text-muted-foreground">Keine anstehenden Dividenden.</p>}
                     </div>
                 </div>

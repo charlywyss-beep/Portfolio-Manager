@@ -146,21 +146,25 @@ export function usePortfolioData() {
                     .filter(d => new Date(d.payDate) >= today)
                     .sort((a, b) => new Date(a.payDate).getTime() - new Date(b.payDate).getTime());
 
-                // Return ONLY the next upcoming dividend (futureDates[0])
+                // Return ALL future upcoming dividends within a reasonable horizon (e.g. 2 years) to allow UI filtering
                 if (futureDates.length > 0) {
-                    const nextDiv = futureDates[0];
-                    return [{
+                    return futureDates.map(date => ({
                         stock: p.stock,
-                        payDate: nextDiv.payDate,
-                        exDate: nextDiv.exDate,
+                        payDate: date.payDate,
+                        exDate: date.exDate,
                         amount: p.stock.dividendAmount ? p.stock.dividendAmount * p.shares : 0,
                         currency: p.stock.dividendCurrency || p.stock.currency
-                    }];
+                    }));
                 }
 
                 return [];
             })
+            // Flatter the array of arrays
+            // .flatMap is already used above, but need to ensure it's flattening correctly if map returns array
+            // Actually the structure above was returning `[{...}]` for single. Now it returns `[{...}, {...}]`.
+            // flatMap handles this perfectly.
             .sort((a, b) => new Date(a.payDate).getTime() - new Date(b.payDate).getTime());
+    }, [positions]);
     }, [positions]);
 
     // NEW: Calculate Bank Risk (Deposit Protection > 100k)
