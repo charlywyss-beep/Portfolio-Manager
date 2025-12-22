@@ -288,10 +288,15 @@ export function Dashboard() {
                                             <p className="text-base text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
                                         </div>
                                     </div>
-                                    <div className="text-right flex flex-col items-end">
-                                        <div className="font-bold text-sm sm:text-base md:text-xl text-green-600 dark:text-green-400 whitespace-normal text-right leading-tight">
-                                            {formatCurrency(div.amount, div.currency)}
+                                    <div className="text-right flex flex-col items-end gap-0.5">
+                                        <div className="font-bold text-base sm:text-lg md:text-xl text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
+                                            {formatCurrency(div.amount, div.currency, false)}
                                         </div>
+                                        {div.currency !== 'CHF' && (
+                                            <div className="font-bold text-sm sm:text-base md:text-lg text-green-600 dark:text-green-400 whitespace-nowrap leading-tight opacity-90">
+                                                {formatCurrency(convertToCHF(div.amount, div.currency), 'CHF', false)}
+                                            </div>
+                                        )}
                                         <p className="text-sm font-medium text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
                                     </div>
                                 </div>
