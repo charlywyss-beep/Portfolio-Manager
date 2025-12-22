@@ -299,7 +299,15 @@ export function Dashboard() {
                                                 />
                                             )}
                                             <div>
-                                                <p className="font-bold text-lg leading-tight mb-1">{smartWrap(div.stock.name)}</p>
+                                                <p
+                                                    className="font-bold text-lg leading-tight mb-1 cursor-pointer hover:text-primary transition-colors"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/stock/${div.stock.symbol}`);
+                                                    }}
+                                                >
+                                                    {smartWrap(div.stock.name)}
+                                                </p>
                                                 <div className="flex flex-wrap items-center gap-2 mt-0.5">
                                                     {showExWarning && (
                                                         <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold shadow-sm whitespace-nowrap w-[110px] justify-center text-center flex-shrink-0" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
@@ -373,7 +381,7 @@ export function Dashboard() {
                                                     />
                                                 )}
                                                 <div>
-                                                    <p className="font-bold text-lg text-foreground cursor-pointer hover:text-primary transition-colors leading-tight mb-1" onClick={() => navigate('/watchlist')}>
+                                                    <p className="font-bold text-lg text-foreground cursor-pointer hover:text-primary transition-colors leading-tight mb-1" onClick={() => navigate(`/stock/${item.stock.symbol}`)}>
                                                         {item.stock.name}
                                                     </p>
                                                     <div className="flex flex-wrap flex-col items-start gap-1 mt-0.5">
