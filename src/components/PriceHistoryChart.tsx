@@ -4,7 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 
-type TimeRange = '1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | '5Y' | 'BUY';
+import { type TimeRange } from '../services/finnhub';
 
 interface PriceHistoryChartProps {
     currentPrice: number;

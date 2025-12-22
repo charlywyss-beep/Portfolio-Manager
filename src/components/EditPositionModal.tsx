@@ -13,6 +13,7 @@ interface EditPositionModalProps {
         stock: Stock;
         shares: number;
         buyPriceAvg: number;
+        buyDate?: string;
     };
     onUpdate: (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string) => void;
     onDelete: (id: string) => void;
@@ -31,8 +32,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
     // Correction state
     const [correctShares, setCorrectShares] = useState(position.shares.toString());
-    // Correction state
-    const [correctShares, setCorrectShares] = useState(position.shares.toString());
+
     const [correctPrice, setCorrectPrice] = useState(position.buyPriceAvg.toString());
     const [correctBuyDate, setCorrectBuyDate] = useState(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
 

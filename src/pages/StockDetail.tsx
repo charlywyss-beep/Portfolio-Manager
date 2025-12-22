@@ -42,7 +42,7 @@ export function StockDetail() {
             console.log('[StockDetail] Fetching Yahoo Finance data for:', stock.symbol, 'Range:', timeRange);
 
             let rangeToUse = timeRange;
-            let customFromDate = undefined;
+
 
             // Handle 'BUY' range
             if (timeRange === 'BUY') {
