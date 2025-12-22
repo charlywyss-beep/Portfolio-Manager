@@ -133,7 +133,8 @@ export function Watchlist() {
                                                                 className="font-semibold cursor-pointer hover:text-primary transition-colors"
                                                                 onClick={() => navigate(`/stock/${stock.id}`)}
                                                             >
-                                                                {stock.name}
+                                                                {/* Smart Wrap: Prevent wrapping for short names (e.g. Swiss Re), allow for long names */}
+                                                                {stock.name.length < 15 ? stock.name.replace(/\s+/g, '\u00A0') : stock.name}
                                                             </div>
                                                             <div className="text-xs text-muted-foreground">{stock.symbol}</div>
                                                         </div>
