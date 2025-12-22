@@ -340,7 +340,7 @@ export function Dashboard() {
                                     });
 
                                     return (
-                                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50 hover:bg-blue-100/50 transition-colors">
+                                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-blue-50/50 dark:bg-transparent border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100/50 dark:hover:bg-muted/10 transition-colors">
                                             <div className="flex items-center gap-3">
                                                 {item.stock.logoUrl && (
                                                     <img
