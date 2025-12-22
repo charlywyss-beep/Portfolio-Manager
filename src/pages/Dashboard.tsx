@@ -250,12 +250,12 @@ export function Dashboard() {
             {/* Reordered: Dividends & Watchlist */}
             <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
                 {/* Upcoming Dividends List */}
-                <div className="col-span-1 lg:col-span-3 p-6 rounded-xl bg-card border border-border shadow-sm">
-                    <div className="flex items-center justify-between mb-6">
+                <div className="col-span-1 lg:col-span-3 p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm">
+                    <div className="flex items-center justify-between mb-4 md:mb-6">
                         <h3 className="text-lg font-bold">Nächste Dividenden Auszahlungen</h3>
                         <Calendar className="size-5 text-muted-foreground" />
                     </div>
-                    <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                    <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1 md:pr-2">
                         {upcomingDividends.map((div, idx) => {
                             const daysToEx = div.exDate ? Math.ceil((new Date(div.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
                             const showExWarning = daysToEx !== null && daysToEx >= 0 && daysToEx <= 7;
@@ -264,9 +264,9 @@ export function Dashboard() {
                                 <div
                                     key={idx}
                                     onClick={() => navigate('/dividends')}
-                                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                                    className="flex items-center justify-between p-2 md:p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
                                 >
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2 md:gap-3">
                                         {div.stock?.logoUrl && (
                                             <img
                                                 src={div.stock.logoUrl}
