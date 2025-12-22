@@ -5,6 +5,8 @@ import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
 import { TransactionSuccessDialog } from './TransactionSuccessDialog';
 
+import { usePortfolio } from '../context/PortfolioContext';
+
 interface EditPositionModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -20,6 +22,9 @@ interface EditPositionModalProps {
 }
 
 export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelete }: EditPositionModalProps) {
+    const { updateStock, stocks } = usePortfolio();
+    const currentStock = stocks.find(s => s.id === position.stock.id) || position.stock;
+
     const [tab, setTab] = useState<'sell' | 'buy' | 'correct'>('correct');
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
 
@@ -480,6 +485,42 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                     Optional. Wird für die "Seit Kauf"-Ansicht im Chart verwendet.
                                 </p>
                             </div>
+
+                            {/* Distribution Policy (ETFs only) - Correction Mode */}
+                            {currentStock?.type === 'etf' && (
+                                <div className="space-y-2 pt-2 border-t border-border/50">
+                                    <label className="text-sm font-medium">Ausschüttung (Stammdaten)</label>
+                                    <div className="flex bg-muted rounded-lg p-1 border border-border">
+                                        <button
+                                            type="button"
+                                            onClick={() => updateStock(currentStock.id, { distributionPolicy: 'distributing' })}
+                                            className={cn(
+                                                "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
+                                                currentStock.distributionPolicy !== 'accumulating'
+                                                    ? "bg-background text-foreground shadow-sm"
+                                                    : "text-muted-foreground hover:text-foreground"
+                                            )}
+                                        >
+                                            Ausschüttend
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => updateStock(currentStock.id, { distributionPolicy: 'accumulating' })}
+                                            className={cn(
+                                                "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
+                                                currentStock.distributionPolicy === 'accumulating'
+                                                    ? "bg-background text-foreground shadow-sm"
+                                                    : "text-muted-foreground hover:text-foreground"
+                                            )}
+                                        >
+                                            Thesaurierend
+                                        </button>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Ändert den Typ für den gesamten ETF (nicht nur diese Position).
+                                    </p>
+                                </div>
+                            )}
 
                             <div className="flex gap-3 pt-4">
                                 <button
