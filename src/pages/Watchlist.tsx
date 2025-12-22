@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useCurrencyFormatter } from '../utils/currency';
 import { smartWrap } from '../utils/text';
+import { getCurrentDividendPeriod, translateFrequency } from '../utils/dividend';
 import { Eye, Plus, Trash2, Edit, ShoppingBag } from 'lucide-react';
 
 import { AddPositionModal } from '../components/AddPositionModal'; // Import AddPositionModal
@@ -203,10 +204,15 @@ export function Watchlist() {
                                                     ) : '-'}
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground">
-                                                    {stock.dividendFrequency === 'quarterly' ? 'Quartalsweise'
-                                                        : stock.dividendFrequency === 'semi-annually' ? 'Halbjährlich'
-                                                            : stock.dividendFrequency === 'monthly' ? 'Monatlich'
-                                                                : 'Jährlich'}
+                                                    {translateFrequency(stock.dividendFrequency)}
+                                                    {(() => {
+                                                        const currentDiv = getCurrentDividendPeriod(stock);
+                                                        return currentDiv.periodLabel ? (
+                                                            <span className="ml-2 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded">
+                                                                {currentDiv.periodLabel}
+                                                            </span>
+                                                        ) : null;
+                                                    })()}
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground">
                                                     {stock.dividendDates && stock.dividendDates.length > 0 ? (

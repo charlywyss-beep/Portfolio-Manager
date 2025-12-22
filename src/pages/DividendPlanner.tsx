@@ -4,18 +4,7 @@ import { Calendar, TrendingUp, Plus, Edit, Trash2 } from 'lucide-react';
 import { Logo } from '../components/Logo';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { getCurrentDividendPeriod } from '../utils/dividend';
-
-// Helper to translate frequency to German
-const translateFrequency = (freq?: string) => {
-    switch (freq) {
-        case 'quarterly': return 'p.Q.';
-        case 'semi-annually': return 'Halbjährlich';
-        case 'annually': return 'Jährlich';
-        case 'monthly': return 'Monatlich';
-        default: return 'Jährlich';
-    }
-};
+import { getCurrentDividendPeriod, translateFrequency } from '../utils/dividend';
 
 export function DividendPlanner() {
     const navigate = useNavigate();

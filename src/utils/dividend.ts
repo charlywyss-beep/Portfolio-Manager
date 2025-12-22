@@ -10,6 +10,17 @@ export interface CurrentDividendInfo {
     periodLabel?: string; // e.g. "Q1", "Q2"
 }
 
+// Helper to translate frequency to German
+export const translateFrequency = (freq?: string) => {
+    switch (freq) {
+        case 'quarterly': return 'p.Q.';
+        case 'semi-annually': return 'Halbjährlich';
+        case 'annually': return 'Jährlich';
+        case 'monthly': return 'Monatlich';
+        default: return 'Jährlich';
+    }
+};
+
 export function getCurrentDividendPeriod(stock: Stock): CurrentDividendInfo {
     const today = startOfDay(new Date());
 
