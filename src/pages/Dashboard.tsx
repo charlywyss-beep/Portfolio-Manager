@@ -290,7 +290,7 @@ export function Dashboard() {
                                     </div>
                                     <div className="text-right">
                                         <p className="font-bold text-xl text-green-600 dark:text-green-400">
-                                            +{formatCurrency(div.amount, div.currency)}
+                                            {formatCurrency(div.amount, div.currency)}
                                         </p>
                                         <p className="text-sm font-medium text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
                                     </div>
