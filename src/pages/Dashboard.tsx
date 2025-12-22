@@ -119,39 +119,39 @@ export function Dashboard() {
                     </div>
                     <div>
                         <p className="text-sm text-muted-foreground font-medium">Gesamtwert</p>
-                        <h3 className="text-xl lg:text-3xl font-bold mt-1 tracking-tight">
-                            {totals.totalValue.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
+                        <h3 className="text-xl lg:text-2xl font-bold mt-1 tracking-tight">
+                            {totals.totalValue.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                         </h3>
                         <p className={cn("text-sm mt-2 font-medium",
                             totals.gainLoss >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                         )}>
-                            {totals.gainLoss >= 0 ? '+' : ''}{totals.gainLoss.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })} Gewinn/Verlust
+                            {totals.gainLoss >= 0 ? '+' : ''}{totals.gainLoss.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF Gewinn/Verlust
                         </p>
 
                         <div className="mt-4 pt-4 border-t border-border flex flex-col gap-1">
                             <div className="flex items-center justify-between gap-4 text-sm">
-                                <span className="text-muted-foreground">Aktien/ETF (Aktuell):</span>
+                                <span className="text-muted-foreground">Aktien/ETF:</span>
                                 <span className="font-medium text-foreground">
-                                    {formatCurrency(totals.totalValueStock, 'CHF')}
+                                    {totals.totalValueStock.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                 </span>
                             </div>
                             <div className="flex items-center justify-between gap-4 text-sm">
-                                <span className="text-muted-foreground">+ Bankguthaben:</span>
+                                <span className="text-muted-foreground">Bankguthaben:</span>
                                 <span className="font-medium text-foreground">
-                                    {formatCurrency(totals.totalValueBank, 'CHF')}
+                                    {totals.totalValueBank.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                 </span>
                             </div>
                             <div className="flex items-center justify-between gap-4 text-sm">
-                                <span className="text-muted-foreground">+ Vorsorgekapital:</span>
+                                <span className="text-muted-foreground">Vorsorgekapital:</span>
                                 <span className="font-medium text-foreground">
-                                    {formatCurrency(totals.totalValueVorsorge, 'CHF')}
+                                    {totals.totalValueVorsorge.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                 </span>
                             </div>
                             <div className="h-px bg-border my-0.5 opacity-50" />
                             <div className="flex items-center justify-between gap-4 text-sm opacity-75">
-                                <span className="text-muted-foreground">Rechnerisch (Total):</span>
+                                <span className="text-muted-foreground">Total:</span>
                                 <span className="font-medium text-foreground">
-                                    {formatCurrency(totals.totalValueStock + totals.totalValueBank + totals.totalValueVorsorge, 'CHF')}
+                                    {(totals.totalValueStock + totals.totalValueBank + totals.totalValueVorsorge).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                 </span>
                             </div>
                         </div>
