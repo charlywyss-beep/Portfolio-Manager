@@ -13,7 +13,7 @@ import { Logo } from '../components/Logo';
 
 
 export function Portfolio() {
-    const { positions: rawPositions, stocks, fixedDeposits, deletePosition, updatePosition, deleteFixedDeposit, updateSimulatorState } = usePortfolio();
+    const { positions: rawPositions, stocks, fixedDeposits, deletePosition, updatePosition, deleteFixedDeposit } = usePortfolio();
     const navigate = useNavigate();
     const [isAddFixedDepositModalOpen, setIsAddFixedDepositModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -225,20 +225,11 @@ export function Portfolio() {
                                         <div className="flex items-center justify-center gap-1">
                                             <button
                                                 onClick={() => {
-                                                    // Redirect to Simulator for Buy/Sell/Edit
-                                                    updateSimulatorState({
-                                                        selectedStockId: pos.stock.id,
-                                                        simName: pos.stock.name,
-                                                        simSymbol: pos.stock.symbol,
-                                                        simCurrency: pos.stock.currency === 'GBp' ? 'GBP' : pos.stock.currency,
-                                                        price: pos.stock.currency === 'GBp' ? pos.stock.currentPrice / 100 : pos.stock.currentPrice,
-                                                        dividend: pos.stock.currency === 'GBp' ? (pos.stock.dividendAmount || 0) / 100 : (pos.stock.dividendAmount || 0),
-                                                        mode: 'buy' // Default to buy
-                                                    });
-                                                    navigate('/calculator');
+                                                    setSelectedPosition(pos);
+                                                    setIsEditModalOpen(true);
                                                 }}
                                                 className="p-1 hover:bg-muted rounded text-primary transition-colors"
-                                                title="Kauf / Verkauf / Korrektur (Im Simulator)"
+                                                title="Position bearbeiten (Kauf/Verkauf/Korrektur)"
                                             >
                                                 <Edit className="size-3.5" />
                                             </button>
