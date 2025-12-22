@@ -14,7 +14,7 @@ interface EditPositionModalProps {
         shares: number;
         buyPriceAvg: number;
     };
-    onUpdate: (id: string, newShares: number, newAvgPrice?: number) => void;
+    onUpdate: (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string) => void;
     onDelete: (id: string) => void;
 }
 
@@ -31,7 +31,10 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
     // Correction state
     const [correctShares, setCorrectShares] = useState(position.shares.toString());
+    // Correction state
+    const [correctShares, setCorrectShares] = useState(position.shares.toString());
     const [correctPrice, setCorrectPrice] = useState(position.buyPriceAvg.toString());
+    const [correctBuyDate, setCorrectBuyDate] = useState(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
 
     // Transaction success state
     const [showSuccessDialog, setShowSuccessDialog] = useState(false);
@@ -112,6 +115,9 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
         const newShares = parseFloat(correctShares);
         const newPrice = parseFloat(correctPrice);
 
+        // Ensure date is valid ISO string if provided
+        const isoDate = correctBuyDate ? new Date(correctBuyDate).toISOString() : undefined;
+
         if (newShares <= 0) {
             if (confirm("Bestand auf 0 setzen löscht die Position. Fortfahren?")) {
                 onDelete(position.id);
@@ -120,7 +126,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
             return;
         }
 
-        onUpdate(position.id, newShares, newPrice);
+        onUpdate(position.id, newShares, newPrice, isoDate);
         onClose();
     };
 
@@ -457,23 +463,37 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                         {position.stock.currency === 'GBp' ? 'GBP' : position.stock.currency}
                                     </div>
                                 </div>
-                            </div>
+                                <div className="space-y-2">
+                                    <label htmlFor="correctBuyDate" className="text-sm font-medium">
+                                        Kaufdatum (Erster Kauf)
+                                    </label>
+                                    <input
+                                        id="correctBuyDate"
+                                        type="date"
+                                        value={correctBuyDate}
+                                        onChange={(e) => setCorrectBuyDate(e.target.value)}
+                                        className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Optional. Wird für die "Seit Kauf"-Ansicht im Chart verwendet.
+                                    </p>
+                                </div>
 
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={onClose}
-                                    className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors font-medium"
-                                >
-                                    Abbrechen
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
-                                >
-                                    Speichern
-                                </button>
-                            </div>
+                                <div className="flex gap-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={onClose}
+                                        className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors font-medium"
+                                    >
+                                        Abbrechen
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                                    >
+                                        Speichern
+                                    </button>
+                                </div>
                         </form>
                     )}
                 </div>

@@ -4,7 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 
-type TimeRange = '1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | '5Y';
+type TimeRange = '1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | '5Y' | 'BUY';
 
 interface PriceHistoryChartProps {
     currentPrice: number;
@@ -144,7 +144,7 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                 </div>
 
                 <div className="flex bg-muted/50 p-1 rounded-lg">
-                    {(['1D', '1W', '1M', '3M', '6M', '1Y', '5Y'] as TimeRange[]).map((range) => (
+                    {(['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
                         <button
                             key={range}
                             onClick={() => handleRangeChange(range)}

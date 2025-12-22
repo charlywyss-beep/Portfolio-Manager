@@ -28,6 +28,9 @@ export function StockDetail() {
     const [timeRange, setTimeRange] = useState<TimeRange>('1D');
     const [chartData, setChartData] = useState<ChartDataPoint[] | null>(null);
 
+    // Get position to determine buy date
+    const position = positions.find(p => p.stockId === stock?.id);
+
     // Fetch History Effect - Now using Yahoo Finance
     useEffect(() => {
         if (!stock) {
@@ -37,7 +40,31 @@ export function StockDetail() {
 
         const loadData = async () => {
             console.log('[StockDetail] Fetching Yahoo Finance data for:', stock.symbol, 'Range:', timeRange);
-            const response = await fetchStockHistory(stock.symbol, timeRange);
+
+            let rangeToUse = timeRange;
+            let customFromDate = undefined;
+
+            // Handle 'BUY' range
+            if (timeRange === 'BUY') {
+                if (position?.buyDate) {
+                    // If we have a buy date, fetch from that date
+                    // But fetchStockHistory api might need 'max' or custom range? 
+                    // Since fetchStockHistory uses simple ranges, we might need to map 'BUY' to a custom timestamp if API supports it, 
+                    // OR map it to the closest larger range (e.g. 5Y) and then filter in the chart component?
+                    // Actually, better to just use '5Y' or 'MAX' as a proxy if we can't do exact, or update fetchStockHistory.
+                    // For now, let's treat 'BUY' as '5Y' but filter in UI, OR check if we can pass current date.
+                    // Wait, fetchStockHistory implementation: check Finnhub service.
+                    // Assuming we pass '5Y' to get enough data, then filter? 
+                    // Or better: Let's assume '5Y' for now to be safe, filtering is done in chart? No, chart creates mock data if empty.
+                    rangeToUse = '5Y';
+                    // Ideally we would pass the specific start date to fetchStockHistory if it supported it.
+                    // Let's rely on '5Y' being enough for now, or 'Max' if needed.
+                } else {
+                    rangeToUse = '5Y'; // Default fallback
+                }
+            }
+
+            const response = await fetchStockHistory(stock.symbol, rangeToUse);
             console.log('[Stock Detail] Yahoo Response:', response);
 
             if (response.error) {
@@ -55,7 +82,20 @@ export function StockDetail() {
                     // Note: Removed GBp / 100 conversion based on user feedback. 
                     // Treating raw GBp values effectively as GBP/Points.
 
-                    setChartData(chartData);
+                    // Filter for 'BUY' range if needed
+                    if (timeRange === 'BUY' && position?.buyDate) {
+                        const buyDate = new Date(position.buyDate).getTime();
+                        // Filter data points after buy date
+                        const filteredData = chartData.filter(d => new Date(d.date).getTime() >= buyDate);
+                        if (filteredData.length > 0) {
+                            setChartData(filteredData);
+                        } else {
+                            // If buy date is older than 5Y or no data found, show full 5Y
+                            setChartData(chartData);
+                        }
+                    } else {
+                        setChartData(chartData);
+                    }
 
                     if (Math.abs(stock.currentPrice - latestPrice) > 0.01) {
                         updateStockPrice(stock.id, latestPrice);

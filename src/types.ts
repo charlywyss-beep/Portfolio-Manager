@@ -30,6 +30,7 @@ export interface Position {
     stockId: string;
     shares: number;
     buyPriceAvg: number; // Average buy price
+    buyDate?: string; // Date of first purchase (ISO format)
 }
 
 // Bankguthaben (e.g. Sparkonto / Privatkonto)
