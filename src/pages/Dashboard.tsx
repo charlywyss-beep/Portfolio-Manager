@@ -392,13 +392,24 @@ export function Dashboard() {
                                                     <div className="flex flex-wrap flex-col items-start gap-1 mt-0.5">
                                                         {visibleDates.map((date, dIdx) => {
                                                             const daysToEx = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                                                            // Find corresponding pay date
+                                                            const dateObj = item.stock.dividendDates?.find(d => d.exDate === date);
+                                                            const payDate = dateObj?.payDate || (item.stock.dividendExDate === date ? item.stock.dividendPayDate : null);
+
                                                             return (
-                                                                <div key={dIdx} className="flex items-center gap-2">
-                                                                    <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold shadow-sm whitespace-nowrap w-[110px] justify-center text-center flex-shrink-0">
-                                                                        <Bell className="size-3 flex-shrink-0" />
-                                                                        <span>Ex in {daysToEx} Tagen</span>
+                                                                <div key={dIdx} className="flex flex-col gap-0.5">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold shadow-sm whitespace-nowrap w-[110px] justify-center text-center flex-shrink-0">
+                                                                            <Bell className="size-3 flex-shrink-0" />
+                                                                            <span>Ex in {daysToEx} Tagen</span>
+                                                                        </div>
+                                                                        <span className="text-xs font-medium text-muted-foreground">{new Date(date).toLocaleDateString('de-DE')}</span>
                                                                     </div>
-                                                                    <span className="text-xs font-medium text-muted-foreground">{new Date(date).toLocaleDateString('de-DE')}</span>
+                                                                    {payDate && (
+                                                                        <p className="text-xs font-medium text-muted-foreground pl-1">
+                                                                            Zahltag: {new Date(payDate).toLocaleDateString('de-DE')}
+                                                                        </p>
+                                                                    )}
                                                                 </div>
                                                             );
                                                         })}
