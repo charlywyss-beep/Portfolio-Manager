@@ -165,7 +165,7 @@ export function usePortfolioData() {
             // flatMap handles this perfectly.
             .sort((a, b) => new Date(a.payDate).getTime() - new Date(b.payDate).getTime());
     }, [positions]);
-    }, [positions]);
+
 
     // NEW: Calculate Bank Risk (Deposit Protection > 100k)
     const bankRisks = useMemo(() => {
