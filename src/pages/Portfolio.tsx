@@ -65,10 +65,13 @@ export function Portfolio() {
 
 
 
-    const handleUpdate = (id: string, newShares: number, newAvgPrice?: number) => {
+    const handleUpdate = (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string) => {
         const updates: any = { shares: newShares };
         if (newAvgPrice !== undefined) {
             updates.buyPriceAvg = newAvgPrice;
+        }
+        if (newBuyDate !== undefined) {
+            updates.buyDate = newBuyDate;
         }
         updatePosition(id, updates);
     };
