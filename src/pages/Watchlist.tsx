@@ -251,10 +251,14 @@ export function Watchlist() {
                                                             className="p-1.5 sm:p-2 hover:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg transition-colors"
                                                             title="Bearbeiten"
                                                         >
-                                                            <Edit2 className="size-4" />
+                                                            <Edit className="size-4" />
                                                         </button>
                                                         <button
-                                                            onClick={() => handleDelete(stock)}
+                                                            onClick={() => {
+                                                                if (confirm(`${stock.name} von der Watchlist entfernen?`)) {
+                                                                    removeFromWatchlist(stock.id);
+                                                                }
+                                                            }}
                                                             className="p-1.5 sm:p-2 hover:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg transition-colors"
                                                             title="Aus Watchlist entfernen"
                                                         >
