@@ -260,7 +260,7 @@ export function Dashboard() {
                     <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1 md:pr-2">
                         {upcomingDividends.map((div, idx) => {
                             const daysToEx = div.exDate ? Math.ceil((new Date(div.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                            const showExWarning = daysToEx !== null && daysToEx >= 0 && daysToEx <= 7;
+                            const showExWarning = daysToEx !== null && daysToEx >= 0;
 
                             return (
                                 <div
@@ -281,7 +281,7 @@ export function Dashboard() {
                                             <div className="flex items-center gap-2">
                                                 <p className="font-bold text-lg">{smartWrap(div.stock.name)}</p>
                                                 {showExWarning && (
-                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
+                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium shadow-sm" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
                                                         <Bell className="size-3" />
                                                         <span>Ex in {daysToEx} Tagen</span>
                                                     </div>
@@ -329,7 +329,7 @@ export function Dashboard() {
                                 <option value={365}>1 Jahr</option>
                             </select>
                         </div>
-                        <div className="space-y-4 flex-1 overflow-y-auto max-h-[400px]">
+                        <div className="space-y-4 flex-1 overflow-y-auto max-h-[500px]">
                             {filteredWatchlistDividends.length > 0 ? (
                                 filteredWatchlistDividends.map((item, idx) => {
                                     // Filter dates again for display based on selection
