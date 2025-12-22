@@ -121,27 +121,38 @@ export function usePortfolioData() {
 
     // Calculate upcoming dividends from stock dividend data
     const upcomingDividends = useMemo(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize to start of day
+
         return positions
             .flatMap(p => {
+                let dates = [];
+
                 // If we have explicit multiple dates (e.g. quarterly)
                 if (p.stock.dividendDates && p.stock.dividendDates.length > 0) {
-                    return p.stock.dividendDates
-                        .filter(d => d.payDate) // Only those with payDate
-                        .map(d => ({
-                            stock: p.stock,
-                            payDate: d.payDate,
-                            exDate: d.exDate,
-                            amount: p.stock.dividendAmount ? p.stock.dividendAmount * p.shares : 0,
-                            currency: p.stock.dividendCurrency || p.stock.currency
-                        }));
+                    dates = p.stock.dividendDates
+                        .filter(d => d.payDate); // Only those with payDate
+                }
+                // Fallback to legacy single date
+                else if (p.stock.dividendPayDate) {
+                    dates = [{
+                        payDate: p.stock.dividendPayDate,
+                        exDate: p.stock.dividendExDate
+                    }];
                 }
 
-                // Fallback to legacy single date
-                if (p.stock.dividendPayDate) {
+                // Filter for FUTURE dates only and sort
+                const futureDates = dates
+                    .filter(d => new Date(d.payDate) >= today)
+                    .sort((a, b) => new Date(a.payDate).getTime() - new Date(b.payDate).getTime());
+
+                // Return ONLY the next upcoming dividend (futureDates[0])
+                if (futureDates.length > 0) {
+                    const nextDiv = futureDates[0];
                     return [{
                         stock: p.stock,
-                        payDate: p.stock.dividendPayDate,
-                        exDate: p.stock.dividendExDate,
+                        payDate: nextDiv.payDate,
+                        exDate: nextDiv.exDate,
                         amount: p.stock.dividendAmount ? p.stock.dividendAmount * p.shares : 0,
                         currency: p.stock.dividendCurrency || p.stock.currency
                     }];
@@ -149,7 +160,6 @@ export function usePortfolioData() {
 
                 return [];
             })
-            // FIlter out past dates? Or keep them? Usually "upcoming" means future. 
             .sort((a, b) => new Date(a.payDate).getTime() - new Date(b.payDate).getTime());
     }, [positions]);
 
