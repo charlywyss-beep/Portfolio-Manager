@@ -289,7 +289,7 @@ export function Dashboard() {
                                         </div>
                                     </div>
                                     <div className="text-right flex flex-col items-end">
-                                        <div className="font-bold text-base sm:text-lg md:text-xl text-green-600 dark:text-green-400 whitespace-pre-wrap text-right leading-tight">
+                                        <div className="font-bold text-sm sm:text-base md:text-xl text-green-600 dark:text-green-400 whitespace-normal text-right leading-tight">
                                             {formatCurrency(div.amount, div.currency)}
                                         </div>
                                         <p className="text-sm font-medium text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
