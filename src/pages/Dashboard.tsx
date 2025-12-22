@@ -255,7 +255,7 @@ export function Dashboard() {
                         <h3 className="text-lg font-bold">Nächste Dividenden Auszahlungen</h3>
                         <Calendar className="size-5 text-muted-foreground" />
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                         {upcomingDividends.map((div, idx) => {
                             const daysToEx = div.exDate ? Math.ceil((new Date(div.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
                             const showExWarning = daysToEx !== null && daysToEx >= 0 && daysToEx <= 7;
