@@ -359,9 +359,10 @@ export function EditDividendPage() {
                                                 const query = `${stock?.name || symbol} Yahoo Finance Symbol`;
                                                 window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
                                             }}
-                                            className="flex-1 px-3 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border whitespace-nowrap"
+                                            className="flex-1 px-2 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border whitespace-nowrap"
+                                            title="Global Search (US/UK)"
                                         >
-                                            Global (US/UK)
+                                            Global
                                         </button>
                                         <button
                                             type="button"
@@ -369,9 +370,10 @@ export function EditDividendPage() {
                                                 const query = `${stock?.name || symbol} Frankfurt Yahoo Finance Symbol`;
                                                 window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
                                             }}
-                                            className="flex-1 px-3 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border whitespace-nowrap"
+                                            className="flex-1 px-2 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border whitespace-nowrap"
+                                            title="Frankfurt (.F)"
                                         >
-                                            Frankfurt (.F)
+                                            Frankfurt
                                         </button>
                                         <button
                                             type="button"
@@ -379,9 +381,10 @@ export function EditDividendPage() {
                                                 const query = `${stock?.name || symbol} Xetra Yahoo Finance Symbol`;
                                                 window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
                                             }}
-                                            className="flex-1 px-3 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border whitespace-nowrap"
+                                            className="flex-1 px-2 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border whitespace-nowrap"
+                                            title="Xetra (.DE)"
                                         >
-                                            Xetra (.DE)
+                                            Xetra
                                         </button>
                                         <button
                                             type="button"
@@ -389,9 +392,10 @@ export function EditDividendPage() {
                                                 const query = `${stock?.name || symbol} SIX Swiss Exchange Yahoo Finance Symbol`;
                                                 window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
                                             }}
-                                            className="flex-1 px-3 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border whitespace-nowrap"
+                                            className="flex-1 px-2 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border whitespace-nowrap"
+                                            title="Schweiz (.SW)"
                                         >
-                                            Schweiz (.SW)
+                                            Schweiz
                                         </button>
                                         <button
                                             type="button"
@@ -399,9 +403,10 @@ export function EditDividendPage() {
                                                 const query = `${stock?.name || symbol} London Stock Exchange Yahoo Finance Symbol`;
                                                 window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
                                             }}
-                                            className="flex-1 px-3 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border whitespace-nowrap"
+                                            className="flex-1 px-2 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-md hover:bg-secondary/80 border border-border whitespace-nowrap"
+                                            title="London (.L)"
                                         >
-                                            London (.L)
+                                            London
                                         </button>
                                     </div>
                                     <div className="space-y-2">
