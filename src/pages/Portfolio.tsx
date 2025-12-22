@@ -110,7 +110,7 @@ export function Portfolio() {
                                             />
                                             <div className="min-w-0 flex-1 flex flex-col items-start gap-0.5">
                                                 <div
-                                                    className="font-semibold text-foreground truncate cursor-pointer hover:text-primary transition-colors text-sm"
+                                                    className="font-semibold text-foreground cursor-pointer hover:text-primary transition-colors text-sm"
                                                     onClick={() => navigate(`/stock/${pos.stock.id}`)}
                                                 >
                                                     {smartWrap(pos.stock.name)}

@@ -195,7 +195,7 @@ export function Dashboard() {
                                 return (
                                     <>
                                         <h3
-                                            className="text-xl font-bold mt-1 tracking-tight truncate cursor-pointer hover:text-primary transition-colors"
+                                            className="text-xl font-bold mt-1 tracking-tight cursor-pointer hover:text-primary transition-colors"
                                             onClick={() => navigate(`/stock/${topStock.stock.id}`)}
                                             title={topStock.stock.name}
                                         >
@@ -230,7 +230,7 @@ export function Dashboard() {
                                 return (
                                     <>
                                         <h3
-                                            className="text-xl font-bold mt-1 tracking-tight truncate cursor-pointer hover:text-primary transition-colors"
+                                            className="text-xl font-bold mt-1 tracking-tight cursor-pointer hover:text-primary transition-colors"
                                             onClick={() => navigate(`/stock/${topEtf.stock.id}`)}
                                             title={topEtf.stock.name}
                                         >
