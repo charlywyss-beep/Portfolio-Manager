@@ -308,14 +308,19 @@ export function Dashboard() {
                                                 >
                                                     {smartWrap(div.stock.name)}
                                                 </p>
-                                                <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                                                <div className="flex flex-col gap-1 mt-1">
                                                     {showExWarning && (
-                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold shadow-sm whitespace-nowrap w-[110px] justify-center text-center flex-shrink-0" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
-                                                            <Bell className="size-3 flex-shrink-0" />
-                                                            <span>Ex in {daysToEx} Tagen</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold shadow-sm whitespace-nowrap w-[110px] justify-center text-center flex-shrink-0" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
+                                                                <Bell className="size-3 flex-shrink-0" />
+                                                                <span>Ex in {daysToEx} Tagen</span>
+                                                            </div>
+                                                            <span className="text-xs text-muted-foreground">{new Date(div.exDate!).toLocaleDateString('de-DE')}</span>
                                                         </div>
                                                     )}
-                                                    <p className="text-xs font-medium text-muted-foreground">{new Date(div.payDate).toLocaleDateString('de-DE')}</p>
+                                                    <p className="text-xs font-medium text-muted-foreground">
+                                                        Zahltag: {new Date(div.payDate).toLocaleDateString('de-DE')}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
