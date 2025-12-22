@@ -5,7 +5,7 @@ export interface ChartDataPoint {
     value: number;
 }
 
-export type TimeRange = '1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | '5Y';
+export type TimeRange = '1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | '5Y' | 'BUY';
 
 // Helper to get period and interval for Yahoo Finance
 const getYahooParams = (range: TimeRange): { period: string; interval: string } => {
@@ -17,6 +17,7 @@ const getYahooParams = (range: TimeRange): { period: string; interval: string } 
         case '6M': return { period: '6mo', interval: '1d' };
         case '1Y': return { period: '1y', interval: '1d' };
         case '5Y': return { period: '5y', interval: '1wk' };
+        case 'BUY': return { period: '5y', interval: '1wk' }; // Fallback for API call if leaked
     }
 };
 
