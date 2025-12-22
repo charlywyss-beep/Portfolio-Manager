@@ -57,22 +57,11 @@ export function EditDividendPage() {
             setSymbol(stock.symbol || ''); // Pre-fill symbol
             setIsin(stock.isin || ''); // Pre-fill ISIN
             setSector(stock.sector || ''); // Pre-fill Sector
-            
-            // Handle GBp (Pence) -> Display as Pounds
-            const isGBp = stock.currency === 'GBp';
-            const priceVal = stock.currentPrice ? (isGBp ? stock.currentPrice / 100 : stock.currentPrice) : 0;
-            setPrice(priceVal ? priceVal.toFixed(2) : '');
-
-            const targetVal = stock.targetPrice ? (isGBp ? stock.targetPrice / 100 : stock.targetPrice) : 0;
-            setTargetPrice(targetVal ? targetVal.toFixed(2) : '');
-            
-            const divCurrency = stock.dividendCurrency || stock.currency;
-            const isDivGBp = divCurrency === 'GBp';
-            const amountVal = stock.dividendAmount ? (isDivGBp ? stock.dividendAmount / 100 : stock.dividendAmount) : 0;
-            setAmount(amountVal ? amountVal.toString() : '');
-
+            setPrice(stock.currentPrice ? stock.currentPrice.toFixed(2) : '');
+            setTargetPrice(stock.targetPrice ? stock.targetPrice.toFixed(2) : '');
+            setAmount(stock.dividendAmount?.toString() || '');
             setYieldPercent(stock.dividendYield?.toString() || '');
-            setCurrency(divCurrency);
+            setCurrency(stock.dividendCurrency || stock.currency);
             setLogoUrl(stock.logoUrl || '');
             setExDate(stock.dividendExDate || '');
             setPayDate(stock.dividendPayDate || '');
@@ -98,9 +87,7 @@ export function EditDividendPage() {
 
     // Handlers
     const getEffectivePrice = () => {
-        return price ? parseFloat(price) : (stock?.currentPrice || 0); // Note: Used for Yield calc, logic below needs review if using raw price?
-        // Actually, logic below uses `price` string state.
-        // If price input is "42.00" (Pounds), calculations should use 42.00.
+        return price ? parseFloat(price) : (stock?.currentPrice || 0);
     };
 
     const handlePriceChange = (newPrice: string) => {
@@ -121,8 +108,7 @@ export function EditDividendPage() {
 
     const handleYieldChange = (newYield: string) => {
         setYieldPercent(newYield);
-        // Note: For GBp, inputs are in Pounds. Calculation remains valid (Pounds / Pounds * 100 = %)
-        const currentP = price ? parseFloat(price.replace(',', '.')) : 0;
+        const currentP = getEffectivePrice();
         const y = parseFloat(newYield.replace(',', '.'));
 
         if (currentP && newYield && !isNaN(y)) {
@@ -137,7 +123,7 @@ export function EditDividendPage() {
 
     const handleAmountChange = (newAmount: string) => {
         setAmount(newAmount);
-        const currentP = price ? parseFloat(price.replace(',', '.')) : 0;
+        const currentP = getEffectivePrice();
         const a = parseFloat(newAmount.replace(',', '.'));
 
         if (currentP && newAmount && !isNaN(a)) {
@@ -152,7 +138,7 @@ export function EditDividendPage() {
 
     const handleFrequencyChange = (newFrequency: 'quarterly' | 'semi-annually' | 'annually' | 'monthly') => {
         setFrequency(newFrequency);
-        const currentP = price ? parseFloat(price.replace(',', '.')) : 0;
+        const currentP = getEffectivePrice();
         if (amount && currentP && !isNaN(parseFloat(amount))) {
             const dividendAmount = parseFloat(amount);
             const factor = getFrequencyFactor(newFrequency);
@@ -183,21 +169,9 @@ export function EditDividendPage() {
         const targetId = currentStockId;
         if (!targetId) return;
 
-        // Determine if target currency is GBp
-        // If user changed currency manually, use that. Else stock currency.
-        // Wait, updates.currency below sets it.
-        const targetCurrency = currency || stock?.currency;
-        const isGBp = targetCurrency === 'GBp';
-
         // Update Price
-        if (price) {
-            let p = parseFloat(price.replace(',', '.'));
-            // If currency is GBp, user entered Pounds, store as Pence
-            if (isGBp) p = p * 100;
-            
-            if (!stock || p !== stock.currentPrice) {
-                 updateStockPrice(targetId, p);
-            }
+        if (price && (!stock || parseFloat(price.replace(',', '.')) !== stock.currentPrice)) {
+            updateStockPrice(targetId, parseFloat(price.replace(',', '.')));
         }
 
         // Update Stock Details (Symbol, Logo, Target Price)
@@ -217,13 +191,8 @@ export function EditDividendPage() {
         if (sector !== undefined && (!stock || sector !== stock.sector)) {
             updates.sector = sector;
         }
-        if (targetPrice !== undefined) {
-             let tp = targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined;
-             if (tp !== undefined && isGBp) tp = tp * 100;
-             
-             if (!stock || tp !== stock.targetPrice) {
-                 updates.targetPrice = tp;
-             }
+        if (targetPrice !== undefined && (!stock || (targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined) !== stock.targetPrice)) {
+            updates.targetPrice = targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined;
         }
         if (currency && (!stock || currency !== stock.currency)) {
             updates.currency = currency;
@@ -251,12 +220,9 @@ export function EditDividendPage() {
             }
         }
 
-        let divAmount = amount ? parseFloat(amount.replace(',', '.')) : undefined;
-        if (divAmount !== undefined && isGBp) divAmount = divAmount * 100;
-
         updateStockDividend(targetId, {
             dividendYield: yieldPercent ? parseFloat(yieldPercent.replace(',', '.')) : undefined,
-            dividendAmount: divAmount,
+            dividendAmount: amount ? parseFloat(amount.replace(',', '.')) : undefined,
             dividendCurrency: currency,
             dividendExDate: submissionExDate,
             dividendPayDate: submissionPayDate,
