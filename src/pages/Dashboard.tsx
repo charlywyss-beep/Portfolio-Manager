@@ -167,11 +167,11 @@ export function Dashboard() {
                     </div>
                     <div>
                         <p className="text-sm text-muted-foreground font-medium">Erwartete Dividende (Jahr)</p>
-                        <h3 className="text-2xl lg:text-3xl font-bold mt-1 tracking-tight">
-                            {totals.projectedYearlyDividends.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
+                        <h3 className="text-xl lg:text-2xl font-bold mt-1 tracking-tight">
+                            {totals.projectedYearlyDividends.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                         </h3>
-                        <p className="text-sm text-muted-foreground mt-2">
-                            Ø {(totals.projectedYearlyDividends / 12).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })} / Monat
+                        <p className="text-base font-medium text-foreground mt-2">
+                            Ø {(totals.projectedYearlyDividends / 12).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF / Monat
                         </p>
                     </div>
                 </div>
