@@ -126,7 +126,7 @@ export function usePortfolioData() {
 
         return positions
             .flatMap(p => {
-                let dates = [];
+                let dates: { payDate: string; exDate?: string }[] = [];
 
                 // If we have explicit multiple dates (e.g. quarterly)
                 if (p.stock.dividendDates && p.stock.dividendDates.length > 0) {
