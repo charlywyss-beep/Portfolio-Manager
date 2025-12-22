@@ -14,7 +14,7 @@ import { fetchStockHistory, type TimeRange, type ChartDataPoint } from '../servi
 export function StockDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { stocks, updateStock, updateStockPrice } = usePortfolio();
+    const { stocks, positions, updateStock, updateStockPrice } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
 
     // Find stock by ID or Symbol (case-insensitive)
@@ -139,6 +139,27 @@ export function StockDetail() {
                                 {stock.dividendYield.toFixed(2)}% Div.Rendite
                             </p>
                         )}
+
+                        {/* Position Gain/Loss Information */}
+                        {(() => {
+                            const position = positions.find(p => p.stockId === stock.id);
+                            if (!position) return null;
+
+                            const currentValue = position.shares * stock.currentPrice;
+                            const costBasis = position.shares * position.buyPriceAvg;
+                            const gainLoss = currentValue - costBasis;
+                            const gainLossPercent = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
+                            const isPositive = gainLoss >= 0;
+
+                            return (
+                                <p className={cn(
+                                    "text-sm font-bold mt-1",
+                                    isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                )}>
+                                    {isPositive ? '+' : ''}{gainLossPercent.toFixed(2)}% ({formatCurrency(gainLoss, stock.currency)})
+                                </p>
+                            );
+                        })()}
                     </div>
                 </div>
             </div>
