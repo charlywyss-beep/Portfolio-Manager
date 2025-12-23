@@ -34,11 +34,11 @@ export function convertToCHF(amount: number, fromCurrency: string, liveRates?: R
 
 // Format currency with optional CHF conversion
 export function formatCurrency(amount: number, currency: string, showCHF: boolean = true, liveRates?: Record<string, number>): string {
-    let formatted: string;
-    let displayAmount = amount;
+    if (amount === undefined || amount === null || isNaN(amount)) {
+        return '0.00 ' + (currency === 'GBp' ? 'GBP' : currency);
+    }
 
-    // User Request: Always display "GBP" (Pounds) even for "GBp" (Pence) codes
-    // But MUST scale down by 100 if it is Pence!
+    let displayAmount = amount;
     let displayCurrency = currency;
 
     if (currency === 'GBp') {
@@ -47,7 +47,7 @@ export function formatCurrency(amount: number, currency: string, showCHF: boolea
     }
 
     // Custom Suffix Formatting for all currencies (e.g. 420.50 EUR)
-    formatted = displayAmount.toLocaleString('de-CH', {
+    const formatted = displayAmount.toLocaleString('de-CH', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     }) + ' ' + displayCurrency;
