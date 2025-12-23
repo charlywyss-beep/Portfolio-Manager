@@ -485,44 +485,41 @@ export function Dashboard() {
                             <table className="w-full text-sm text-left min-w-[500px]">
                                 <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border">
                                     <tr>
-                                        <th className="px-3 py-2 text-center w-[60px]"></th>
-                                        <th className="px-3 py-2 text-xs w-[100px]">Datum</th>
-                                        <th className="px-2 py-2 text-right text-xs text-blue-500 font-bold w-[18%]">Aktien</th>
-                                        <th className="px-2 py-2 text-right text-xs text-violet-500 font-bold w-[18%]">ETFs</th>
-                                        <th className="px-2 py-2 text-right text-xs text-green-500 font-bold w-[18%]">Bank</th>
-                                        <th className="px-2 py-2 text-right text-xs font-bold w-[18%]">Gesamt</th>
+                                        <th className="px-3 py-2 text-left text-xs w-[140px]">Datum</th>
+                                        <th className="px-2 py-2 text-right text-xs text-blue-500 font-bold w-[20%]">Aktien</th>
+                                        <th className="px-2 py-2 text-right text-xs text-violet-500 font-bold w-[20%]">ETFs</th>
+                                        <th className="px-2 py-2 text-right text-xs text-green-500 font-bold w-[20%]">Bank</th>
+                                        <th className="px-2 py-2 text-right text-xs font-bold w-[20%]">Gesamt</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">
                                     {history.map((entry) => (
                                         <tr key={entry.id} className="hover:bg-muted/30 transition-colors group">
-                                            <td className="px-3 py-2 text-center">
-                                                <div className="flex items-center justify-center gap-1">
-                                                    <button
-                                                        onClick={() => {
-                                                            setEditingHistoryEntry(entry);
-                                                            setIsHistoryModalOpen(true);
-                                                        }}
-                                                        className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
-                                                        title="Eintrag bearbeiten"
-                                                        aria-label="Eintrag bearbeiten"
-                                                    >
-                                                        <Edit className="size-3" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => {
-                                                            if (confirm('Historischen Eintrag löschen?')) deleteHistoryEntry(entry.id);
-                                                        }}
-                                                        className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
-                                                        title="Eintrag löschen"
-                                                        aria-label="Eintrag löschen"
-                                                    >
-                                                        <Trash2 className="size-3" />
-                                                    </button>
-                                                </div>
-                                            </td>
                                             <td className="px-3 py-2 font-medium text-xs whitespace-nowrap">
-                                                {new Date(entry.date).toLocaleDateString('de-DE')}
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-0.5">
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingHistoryEntry(entry);
+                                                                setIsHistoryModalOpen(true);
+                                                            }}
+                                                            className="p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
+                                                            title="Eintrag bearbeiten"
+                                                        >
+                                                            <Edit className="size-3" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                if (confirm('Historischen Eintrag löschen?')) deleteHistoryEntry(entry.id);
+                                                            }}
+                                                            className="p-1 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                                                            title="Eintrag löschen"
+                                                        >
+                                                            <Trash2 className="size-3" />
+                                                        </button>
+                                                    </div>
+                                                    <span>{new Date(entry.date).toLocaleDateString('de-DE')}</span>
+                                                </div>
                                             </td>
                                             <td className="px-2 py-2 text-right text-xs text-blue-500 font-medium">
                                                 {entry.stockValue ? formatCurrency(entry.stockValue, 'CHF').replace('CHF', '') : '-'}
