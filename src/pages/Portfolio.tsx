@@ -183,7 +183,7 @@ export function Portfolio() {
                                             <span className="whitespace-nowrap">{formatCurrency(pos.buyPriceAvg, pos.stock.currency, false)}</span>
                                             {pos.stock.currency !== 'CHF' && (
                                                 <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
-                                                    {formatCurrency(convertToCHF(pos.buyPriceAvg, pos.stock.currency), 'CHF', false)}
+                                                    {formatCurrency(pos.buyValueCHF / pos.shares, 'CHF', false)}
                                                 </span>
                                             )}
                                         </div>
@@ -195,7 +195,7 @@ export function Portfolio() {
                                             <span className="whitespace-nowrap">{formatCurrency(pos.buyValue, pos.stock.currency, false)}</span>
                                             {pos.stock.currency !== 'CHF' && (
                                                 <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
-                                                    {formatCurrency(convertToCHF(pos.buyValue, pos.stock.currency), 'CHF', false)}
+                                                    {formatCurrency(pos.buyValueCHF, 'CHF', false)}
                                                 </span>
                                             )}
                                         </div>
