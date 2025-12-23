@@ -31,28 +31,38 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     const [manualFx, setManualFx] = useState(position.averageEntryFxRate?.toString() || '1.0');
     const [manualDate, setManualDate] = useState(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
 
+    // Helper to fix floating point dust (e.g. 49.9999999 -> 50)
+    const fixFloat = (num: number) => parseFloat(num.toFixed(6));
+
     // Reset state when modal opens
     useEffect(() => {
         if (isOpen) {
             if (position.purchases && position.purchases.length > 0) {
-                setPurchases(position.purchases);
+                // Sanitize loaded purchases
+                const sanitizedPurchases = position.purchases.map(p => ({
+                    ...p,
+                    shares: fixFloat(p.shares),
+                    price: fixFloat(p.price),
+                    fxRate: fixFloat(p.fxRate)
+                }));
+                setPurchases(sanitizedPurchases);
             } else {
                 // If no history exists, create one initial "Legacy" entry from current totals
                 // so the user has something to edit or split up
                 const initialEntry: Purchase = {
                     id: crypto.randomUUID(),
                     date: position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-                    shares: position.shares,
-                    price: position.buyPriceAvg,
-                    fxRate: position.averageEntryFxRate || 1.0
+                    shares: fixFloat(position.shares),
+                    price: fixFloat(position.buyPriceAvg),
+                    fxRate: fixFloat(position.averageEntryFxRate || 1.0)
                 };
                 setPurchases([initialEntry]);
             }
 
             // Still sync manuals just in case
-            setManualShares(position.shares.toString());
-            setManualPrice(position.buyPriceAvg.toString());
-            setManualFx(position.averageEntryFxRate?.toString() || '1.0');
+            setManualShares(fixFloat(position.shares).toString());
+            setManualPrice(fixFloat(position.buyPriceAvg).toString());
+            setManualFx(fixFloat(position.averageEntryFxRate || 1.0).toString());
             setManualDate(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
         }
     }, [isOpen, position]);
