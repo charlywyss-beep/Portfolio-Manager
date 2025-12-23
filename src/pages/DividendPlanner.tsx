@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Calendar, TrendingUp, Plus, Edit, Trash2 } from 'lucide-react';
+import { Calendar, TrendingUp, Edit, Trash2 } from 'lucide-react';
 import { Logo } from '../components/Logo';
 
 import { useCurrencyFormatter } from '../utils/currency';
@@ -171,13 +171,6 @@ export function DividendPlanner() {
             <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b bg-muted/30">
                     <h2 className="text-lg font-semibold">Erwartete Dividenden</h2>
-                    <button
-                        onClick={() => navigate('/dividends/add')}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium transition-colors"
-                    >
-                        <Plus className="size-4" />
-                        Dividende hinzufügen
-                    </button>
                 </div>
 
                 <div className="overflow-x-auto">
