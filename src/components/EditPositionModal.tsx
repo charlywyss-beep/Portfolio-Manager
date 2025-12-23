@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
-import { X, TrendingDown, TrendingUp, Edit } from 'lucide-react';
+import { X, Save, Trash2 } from 'lucide-react';
 import type { Stock } from '../types';
 import { cn } from '../utils';
-import { useCurrencyFormatter } from '../utils/currency';
-import { TransactionSuccessDialog } from './TransactionSuccessDialog';
-
 import { usePortfolio } from '../context/PortfolioContext';
 
 interface EditPositionModalProps {
@@ -16,7 +13,7 @@ interface EditPositionModalProps {
         shares: number;
         buyPriceAvg: number;
         buyDate?: string;
-        averageEntryFxRate?: number; // Added this
+        averageEntryFxRate?: number;
     };
     onUpdate: (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number) => void;
     onDelete: (id: string) => void;
@@ -26,137 +23,35 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     const { updateStock, stocks } = usePortfolio();
     const currentStock = stocks.find(s => s.id === position.stock.id) || position.stock;
 
-    const [tab, setTab] = useState<'sell' | 'buy' | 'correct'>('correct');
-    const { formatCurrency, convertToCHF, rates } = useCurrencyFormatter();
+    // Local State for Form Fields
+    const [shares, setShares] = useState(position.shares.toString());
+    const [avgPrice, setAvgPrice] = useState(position.buyPriceAvg.toString());
+    const [avgFxRate, setAvgFxRate] = useState(position.averageEntryFxRate?.toString() || '');
+    const [buyDate, setBuyDate] = useState(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
 
-    // Sell state
-    const [sellShares, setSellShares] = useState('');
-
-    // Buy state
-    const [buyShares, setBuyShares] = useState('');
-    const [buyPrice, setBuyPrice] = useState(position.stock.currentPrice.toFixed(2));
-    const [buyFxRate, setBuyFxRate] = useState(''); // New: FX Rate for new purchase
-
-    // Correction state
-    const [correctShares, setCorrectShares] = useState(position.shares.toString());
-    const [correctPrice, setCorrectPrice] = useState(position.buyPriceAvg.toString());
-    const [correctFxRate, setCorrectFxRate] = useState(position.averageEntryFxRate?.toString() || ''); // New: Correct historical FX
-    const [correctBuyDate, setCorrectBuyDate] = useState(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
-
-    // Transaction success state
-    const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-    const [completedTransaction, setCompletedTransaction] = useState<any>(null);
-
-    // Auto-fetch FX Rate for Buy Tab
+    // Reset state when modal opens or position changes
     useEffect(() => {
-        if (!isOpen) return;
-        if (position.stock.currency === 'CHF') {
-            setBuyFxRate('1.0');
-        } else if (rates && rates[position.stock.currency]) {
-            const currentRate = 1 / rates[position.stock.currency];
-            setBuyFxRate(currentRate.toFixed(4));
+        if (isOpen) {
+            setShares(position.shares.toString());
+            setAvgPrice(position.buyPriceAvg.toString());
+            setAvgFxRate(position.averageEntryFxRate?.toString() || '');
+            setBuyDate(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
         }
-    }, [isOpen, position.stock.currency, rates]);
-
-
-    // Helper: Format shares (no decimals for whole numbers)
-    const formatShares = (shares: number) => {
-        return shares % 1 === 0 ? shares.toString() : shares.toFixed(2);
-    };
+    }, [isOpen, position]);
 
     if (!isOpen) return null;
 
-    const handleSell = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const sharesToSell = parseFloat(sellShares);
-        const newShares = position.shares - sharesToSell;
-        const sellValue = sharesToSell * position.stock.currentPrice;
-        const profitLoss = sellValue - (sharesToSell * position.buyPriceAvg);
-
-        // Calculate CHF equivalent for record
-        const chfValue = convertToCHF(sellValue, position.stock.currency);
-
-        // Store transaction data
-        setCompletedTransaction({
-            type: 'sell',
-            stock: position.stock,
-            shares: sharesToSell,
-            pricePerShare: position.stock.currentPrice,
-            totalValue: sellValue,
-            chfEquivalent: chfValue,
-            avgBuyPrice: position.buyPriceAvg,
-            profitLoss: profitLoss,
-        });
-
-        if (newShares <= 0) {
-            onDelete(position.id);
-        } else {
-            // Sell doesn't change Avg Price or FX Rate, just shares
-            onUpdate(position.id, newShares);
-        }
-
-        // Don't close yet - show success dialog first
-        setShowSuccessDialog(true);
-    };
-
-    const handleBuy = (e: React.FormEvent) => {
-        e.preventDefault();
-        const sharesToBuy = parseFloat(buyShares);
-        const pricePerShare = parseFloat(buyPrice);
-        const fxRate = parseFloat(buyFxRate) || 1.0;
-
-        // Calculate new average buy price (NATIVE)
-        const currentCostNative = position.shares * position.buyPriceAvg;
-        const addedCostNative = sharesToBuy * pricePerShare;
-        const newTotalShares = position.shares + sharesToBuy;
-        const newAvgPrice = (currentCostNative + addedCostNative) / newTotalShares;
-
-        // Calculate new weighted FX Rate
-        // Total Cost CHF / Total Cost Native
-        // Cost CHF = (Old Shares * Old Price * Old FX) + (New Shares * New Price * New FX)
-        const oldFx = position.averageEntryFxRate || 1.0;
-        const currentCostCHF = currentCostNative * oldFx;
-        const addedCostCHF = addedCostNative * fxRate;
-        const totalCostCHF = currentCostCHF + addedCostCHF;
-        const totalCostNative = currentCostNative + addedCostNative;
-
-        const newAvgFxRate = totalCostCHF / totalCostNative;
-
-
-        // Calculate CHF equivalent for record (of this specific buy)
-        const buyValueCHF = addedCostNative * fxRate;
-
-        // Store transaction data
-        setCompletedTransaction({
-            type: 'buy',
-            stock: position.stock,
-            shares: sharesToBuy,
-            pricePerShare: pricePerShare,
-            totalValue: addedCostNative,
-            chfEquivalent: buyValueCHF,
-            newAvgPrice: newAvgPrice,
-        });
-
-        onUpdate(position.id, newTotalShares, newAvgPrice, undefined, newAvgFxRate);
-
-        // Don't close yet - show success dialog first
-        setShowSuccessDialog(true);
-    };
-
-    const handleCorrection = (e: React.FormEvent) => {
-        e.preventDefault();
-        const newShares = parseFloat(correctShares);
-        const newPrice = parseFloat(correctPrice);
-        const newFx = correctFxRate ? parseFloat(correctFxRate) : undefined;
-
+        
+        const newShares = parseFloat(shares);
+        const newPrice = parseFloat(avgPrice);
+        const newFx = avgFxRate ? parseFloat(avgFxRate) : undefined;
         // Ensure date is valid ISO string if provided
-        const isoDate = correctBuyDate ? new Date(correctBuyDate).toISOString() : undefined;
+        const isoDate = buyDate ? new Date(buyDate).toISOString() : undefined;
 
         if (newShares <= 0) {
-            if (confirm("Bestand auf 0 setzen löscht die Position. Fortfahren?")) {
-                onDelete(position.id);
-                onClose();
-            }
+            handleDelete();
             return;
         }
 
@@ -164,479 +59,189 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
         onClose();
     };
 
-    const sellValue = sellShares ? parseFloat(sellShares) * position.stock.currentPrice : 0;
-    const buyValue = buyShares && buyPrice ? parseFloat(buyShares) * parseFloat(buyPrice) : 0;
+    const handleDelete = () => {
+        if (confirm(`Möchten Sie die Position "${position.stock.name}" wirklich löschen?`)) {
+            onDelete(position.id);
+            onClose();
+        }
+    };
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-border">
-                    <h2 className="text-xl font-bold">Kauf/Verkauf</h2>
+                    <div>
+                        <h2 className="text-xl font-bold">Position bearbeiten</h2>
+                        <p className="text-xs text-muted-foreground mt-1">Stammdaten manuell korrigieren</p>
+                    </div>
                     <button
                         onClick={onClose}
                         className="p-2 hover:bg-muted rounded-lg transition-colors"
+                        title="Schließen"
                     >
                         <X className="size-5" />
                     </button>
                 </div>
 
-                {/* Tabs */}
-                <div className="flex border-b border-border">
-                    <button
-                        onClick={() => setTab('sell')}
-                        className={cn(
-                            "flex-1 px-4 py-3 font-medium transition-colors flex items-center justify-center gap-2",
-                            tab === 'sell'
-                                ? "bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border-b-2 border-red-600 dark:border-red-400"
-                                : "text-muted-foreground hover:bg-muted"
-                        )}
-                    >
-                        <TrendingDown className="size-4" />
-                        Verkaufen
-                    </button>
-                    <button
-                        onClick={() => setTab('buy')}
-                        className={cn(
-                            "flex-1 px-4 py-3 font-medium transition-colors flex items-center justify-center gap-2",
-                            tab === 'buy'
-                                ? "bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 border-b-2 border-green-600 dark:border-green-400"
-                                : "text-muted-foreground hover:bg-muted"
-                        )}
-                    >
-                        <TrendingUp className="size-4" />
-                        Kaufen
-                    </button>
-                    <button
-                        onClick={() => setTab('correct')}
-                        className={cn(
-                            "flex-1 px-4 py-3 font-medium transition-colors flex items-center justify-center gap-2",
-                            tab === 'correct'
-                                ? "bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400"
-                                : "text-muted-foreground hover:bg-muted"
-                        )}
-                    >
-                        <Edit className="size-4" />
-                        Korrektur
-                    </button>
-                </div>
-
                 {/* Content */}
-                <div className="p-6 overflow-y-auto flex-1">
-                    {/* Stock Info */}
-                    <div className="p-4 border border-border rounded-lg bg-muted/30 mb-6">
-                        <div className="font-semibold">{position.stock.name}</div>
-                        <div className="text-sm text-muted-foreground">{position.stock.symbol}</div>
-                        <div className="mt-2 text-sm grid grid-cols-2 gap-2">
-                            <div>
-                                <span className="text-muted-foreground">Aktueller Kurs:</span>
-                                <div className="font-medium">
-                                    {position.stock.currentPrice.toLocaleString('de-DE', {
-                                        style: 'currency',
-                                        currency: position.stock.currency,
-                                    })}
-                                </div>
-                            </div>
-                            <div>
-                                <span className="text-muted-foreground">Bestand:</span>
-                                <div className="font-medium">{position.shares} Stk</div>
+                <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-6">
+                    
+                    {/* Stock Info (Read Only) */}
+                    <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
+                        <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 shrink-0">
+                            {position.stock.symbol.slice(0, 2)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="font-semibold truncate">{position.stock.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                                {position.stock.symbol} • Aktuell: {position.stock.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: position.stock.currency })}
                             </div>
                         </div>
                     </div>
 
-                    {/* Sell Form */}
-                    {tab === 'sell' && (
-                        <form onSubmit={handleSell} className="space-y-4">
+                    <div className="space-y-4">
+                        {/* shares */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">
+                                Anzahl Bestand (Stück)
+                            </label>
+                            <input
+                                type="number"
+                                step="0.000001"
+                                min="0"
+                                required
+                                value={shares}
+                                onChange={(e) => setShares(e.target.value)}
+                                className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                        </div>
+
+                        {/* Average Price */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">
+                                Ø Kaufpreis ({position.stock.currency === 'GBp' ? 'GBP' : position.stock.currency})
+                            </label>
+                            <input
+                                type="number"
+                                step="0.000001"
+                                min="0"
+                                required
+                                value={avgPrice}
+                                onChange={(e) => setAvgPrice(e.target.value)}
+                                className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                            <p className="text-[10px] text-muted-foreground">
+                                Durchschnittlicher Einstandspreis pro Stück in Originalwährung.
+                            </p>
+                        </div>
+
+                        {/* FX Rate */}
+                        {position.stock.currency !== 'CHF' && (
                             <div className="space-y-2">
-                                <label htmlFor="sellShares" className="text-sm font-medium">
-                                    Anzahl verkaufen
-                                </label>
-                                <input
-                                    id="sellShares"
-                                    type="number"
-                                    step="0.01"
-                                    min="0.01"
-                                    max={position.shares}
-                                    placeholder="z.B. 4"
-                                    value={sellShares}
-                                    onChange={(e) => setSellShares(e.target.value)}
-                                    className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-red-500/20"
-                                    required
-                                />
-                                <div className="text-xs text-muted-foreground">
-                                    Maximal {position.shares} Stück verfügbar
-                                </div>
-                            </div>
-
-                            {/* Quick Sell */}
-                            <div className="space-y-2">
-                                <div className="text-sm font-medium text-muted-foreground">Schnellauswahl</div>
-                                <div className="grid grid-cols-4 gap-2">
-                                    {[25, 50, 75, 100].map((percent) => {
-                                        const amount = (position.shares * percent) / 100;
-                                        return (
-                                            <button
-                                                key={percent}
-                                                type="button"
-                                                onClick={() => setSellShares(amount.toFixed(2))}
-                                                className="px-3 py-2 text-sm border border-border rounded-lg hover:bg-muted transition-colors"
-                                            >
-                                                {percent}%
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Preview */}
-                            {sellShares && parseFloat(sellShares) > 0 && (
-                                <div className="p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900/30">
-                                    <div className="text-sm space-y-1">
-                                        <div className="flex justify-between font-medium text-red-600 dark:text-red-400">
-                                            <span>Verkaufte Anteile:</span>
-                                            <div className="text-right">
-                                                <div>{formatShares(parseFloat(sellShares))} Stk</div>
-                                                <div className="text-xs text-muted-foreground mt-0.5">
-                                                    zu: {formatCurrency(position.stock.currentPrice, position.stock.currency)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Verbleibend:</span>
-                                            <span className="font-medium">{formatShares(position.shares - parseFloat(sellShares))} Stk</span>
-                                        </div>
-                                        <div className="flex justify-between border-t border-red-200 dark:border-red-900/30 pt-1 mt-1">
-                                            <span>Verkaufswert:</span>
-                                            <span className="font-medium text-red-600 dark:text-red-400">
-                                                {formatCurrency(sellValue, position.stock.currency)}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between text-xs text-muted-foreground">
-                                            <span>Einstandspreis (Ø):</span>
-                                            <span>
-                                                {formatCurrency(position.buyPriceAvg, position.stock.currency)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Actions */}
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={onClose}
-                                    className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors font-medium"
-                                >
-                                    Abbrechen
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={!sellShares || parseFloat(sellShares) <= 0}
-                                    className={cn(
-                                        "flex-1 px-4 py-2 rounded-lg font-medium transition-colors",
-                                        sellShares && parseFloat(sellShares) > 0
-                                            ? "bg-red-600 text-white hover:bg-red-700"
-                                            : "bg-muted text-muted-foreground cursor-not-allowed"
-                                    )}
-                                >
-                                    {parseFloat(sellShares || '0') >= position.shares ? 'Position schließen' : 'Verkaufen'}
-                                </button>
-                            </div>
-                        </form>
-                    )}
-
-                    {/* Buy Form */}
-                    {tab === 'buy' && (
-                        <form onSubmit={handleBuy} className="space-y-4">
-                            <div className="space-y-2">
-                                <label htmlFor="buyShares" className="text-sm font-medium">
-                                    Anzahl kaufen
-                                </label>
-                                <input
-                                    id="buyShares"
-                                    type="number"
-                                    step="0.01"
-                                    min="0.01"
-                                    placeholder="z.B. 6"
-                                    value={buyShares}
-                                    onChange={(e) => setBuyShares(e.target.value)}
-                                    className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-green-500/20"
-                                    required
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label htmlFor="buyPrice" className="text-sm font-medium">
-                                    Kaufpreis pro Stück ({position.stock.currency === 'GBp' ? 'GBP' : position.stock.currency})
+                                <label className="text-sm font-medium">
+                                    Ø Wechselkurs (CHF)
                                 </label>
                                 <div className="relative">
                                     <input
-                                        id="buyPrice"
                                         type="number"
-                                        step="0.01"
-                                        min="0.01"
-                                        placeholder={position.stock.currentPrice.toFixed(2)}
-                                        value={buyPrice}
-                                        onChange={(e) => setBuyPrice(e.target.value)}
-                                        className="w-full px-4 py-2 pr-12 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-green-500/20"
-                                        required
+                                        step="0.000001"
+                                        min="0.000001"
+                                        placeholder="1.0"
+                                        value={avgFxRate}
+                                        onChange={(e) => setAvgFxRate(e.target.value)}
+                                        className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 pr-12"
                                     />
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">
-                                        {position.stock.currency === 'GBp' ? 'GBP' : position.stock.currency}
+                                        CHF
                                     </div>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setBuyPrice(position.stock.currentPrice.toString())}
-                                    className="text-xs text-primary hover:underline"
-                                >
-                                    Aktuellen Kurs übernehmen ({position.stock.currentPrice.toLocaleString('de-DE', { style: 'currency', currency: position.stock.currency === 'GBp' ? 'GBP' : position.stock.currency })})
-                                </button>
-                            </div>
-
-                            {/* Buy FX Rate */}
-                            {position.stock.currency !== 'CHF' && (
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium flex justify-between">
-                                        <span>Wechselkurs (CHF)</span>
-                                        <span className="text-xs text-muted-foreground font-normal">
-                                            1 {position.stock.currency} = {buyFxRate} CHF
-                                        </span>
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            required
-                                            type="number"
-                                            step="0.0001"
-                                            min="0.0001"
-                                            placeholder="z.B. 0.95"
-                                            className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-green-500/20"
-                                            value={buyFxRate}
-                                            onChange={e => setBuyFxRate(e.target.value)}
-                                        />
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">
-                                            CHF
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-
-                            {/* Preview */}
-                            {buyShares && buyPrice && parseFloat(buyShares) > 0 && parseFloat(buyPrice) > 0 && (
-                                <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900/30">
-                                    <div className="text-sm space-y-1">
-                                        <div className="flex justify-between font-medium text-green-600 dark:text-green-400">
-                                            <span>Gekaufte Anteile:</span>
-                                            <div className="text-right">
-                                                <div>{formatShares(parseFloat(buyShares))} Stk</div>
-                                                <div className="text-xs text-muted-foreground mt-0.5">
-                                                    zu: {formatCurrency(parseFloat(buyPrice), position.stock.currency)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Neuer Bestand:</span>
-                                            <span className="font-medium">{formatShares(position.shares + parseFloat(buyShares))} Stk</span>
-                                        </div>
-                                        <div className="flex justify-between border-t border-green-200 dark:border-green-900/30 pt-1 mt-1">
-                                            <span>Kaufwert:</span>
-                                            <span className="font-medium text-green-600 dark:text-green-400">
-                                                {formatCurrency(buyValue, position.stock.currency)}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between text-xs text-muted-foreground">
-                                            <span>Neuer Einstandspreis (Ø):</span>
-                                            <span>
-                                                {formatCurrency((position.shares * position.buyPriceAvg + buyValue) / (position.shares + parseFloat(buyShares)), position.stock.currency)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Actions */}
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={onClose}
-                                    className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors font-medium"
-                                >
-                                    Abbrechen
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={!buyShares || !buyPrice || parseFloat(buyShares) <= 0 || parseFloat(buyPrice) <= 0}
-                                    className={cn(
-                                        "flex-1 px-4 py-2 rounded-lg font-medium transition-colors",
-                                        buyShares && buyPrice && parseFloat(buyShares) > 0 && parseFloat(buyPrice) > 0
-                                            ? "bg-green-600 text-white hover:bg-green-700"
-                                            : "bg-muted text-muted-foreground cursor-not-allowed"
-                                    )}
-                                >
-                                    Kaufen
-                                </button>
-                            </div>
-                        </form>
-                    )}
-
-                    {/* Correction Form */}
-                    {tab === 'correct' && (
-                        <form onSubmit={handleCorrection} className="space-y-4">
-                            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-700 dark:text-blue-300 mb-4">
-                                Hier kannst du Schreibfehler korrigieren. Diese Änderung wird <strong>nicht</strong> als Kauf/Verkauf in der Historie gespeichert.
-                            </div>
-
-                            <div className="space-y-2">
-                                <label htmlFor="correctShares" className="text-sm font-medium">
-                                    Aktueller Bestand (Stück)
-                                </label>
-                                <input
-                                    id="correctShares"
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    placeholder="z.B. 10"
-                                    value={correctShares}
-                                    onChange={(e) => setCorrectShares(e.target.value)}
-                                    className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                                    required
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label htmlFor="correctPrice" className="text-sm font-medium">
-                                    Durchschnittlicher Kaufpreis ({position.stock.currency === 'GBp' ? 'GBP' : position.stock.currency})
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        id="correctPrice"
-                                        type="number"
-                                        step="0.01"
-                                        min="0.01"
-                                        placeholder="z.B. 150.00"
-                                        value={correctPrice}
-                                        onChange={(e) => setCorrectPrice(e.target.value)}
-                                        className="w-full px-4 py-2 pr-12 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                                        required
-                                    />
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">
-                                        {position.stock.currency === 'GBp' ? 'GBP' : position.stock.currency}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Correct FX Rate */}
-                            {position.stock.currency !== 'CHF' && (
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">
-                                        Durchschnittlicher Einstiegs-Wechselkurs (CHF)
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type="number"
-                                            step="0.0001"
-                                            min="0.0001"
-                                            placeholder="z.B. 0.95"
-                                            className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                                            value={correctFxRate}
-                                            onChange={e => setCorrectFxRate(e.target.value)}
-                                        />
-                                         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">
-                                            CHF
-                                        </div>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Falls leer, wird 1.0 angenommen.
-                                    </p>
-                                </div>
-                            )}
-
-                            <div className="space-y-2">
-                                <label htmlFor="correctBuyDate" className="text-sm font-medium">
-                                    Kaufdatum (Erster Kauf)
-                                </label>
-                                <input
-                                    id="correctBuyDate"
-                                    type="date"
-                                    value={correctBuyDate}
-                                    onChange={(e) => setCorrectBuyDate(e.target.value)}
-                                    className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                    Optional. Wird für die "Seit Kauf"-Ansicht im Chart verwendet.
+                                <p className="text-[10px] text-muted-foreground">
+                                    Gewichteter Durchschnittskurs aller Käufe (1 {position.stock.currency} = ? CHF).
                                 </p>
                             </div>
+                        )}
 
-                            {/* Distribution Policy (ETFs only) - Correction Mode */}
-                            {currentStock?.type === 'etf' && (
-                                <div className="space-y-2 pt-2 border-t border-border/50">
-                                    <label className="text-sm font-medium">Ausschüttung (Stammdaten)</label>
-                                    <div className="flex bg-muted rounded-lg p-1 border border-border">
-                                        <button
-                                            type="button"
-                                            onClick={() => updateStock(currentStock.id, { distributionPolicy: 'distributing' })}
-                                            className={cn(
-                                                "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
-                                                currentStock.distributionPolicy !== 'accumulating'
-                                                    ? "bg-background text-foreground shadow-sm"
-                                                    : "text-muted-foreground hover:text-foreground"
-                                            )}
-                                        >
-                                            Ausschüttend
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => updateStock(currentStock.id, { distributionPolicy: 'accumulating' })}
-                                            className={cn(
-                                                "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
-                                                currentStock.distributionPolicy === 'accumulating'
-                                                    ? "bg-background text-foreground shadow-sm"
-                                                    : "text-muted-foreground hover:text-foreground"
-                                            )}
-                                        >
-                                            Thesaurierend
-                                        </button>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Ändert den Typ für den gesamten ETF (nicht nur diese Position).
-                                    </p>
-                                </div>
-                            )}
+                        {/* Buy Date */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium flex items-center gap-2">
+                                Datum Erster Kauf <span className="text-xs text-muted-foreground font-normal">(Optional)</span>
+                            </label>
+                            <input
+                                type="date"
+                                value={buyDate}
+                                onChange={(e) => setBuyDate(e.target.value)}
+                                className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                            <p className="text-[10px] text-muted-foreground">
+                                Dient als Startpunkt für die Performance-Berechnung im Chart.
+                            </p>
+                        </div>
+                    </div>
 
-                            <div className="flex gap-3 pt-4">
+                    {/* ETF Options (Only if ETF) */}
+                    {currentStock?.type === 'etf' && (
+                        <div className="space-y-2 pt-4 border-t border-border">
+                            <label className="text-sm font-medium">Ausschüttung (ETF Stammdaten)</label>
+                            <div className="flex bg-muted rounded-lg p-1 border border-border">
                                 <button
                                     type="button"
-                                    onClick={onClose}
-                                    className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors font-medium"
+                                    onClick={() => updateStock(currentStock.id, { distributionPolicy: 'distributing' })}
+                                    className={cn(
+                                        "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
+                                        currentStock.distributionPolicy !== 'accumulating'
+                                            ? "bg-background text-foreground shadow-sm"
+                                            : "text-muted-foreground hover:text-foreground"
+                                    )}
                                 >
-                                    Abbrechen
+                                    Ausschüttend
                                 </button>
                                 <button
-                                    type="submit"
-                                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                                    type="button"
+                                    onClick={() => updateStock(currentStock.id, { distributionPolicy: 'accumulating' })}
+                                    className={cn(
+                                        "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
+                                        currentStock.distributionPolicy === 'accumulating'
+                                            ? "bg-background text-foreground shadow-sm"
+                                            : "text-muted-foreground hover:text-foreground"
+                                    )}
                                 >
-                                    Speichern
+                                    Thesaurierend
                                 </button>
                             </div>
-                        </form>
+                        </div>
                     )}
-                </div>
-            </div>
 
-            {/* Transaction Success Dialog */}
-            {completedTransaction && (
-                <TransactionSuccessDialog
-                    isOpen={showSuccessDialog}
-                    onClose={() => {
-                        setShowSuccessDialog(false);
-                        setCompletedTransaction(null);
-                        onClose();
-                    }}
-                    transaction={completedTransaction}
-                />
-            )}
+                    {/* Actions */}
+                    <div className="flex items-center gap-3 pt-4 border-t border-border mt-6">
+                        <button
+                            type="button"
+                            onClick={handleDelete}
+                            className="p-2.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors border border-transparent hover:border-red-200 dark:hover:border-red-900"
+                            title="Position löschen"
+                        >
+                            <Trash2 className="size-5" />
+                        </button>
+                        <div className="flex-1 flex gap-3">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="flex-1 px-4 py-2.5 border border-border rounded-lg hover:bg-muted font-medium transition-colors"
+                            >
+                                Abbrechen
+                            </button>
+                            <button
+                                type="submit"
+                                className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Save className="size-4" />
+                                Speichern
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
         </div>
     );
 }
