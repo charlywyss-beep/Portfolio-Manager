@@ -3,6 +3,8 @@ import { Building, Calculator, Plus, Trash2, Landmark, Percent } from 'lucide-re
 import { cn } from '../utils';
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
 
+import { SaronChart } from '../components/SaronChart';
+
 interface Tranche {
     id: string;
     name: string;
@@ -326,6 +328,9 @@ export const MortgageCalculator = () => {
                             </div>
                         </div>
                     )}
+
+                    {/* SARON Chart */}
+                    <SaronChart />
 
                 </div>
             </div>
