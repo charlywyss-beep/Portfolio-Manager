@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
+import { DecimalInput } from './DecimalInput';
 import type { PortfolioHistoryEntry } from '../types';
 
 interface AddHistoryEntryModalProps {
@@ -21,29 +22,29 @@ export function AddHistoryEntryModal({ isOpen, onClose, editingEntry, currentTot
 
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
-    // Detailed breakdown
-    const [stockValue, setStockValue] = useState<number | ''>('');
-    const [etfValue, setEtfValue] = useState<number | ''>('');
-    const [cashValue, setCashValue] = useState<number | ''>('');
+    // Detailed breakdown - using strings for DecimalInput
+    const [stockValue, setStockValue] = useState<string>('');
+    const [etfValue, setEtfValue] = useState<string>('');
+    const [cashValue, setCashValue] = useState<string>('');
 
     const [notes, setNotes] = useState('');
 
     // Computed total for display
-    const calculatedTotal = (Number(stockValue) || 0) + (Number(etfValue) || 0) + (Number(cashValue) || 0);
+    const calculatedTotal = (parseFloat(stockValue) || 0) + (parseFloat(etfValue) || 0) + (parseFloat(cashValue) || 0);
 
 
     useEffect(() => {
         if (editingEntry) {
             setDate(editingEntry.date);
-            setStockValue(editingEntry.stockValue ?? '');
-            setEtfValue(editingEntry.etfValue ?? '');
-            setCashValue(editingEntry.cashValue ?? '');
+            setStockValue(editingEntry.stockValue?.toString() ?? '');
+            setEtfValue(editingEntry.etfValue?.toString() ?? '');
+            setCashValue(editingEntry.cashValue?.toString() ?? '');
             // Fallback: if editing legacy entry with only totalValue, put it in Stock? or Cash? 
             // Better to leave empty or maybe put in Stock if other two are missing?
             // Decision: If new fields are missing but totalValue exists, maybe put it all in Stock as default?
             // Or just leave blank and let user fix it.
             if (!editingEntry.stockValue && !editingEntry.etfValue && !editingEntry.cashValue && editingEntry.totalValue) {
-                setStockValue(editingEntry.totalValue);
+                setStockValue(editingEntry.totalValue.toString());
             }
 
             setNotes(editingEntry.notes || '');
@@ -65,9 +66,9 @@ export function AddHistoryEntryModal({ isOpen, onClose, editingEntry, currentTot
         const entryData = {
             date,
             totalValue: calculatedTotal,
-            stockValue: Number(stockValue) || 0,
-            etfValue: Number(etfValue) || 0,
-            cashValue: Number(cashValue) || 0,
+            stockValue: parseFloat(stockValue) || 0,
+            etfValue: parseFloat(etfValue) || 0,
+            cashValue: parseFloat(cashValue) || 0,
             notes
         };
 
@@ -92,9 +93,9 @@ export function AddHistoryEntryModal({ isOpen, onClose, editingEntry, currentTot
                             <button
                                 onClick={() => {
                                     setDate(new Date().toISOString().split('T')[0]);
-                                    setStockValue(Number((currentTotals.stockValue || 0).toFixed(2)));
-                                    setEtfValue(Number((currentTotals.etfValue || 0).toFixed(2)));
-                                    setCashValue(Number((currentTotals.cashValue || 0).toFixed(2)));
+                                    setStockValue((currentTotals.stockValue || 0).toFixed(2));
+                                    setEtfValue((currentTotals.etfValue || 0).toFixed(2));
+                                    setCashValue((currentTotals.cashValue || 0).toFixed(2));
                                     setNotes('Automatischer Eintrag');
                                 }}
                                 className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors"
@@ -124,35 +125,29 @@ export function AddHistoryEntryModal({ isOpen, onClose, editingEntry, currentTot
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Aktien (CHF)</label>
-                            <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono"
+                            <DecimalInput
                                 value={stockValue}
-                                onChange={(e) => setStockValue(Number(e.target.value))}
+                                onChange={setStockValue}
+                                className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono"
+                                placeholder="0.00"
                             />
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium">ETFs (CHF)</label>
-                            <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono"
+                            <DecimalInput
                                 value={etfValue}
-                                onChange={(e) => setEtfValue(Number(e.target.value))}
+                                onChange={setEtfValue}
+                                className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono"
+                                placeholder="0.00"
                             />
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Bank/Bar (CHF)</label>
-                            <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono"
+                            <DecimalInput
                                 value={cashValue}
-                                onChange={(e) => setCashValue(Number(e.target.value))}
+                                onChange={setCashValue}
+                                className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono"
+                                placeholder="0.00"
                             />
                         </div>
                     </div>
