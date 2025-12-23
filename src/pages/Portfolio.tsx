@@ -40,6 +40,16 @@ export function Portfolio() {
         const dailyChangePercent = stock.previousClose !== 0 ? (dailyChange / stock.previousClose) * 100 : 0;
         const dailyValueChange = pos.shares * dailyChange;
 
+        // Forex Calculations
+        const currentFxRate = stock.currency === 'CHF' ? 1 : convertToCHF(1, stock.currency);
+        const entryFxRate = pos.averageEntryFxRate ?? (stock.currency === 'CHF' ? 1 : 1);
+
+        const currentValueCHF = currentValue * currentFxRate;
+        const buyValueCHF = buyValue * entryFxRate;
+
+        const gainLossTotalCHF = currentValueCHF - buyValueCHF;
+        const forexImpactCHF = currentValue * (currentFxRate - entryFxRate);
+
         return {
             ...pos,
             stock,
@@ -50,6 +60,8 @@ export function Portfolio() {
             dailyChange,
             dailyChangePercent,
             dailyValueChange,
+            gainLossTotalCHF, // New
+            forexImpactCHF // New
         };
     }).filter(Boolean) as any[];
 
@@ -65,13 +77,16 @@ export function Portfolio() {
 
 
 
-    const handleUpdate = (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string) => {
+    const handleUpdate = (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number) => {
         const updates: any = { shares: newShares };
         if (newAvgPrice !== undefined) {
             updates.buyPriceAvg = newAvgPrice;
         }
         if (newBuyDate !== undefined) {
             updates.buyDate = newBuyDate;
+        }
+        if (newFxRate !== undefined) {
+            updates.averageEntryFxRate = newFxRate;
         }
         updatePosition(id, updates);
     };
@@ -202,12 +217,15 @@ export function Portfolio() {
                                                 {pos.gainLossTotal >= 0 ? '+' : ''}{formatCurrency(pos.gainLossTotal, pos.stock.currency, false)}
                                             </span>
                                             {pos.stock.currency !== 'CHF' && (
-                                                <span className={cn(
-                                                    "text-xs font-medium whitespace-nowrap mt-0.5",
-                                                    pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                                )}>
-                                                    {pos.gainLossTotal >= 0 ? '+' : ''}{formatCurrency(convertToCHF(pos.gainLossTotal, pos.stock.currency), 'CHF', false)}
-                                                </span>
+                                                <div
+                                                    className={cn(
+                                                        "text-xs font-medium whitespace-nowrap mt-0.5 border-b border-dotted border-border/50 cursor-help",
+                                                        pos.gainLossTotalCHF >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                                    )}
+                                                    title={`FX-Effekt: ${pos.forexImpactCHF >= 0 ? '+' : ''}${formatCurrency(pos.forexImpactCHF, 'CHF', false)}`}
+                                                >
+                                                    {pos.gainLossTotalCHF >= 0 ? '+' : ''}{formatCurrency(pos.gainLossTotalCHF, 'CHF', false)}
+                                                </div>
                                             )}
                                         </div>
                                     </td>
@@ -359,7 +377,6 @@ export function Portfolio() {
                                         </div>
                                     </div>
 
-                                    {/* Actions (Always visible) */}
                                     <div className="absolute top-0 right-0 flex gap-1 bg-card/80 backdrop-blur-sm p-1 rounded-bl-lg border-l border-b border-border shadow-sm">
                                         <button
                                             onClick={() => {
@@ -367,6 +384,8 @@ export function Portfolio() {
                                                 setIsAddFixedDepositModalOpen(true);
                                             }}
                                             className="p-1.5 hover:bg-muted rounded text-primary transition-colors"
+                                            title="Bearbeiten"
+                                            aria-label="Konto bearbeiten"
                                         >
                                             <Edit className="size-4" />
                                         </button>
@@ -375,6 +394,8 @@ export function Portfolio() {
                                                 if (confirm(`Konto bei "${fd.bankName}" wirklich löschen?`)) deleteFixedDeposit(fd.id);
                                             }}
                                             className="p-1.5 hover:bg-red-50 hover:text-red-600 rounded text-muted-foreground transition-colors"
+                                            title="Löschen"
+                                            aria-label="Konto löschen"
                                         >
                                             <Trash2 className="size-4" />
                                         </button>

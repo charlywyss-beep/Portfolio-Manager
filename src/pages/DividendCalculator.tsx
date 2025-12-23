@@ -643,10 +643,17 @@ export function DividendCalculator() {
                 const feeRatio = totalFees / volumeCHF;
                 effectivePrice = price * (1 + feeRatio);
             }
+
+            let effectiveFxRate = 1;
+            if (simCurrency && simCurrency !== 'CHF' && volumeNative > 0) {
+                effectiveFxRate = volumeCHF / volumeNative;
+            }
+
             addPosition({
                 stockId: targetStockId,
                 shares: shares,
-                buyPriceAvg: effectivePrice
+                buyPriceAvg: effectivePrice,
+                averageEntryFxRate: effectiveFxRate
             });
         }
         else if (mode === 'sell') {
@@ -959,12 +966,12 @@ export function DividendCalculator() {
                                         <div className="space-y-2">
                                             <label className="text-sm font-medium">Sektor (Optional)</label>
                                             <input placeholder="z.B. Konsumgüter" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
-                                                value={simulatorState.simSector} onChange={e => updateSimulatorState({ simSector: e.target.value })} />
+                                                value={simulatorState.simSector} onChange={e => updateSimulatorState({ simSector: e.target.value })} aria-label="Sektor" />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm font-medium">Währung</label>
                                             <select className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
-                                                value={simCurrency} onChange={e => updateSimulatorState({ simCurrency: e.target.value })}>
+                                                value={simCurrency} onChange={e => updateSimulatorState({ simCurrency: e.target.value })} aria-label="Währung">
                                                 <option value="USD">USD</option>
                                                 <option value="CHF">CHF</option>
                                                 <option value="EUR">EUR</option>
@@ -974,12 +981,12 @@ export function DividendCalculator() {
                                         <div className="space-y-2">
                                             <label className="text-sm font-medium">Valor (Optional)</label>
                                             <input placeholder="z.B. 3886335" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
-                                                value={simulatorState.simValor} onChange={e => updateSimulatorState({ simValor: e.target.value })} />
+                                                value={simulatorState.simValor} onChange={e => updateSimulatorState({ simValor: e.target.value })} aria-label="Valor" />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm font-medium">ISIN (Optional)</label>
                                             <input placeholder="z.B. CH00..." className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
-                                                value={simIsin} onChange={e => updateSimulatorState({ simIsin: e.target.value })} />
+                                                value={simIsin} onChange={e => updateSimulatorState({ simIsin: e.target.value })} aria-label="ISIN" />
                                         </div>
                                         <div className="space-y-2 col-span-2">
                                             <div className="flex justify-between items-center">
@@ -1008,7 +1015,7 @@ export function DividendCalculator() {
                                             </div>
                                             <input required type="number" step="0.01" placeholder="z.B. 98.50" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                                 value={simCurrency === 'GBP' ? parseFloat(price.toFixed(4)) : parseFloat(price.toFixed(2))}
-                                                onChange={e => updateSimulatorState({ price: parseFloat(e.target.value) || 0 })} />
+                                                onChange={e => updateSimulatorState({ price: parseFloat(e.target.value) || 0 })} aria-label="Kaufpreis" />
                                         </div>
                                     </div>
                                 </div>
@@ -1183,6 +1190,7 @@ export function DividendCalculator() {
                                         value={simCurrency || 'CHF'}
                                         onChange={(e) => updateSimulatorState({ simCurrency: e.target.value })}
                                         className="text-xs border border-input bg-background text-foreground rounded px-2 py-1 focus:ring-1 focus:ring-primary transition-all"
+                                        aria-label="Währung auswählen"
                                     >
                                         <option value="CHF">CHF</option>
                                         <option value="USD">USD</option>

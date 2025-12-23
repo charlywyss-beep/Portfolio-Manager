@@ -32,6 +32,7 @@ export interface Position {
     shares: number;
     buyPriceAvg: number; // Average buy price
     buyDate?: string; // Date of first purchase (ISO format)
+    averageEntryFxRate?: number; // NEW: Weighted Average Exchange Rate at time of purchase
 }
 
 // Bankguthaben (e.g. Sparkonto / Privatkonto)

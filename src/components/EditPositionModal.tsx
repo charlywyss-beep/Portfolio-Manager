@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, TrendingDown, TrendingUp, Edit } from 'lucide-react';
 import type { Stock } from '../types';
 import { cn } from '../utils';
@@ -16,8 +16,9 @@ interface EditPositionModalProps {
         shares: number;
         buyPriceAvg: number;
         buyDate?: string;
+        averageEntryFxRate?: number; // Added this
     };
-    onUpdate: (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string) => void;
+    onUpdate: (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number) => void;
     onDelete: (id: string) => void;
 }
 
@@ -26,7 +27,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     const currentStock = stocks.find(s => s.id === position.stock.id) || position.stock;
 
     const [tab, setTab] = useState<'sell' | 'buy' | 'correct'>('correct');
-    const { formatCurrency, convertToCHF } = useCurrencyFormatter();
+    const { formatCurrency, convertToCHF, rates } = useCurrencyFormatter();
 
     // Sell state
     const [sellShares, setSellShares] = useState('');
@@ -34,16 +35,29 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     // Buy state
     const [buyShares, setBuyShares] = useState('');
     const [buyPrice, setBuyPrice] = useState(position.stock.currentPrice.toFixed(2));
+    const [buyFxRate, setBuyFxRate] = useState(''); // New: FX Rate for new purchase
 
     // Correction state
     const [correctShares, setCorrectShares] = useState(position.shares.toString());
-
     const [correctPrice, setCorrectPrice] = useState(position.buyPriceAvg.toString());
+    const [correctFxRate, setCorrectFxRate] = useState(position.averageEntryFxRate?.toString() || ''); // New: Correct historical FX
     const [correctBuyDate, setCorrectBuyDate] = useState(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
 
     // Transaction success state
     const [showSuccessDialog, setShowSuccessDialog] = useState(false);
     const [completedTransaction, setCompletedTransaction] = useState<any>(null);
+
+    // Auto-fetch FX Rate for Buy Tab
+    useEffect(() => {
+        if (!isOpen) return;
+        if (position.stock.currency === 'CHF') {
+            setBuyFxRate('1.0');
+        } else if (rates && rates[position.stock.currency]) {
+            const currentRate = 1 / rates[position.stock.currency];
+            setBuyFxRate(currentRate.toFixed(4));
+        }
+    }, [isOpen, position.stock.currency, rates]);
+
 
     // Helper: Format shares (no decimals for whole numbers)
     const formatShares = (shares: number) => {
@@ -77,6 +91,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
         if (newShares <= 0) {
             onDelete(position.id);
         } else {
+            // Sell doesn't change Avg Price or FX Rate, just shares
             onUpdate(position.id, newShares);
         }
 
@@ -88,15 +103,28 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
         e.preventDefault();
         const sharesToBuy = parseFloat(buyShares);
         const pricePerShare = parseFloat(buyPrice);
+        const fxRate = parseFloat(buyFxRate) || 1.0;
 
-        // Calculate new average buy price
-        const currentValue = position.shares * position.buyPriceAvg;
-        const addedValue = sharesToBuy * pricePerShare;
+        // Calculate new average buy price (NATIVE)
+        const currentCostNative = position.shares * position.buyPriceAvg;
+        const addedCostNative = sharesToBuy * pricePerShare;
         const newTotalShares = position.shares + sharesToBuy;
-        const newAvgPrice = (currentValue + addedValue) / newTotalShares;
+        const newAvgPrice = (currentCostNative + addedCostNative) / newTotalShares;
 
-        // Calculate CHF equivalent for record
-        const chfValue = convertToCHF(addedValue, position.stock.currency);
+        // Calculate new weighted FX Rate
+        // Total Cost CHF / Total Cost Native
+        // Cost CHF = (Old Shares * Old Price * Old FX) + (New Shares * New Price * New FX)
+        const oldFx = position.averageEntryFxRate || 1.0;
+        const currentCostCHF = currentCostNative * oldFx;
+        const addedCostCHF = addedCostNative * fxRate;
+        const totalCostCHF = currentCostCHF + addedCostCHF;
+        const totalCostNative = currentCostNative + addedCostNative;
+
+        const newAvgFxRate = totalCostCHF / totalCostNative;
+
+
+        // Calculate CHF equivalent for record (of this specific buy)
+        const buyValueCHF = addedCostNative * fxRate;
 
         // Store transaction data
         setCompletedTransaction({
@@ -104,12 +132,12 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
             stock: position.stock,
             shares: sharesToBuy,
             pricePerShare: pricePerShare,
-            totalValue: addedValue,
-            chfEquivalent: chfValue,
+            totalValue: addedCostNative,
+            chfEquivalent: buyValueCHF,
             newAvgPrice: newAvgPrice,
         });
 
-        onUpdate(position.id, newTotalShares, newAvgPrice);
+        onUpdate(position.id, newTotalShares, newAvgPrice, undefined, newAvgFxRate);
 
         // Don't close yet - show success dialog first
         setShowSuccessDialog(true);
@@ -119,6 +147,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
         e.preventDefault();
         const newShares = parseFloat(correctShares);
         const newPrice = parseFloat(correctPrice);
+        const newFx = correctFxRate ? parseFloat(correctFxRate) : undefined;
 
         // Ensure date is valid ISO string if provided
         const isoDate = correctBuyDate ? new Date(correctBuyDate).toISOString() : undefined;
@@ -131,7 +160,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
             return;
         }
 
-        onUpdate(position.id, newShares, newPrice, isoDate);
+        onUpdate(position.id, newShares, newPrice, isoDate, newFx);
         onClose();
     };
 
@@ -366,6 +395,34 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                 </button>
                             </div>
 
+                            {/* Buy FX Rate */}
+                            {position.stock.currency !== 'CHF' && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium flex justify-between">
+                                        <span>Wechselkurs (CHF)</span>
+                                        <span className="text-xs text-muted-foreground font-normal">
+                                            1 {position.stock.currency} = {buyFxRate} CHF
+                                        </span>
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            required
+                                            type="number"
+                                            step="0.0001"
+                                            min="0.0001"
+                                            placeholder="z.B. 0.95"
+                                            className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-green-500/20"
+                                            value={buyFxRate}
+                                            onChange={e => setBuyFxRate(e.target.value)}
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">
+                                            CHF
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+
                             {/* Preview */}
                             {buyShares && buyPrice && parseFloat(buyShares) > 0 && parseFloat(buyPrice) > 0 && (
                                 <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900/30">
@@ -469,6 +526,32 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Correct FX Rate */}
+                            {position.stock.currency !== 'CHF' && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">
+                                        Durchschnittlicher Einstiegs-Wechselkurs (CHF)
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            step="0.0001"
+                                            min="0.0001"
+                                            placeholder="z.B. 0.95"
+                                            className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                            value={correctFxRate}
+                                            onChange={e => setCorrectFxRate(e.target.value)}
+                                        />
+                                         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">
+                                            CHF
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Falls leer, wird 1.0 angenommen.
+                                    </p>
+                                </div>
+                            )}
 
                             <div className="space-y-2">
                                 <label htmlFor="correctBuyDate" className="text-sm font-medium">

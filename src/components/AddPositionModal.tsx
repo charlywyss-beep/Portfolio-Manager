@@ -9,13 +9,13 @@ interface AddPositionModalProps {
     isOpen: boolean;
     onClose: () => void;
     stocks: Stock[];
-    onAdd: (position: { stockId: string; shares: number; buyPriceAvg: number }) => void;
+    onAdd: (position: { stockId: string; shares: number; buyPriceAvg: number; averageEntryFxRate?: number }) => void;
     preSelectedStock?: Stock | null; // New prop
 }
 
 export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedStock }: AddPositionModalProps) {
     const { addStock } = usePortfolio();
-    const { formatCurrency } = useCurrencyFormatter();
+    const { formatCurrency, rates } = useCurrencyFormatter(); // Get rates
     const [activeTab, setActiveTab] = useState<'search' | 'manual'>('search');
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -23,8 +23,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
     const [selectedStock, setSelectedStock] = useState<Stock | null>(preSelectedStock || null);
     const [shares, setShares] = useState('');
     const [buyPrice, setBuyPrice] = useState(preSelectedStock ? preSelectedStock.currentPrice.toString() : '');
-
-
+    const [fxRate, setFxRate] = useState(''); // New State for FX Rate
 
     // Manual entry state
     const [newStock, setNewStock] = useState<{
@@ -49,7 +48,8 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
         dividendYield: '',
     });
 
-
+    // Determine current currency to auto-fetch FX
+    const currentCurrency = activeTab === 'manual' ? newStock.currency : (selectedStock?.currency || '');
 
     // Effect to update local state when prop changes or modal opens
     useEffect(() => {
@@ -63,8 +63,39 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
             setBuyPrice('');
             setShares('');
             setSearchTerm('');
+            setFxRate('');
         }
     }, [isOpen, preSelectedStock]);
+
+    // Auto-Fetch FX Rate Logic
+    useEffect(() => {
+        if (!isOpen) return;
+
+        if (currentCurrency === 'CHF') {
+            setFxRate('1.0');
+            return;
+        }
+
+        if (currentCurrency && rates && rates[currentCurrency]) {
+            // 1 Unit of Foreign = X CHF
+            // rates[currency] usually gives CHF per Unit or Unit per CHF?
+            // Checking currency.ts: convertToCHF = amount / rate. So rate is "Foreign per CHF" (indirect quote) OR "CHF per Foreign"?
+            // fallback: USD: 1.12. 1 CHF = 1.12 USD.
+            // So convertToCHF(1 USD) = 1 / 1.12 = 0.89 CHF.
+            // Wait, usually users think "1 USD = 0.90 CHF" (Direct Quote in CHF).
+            // If rate is 1.12 (USD per CHF), then Direct Quote is 1 / 1.12.
+            // Let's display the DIRECT quote (CHF per 1 Unit) because that's what "Wechselkurs" usually means in this context.
+            // "Einstiegs-Wechselkurs" = How much CHF did I pay for 1 USD?
+            // calculatedRate = 1 / rates[currentCurrency]
+
+            const rate = rates[currentCurrency];
+            if (rate) {
+                const directRate = 1 / rate;
+                setFxRate(directRate.toFixed(4));
+            }
+        }
+    }, [currentCurrency, isOpen, rates]);
+
 
     if (!isOpen) return null;
 
@@ -77,12 +108,15 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        const entryFxRate = parseFloat(fxRate) || 1.0;
+
         if (activeTab === 'search') {
             if (!selectedStock || !shares || !buyPrice) return;
             onAdd({
                 stockId: selectedStock.id,
                 shares: parseFloat(shares),
                 buyPriceAvg: parseFloat(buyPrice),
+                averageEntryFxRate: entryFxRate,
             });
         } else {
             // Manual entry
@@ -107,6 +141,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                 stockId: stockId,
                 shares: parseFloat(shares),
                 buyPriceAvg: parseFloat(buyPrice),
+                averageEntryFxRate: entryFxRate,
             });
         }
 
@@ -115,6 +150,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
         setShares('');
         setBuyPrice('');
         setSearchTerm('');
+        setFxRate('');
         setNewStock({
             name: '',
             symbol: '',
@@ -327,9 +363,38 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                 <input required type="number" step="0.001" min="0" placeholder="z.B. 10" className="w-full px-3 py-2 border rounded-md bg-background text-foreground" value={shares} onChange={e => setShares(e.target.value)} />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Kaufpreis</label>
+                                <label className="text-sm font-medium">Kaufpreis {activeTab === 'manual' ? (newStock.currency !== 'CHF' ? `(${newStock.currency})` : '') : (selectedStock?.currency && selectedStock.currency !== 'CHF' ? `(${selectedStock.currency})` : '')}</label>
                                 <input required type="number" step="0.01" min="0" placeholder="z.B. 150.00" className="w-full px-3 py-2 border rounded-md bg-background text-foreground" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} />
                             </div>
+                            {/* FX Rate Input - Only if not CHF */}
+                            {((activeTab === 'manual' && newStock.currency !== 'CHF') || (activeTab === 'search' && selectedStock?.currency && selectedStock.currency !== 'CHF')) && (
+                                <div className="space-y-2 col-span-2">
+                                    <label className="text-sm font-medium flex justify-between">
+                                        <span>Wechselkurs (CHF)</span>
+                                        <span className="text-xs text-muted-foreground font-normal">
+                                            1 {activeTab === 'manual' ? newStock.currency : selectedStock?.currency} = {fxRate} CHF
+                                        </span>
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            required
+                                            type="number"
+                                            step="0.0001"
+                                            min="0.0001"
+                                            placeholder="z.B. 0.95"
+                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                            value={fxRate}
+                                            onChange={e => setFxRate(e.target.value)}
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">
+                                            CHF
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Wechselkurs zum Zeitpunkt des Kaufs. (Automatisch vorausgefüllt mit aktuellem Kurs)
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Summary */}

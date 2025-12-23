@@ -157,6 +157,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                             onChange={(e) => setBankName(e.target.value)}
                             placeholder="z.B. UBS, Credit Suisse..."
                             title="Bank Name"
+                            aria-label="Bank Name"
                         />
                     </div>
 
@@ -169,6 +170,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                 value={logoUrl}
                                 onChange={(e) => setLogoUrl(e.target.value)}
                                 className="flex-1 h-9 px-3 rounded-md border border-input bg-background/50 text-xs focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                aria-label="Logo URL"
                             />
                             {logoUrl && (
                                 <img
@@ -266,6 +268,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                             className="w-full h-10 px-3 rounded-md border border-input bg-background focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                                             value={monthlyContribution}
                                             onChange={(e) => setMonthlyContribution(e.target.value === '' ? '' : Number(e.target.value))}
+                                            aria-label="Monatlicher Beitrag"
                                         />
                                         <div className="absolute right-10 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
                                             × {new Date().getMonth() + 1} Monate
@@ -286,6 +289,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                         className="w-full h-10 px-3 rounded-md border border-input bg-background focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                                         value={currentYearContribution}
                                         onChange={(e) => setCurrentYearContribution(e.target.value === '' ? '' : Number(e.target.value))}
+                                        aria-label="Bereits eingezahlt"
                                     />
                                 </div>
                             )}
@@ -303,6 +307,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                 className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                                 value={amount}
                                 onChange={(e) => setAmount(Number(e.target.value))}
+                                aria-label="Betrag"
                             />
                         </div>
                         <div className="space-y-2">
@@ -311,6 +316,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                 className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                                 value={currency}
                                 onChange={(e) => setCurrency(e.target.value as Currency)}
+                                aria-label="Währung"
                             >
                                 <option value="CHF">CHF</option>
                                 <option value="USD">USD</option>
@@ -331,6 +337,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                 className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                                 value={interestRate}
                                 onChange={(e) => setInterestRate(e.target.value === '' ? '' : Number(e.target.value))}
+                                aria-label="Zins"
                             />
                         </div>
                         <div className="space-y-2">
@@ -345,6 +352,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                         className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                                         value={monthlyFee}
                                         onChange={(e) => setMonthlyFee(e.target.value === '' ? '' : Number(e.target.value))}
+                                        aria-label="Gebühr Betrag"
                                     />
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
                                         CHF
@@ -354,6 +362,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                     className="w-32 h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all cursor-pointer"
                                     value={feeFrequency}
                                     onChange={(e) => setFeeFrequency(e.target.value as any)}
+                                    aria-label="Gebühr Intervall"
                                 >
                                     <option value="monthly">Monatlich</option>
                                     <option value="quarterly">Quartalsweise</option>

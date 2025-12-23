@@ -177,13 +177,24 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
             const existingPosition = prev.find(p => p.stockId === position.stockId);
 
             if (existingPosition) {
-                // Merge with existing position (Calculate weighted average price)
+                // Merge with existing position (Calculate weighted average price AND FX rate)
                 const totalShares = existingPosition.shares + position.shares;
-                const totalCost = (existingPosition.shares * existingPosition.buyPriceAvg) + (position.shares * position.buyPriceAvg);
-                const newAvgPrice = totalCost / totalShares;
+                const oldCostNative = existingPosition.shares * existingPosition.buyPriceAvg;
+                const newCostNative = position.shares * position.buyPriceAvg;
+                const totalCostNative = oldCostNative + newCostNative;
+
+                const newAvgPrice = totalCostNative / totalShares;
+
+                // Weighted FX Rate Calculation
+                // If old position doesn't have FX rate, assume 1.0 (best guess fallback) until corrected
+                const oldFx = existingPosition.averageEntryFxRate || 1;
+                const newFx = position.averageEntryFxRate || 1;
+
+                const totalCostCHF = (oldCostNative * oldFx) + (newCostNative * newFx);
+                const newAvgFx = totalCostCHF / totalCostNative;
 
                 return prev.map(p => p.id === existingPosition.id
-                    ? { ...p, shares: totalShares, buyPriceAvg: newAvgPrice }
+                    ? { ...p, shares: totalShares, buyPriceAvg: newAvgPrice, averageEntryFxRate: newAvgFx }
                     : p
                 );
             }
@@ -192,6 +203,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
             const newPosition: Position = {
                 ...position,
                 id: `pos_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                // Ensure new position gets the FX rate (or 1 as default if somehow missing)
+                averageEntryFxRate: position.averageEntryFxRate || 1
             };
             return [...prev, newPosition];
         });

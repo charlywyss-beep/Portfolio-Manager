@@ -109,7 +109,7 @@ export const SaronChart = () => {
                                 className="w-full bg-background border border-input rounded-md px-2 py-1 text-sm"
                             />
                         </div>
-                        <button onClick={handleAdd} className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-sm flex items-center gap-1">
+                        <button onClick={handleAdd} className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-sm flex items-center gap-1" aria-label="Eintrag hinzufügen">
                             <Plus className="size-4" />
                         </button>
                     </div>
@@ -122,7 +122,7 @@ export const SaronChart = () => {
                                     <span>{item.date}</span>
                                     <div className="flex items-center gap-4">
                                         <span className="font-mono font-bold">{item.rate.toFixed(2)}%</span>
-                                        <button onClick={() => handleDelete(realIndex)} className="text-destructive hover:bg-destructive/10 p-1 rounded">
+                                        <button onClick={() => handleDelete(realIndex)} className="text-destructive hover:bg-destructive/10 p-1 rounded" aria-label="Eintrag löschen">
                                             <Trash2 className="size-4" />
                                         </button>
                                     </div>
