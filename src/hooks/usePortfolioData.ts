@@ -48,11 +48,15 @@ export function usePortfolioData() {
         const totalValueEtf = etfPositions.reduce((sum, p) => sum + convertToCHF(p.currentValue, p.stock.currency, rates), 0);
 
         const totalValueStock = positions.reduce((sum, p) => sum + convertToCHF(p.currentValue, p.stock.currency, rates), 0);
-        
+
         // Cost Basis: Use Historical FX Rate (averageEntryFxRate)
         const totalCostStock = positions.reduce((sum, p) => {
             const entryFxRate = p.averageEntryFxRate ?? 1; // Fallback to 1.0 if missing
-            return sum + (p.costBasis * entryFxRate);
+
+            // Normalize GBp Pence to Pounds for CHF Calculation
+            const normalizedCostBasis = p.stock.currency === 'GBp' ? p.costBasis / 100 : p.costBasis;
+
+            return sum + (normalizedCostBasis * entryFxRate);
         }, 0);
 
         const totalGainLossStock = totalValueStock - totalCostStock;

@@ -42,13 +42,28 @@ export function Portfolio() {
 
         // Forex Calculations
         const currentFxRate = stock.currency === 'CHF' ? 1 : convertToCHF(1, stock.currency);
+        // entryFxRate is usually "CHF per User-Unit" (e.g. per Pound).
         const entryFxRate = pos.averageEntryFxRate ?? (stock.currency === 'CHF' ? 1 : 1);
 
         const currentValueCHF = currentValue * currentFxRate;
-        const buyValueCHF = buyValue * entryFxRate;
+
+        // Fix for GBp: buyValue is Pence, but entryFxRate is per Pound.
+        // We must normalize buyValue to Pounds for the CHF Cost calculation.
+        const normalizedBuyValue = stock.currency === 'GBp' ? buyValue / 100 : buyValue;
+        const buyValueCHF = normalizedBuyValue * entryFxRate;
 
         const gainLossTotalCHF = currentValueCHF - buyValueCHF;
-        const forexImpactCHF = currentValue * (currentFxRate - entryFxRate);
+        // forexImpactCHF calculated below using normalized values
+
+        const normalizedCurrentValue = stock.currency === 'GBp' ? currentValue / 100 : currentValue;
+        const currentValAtEntryFx = normalizedCurrentValue * entryFxRate; // What value would be if FX never changed.
+
+        // FX Impact calculation
+        const forexImpactCHF = currentValueCHF - currentValAtEntryFx;
+
+        // This is strictly "FX contribution to Current Value". 
+        // If you want "FX contribution to P/L", it's slightly more complex, but this is a standard approx.
+
 
         return {
             ...pos,
