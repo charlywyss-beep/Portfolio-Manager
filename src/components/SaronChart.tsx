@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { Plus, Trash2, X, Edit2 } from 'lucide-react';
+import { DecimalInput } from './DecimalInput';
 
 interface SaronDataPoint {
     date: string;
@@ -43,19 +44,19 @@ export const SaronChart = () => {
 
     const [isEditing, setIsEditing] = useState(false);
     const [newDate, setNewDate] = useState('');
-    const [newRate, setNewRate] = useState('');
+    const [newRate, setNewRate] = useState<number>(0);
 
     useEffect(() => {
         localStorage.setItem('saron_data', JSON.stringify(data));
     }, [data]);
 
     const handleAdd = () => {
-        if (!newDate || !newRate) return;
-        const newItem = { date: newDate, rate: parseFloat(newRate), isForecast: false };
+        if (!newDate) return;
+        const newItem = { date: newDate, rate: newRate, isForecast: false };
         // Stick to appending for now
         setData([...data, newItem]);
         setNewDate('');
-        setNewRate('');
+        setNewRate(0);
     };
 
     const handleDelete = (index: number) => {
@@ -102,11 +103,9 @@ export const SaronChart = () => {
                         </div>
                         <div className="flex-1 space-y-1">
                             <label className="text-xs text-muted-foreground">Zinssatz (%)</label>
-                            <input
-                                type="number"
-                                step="0.01"
+                            <DecimalInput
                                 value={newRate}
-                                onChange={(e) => setNewRate(e.target.value)}
+                                onChange={setNewRate}
                                 className="w-full bg-background border border-input rounded-md px-2 py-1 text-sm"
                             />
                         </div>

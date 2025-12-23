@@ -4,6 +4,7 @@ import { cn } from '../utils';
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
 
 import { SaronChart } from '../components/SaronChart';
+import { DecimalInput } from '../components/DecimalInput';
 
 interface Tranche {
     id: string;
@@ -98,10 +99,9 @@ export const MortgageCalculator = () => {
                                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 flex items-center justify-center">
                                         CR
                                     </div>
-                                    <input
-                                        type="number"
+                                    <DecimalInput
                                         value={propertyValue}
-                                        onChange={(e) => setPropertyValue(Number(e.target.value))}
+                                        onChange={setPropertyValue}
                                         className={cn(inputClass, "pl-9")}
                                     />
                                 </div>
@@ -110,11 +110,9 @@ export const MortgageCalculator = () => {
                                 <label className="text-sm font-medium">Unterhalt & Nebenkosten (%)</label>
                                 <div className="relative">
                                     <Percent className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
-                                    <input
-                                        type="number"
-                                        step="0.1"
+                                    <DecimalInput
                                         value={maintenanceRate}
-                                        onChange={(e) => setMaintenanceRate(Number(e.target.value))}
+                                        onChange={setMaintenanceRate}
                                         className={cn(inputClass, "pl-9")}
                                     />
                                 </div>
@@ -128,11 +126,9 @@ export const MortgageCalculator = () => {
                                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 flex items-center justify-center">
                                         CR
                                     </div>
-                                    <input
-                                        type="number"
-                                        step="1000"
+                                    <DecimalInput
                                         value={yearlyAmortization}
-                                        onChange={(e) => setYearlyAmortization(Number(e.target.value))}
+                                        onChange={setYearlyAmortization}
                                         className={cn(inputClass, "pl-9")}
                                     />
                                 </div>
@@ -173,20 +169,17 @@ export const MortgageCalculator = () => {
                                     </div>
                                     <div className="col-span-4 sm:col-span-3 space-y-1">
                                         <label className="text-xs text-muted-foreground">Betrag</label>
-                                        <input
-                                            type="number"
+                                        <DecimalInput
                                             value={tranche.amount}
-                                            onChange={(e) => updateTranche(tranche.id, 'amount', Number(e.target.value))}
+                                            onChange={(val) => updateTranche(tranche.id, 'amount', val)}
                                             className={inputClass}
                                         />
                                     </div>
                                     <div className="col-span-2 sm:col-span-3 space-y-1">
                                         <label className="text-xs text-muted-foreground">Zins (%)</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
+                                        <DecimalInput
                                             value={tranche.rate}
-                                            onChange={(e) => updateTranche(tranche.id, 'rate', Number(e.target.value))}
+                                            onChange={(val) => updateTranche(tranche.id, 'rate', val)}
                                             className={inputClass}
                                         />
                                     </div>
