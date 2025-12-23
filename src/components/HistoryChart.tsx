@@ -26,9 +26,6 @@ export function HistoryChart() {
 
         // Determine start date based on range
         let startDate = new Date(lastDate);
-        const now = new Date(); // Use today as anchor if we want or data max? 
-        // Use data max to ensure we see the bars at the end.
-        let cutoff = new Date(lastDate);
 
         if (timeRange === '1W') startDate.setDate(lastDate.getDate() - 7);
         else if (timeRange === '1M') startDate.setMonth(lastDate.getMonth() - 1);
