@@ -28,13 +28,21 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     const [purchases, setPurchases] = useState<Purchase[]>([]);
 
     // Fallback for "Manual Overrides" if user deletes all purchases but wants to set totals manually
+    // NOTE: Manual states are "UI Values" (Pounds), not Storage Values (Pence)
     const [manualShares, setManualShares] = useState(position.shares.toString());
-    const [manualPrice, setManualPrice] = useState(position.buyPriceAvg.toString());
+    const [manualPrice, setManualPrice] = useState('0'); // Initialized in useEffect
     const [manualFx, setManualFx] = useState(position.averageEntryFxRate?.toString() || '1.0');
     const [manualDate, setManualDate] = useState(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
 
     // Helper to fix floating point dust (e.g. 49.9999999 -> 50)
     const fixFloat = (num: number) => parseFloat(num.toFixed(6));
+
+    const isGBX = position.stock.currency === 'GBp';
+
+    // Scale Helpers: Storage (Pence) <-> UI (Pounds)
+    // If GBX: Storage 3282 (p) -> UI 32.82 (£)
+    const toUI = (storageVal: number) => isGBX ? storageVal / 100 : storageVal;
+    const toStorage = (uiVal: number) => isGBX ? uiVal * 100 : uiVal;
 
     // Reset state when modal opens
     useEffect(() => {
@@ -44,35 +52,39 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                 const sanitizedPurchases = position.purchases.map(p => ({
                     ...p,
                     shares: fixFloat(p.shares),
-                    price: fixFloat(p.price),
+                    price: fixFloat(toUI(p.price)), // Scale Price to UI
                     fxRate: fixFloat(p.fxRate)
                 }));
                 setPurchases(sanitizedPurchases);
             } else {
                 // If no history exists, create one initial "Legacy" entry from current totals
-                // so the user has something to edit or split up
                 const initialEntry: Purchase = {
                     id: crypto.randomUUID(),
                     date: position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
                     shares: fixFloat(position.shares),
-                    price: fixFloat(position.buyPriceAvg),
+                    price: fixFloat(toUI(position.buyPriceAvg)), // Scale Price to UI
                     fxRate: fixFloat(position.averageEntryFxRate || 1.0)
                 };
                 setPurchases([initialEntry]);
             }
 
-            // Still sync manuals just in case
+            // Sync manuals
             setManualShares(fixFloat(position.shares).toString());
-            setManualPrice(fixFloat(position.buyPriceAvg).toString());
+            setManualPrice(fixFloat(toUI(position.buyPriceAvg)).toString()); // Scale Price to UI
             setManualFx(fixFloat(position.averageEntryFxRate || 1.0).toString());
             setManualDate(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
         }
     }, [isOpen, position]);
 
     // Derived Totals from Purchases
+    // NOTE: `p.price` here is the UI VALUE (Pounds). 
+    // We need to convert back to Storage Value for correct "Average Price" calculation if we want the Result to be Storage Value?
+    // Wait, the Header Display wants "UI Value" (Pounds).
+    // The "onUpdate" wants "Storage Value" (Pence).
+    // Let's keep `purchases` state as UI Values.
     const calculatedTotals = purchases.reduce((acc, p) => {
         acc.shares += p.shares;
-        acc.totalNativeCost += p.shares * p.price;
+        acc.totalNativeCost += p.shares * p.price; // Cost in UI Units
         acc.totalCHFCost += p.shares * p.price * p.fxRate;
         // Find earliest date
         if (!acc.earliestDate || new Date(p.date) < new Date(acc.earliestDate)) {
@@ -81,7 +93,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
         return acc;
     }, { shares: 0, totalNativeCost: 0, totalCHFCost: 0, earliestDate: '' });
 
-    const calculatedAvgPrice = calculatedTotals.shares > 0 ? calculatedTotals.totalNativeCost / calculatedTotals.shares : 0;
+    const calculatedAvgPriceUI = calculatedTotals.shares > 0 ? calculatedTotals.totalNativeCost / calculatedTotals.shares : 0;
     const calculatedAvgFx = calculatedTotals.totalNativeCost > 0 ? calculatedTotals.totalCHFCost / calculatedTotals.totalNativeCost : 1.0;
 
     const handleAddPurchase = () => {
@@ -110,21 +122,31 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
         // If we have purchases, use the calculated values
         if (purchases.length > 0) {
+            // Must convert UI Prices back to Storage Prices for saving
+            // Deep copy and map
+            const purchasesToSave = purchases.map(p => ({
+                ...p,
+                price: toStorage(p.price)
+            }));
+
+            const finalAvgPrice = toStorage(calculatedAvgPriceUI);
+
             onUpdate(
                 position.id,
                 calculatedTotals.shares,
-                calculatedAvgPrice,
+                finalAvgPrice,
                 calculatedTotals.earliestDate,
                 calculatedAvgFx,
-                purchases
+                purchasesToSave
             );
         } else {
-            // Fallback (shouldn't really happen if we default to one entry, but safety first)
+            // Manual fallback
             const newShares = parseFloat(manualShares);
-            const newPrice = parseFloat(manualPrice);
+            const newPriceUI = parseFloat(manualPrice);
             const newFx = parseFloat(manualFx);
             const isoDate = manualDate ? new Date(manualDate).toISOString() : undefined;
-            onUpdate(position.id, newShares, newPrice, isoDate, newFx, []);
+
+            onUpdate(position.id, newShares, toStorage(newPriceUI), isoDate, newFx, []);
         }
         onClose();
     };
@@ -175,7 +197,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                 {calculatedTotals.shares.toLocaleString('de-CH')} Stk
                             </div>
                             <div className="text-[10px] text-muted-foreground">
-                                Ø {calculatedAvgPrice.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {position.stock.currency}
+                                Ø {calculatedAvgPriceUI.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {isGBX ? 'GBP' : position.stock.currency}
                             </div>
                         </div>
                     </div>
@@ -206,7 +228,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                     </div>
                                     {/* Price */}
                                     <div className="col-span-3">
-                                        <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Preis ({position.stock.currency})</label>
+                                        <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Preis ({isGBX ? 'GBP' : position.stock.currency})</label>
                                         <DecimalInput
                                             value={purchase.price}
                                             onChange={(val) => handleUpdatePurchase(purchase.id, 'price', val)}

@@ -112,10 +112,14 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
 
         if (activeTab === 'search') {
             if (!selectedStock || !shares || !buyPrice) return;
+
+            const isGBX = selectedStock.currency === 'GBp';
+            const finalBuyPrice = isGBX ? parseFloat(buyPrice) * 100 : parseFloat(buyPrice);
+
             onAdd({
                 stockId: selectedStock.id,
                 shares: parseFloat(shares),
-                buyPriceAvg: parseFloat(buyPrice),
+                buyPriceAvg: finalBuyPrice,
                 averageEntryFxRate: entryFxRate,
             });
         } else {
@@ -136,11 +140,14 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                 dividendYield: newStock.dividendYield ? parseFloat(newStock.dividendYield) : undefined,
             });
 
+            const isGBX = newStock.currency === 'GBp';
+            const finalBuyPrice = isGBX ? parseFloat(buyPrice) * 100 : parseFloat(buyPrice);
+
             // Create position
             onAdd({
                 stockId: stockId,
                 shares: parseFloat(shares),
-                buyPriceAvg: parseFloat(buyPrice),
+                buyPriceAvg: finalBuyPrice,
                 averageEntryFxRate: entryFxRate,
             });
         }
