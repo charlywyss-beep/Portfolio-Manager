@@ -490,7 +490,7 @@ export function Dashboard() {
                                         <th className="px-2 py-2 text-right text-xs text-violet-500 font-bold w-[18%]">ETFs</th>
                                         <th className="px-2 py-2 text-right text-xs text-green-500 font-bold w-[18%]">Bank</th>
                                         <th className="px-2 py-2 text-right text-xs font-bold w-[18%]">Gesamt</th>
-                                        <th className="px-3 py-2 text-center w-[60px]"></th>
+                                        <th className="px-3 py-2 text-center w-[60px] sticky right-0 bg-background z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">
@@ -511,7 +511,7 @@ export function Dashboard() {
                                             <td className="px-2 py-2 text-right font-bold text-xs text-foreground whitespace-nowrap">
                                                 {formatCurrency(entry.totalValue, 'CHF').replace('CHF', '')}
                                             </td>
-                                            <td className="px-3 py-2 text-center">
+                                            <td className="px-3 py-2 text-center sticky right-0 bg-background group-hover:bg-muted z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] transition-colors">
                                                 <div className="flex items-center justify-center gap-1">
                                                     <button
                                                         onClick={() => {
