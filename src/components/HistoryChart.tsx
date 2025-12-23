@@ -4,12 +4,12 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 
-type TimeRange = '1W' | '1M' | '6M' | '1Y' | '5Y' | '10Y' | 'MAX';
+type TimeRange = '1W' | '1M' | '6M' | '1Y' | '5Y';
 
 export function HistoryChart() {
     const { history } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
-    const [timeRange, setTimeRange] = useState<TimeRange>('MAX');
+    const [timeRange, setTimeRange] = useState<TimeRange>('1Y');
     const [hasMounted, setHasMounted] = useState(false);
 
     useEffect(() => {
@@ -32,17 +32,6 @@ export function HistoryChart() {
         else if (timeRange === '6M') startDate.setMonth(lastDate.getMonth() - 6);
         else if (timeRange === '1Y') startDate.setFullYear(lastDate.getFullYear() - 1);
         else if (timeRange === '5Y') startDate.setFullYear(lastDate.getFullYear() - 5);
-        else if (timeRange === '10Y') startDate.setFullYear(lastDate.getFullYear() - 10);
-        else if (timeRange === 'MAX') {
-            const firstDate = new Date(sortedHistory[0].date);
-            startDate = new Date(firstDate);
-            // Default to at least 14 days view if sparse
-            const diffTime = Math.abs(lastDate.getTime() - startDate.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            if (diffDays < 14) {
-                startDate.setDate(lastDate.getDate() - 14);
-            }
-        }
 
         // Generate all dates from startDate to lastDate
         const filledData = [];
@@ -130,7 +119,7 @@ export function HistoryChart() {
         <div className="w-full flex flex-col h-full">
             <div className="flex justify-end mb-4">
                 <div className="flex bg-muted/50 p-1 rounded-lg">
-                    {(['1W', '1M', '6M', '1Y', '5Y', '10Y', 'MAX'] as const).map((range) => (
+                    {(['1W', '1M', '6M', '1Y', '5Y'] as const).map((range) => (
                         <button
                             key={range}
                             onClick={() => setTimeRange(range)}
