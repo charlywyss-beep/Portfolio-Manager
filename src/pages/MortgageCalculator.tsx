@@ -19,13 +19,13 @@ export const MortgageCalculator = () => {
     const [yearlyAmortization, setYearlyAmortization] = useState<number>(10000); // 1% typical
 
     const [tranches, setTranches] = useState<Tranche[]>([
-        { id: '1', name: 'Festhypothek 5J', amount: 400000, rate: 1.5 },
-        { id: '2', name: 'SARON / Variabel', amount: 200000, rate: 2.1 },
+        { id: '1', name: 'Festhypothek 5 Jahre', amount: 400000, rate: 1.5 },
+        { id: '2', name: 'SARON Indikativ', amount: 200000, rate: 2.1 },
     ]);
 
     const addTranche = () => {
         const newId = Math.random().toString(36).substr(2, 9);
-        setTranches([...tranches, { id: newId, name: 'Neues Tranche', amount: 0, rate: 2.0 }]);
+        setTranches([...tranches, { id: newId, name: 'Festhypothek 2 Jahre', amount: 0, rate: 2.0 }]);
     };
 
     const updateTranche = (id: string, field: keyof Tranche, value: string | number) => {
@@ -159,13 +159,29 @@ export const MortgageCalculator = () => {
                                 <div key={tranche.id} className="grid grid-cols-12 gap-2 items-end bg-accent/30 p-3 rounded-lg border border-transparent hover:border-border transition-all">
                                     <div className="col-span-5 sm:col-span-5 space-y-1">
                                         <label className="text-xs text-muted-foreground">Bezeichnung</label>
-                                        <input
-                                            type="text"
+                                        <select
                                             value={tranche.name}
                                             onChange={(e) => updateTranche(tranche.id, 'name', e.target.value)}
                                             className={inputClass}
-                                            placeholder="z.B. Festhypothek"
-                                        />
+                                        >
+                                            <option value="" disabled>Bitte wählen...</option>
+                                            <optgroup label="SARON / Markt">
+                                                <option value="SARON Indikativ">SARON Indikativ</option>
+                                                <option value="SARON HYPO 3 Jahre">SARON HYPO 3 Jahre</option>
+                                            </optgroup>
+                                            <optgroup label="Festhypotheken">
+                                                <option value="Festhypothek 2 Jahre">Festhypothek 2 Jahre</option>
+                                                <option value="Festhypothek 3 Jahre">Festhypothek 3 Jahre</option>
+                                                <option value="Festhypothek 4 Jahre">Festhypothek 4 Jahre</option>
+                                                <option value="Festhypothek 5 Jahre">Festhypothek 5 Jahre</option>
+                                                <option value="Festhypothek 6 Jahre">Festhypothek 6 Jahre</option>
+                                                <option value="Festhypothek 7 Jahre">Festhypothek 7 Jahre</option>
+                                                {/* Extended for completeness */}
+                                                <option value="Festhypothek 8 Jahre">Festhypothek 8 Jahre</option>
+                                                <option value="Festhypothek 9 Jahre">Festhypothek 9 Jahre</option>
+                                                <option value="Festhypothek 10 Jahre">Festhypothek 10 Jahre</option>
+                                            </optgroup>
+                                        </select>
                                     </div>
                                     <div className="col-span-4 sm:col-span-3 space-y-1">
                                         <label className="text-xs text-muted-foreground">Betrag</label>
