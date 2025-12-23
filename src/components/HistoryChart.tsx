@@ -38,8 +38,9 @@ export function HistoryChart() {
     // Dynamic X-Axis Formatter
     const formatXAxis = (dateStr: string) => {
         const date = new Date(dateStr);
-        if (timeRange === '1W' || timeRange === '1M' || timeRange === '6M') {
-            return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+        // Show full date if data points are sparse or range is short
+        if (filteredData.length <= 15 || ['1W', '1M', '6M', '1Y'].includes(timeRange)) {
+            return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
         }
         return date.getFullYear().toString();
     };

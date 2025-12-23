@@ -474,9 +474,9 @@ export function Dashboard() {
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 2xl:grid-cols-3 gap-8">
+                    <div className="flex flex-col gap-8">
                         {/* Chart */}
-                        <div className="2xl:col-span-2">
+                        <div className="w-full">
                             <HistoryChart />
                         </div>
 
