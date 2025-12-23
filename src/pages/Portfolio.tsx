@@ -244,15 +244,23 @@ export function Portfolio() {
                                                 {pos.gainLossTotal >= 0 ? '+' : ''}{formatCurrency(pos.gainLossTotal, pos.stock.currency, false)}
                                             </span>
                                             {pos.stock.currency !== 'CHF' && (
-                                                <div
-                                                    className={cn(
-                                                        "text-xs font-medium whitespace-nowrap mt-0.5 border-b border-dotted border-border/50 cursor-help",
-                                                        pos.gainLossTotalCHF >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                                    )}
-                                                    title={`FX-Effekt: ${pos.forexImpactCHF >= 0 ? '+' : ''}${formatCurrency(pos.forexImpactCHF, 'CHF', false)}`}
-                                                >
-                                                    {pos.gainLossTotalCHF >= 0 ? '+' : ''}{formatCurrency(pos.gainLossTotalCHF, 'CHF', false)}
-                                                </div>
+                                                <>
+                                                    <div
+                                                        className={cn(
+                                                            "text-xs font-medium whitespace-nowrap mt-0.5",
+                                                            pos.gainLossTotalCHF >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                                        )}
+                                                        title="Gewinn/Verlust in CHF (inkl. Währungseffekt)"
+                                                    >
+                                                        {pos.gainLossTotalCHF >= 0 ? '+' : ''}{formatCurrency(pos.gainLossTotalCHF, 'CHF', false)}
+                                                    </div>
+                                                    <div className={cn(
+                                                        "text-[10px] whitespace-nowrap mt-0.5",
+                                                        pos.forexImpactCHF >= 0 ? "text-emerald-600/80 dark:text-emerald-400/80" : "text-rose-600/80 dark:text-rose-400/80"
+                                                    )} title="Anteil Währungsgewinn/-verlust">
+                                                        (Währung: {pos.forexImpactCHF >= 0 ? '+' : ''}{formatCurrency(pos.forexImpactCHF, 'CHF', false)})
+                                                    </div>
+                                                </>
                                             )}
                                         </div>
                                     </td>
