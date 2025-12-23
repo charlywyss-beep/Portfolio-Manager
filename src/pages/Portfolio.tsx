@@ -77,7 +77,7 @@ export function Portfolio() {
 
 
 
-    const handleUpdate = (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number) => {
+    const handleUpdate = (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number, newPurchases?: any[]) => {
         const updates: any = { shares: newShares };
         if (newAvgPrice !== undefined) {
             updates.buyPriceAvg = newAvgPrice;
@@ -87,6 +87,9 @@ export function Portfolio() {
         }
         if (newFxRate !== undefined) {
             updates.averageEntryFxRate = newFxRate;
+        }
+        if (newPurchases !== undefined) {
+            updates.purchases = newPurchases;
         }
         updatePosition(id, updates);
     };

@@ -176,6 +176,21 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         setPositions((prev) => {
             const existingPosition = prev.find(p => p.stockId === position.stockId);
 
+            // Construct new purchase entry from the incoming addition
+            const newPurchaseEntry: import('../types').Purchase = {
+                id: crypto.randomUUID(),
+                date: position.buyDate || new Date().toISOString().split('T')[0],
+                shares: position.shares,
+                price: position.buyPriceAvg,
+                fxRate: position.averageEntryFxRate || 1
+            };
+
+            // Incoming purchases (if any exist, e.g. from bulk import or migration)
+            // If the incoming position HAS a history array, use that instead of creating a single entry
+            const incomingPurchases = position.purchases && position.purchases.length > 0
+                ? position.purchases
+                : [newPurchaseEntry];
+
             if (existingPosition) {
                 // Merge with existing position (Calculate weighted average price AND FX rate)
                 const totalShares = existingPosition.shares + position.shares;
@@ -183,7 +198,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 const newCostNative = position.shares * position.buyPriceAvg;
                 const totalCostNative = oldCostNative + newCostNative;
 
-                const newAvgPrice = totalCostNative / totalShares;
+                const newAvgPrice = totalShares > 0 ? totalCostNative / totalShares : 0;
 
                 // Weighted FX Rate Calculation
                 // If old position doesn't have FX rate, assume 1.0 (best guess fallback) until corrected
@@ -191,10 +206,32 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 const newFx = position.averageEntryFxRate || 1;
 
                 const totalCostCHF = (oldCostNative * oldFx) + (newCostNative * newFx);
-                const newAvgFx = totalCostCHF / totalCostNative;
+                const newAvgFx = totalCostNative > 0 ? totalCostCHF / totalCostNative : 1.0;
+
+                // Merge History
+                const existingPurchases = existingPosition.purchases || [];
+                // If existing position has no history (legacy data), create a synthetic entry for the "rest"
+                let mergedPurchases = [...existingPurchases];
+                if (existingPurchases.length === 0 && existingPosition.shares > 0) {
+                    mergedPurchases.push({
+                        id: crypto.randomUUID(),
+                        date: existingPosition.buyDate || new Date().toISOString().split('T')[0],
+                        shares: existingPosition.shares,
+                        price: existingPosition.buyPriceAvg,
+                        fxRate: existingPosition.averageEntryFxRate || 1
+                    });
+                }
+                mergedPurchases = [...mergedPurchases, ...incomingPurchases];
+
 
                 return prev.map(p => p.id === existingPosition.id
-                    ? { ...p, shares: totalShares, buyPriceAvg: newAvgPrice, averageEntryFxRate: newAvgFx }
+                    ? {
+                        ...p,
+                        shares: totalShares,
+                        buyPriceAvg: newAvgPrice,
+                        averageEntryFxRate: newAvgFx,
+                        purchases: mergedPurchases
+                    }
                     : p
                 );
             }
@@ -204,7 +241,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 ...position,
                 id: `pos_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 // Ensure new position gets the FX rate (or 1 as default if somehow missing)
-                averageEntryFxRate: position.averageEntryFxRate || 1
+                averageEntryFxRate: position.averageEntryFxRate || 1,
+                purchases: incomingPurchases
             };
             return [...prev, newPosition];
         });

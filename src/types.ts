@@ -33,6 +33,15 @@ export interface Position {
     buyPriceAvg: number; // Average buy price
     buyDate?: string; // Date of first purchase (ISO format)
     averageEntryFxRate?: number; // NEW: Weighted Average Exchange Rate at time of purchase
+    purchases?: Purchase[]; // NEW: History of individual purchases for this position
+}
+
+export interface Purchase {
+    id: string;
+    date: string; // ISO format
+    shares: number;
+    price: number;
+    fxRate: number;
 }
 
 // Bankguthaben (e.g. Sparkonto / Privatkonto)

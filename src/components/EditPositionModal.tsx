@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import { X, Save, Trash2 } from 'lucide-react';
-import type { Stock } from '../types';
-import { cn } from '../utils';
-import { usePortfolio } from '../context/PortfolioContext';
+import { X, Save, Trash2, Plus } from 'lucide-react';
+import type { Stock, Purchase } from '../types';
 
 interface EditPositionModalProps {
     isOpen: boolean;
@@ -14,48 +12,108 @@ interface EditPositionModalProps {
         buyPriceAvg: number;
         buyDate?: string;
         averageEntryFxRate?: number;
+        purchases?: Purchase[];
     };
-    onUpdate: (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number) => void;
+    onUpdate: (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number, newPurchases?: Purchase[]) => void;
     onDelete: (id: string) => void;
 }
 
 export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelete }: EditPositionModalProps) {
-    const { updateStock, stocks } = usePortfolio();
-    const currentStock = stocks.find(s => s.id === position.stock.id) || position.stock;
+    // Unused: const { updateStock, stocks } = usePortfolio();
+    // Unused: const currentStock = stocks.find(s => s.id === position.stock.id) || position.stock;
 
-    // Local State for Form Fields
-    const [shares, setShares] = useState(position.shares.toString());
-    const [avgPrice, setAvgPrice] = useState(position.buyPriceAvg.toString());
-    const [avgFxRate, setAvgFxRate] = useState(position.averageEntryFxRate?.toString() || '');
-    const [buyDate, setBuyDate] = useState(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
+    // State for individual purchases
+    const [purchases, setPurchases] = useState<Purchase[]>([]);
 
-    // Reset state when modal opens or position changes
+    // Fallback for "Manual Overrides" if user deletes all purchases but wants to set totals manually
+    const [manualShares, setManualShares] = useState(position.shares.toString());
+    const [manualPrice, setManualPrice] = useState(position.buyPriceAvg.toString());
+    const [manualFx, setManualFx] = useState(position.averageEntryFxRate?.toString() || '1.0');
+    const [manualDate, setManualDate] = useState(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
+
+    // Reset state when modal opens
     useEffect(() => {
         if (isOpen) {
-            setShares(position.shares.toString());
-            setAvgPrice(position.buyPriceAvg.toString());
-            setAvgFxRate(position.averageEntryFxRate?.toString() || '');
-            setBuyDate(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
+            if (position.purchases && position.purchases.length > 0) {
+                setPurchases(position.purchases);
+            } else {
+                // If no history exists, create one initial "Legacy" entry from current totals
+                // so the user has something to edit or split up
+                const initialEntry: Purchase = {
+                    id: crypto.randomUUID(),
+                    date: position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                    shares: position.shares,
+                    price: position.buyPriceAvg,
+                    fxRate: position.averageEntryFxRate || 1.0
+                };
+                setPurchases([initialEntry]);
+            }
+
+            // Still sync manuals just in case
+            setManualShares(position.shares.toString());
+            setManualPrice(position.buyPriceAvg.toString());
+            setManualFx(position.averageEntryFxRate?.toString() || '1.0');
+            setManualDate(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
         }
     }, [isOpen, position]);
 
-    if (!isOpen) return null;
+    // Derived Totals from Purchases
+    const calculatedTotals = purchases.reduce((acc, p) => {
+        acc.shares += p.shares;
+        acc.totalNativeCost += p.shares * p.price;
+        acc.totalCHFCost += p.shares * p.price * p.fxRate;
+        // Find earliest date
+        if (!acc.earliestDate || new Date(p.date) < new Date(acc.earliestDate)) {
+            acc.earliestDate = p.date;
+        }
+        return acc;
+    }, { shares: 0, totalNativeCost: 0, totalCHFCost: 0, earliestDate: '' });
+
+    const calculatedAvgPrice = calculatedTotals.shares > 0 ? calculatedTotals.totalNativeCost / calculatedTotals.shares : 0;
+    const calculatedAvgFx = calculatedTotals.totalNativeCost > 0 ? calculatedTotals.totalCHFCost / calculatedTotals.totalNativeCost : 1.0;
+
+    const handleAddPurchase = () => {
+        const newPurchase: Purchase = {
+            id: crypto.randomUUID(),
+            date: new Date().toISOString().split('T')[0],
+            shares: 0,
+            price: 0,
+            fxRate: 1.0
+        };
+        setPurchases([...purchases, newPurchase]);
+    };
+
+    const handleUpdatePurchase = (id: string, field: keyof Purchase, value: any) => {
+        setPurchases(purchases.map(p =>
+            p.id === id ? { ...p, [field]: value } : p
+        ));
+    };
+
+    const handleRemovePurchase = (id: string) => {
+        setPurchases(purchases.filter(p => p.id !== id));
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        
-        const newShares = parseFloat(shares);
-        const newPrice = parseFloat(avgPrice);
-        const newFx = avgFxRate ? parseFloat(avgFxRate) : undefined;
-        // Ensure date is valid ISO string if provided
-        const isoDate = buyDate ? new Date(buyDate).toISOString() : undefined;
 
-        if (newShares <= 0) {
-            handleDelete();
-            return;
+        // If we have purchases, use the calculated values
+        if (purchases.length > 0) {
+            onUpdate(
+                position.id,
+                calculatedTotals.shares,
+                calculatedAvgPrice,
+                calculatedTotals.earliestDate,
+                calculatedAvgFx,
+                purchases
+            );
+        } else {
+            // Fallback (shouldn't really happen if we default to one entry, but safety first)
+            const newShares = parseFloat(manualShares);
+            const newPrice = parseFloat(manualPrice);
+            const newFx = parseFloat(manualFx);
+            const isoDate = manualDate ? new Date(manualDate).toISOString() : undefined;
+            onUpdate(position.id, newShares, newPrice, isoDate, newFx, []);
         }
-
-        onUpdate(position.id, newShares, newPrice, isoDate, newFx);
         onClose();
     };
 
@@ -66,29 +124,29 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
         }
     };
 
+    if (!isOpen) return null;
+
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-border">
                     <div>
                         <h2 className="text-xl font-bold">Position bearbeiten</h2>
-                        <p className="text-xs text-muted-foreground mt-1">Stammdaten manuell korrigieren</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Erfassen Sie hier alle einzelnen Käufe. Der Durchschnitt wird automatisch berechnet.
+                        </p>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-muted rounded-lg transition-colors"
-                        title="Schließen"
-                    >
+                    <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors" title="Schließen">
                         <X className="size-5" />
                     </button>
                 </div>
 
                 {/* Content */}
-                <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-6">
-                    
-                    {/* Stock Info (Read Only) */}
-                    <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
+                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto flex flex-col">
+
+                    {/* Stock Info Bar */}
+                    <div className="p-4 bg-muted/30 border-b border-border flex items-center gap-3">
                         <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 shrink-0">
                             {position.stock.symbol.slice(0, 2)}
                         </div>
@@ -98,122 +156,100 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                 {position.stock.symbol} • Aktuell: {position.stock.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: position.stock.currency })}
                             </div>
                         </div>
+                        {/* Live Calculation Badge */}
+                        <div className="text-right px-4 py-2 bg-primary/5 rounded-lg border border-primary/10">
+                            <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">NEUER BESTAND</div>
+                            <div className="font-mono font-bold text-lg text-primary">
+                                {calculatedTotals.shares.toLocaleString('de-CH')} Stk
+                            </div>
+                            <div className="text-[10px] text-muted-foreground">
+                                Ø {calculatedAvgPrice.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {position.stock.currency}
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="space-y-4">
-                        {/* shares */}
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">
-                                Anzahl Bestand (Stück)
-                            </label>
-                            <input
-                                type="number"
-                                step="0.000001"
-                                min="0"
-                                required
-                                value={shares}
-                                onChange={(e) => setShares(e.target.value)}
-                                className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                            />
-                        </div>
-
-                        {/* Average Price */}
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">
-                                Ø Kaufpreis ({position.stock.currency === 'GBp' ? 'GBP' : position.stock.currency})
-                            </label>
-                            <input
-                                type="number"
-                                step="0.000001"
-                                min="0"
-                                required
-                                value={avgPrice}
-                                onChange={(e) => setAvgPrice(e.target.value)}
-                                className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                            />
-                            <p className="text-[10px] text-muted-foreground">
-                                Durchschnittlicher Einstandspreis pro Stück in Originalwährung.
-                            </p>
-                        </div>
-
-                        {/* FX Rate */}
-                        {position.stock.currency !== 'CHF' && (
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">
-                                    Ø Wechselkurs (CHF)
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        step="0.000001"
-                                        min="0.000001"
-                                        placeholder="1.0"
-                                        value={avgFxRate}
-                                        onChange={(e) => setAvgFxRate(e.target.value)}
-                                        className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 pr-12"
-                                    />
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">
-                                        CHF
+                    {/* Purchases List */}
+                    <div className="p-6 space-y-4 flex-1">
+                        <div className="space-y-3">
+                            {purchases.map((purchase) => (
+                                <div key={purchase.id} className="grid grid-cols-12 gap-3 items-end bg-card p-3 rounded-lg border border-border shadow-sm group hover:border-primary/30 transition-colors">
+                                    {/* Date */}
+                                    <div className="col-span-3">
+                                        <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Datum</label>
+                                        <input
+                                            type="date"
+                                            value={purchase.date}
+                                            onChange={(e) => handleUpdatePurchase(purchase.id, 'date', e.target.value)}
+                                            className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary"
+                                        />
+                                    </div>
+                                    {/* Shares */}
+                                    <div className="col-span-2">
+                                        <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Stück</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.000001"
+                                            value={purchase.shares}
+                                            onChange={(e) => handleUpdatePurchase(purchase.id, 'shares', parseFloat(e.target.value))}
+                                            className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary"
+                                        />
+                                    </div>
+                                    {/* Price */}
+                                    <div className="col-span-3">
+                                        <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Preis ({position.stock.currency})</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.000001"
+                                            value={purchase.price}
+                                            onChange={(e) => handleUpdatePurchase(purchase.id, 'price', parseFloat(e.target.value))}
+                                            className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary"
+                                        />
+                                    </div>
+                                    {/* FX Rate */}
+                                    <div className="col-span-3">
+                                        <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Wechselkurs (CHF)</label>
+                                        <input
+                                            type="number"
+                                            min="0.000001"
+                                            step="0.000001"
+                                            placeholder="1.0"
+                                            value={purchase.fxRate}
+                                            disabled={position.stock.currency === 'CHF'}
+                                            onChange={(e) => handleUpdatePurchase(purchase.id, 'fxRate', parseFloat(e.target.value))}
+                                            className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary disabled:opacity-50"
+                                        />
+                                    </div>
+                                    {/* Delete Row */}
+                                    <div className="col-span-1 flex justify-center pb-1">
+                                        {purchases.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemovePurchase(purchase.id)}
+                                                className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                                title="Eintrag entfernen"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-muted-foreground">
-                                    Gewichteter Durchschnittskurs aller Käufe (1 {position.stock.currency} = ? CHF).
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Buy Date */}
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium flex items-center gap-2">
-                                Datum Erster Kauf <span className="text-xs text-muted-foreground font-normal">(Optional)</span>
-                            </label>
-                            <input
-                                type="date"
-                                value={buyDate}
-                                onChange={(e) => setBuyDate(e.target.value)}
-                                className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                            />
-                            <p className="text-[10px] text-muted-foreground">
-                                Dient als Startpunkt für die Performance-Berechnung im Chart.
-                            </p>
+                            ))}
                         </div>
+
+                        <button
+                            type="button"
+                            onClick={handleAddPurchase}
+                            className="w-full py-2 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
+                        >
+                            <Plus className="size-4" />
+                            Weiteren Kauf hinzufügen
+                        </button>
                     </div>
 
-                    {/* ETF Options (Only if ETF) */}
-                    {currentStock?.type === 'etf' && (
-                        <div className="space-y-2 pt-4 border-t border-border">
-                            <label className="text-sm font-medium">Ausschüttung (ETF Stammdaten)</label>
-                            <div className="flex bg-muted rounded-lg p-1 border border-border">
-                                <button
-                                    type="button"
-                                    onClick={() => updateStock(currentStock.id, { distributionPolicy: 'distributing' })}
-                                    className={cn(
-                                        "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
-                                        currentStock.distributionPolicy !== 'accumulating'
-                                            ? "bg-background text-foreground shadow-sm"
-                                            : "text-muted-foreground hover:text-foreground"
-                                    )}
-                                >
-                                    Ausschüttend
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => updateStock(currentStock.id, { distributionPolicy: 'accumulating' })}
-                                    className={cn(
-                                        "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
-                                        currentStock.distributionPolicy === 'accumulating'
-                                            ? "bg-background text-foreground shadow-sm"
-                                            : "text-muted-foreground hover:text-foreground"
-                                    )}
-                                >
-                                    Thesaurierend
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-3 pt-4 border-t border-border mt-6">
+                    {/* Footer Actions */}
+                    <div className="flex items-center gap-3 p-6 border-t border-border bg-muted/10">
                         <button
                             type="button"
                             onClick={handleDelete}
@@ -239,7 +275,6 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                             </button>
                         </div>
                     </div>
-
                 </form>
             </div>
         </div>
