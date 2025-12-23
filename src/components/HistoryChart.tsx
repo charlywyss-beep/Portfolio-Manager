@@ -79,7 +79,7 @@ export function HistoryChart() {
     const formatXAxis = (dateStr: string) => {
         const date = new Date(dateStr);
         // Show full date if data points are sparse or range is short
-        if (timeRange === '1W' || timeRange === '1M' || timeRange === '6M' || timeRange === '1Y' || timeRange === 'MAX') {
+        if (timeRange === '1W' || timeRange === '1M' || timeRange === '6M' || timeRange === '1Y') {
             return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
         }
         return date.getFullYear().toString();
