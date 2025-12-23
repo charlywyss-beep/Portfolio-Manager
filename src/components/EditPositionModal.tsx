@@ -237,7 +237,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                     </div>
                                     {/* FX Rate */}
                                     <div className="col-span-3">
-                                        <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Wechselkurs (CHF)</label>
+                                        <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Wechselkurs (CHF pro 1 {isGBX ? 'GBP' : position.stock.currency})</label>
                                         <DecimalInput
                                             value={purchase.fxRate}
                                             onChange={(val) => handleUpdatePurchase(purchase.id, 'fxRate', val)}

@@ -50,13 +50,21 @@ export function Portfolio() {
         // Fix for GBp: buyValue is Pence, but entryFxRate is per Pound.
         // We must normalize buyValue to Pounds for the CHF Cost calculation.
         const normalizedBuyValue = stock.currency === 'GBp' ? buyValue / 100 : buyValue;
-        const buyValueCHF = normalizedBuyValue * entryFxRate;
+
+        // Auto-Correct for Legacy GBP Rates (if stored as 0.93 instead of 1.07)
+        // GBP is stronger than CHF, so rate should be > 1.0.
+        let effectiveEntryRate = entryFxRate;
+        if (stock.currency === 'GBp' && entryFxRate < 1.0 && entryFxRate > 0) {
+            effectiveEntryRate = 1 / entryFxRate;
+        }
+
+        const buyValueCHF = normalizedBuyValue * effectiveEntryRate;
 
         const gainLossTotalCHF = currentValueCHF - buyValueCHF;
         // forexImpactCHF calculated below using normalized values
 
         const normalizedCurrentValue = stock.currency === 'GBp' ? currentValue / 100 : currentValue;
-        const currentValAtEntryFx = normalizedCurrentValue * entryFxRate; // What value would be if FX never changed.
+        const currentValAtEntryFx = normalizedCurrentValue * effectiveEntryRate; // What value would be if FX never changed.
 
         // FX Impact calculation
         const forexImpactCHF = currentValueCHF - currentValAtEntryFx;
@@ -75,6 +83,7 @@ export function Portfolio() {
             dailyChange,
             dailyChangePercent,
             dailyValueChange,
+            buyValueCHF, // New: Fixes Invest Column
             gainLossTotalCHF, // New
             forexImpactCHF // New
         };
