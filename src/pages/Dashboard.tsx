@@ -485,33 +485,18 @@ export function Dashboard() {
                             <table className="w-full text-sm text-left min-w-[500px]">
                                 <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border">
                                     <tr>
+                                        <th className="px-3 py-2 text-center w-[60px]"></th>
                                         <th className="px-3 py-2 text-xs w-[100px]">Datum</th>
                                         <th className="px-2 py-2 text-right text-xs text-blue-500 font-bold w-[18%]">Aktien</th>
                                         <th className="px-2 py-2 text-right text-xs text-violet-500 font-bold w-[18%]">ETFs</th>
                                         <th className="px-2 py-2 text-right text-xs text-green-500 font-bold w-[18%]">Bank</th>
                                         <th className="px-2 py-2 text-right text-xs font-bold w-[18%]">Gesamt</th>
-                                        <th className="px-3 py-2 text-center w-[60px] sticky right-0 bg-background z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">
                                     {history.map((entry) => (
                                         <tr key={entry.id} className="hover:bg-muted/30 transition-colors group">
-                                            <td className="px-3 py-2 font-medium text-xs whitespace-nowrap">
-                                                {new Date(entry.date).toLocaleDateString('de-DE')}
-                                            </td>
-                                            <td className="px-2 py-2 text-right text-xs text-blue-500 font-medium">
-                                                {entry.stockValue ? formatCurrency(entry.stockValue, 'CHF').replace('CHF', '') : '-'}
-                                            </td>
-                                            <td className="px-2 py-2 text-right text-xs text-violet-500 font-medium">
-                                                {entry.etfValue ? formatCurrency(entry.etfValue, 'CHF').replace('CHF', '') : '-'}
-                                            </td>
-                                            <td className="px-2 py-2 text-right text-xs text-green-500 font-medium">
-                                                {entry.cashValue ? formatCurrency(entry.cashValue, 'CHF').replace('CHF', '') : '-'}
-                                            </td>
-                                            <td className="px-2 py-2 text-right font-bold text-xs text-foreground whitespace-nowrap">
-                                                {formatCurrency(entry.totalValue, 'CHF').replace('CHF', '')}
-                                            </td>
-                                            <td className="px-3 py-2 text-center sticky right-0 bg-background group-hover:bg-muted z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] transition-colors">
+                                            <td className="px-3 py-2 text-center">
                                                 <div className="flex items-center justify-center gap-1">
                                                     <button
                                                         onClick={() => {
@@ -535,6 +520,21 @@ export function Dashboard() {
                                                         <Trash2 className="size-3" />
                                                     </button>
                                                 </div>
+                                            </td>
+                                            <td className="px-3 py-2 font-medium text-xs whitespace-nowrap">
+                                                {new Date(entry.date).toLocaleDateString('de-DE')}
+                                            </td>
+                                            <td className="px-2 py-2 text-right text-xs text-blue-500 font-medium">
+                                                {entry.stockValue ? formatCurrency(entry.stockValue, 'CHF').replace('CHF', '') : '-'}
+                                            </td>
+                                            <td className="px-2 py-2 text-right text-xs text-violet-500 font-medium">
+                                                {entry.etfValue ? formatCurrency(entry.etfValue, 'CHF').replace('CHF', '') : '-'}
+                                            </td>
+                                            <td className="px-2 py-2 text-right text-xs text-green-500 font-medium">
+                                                {entry.cashValue ? formatCurrency(entry.cashValue, 'CHF').replace('CHF', '') : '-'}
+                                            </td>
+                                            <td className="px-2 py-2 text-right font-bold text-xs text-foreground whitespace-nowrap">
+                                                {formatCurrency(entry.totalValue, 'CHF').replace('CHF', '')}
                                             </td>
                                         </tr>
                                     ))}
