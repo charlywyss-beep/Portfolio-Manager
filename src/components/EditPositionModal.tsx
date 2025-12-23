@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { X, Save, Trash2, Plus } from 'lucide-react';
 import type { Stock, Purchase } from '../types';
 
+import { DecimalInput } from './DecimalInput';
+
 interface EditPositionModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -196,38 +198,28 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                     {/* Shares */}
                                     <div className="col-span-2">
                                         <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Stück</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            step="0.000001"
+                                        <DecimalInput
                                             value={purchase.shares}
-                                            onChange={(e) => handleUpdatePurchase(purchase.id, 'shares', parseFloat(e.target.value))}
+                                            onChange={(val) => handleUpdatePurchase(purchase.id, 'shares', val)}
                                             className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary"
                                         />
                                     </div>
                                     {/* Price */}
                                     <div className="col-span-3">
                                         <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Preis ({position.stock.currency})</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            step="0.000001"
+                                        <DecimalInput
                                             value={purchase.price}
-                                            onChange={(e) => handleUpdatePurchase(purchase.id, 'price', parseFloat(e.target.value))}
+                                            onChange={(val) => handleUpdatePurchase(purchase.id, 'price', val)}
                                             className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary"
                                         />
                                     </div>
                                     {/* FX Rate */}
                                     <div className="col-span-3">
                                         <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Wechselkurs (CHF)</label>
-                                        <input
-                                            type="number"
-                                            min="0.000001"
-                                            step="0.000001"
-                                            placeholder="1.0"
+                                        <DecimalInput
                                             value={purchase.fxRate}
+                                            onChange={(val) => handleUpdatePurchase(purchase.id, 'fxRate', val)}
                                             disabled={position.stock.currency === 'CHF'}
-                                            onChange={(e) => handleUpdatePurchase(purchase.id, 'fxRate', parseFloat(e.target.value))}
                                             className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary disabled:opacity-50"
                                         />
                                     </div>
