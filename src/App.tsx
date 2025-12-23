@@ -113,9 +113,9 @@ function App() {
               <NavItem to="/" icon={LayoutDashboard} label="Übersicht" />
               <NavItem to="/portfolio" icon={Wallet} label="Meine Positionen" />
               <NavItem to="/dividends" icon={TrendingUp} label="Dividenden Planer" />
-              <NavItem to="/mortgage" icon={Landmark} label="Hypotheken" />
               <NavItem to="/watchlist" icon={Eye} label="Watchlist" />
               <NavItem to="/calculator" icon={Calculator} label="Kauf / Verkauf" />
+              <NavItem to="/mortgage" icon={Landmark} label="Hypotheken" />
 
 
 
