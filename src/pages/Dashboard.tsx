@@ -512,7 +512,7 @@ export function Dashboard() {
                                                 {formatCurrency(entry.totalValue, 'CHF').replace('CHF', '')}
                                             </td>
                                             <td className="px-3 py-2 text-center">
-                                                <div className="flex items-center justify-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                                                <div className="flex items-center justify-center gap-1">
                                                     <button
                                                         onClick={() => {
                                                             setEditingHistoryEntry(entry);
