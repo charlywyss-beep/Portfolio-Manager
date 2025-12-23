@@ -102,7 +102,7 @@ export const MortgageCalculator = () => {
                                     <DecimalInput
                                         value={propertyValue}
                                         onChange={setPropertyValue}
-                                        className={cn(inputClass, "pl-9")}
+                                        className={cn(inputClass, "pl-14")}
                                     />
                                 </div>
                             </div>
@@ -129,11 +129,11 @@ export const MortgageCalculator = () => {
                                     <DecimalInput
                                         value={yearlyAmortization}
                                         onChange={setYearlyAmortization}
-                                        className={cn(inputClass, "pl-9")}
+                                        className={cn(inputClass, "pl-14")}
                                     />
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    Direkte oder indirekte Amortisation pro Jahr.
+                                    Pflicht bei Belehnung &gt; 66% (2. Hypothek). Üblich: ~1% vom Immobilienwert.
                                 </p>
                             </div>
                         </div>
