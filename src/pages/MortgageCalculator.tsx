@@ -96,8 +96,8 @@ export const MortgageCalculator = () => {
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Immobilienwert</label>
                                 <div className="relative">
-                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 flex items-center justify-center">
-                                        CR
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-8 h-4 flex items-center justify-center text-xs">
+                                        CHF
                                     </div>
                                     <DecimalInput
                                         value={propertyValue}
@@ -123,8 +123,8 @@ export const MortgageCalculator = () => {
                             <div className="space-y-2 sm:col-span-2">
                                 <label className="text-sm font-medium">Amortisation (Jährlich)</label>
                                 <div className="relative">
-                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 flex items-center justify-center">
-                                        CR
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-8 h-4 flex items-center justify-center text-xs">
+                                        CHF
                                     </div>
                                     <DecimalInput
                                         value={yearlyAmortization}
