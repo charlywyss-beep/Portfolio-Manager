@@ -241,7 +241,30 @@ export function Watchlist() {
                                                         </div>
                                                     )}
                                                 </td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground text-xs">{stock.dividendPayDate ? new Date(stock.dividendPayDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
+                                                <td className="text-right py-3 px-4 text-muted-foreground">
+                                                    {stock.dividendDates && stock.dividendDates.length > 0 ? (
+                                                        <div className="text-xs whitespace-nowrap">
+                                                            {stock.dividendDates
+                                                                .map((d, i) => ({ ...d, label: stock.dividendFrequency === 'semi-annually' ? `${i + 1}.` : `Q${i + 1}` }))
+                                                                .filter(d => d.payDate)
+                                                                .sort((a, b) => new Date(a.payDate).getTime() - new Date(b.payDate).getTime())
+                                                                .map((d, idx) => {
+                                                                    const dateObj = new Date(d.payDate);
+                                                                    const formattedDate = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+
+                                                                    return (
+                                                                        <span key={idx}>
+                                                                            {d.label} {formattedDate}
+                                                                            {idx < (stock.dividendDates?.filter(dd => dd.payDate).length ?? 0) - 1 && <br />}
+                                                                        </span>
+                                                                    );
+                                                                })}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-xs whitespace-nowrap">
+                                                            {stock.dividendPayDate ? new Date(stock.dividendPayDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="text-right py-3 px-1 sm:px-4 sticky right-0 bg-card group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                     <div className="flex items-center justify-end gap-0 sm:gap-1 opacity-100 transition-opacity">
