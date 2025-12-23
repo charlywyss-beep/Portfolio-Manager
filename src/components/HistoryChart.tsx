@@ -16,31 +16,85 @@ export function HistoryChart() {
         setHasMounted(true);
     }, []);
 
-    // Filter data based on range
-    const filteredData = useMemo(() => {
+    // Dynamic Data Filling: Ensure continuous timeline with empty days
+    const chartData = useMemo(() => {
         if (!history || history.length === 0) return [];
 
-        const sortedData = [...history].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const sortedHistory = [...history].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const lastEntry = sortedHistory[sortedHistory.length - 1];
+        const lastDate = new Date(lastEntry.date);
 
-        if (timeRange === 'MAX') return sortedData;
+        // Determine start date based on range
+        let startDate = new Date(lastDate);
+        const now = new Date(); // Use today as anchor if we want or data max? 
+        // Use data max to ensure we see the bars at the end.
+        let cutoff = new Date(lastDate);
 
-        const now = new Date();
-        let cutoff = new Date();
+        if (timeRange === '1W') startDate.setDate(lastDate.getDate() - 7);
+        else if (timeRange === '1M') startDate.setMonth(lastDate.getMonth() - 1);
+        else if (timeRange === '6M') startDate.setMonth(lastDate.getMonth() - 6);
+        else if (timeRange === '1Y') startDate.setFullYear(lastDate.getFullYear() - 1);
+        else if (timeRange === '5Y') startDate.setFullYear(lastDate.getFullYear() - 5);
+        else if (timeRange === '10Y') startDate.setFullYear(lastDate.getFullYear() - 10);
+        else if (timeRange === 'MAX') {
+            const firstDate = new Date(sortedHistory[0].date);
+            startDate = new Date(firstDate);
+            // Default to at least 14 days view if sparse
+            const diffTime = Math.abs(lastDate.getTime() - startDate.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays < 14) {
+                startDate.setDate(lastDate.getDate() - 14);
+            }
+        }
 
-        if (timeRange === '1W') cutoff.setDate(now.getDate() - 7);
-        else if (timeRange === '1M') cutoff.setMonth(now.getMonth() - 1);
-        else if (timeRange === '6M') cutoff.setMonth(now.getMonth() - 6);
-        else if (timeRange === '1Y') cutoff.setFullYear(now.getFullYear() - 1);
+        // Generate all dates from startDate to lastDate
+        const filledData = [];
+        const currentDate = new Date(startDate);
 
-        return sortedData.filter(d => new Date(d.date) >= cutoff);
+        // Map history for quick lookup O(N)
+        const historyMap = new Map();
+        sortedHistory.forEach(h => {
+            historyMap.set(new Date(h.date).toDateString(), h);
+        });
+
+        // Use last known values for gaps? OR just empty?
+        // User asked "why bars so far apart". Empty gaps implies 0 or missing.
+        // For a portfolio, usually "holding" value persists. 
+        // BUT this is a "History" Log. It shows snapshots.
+        // If we want "Time Stream", we should show nothing in between.
+        // Let's stick to Sparse (empty values) for now to visually separate the bars properly.
+
+        while (currentDate <= lastDate) {
+            const dateKey = currentDate.toDateString();
+            const entry = historyMap.get(dateKey);
+
+            if (entry) {
+                filledData.push({ ...entry, isReal: true });
+            } else {
+                // Determine if we are out of range for strict filters? 
+                // The loop ensures we are in range.
+                filledData.push({
+                    date: currentDate.toISOString(),
+                    stockValue: 0,
+                    etfValue: 0,
+                    cashValue: 0,
+                    totalValue: 0,
+                    isReal: false // Flag to maybe hide tooltip or style differently
+                });
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        return filledData;
+
     }, [history, timeRange]);
 
     // Dynamic X-Axis Formatter
     const formatXAxis = (dateStr: string) => {
         const date = new Date(dateStr);
         // Show full date if data points are sparse or range is short
-        if (filteredData.length <= 15 || ['1W', '1M', '6M', '1Y'].includes(timeRange)) {
-            return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+        if (timeRange === '1W' || timeRange === '1M' || timeRange === '6M' || timeRange === '1Y' || timeRange === 'MAX') {
+            return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
         }
         return date.getFullYear().toString();
     };
@@ -104,9 +158,9 @@ export function HistoryChart() {
                             <p className="text-sm">Fügen Sie Einträge hinzu, um die Entwicklung zu sehen.</p>
                         </div>
                     </div>
-                ) : hasMounted && filteredData.length > 0 ? (
+                ) : hasMounted && chartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
-                        <BarChart data={filteredData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                             <XAxis
                                 dataKey="date"
@@ -128,8 +182,6 @@ export function HistoryChart() {
                             <Legend
                                 content={({ payload }) => {
                                     if (!payload) return null;
-                                    // Enforce order: Aktien (Blue), ETFs (Violet), Bank (Green)
-                                    // Use the payload values but verify strictly
                                     const customOrder = [
                                         { id: 'stockValue', label: 'Aktien', color: '#2563eb' },
                                         { id: 'etfValue', label: 'ETFs', color: '#7c3aed' },
@@ -152,23 +204,23 @@ export function HistoryChart() {
                                 dataKey="stockValue"
                                 name="Aktien"
                                 stackId="a"
-                                fill="#2563eb" // Blue-600
-                                radius={[0, 0, 4, 4]} // Bottom radius
+                                fill="#2563eb"
+                                radius={[0, 0, 4, 4]}
                                 maxBarSize={50}
                             />
                             <Bar
                                 dataKey="etfValue"
                                 name="ETFs"
                                 stackId="a"
-                                fill="#7c3aed" // Violet-600
+                                fill="#7c3aed"
                                 maxBarSize={50}
                             />
                             <Bar
                                 dataKey="cashValue"
                                 name="Bank"
                                 stackId="a"
-                                fill="#22c55e" // Green-500
-                                radius={[4, 4, 0, 0]} // Top radius
+                                fill="#22c55e"
+                                radius={[4, 4, 0, 0]}
                                 maxBarSize={50}
                             />
                         </BarChart>
