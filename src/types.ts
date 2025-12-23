@@ -66,10 +66,25 @@ export interface PortfolioHistoryEntry {
     notes?: string;
 }
 
+
 export interface Portfolio {
     id: string;
     positions: Position[];
     fixedDeposits: FixedDeposit[];
     history: PortfolioHistoryEntry[]; // New field
     cash: number;
+}
+
+export interface MortgageTranche {
+    id: string;
+    name: string;
+    amount: number;
+    rate: number;
+}
+
+export interface MortgageData {
+    propertyValue: number;
+    maintenanceRate: number;
+    yearlyAmortization: number;
+    tranches: MortgageTranche[];
 }

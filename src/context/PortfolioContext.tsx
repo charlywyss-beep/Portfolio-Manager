@@ -53,6 +53,10 @@ interface PortfolioContextType {
     updateSimulatorState: (newState: Partial<PortfolioContextType['simulatorState']>) => void;
     finnhubApiKey: string;
     setFinnhubApiKey: (key: string) => void;
+
+    // Mortgage Persistence
+    mortgageData: import('../types').MortgageData;
+    updateMortgageData: (data: Partial<import('../types').MortgageData>) => void;
 }
 
 const defaultSimulatorState = {
@@ -298,13 +302,35 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         );
     };
 
-    const importData = (data: { positions: Position[], stocks: Stock[], fixedDeposits: any[], history: any[], watchlist?: string[] }) => {
+    const [mortgageData, setMortgageData] = useState<import('../types').MortgageData>(() => {
+        const stored = localStorage.getItem('portfolio_mortgage_data');
+        return stored ? JSON.parse(stored) : {
+            propertyValue: 1000000,
+            maintenanceRate: 0.7,
+            yearlyAmortization: 10000,
+            tranches: [
+                { id: '1', name: 'Festhypothek 5 Jahre', amount: 400000, rate: 1.5 },
+                { id: '2', name: 'SARON Indikativ', amount: 200000, rate: 2.1 },
+            ]
+        };
+    });
+
+    useEffect(() => {
+        localStorage.setItem('portfolio_mortgage_data', JSON.stringify(mortgageData));
+    }, [mortgageData]);
+
+    const updateMortgageData = (newData: Partial<import('../types').MortgageData>) => {
+        setMortgageData(prev => ({ ...prev, ...newData }));
+    };
+
+    const importData = (data: { positions: Position[], stocks: Stock[], fixedDeposits: any[], history: any[], watchlist?: string[], mortgageData?: import('../types').MortgageData }) => {
         try {
             if (data.positions) setPositions(data.positions);
             if (data.stocks) setStocks(data.stocks);
             if (data.fixedDeposits) setFixedDeposits(data.fixedDeposits);
             if (data.history) setHistory(data.history);
             if (data.watchlist) setWatchlist(data.watchlist);
+            if (data.mortgageData) setMortgageData(data.mortgageData);
             return true;
         } catch (e) {
             console.error("Import failed", e);
@@ -357,7 +383,9 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 finnhubApiKey,
                 setFinnhubApiKey,
                 simulatorState,
-                updateSimulatorState
+                updateSimulatorState,
+                mortgageData,
+                updateMortgageData
             }}
         >
             {children}

@@ -1,42 +1,39 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Building, Calculator, Plus, Trash2, Landmark, Percent } from 'lucide-react';
 import { cn } from '../utils';
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
 
 import { SaronChart } from '../components/SaronChart';
 import { DecimalInput } from '../components/DecimalInput';
-
-interface Tranche {
-    id: string;
-    name: string;
-    amount: number;
-    rate: number;
-}
+import { usePortfolio } from '../context/PortfolioContext';
+import type { MortgageTranche } from '../types';
 
 export const MortgageCalculator = () => {
-    const [propertyValue, setPropertyValue] = useState<number>(1000000);
-    const [maintenanceRate, setMaintenanceRate] = useState<number>(0.7); // % per year
-    const [yearlyAmortization, setYearlyAmortization] = useState<number>(10000); // 1% typical
+    const { mortgageData, updateMortgageData } = usePortfolio();
 
-    const [tranches, setTranches] = useState<Tranche[]>([
-        { id: '1', name: 'Festhypothek 5 Jahre', amount: 400000, rate: 1.5 },
-        { id: '2', name: 'SARON Indikativ', amount: 200000, rate: 2.1 },
-    ]);
+    const { propertyValue, maintenanceRate, yearlyAmortization, tranches } = mortgageData;
+
+    const setPropertyValue = (val: number) => updateMortgageData({ propertyValue: val });
+    const setMaintenanceRate = (val: number) => updateMortgageData({ maintenanceRate: val });
+    const setYearlyAmortization = (val: number) => updateMortgageData({ yearlyAmortization: val });
 
     const addTranche = () => {
         const newId = Math.random().toString(36).substr(2, 9);
-        setTranches([...tranches, { id: newId, name: 'Festhypothek 2 Jahre', amount: 0, rate: 2.0 }]);
+        const newTranches = [...tranches, { id: newId, name: 'Festhypothek 2 Jahre', amount: 0, rate: 2.0 }];
+        updateMortgageData({ tranches: newTranches });
     };
 
-    const updateTranche = (id: string, field: keyof Tranche, value: string | number) => {
-        setTranches(tranches.map(t => {
+    const updateTranche = (id: string, field: keyof MortgageTranche, value: string | number) => {
+        const newTranches = tranches.map(t => {
             if (t.id !== id) return t;
             return { ...t, [field]: value };
-        }));
+        });
+        updateMortgageData({ tranches: newTranches });
     };
 
     const removeTranche = (id: string) => {
-        setTranches(tranches.filter(t => t.id !== id));
+        const newTranches = tranches.filter(t => t.id !== id);
+        updateMortgageData({ tranches: newTranches });
     };
 
     // --- Calculations ---

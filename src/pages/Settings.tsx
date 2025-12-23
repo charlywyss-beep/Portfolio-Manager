@@ -4,7 +4,7 @@ import { Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, Rotate
 
 
 export function Settings() {
-    const { positions, stocks, fixedDeposits, history, watchlist, importData } = usePortfolio();
+    const { positions, stocks, fixedDeposits, history, watchlist, importData, mortgageData } = usePortfolio();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [importMessage, setImportMessage] = useState('');
@@ -17,7 +17,8 @@ export function Settings() {
             stocks,
             fixedDeposits,
             history,
-            watchlist
+            watchlist,
+            mortgageData
         };
 
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
