@@ -155,10 +155,10 @@ export const MortgageCalculator = () => {
                         </div>
 
                         <div className="space-y-3">
-                            {tranches.map((tranche) => (
+                            {tranches.map((tranche, index) => (
                                 <div key={tranche.id} className="grid grid-cols-12 gap-2 items-end bg-accent/30 p-3 rounded-lg border border-transparent hover:border-border transition-all">
                                     <div className="col-span-5 sm:col-span-5 space-y-1">
-                                        <label className="text-xs text-muted-foreground">Bezeichnung</label>
+                                        <label className="text-xs text-muted-foreground">{index + 1}. Hypothek</label>
                                         <select
                                             value={tranche.name}
                                             onChange={(e) => updateTranche(tranche.id, 'name', e.target.value)}
