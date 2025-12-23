@@ -98,7 +98,7 @@ export const MortgageCalculator = () => {
                                     </div>
                                     <DecimalInput
                                         value={propertyValue}
-                                        onChange={setPropertyValue}
+                                        onChange={(val) => setPropertyValue(parseFloat(val) || 0)}
                                         className={cn(inputClass, "pl-14")}
                                     />
                                 </div>
@@ -109,7 +109,7 @@ export const MortgageCalculator = () => {
                                     <Percent className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
                                     <DecimalInput
                                         value={maintenanceRate}
-                                        onChange={setMaintenanceRate}
+                                        onChange={(val) => setMaintenanceRate(parseFloat(val) || 0)}
                                         className={cn(inputClass, "pl-9")}
                                     />
                                 </div>
@@ -125,7 +125,7 @@ export const MortgageCalculator = () => {
                                     </div>
                                     <DecimalInput
                                         value={yearlyAmortization}
-                                        onChange={setYearlyAmortization}
+                                        onChange={(val) => setYearlyAmortization(parseFloat(val) || 0)}
                                         className={cn(inputClass, "pl-14")}
                                     />
                                 </div>
@@ -184,7 +184,7 @@ export const MortgageCalculator = () => {
                                         <label className="text-xs text-muted-foreground">Betrag</label>
                                         <DecimalInput
                                             value={tranche.amount}
-                                            onChange={(val) => updateTranche(tranche.id, 'amount', val)}
+                                            onChange={(val) => updateTranche(tranche.id, 'amount', parseFloat(val) || 0)}
                                             className={inputClass}
                                         />
                                     </div>
@@ -192,7 +192,7 @@ export const MortgageCalculator = () => {
                                         <label className="text-xs text-muted-foreground">Zins (%)</label>
                                         <DecimalInput
                                             value={tranche.rate}
-                                            onChange={(val) => updateTranche(tranche.id, 'rate', val)}
+                                            onChange={(val) => updateTranche(tranche.id, 'rate', parseFloat(val) || 0)}
                                             className={inputClass}
                                         />
                                     </div>

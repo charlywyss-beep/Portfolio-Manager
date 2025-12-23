@@ -105,7 +105,7 @@ export const SaronChart = () => {
                             <label className="text-xs text-muted-foreground">Zinssatz (%)</label>
                             <DecimalInput
                                 value={newRate}
-                                onChange={setNewRate}
+                                onChange={(val) => setNewRate(parseFloat(val) || 0)}
                                 className="w-full bg-background border border-input rounded-md px-2 py-1 text-sm"
                             />
                         </div>

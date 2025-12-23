@@ -4,6 +4,7 @@ import type { Stock } from '../types';
 import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useCurrencyFormatter } from '../utils/currency';
+import { DecimalInput } from './DecimalInput';
 
 interface AddPositionModalProps {
     isOpen: boolean;
@@ -343,19 +344,19 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                 </div>
                                 <div className="space-y-2 col-span-2">
                                     <label className="text-sm font-medium">Aktueller Marktpreis</label>
-                                    <input required type="number" step="0.01" placeholder="z.B. 98.50" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                    <DecimalInput required placeholder="z.B. 98.50" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                         value={newStock.currentPrice}
-                                        onChange={e => {
-                                            setNewStock({ ...newStock, currentPrice: e.target.value });
-                                            if (!buyPrice) setBuyPrice(e.target.value);
+                                        onChange={val => {
+                                            setNewStock({ ...newStock, currentPrice: val });
+                                            if (!buyPrice) setBuyPrice(val);
                                         }} />
                                     <p className="text-xs text-muted-foreground">Dieser Preis wird als aktueller Kurs für die Simulation verwendet.</p>
                                 </div>
                                 <div className="space-y-2 col-span-2">
                                     <label className="text-sm font-medium">Dividendenrendite % (Optional)</label>
-                                    <input type="number" step="0.001" min="0" placeholder="z.B. 3.5" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                    <DecimalInput placeholder="z.B. 3.5" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                         value={newStock.dividendYield}
-                                        onChange={e => setNewStock({ ...newStock, dividendYield: e.target.value })} />
+                                        onChange={val => setNewStock({ ...newStock, dividendYield: val })} />
                                     <p className="text-xs text-muted-foreground">Jährliche Dividendenrendite in Prozent.</p>
                                 </div>
                             </div>
@@ -367,11 +368,11 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Anzahl Anteile</label>
-                                <input required type="number" step="0.001" min="0" placeholder="z.B. 10" className="w-full px-3 py-2 border rounded-md bg-background text-foreground" value={shares} onChange={e => setShares(e.target.value)} />
+                                <DecimalInput required placeholder="z.B. 10" className="w-full px-3 py-2 border rounded-md bg-background text-foreground" value={shares} onChange={val => setShares(val)} />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Kaufpreis {activeTab === 'manual' ? (newStock.currency !== 'CHF' ? `(${newStock.currency})` : '') : (selectedStock?.currency && selectedStock.currency !== 'CHF' ? `(${selectedStock.currency})` : '')}</label>
-                                <input required type="number" step="0.01" min="0" placeholder="z.B. 150.00" className="w-full px-3 py-2 border rounded-md bg-background text-foreground" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} />
+                                <DecimalInput required placeholder="z.B. 150.00" className="w-full px-3 py-2 border rounded-md bg-background text-foreground" value={buyPrice} onChange={val => setBuyPrice(val)} />
                             </div>
                             {/* FX Rate Input - Only if not CHF */}
                             {((activeTab === 'manual' && newStock.currency !== 'CHF') || (activeTab === 'search' && selectedStock?.currency && selectedStock.currency !== 'CHF')) && (
@@ -383,15 +384,12 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                         </span>
                                     </label>
                                     <div className="relative">
-                                        <input
+                                        <DecimalInput
                                             required
-                                            type="number"
-                                            step="0.0001"
-                                            min="0.0001"
                                             placeholder="z.B. 0.95"
                                             className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                             value={fxRate}
-                                            onChange={e => setFxRate(e.target.value)}
+                                            onChange={val => setFxRate(val)}
                                         />
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">
                                             CHF

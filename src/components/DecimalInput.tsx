@@ -3,8 +3,8 @@ import type { ChangeEvent, FocusEvent } from 'react';
 import { cn } from '../utils';
 
 interface DecimalInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
-    value: number;
-    onChange: (value: number) => void;
+    value: string | number;
+    onChange: (value: string) => void;
     maxDecimals?: number;
 }
 
@@ -16,20 +16,34 @@ export const DecimalInput = ({
     ...props
 }: DecimalInputProps) => {
     // Internal string state to manage user input (allowing "10." or "10,5")
-    const [localValue, setLocalValue] = useState(value.toString());
+    const [localValue, setLocalValue] = useState(value === null || value === undefined ? '' : value.toString());
 
     // Sync local state with prop value when it changes externally
-    // We strictly compare to avoid resetting valid user inputs like "1.00" -> 1
     useEffect(() => {
-        // If the parsed local value is different from the prop, update local.
-        // This handles external updates (e.g. valid data loaded).
-        // But we must be careful not to kill "1." type inputs if this runs during typing.
-        // Usually, we only want to sync if the *numeric* value changed significantly.
-        const parsedLocal = parseFloat(localValue.replace(',', '.'));
-        if (parsedLocal !== value && !isNaN(value)) {
-            setLocalValue(value.toString());
-        } else if (value === 0 && localValue === '') {
-            // Optional: allow empty for 0? No, let's stick to string
+        const propValStr = value === null || value === undefined ? '' : value.toString();
+
+        // Helper to parse safely
+        const pProp = parseFloat(propValStr);
+        const pLocal = parseFloat(localValue.replace(',', '.'));
+
+        // If prop is exactly the same string representation, return (e.g. "10.0" vs "10.0")
+        if (propValStr === localValue) return;
+
+        // If numeric values match, don't interfere (preserves "10." vs "10")
+        if (!isNaN(pProp) && !isNaN(pLocal) && Math.abs(pProp - pLocal) < 1e-9) {
+            return;
+        }
+
+        // Handle explicit empty vs 0 difference
+        // If prop is empty string, and local is not, clear it
+        if (propValStr === '' && localValue !== '') {
+            setLocalValue('');
+            return;
+        }
+
+        // If numeric mismatch or other cases, sync to prop
+        if (!isNaN(pProp) || propValStr === '') {
+            setLocalValue(propValStr);
         }
     }, [value]);
 
@@ -43,30 +57,22 @@ export const DecimalInput = ({
         const dots = (input.match(/[.,]/g) || []).length;
         if (dots > 1) return;
 
+        // Check max decimals
+        if (maxDecimals !== undefined) {
+            const parts = input.replace(',', '.').split('.');
+            if (parts[1] && parts[1].length > maxDecimals) return;
+        }
+
         setLocalValue(input);
 
         // Normalize to dot
         const normalized = input.replace(',', '.');
 
-        // Handle "minus only" or empty
-        if (input === '' || input === '-') {
-            onChange(0); // Or handle as special case? For now 0
-            return;
-        }
-
-        // Parse
-        const num = parseFloat(normalized);
-        if (!isNaN(num)) {
-            onChange(num);
-        }
+        // Pass raw string to parent (parent handles parsing)
+        onChange(normalized);
     };
 
     const handleBlur = (e: FocusEvent<HTMLInputElement>) => {
-        // On blur, we can format it nicely if we want, OR just leave it.
-        // Let's ensure it matches the numeric value cleanly, but don't force formatting style 
-        // to avoid annoying the user. Just strictly ensure it represents the number.
-        // Actually, if we just leave it, it's fine.
-        // If the user typed "10,500" (semantic nonsense if they meant 10.5), we already parsed it.
         if (props.onBlur) props.onBlur(e);
     };
 

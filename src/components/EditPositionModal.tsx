@@ -34,8 +34,13 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     const [manualFx, setManualFx] = useState(position.averageEntryFxRate?.toString() || '1.0');
     const [manualDate, setManualDate] = useState(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
 
-    // Helper to fix floating point dust (e.g. 49.9999999 -> 50)
-    const fixFloat = (num: number) => parseFloat(num.toFixed(6));
+    // Helper to fix floating point dust
+    // GBp: 4 decimals allowed. Others: 2 decimals.
+    // FX Rates: 6 decimals (default).
+    // Shares: 6 decimals (fractional shares).
+    const fixPrice = (num: number) => parseFloat(num.toFixed(isGBX ? 4 : 2));
+    const fixFx = (num: number) => parseFloat(num.toFixed(6));
+    const fixShares = (num: number) => parseFloat(num.toFixed(6));
 
     const isGBX = position.stock.currency === 'GBp';
 
@@ -49,11 +54,12 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
         if (isOpen) {
             if (position.purchases && position.purchases.length > 0) {
                 // Sanitize loaded purchases
+                // Sanitize loaded purchases
                 const sanitizedPurchases = position.purchases.map(p => ({
                     ...p,
-                    shares: fixFloat(p.shares),
-                    price: fixFloat(toUI(p.price)), // Scale Price to UI
-                    fxRate: fixFloat(p.fxRate)
+                    shares: fixShares(p.shares),
+                    price: fixPrice(toUI(p.price)), // Scale Price to UI and Fix Precision
+                    fxRate: fixFx(p.fxRate)
                 }));
                 setPurchases(sanitizedPurchases);
             } else {
@@ -61,17 +67,17 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                 const initialEntry: Purchase = {
                     id: crypto.randomUUID(),
                     date: position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-                    shares: fixFloat(position.shares),
-                    price: fixFloat(toUI(position.buyPriceAvg)), // Scale Price to UI
-                    fxRate: fixFloat(position.averageEntryFxRate || 1.0)
+                    shares: fixShares(position.shares),
+                    price: fixPrice(toUI(position.buyPriceAvg)), // Scale Price to UI
+                    fxRate: fixFx(position.averageEntryFxRate || 1.0)
                 };
                 setPurchases([initialEntry]);
             }
 
             // Sync manuals
-            setManualShares(fixFloat(position.shares).toString());
-            setManualPrice(fixFloat(toUI(position.buyPriceAvg)).toString()); // Scale Price to UI
-            setManualFx(fixFloat(position.averageEntryFxRate || 1.0).toString());
+            setManualShares(fixShares(position.shares).toString());
+            setManualPrice(fixPrice(toUI(position.buyPriceAvg)).toString()); // Scale Price to UI
+            setManualFx(fixFx(position.averageEntryFxRate || 1.0).toString());
             setManualDate(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
         }
     }, [isOpen, position]);
@@ -222,7 +228,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                         <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Stück</label>
                                         <DecimalInput
                                             value={purchase.shares}
-                                            onChange={(val) => handleUpdatePurchase(purchase.id, 'shares', val)}
+                                            onChange={(val) => handleUpdatePurchase(purchase.id, 'shares', parseFloat(val) || 0)}
                                             className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary"
                                         />
                                     </div>
@@ -231,7 +237,8 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                         <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Preis ({isGBX ? 'GBP' : position.stock.currency})</label>
                                         <DecimalInput
                                             value={purchase.price}
-                                            onChange={(val) => handleUpdatePurchase(purchase.id, 'price', val)}
+                                            onChange={(val) => handleUpdatePurchase(purchase.id, 'price', parseFloat(val) || 0)}
+                                            maxDecimals={isGBX ? 4 : 2}
                                             className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary"
                                         />
                                     </div>
@@ -240,8 +247,9 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                         <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Wechselkurs (CHF pro 1 {isGBX ? 'GBP' : position.stock.currency})</label>
                                         <DecimalInput
                                             value={purchase.fxRate}
-                                            onChange={(val) => handleUpdatePurchase(purchase.id, 'fxRate', val)}
+                                            onChange={(val) => handleUpdatePurchase(purchase.id, 'fxRate', parseFloat(val) || 0)}
                                             disabled={position.stock.currency === 'CHF'}
+                                            maxDecimals={6}
                                             className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary disabled:opacity-50"
                                         />
                                     </div>
