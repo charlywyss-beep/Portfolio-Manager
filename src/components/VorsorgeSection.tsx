@@ -52,7 +52,7 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                             <tr>
                                 <th className="px-2 py-3 sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[200px]">Bank / Institut</th>
                                 <th className="px-2 py-3 min-w-[100px]">Konto-Typ</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap min-w-[100px]">Vermögen</th>
+                                <th className="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">Vermögen</th>
                                 <th className="px-4 py-3 min-w-[200px]">Fortschritt 2025</th>
                                 <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
