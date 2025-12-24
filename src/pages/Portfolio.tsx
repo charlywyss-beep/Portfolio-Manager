@@ -491,9 +491,9 @@ export function Portfolio() {
                                 <tr>
                                     <th className="px-2 py-3 sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Bank / Institut</th>
                                     <th className="px-2 py-3">Konto-Typ</th>
-                                    <th className="px-4 py-3 text-right">Betrag</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">Betrag</th>
                                     <th className="px-4 py-3 text-right">Zins p.a.</th>
-                                    <th className="px-4 py-3 text-right">Jährlicher Ertrag</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">Jährlicher Ertrag</th>
                                     <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                                 </tr>
                             </thead>
@@ -538,7 +538,7 @@ export function Portfolio() {
                                                     {fd.accountType === 'sparkonto' ? 'Sparkonto' : 'Privatkonto'}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 text-right font-bold text-foreground">
+                                            <td className="px-4 py-3 text-right font-bold text-foreground whitespace-nowrap">
                                                 {formatCurrency(fd.amount, fd.currency)}
                                             </td>
                                             <td className="px-4 py-3 text-right">
@@ -551,7 +551,7 @@ export function Portfolio() {
                                                     {fd.interestRate.toFixed(2)}%
                                                 </span>
                                             </td>
-                                            <td className={`px-4 py-3 text-right font-medium ${isNegative ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
+                                            <td className={`px-4 py-3 text-right font-medium whitespace-nowrap ${isNegative ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
                                                 {isNegative ? '-' : '+'}CHF {Math.abs(netAnnualReturn).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </td>
                                             <td className="px-1 py-3 sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
