@@ -100,8 +100,8 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                             </span>
                                         </td>
                                         <td className="px-4 py-3 text-right font-medium">
-                                            <span className="text-slate-600 dark:text-slate-300">
-                                                {formatCurrency(fd.amount, fd.currency)}
+                                            <span style={{ color: '#ffffff' }}>
+                                                {fd.amount.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
