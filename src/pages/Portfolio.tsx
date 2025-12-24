@@ -432,7 +432,7 @@ export function Portfolio() {
                                                                 setEditingFixedDeposit(fd);
                                                                 setIsAddFixedDepositModalOpen(true);
                                                             }}
-                                                            className="p-1 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
+                                                            className="p-1 hover:bg-muted rounded text-primary transition-colors"
                                                             title="Bearbeiten"
                                                         >
                                                             <Edit className="size-3.5" />
@@ -515,7 +515,7 @@ export function Portfolio() {
 
                                     return (
                                         <tr key={fd.id} className="group hover:bg-muted/30 transition-colors">
-                                            <td className="px-4 py-3 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                            <td className="px-2 py-3 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                 <div className="absolute inset-0 bg-card -z-10" />
                                                 <div className="relative flex items-center gap-3">
                                                     <Logo
@@ -563,7 +563,7 @@ export function Portfolio() {
                                                             setEditingFixedDeposit(fd);
                                                             setIsAddFixedDepositModalOpen(true);
                                                         }}
-                                                        className="p-1 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
+                                                        className="p-1 hover:bg-muted rounded text-primary transition-colors"
                                                         title="Bearbeiten"
                                                     >
                                                         <Edit className="size-3.5" />
