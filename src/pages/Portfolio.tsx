@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Plus, Search, Trash2, ArrowUpRight, ArrowDownRight, PieChart, BarChart3, Edit, Landmark } from 'lucide-react';
+import { Plus, Search, Trash2, ArrowUpRight, ArrowDownRight, PieChart, BarChart3, Edit, Landmark, ShieldCheck } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
 import { smartWrap } from '../utils/text';
@@ -339,6 +339,7 @@ export function Portfolio() {
                     <div className="flex items-center gap-2">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
+                                <ShieldCheck className="size-5 text-primary" />
                                 <h2 className="text-lg font-bold">Vorsorge</h2>
                             </div>
                         </div>
@@ -562,10 +563,10 @@ export function Portfolio() {
                                                             setEditingFixedDeposit(fd);
                                                             setIsAddFixedDepositModalOpen(true);
                                                         }}
-                                                        className="text-muted-foreground hover:text-primary p-2 rounded-md hover:bg-primary/10 transition-colors"
+                                                        className="p-1 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
                                                         title="Bearbeiten"
                                                     >
-                                                        <Edit className="size-4" />
+                                                        <Edit className="size-3.5" />
                                                     </button>
                                                     <button
                                                         onClick={() => {
