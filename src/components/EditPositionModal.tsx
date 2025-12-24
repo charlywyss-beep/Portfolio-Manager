@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { X, Save, Trash2, Plus } from 'lucide-react';
+import { usePortfolio } from '../context/PortfolioContext';
 import type { Stock, Purchase } from '../types';
 
 import { DecimalInput } from './DecimalInput';
+import { Logo } from './Logo';
 
 interface EditPositionModalProps {
     isOpen: boolean;
@@ -21,11 +23,13 @@ interface EditPositionModalProps {
 }
 
 export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelete }: EditPositionModalProps) {
-    // Unused: const { updateStock, stocks } = usePortfolio();
-    // Unused: const currentStock = stocks.find(s => s.id === position.stock.id) || position.stock;
+    const { updateStock } = usePortfolio();
 
     // State for individual purchases
     const [purchases, setPurchases] = useState<Purchase[]>([]);
+
+    // Editable Stock Name
+    const [stockName, setStockName] = useState(position.stock.name);
 
     // Fallback for "Manual Overrides" if user deletes all purchases but wants to set totals manually
     // NOTE: Manual states are "UI Values" (Pounds), not Storage Values (Pence)
@@ -52,6 +56,8 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     // Reset state when modal opens
     useEffect(() => {
         if (isOpen) {
+            setStockName(position.stock.name); // Sync Name
+
             if (position.purchases && position.purchases.length > 0) {
                 // Sanitize loaded purchases
                 // Sanitize loaded purchases
@@ -126,6 +132,11 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Update Stock Name
+        if (stockName.trim() !== position.stock.name) {
+            updateStock(position.stock.id, { name: stockName });
+        }
+
         // If we have purchases, use the calculated values
         if (purchases.length > 0) {
             // Must convert UI Prices back to Storage Prices for saving
@@ -187,12 +198,21 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
                     {/* Stock Info Bar */}
                     <div className="p-4 bg-muted/30 border-b border-border flex items-center gap-3">
-                        <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 shrink-0">
-                            {position.stock.symbol.slice(0, 2)}
-                        </div>
+                        <Logo
+                            url={position.stock.logoUrl}
+                            alt={stockName}
+                            fallback={position.stock.symbol.slice(0, 2)}
+                            size="size-10"
+                        />
                         <div className="flex-1 min-w-0">
-                            <div className="font-semibold truncate">{position.stock.name}</div>
-                            <div className="text-xs text-muted-foreground">
+                            <input
+                                type="text"
+                                className="w-full text-base font-semibold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground"
+                                value={stockName}
+                                onChange={(e) => setStockName(e.target.value)}
+                                placeholder="Name der Position"
+                            />
+                            <div className="text-xs text-muted-foreground mt-0.5">
                                 {position.stock.symbol} • Aktuell: {position.stock.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: position.stock.currency })}
                             </div>
                         </div>
