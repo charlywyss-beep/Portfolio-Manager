@@ -40,7 +40,7 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                         <p className="text-xs text-muted-foreground mt-1">Total über alle 3a Konten</p>
                     </div>
                     <div className="text-right">
-                        <span className="text-xl font-bold !text-white block">
+                        <span className="text-xl font-bold text-primary block">
                             {totalVorsorge.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
                         </span>
                     </div>
@@ -107,8 +107,8 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                         <td className="px-4 py-3">
                                             <div className="flex flex-col gap-1.5">
                                                 <div className="flex justify-between text-xs font-medium">
-                                                    <span className="text-slate-500 dark:text-slate-400">
-                                                        {current.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[10px] uppercase text-muted-foreground ml-1">von {limit.toLocaleString('de-CH', { minimumFractionDigits: 0 })}</span>
+                                                    <span className="!text-white">
+                                                        {current.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} <span className="text-[10px] uppercase text-muted-foreground ml-1">von {limit.toLocaleString('de-CH', { minimumFractionDigits: 0 })}</span>
                                                     </span>
                                                 </div>
                                                 <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
