@@ -262,15 +262,18 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                             className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary"
                                         />
                                     </div>
-                                    {/* FX Rate */}
                                     <div className="col-span-3">
-                                        <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Wechselkurs (CHF pro 1 {isGBX ? 'GBP' : position.stock.currency})</label>
+                                        <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
+                                            <div>Wechselkurs</div>
+                                            <div className="font-normal normal-case text-[9px] opacity-80">CHF pro 1 {isGBX ? 'GBP' : position.stock.currency}</div>
+                                        </label>
                                         <DecimalInput
                                             value={purchase.fxRate}
                                             onChange={(val) => handleUpdatePurchase(purchase.id, 'fxRate', parseFloat(val) || 0)}
                                             disabled={position.stock.currency === 'CHF'}
                                             maxDecimals={6}
-                                            className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary disabled:opacity-50"
+                                            onFocus={(e) => e.target.select()}
+                                            className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary disabled:opacity-50 text-center"
                                         />
                                     </div>
                                     {/* Delete Row */}
