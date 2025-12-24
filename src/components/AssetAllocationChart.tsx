@@ -92,7 +92,7 @@ export function AssetAllocationChart() {
                         <Pie
                             data={data}
                             cx={isMobile ? "50%" : "40%"}
-                            cy={isMobile ? "40%" : "50%"}
+                            cy="50%"
                             innerRadius="50%"
                             outerRadius="90%"
                             paddingAngle={2}

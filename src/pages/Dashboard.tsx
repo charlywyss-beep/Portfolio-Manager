@@ -560,12 +560,51 @@ export function Dashboard() {
                     <div className="w-full h-[300px] min-h-[300px] min-w-0">
                         {hasMounted && chartData.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
-                                <BarChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+                                <BarChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 40 }}>
                                     <XAxis
-                                        dataKey="name"
-                                        tick={{ fill: 'currentColor', fontSize: 13, opacity: 0.7 }}
+                                        dataKey="fullName"
+                                        tick={({ x, y, payload }) => {
+                                            const words = payload.value.split(' ');
+                                            const lines = [];
+                                            let currentLine = words[0];
+
+                                            for (let i = 1; i < words.length; i++) {
+                                                if ((currentLine + ' ' + words[i]).length < 15) {
+                                                    currentLine += ' ' + words[i];
+                                                } else {
+                                                    lines.push(currentLine);
+                                                    currentLine = words[i];
+                                                }
+                                            }
+                                            lines.push(currentLine);
+                                            // Limit to 2 lines
+                                            if (lines.length > 2) {
+                                                lines[1] = lines[1] + '...';
+                                                lines.length = 2;
+                                            }
+
+                                            return (
+                                                <g transform={`translate(${x},${y})`}>
+                                                    {lines.map((line, index) => (
+                                                        <text
+                                                            key={index}
+                                                            x={0}
+                                                            y={0}
+                                                            dy={16 + (index * 12)}
+                                                            textAnchor="middle"
+                                                            fill="currentColor"
+                                                            fontSize={11}
+                                                            opacity={0.7}
+                                                        >
+                                                            {line}
+                                                        </text>
+                                                    ))}
+                                                </g>
+                                            );
+                                        }}
                                         tickLine={false}
                                         axisLine={false}
+                                        interval={0}
                                     />
                                     <YAxis
                                         tick={{ fill: 'currentColor', fontSize: 13, opacity: 0.7 }}
