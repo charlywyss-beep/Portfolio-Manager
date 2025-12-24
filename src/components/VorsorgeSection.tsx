@@ -108,7 +108,7 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                             <div className="flex flex-col gap-1.5">
                                                 <div className="flex justify-between text-xs font-medium">
                                                     <span>
-                                                        <span className="!text-white">{current.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span> <span className="text-[10px] uppercase text-muted-foreground ml-1">von {limit.toLocaleString('de-CH', { minimumFractionDigits: 0 })}</span>
+                                                        <span className="!text-white">{current.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span> <span className="uppercase text-muted-foreground ml-1">von {limit.toLocaleString('de-CH', { minimumFractionDigits: 0 })}</span>
                                                     </span>
                                                 </div>
                                                 <div className="h-2.5 w-full bg-green-100 dark:bg-green-900/30 rounded-full overflow-hidden border border-green-200 dark:border-green-800">
