@@ -40,7 +40,7 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                         <p className="text-xs text-muted-foreground mt-1">Total über alle 3a Konten</p>
                     </div>
                     <div className="text-right">
-                        <span className="text-xl font-bold text-primary block">
+                        <span className="text-xl font-bold text-white block">
                             {totalVorsorge.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
                         </span>
                     </div>
@@ -53,6 +53,7 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                         <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
                             <tr>
                                 <th className="px-2 py-3 sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[200px]">Bank / Institut</th>
+                                <th className="px-2 py-3 min-w-[100px]">Konto-Typ</th>
                                 <th className="px-4 py-3 text-right min-w-[120px]">Vorsorgevermögen</th>
                                 <th className="px-4 py-3 min-w-[200px]">Fortschritt 2025</th>
                                 <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
@@ -92,6 +93,11 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                                     {fd.notes && <span className="text-xs text-muted-foreground italic mt-0.5">{fd.notes}</span>}
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td className="px-2 py-3">
+                                            <span className="px-2 py-0.5 rounded-md text-xs font-medium border bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50">
+                                                Vorsorge 3a
+                                            </span>
                                         </td>
                                         <td className="px-4 py-3 text-right font-medium">
                                             <span className="text-slate-600 dark:text-slate-300">
