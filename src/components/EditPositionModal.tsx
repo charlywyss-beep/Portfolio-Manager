@@ -249,7 +249,8 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                         <DecimalInput
                                             value={purchase.shares}
                                             onChange={(val) => handleUpdatePurchase(purchase.id, 'shares', parseFloat(val) || 0)}
-                                            className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary"
+                                            onFocus={(e) => e.target.select()}
+                                            className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary text-center"
                                         />
                                     </div>
                                     {/* Price */}
@@ -259,7 +260,8 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                             value={purchase.price}
                                             onChange={(val) => handleUpdatePurchase(purchase.id, 'price', parseFloat(val) || 0)}
                                             maxDecimals={isGBX ? 4 : 2}
-                                            className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary"
+                                            onFocus={(e) => e.target.select()}
+                                            className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary text-center"
                                         />
                                     </div>
                                     <div className="col-span-3">
