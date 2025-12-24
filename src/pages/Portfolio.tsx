@@ -130,7 +130,7 @@ export function Portfolio() {
                     <table className="w-full text-xs text-left">
                         <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border">
                             <tr>
-                                <th className="px-2 py-3 min-w-[150px]">Name</th>
+                                <th className="px-2 py-3 min-w-[150px] sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Name</th>
                                 <th className="px-2 py-3 min-w-[80px]">ISIN</th>
                                 <th className="px-2 py-3 text-right whitespace-nowrap">Anzahl</th>
                                 <th className="px-2 py-3 text-right whitespace-nowrap">Ø Kauf</th>
@@ -145,8 +145,7 @@ export function Portfolio() {
                         <tbody className="divide-y divide-border">
                             {data.map((pos) => (
                                 <tr key={pos.id} className="group hover:bg-muted/30 transition-colors">
-                                    {/* Name */}
-                                    <td className="px-2 py-3">
+                                    <td className="px-2 py-3 sticky left-0 z-10 bg-card group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                         <div className="flex items-center gap-3">
                                             <Logo
                                                 url={pos.stock.logoUrl}
