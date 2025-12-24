@@ -329,8 +329,8 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                    <div className="grid grid-cols-12 gap-4">
+                        <div className="col-span-4 space-y-2">
                             <label className="text-sm font-medium">Zins (% p.a.)</label>
                             <input
                                 type="number"
@@ -344,7 +344,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                 aria-label="Zins"
                             />
                         </div>
-                        <div className="space-y-2">
+                        <div className="col-span-8 space-y-2">
                             <label className="text-sm font-medium">Gebühr</label>
                             <div className="flex gap-2">
                                 <div className="relative flex-1">
