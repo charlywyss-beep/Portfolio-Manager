@@ -162,8 +162,6 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                             title="Bank Name"
                             aria-label="Bank Name"
                         />
-                        aria-label="Bank Name"
-                        />
                     </div>
 
                     <div className="space-y-2">
