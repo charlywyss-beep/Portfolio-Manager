@@ -394,7 +394,7 @@ export function Portfolio() {
                                                         className={fd.accountType === 'vorsorge' ? "bg-blue-100 text-blue-700 border-blue-200" : undefined}
                                                     />
                                                     <div className="flex flex-col">
-                                                        <span>{fd.bankName}</span>
+                                                        <span className="text-sm font-semibold">{fd.bankName}</span>
                                                         {fd.notes && <span className="text-xs text-muted-foreground">{fd.notes}</span>}
                                                     </div>
                                                 </div>
@@ -518,7 +518,7 @@ export function Portfolio() {
                                                         fallback={fd.bankName.slice(0, 2).toUpperCase()}
                                                     />
                                                     <div className="flex flex-col">
-                                                        <span>{fd.bankName}</span>
+                                                        <span className="text-sm font-semibold">{fd.bankName}</span>
                                                         {fd.notes && <span className="text-xs text-muted-foreground">{fd.notes}</span>}
                                                     </div>
                                                 </div>
