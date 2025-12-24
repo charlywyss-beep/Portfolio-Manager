@@ -146,8 +146,8 @@ export function Dashboard() {
                             </div>
                             <div className="flex items-center justify-between gap-4 text-sm">
                                 <span className="text-muted-foreground">Vorsorgekapital:</span>
-                                <span className="font-medium text-foreground">
-                                    {totals.totalValueVorsorge.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                <span className="font-medium" style={{ color: '#ffffff' }}>
+                                    {totals.totalValueVorsorge.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
                                 </span>
                             </div>
                             <div className="h-px bg-border my-0.5 opacity-50" />
