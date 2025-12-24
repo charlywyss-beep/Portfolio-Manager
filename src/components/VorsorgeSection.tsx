@@ -1,6 +1,5 @@
 import { ShieldCheck, Edit, Trash2 } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { useCurrencyFormatter } from '../utils/currency';
 import { Logo } from './Logo';
 
 interface VorsorgeSectionProps {
@@ -11,7 +10,6 @@ interface VorsorgeSectionProps {
 
 export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, setEditingFixedDeposit }: VorsorgeSectionProps) {
     const { fixedDeposits, deleteFixedDeposit } = usePortfolio();
-    const { formatCurrency } = useCurrencyFormatter();
 
     const vorsorgeDeposits = fixedDeposits?.filter(fd => fd.accountType === 'vorsorge') || [];
 
