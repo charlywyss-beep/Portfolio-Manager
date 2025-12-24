@@ -1,0 +1,223 @@
+import { useNavigate } from 'react-router-dom';
+import { usePortfolio } from '../context/PortfolioContext';
+import { smartWrap } from '../utils/text';
+import { cn } from '../utils';
+import { useCurrencyFormatter } from '../utils/currency';
+import { Logo } from './Logo';
+import { Edit, Trash2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+
+interface PositionTableProps {
+    title: string;
+    icon: React.ElementType;
+    data: any[];
+    emptyMessage: string;
+    setSelectedPosition: (pos: any) => void;
+    setIsEditModalOpen: (open: boolean) => void;
+}
+
+export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelectedPosition, setIsEditModalOpen }: PositionTableProps) {
+    const { deletePosition } = usePortfolio();
+    const navigate = useNavigate();
+    const { formatCurrency, convertToCHF } = useCurrencyFormatter();
+
+    return (
+        <div className="space-y-3">
+            <div className="flex items-center gap-2">
+                <Icon className="size-6 text-primary" />
+                <h2 className="text-xl font-bold tracking-tight">{title}</h2>
+                <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{data.length} Positionen</span>
+            </div>
+            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                        <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
+                            <tr>
+                                <th className="px-2 py-3 min-w-[110px] sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Name</th>
+                                <th className="px-2 py-3 min-w-[80px]">ISIN</th>
+                                <th className="px-2 py-3 text-right whitespace-nowrap">Anzahl</th>
+                                <th className="px-2 py-3 text-right whitespace-nowrap">Ø Kauf</th>
+                                <th className="px-2 py-3 text-right whitespace-nowrap">Invest</th>
+                                <th className="px-2 py-3 text-right whitespace-nowrap">Kurs</th>
+                                <th className="px-2 py-3 text-right whitespace-nowrap">Wert</th>
+                                <th className="px-2 py-3 text-right whitespace-nowrap">+/-</th>
+                                <th className="px-2 py-3 text-right whitespace-nowrap">%</th>
+                                <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                            {data.map((pos) => (
+                                <tr key={pos.id} className="group hover:bg-muted/30 transition-colors">
+                                    <td className="px-2 py-3 sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <div className="absolute inset-0 bg-card -z-10" />
+                                        <div className="relative flex items-center gap-3">
+                                            <Logo
+                                                url={pos.stock.logoUrl}
+                                                alt={pos.stock.name}
+                                                fallback={pos.stock.symbol.slice(0, 2)}
+                                            />
+                                            <div className="min-w-0 flex-1 flex flex-col items-start gap-0.5">
+                                                <div
+                                                    className="font-semibold text-foreground cursor-pointer hover:text-primary transition-colors text-sm"
+                                                    onClick={() => navigate(`/stock/${pos.stock.id}`)}
+                                                >
+                                                    {smartWrap(pos.stock.name)}
+                                                </div>
+                                                <div className="text-xs font-mono text-muted-foreground">{pos.stock.symbol}</div>
+                                                <div className="text-[10px] text-muted-foreground/80">{pos.stock.sector}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    {/* Valor / ISIN */}
+                                    <td className="px-2 py-3">
+                                        <div className="text-xs space-y-0.5">
+                                            {pos.stock.valor && (
+                                                <div className="font-mono">
+                                                    <span className="text-muted-foreground">Valor: </span>
+                                                    <span className="font-medium">{pos.stock.valor}</span>
+                                                </div>
+                                            )}
+                                            {pos.stock.isin && (
+                                                <div className="font-mono text-muted-foreground truncate" title={pos.stock.isin}>
+                                                    {pos.stock.isin}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </td>
+
+                                    {/* Anzahl */}
+                                    <td className="px-4 py-3 text-right font-medium">{pos.shares}</td>
+
+                                    {/* Kauf Kurs */}
+                                    <td className="px-4 py-3 text-right">
+                                        <div className="flex flex-col items-end">
+                                            <span className="whitespace-nowrap">{formatCurrency(pos.buyPriceAvg, pos.stock.currency, false)}</span>
+                                            {pos.stock.currency !== 'CHF' && (
+                                                <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
+                                                    {formatCurrency(pos.buyValueCHF / pos.shares, 'CHF', false)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+
+                                    {/* Kauf Wert */}
+                                    <td className="px-4 py-3 text-right font-medium">
+                                        <div className="flex flex-col items-end">
+                                            <span className="whitespace-nowrap">{formatCurrency(pos.buyValue, pos.stock.currency, false)}</span>
+                                            {pos.stock.currency !== 'CHF' && (
+                                                <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
+                                                    {formatCurrency(pos.buyValueCHF, 'CHF', false)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+
+                                    {/* Aktueller Kurs */}
+                                    <td className="px-4 py-3 text-right">
+                                        <div className="flex flex-col items-end">
+                                            <span className="whitespace-nowrap">{formatCurrency(pos.stock.currentPrice, pos.stock.currency, false)}</span>
+                                            {pos.stock.currency !== 'CHF' && (
+                                                <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
+                                                    {formatCurrency(convertToCHF(pos.stock.currentPrice, pos.stock.currency), 'CHF', false)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+
+                                    {/* Aktueller Wert */}
+                                    <td className="px-4 py-3 text-right font-bold">
+                                        <div className="flex flex-col items-end">
+                                            <span className="whitespace-nowrap">{formatCurrency(pos.currentValue, pos.stock.currency, false)}</span>
+                                            {pos.stock.currency !== 'CHF' && (
+                                                <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
+                                                    {formatCurrency(convertToCHF(pos.currentValue, pos.stock.currency), 'CHF', false)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+
+                                    {/* Gesamt +/- */}
+                                    <td className="px-4 py-3 text-right">
+                                        <div className="flex flex-col items-end">
+                                            <span className={cn(
+                                                "font-medium whitespace-nowrap",
+                                                pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                            )}>
+                                                {pos.gainLossTotal >= 0 ? '+' : ''}{formatCurrency(pos.gainLossTotal, pos.stock.currency, false)}
+                                            </span>
+                                            {pos.stock.currency !== 'CHF' && (
+                                                <>
+                                                    <div
+                                                        className={cn(
+                                                            "text-xs font-medium whitespace-nowrap mt-0.5",
+                                                            pos.gainLossTotalCHF >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                                        )}
+                                                        title="Gewinn/Verlust in CHF (inkl. Währungseffekt)"
+                                                    >
+                                                        {pos.gainLossTotalCHF >= 0 ? '+' : ''}{formatCurrency(pos.gainLossTotalCHF, 'CHF', false)}
+                                                    </div>
+                                                    <div className={cn(
+                                                        "text-[10px] whitespace-nowrap mt-0.5",
+                                                        pos.forexImpactCHF >= 0 ? "text-emerald-600/80 dark:text-emerald-400/80" : "text-rose-600/80 dark:text-rose-400/80"
+                                                    )} title="Anteil Währungsgewinn/-verlust">
+                                                        (Währung: {pos.forexImpactCHF >= 0 ? '+' : ''}{formatCurrency(pos.forexImpactCHF, 'CHF', false)})
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    </td>
+
+                                    {/* Gesamt % +/- */}
+                                    <td className="px-4 py-3 text-right">
+                                        <div className={cn(
+                                            "flex items-center justify-end gap-1 font-medium",
+                                            pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                        )}>
+                                            {pos.gainLossTotal >= 0 ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
+                                            {pos.gainLossTotal >= 0 ? '+' : ''}{pos.gainLossTotalPercent.toFixed(2)}%
+                                        </div>
+                                    </td>
+
+                                    {/* Aktionen */}
+                                    <td className="px-1 py-3 sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <div className="absolute inset-0 bg-card -z-10" />
+                                        <div className="relative flex items-center justify-center gap-1">
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedPosition(pos);
+                                                    setIsEditModalOpen(true);
+                                                }}
+                                                className="p-1 hover:bg-muted rounded text-primary transition-colors"
+                                                title="Position bearbeiten (Kauf/Verkauf/Korrektur)"
+                                            >
+                                                <Edit className="size-3.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm(`Position "${pos.stock.name}" wirklich löschen?`)) {
+                                                        deletePosition(pos.id);
+                                                    }
+                                                }}
+                                                className="text-muted-foreground hover:text-red-600 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                                                title="Position löschen"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                            {data.length === 0 && (
+                                <tr>
+                                    <td colSpan={10} className="px-4 py-12 text-center text-muted-foreground">
+                                        {emptyMessage}
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+}

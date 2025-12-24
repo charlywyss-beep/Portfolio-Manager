@@ -25,6 +25,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
     const [monthlyContribution, setMonthlyContribution] = useState<number | ''>(''); // NEW
     const [monthlyFee, setMonthlyFee] = useState<number | ''>(''); // NEW
     const [feeFrequency, setFeeFrequency] = useState<'monthly' | 'quarterly' | 'annually'>('monthly'); // NEW
+    const [iban, setIban] = useState(''); // NEW
 
     useEffect(() => {
         if (editingDeposit) {
@@ -40,6 +41,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             setMonthlyContribution(editingDeposit.monthlyContribution || '');
             setMonthlyFee(editingDeposit.monthlyFee || '');
             setFeeFrequency(editingDeposit.feeFrequency || 'monthly');
+            setIban(editingDeposit.iban || '');
         } else {
             // Reset form for new entry
             setBankName('');
@@ -55,6 +57,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             setMonthlyContribution('');
             setMonthlyFee('');
             setFeeFrequency('monthly');
+            setIban('');
         }
     }, [editingDeposit, isOpen]);
 
@@ -158,6 +161,21 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                             placeholder="z.B. UBS, Credit Suisse..."
                             title="Bank Name"
                             aria-label="Bank Name"
+                        />
+                        aria-label="Bank Name"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">IBAN / Konto-Nr.</label>
+                        <input
+                            type="text"
+                            className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono text-sm"
+                            value={iban}
+                            onChange={(e) => setIban(e.target.value)}
+                            placeholder="z.B. CH..."
+                            title="IBAN oder Kontonummer"
+                            aria-label="IBAN"
                         />
                     </div>
 

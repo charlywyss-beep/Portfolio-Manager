@@ -63,6 +63,7 @@ export interface FixedDeposit {
     monthlyContribution?: number; // NEW: Monthly amount to be extrapolated
     monthlyFee?: number; // NEW: Account fee
     feeFrequency?: 'monthly' | 'quarterly' | 'annually'; // NEW: Frequency of the fee
+    iban?: string; // NEW: IBAN / Account Number
 }
 
 export interface PortfolioHistoryEntry {

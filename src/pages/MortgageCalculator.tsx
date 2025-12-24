@@ -297,9 +297,9 @@ export const MortgageCalculator = () => {
                         </div>
                         {/* Simple Visual Bar */}
                         <div className="h-4 w-full flex">
-                            <div className="h-full bg-blue-500" style={{ width: `${(monthlyData.interest / totalMonthlyCost) * 100}%` }}></div>
-                            <div className="h-full bg-emerald-500" style={{ width: `${(monthlyData.amortization / totalMonthlyCost) * 100}%` }}></div>
-                            <div className="h-full bg-amber-500" style={{ width: `${(monthlyData.maintenance / totalMonthlyCost) * 100}%` }}></div>
+                            <div className="h-full bg-blue-500 w-[var(--width)]" style={{ '--width': `${(monthlyData.interest / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>
+                            <div className="h-full bg-emerald-500 w-[var(--width)]" style={{ '--width': `${(monthlyData.amortization / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>
+                            <div className="h-full bg-amber-500 w-[var(--width)]" style={{ '--width': `${(monthlyData.maintenance / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>
                         </div>
                     </div>
 

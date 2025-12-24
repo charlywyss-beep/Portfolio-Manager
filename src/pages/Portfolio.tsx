@@ -1,26 +1,23 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Plus, Search, Trash2, ArrowUpRight, ArrowDownRight, PieChart, BarChart3, Edit, Landmark, ShieldCheck } from 'lucide-react';
-import { cn } from '../utils';
+import { Plus, Search, PieChart, BarChart3, Landmark } from 'lucide-react';
 import { useCurrencyFormatter } from '../utils/currency';
-import { smartWrap } from '../utils/text';
 import { EditPositionModal } from '../components/EditPositionModal';
 import { AddFixedDepositModal } from '../components/AddFixedDepositModal';
-import { Logo } from '../components/Logo';
-
-
-
+import { PositionTable } from '../components/PositionTable';
+import { VorsorgeSection } from '../components/VorsorgeSection';
+import { FixedDepositTable } from '../components/FixedDepositTable';
 
 export function Portfolio() {
-    const { positions: rawPositions, stocks, fixedDeposits, deletePosition, updatePosition, deleteFixedDeposit } = usePortfolio();
+    const { positions: rawPositions, stocks, deletePosition, updatePosition } = usePortfolio();
     const navigate = useNavigate();
     const [isAddFixedDepositModalOpen, setIsAddFixedDepositModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedPosition, setSelectedPosition] = useState<any>(null);
     const [editingFixedDeposit, setEditingFixedDeposit] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const { formatCurrency, convertToCHF } = useCurrencyFormatter();
+    const { convertToCHF } = useCurrencyFormatter();
 
     // Enrich positions with stock data and calculations
     const positions = rawPositions.map((pos) => {
@@ -99,8 +96,6 @@ export function Portfolio() {
     const stockPositions = filteredPositions.filter(p => !p.stock.type || p.stock.type === 'stock');
     const etfPositions = filteredPositions.filter(p => p.stock.type === 'etf');
 
-
-
     const handleUpdate = (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number, newPurchases?: any[]) => {
         const updates: any = { shares: newShares };
         if (newAvgPrice !== undefined) {
@@ -116,481 +111,6 @@ export function Portfolio() {
             updates.purchases = newPurchases;
         }
         updatePosition(id, updates);
-    };
-
-    const PositionTable = ({ title, icon: Icon, data, emptyMessage }: { title: string, icon: any, data: any[], emptyMessage: string }) => (
-        <div className="space-y-3">
-            <div className="flex items-center gap-2">
-                <Icon className="size-6 text-primary" />
-                <h2 className="text-xl font-bold tracking-tight">{title}</h2>
-                <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{data.length} Positionen</span>
-            </div>
-            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-xs text-left">
-                        <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
-                            <tr>
-                                <th className="px-2 py-3 min-w-[110px] sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Name</th>
-                                <th className="px-2 py-3 min-w-[80px]">ISIN</th>
-                                <th className="px-2 py-3 text-right whitespace-nowrap">Anzahl</th>
-                                <th className="px-2 py-3 text-right whitespace-nowrap">Ø Kauf</th>
-                                <th className="px-2 py-3 text-right whitespace-nowrap">Invest</th>
-                                <th className="px-2 py-3 text-right whitespace-nowrap">Kurs</th>
-                                <th className="px-2 py-3 text-right whitespace-nowrap">Wert</th>
-                                <th className="px-2 py-3 text-right whitespace-nowrap">+/-</th>
-                                <th className="px-2 py-3 text-right whitespace-nowrap">%</th>
-                                <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                            {data.map((pos) => (
-                                <tr key={pos.id} className="group hover:bg-muted/30 transition-colors">
-                                    <td className="px-2 py-3 sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                        <div className="absolute inset-0 bg-card -z-10" />
-                                        <div className="relative flex items-center gap-3">
-                                            <Logo
-                                                url={pos.stock.logoUrl}
-                                                alt={pos.stock.name}
-                                                fallback={pos.stock.symbol.slice(0, 2)}
-                                            />
-                                            <div className="min-w-0 flex-1 flex flex-col items-start gap-0.5">
-                                                <div
-                                                    className="font-semibold text-foreground cursor-pointer hover:text-primary transition-colors text-sm"
-                                                    onClick={() => navigate(`/stock/${pos.stock.id}`)}
-                                                >
-                                                    {smartWrap(pos.stock.name)}
-                                                </div>
-                                                <div className="text-xs font-mono text-muted-foreground">{pos.stock.symbol}</div>
-                                                <div className="text-[10px] text-muted-foreground/80">{pos.stock.sector}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-
-                                    {/* Valor / ISIN */}
-                                    <td className="px-2 py-3">
-                                        <div className="text-xs space-y-0.5">
-                                            {pos.stock.valor && (
-                                                <div className="font-mono">
-                                                    <span className="text-muted-foreground">Valor: </span>
-                                                    <span className="font-medium">{pos.stock.valor}</span>
-                                                </div>
-                                            )}
-                                            {pos.stock.isin && (
-                                                <div className="font-mono text-muted-foreground truncate" title={pos.stock.isin}>
-                                                    {pos.stock.isin}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </td>
-
-                                    {/* Anzahl */}
-                                    <td className="px-4 py-3 text-right font-medium">{pos.shares}</td>
-
-                                    {/* Kauf Kurs */}
-                                    <td className="px-4 py-3 text-right">
-                                        <div className="flex flex-col items-end">
-                                            <span className="whitespace-nowrap">{formatCurrency(pos.buyPriceAvg, pos.stock.currency, false)}</span>
-                                            {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
-                                                    {formatCurrency(pos.buyValueCHF / pos.shares, 'CHF', false)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-
-                                    {/* Kauf Wert */}
-                                    <td className="px-4 py-3 text-right font-medium">
-                                        <div className="flex flex-col items-end">
-                                            <span className="whitespace-nowrap">{formatCurrency(pos.buyValue, pos.stock.currency, false)}</span>
-                                            {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
-                                                    {formatCurrency(pos.buyValueCHF, 'CHF', false)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-
-                                    {/* Aktueller Kurs */}
-                                    <td className="px-4 py-3 text-right">
-                                        <div className="flex flex-col items-end">
-                                            <span className="whitespace-nowrap">{formatCurrency(pos.stock.currentPrice, pos.stock.currency, false)}</span>
-                                            {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
-                                                    {formatCurrency(convertToCHF(pos.stock.currentPrice, pos.stock.currency), 'CHF', false)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-
-                                    {/* Aktueller Wert */}
-                                    <td className="px-4 py-3 text-right font-bold">
-                                        <div className="flex flex-col items-end">
-                                            <span className="whitespace-nowrap">{formatCurrency(pos.currentValue, pos.stock.currency, false)}</span>
-                                            {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
-                                                    {formatCurrency(convertToCHF(pos.currentValue, pos.stock.currency), 'CHF', false)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-
-                                    {/* Gesamt +/- */}
-                                    <td className="px-4 py-3 text-right">
-                                        <div className="flex flex-col items-end">
-                                            <span className={cn(
-                                                "font-medium whitespace-nowrap",
-                                                pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                            )}>
-                                                {pos.gainLossTotal >= 0 ? '+' : ''}{formatCurrency(pos.gainLossTotal, pos.stock.currency, false)}
-                                            </span>
-                                            {pos.stock.currency !== 'CHF' && (
-                                                <>
-                                                    <div
-                                                        className={cn(
-                                                            "text-xs font-medium whitespace-nowrap mt-0.5",
-                                                            pos.gainLossTotalCHF >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                                        )}
-                                                        title="Gewinn/Verlust in CHF (inkl. Währungseffekt)"
-                                                    >
-                                                        {pos.gainLossTotalCHF >= 0 ? '+' : ''}{formatCurrency(pos.gainLossTotalCHF, 'CHF', false)}
-                                                    </div>
-                                                    <div className={cn(
-                                                        "text-[10px] whitespace-nowrap mt-0.5",
-                                                        pos.forexImpactCHF >= 0 ? "text-emerald-600/80 dark:text-emerald-400/80" : "text-rose-600/80 dark:text-rose-400/80"
-                                                    )} title="Anteil Währungsgewinn/-verlust">
-                                                        (Währung: {pos.forexImpactCHF >= 0 ? '+' : ''}{formatCurrency(pos.forexImpactCHF, 'CHF', false)})
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
-                                    </td>
-
-                                    {/* Gesamt % +/- */}
-                                    <td className="px-4 py-3 text-right">
-                                        <div className={cn(
-                                            "flex items-center justify-end gap-1 font-medium",
-                                            pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                        )}>
-                                            {pos.gainLossTotal >= 0 ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
-                                            {pos.gainLossTotal >= 0 ? '+' : ''}{pos.gainLossTotalPercent.toFixed(2)}%
-                                        </div>
-                                    </td>
-
-                                    {/* Aktionen */}
-                                    <td className="px-1 py-3 sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                        <div className="absolute inset-0 bg-card -z-10" />
-                                        <div className="relative flex items-center justify-center gap-1">
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedPosition(pos);
-                                                    setIsEditModalOpen(true);
-                                                }}
-                                                className="p-1 hover:bg-muted rounded text-primary transition-colors"
-                                                title="Position bearbeiten (Kauf/Verkauf/Korrektur)"
-                                            >
-                                                <Edit className="size-3.5" />
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    if (confirm(`Position "${pos.stock.name}" wirklich löschen?`)) {
-                                                        deletePosition(pos.id);
-                                                    }
-                                                }}
-                                                className="text-muted-foreground hover:text-red-600 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
-                                                title="Position löschen"
-                                            >
-                                                <Trash2 className="size-4" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            {data.length === 0 && (
-                                <tr>
-                                    <td colSpan={10} className="px-4 py-12 text-center text-muted-foreground">
-                                        {emptyMessage}
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    );
-
-    const VorsorgeSection = () => {
-        const vorsorgeDeposits = fixedDeposits?.filter(fd => fd.accountType === 'vorsorge') || [];
-
-        if (vorsorgeDeposits.length === 0 && !searchTerm) return null;
-
-        const filteredVorsorge = vorsorgeDeposits.filter(fd =>
-            fd.bankName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (fd.notes && fd.notes.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
-
-        if (filteredVorsorge.length === 0 && searchTerm) return null;
-
-        const totalVorsorge = vorsorgeDeposits.reduce((sum, fd) => sum + fd.amount, 0);
-
-        return (
-            <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                    <ShieldCheck className="size-6 text-primary" />
-                    <h2 className="text-xl font-bold tracking-tight">Vorsorge</h2>
-                </div>
-
-                <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
-                    <div className="flex justify-between items-end mb-6 border-b border-border pb-4">
-                        <div>
-                            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Vorsorge Status</h3>
-                            <p className="text-xs text-muted-foreground mt-1">Total über alle 3a Konten</p>
-                        </div>
-                        <div className="text-right">
-                            <span className="text-xl font-bold text-primary block">
-                                {totalVorsorge.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-xs text-left">
-                            <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
-                                <tr>
-                                    <th className="px-2 py-3 sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[200px]">Bank / Institut</th>
-                                    <th className="px-4 py-3 text-right min-w-[120px]">Vorsorgevermögen</th>
-                                    <th className="px-4 py-3 min-w-[200px]">Fortschritt 2025</th>
-                                    <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
-                                {filteredVorsorge.map(fd => {
-                                    const limit = 7258;
-                                    // Calculate current based on manual or auto
-                                    const currentMonth = new Date().getMonth() + 1;
-                                    const calculatedAuto = fd.autoContribution && fd.monthlyContribution
-                                        ? fd.monthlyContribution * currentMonth
-                                        : 0;
-
-                                    const current = fd.autoContribution
-                                        ? Math.min(limit, calculatedAuto)
-                                        : (fd.currentYearContribution || 0);
-
-                                    const percent = Math.min((current / limit) * 100, 100);
-
-                                    return (
-                                        <tr key={fd.id} className="group hover:bg-muted/30 transition-colors">
-                                            <td className="px-2 py-3 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                                <div className="absolute inset-0 bg-card -z-10" />
-                                                <div className="relative flex items-center gap-3">
-                                                    <Logo
-                                                        url={fd.logoUrl}
-                                                        alt={fd.bankName}
-                                                        fallback={
-                                                            fd.accountType === 'vorsorge' ? '3a' : fd.bankName.slice(0, 2).toUpperCase()
-                                                        }
-                                                        className={fd.accountType === 'vorsorge' ? "bg-blue-100 text-blue-700 border-blue-200" : undefined}
-                                                    />
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm font-semibold">{fd.bankName}</span>
-                                                        {fd.notes && <span className="text-xs text-muted-foreground">{fd.notes}</span>}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-medium">
-                                                <span className="text-slate-600 dark:text-slate-300">
-                                                    {formatCurrency(fd.amount, fd.currency)}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex flex-col gap-1.5">
-                                                    <div className="flex justify-between text-xs font-medium">
-                                                        <span className="text-slate-500 dark:text-slate-400">
-                                                            {current.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[10px] uppercase text-muted-foreground ml-1">von {limit.toLocaleString('de-CH', { minimumFractionDigits: 0 })}</span>
-                                                        </span>
-                                                    </div>
-                                                    <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
-                                                        <div
-                                                            className="h-full bg-slate-700 dark:bg-slate-400 rounded-full transition-all duration-500"
-                                                            style={{ width: `${percent}%` }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-1 py-3 sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                                <div className="absolute inset-0 bg-card -z-10" />
-                                                <div className="relative flex items-center justify-center gap-1">
-                                                    <button
-                                                        onClick={() => {
-                                                            setEditingFixedDeposit(fd);
-                                                            setIsAddFixedDepositModalOpen(true);
-                                                        }}
-                                                        className="p-1 hover:bg-muted rounded text-primary transition-colors"
-                                                        title="Bearbeiten"
-                                                    >
-                                                        <Edit className="size-3.5" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => {
-                                                            if (confirm(`Konto bei "${fd.bankName}" wirklich löschen?`)) deleteFixedDeposit(fd.id);
-                                                        }}
-                                                        className="text-muted-foreground hover:text-red-600 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
-                                                        title="Löschen"
-                                                    >
-                                                        <Trash2 className="size-4" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
-    const FixedDepositTable = () => {
-        const filteredFixedDeposits = fixedDeposits?.filter(fd =>
-            fd.accountType !== 'vorsorge' && (
-                fd.bankName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (fd.notes && fd.notes.toLowerCase().includes(searchTerm.toLowerCase()))
-            )) || [];
-
-        // If filtering hides everything but there ARE header items, we might want to just show empty state inside the table
-        // But if there are NO non-vorsorge deposits at all, and no search term, maybe hide the whole section? 
-        // User asked for "Bankguthaben" implementation, usually implies the list exists.
-
-        return (
-            <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                    <Landmark className="size-6 text-primary" />
-                    <h2 className="text-xl font-bold tracking-tight">Bankguthaben</h2>
-                    <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{filteredFixedDeposits.length} Konten</span>
-                    <button
-                        onClick={() => setIsAddFixedDepositModalOpen(true)}
-                        className="ml-auto flex items-center gap-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary px-2 py-1 rounded transition-colors"
-                    >
-                        <Plus className="size-3" />
-                        <span>Konto hinzufügen</span>
-                    </button>
-                </div>
-                <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-xs text-left">
-                            <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
-                                <tr>
-                                    <th className="px-2 py-3 sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[200px]">Bank / Institut</th>
-                                    <th className="px-2 py-3 min-w-[100px]">Konto-Typ</th>
-                                    <th className="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">Betrag</th>
-                                    <th className="px-4 py-3 text-right min-w-[100px]">Zins p.a.</th>
-                                    <th className="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">Jährlicher Ertrag</th>
-                                    <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
-                                {filteredFixedDeposits.map((fd) => {
-                                    const interestAmount = fd.amount * (fd.interestRate / 100);
-
-                                    // Calculate Annual Fee
-                                    let annualFee = 0;
-                                    if (fd.monthlyFee && fd.monthlyFee > 0) {
-                                        if (fd.feeFrequency === 'annually') annualFee = fd.monthlyFee;
-                                        else if (fd.feeFrequency === 'quarterly') annualFee = fd.monthlyFee * 4;
-                                        else annualFee = fd.monthlyFee * 12; // Default to monthly
-                                    }
-
-                                    const netAnnualReturn = interestAmount - annualFee;
-                                    const isNegative = netAnnualReturn < 0;
-
-                                    return (
-                                        <tr key={fd.id} className="group hover:bg-muted/30 transition-colors">
-                                            <td className="px-2 py-3 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                                <div className="absolute inset-0 bg-card -z-10" />
-                                                <div className="relative flex items-center gap-3">
-                                                    <Logo
-                                                        url={fd.logoUrl}
-                                                        alt={fd.bankName}
-                                                        fallback={fd.bankName.slice(0, 2).toUpperCase()}
-                                                    />
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm font-semibold">{fd.bankName}</span>
-                                                        {fd.notes && <span className="text-xs text-muted-foreground">{fd.notes}</span>}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-2 py-3">
-                                                <span className={cn(
-                                                    "px-2 py-0.5 rounded-md text-xs font-medium border",
-                                                    fd.accountType === 'sparkonto'
-                                                        ? "bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50"
-                                                        : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
-                                                )}>
-                                                    {fd.accountType === 'sparkonto' ? 'Sparkonto' : 'Privatkonto'}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-bold text-foreground whitespace-nowrap">
-                                                {formatCurrency(fd.amount, fd.currency)}
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <span className={cn(
-                                                    "px-2 py-0.5 rounded-full text-xs font-medium border",
-                                                    fd.interestRate > 0
-                                                        ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-900/50"
-                                                        : "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-500 dark:border-gray-700"
-                                                )}>
-                                                    {fd.interestRate.toFixed(2)}%
-                                                </span>
-                                            </td>
-                                            <td className={`px-4 py-3 text-right font-medium whitespace-nowrap ${isNegative ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
-                                                {isNegative ? '-' : '+'}CHF {Math.abs(netAnnualReturn).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                            </td>
-                                            <td className="px-1 py-3 sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                                <div className="absolute inset-0 bg-card -z-10" />
-                                                <div className="relative flex items-center justify-center gap-1">
-                                                    <button
-                                                        onClick={() => {
-                                                            setEditingFixedDeposit(fd);
-                                                            setIsAddFixedDepositModalOpen(true);
-                                                        }}
-                                                        className="p-1 hover:bg-muted rounded text-primary transition-colors"
-                                                        title="Bearbeiten"
-                                                    >
-                                                        <Edit className="size-3.5" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => {
-                                                            if (confirm(`Konto bei "${fd.bankName}" wirklich löschen?`)) {
-                                                                deleteFixedDeposit(fd.id);
-                                                            }
-                                                        }}
-                                                        className="text-muted-foreground hover:text-red-600 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
-                                                        title="Löschen"
-                                                    >
-                                                        <Trash2 className="size-4" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )
-                                })}
-                                {filteredFixedDeposits.length === 0 && (
-                                    <tr>
-                                        <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
-                                            {searchTerm ? 'Keine Konten gefunden.' : 'Noch keine Bankguthaben erfasst.'}
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        );
     };
 
     return (
@@ -631,6 +151,8 @@ export function Portfolio() {
                 icon={BarChart3}
                 data={stockPositions}
                 emptyMessage={searchTerm ? 'Keine Aktien gefunden.' : 'Noch keine Aktien im Depot.'}
+                setSelectedPosition={setSelectedPosition}
+                setIsEditModalOpen={setIsEditModalOpen}
             />
 
             {/* ETFs Table */}
@@ -639,13 +161,23 @@ export function Portfolio() {
                 icon={PieChart}
                 data={etfPositions}
                 emptyMessage={searchTerm ? 'Keine ETFs gefunden.' : 'Noch keine ETFs im Depot.'}
+                setSelectedPosition={setSelectedPosition}
+                setIsEditModalOpen={setIsEditModalOpen}
             />
 
             {/* Vorsorge Section */}
-            <VorsorgeSection />
+            <VorsorgeSection
+                searchTerm={searchTerm}
+                setIsAddFixedDepositModalOpen={setIsAddFixedDepositModalOpen}
+                setEditingFixedDeposit={setEditingFixedDeposit}
+            />
 
             {/* Bankguthaben Table */}
-            <FixedDepositTable />
+            <FixedDepositTable
+                searchTerm={searchTerm}
+                setIsAddFixedDepositModalOpen={setIsAddFixedDepositModalOpen}
+                setEditingFixedDeposit={setEditingFixedDeposit}
+            />
 
             <AddFixedDepositModal
                 isOpen={isAddFixedDepositModalOpen}
@@ -668,8 +200,6 @@ export function Portfolio() {
                     onDelete={deletePosition}
                 />
             )}
-
-
         </div>
     );
 }
