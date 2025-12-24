@@ -33,8 +33,8 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                 <h2 className="text-xl font-bold tracking-tight">Vorsorge</h2>
             </div>
 
-            <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
-                <div className="flex justify-between items-end mb-6 border-b border-border pb-4">
+            <div className="bg-card border border-border rounded-xl p-3 shadow-sm">
+                <div className="flex justify-between items-end mb-3 border-b border-border pb-2">
                     <div>
                         <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Vorsorge Status</h3>
                         <p className="text-xs text-muted-foreground mt-1">Total über alle 3a Konten</p>
