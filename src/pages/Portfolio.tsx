@@ -349,7 +349,7 @@ export function Portfolio() {
                 <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
                     <div className="flex justify-between items-end mb-6 border-b border-border pb-4">
                         <div>
-                            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Vorsorgevermögen</h3>
+                            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Vorsorge Status</h3>
                             <p className="text-xs text-muted-foreground mt-1">Total über alle 3a Konten</p>
                         </div>
                         <div className="text-right">
@@ -457,226 +457,225 @@ export function Portfolio() {
                     </div>
                 </div>
             </div>
-            </div >
         );
-};
+    };
 
-const FixedDepositTable = () => {
-    const filteredFixedDeposits = fixedDeposits?.filter(fd =>
-        fd.accountType !== 'vorsorge' && (
-            fd.bankName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (fd.notes && fd.notes.toLowerCase().includes(searchTerm.toLowerCase()))
-        )) || [];
+    const FixedDepositTable = () => {
+        const filteredFixedDeposits = fixedDeposits?.filter(fd =>
+            fd.accountType !== 'vorsorge' && (
+                fd.bankName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (fd.notes && fd.notes.toLowerCase().includes(searchTerm.toLowerCase()))
+            )) || [];
 
-    // If filtering hides everything but there ARE header items, we might want to just show empty state inside the table
-    // But if there are NO non-vorsorge deposits at all, and no search term, maybe hide the whole section? 
-    // User asked for "Bankguthaben" implementation, usually implies the list exists.
+        // If filtering hides everything but there ARE header items, we might want to just show empty state inside the table
+        // But if there are NO non-vorsorge deposits at all, and no search term, maybe hide the whole section? 
+        // User asked for "Bankguthaben" implementation, usually implies the list exists.
 
-    return (
-        <div className="space-y-3">
-            <div className="flex items-center gap-2">
-                <Landmark className="size-5 text-primary" />
-                <h2 className="text-lg font-bold">Bankguthaben (Konto & Einlagen)</h2>
-                <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{filteredFixedDeposits.length} Konten</span>
-                <button
-                    onClick={() => setIsAddFixedDepositModalOpen(true)}
-                    className="ml-auto flex items-center gap-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary px-2 py-1 rounded transition-colors"
-                >
-                    <Plus className="size-3" />
-                    <span>Konto hinzufügen</span>
-                </button>
-            </div>
-            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border">
-                            <tr>
-                                <th className="px-2 py-3 sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Bank / Institut</th>
-                                <th className="px-2 py-3">Konto-Typ</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap">Betrag</th>
-                                <th className="px-4 py-3 text-right">Zins p.a.</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap">Jährlicher Ertrag</th>
-                                <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                            {filteredFixedDeposits.map((fd) => {
-                                const interestAmount = fd.amount * (fd.interestRate / 100);
+        return (
+            <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                    <Landmark className="size-5 text-primary" />
+                    <h2 className="text-lg font-bold">Bankguthaben (Konto & Einlagen)</h2>
+                    <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{filteredFixedDeposits.length} Konten</span>
+                    <button
+                        onClick={() => setIsAddFixedDepositModalOpen(true)}
+                        className="ml-auto flex items-center gap-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary px-2 py-1 rounded transition-colors"
+                    >
+                        <Plus className="size-3" />
+                        <span>Konto hinzufügen</span>
+                    </button>
+                </div>
+                <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border">
+                                <tr>
+                                    <th className="px-2 py-3 sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Bank / Institut</th>
+                                    <th className="px-2 py-3">Konto-Typ</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">Betrag</th>
+                                    <th className="px-4 py-3 text-right">Zins p.a.</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">Jährlicher Ertrag</th>
+                                    <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border">
+                                {filteredFixedDeposits.map((fd) => {
+                                    const interestAmount = fd.amount * (fd.interestRate / 100);
 
-                                // Calculate Annual Fee
-                                let annualFee = 0;
-                                if (fd.monthlyFee && fd.monthlyFee > 0) {
-                                    if (fd.feeFrequency === 'annually') annualFee = fd.monthlyFee;
-                                    else if (fd.feeFrequency === 'quarterly') annualFee = fd.monthlyFee * 4;
-                                    else annualFee = fd.monthlyFee * 12; // Default to monthly
-                                }
+                                    // Calculate Annual Fee
+                                    let annualFee = 0;
+                                    if (fd.monthlyFee && fd.monthlyFee > 0) {
+                                        if (fd.feeFrequency === 'annually') annualFee = fd.monthlyFee;
+                                        else if (fd.feeFrequency === 'quarterly') annualFee = fd.monthlyFee * 4;
+                                        else annualFee = fd.monthlyFee * 12; // Default to monthly
+                                    }
 
-                                const netAnnualReturn = interestAmount - annualFee;
-                                const isNegative = netAnnualReturn < 0;
+                                    const netAnnualReturn = interestAmount - annualFee;
+                                    const isNegative = netAnnualReturn < 0;
 
-                                return (
-                                    <tr key={fd.id} className="group hover:bg-muted/30 transition-colors">
-                                        <td className="px-2 py-3 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                            <div className="absolute inset-0 bg-card -z-10" />
-                                            <div className="relative flex items-center gap-3">
-                                                <Logo
-                                                    url={fd.logoUrl}
-                                                    alt={fd.bankName}
-                                                    fallback={fd.bankName.slice(0, 2).toUpperCase()}
-                                                />
-                                                <div className="flex flex-col">
-                                                    <span>{fd.bankName}</span>
-                                                    {fd.notes && <span className="text-xs text-muted-foreground">{fd.notes}</span>}
+                                    return (
+                                        <tr key={fd.id} className="group hover:bg-muted/30 transition-colors">
+                                            <td className="px-2 py-3 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <div className="absolute inset-0 bg-card -z-10" />
+                                                <div className="relative flex items-center gap-3">
+                                                    <Logo
+                                                        url={fd.logoUrl}
+                                                        alt={fd.bankName}
+                                                        fallback={fd.bankName.slice(0, 2).toUpperCase()}
+                                                    />
+                                                    <div className="flex flex-col">
+                                                        <span>{fd.bankName}</span>
+                                                        {fd.notes && <span className="text-xs text-muted-foreground">{fd.notes}</span>}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-2 py-3">
-                                            <span className={cn(
-                                                "px-2 py-0.5 rounded-md text-xs font-medium border",
-                                                fd.accountType === 'sparkonto'
-                                                    ? "bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50"
-                                                    : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
-                                            )}>
-                                                {fd.accountType === 'sparkonto' ? 'Sparkonto' : 'Privatkonto'}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-right font-bold text-foreground whitespace-nowrap">
-                                            {formatCurrency(fd.amount, fd.currency)}
-                                        </td>
-                                        <td className="px-4 py-3 text-right">
-                                            <span className={cn(
-                                                "px-2 py-0.5 rounded-full text-xs font-medium border",
-                                                fd.interestRate > 0
-                                                    ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-900/50"
-                                                    : "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-500 dark:border-gray-700"
-                                            )}>
-                                                {fd.interestRate.toFixed(2)}%
-                                            </span>
-                                        </td>
-                                        <td className={`px-4 py-3 text-right font-medium whitespace-nowrap ${isNegative ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
-                                            {isNegative ? '-' : '+'}CHF {Math.abs(netAnnualReturn).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                        </td>
-                                        <td className="px-1 py-3 sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                            <div className="absolute inset-0 bg-card -z-10" />
-                                            <div className="relative flex items-center justify-center gap-1">
-                                                <button
-                                                    onClick={() => {
-                                                        setEditingFixedDeposit(fd);
-                                                        setIsAddFixedDepositModalOpen(true);
-                                                    }}
-                                                    className="p-1 hover:bg-muted rounded text-primary transition-colors"
-                                                    title="Bearbeiten"
-                                                >
-                                                    <Edit className="size-3.5" />
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        if (confirm(`Konto bei "${fd.bankName}" wirklich löschen?`)) {
-                                                            deleteFixedDeposit(fd.id);
-                                                        }
-                                                    }}
-                                                    className="text-muted-foreground hover:text-red-600 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
-                                                    title="Löschen"
-                                                >
-                                                    <Trash2 className="size-4" />
-                                                </button>
-                                            </div>
+                                            </td>
+                                            <td className="px-2 py-3">
+                                                <span className={cn(
+                                                    "px-2 py-0.5 rounded-md text-xs font-medium border",
+                                                    fd.accountType === 'sparkonto'
+                                                        ? "bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50"
+                                                        : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                                                )}>
+                                                    {fd.accountType === 'sparkonto' ? 'Sparkonto' : 'Privatkonto'}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-bold text-foreground whitespace-nowrap">
+                                                {formatCurrency(fd.amount, fd.currency)}
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <span className={cn(
+                                                    "px-2 py-0.5 rounded-full text-xs font-medium border",
+                                                    fd.interestRate > 0
+                                                        ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-900/50"
+                                                        : "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-500 dark:border-gray-700"
+                                                )}>
+                                                    {fd.interestRate.toFixed(2)}%
+                                                </span>
+                                            </td>
+                                            <td className={`px-4 py-3 text-right font-medium whitespace-nowrap ${isNegative ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
+                                                {isNegative ? '-' : '+'}CHF {Math.abs(netAnnualReturn).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </td>
+                                            <td className="px-1 py-3 sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <div className="absolute inset-0 bg-card -z-10" />
+                                                <div className="relative flex items-center justify-center gap-1">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingFixedDeposit(fd);
+                                                            setIsAddFixedDepositModalOpen(true);
+                                                        }}
+                                                        className="p-1 hover:bg-muted rounded text-primary transition-colors"
+                                                        title="Bearbeiten"
+                                                    >
+                                                        <Edit className="size-3.5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            if (confirm(`Konto bei "${fd.bankName}" wirklich löschen?`)) {
+                                                                deleteFixedDeposit(fd.id);
+                                                            }
+                                                        }}
+                                                        className="text-muted-foreground hover:text-red-600 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                                                        title="Löschen"
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
+                                {filteredFixedDeposits.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                                            {searchTerm ? 'Keine Konten gefunden.' : 'Noch keine Bankguthaben erfasst.'}
                                         </td>
                                     </tr>
-                                )
-                            })}
-                            {filteredFixedDeposits.length === 0 && (
-                                <tr>
-                                    <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
-                                        {searchTerm ? 'Keine Konten gefunden.' : 'Noch keine Bankguthaben erfasst.'}
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
+        );
+    };
+
+    return (
+        <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
+            {/* Header / Actions */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="relative w-full sm:w-72">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <input
+                        type="text"
+                        placeholder="Aktien, ETFs oder Festgeld suchen..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
+                    />
+                </div>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setIsAddFixedDepositModalOpen(true)}
+                        className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-medium text-sm border border-border"
+                    >
+                        <Landmark className="size-4" />
+                        <span>Bank / Vorsorge</span>
+                    </button>
+                    <button
+                        onClick={() => navigate('/calculator?mode=buy&from=portfolio')}
+                        className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium text-sm"
+                    >
+                        <Plus className="size-4" />
+                        <span>Aktie / ETF</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Aktien Table */}
+            <PositionTable
+                title="Aktien"
+                icon={BarChart3}
+                data={stockPositions}
+                emptyMessage={searchTerm ? 'Keine Aktien gefunden.' : 'Noch keine Aktien im Depot.'}
+            />
+
+            {/* ETFs Table */}
+            <PositionTable
+                title="ETFs"
+                icon={PieChart}
+                data={etfPositions}
+                emptyMessage={searchTerm ? 'Keine ETFs gefunden.' : 'Noch keine ETFs im Depot.'}
+            />
+
+            {/* Vorsorge Section */}
+            <VorsorgeSection />
+
+            {/* Bankguthaben Table */}
+            <FixedDepositTable />
+
+            <AddFixedDepositModal
+                isOpen={isAddFixedDepositModalOpen}
+                onClose={() => {
+                    setIsAddFixedDepositModalOpen(false);
+                    setEditingFixedDeposit(null);
+                }}
+                editingDeposit={editingFixedDeposit}
+            />
+
+            {selectedPosition && (
+                <EditPositionModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => {
+                        setIsEditModalOpen(false);
+                        setSelectedPosition(null);
+                    }}
+                    position={selectedPosition}
+                    onUpdate={handleUpdate}
+                    onDelete={deletePosition}
+                />
+            )}
+
+
         </div>
     );
-};
-
-return (
-    <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
-        {/* Header / Actions */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="relative w-full sm:w-72">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <input
-                    type="text"
-                    placeholder="Aktien, ETFs oder Festgeld suchen..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
-                />
-            </div>
-            <div className="flex gap-2">
-                <button
-                    onClick={() => setIsAddFixedDepositModalOpen(true)}
-                    className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-medium text-sm border border-border"
-                >
-                    <Landmark className="size-4" />
-                    <span>Bank / Vorsorge</span>
-                </button>
-                <button
-                    onClick={() => navigate('/calculator?mode=buy&from=portfolio')}
-                    className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium text-sm"
-                >
-                    <Plus className="size-4" />
-                    <span>Aktie / ETF</span>
-                </button>
-            </div>
-        </div>
-
-        {/* Aktien Table */}
-        <PositionTable
-            title="Aktien"
-            icon={BarChart3}
-            data={stockPositions}
-            emptyMessage={searchTerm ? 'Keine Aktien gefunden.' : 'Noch keine Aktien im Depot.'}
-        />
-
-        {/* ETFs Table */}
-        <PositionTable
-            title="ETFs"
-            icon={PieChart}
-            data={etfPositions}
-            emptyMessage={searchTerm ? 'Keine ETFs gefunden.' : 'Noch keine ETFs im Depot.'}
-        />
-
-        {/* Vorsorge Section */}
-        <VorsorgeSection />
-
-        {/* Bankguthaben Table */}
-        <FixedDepositTable />
-
-        <AddFixedDepositModal
-            isOpen={isAddFixedDepositModalOpen}
-            onClose={() => {
-                setIsAddFixedDepositModalOpen(false);
-                setEditingFixedDeposit(null);
-            }}
-            editingDeposit={editingFixedDeposit}
-        />
-
-        {selectedPosition && (
-            <EditPositionModal
-                isOpen={isEditModalOpen}
-                onClose={() => {
-                    setIsEditModalOpen(false);
-                    setSelectedPosition(null);
-                }}
-                position={selectedPosition}
-                onUpdate={handleUpdate}
-                onDelete={deletePosition}
-            />
-        )}
-
-
-    </div>
-);
 }
