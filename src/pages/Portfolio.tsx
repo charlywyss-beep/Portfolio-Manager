@@ -334,7 +334,7 @@ export function Portfolio() {
         const totalVorsorge = vorsorgeDeposits.reduce((sum, fd) => sum + fd.amount, 0);
 
         return (
-            <div className="space-y-4 mb-8">
+            <div className="space-y-3">
                 <div className="flex items-center gap-2">
                     <ShieldCheck className="size-5 text-primary" />
                     <h2 className="text-xl font-bold tracking-tight">Vorsorge</h2>
