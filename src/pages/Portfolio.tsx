@@ -139,7 +139,7 @@ export function Portfolio() {
                                 <th className="px-2 py-3 text-right whitespace-nowrap">Wert</th>
                                 <th className="px-2 py-3 text-right whitespace-nowrap">+/-</th>
                                 <th className="px-2 py-3 text-right whitespace-nowrap">%</th>
-                                <th className="px-2 py-3 text-center sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
+                                <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -277,7 +277,7 @@ export function Portfolio() {
                                     </td>
 
                                     {/* Aktionen */}
-                                    <td className="px-2 py-3 sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                    <td className="px-1 py-3 sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                         <div className="absolute inset-0 bg-card -z-10" />
                                         <div className="relative flex items-center justify-center gap-1">
                                             <button
