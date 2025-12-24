@@ -434,7 +434,7 @@ export function Portfolio() {
                                                             className="p-1 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
                                                             title="Bearbeiten"
                                                         >
-                                                            <Edit className="size-4" />
+                                                            <Edit className="size-3.5" />
                                                         </button>
                                                         <button
                                                             onClick={() => {
