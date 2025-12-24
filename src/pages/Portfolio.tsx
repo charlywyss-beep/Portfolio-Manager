@@ -277,8 +277,9 @@ export function Portfolio() {
                                     </td>
 
                                     {/* Aktionen */}
-                                    <td className="px-2 py-3 sticky right-0 bg-card group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                        <div className="flex items-center justify-center gap-1">
+                                    <td className="px-2 py-3 sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <div className="absolute inset-0 bg-card -z-10" />
+                                        <div className="relative flex items-center justify-center gap-1">
                                             <button
                                                 onClick={() => {
                                                     setSelectedPosition(pos);
