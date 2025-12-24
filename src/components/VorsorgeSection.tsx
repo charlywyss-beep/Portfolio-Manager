@@ -40,7 +40,7 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                         <p className="text-xs text-muted-foreground mt-1">Total über alle 3a Konten</p>
                     </div>
                     <div className="text-right">
-                        <span className="text-xl font-bold text-primary block">
+                        <span className="text-xl font-bold !text-white block">
                             {totalVorsorge.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
                         </span>
                     </div>
