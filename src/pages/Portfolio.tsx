@@ -121,9 +121,9 @@ export function Portfolio() {
     const PositionTable = ({ title, icon: Icon, data, emptyMessage }: { title: string, icon: any, data: any[], emptyMessage: string }) => (
         <div className="space-y-3">
             <div className="flex items-center gap-2">
-                <Icon className="size-5 text-primary" />
-                <h2 className="text-xl font-bold tracking-tight">{title}</h2>
-                <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{data.length} Positionen</span>
+                <Icon className="size-6 text-primary" />
+                <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+                <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{data.length} Positionen</span>
             </div>
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
@@ -336,8 +336,8 @@ export function Portfolio() {
         return (
             <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                    <ShieldCheck className="size-5 text-primary" />
-                    <h2 className="text-xl font-bold tracking-tight">Vorsorge</h2>
+                    <ShieldCheck className="size-6 text-primary" />
+                    <h2 className="text-2xl font-bold tracking-tight">Vorsorge</h2>
                 </div>
 
                 <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
@@ -468,9 +468,9 @@ export function Portfolio() {
         return (
             <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                    <Landmark className="size-5 text-primary" />
-                    <h2 className="text-xl font-bold tracking-tight">Bankguthaben (Konto & Einlagen)</h2>
-                    <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{filteredFixedDeposits.length} Konten</span>
+                    <Landmark className="size-6 text-primary" />
+                    <h2 className="text-2xl font-bold tracking-tight">Bankguthaben (Konto & Einlagen)</h2>
+                    <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{filteredFixedDeposits.length} Konten</span>
                     <button
                         onClick={() => setIsAddFixedDepositModalOpen(true)}
                         className="ml-auto flex items-center gap-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary px-2 py-1 rounded transition-colors"
