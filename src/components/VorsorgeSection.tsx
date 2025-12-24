@@ -92,10 +92,12 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-2 py-3 text-right">
-                                            <span className="px-2 py-0.5 rounded-md text-xs font-medium border bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50">
-                                                Vorsorge 3a
-                                            </span>
+                                        <td className="px-2 py-3">
+                                            <div className="flex justify-end">
+                                                <span className="px-2 py-0.5 rounded-md text-xs font-medium border bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50">
+                                                    Vorsorge 3a
+                                                </span>
+                                            </div>
                                         </td>
                                         <td className="px-4 py-3 text-right font-medium">
                                             <span style={{ color: '#ffffff' }}>
