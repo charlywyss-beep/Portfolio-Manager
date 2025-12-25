@@ -250,7 +250,7 @@ export function DividendPlanner() {
                                                             {formatCurrency(stock.dividendAmount, divCurrency, false)}
                                                         </span>
                                                         {divCurrency !== 'CHF' && (
-                                                            <span className="text-xs text-muted-foreground font-normal whitespace-nowrap">
+                                                            <span className="font-medium whitespace-nowrap">
                                                                 {formatCurrency(convertToCHF(stock.dividendAmount, divCurrency), 'CHF', false)}
                                                             </span>
                                                         )}
