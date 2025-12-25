@@ -26,7 +26,7 @@ interface EditPositionModalProps {
 export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelete }: EditPositionModalProps) {
     const { updateStock } = usePortfolio();
     const { rates } = useCurrencyFormatter();
-    const inputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
 
     // State for individual purchases
     const [purchases, setPurchases] = useState<Purchase[]>([]);
@@ -212,17 +212,27 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                 size="size-10"
                             />
                             <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2 group/edit">
-                                    <input
+                                <div className="flex items-start gap-2 group/edit w-full">
+                                    <textarea
                                         ref={inputRef}
-                                        type="text"
-                                        className="w-full text-base font-semibold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground truncate"
+                                        className="w-full text-base font-semibold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground resize-y min-h-[28px] overflow-hidden leading-snug"
                                         value={stockName}
-                                        onChange={(e) => setStockName(e.target.value)}
+                                        onChange={(e) => {
+                                            setStockName(e.target.value);
+                                            // Auto-resize
+                                            e.target.style.height = 'auto';
+                                            e.target.style.height = e.target.scrollHeight + 'px';
+                                        }}
+                                        onFocus={(e) => {
+                                            e.target.style.height = 'auto';
+                                            e.target.style.height = e.target.scrollHeight + 'px';
+                                        }}
+                                        rows={1}
                                         placeholder="Name der Position"
+                                        style={{ height: 'auto' }}
                                     />
                                     <Pencil
-                                        className="size-3.5 text-muted-foreground opacity-50 group-hover/edit:opacity-100 transition-opacity shrink-0 cursor-pointer hover:text-primary"
+                                        className="size-3.5 text-muted-foreground opacity-50 group-hover/edit:opacity-100 transition-opacity shrink-0 cursor-pointer hover:text-primary mt-1.5"
                                         onClick={() => inputRef.current?.focus()}
                                     />
                                 </div>
