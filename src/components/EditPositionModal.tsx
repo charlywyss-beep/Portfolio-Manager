@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Save, Trash2, Plus } from 'lucide-react';
+import { X, Save, Trash2, Plus, Pencil } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import type { Stock, Purchase } from '../types';
 
@@ -181,7 +181,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-border">
                     <div>
@@ -211,13 +211,16 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                 size="size-10"
                             />
                             <div className="min-w-0 flex-1">
-                                <input
-                                    type="text"
-                                    className="w-full text-base font-semibold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground"
-                                    value={stockName}
-                                    onChange={(e) => setStockName(e.target.value)}
-                                    placeholder="Name der Position"
-                                />
+                                <div className="flex items-center gap-2 group/edit">
+                                    <input
+                                        type="text"
+                                        className="w-full text-base font-semibold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground truncate"
+                                        value={stockName}
+                                        onChange={(e) => setStockName(e.target.value)}
+                                        placeholder="Name der Position"
+                                    />
+                                    <Pencil className="size-3.5 text-muted-foreground opacity-50 group-hover/edit:opacity-100 transition-opacity shrink-0" />
+                                </div>
                                 <div className="text-xs text-muted-foreground mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
                                     {position.stock.symbol} • Aktuell: {position.stock.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: position.stock.currency })}
                                 </div>
