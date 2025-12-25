@@ -41,7 +41,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             setMonthlyContribution(editingDeposit.monthlyContribution || '');
             setMonthlyFee(editingDeposit.monthlyFee || '');
             setFeeFrequency(editingDeposit.feeFrequency || 'monthly');
-            setIban(editingDeposit.iban || '');
+            setIban((editingDeposit as any).iban || '');
         } else {
             // Reset form for new entry
             setBankName('');
@@ -159,6 +159,11 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                             className="w-full px-3 py-2 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none font-sans"
                             value={bankName}
                             onChange={(e) => setBankName(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.stopPropagation();
+                                }
+                            }}
                             placeholder="z.B. UBS, Credit Suisse..."
                             title="Bank Name"
                             aria-label="Bank Name"
