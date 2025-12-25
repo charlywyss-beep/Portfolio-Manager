@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Save, Trash2, Plus, Pencil } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import type { Stock, Purchase } from '../types';
@@ -26,6 +26,7 @@ interface EditPositionModalProps {
 export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelete }: EditPositionModalProps) {
     const { updateStock } = usePortfolio();
     const { rates } = useCurrencyFormatter();
+    const inputRef = useRef<HTMLInputElement>(null);
 
     // State for individual purchases
     const [purchases, setPurchases] = useState<Purchase[]>([]);
@@ -213,13 +214,17 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2 group/edit">
                                     <input
+                                        ref={inputRef}
                                         type="text"
                                         className="w-full text-base font-semibold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground truncate"
                                         value={stockName}
                                         onChange={(e) => setStockName(e.target.value)}
                                         placeholder="Name der Position"
                                     />
-                                    <Pencil className="size-3.5 text-muted-foreground opacity-50 group-hover/edit:opacity-100 transition-opacity shrink-0" />
+                                    <Pencil
+                                        className="size-3.5 text-muted-foreground opacity-50 group-hover/edit:opacity-100 transition-opacity shrink-0 cursor-pointer hover:text-primary"
+                                        onClick={() => inputRef.current?.focus()}
+                                    />
                                 </div>
                                 <div className="text-xs text-muted-foreground mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
                                     {position.stock.symbol} • Aktuell: {position.stock.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: position.stock.currency })}
