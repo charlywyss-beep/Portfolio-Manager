@@ -77,10 +77,17 @@ export function StockDetail() {
                 // Sync current price with latest chart data
                 if (response.data && response.data.length > 0) {
                     const chartData = response.data;
-                    const latestPrice = chartData[chartData.length - 1].value;
+                    let latestPrice = chartData[chartData.length - 1].value;
 
-                    // Note: Removed GBp / 100 conversion based on user feedback. 
-                    // Treating raw GBp values effectively as GBP/Points.
+                    // Auto-detect GBp (Pence) to GBP (Pound) conversion
+                    // If user selected GBP (Pounds), we must divide by 100.
+                    if (stock.currency === 'GBP') {
+                        const isLSE = stock.symbol.toUpperCase().endsWith('.L') || stock.isin?.startsWith('GB');
+                        // Threshold check: If price is > 50, it's almost certainly Pence for a typical stock
+                        if (isLSE && latestPrice > 50) {
+                            latestPrice = latestPrice / 100;
+                        }
+                    }
 
                     // Filter for 'BUY' range if needed
                     if (timeRange === 'BUY' && position?.buyDate) {

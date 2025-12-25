@@ -571,7 +571,9 @@ export function EditDividendPage() {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Kauflimit</label>
+                                        <div className="flex justify-between items-center h-[24px]">
+                                            <label className="text-sm font-medium">Kauflimit</label>
+                                        </div>
                                         <input
                                             type="text"
                                             inputMode="decimal"
