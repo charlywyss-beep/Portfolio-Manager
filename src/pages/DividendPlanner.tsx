@@ -377,7 +377,7 @@ export function DividendPlanner() {
                         <table className="w-full min-w-[1000px]">
                             <thead>
                                 <tr className="border-b border-border">
-                                    <th className="text-left py-3 px-4 font-semibold">Bank / Institut</th>
+                                    <th className="text-left py-3 px-4 font-semibold sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Bank / Institut</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Betrag</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zins %</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Ø Monatlich</th>
@@ -392,7 +392,7 @@ export function DividendPlanner() {
                                     const isNegative = data.isNegative;
                                     return (
                                         <tr key={data.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group">
-                                            <td className="py-3 px-4">
+                                            <td className="py-3 px-4 sticky left-0 z-10 bg-card group-hover:bg-muted/50 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                 <div className="flex items-center gap-3">
                                                     <Logo
                                                         url={data.logoUrl}
