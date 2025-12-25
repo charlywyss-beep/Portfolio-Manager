@@ -202,7 +202,7 @@ export function Watchlist() {
                                                         <div className="flex flex-col items-end">
                                                             <span className="whitespace-nowrap">{formatCurrency(stock.dividendAmount, stock.dividendCurrency || stock.currency, false)}</span>
                                                             {stock.currency !== 'CHF' && (
-                                                                <span className="text-[10px] text-muted-foreground font-normal whitespace-nowrap">
+                                                                <span className="font-medium whitespace-nowrap">
                                                                     {formatCurrency(convertToCHF(stock.dividendAmount, stock.dividendCurrency || stock.currency), 'CHF', false)}
                                                                 </span>
                                                             )}
