@@ -1007,7 +1007,7 @@ export function DividendCalculator() {
                                                                 updateSimulatorState({ price: val });
                                                             }
                                                         }}
-                                                        className="text-xs flex items-center gap-1 text-foreground hover:text-primary bg-muted hover:bg-muted/80 px-2 py-0.5 rounded transition-colors"
+                                                        className="text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-0.5 rounded transition-colors"
                                                     >
                                                         <RefreshCw className="size-3" /> Kurs laden
                                                     </button>
@@ -1156,7 +1156,7 @@ export function DividendCalculator() {
                                                         updateSimulatorState({ price: val });
                                                     }
                                                 }}
-                                                className="text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded transition-colors -mr-1"
+                                                className="text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-1.5 py-0.5 rounded transition-colors -mr-1"
                                                 title="Aktuellen Kurs laden"
                                             >
                                                 <RefreshCw className="size-3" /> Kurs laden
