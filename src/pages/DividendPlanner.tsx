@@ -184,8 +184,8 @@ export function DividendPlanner() {
                                 <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Quartalsweise</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Ex-Date</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Pay-Date</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">EX-Tag</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zahl-Tag</th>
                                 <th className="text-right py-3 px-4 w-24 sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
                             </tr>
                         </thead>
@@ -271,7 +271,12 @@ export function DividendPlanner() {
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
                                                 <div className="flex flex-col items-end gap-1">
-                                                    <span>
+                                                    <span className={(() => {
+                                                        const dDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                                                        if (dDays !== null && dDays < 0) return "text-red-500 font-medium";
+                                                        if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-orange-500 font-medium";
+                                                        return "";
+                                                    })()}>
                                                         {currentDiv.exDate
                                                             ? new Date(currentDiv.exDate).toLocaleDateString('de-DE')
                                                             : '-'}
@@ -285,7 +290,12 @@ export function DividendPlanner() {
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
                                                 <div className="flex flex-col items-end gap-1">
-                                                    <span>
+                                                    <span className={(() => {
+                                                        const dDays = currentDiv.payDate ? Math.ceil((new Date(currentDiv.payDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                                                        if (dDays !== null && dDays < 0) return "text-red-500 font-medium";
+                                                        if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-orange-500 font-medium";
+                                                        return "";
+                                                    })()}>
                                                         {currentDiv.payDate
                                                             ? new Date(currentDiv.payDate).toLocaleDateString('de-DE')
                                                             : '-'}

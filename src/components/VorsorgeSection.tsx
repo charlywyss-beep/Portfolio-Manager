@@ -38,7 +38,7 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                         <p className="text-xs text-muted-foreground mt-1">Total über alle 3a Konten</p>
                     </div>
                     <div className="text-right">
-                        <span className="text-xl font-bold block" style={{ color: '#ffffff' }}>
+                        <span className="text-xl font-bold block text-white">
                             {totalVorsorge.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
                         </span>
                     </div>
@@ -98,7 +98,7 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                             </span>
                                         </td>
                                         <td className="px-4 py-3 text-right font-medium">
-                                            <span style={{ color: '#ffffff' }}>
+                                            <span className="text-white">
                                                 {fd.amount.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
                                             </span>
                                         </td>

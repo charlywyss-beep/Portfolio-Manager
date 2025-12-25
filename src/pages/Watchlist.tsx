@@ -214,8 +214,7 @@ export function Watchlist() {
                                                         ) : null;
                                                     })()}
                                                 </td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground">
-                                                    {stock.dividendDates && stock.dividendDates.length > 0 ? (
+                                            {stock.dividendDates && stock.dividendDates.length > 0 ? (
                                                         <div className="text-xs whitespace-nowrap">
                                                             {stock.dividendDates
                                                                 .map((d, i) => ({ ...d, label: stock.dividendFrequency === 'semi-annually' ? `${i + 1}.` : `Q${i + 1}` }))
@@ -224,19 +223,29 @@ export function Watchlist() {
                                                                 .map((d, idx) => {
                                                                     const dateObj = new Date(d.exDate);
                                                                     const dDays = Math.ceil((dateObj.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                                                                    const dIsSoon = dDays >= 0 && dDays <= 14;
+                                                                    const isExpired = dDays < 0;
+                                                                    const isSoon = dDays >= 0 && dDays <= 14;
                                                                     const formattedDate = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
 
                                                                     return (
-                                                                        <span key={idx}>
-                                                                            {dIsSoon && '⚠️ '}{d.label} {formattedDate}
+                                                                        <span key={idx} className={isExpired ? "text-red-500 font-medium" : isSoon ? "text-orange-500 font-medium" : ""}>
+                                                                            {isSoon && '⚠️ '}
+                                                                            <span className="mr-1.5 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded">
+                                                                                {d.label}
+                                                                            </span>
+                                                                            {formattedDate}
                                                                             {idx < (stock.dividendDates?.filter(dd => dd.exDate).length ?? 0) - 1 && <br />}
                                                                         </span>
                                                                     );
                                                                 })}
                                                         </div>
                                                     ) : (
-                                                        <div className="text-xs whitespace-nowrap">
+                                                        <div className={(() => {
+                                                            const dDays = stock.dividendExDate ? Math.ceil((new Date(stock.dividendExDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                                                            if (dDays !== null && dDays < 0) return "text-xs whitespace-nowrap text-red-500 font-medium";
+                                                            if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-xs whitespace-nowrap text-orange-500 font-medium";
+                                                            return "text-xs whitespace-nowrap";
+                                                        })()}>
                                                             {isExSoon && '⚠️ '}{stock.dividendExDate ? new Date(stock.dividendExDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
                                                         </div>
                                                     )}
@@ -250,18 +259,29 @@ export function Watchlist() {
                                                                 .sort((a, b) => new Date(a.payDate).getTime() - new Date(b.payDate).getTime())
                                                                 .map((d, idx) => {
                                                                     const dateObj = new Date(d.payDate);
+                                                                    const dDays = Math.ceil((dateObj.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                                                                    const isExpired = dDays < 0;
+                                                                    const isSoon = dDays >= 0 && dDays <= 14;
                                                                     const formattedDate = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
 
                                                                     return (
-                                                                        <span key={idx}>
-                                                                            {d.label} {formattedDate}
+                                                                        <span key={idx} className={isExpired ? "text-red-500 font-medium" : isSoon ? "text-orange-500 font-medium" : ""}>
+                                                                            <span className="mr-1.5 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded">
+                                                                                {d.label}
+                                                                            </span>
+                                                                            {formattedDate}
                                                                             {idx < (stock.dividendDates?.filter(dd => dd.payDate).length ?? 0) - 1 && <br />}
                                                                         </span>
                                                                     );
                                                                 })}
                                                         </div>
                                                     ) : (
-                                                        <div className="text-xs whitespace-nowrap">
+                                                        <div className={(() => {
+                                                            const dDays = stock.dividendPayDate ? Math.ceil((new Date(stock.dividendPayDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                                                            if (dDays !== null && dDays < 0) return "text-xs whitespace-nowrap text-red-500 font-medium";
+                                                            if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-xs whitespace-nowrap text-orange-500 font-medium";
+                                                            return "text-xs whitespace-nowrap";
+                                                        })()}>
                                                             {stock.dividendPayDate ? new Date(stock.dividendPayDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
                                                         </div>
                                                     )}
@@ -296,34 +316,34 @@ export function Watchlist() {
                                                     </div>
                                                 </td>
                                             </tr>
-                                        );
+                            );
                                     })
                                 )}
-                            </tbody>
-                        </table>
-                    </div>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-
-            {/* Removed AddWatchlistStockModal as it's superseded by the calculator */}
-
-            {/* Buy Modal */}
-            <AddPositionModal
-                isOpen={!!buyStock}
-                onClose={() => setBuyStock(null)}
-                stocks={stocks}
-                preSelectedStock={buyStock}
-                onAdd={(pos) => {
-                    addPosition(pos);
-                    // Remove from watchlist after buying
-                    if (buyStock) {
-                        removeFromWatchlist(buyStock.id);
-                    }
-                    setBuyStock(null);
-                    // Optional: Navigate to portfolio or show success
-                    // navigate('/portfolio');
-                }}
-            />
         </div>
+
+            {/* Removed AddWatchlistStockModal as it's superseded by the calculator */ }
+
+    {/* Buy Modal */ }
+    <AddPositionModal
+        isOpen={!!buyStock}
+        onClose={() => setBuyStock(null)}
+        stocks={stocks}
+        preSelectedStock={buyStock}
+        onAdd={(pos) => {
+            addPosition(pos);
+            // Remove from watchlist after buying
+            if (buyStock) {
+                removeFromWatchlist(buyStock.id);
+            }
+            setBuyStock(null);
+            // Optional: Navigate to portfolio or show success
+            // navigate('/portfolio');
+        }}
+    />
+        </div >
     );
 }
