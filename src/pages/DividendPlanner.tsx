@@ -265,7 +265,7 @@ export function DividendPlanner() {
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="text-right py-3 px-4 whitespace-nowrap">
+                                            <td className="text-right py-3 px-4 font-medium whitespace-nowrap">
                                                 {stock.dividendFrequency !== 'annually' ? `CHF ${quarterlyDividendCHF.toFixed(2)}` : ''}
                                             </td>
                                             <td className="text-right py-3 px-4 font-semibold whitespace-nowrap">
@@ -383,7 +383,7 @@ export function DividendPlanner() {
                                             <td className="text-right py-3 px-4 text-muted-foreground">
                                                 Jährlich
                                             </td>
-                                            <td className={`text-right py-3 px-4 whitespace-nowrap ${isNegative ? 'text-red-600/70' : 'text-green-600/70'}`}>
+                                            <td className={`text-right py-3 px-4 font-medium whitespace-nowrap ${isNegative ? 'text-red-600/70' : 'text-green-600/70'}`}>
                                                 {isNegative ? '-' : '+'} CHF {Math.abs(data.quarterly).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </td>
                                             <td className={`text-right py-3 px-4 font-semibold whitespace-nowrap ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
