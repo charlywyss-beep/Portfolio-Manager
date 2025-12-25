@@ -138,32 +138,60 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
 
                                     {/* Gesamt +/- */}
                                     <td className="px-4 py-3 text-right">
-                                        <div className="flex flex-col items-end">
-                                            <span className={cn(
-                                                "font-medium whitespace-nowrap",
-                                                pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                            )}>
-                                                {pos.gainLossTotal >= 0 ? '+' : ''}{formatCurrency(pos.gainLossTotal, pos.stock.currency, false)}
-                                            </span>
-                                            {pos.stock.currency !== 'CHF' && (
-                                                <>
-                                                    <div
-                                                        className={cn(
-                                                            "text-xs font-medium whitespace-nowrap mt-0.5",
-                                                            pos.gainLossTotalCHF >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                        <div className="flex flex-col items-end gap-0.5">
+                                            {/* Native Gain/Loss */}
+                                            {(() => {
+                                                const nativeGain = pos.gainLossTotal;
+                                                const chfGain = pos.gainLossTotalCHF;
+                                                const isNativeCHF = pos.stock.currency === 'CHF';
+
+                                                return (
+                                                    <>
+                                                        <div className={cn(
+                                                            "flex items-center justify-end gap-1.5 font-medium tabular-nums",
+                                                            nativeGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                                        )} title="Gewinn/Verlust (Native)">
+                                                            <span>
+                                                                {nativeGain >= 0 ? '+' : ''}{nativeGain.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                            </span>
+                                                            <span className="w-8 text-left text-[11px] uppercase text-current/80 sm:text-sm sm:w-8 translate-y-[0.5px]">
+                                                                {pos.stock.currency === 'GBp' ? 'GBP' : pos.stock.currency}
+                                                            </span>
+                                                        </div>
+
+                                                        {!isNativeCHF && (
+                                                            <div className={cn(
+                                                                "flex items-center justify-end gap-1.5 font-medium tabular-nums",
+                                                                chfGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                                            )} title="Gewinn/Verlust in CHF">
+                                                                <span>
+                                                                    {chfGain >= 0 ? '+' : ''}{chfGain.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                                </span>
+                                                                <span className="w-8 text-left text-[11px] uppercase text-current/80 sm:text-sm sm:w-8 translate-y-[0.5px]">
+                                                                    CHF
+                                                                </span>
+                                                            </div>
                                                         )}
-                                                        title="Gewinn/Verlust in CHF (inkl. Währungseffekt)"
-                                                    >
-                                                        {pos.gainLossTotalCHF >= 0 ? '+' : ''}{formatCurrency(pos.gainLossTotalCHF, 'CHF', false)}
-                                                    </div>
-                                                    <div className={cn(
-                                                        "text-[10px] whitespace-nowrap mt-0.5",
-                                                        pos.forexImpactCHF >= 0 ? "text-emerald-600/80 dark:text-emerald-400/80" : "text-rose-600/80 dark:text-rose-400/80"
-                                                    )} title="Anteil Währungsgewinn/-verlust">
-                                                        (Währung: {pos.forexImpactCHF >= 0 ? '+' : ''}{formatCurrency(pos.forexImpactCHF, 'CHF', false)})
-                                                    </div>
-                                                </>
-                                            )}
+
+                                                        {/* Forex Impact (Optional, keep if needed or tabularize it too?) 
+                                                            Original: (Währung: +5'704.93 CHF)
+                                                            This is usually small text below. Standardizing it might make it too prominent?
+                                                            The user explicitly asked for tabular alignment for "+/-". 
+                                                            To be safe, I will keep Forex Impact as is but ensure it doesn't break flow.
+                                                            Or should I align it too? 
+                                                            The screenshot shows separate lines. I will keep it simple for now, focusing on the main numbers.
+                                                        */}
+                                                        {!isNativeCHF && (
+                                                            <div className={cn(
+                                                                "text-[10px] whitespace-nowrap mt-0.5 pr-[38px] text-right", // Added padding right to align with numbers roughly? No, tabular is hard here.
+                                                                pos.forexImpactCHF >= 0 ? "text-emerald-600/80 dark:text-emerald-400/80" : "text-rose-600/80 dark:text-rose-400/80"
+                                                            )} title="Anteil Währungsgewinn/-verlust">
+                                                                (Währung: {pos.forexImpactCHF >= 0 ? '+' : ''}{pos.forexImpactCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF)
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     </td>
 
