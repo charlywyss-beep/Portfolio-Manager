@@ -888,7 +888,7 @@ export function DividendCalculator() {
                                                                     </div>
                                                                     <div className="text-right">
                                                                         <div className="font-medium">
-                                                                            {stock.currentPrice.toLocaleString('de-DE', { style: 'currency', currency: stock.currency === 'GBp' ? 'GBP' : stock.currency })}
+                                                                            {stock.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: stock.currency === 'GBp' ? 'GBP' : stock.currency })}
                                                                         </div>
                                                                     </div>
                                                                 </button>
@@ -914,7 +914,7 @@ export function DividendCalculator() {
                                                 <div className="flex-1">
                                                     <div className="font-semibold">{stocks.find(s => s.id === selectedStockId)?.name}</div>
                                                     <div className="text-sm text-muted-foreground">
-                                                        {stocks.find(s => s.id === selectedStockId)?.symbol} • {stocks.find(s => s.id === selectedStockId)?.currentPrice.toLocaleString('de-DE', { style: 'currency', currency: stocks.find(s => s.id === selectedStockId)?.currency === 'GBp' ? 'GBP' : stocks.find(s => s.id === selectedStockId)?.currency })}
+                                                        {stocks.find(s => s.id === selectedStockId)?.symbol} • {stocks.find(s => s.id === selectedStockId)?.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: stocks.find(s => s.id === selectedStockId)?.currency === 'GBp' ? 'GBP' : stocks.find(s => s.id === selectedStockId)?.currency })}
                                                     </div>
                                                 </div>
                                                 <button
@@ -1093,7 +1093,7 @@ export function DividendCalculator() {
                                                     </div>
                                                 ) : (
                                                     <span className="text-xl font-bold group-hover:text-primary transition-colors flex items-center gap-2">
-                                                        {displayAvgPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')}
+                                                        {displayAvgPrice.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')}
                                                         <Pencil size={12} className="opacity-0 group-hover:opacity-50 text-muted-foreground" />
                                                     </span>
                                                 )}
@@ -1107,7 +1107,7 @@ export function DividendCalculator() {
                                         <div className="flex flex-col items-center gap-1">
                                             <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Gesamtwert</span>
                                             <span className="text-xl font-medium">
-                                                {(displayAvgPrice * currentPos.shares).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')}
+                                                {(displayAvgPrice * currentPos.shares).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')}
                                             </span>
                                         </div>
                                     </div>
