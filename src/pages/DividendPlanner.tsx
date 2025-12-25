@@ -177,7 +177,7 @@ export function DividendPlanner() {
                     <table className="w-full min-w-[1000px]">
                         <thead>
                             <tr className="border-b border-border">
-                                <th className="text-left py-3 px-4 font-semibold">Aktie</th>
+                                <th className="text-left py-3 px-4 font-semibold sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktie</th>
                                 <th className="text-right py-3 px-4 font-semibold">Anteile</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Rendite %</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Betrag/Aktie</th>
@@ -186,7 +186,7 @@ export function DividendPlanner() {
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">EX-Tag</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zahl-Tag</th>
-                                <th className="text-right py-3 px-4 w-24 sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
+                                <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -220,8 +220,9 @@ export function DividendPlanner() {
 
                                     return (
                                         <tr key={position.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group">
-                                            <td className="py-3 px-4">
-                                                <div className="flex items-center gap-3">
+                                            <td className="py-3 px-4 sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <div className="absolute inset-0 bg-card -z-10" />
+                                                <div className="relative flex items-center gap-3">
                                                     <Logo
                                                         url={stock.logoUrl}
                                                         alt={stock.name}
@@ -307,14 +308,17 @@ export function DividendPlanner() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="text-right py-3 px-4 sticky right-0 bg-card group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                                <button
-                                                    onClick={() => navigate(`/dividends/edit/${stock.id}`)}
-                                                    className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
-                                                    title="Bearbeiten"
-                                                >
-                                                    <Edit className="size-4" />
-                                                </button>
+                                            <td className="px-1 py-3 text-center sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <div className="absolute inset-0 bg-card -z-10" />
+                                                <div className="relative flex items-center justify-center">
+                                                    <button
+                                                        onClick={() => navigate(`/dividends/edit/${stock.id}`)}
+                                                        className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
+                                                        title="Bearbeiten"
+                                                    >
+                                                        <Edit className="size-4" />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     );
