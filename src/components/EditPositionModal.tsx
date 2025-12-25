@@ -216,6 +216,22 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                             />
                             <div className="text-xs text-muted-foreground mt-0.5">
                                 {position.stock.symbol} • Aktuell: {position.stock.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: position.stock.currency })}
+                                {rates && position.stock.currency !== 'CHF' && rates[isGBX ? 'GBP' : position.stock.currency] && (
+                                    <>
+                                        {' • '}
+                                        <span className="text-primary font-medium">
+                                            1 {isGBX ? 'GBP' : position.stock.currency} = {(1 / rates[isGBX ? 'GBP' : position.stock.currency]).toFixed(4)} CHF
+                                        </span>
+                                    </>
+                                )}
+                                {rates && position.stock.currency !== 'CHF' && rates[isGBX ? 'GBP' : position.stock.currency] && (
+                                    <>
+                                        {' • '}
+                                        <span className="text-primary font-medium">
+                                            1 {isGBX ? 'GBP' : position.stock.currency} = {(1 / rates[isGBX ? 'GBP' : position.stock.currency]).toFixed(4)} CHF
+                                        </span>
+                                    </>
+                                )}
                             </div>
                         </div>
                         {/* Live Calculation Badge */}
