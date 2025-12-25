@@ -285,9 +285,19 @@ export function EditDividendPage() {
                 <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-muted rounded-full">
                     <ArrowLeft className="size-6" />
                 </button>
-                <div className="flex-1">
-                    <h1 className="text-xl font-bold">{stock ? stock.name : 'Dividende hinzufügen'}</h1>
-                    <p className="text-sm text-muted-foreground">{stock ? stock.symbol : 'Neue Erfassung'}</p>
+                <div className="flex-1 flex items-center gap-3">
+                    {logoUrl && (
+                        <img
+                            src={logoUrl}
+                            alt="Logo"
+                            className="size-10 rounded-full bg-white object-contain p-1 border border-border shrink-0"
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                        />
+                    )}
+                    <div>
+                        <h1 className="text-xl font-bold">{stock ? stock.name : 'Dividende hinzufügen'}</h1>
+                        <p className="text-sm text-muted-foreground">{stock ? stock.symbol : 'Neue Erfassung'}</p>
+                    </div>
                 </div>
             </div>
 
