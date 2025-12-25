@@ -199,6 +199,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                 <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto flex flex-col">
 
                     {/* Stock Info Bar */}
+                    {/* Stock Info Bar */}
                     <div className="p-4 bg-muted/30 border-b border-border flex items-center gap-3">
                         <Logo
                             url={position.stock.logoUrl}
@@ -216,24 +217,19 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                             />
                             <div className="text-xs text-muted-foreground mt-0.5">
                                 {position.stock.symbol} • Aktuell: {position.stock.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: position.stock.currency })}
-                                {rates && position.stock.currency !== 'CHF' && rates[isGBX ? 'GBP' : position.stock.currency] && (
-                                    <>
-                                        {' • '}
-                                        <span className="text-primary font-medium">
-                                            1 {isGBX ? 'GBP' : position.stock.currency} = {(1 / rates[isGBX ? 'GBP' : position.stock.currency]).toFixed(4)} CHF
-                                        </span>
-                                    </>
-                                )}
-                                {rates && position.stock.currency !== 'CHF' && rates[isGBX ? 'GBP' : position.stock.currency] && (
-                                    <>
-                                        {' • '}
-                                        <span className="text-primary font-medium">
-                                            1 {isGBX ? 'GBP' : position.stock.currency} = {(1 / rates[isGBX ? 'GBP' : position.stock.currency]).toFixed(4)} CHF
-                                        </span>
-                                    </>
-                                )}
                             </div>
                         </div>
+
+                        {/* FX Info (Middle) */}
+                        {rates && position.stock.currency !== 'CHF' && rates[isGBX ? 'GBP' : position.stock.currency] && (
+                            <div className="px-4 py-2 bg-background/50 rounded-lg border border-border/50 flex flex-col items-center justify-center min-w-[120px]">
+                                <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">WECHSELKURS</div>
+                                <div className="font-mono font-medium text-sm text-primary">
+                                    1 {isGBX ? 'GBP' : position.stock.currency} = {(1 / rates[isGBX ? 'GBP' : position.stock.currency]).toFixed(4)} CHF
+                                </div>
+                            </div>
+                        )}
+
                         {/* Live Calculation Badge */}
                         <div className="text-right px-4 py-2 bg-primary/5 rounded-lg border border-primary/10">
                             <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">NEUER BESTAND</div>
