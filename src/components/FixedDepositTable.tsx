@@ -36,7 +36,7 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
             </div>
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-xs text-left">
+                    <table className="w-auto text-xs text-left">
                         <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
                             <tr>
                                 <th className="px-2 py-3 sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[200px]">Bank / Institut</th>
