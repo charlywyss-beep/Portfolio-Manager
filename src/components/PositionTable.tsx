@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
-import { smartWrap } from '../utils/text';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
 import { Logo } from './Logo';
@@ -58,10 +57,10 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                             />
                                             <div className="min-w-0 flex-1 flex flex-col items-start gap-0.5">
                                                 <div
-                                                    className="font-semibold text-foreground cursor-pointer hover:text-primary transition-colors text-sm"
+                                                    className="font-semibold text-foreground cursor-pointer hover:text-primary transition-colors text-sm whitespace-pre-line"
                                                     onClick={() => navigate(`/stock/${pos.stock.id}`)}
                                                 >
-                                                    {smartWrap(pos.stock.name)}
+                                                    {pos.stock.name}
                                                 </div>
                                                 <div className="text-xs font-mono text-muted-foreground">{pos.stock.symbol}</div>
                                                 <div className="text-[10px] text-muted-foreground/80">{pos.stock.sector}</div>
