@@ -116,9 +116,9 @@ export function Watchlist() {
 
                                         return (
                                             <tr key={stock.id} className="hover:bg-muted/50 transition-colors group">
-                                                <td className="py-3 px-4 sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[140px]">
+                                                <td className="py-3 px-4 sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[140px] align-top">
                                                     <div className="absolute inset-0 bg-card -z-10" />
-                                                    <div className="relative flex items-center gap-3">
+                                                    <div className="relative flex items-start gap-3">
                                                         {stock.logoUrl ? (
                                                             <img
                                                                 src={stock.logoUrl}
@@ -143,7 +143,7 @@ export function Watchlist() {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="text-right py-3 px-2 sm:px-4">
+                                                <td className="text-right py-3 px-2 sm:px-4 align-top">
                                                     <div className="flex flex-col items-end gap-1">
                                                         <span className="font-medium whitespace-nowrap">{formatCurrency(stock.currentPrice, stock.currency, false)}</span>
                                                         {stock.currency !== 'CHF' && (
@@ -173,7 +173,7 @@ export function Watchlist() {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="text-right py-3 px-4 font-medium">
+                                                <td className="text-right py-3 px-4 font-medium align-top">
                                                     {hasTarget ? (
                                                         <div className="flex flex-col items-end gap-1">
                                                             <span className="whitespace-nowrap">{formatCurrency(stock.targetPrice || 0, stock.currency, false)}</span>
@@ -185,7 +185,7 @@ export function Watchlist() {
                                                         </div>
                                                     ) : '-'}
                                                 </td>
-                                                <td className="text-right py-3 px-4">
+                                                <td className="text-right py-3 px-4 align-top">
                                                     <div className="flex flex-col items-end">
                                                         <span className="text-green-600 dark:text-green-400 font-medium">
                                                             {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
@@ -197,7 +197,7 @@ export function Watchlist() {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="text-right py-3 px-4">
+                                                <td className="text-right py-3 px-4 align-top">
                                                     {stock.dividendAmount ? (
                                                         <div className="flex flex-col items-end gap-1">
                                                             <span className="whitespace-nowrap">{formatCurrency(stock.dividendAmount, stock.dividendCurrency || stock.currency, false)}</span>
@@ -209,7 +209,7 @@ export function Watchlist() {
                                                         </div>
                                                     ) : '-'}
                                                 </td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground">
+                                                <td className="text-right py-3 px-4 text-muted-foreground align-top">
                                                     {translateFrequency(stock.dividendFrequency)}
                                                     {(() => {
                                                         const currentDiv = getCurrentDividendPeriod(stock);
@@ -220,7 +220,7 @@ export function Watchlist() {
                                                         ) : null;
                                                     })()}
                                                 </td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground">
+                                                <td className="text-right py-3 px-4 text-muted-foreground align-top">
                                                     {stock.dividendDates && stock.dividendDates.length > 0 ? (
                                                         <div className="text-xs whitespace-nowrap">
                                                             {stock.dividendDates
@@ -257,7 +257,7 @@ export function Watchlist() {
                                                         </div>
                                                     )}
                                                 </td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground">
+                                                <td className="text-right py-3 px-4 text-muted-foreground align-top">
                                                     {stock.dividendDates && stock.dividendDates.length > 0 ? (
                                                         <div className="text-xs whitespace-nowrap">
                                                             {stock.dividendDates
