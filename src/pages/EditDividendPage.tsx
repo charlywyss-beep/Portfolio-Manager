@@ -534,8 +534,8 @@ export function EditDividendPage() {
                             <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4">
                                 <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Kursdaten</h3>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between items-center">
+                                    <div className="flex flex-col h-full gap-2">
+                                        <div className="flex justify-between items-center min-h-[28px]">
                                             <label className="text-sm font-medium">Aktueller Kurs <span className="text-xs text-muted-foreground">({currency === 'GBp' ? 'GBP' : currency})</span></label>
                                             {symbol && (
                                                 <button
@@ -577,11 +577,11 @@ export function EditDividendPage() {
                                             value={price}
                                             onChange={(e) => handlePriceChange(e.target.value)}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg"
+                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg mt-auto"
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between items-center h-[24px]">
+                                    <div className="flex flex-col h-full gap-2">
+                                        <div className="flex justify-between items-center min-h-[28px]">
                                             <label className="text-sm font-medium">Kauflimit</label>
                                         </div>
                                         <input
@@ -593,7 +593,7 @@ export function EditDividendPage() {
                                             value={targetPrice}
                                             onChange={(e) => setTargetPrice(e.target.value)}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg"
+                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg mt-auto"
                                         />
                                     </div>
                                 </div>
