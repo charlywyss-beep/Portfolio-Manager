@@ -145,7 +145,12 @@ export function Watchlist() {
                                                 </td>
                                                 <td className="text-right py-3 px-2 sm:px-4">
                                                     <div className="flex flex-col items-end gap-1">
-                                                        <span className="font-medium">{formatCurrency(stock.currentPrice, stock.currency)}</span>
+                                                        <span className="font-medium whitespace-nowrap">{formatCurrency(stock.currentPrice, stock.currency, false)}</span>
+                                                        {stock.currency !== 'CHF' && (
+                                                            <span className="text-xs text-muted-foreground font-normal whitespace-nowrap">
+                                                                {formatCurrency(convertToCHF(stock.currentPrice, stock.currency), 'CHF', false)}
+                                                            </span>
+                                                        )}
                                                         {hasTarget && (
                                                             <div className="flex items-center justify-end gap-1.5 text-xs">
                                                                 {isUndervalued ? (
@@ -209,7 +214,7 @@ export function Watchlist() {
                                                     {(() => {
                                                         const currentDiv = getCurrentDividendPeriod(stock);
                                                         return currentDiv.periodLabel ? (
-                                                            <span className="ml-2 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded">
+                                                            <span className="ml-2 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-blue-900/30 text-blue-400 rounded">
                                                                 {currentDiv.periodLabel}
                                                             </span>
                                                         ) : null;
@@ -232,7 +237,7 @@ export function Watchlist() {
                                                                     return (
                                                                         <span key={idx} className={isExpired ? "text-red-500 font-medium" : isSoon ? "text-orange-500 font-medium" : ""}>
                                                                             {isSoon && '⚠️ '}
-                                                                            <span className="mr-1.5 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded">
+                                                                            <span className="mr-1.5 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-blue-900/30 text-blue-400 rounded">
                                                                                 {d.label}
                                                                             </span>
                                                                             {formattedDate}
@@ -268,7 +273,7 @@ export function Watchlist() {
 
                                                                     return (
                                                                         <span key={idx} className={isExpired ? "text-red-500 font-medium" : isSoon ? "text-orange-500 font-medium" : ""}>
-                                                                            <span className="mr-1.5 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded">
+                                                                            <span className="mr-1.5 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-blue-900/30 text-blue-400 rounded">
                                                                                 {d.label}
                                                                             </span>
                                                                             {formattedDate}
