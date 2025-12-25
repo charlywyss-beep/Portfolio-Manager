@@ -239,7 +239,7 @@ export function DividendPlanner() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="text-right py-3 px-4">{position.shares}</td>
+                                            <td className="text-right py-3 px-4 font-medium">{position.shares}</td>
                                             <td className="text-right py-3 px-4 text-green-600 dark:text-green-400 font-medium">
                                                 {stock.dividendYield?.toFixed(2)}%
                                             </td>
@@ -371,7 +371,7 @@ export function DividendPlanner() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="text-right py-3 px-4 text-muted-foreground whitespace-nowrap">
+                                            <td className="text-right py-3 px-4 font-medium whitespace-nowrap">
                                                 CHF {data.depositAmount?.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
