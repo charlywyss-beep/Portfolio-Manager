@@ -5,6 +5,7 @@ import type { Stock, Purchase } from '../types';
 
 import { DecimalInput } from './DecimalInput';
 import { Logo } from './Logo';
+import { useCurrencyFormatter } from '../utils/currency';
 
 interface EditPositionModalProps {
     isOpen: boolean;
@@ -24,6 +25,7 @@ interface EditPositionModalProps {
 
 export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelete }: EditPositionModalProps) {
     const { updateStock } = usePortfolio();
+    const { rates } = useCurrencyFormatter();
 
     // State for individual purchases
     const [purchases, setPurchases] = useState<Purchase[]>([]);
@@ -266,7 +268,34 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                     </div>
                                     <div className="col-span-3">
                                         <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
-                                            <div>Wechselkurs</div>
+                                            <div className="flex justify-between items-center">
+                                                <span>Wechselkurs</span>
+                                                {position.stock.currency !== 'CHF' && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const currency = isGBX ? 'GBP' : position.stock.currency;
+                                                            const rate = rates && rates[currency] ? rates[currency] : undefined;
+
+                                                            if (rate) {
+                                                                // Rate is "Units per CHF" (e.g. 1.12 USD for 1 CHF)
+                                                                // Input expects "CHF per Unit" (e.g. 0.89 CHF for 1 USD)
+                                                                const fxRate = 1 / rate;
+                                                                handleUpdatePurchase(purchase.id, 'fxRate', parseFloat(fxRate.toFixed(6)));
+                                                            } else {
+                                                                // Fallback to defaults if live rate missing
+                                                                const fallback = currency === 'USD' ? 0.89 : currency === 'EUR' ? 0.94 : currency === 'GBP' ? 1.07 : 1.0;
+                                                                handleUpdatePurchase(purchase.id, 'fxRate', fallback);
+                                                            }
+                                                        }}
+                                                        className="text-[9px] text-blue-500 hover:text-blue-600 hover:underline flex items-center gap-0.5"
+                                                        title="Aktuellen Kurs laden"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-refresh-cw"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M3 21v-5h5" /></svg>
+                                                        Laden
+                                                    </button>
+                                                )}
+                                            </div>
                                             <div className="font-normal normal-case text-[9px] opacity-80">CHF pro 1 {isGBX ? 'GBP' : position.stock.currency}</div>
                                         </label>
                                         <DecimalInput
