@@ -76,18 +76,34 @@ export function StockDetail() {
 
                 // Sync current price with latest chart data
                 if (response.data && response.data.length > 0) {
-                    const chartData = response.data;
-                    let latestPrice = chartData[chartData.length - 1].value;
+                    let chartData = response.data;
 
                     // Auto-detect GBp (Pence) to GBP (Pound) conversion
                     // If user selected GBP (Pounds), we must divide by 100.
-                    if (stock.currency === 'GBP') {
+                    // We check the latest price as a heuristic.
+                    const latestPriceRaw = chartData[chartData.length - 1].value;
+                    const isGBP = stock.currency === 'GBP';
+
+                    if (isGBP) {
                         const isLSE = stock.symbol.toUpperCase().endsWith('.L') || stock.isin?.startsWith('GB');
-                        // Threshold check: If price is > 50, it's almost certainly Pence for a typical stock
-                        if (isLSE && latestPrice > 50) {
-                            latestPrice = latestPrice / 100;
+                        // Threshold check: If price is > 50, it's almost certainly Pence for a typical stock.
+                        // UK stocks are rarely > 50 GBP per share (most are < 50 GBP). 
+                        // Example: AstraZeneca ~100 GBP, but most others are lower. 
+                        // Berkshire A is exception but that's USD.
+                        // Use 200 as stricter threshold or stick to 50? 
+                        // Most LSE stocks are quoted in pence. If we see 4000, it's 40 GBP. 
+                        // If we see 42.15, it's GBP. 
+                        // Let's use 100 as safe threshold? Or sticking to 50. 
+                        if (isLSE && latestPriceRaw > 50) {
+                            console.log('[StockDetail] Normalizing GBp to GBP for chart data');
+                            chartData = chartData.map(d => ({
+                                ...d,
+                                value: d.value / 100
+                            }));
                         }
                     }
+
+                    const latestPrice = chartData[chartData.length - 1].value;
 
                     // Filter for 'BUY' range if needed
                     if (timeRange === 'BUY' && position?.buyDate) {
@@ -104,7 +120,8 @@ export function StockDetail() {
                         setChartData(chartData);
                     }
 
-                    if (Math.abs(stock.currentPrice - latestPrice) > 0.01) {
+                    if (Math.abs(stock.currentPrice - latestPrice) > 0.0001) {
+                        // Only update if difference is significant (floating point)
                         updateStockPrice(stock.id, latestPrice);
                     }
                 } else {
