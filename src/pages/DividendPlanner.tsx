@@ -209,7 +209,7 @@ export function DividendPlanner() {
                                         annualDisplay = (
                                             <div className="flex flex-col items-end whitespace-nowrap">
                                                 <span>{nativeFormatted}</span>
-                                                <span className="text-xs text-muted-foreground font-normal">{chfFormatted}</span>
+                                                <span className="font-medium">{chfFormatted}</span>
                                             </div>
                                         );
                                     } else {
@@ -265,7 +265,7 @@ export function DividendPlanner() {
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="text-right py-3 px-4 text-muted-foreground whitespace-nowrap">
+                                            <td className="text-right py-3 px-4 whitespace-nowrap">
                                                 {stock.dividendFrequency !== 'annually' ? `CHF ${quarterlyDividendCHF.toFixed(2)}` : ''}
                                             </td>
                                             <td className="text-right py-3 px-4 font-semibold text-primary whitespace-nowrap">
