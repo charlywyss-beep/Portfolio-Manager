@@ -1007,7 +1007,7 @@ export function DividendCalculator() {
                                                                 updateSimulatorState({ price: val });
                                                             }
                                                         }}
-                                                        className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded transition-colors"
+                                                        className="text-xs flex items-center gap-1 text-foreground hover:text-primary bg-muted hover:bg-muted/80 px-2 py-0.5 rounded transition-colors"
                                                     >
                                                         <RefreshCw className="size-3" /> Kurs laden
                                                     </button>
@@ -1042,7 +1042,7 @@ export function DividendCalculator() {
                                         {/* Shares */}
                                         <div className="flex flex-col items-center gap-1">
                                             <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Bestand</span>
-                                            <span className="text-xl font-bold">{currentPos.shares} Stk.</span>
+                                            <span className="text-xl font-medium">{currentPos.shares} Stk.</span>
                                         </div>
 
                                         {/* Divider */}
@@ -1106,7 +1106,7 @@ export function DividendCalculator() {
                                         {/* Total Value */}
                                         <div className="flex flex-col items-center gap-1">
                                             <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Gesamtwert</span>
-                                            <span className="text-xl font-bold">
+                                            <span className="text-xl font-medium">
                                                 {(displayAvgPrice * currentPos.shares).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')}
                                             </span>
                                         </div>
@@ -1119,21 +1119,21 @@ export function DividendCalculator() {
                             {/* Core Inputs - Compact Grid */}
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] uppercase font-bold text-muted-foreground">Anzahl Anteile</label>
+                                    <label className="text-[10px] uppercase font-medium text-muted-foreground">Anzahl Anteile</label>
                                     <LocalNumberInput
                                         value={shares}
                                         onChange={(val) => updateSimulatorState({ shares: val })}
                                         className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                     />
                                     {price > 0 && dividend > 0 && (
-                                        <div className="text-sm font-bold text-green-600 font-medium text-right mt-1">
+                                        <div className="text-sm text-green-600 font-medium text-right mt-1">
                                             {((dividend / price) * 100).toFixed(2)}% Brutto
                                         </div>
                                     )}
                                 </div>
                                 <div className="space-y-1">
                                     <div className="flex justify-between items-center">
-                                        <label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">
+                                        <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap">
                                             Kaufpreis ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
                                         </label>
                                         {(stocks.find(s => s.id === selectedStockId)?.symbol) && (
@@ -1171,7 +1171,7 @@ export function DividendCalculator() {
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">
+                                    <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap">
                                         Dividende ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
                                     </label>
                                     <LocalNumberInput
@@ -1435,7 +1435,7 @@ export function DividendCalculator() {
                                     <div className="h-px bg-border my-2" />
                                     <div className="flex justify-between items-center font-bold">
                                         <span>{mode === 'buy' ? 'Investition Total' : 'Netto Erlös'} (CHF):</span>
-                                        <span className={mode === 'buy' ? 'text-green-500 dark:text-green-400' : 'text-blue-600 dark:text-blue-400 font-mono'}>
+                                        <span className={mode === 'buy' ? 'text-green-500 dark:text-green-400' : 'text-foreground font-medium font-mono'}>
                                             {mode === 'buy' ? totalInvestCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' }) : totalProceedsCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                                         </span>
                                     </div>

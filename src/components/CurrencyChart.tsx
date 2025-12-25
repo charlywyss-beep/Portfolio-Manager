@@ -169,25 +169,25 @@ export function CurrencyChart({ inverse = false }: Props) {
                     <>
                         {/* Currency Converter */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 rounded-xl p-6 border border-indigo-200 dark:border-indigo-800">
-                                <label className="text-sm font-medium text-indigo-900 dark:text-indigo-100 mb-2 block">{baseCurrency}</label>
+                            <div className="bg-muted/30 rounded-xl p-6 border border-border/50">
+                                <label className="text-sm font-medium text-muted-foreground mb-2 block">{baseCurrency}</label>
                                 <input
                                     type="number"
                                     value={baseAmount}
                                     onChange={(e) => handleBaseAmountChange(e.target.value)}
                                     onFocus={(e) => e.target.select()}
-                                    className="w-full px-4 py-3 text-2xl font-bold rounded-lg bg-white dark:bg-background text-gray-900 dark:text-white border-0 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-3 text-2xl font-bold rounded-lg bg-background text-foreground border border-input focus:outline-none focus:ring-2 focus:ring-primary/20"
                                     placeholder="0.00"
                                 />
                             </div>
-                            <div className="bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-950/30 rounded-xl p-6 border border-cyan-200 dark:border-cyan-800">
-                                <label className="text-sm font-medium text-cyan-900 dark:text-cyan-100 mb-2 block">{targetCurrency}</label>
+                            <div className="bg-muted/30 rounded-xl p-6 border border-border/50">
+                                <label className="text-sm font-medium text-muted-foreground mb-2 block">{targetCurrency}</label>
                                 <input
                                     type="number"
                                     value={convertedAmount}
                                     onChange={(e) => handleConvertedAmountChange(e.target.value)}
                                     onFocus={(e) => e.target.select()}
-                                    className="w-full px-4 py-3 text-2xl font-bold rounded-lg bg-white dark:bg-background text-gray-900 dark:text-white border-0 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                    className="w-full px-4 py-3 text-2xl font-bold rounded-lg bg-background text-foreground border border-input focus:outline-none focus:ring-2 focus:ring-primary/20"
                                     placeholder="0.00"
                                 />
                             </div>

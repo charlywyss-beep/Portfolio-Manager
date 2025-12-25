@@ -214,7 +214,7 @@ export function Watchlist() {
                                                     {(() => {
                                                         const currentDiv = getCurrentDividendPeriod(stock);
                                                         return currentDiv.periodLabel ? (
-                                                            <span className="ml-2 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-blue-900/30 text-blue-400 rounded">
+                                                            <span className="ml-2 px-1.5 py-0.5 text-[10px] uppercase font-medium bg-muted text-muted-foreground border border-border rounded">
                                                                 {currentDiv.periodLabel}
                                                             </span>
                                                         ) : null;
@@ -237,7 +237,7 @@ export function Watchlist() {
                                                                     return (
                                                                         <span key={idx} className={isExpired ? "text-red-500 font-medium" : isSoon ? "text-orange-500 font-medium" : ""}>
                                                                             {isSoon && '⚠️ '}
-                                                                            <span className="mr-1.5 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-blue-900/30 text-blue-400 rounded">
+                                                                            <span className="mr-1.5 px-1.5 py-0.5 text-[10px] uppercase font-medium bg-muted text-muted-foreground border border-border rounded">
                                                                                 {d.label}
                                                                             </span>
                                                                             {formattedDate}
@@ -273,7 +273,7 @@ export function Watchlist() {
 
                                                                     return (
                                                                         <span key={idx} className={isExpired ? "text-red-500 font-medium" : isSoon ? "text-orange-500 font-medium" : ""}>
-                                                                            <span className="mr-1.5 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-blue-900/30 text-blue-400 rounded">
+                                                                            <span className="mr-1.5 px-1.5 py-0.5 text-[10px] uppercase font-medium bg-muted text-muted-foreground border border-border rounded">
                                                                                 {d.label}
                                                                             </span>
                                                                             {formattedDate}

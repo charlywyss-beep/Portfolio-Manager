@@ -241,7 +241,7 @@ export const MortgageCalculator = () => {
                         </div>
                         <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
                             <div className="text-sm text-muted-foreground mb-1">Mischzinssatz</div>
-                            <div className="text-2xl font-bold text-primary font-mono">
+                            <div className="text-2xl font-bold text-foreground font-mono">
                                 {weightedRate.toFixed(2)}%
                             </div>
                             <div className="text-xs text-muted-foreground mt-1">

@@ -9,7 +9,7 @@ import { getCurrentDividendPeriod, translateFrequency } from '../utils/dividend'
 export function DividendPlanner() {
     const navigate = useNavigate();
     const { stocks, positions, fixedDeposits, deleteFixedDeposit } = usePortfolio();
-    const { formatCurrency, convertToCHF } = useCurrencyFormatter();
+    const { convertToCHF } = useCurrencyFormatter();
 
     // Calculate projected dividends from yield
     const projectedDividends = positions
@@ -203,17 +203,34 @@ export function DividendPlanner() {
                                     // Annual Display Logic
                                     let annualDisplay: React.ReactNode;
                                     if (divCurrency !== 'CHF') {
-                                        const nativeFormatted = formatCurrency(annualDividendNative, divCurrency, false);
-                                        const chfFormatted = formatCurrency(annualDividendCHF, 'CHF', false);
+                                        // Manual Format for Tabular Alignment
+                                        const annualNative = annualDividendNative || 0;
+                                        let displayAnnualNative = annualNative;
+                                        let displayAnnualCurrency = divCurrency;
+                                        if (divCurrency === 'GBp') {
+                                            displayAnnualNative /= 100;
+                                            displayAnnualCurrency = 'GBP';
+                                        }
 
                                         annualDisplay = (
-                                            <div className="flex flex-col items-end whitespace-nowrap">
-                                                <span className="font-medium">{nativeFormatted}</span>
-                                                <span className="font-medium">{chfFormatted}</span>
+                                            <div className="flex flex-col items-end gap-0.5">
+                                                <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
+                                                    <span>{displayAnnualNative.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                    <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">{displayAnnualCurrency}</span>
+                                                </div>
+                                                <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
+                                                    <span>{annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                    <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">CHF</span>
+                                                </div>
                                             </div>
                                         );
                                     } else {
-                                        annualDisplay = formatCurrency(annualDividendCHF, 'CHF', false);
+                                        annualDisplay = (
+                                            <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
+                                                <span>{annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">CHF</span>
+                                            </div>
+                                        );
                                     }
 
                                     const currentDiv = getCurrentDividendPeriod(stock);
@@ -245,15 +262,34 @@ export function DividendPlanner() {
                                             </td>
                                             <td className="text-right py-3 px-4 font-medium">
                                                 {stock.dividendAmount ? (
-                                                    <div className="flex flex-col items-end">
-                                                        <span className="whitespace-nowrap font-medium">
-                                                            {formatCurrency(stock.dividendAmount, divCurrency, false)}
-                                                        </span>
-                                                        {divCurrency !== 'CHF' && (
-                                                            <span className="font-medium whitespace-nowrap">
-                                                                {formatCurrency(convertToCHF(stock.dividendAmount, divCurrency), 'CHF', false)}
-                                                            </span>
-                                                        )}
+                                                    <div className="flex flex-col items-end gap-0.5">
+                                                        {(() => {
+                                                            // Native Line
+                                                            let displayAmount = stock.dividendAmount || 0;
+                                                            let displayCurrency = divCurrency;
+                                                            if (divCurrency === 'GBp') {
+                                                                displayAmount /= 100;
+                                                                displayCurrency = 'GBP';
+                                                            }
+
+                                                            // CHF Line
+                                                            const chfAmount = convertToCHF(stock.dividendAmount || 0, divCurrency);
+
+                                                            return (
+                                                                <>
+                                                                    <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
+                                                                        <span>{displayAmount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                                        <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">{displayCurrency}</span>
+                                                                    </div>
+                                                                    {divCurrency !== 'CHF' && (
+                                                                        <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
+                                                                            <span>{chfAmount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                                            <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">CHF</span>
+                                                                        </div>
+                                                                    )}
+                                                                </>
+                                                            );
+                                                        })()}
                                                     </div>
                                                 ) : '-'}
                                             </td>
