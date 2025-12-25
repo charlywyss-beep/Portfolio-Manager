@@ -72,6 +72,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
             interestRate: interestRate === '' ? 0 : Number(interestRate),
             currency,
             notes,
+            iban,
             accountType,
             logoUrl,
             currentYearContribution: accountType === 'vorsorge' && !isAutoContribution ? (currentYearContribution === '' ? 0 : Number(currentYearContribution)) : undefined,
