@@ -152,17 +152,18 @@ export function HistoryChart() {
                                 dataKey="date"
                                 tickFormatter={formatXAxis}
                                 stroke="hsl(var(--muted-foreground))"
-                                fontSize={12}
+                                fontSize={13}
                                 tickLine={false}
                                 axisLine={false}
                                 minTickGap={30}
                             />
                             <YAxis
                                 stroke="hsl(var(--muted-foreground))"
-                                fontSize={12}
+                                fontSize={13}
                                 tickLine={false}
                                 axisLine={false}
-                                tickFormatter={(value) => `CHF ${(value / 1000).toFixed(0)}k`}
+                                tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                                domain={['auto', 'auto']}
                             />
                             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted)/0.2)' }} />
                             <Legend
