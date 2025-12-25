@@ -91,9 +91,9 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                     {/* Kauf Kurs */}
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex flex-col items-end">
-                                            <span className="whitespace-nowrap">{formatCurrency(pos.buyPriceAvg, pos.stock.currency, false)}</span>
+                                            <span className="font-medium whitespace-nowrap">{formatCurrency(pos.buyPriceAvg, pos.stock.currency, false)}</span>
                                             {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
+                                                <span className="font-medium whitespace-nowrap">
                                                     {formatCurrency(pos.buyValueCHF / pos.shares, 'CHF', false)}
                                                 </span>
                                             )}
@@ -103,9 +103,9 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                     {/* Kauf Wert */}
                                     <td className="px-4 py-3 text-right font-medium">
                                         <div className="flex flex-col items-end">
-                                            <span className="whitespace-nowrap">{formatCurrency(pos.buyValue, pos.stock.currency, false)}</span>
+                                            <span className="font-medium whitespace-nowrap">{formatCurrency(pos.buyValue, pos.stock.currency, false)}</span>
                                             {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
+                                                <span className="font-medium whitespace-nowrap">
                                                     {formatCurrency(pos.buyValueCHF, 'CHF', false)}
                                                 </span>
                                             )}
@@ -115,9 +115,9 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                     {/* Aktueller Kurs */}
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex flex-col items-end">
-                                            <span className="whitespace-nowrap">{formatCurrency(pos.stock.currentPrice, pos.stock.currency, false)}</span>
+                                            <span className="font-medium whitespace-nowrap">{formatCurrency(pos.stock.currentPrice, pos.stock.currency, false)}</span>
                                             {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
+                                                <span className="font-medium whitespace-nowrap">
                                                     {formatCurrency(convertToCHF(pos.stock.currentPrice, pos.stock.currency), 'CHF', false)}
                                                 </span>
                                             )}
@@ -127,9 +127,9 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                     {/* Aktueller Wert */}
                                     <td className="px-4 py-3 text-right font-bold">
                                         <div className="flex flex-col items-end">
-                                            <span className="whitespace-nowrap">{formatCurrency(pos.currentValue, pos.stock.currency, false)}</span>
+                                            <span className="font-medium whitespace-nowrap">{formatCurrency(pos.currentValue, pos.stock.currency, false)}</span>
                                             {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium whitespace-nowrap mt-0.5">
+                                                <span className="font-medium whitespace-nowrap">
                                                     {formatCurrency(convertToCHF(pos.currentValue, pos.stock.currency), 'CHF', false)}
                                                 </span>
                                             )}
