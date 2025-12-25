@@ -200,44 +200,52 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
                     {/* Stock Info Bar */}
                     {/* Stock Info Bar */}
-                    <div className="p-4 bg-muted/30 border-b border-border flex items-center gap-3">
-                        <Logo
-                            url={position.stock.logoUrl}
-                            alt={stockName}
-                            fallback={position.stock.symbol.slice(0, 2)}
-                            size="size-10"
-                        />
-                        <div className="flex-1 min-w-0">
-                            <input
-                                type="text"
-                                className="w-full text-base font-semibold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground"
-                                value={stockName}
-                                onChange={(e) => setStockName(e.target.value)}
-                                placeholder="Name der Position"
+                    {/* Stock Info Bar */}
+                    <div className="p-4 bg-muted/30 border-b border-border grid grid-cols-3 items-center gap-4">
+                        {/* Left Column: Logo & Name */}
+                        <div className="flex items-center gap-3 overflow-hidden justify-start">
+                            <Logo
+                                url={position.stock.logoUrl}
+                                alt={stockName}
+                                fallback={position.stock.symbol.slice(0, 2)}
+                                size="size-10"
                             />
-                            <div className="text-xs text-muted-foreground mt-0.5">
-                                {position.stock.symbol} • Aktuell: {position.stock.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: position.stock.currency })}
+                            <div className="min-w-0 flex-1">
+                                <input
+                                    type="text"
+                                    className="w-full text-base font-semibold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground"
+                                    value={stockName}
+                                    onChange={(e) => setStockName(e.target.value)}
+                                    placeholder="Name der Position"
+                                />
+                                <div className="text-xs text-muted-foreground mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                                    {position.stock.symbol} • Aktuell: {position.stock.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: position.stock.currency })}
+                                </div>
                             </div>
                         </div>
 
-                        {/* FX Info (Middle) */}
-                        {rates && position.stock.currency !== 'CHF' && rates[isGBX ? 'GBP' : position.stock.currency] && (
-                            <div className="px-4 py-2 bg-background/50 rounded-lg border border-border/50 flex flex-col items-center justify-center min-w-[120px]">
-                                <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">WECHSELKURS</div>
-                                <div className="font-mono font-medium text-sm text-primary">
-                                    1 {isGBX ? 'GBP' : position.stock.currency} = {(1 / rates[isGBX ? 'GBP' : position.stock.currency]).toFixed(4)} CHF
+                        {/* Middle Column: FX Info */}
+                        <div className="flex justify-center">
+                            {rates && position.stock.currency !== 'CHF' && rates[isGBX ? 'GBP' : position.stock.currency] && (
+                                <div className="px-4 py-2 bg-background/50 rounded-lg border border-border/50 flex flex-col items-center justify-center min-w-[120px]">
+                                    <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">WECHSELKURS</div>
+                                    <div className="font-mono font-medium text-sm text-primary">
+                                        1 {isGBX ? 'GBP' : position.stock.currency} = {(1 / rates[isGBX ? 'GBP' : position.stock.currency]).toFixed(4)} CHF
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
 
-                        {/* Live Calculation Badge */}
-                        <div className="text-right px-4 py-2 bg-primary/5 rounded-lg border border-primary/10">
-                            <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">NEUER BESTAND</div>
-                            <div className="font-mono font-bold text-lg text-primary">
-                                {calculatedTotals.shares.toLocaleString('de-CH')} Stk
-                            </div>
-                            <div className="text-[10px] text-muted-foreground">
-                                Ø {calculatedAvgPriceUI.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {isGBX ? 'GBP' : position.stock.currency}
+                        {/* Right Column: New Balance */}
+                        <div className="flex justify-end">
+                            <div className="text-right px-4 py-2 bg-primary/5 rounded-lg border border-primary/10">
+                                <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">NEUER BESTAND</div>
+                                <div className="font-mono font-bold text-lg text-primary">
+                                    {calculatedTotals.shares.toLocaleString('de-CH')} Stk
+                                </div>
+                                <div className="text-[10px] text-muted-foreground">
+                                    Ø {calculatedAvgPriceUI.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {isGBX ? 'GBP' : position.stock.currency}
+                                </div>
                             </div>
                         </div>
                     </div>
