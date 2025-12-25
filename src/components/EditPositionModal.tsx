@@ -303,7 +303,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                             value={purchase.fxRate}
                                             onChange={(val) => handleUpdatePurchase(purchase.id, 'fxRate', parseFloat(val) || 0)}
                                             disabled={position.stock.currency === 'CHF'}
-                                            maxDecimals={6}
+                                            maxDecimals={4}
                                             onFocus={(e) => e.target.select()}
                                             className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary disabled:opacity-50 text-center"
                                         />
