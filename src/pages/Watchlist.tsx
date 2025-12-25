@@ -173,7 +173,7 @@ export function Watchlist() {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="text-right py-3 px-4 font-medium text-muted-foreground">
+                                                <td className="text-right py-3 px-4 font-medium">
                                                     {hasTarget ? (
                                                         <div className="flex flex-col items-end">
                                                             <span className="whitespace-nowrap">{formatCurrency(stock.targetPrice || 0, stock.currency, false)}</span>
