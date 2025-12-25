@@ -29,10 +29,10 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
 
-                    <table className="w-auto text-sm text-left">
+                    <table className="w-full text-sm text-left">
                         <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
                             <tr>
-                                <th className="px-4 py-3 max-w-[110px] sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Name</th>
+                                <th className="px-4 py-3 min-w-[140px] sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Name</th>
                                 <th className="px-4 py-3 min-w-[100px]">ISIN</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap">Anzahl</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap">Ø Kauf</th>
