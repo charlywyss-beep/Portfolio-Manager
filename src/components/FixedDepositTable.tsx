@@ -39,8 +39,8 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                     <table className="w-full text-sm text-left">
                         <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
                             <tr>
-                                <th className="px-2 py-3 sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] lg:w-[250px] min-w-[160px] lg:min-w-[250px] max-w-[160px] lg:max-w-[250px]">Bank / Institut</th>
-                                <th className="px-2 py-3 w-[110px] lg:w-[150px] min-w-[110px] lg:min-w-[150px] max-w-[110px] lg:max-w-[150px]">Konto-Typ</th>
+                                <th className="px-4 py-3 sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] lg:w-[250px] min-w-[180px] lg:min-w-[250px] max-w-[180px] lg:max-w-[250px]">Bank / Institut</th>
+                                <th className="px-4 py-3 w-[130px] lg:w-[150px] min-w-[130px] lg:min-w-[150px] max-w-[130px] lg:max-w-[150px]">Konto-Typ</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">Betrag</th>
                                 <th className="px-4 py-3 text-right min-w-[100px]">Zins p.a.</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">Jährlicher Ertrag</th>
@@ -64,7 +64,7 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
 
                                 return (
                                     <tr key={fd.id} className="group hover:bg-muted/30 transition-colors">
-                                        <td className="px-2 py-3 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <td className="px-4 py-3 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center gap-3">
                                                 <Logo
@@ -79,7 +79,7 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-2 py-3">
+                                        <td className="px-4 py-3">
                                             <span className={cn(
                                                 "px-2 py-0.5 rounded-md text-xs font-medium border",
                                                 fd.accountType === 'sparkonto'

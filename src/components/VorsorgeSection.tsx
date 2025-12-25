@@ -50,8 +50,8 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                     <table className="w-full text-sm text-left">
                         <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
                             <tr>
-                                <th className="px-2 py-3 sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] lg:w-[250px] min-w-[160px] lg:min-w-[250px] max-w-[160px] lg:max-w-[250px]">Bank / Institut</th>
-                                <th className="px-2 py-3 w-[110px] lg:w-[150px] min-w-[110px] lg:min-w-[150px] max-w-[110px] lg:max-w-[150px]">Konto-Typ</th>
+                                <th className="px-4 py-3 sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] lg:w-[250px] min-w-[180px] lg:min-w-[250px] max-w-[180px] lg:max-w-[250px]">Bank / Institut</th>
+                                <th className="px-4 py-3 w-[130px] lg:w-[150px] min-w-[130px] lg:min-w-[150px] max-w-[130px] lg:max-w-[150px]">Konto-Typ</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">Vermögen</th>
                                 <th className="px-4 py-3 min-w-[300px]">Fortschritt 2025</th>
                                 <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
@@ -74,7 +74,7 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
 
                                 return (
                                     <tr key={fd.id} className="group hover:bg-muted/30 transition-colors">
-                                        <td className="px-2 py-3 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <td className="px-4 py-3 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center gap-3">
                                                 <Logo
@@ -87,12 +87,12 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                                 />
                                                 <div className="flex flex-col">
                                                     <span className="text-sm font-semibold whitespace-pre-line">{fd.bankName}</span>
-                                                    {fd.iban && <span className="text-xs font-mono text-muted-foreground">{fd.iban}</span>}
+                                                    {fd.iban && <span className="text-xs font-mono text-muted-foreground hidden lg:block">{fd.iban}</span>}
                                                     {fd.notes && <span className="text-xs text-muted-foreground italic mt-0.5">{fd.notes}</span>}
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-2 py-3">
+                                        <td className="px-4 py-3">
                                             <span className="px-2 py-0.5 rounded-md text-xs font-medium border bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50">
                                                 Vorsorge 3a
                                             </span>
