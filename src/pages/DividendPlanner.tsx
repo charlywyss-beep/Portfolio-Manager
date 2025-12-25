@@ -208,7 +208,7 @@ export function DividendPlanner() {
 
                                         annualDisplay = (
                                             <div className="flex flex-col items-end whitespace-nowrap">
-                                                <span>{nativeFormatted}</span>
+                                                <span className="font-medium">{nativeFormatted}</span>
                                                 <span className="font-medium">{chfFormatted}</span>
                                             </div>
                                         );

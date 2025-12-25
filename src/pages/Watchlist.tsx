@@ -176,7 +176,7 @@ export function Watchlist() {
                                                 <td className="text-right py-3 px-4 font-medium align-top">
                                                     {hasTarget ? (
                                                         <div className="flex flex-col items-end gap-1">
-                                                            <span className="whitespace-nowrap">{formatCurrency(stock.targetPrice || 0, stock.currency, false)}</span>
+                                                            <span className="font-medium whitespace-nowrap">{formatCurrency(stock.targetPrice || 0, stock.currency, false)}</span>
                                                             {stock.currency !== 'CHF' && (
                                                                 <span className="font-medium whitespace-nowrap">
                                                                     {formatCurrency(convertToCHF(stock.targetPrice || 0, stock.currency), 'CHF', false)}
@@ -200,7 +200,7 @@ export function Watchlist() {
                                                 <td className="text-right py-3 px-4 align-top">
                                                     {stock.dividendAmount ? (
                                                         <div className="flex flex-col items-end gap-1">
-                                                            <span className="whitespace-nowrap">{formatCurrency(stock.dividendAmount, stock.dividendCurrency || stock.currency, false)}</span>
+                                                            <span className="font-medium whitespace-nowrap">{formatCurrency(stock.dividendAmount, stock.dividendCurrency || stock.currency, false)}</span>
                                                             {stock.currency !== 'CHF' && (
                                                                 <span className="font-medium whitespace-nowrap">
                                                                     {formatCurrency(convertToCHF(stock.dividendAmount, stock.dividendCurrency || stock.currency), 'CHF', false)}
