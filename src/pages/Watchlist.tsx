@@ -175,7 +175,7 @@ export function Watchlist() {
                                                 </td>
                                                 <td className="text-right py-3 px-4 font-medium">
                                                     {hasTarget ? (
-                                                        <div className="flex flex-col items-end">
+                                                        <div className="flex flex-col items-end gap-1">
                                                             <span className="whitespace-nowrap">{formatCurrency(stock.targetPrice || 0, stock.currency, false)}</span>
                                                             {stock.currency !== 'CHF' && (
                                                                 <span className="font-medium whitespace-nowrap">
@@ -199,7 +199,7 @@ export function Watchlist() {
                                                 </td>
                                                 <td className="text-right py-3 px-4">
                                                     {stock.dividendAmount ? (
-                                                        <div className="flex flex-col items-end">
+                                                        <div className="flex flex-col items-end gap-1">
                                                             <span className="whitespace-nowrap">{formatCurrency(stock.dividendAmount, stock.dividendCurrency || stock.currency, false)}</span>
                                                             {stock.currency !== 'CHF' && (
                                                                 <span className="font-medium whitespace-nowrap">
