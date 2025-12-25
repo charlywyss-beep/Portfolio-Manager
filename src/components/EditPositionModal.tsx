@@ -230,7 +230,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                 <div className="px-4 py-2 bg-background/50 rounded-lg border border-border/50 flex flex-col items-center justify-center min-w-[120px]">
                                     <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">WECHSELKURS</div>
                                     <div className="font-mono font-medium text-sm text-primary">
-                                        1 {isGBX ? 'GBP' : position.stock.currency} = {(1 / rates[isGBX ? 'GBP' : position.stock.currency]).toFixed(4)} CHF
+                                        1 {isGBX ? 'GBP' : position.stock.currency} = {(1 / rates[isGBX ? 'GBP' : position.stock.currency]).toFixed(2)} CHF
                                     </div>
                                 </div>
                             )}
