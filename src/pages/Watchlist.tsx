@@ -214,7 +214,8 @@ export function Watchlist() {
                                                         ) : null;
                                                     })()}
                                                 </td>
-                                            {stock.dividendDates && stock.dividendDates.length > 0 ? (
+                                                <td className="text-right py-3 px-4 text-muted-foreground">
+                                                    {stock.dividendDates && stock.dividendDates.length > 0 ? (
                                                         <div className="text-xs whitespace-nowrap">
                                                             {stock.dividendDates
                                                                 .map((d, i) => ({ ...d, label: stock.dividendFrequency === 'semi-annually' ? `${i + 1}.` : `Q${i + 1}` }))
@@ -316,34 +317,34 @@ export function Watchlist() {
                                                     </div>
                                                 </td>
                                             </tr>
-                            );
+                                        );
                                     })
                                 )}
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
 
-            {/* Removed AddWatchlistStockModal as it's superseded by the calculator */ }
+            {/* Removed AddWatchlistStockModal as it's superseded by the calculator */}
 
-    {/* Buy Modal */ }
-    <AddPositionModal
-        isOpen={!!buyStock}
-        onClose={() => setBuyStock(null)}
-        stocks={stocks}
-        preSelectedStock={buyStock}
-        onAdd={(pos) => {
-            addPosition(pos);
-            // Remove from watchlist after buying
-            if (buyStock) {
-                removeFromWatchlist(buyStock.id);
-            }
-            setBuyStock(null);
-            // Optional: Navigate to portfolio or show success
-            // navigate('/portfolio');
-        }}
-    />
+            {/* Buy Modal */}
+            <AddPositionModal
+                isOpen={!!buyStock}
+                onClose={() => setBuyStock(null)}
+                stocks={stocks}
+                preSelectedStock={buyStock}
+                onAdd={(pos) => {
+                    addPosition(pos);
+                    // Remove from watchlist after buying
+                    if (buyStock) {
+                        removeFromWatchlist(buyStock.id);
+                    }
+                    setBuyStock(null);
+                    // Optional: Navigate to portfolio or show success
+                    // navigate('/portfolio');
+                }}
+            />
         </div >
     );
 }
