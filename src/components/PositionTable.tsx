@@ -93,7 +93,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                         <div className="flex flex-col items-end">
                                             <span className="font-medium whitespace-nowrap">{formatCurrency(pos.buyPriceAvg, pos.stock.currency, false)}</span>
                                             {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                                <span className="font-medium whitespace-nowrap">
                                                     {formatCurrency(pos.buyValueCHF / pos.shares, 'CHF', false)}
                                                 </span>
                                             )}
@@ -105,7 +105,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                         <div className="flex flex-col items-end">
                                             <span className="font-medium whitespace-nowrap">{formatCurrency(pos.buyValue, pos.stock.currency, false)}</span>
                                             {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                                <span className="font-medium whitespace-nowrap">
                                                     {formatCurrency(pos.buyValueCHF, 'CHF', false)}
                                                 </span>
                                             )}
@@ -117,7 +117,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                         <div className="flex flex-col items-end">
                                             <span className="font-medium whitespace-nowrap">{formatCurrency(pos.stock.currentPrice, pos.stock.currency, false)}</span>
                                             {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                                <span className="font-medium whitespace-nowrap">
                                                     {formatCurrency(convertToCHF(pos.stock.currentPrice, pos.stock.currency), 'CHF', false)}
                                                 </span>
                                             )}
@@ -129,7 +129,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                         <div className="flex flex-col items-end">
                                             <span className="font-medium whitespace-nowrap">{formatCurrency(pos.currentValue, pos.stock.currency, false)}</span>
                                             {pos.stock.currency !== 'CHF' && (
-                                                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                                <span className="font-medium whitespace-nowrap">
                                                     {formatCurrency(convertToCHF(pos.currentValue, pos.stock.currency), 'CHF', false)}
                                                 </span>
                                             )}
