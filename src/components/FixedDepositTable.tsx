@@ -89,7 +89,7 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                                                 {fd.accountType === 'sparkonto' ? 'Sparkonto' : 'Privatkonto'}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-right font-bold text-foreground whitespace-nowrap">
+                                        <td className="px-4 py-3 text-right font-medium text-foreground whitespace-nowrap">
                                             {formatCurrency(fd.amount, fd.currency)}
                                         </td>
                                         <td className="px-4 py-3 text-right">
@@ -102,8 +102,10 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                                                 {fd.interestRate.toFixed(2)}%
                                             </span>
                                         </td>
-                                        <td className={`px-4 py-3 text-right font-medium whitespace-nowrap ${isNegative ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
-                                            {isNegative ? '-' : '+'}CHF {Math.abs(netAnnualReturn).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        <td className={cn(
+                                            "px-4 py-3 text-right font-medium whitespace-nowrap",
+                                            isNegative ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"
+                                        )}>    {isNegative ? '-' : '+'}CHF {Math.abs(netAnnualReturn).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </td>
                                         <td className="px-1 py-3 sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                             <div className="absolute inset-0 bg-card -z-10" />
