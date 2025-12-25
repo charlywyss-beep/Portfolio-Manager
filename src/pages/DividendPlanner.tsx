@@ -268,7 +268,7 @@ export function DividendPlanner() {
                                             <td className="text-right py-3 px-4 whitespace-nowrap">
                                                 {stock.dividendFrequency !== 'annually' ? `CHF ${quarterlyDividendCHF.toFixed(2)}` : ''}
                                             </td>
-                                            <td className="text-right py-3 px-4 font-semibold text-primary whitespace-nowrap">
+                                            <td className="text-right py-3 px-4 font-semibold whitespace-nowrap">
                                                 {annualDisplay}
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
