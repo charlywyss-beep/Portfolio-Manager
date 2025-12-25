@@ -39,8 +39,8 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                     <table className="w-full text-xs text-left">
                         <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
                             <tr>
-                                <th className="px-2 py-3 sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[200px] min-w-[200px] max-w-[200px]">Bank / Institut</th>
-                                <th className="px-2 py-3 w-[110px] min-w-[110px] max-w-[110px]">Konto-Typ</th>
+                                <th className="px-2 py-3 sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] lg:w-[250px] min-w-[160px] lg:min-w-[250px] max-w-[160px] lg:max-w-[250px]">Bank / Institut</th>
+                                <th className="px-2 py-3 w-[110px] lg:w-[150px] min-w-[110px] lg:min-w-[150px] max-w-[110px] lg:max-w-[150px]">Konto-Typ</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">Betrag</th>
                                 <th className="px-4 py-3 text-right min-w-[100px]">Zins p.a.</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">Jährlicher Ertrag</th>
@@ -74,7 +74,7 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                                                 />
                                                 <div className="flex flex-col">
                                                     <span className="text-sm font-semibold whitespace-pre-line">{fd.bankName}</span>
-                                                    {fd.iban && <span className="text-xs font-mono text-muted-foreground">{fd.iban}</span>}
+                                                    {fd.iban && <span className="text-xs font-mono text-muted-foreground hidden lg:block">{fd.iban}</span>}
                                                     {fd.notes && <span className="text-xs text-muted-foreground italic mt-0.5">{fd.notes}</span>}
                                                 </div>
                                             </div>
