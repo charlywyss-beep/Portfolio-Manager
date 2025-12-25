@@ -29,25 +29,26 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
             </div>
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-xs text-left">
+
+                    <table className="w-full text-sm text-left">
                         <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
                             <tr>
-                                <th className="px-2 py-3 min-w-[110px] sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Name</th>
-                                <th className="px-2 py-3 min-w-[80px]">ISIN</th>
-                                <th className="px-2 py-3 text-right whitespace-nowrap">Anzahl</th>
-                                <th className="px-2 py-3 text-right whitespace-nowrap">Ø Kauf</th>
-                                <th className="px-2 py-3 text-right whitespace-nowrap">Invest</th>
-                                <th className="px-2 py-3 text-right whitespace-nowrap">Kurs</th>
-                                <th className="px-2 py-3 text-right whitespace-nowrap">Wert</th>
-                                <th className="px-2 py-3 text-right whitespace-nowrap">+/-</th>
-                                <th className="px-2 py-3 text-right whitespace-nowrap">%</th>
-                                <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                <th className="px-4 py-3 min-w-[140px] sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Name</th>
+                                <th className="px-4 py-3 min-w-[100px]">ISIN</th>
+                                <th className="px-4 py-3 text-right whitespace-nowrap">Anzahl</th>
+                                <th className="px-4 py-3 text-right whitespace-nowrap">Ø Kauf</th>
+                                <th className="px-4 py-3 text-right whitespace-nowrap">Invest</th>
+                                <th className="px-4 py-3 text-right whitespace-nowrap">Kurs</th>
+                                <th className="px-4 py-3 text-right whitespace-nowrap">Wert</th>
+                                <th className="px-4 py-3 text-right whitespace-nowrap">+/-</th>
+                                <th className="px-4 py-3 text-right whitespace-nowrap">%</th>
+                                <th className="px-2 py-3 text-center sticky right-0 bg-card z-10 w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
                             {data.map((pos) => (
                                 <tr key={pos.id} className="group hover:bg-muted/30 transition-colors">
-                                    <td className="px-2 py-3 sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                    <td className="px-4 py-3 sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                         <div className="absolute inset-0 bg-card -z-10" />
                                         <div className="relative flex items-center gap-3">
                                             <Logo
@@ -69,7 +70,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                     </td>
 
                                     {/* Valor / ISIN */}
-                                    <td className="px-2 py-3">
+                                    <td className="px-4 py-3">
                                         <div className="text-xs space-y-0.5">
                                             {pos.stock.valor && (
                                                 <div className="font-mono">
