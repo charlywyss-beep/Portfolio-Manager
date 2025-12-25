@@ -86,7 +86,7 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                                     className={fd.accountType === 'vorsorge' ? "bg-blue-100 text-blue-700 border-blue-200" : undefined}
                                                 />
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm font-semibold">{fd.bankName}</span>
+                                                    <span className="text-sm font-semibold whitespace-pre-line">{fd.bankName}</span>
                                                     {fd.iban && <span className="text-xs font-mono text-muted-foreground">{fd.iban}</span>}
                                                     {fd.notes && <span className="text-xs text-muted-foreground italic mt-0.5">{fd.notes}</span>}
                                                 </div>

@@ -73,7 +73,7 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                                                     fallback={fd.bankName.slice(0, 2).toUpperCase()}
                                                 />
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm font-semibold">{fd.bankName}</span>
+                                                    <span className="text-sm font-semibold whitespace-pre-line">{fd.bankName}</span>
                                                     {fd.iban && <span className="text-xs font-mono text-muted-foreground">{fd.iban}</span>}
                                                     {fd.notes && <span className="text-xs text-muted-foreground italic mt-0.5">{fd.notes}</span>}
                                                 </div>

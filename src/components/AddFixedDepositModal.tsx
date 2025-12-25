@@ -153,10 +153,10 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
 
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Bank / Institut</label>
-                        <input
-                            type="text"
+                        <textarea
                             required
-                            className="w-full h-10 px-3 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                            rows={2}
+                            className="w-full px-3 py-2 rounded-md border border-input bg-background/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none font-sans"
                             value={bankName}
                             onChange={(e) => setBankName(e.target.value)}
                             placeholder="z.B. UBS, Credit Suisse..."
