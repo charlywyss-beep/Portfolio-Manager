@@ -180,7 +180,7 @@ export function DividendPlanner() {
                                 <th className="text-left py-3 px-4 font-semibold sticky left-0 z-30 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[140px]">Aktie</th>
                                 <th className="text-right py-3 px-4 font-semibold">Anteile</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Rendite %</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Betrag/Aktie</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Div./Akt.</th>
                                 <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Quartalsweise</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
@@ -245,15 +245,16 @@ export function DividendPlanner() {
                                             </td>
                                             <td className="text-right py-3 px-4 font-medium">
                                                 {stock.dividendAmount ? (
-                                                    divCurrency !== 'CHF' ? (
-                                                        <div className="flex items-center justify-end whitespace-nowrap">
-                                                            <span>{formatCurrency(stock.dividendAmount, divCurrency)}</span>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="whitespace-nowrap">
-                                                            {stock.dividendAmount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="whitespace-nowrap font-medium">
+                                                            {formatCurrency(stock.dividendAmount, divCurrency, false)}
                                                         </span>
-                                                    )
+                                                        {divCurrency !== 'CHF' && (
+                                                            <span className="text-xs text-muted-foreground font-normal whitespace-nowrap">
+                                                                {formatCurrency(convertToCHF(stock.dividendAmount, divCurrency), 'CHF', false)}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 ) : '-'}
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
