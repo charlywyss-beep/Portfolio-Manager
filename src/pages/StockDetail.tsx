@@ -1,10 +1,11 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, Save, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Save, TrendingUp, RefreshCw } from 'lucide-react';
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { cn } from '../utils';
 import { Logo } from '../components/Logo';
@@ -27,111 +28,99 @@ export function StockDetail() {
     const [isSaving, setIsSaving] = useState(false);
     const [timeRange, setTimeRange] = useState<TimeRange>('1D');
     const [chartData, setChartData] = useState<ChartDataPoint[] | null>(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
     // Get position to determine buy date
     const position = positions.find(p => p.stockId === stock?.id);
 
-    // Fetch History Effect - Now using Yahoo Finance
-    useEffect(() => {
+    // Load data function (memoized for auto-refresh)
+    const loadData = useCallback(async () => {
         if (!stock) {
             setChartData(null);
             return;
         }
 
-        const loadData = async () => {
-            console.log('[StockDetail] Fetching Yahoo Finance data for:', stock.symbol, 'Range:', timeRange);
+        setIsRefreshing(true);
+        console.log('[StockDetail] Fetching Yahoo Finance data for:', stock.symbol, 'Range:', timeRange);
 
-            let rangeToUse = timeRange;
+        let rangeToUse = timeRange;
 
-
-            // Handle 'BUY' range
-            if (timeRange === 'BUY') {
-                if (position?.buyDate) {
-                    // If we have a buy date, fetch from that date
-                    // But fetchStockHistory api might need 'max' or custom range? 
-                    // Since fetchStockHistory uses simple ranges, we might need to map 'BUY' to a custom timestamp if API supports it, 
-                    // OR map it to the closest larger range (e.g. 5Y) and then filter in the chart component?
-                    // Actually, better to just use '5Y' or 'MAX' as a proxy if we can't do exact, or update fetchStockHistory.
-                    // For now, let's treat 'BUY' as '5Y' but filter in UI, OR check if we can pass current date.
-                    // Wait, fetchStockHistory implementation: check Finnhub service.
-                    // Assuming we pass '5Y' to get enough data, then filter? 
-                    // Or better: Let's assume '5Y' for now to be safe, filtering is done in chart? No, chart creates mock data if empty.
-                    rangeToUse = '5Y';
-                    // Ideally we would pass the specific start date to fetchStockHistory if it supported it.
-                    // Let's rely on '5Y' being enough for now, or 'Max' if needed.
-                } else {
-                    rangeToUse = '5Y'; // Default fallback
-                }
-            }
-
-            const response = await fetchStockHistory(stock.symbol, rangeToUse);
-            console.log('[Stock Detail] Yahoo Response:', response);
-
-            if (response.error) {
-                console.warn('[StockDetail] Error from Yahoo:', response.error);
-                setChartData(null); // Fallback to simulation
+        // Handle 'BUY' range
+        if (timeRange === 'BUY') {
+            if (position?.buyDate) {
+                rangeToUse = '5Y';
             } else {
-                console.log('[StockDetail] Success! Data points:', response.data?.length || 0);
-                setChartData(response.data);
+                rangeToUse = '5Y'; // Default fallback
+            }
+        }
 
-                // Sync current price with latest chart data
-                if (response.data && response.data.length > 0) {
-                    let chartData = response.data;
+        const response = await fetchStockHistory(stock.symbol, rangeToUse);
+        console.log('[Stock Detail] Yahoo Response:', response);
 
-                    // Auto-detect GBp (Pence) to GBP (Pound) conversion
-                    // If user selected GBP (Pounds), we must divide by 100.
-                    // We check the latest price as a heuristic.
-                    const latestPriceRaw = chartData[chartData.length - 1].value;
-                    const isGBP = stock.currency === 'GBP';
+        if (response.error) {
+            console.warn('[StockDetail] Error from Yahoo:', response.error);
+            setChartData(null); // Fallback to simulation
+        } else {
+            console.log('[StockDetail] Success! Data points:', response.data?.length || 0);
+            setChartData(response.data);
 
-                    if (isGBP) {
-                        const isLSE = stock.symbol.toUpperCase().endsWith('.L') || stock.isin?.startsWith('GB');
-                        // Threshold check: If price is > 50, it's almost certainly Pence for a typical stock.
-                        // UK stocks are rarely > 50 GBP per share (most are < 50 GBP). 
-                        // Example: AstraZeneca ~100 GBP, but most others are lower. 
-                        // Berkshire A is exception but that's USD.
-                        // Use 200 as stricter threshold or stick to 50? 
-                        // Most LSE stocks are quoted in pence. If we see 4000, it's 40 GBP. 
-                        // If we see 42.15, it's GBP. 
-                        // Let's use 100 as safe threshold? Or sticking to 50. 
-                        if (isLSE && latestPriceRaw > 50) {
-                            console.log('[StockDetail] Normalizing GBp to GBP for chart data');
-                            chartData = chartData.map(d => ({
-                                ...d,
-                                value: d.value / 100
-                            }));
-                        }
+            // Sync current price with latest chart data
+            if (response.data && response.data.length > 0) {
+                let chartData = response.data;
+
+                // Auto-detect GBp (Pence) to GBP (Pound) conversion
+                const latestPriceRaw = chartData[chartData.length - 1].value;
+                const isGBP = stock.currency === 'GBP';
+
+                if (isGBP) {
+                    const isLSE = stock.symbol.toUpperCase().endsWith('.L') || stock.isin?.startsWith('GB');
+                    if (isLSE && latestPriceRaw > 50) {
+                        console.log('[StockDetail] Normalizing GBp to GBP for chart data');
+                        chartData = chartData.map(d => ({
+                            ...d,
+                            value: d.value / 100
+                        }));
                     }
+                }
 
-                    const latestPrice = chartData[chartData.length - 1].value;
+                const latestPrice = chartData[chartData.length - 1].value;
 
-                    // Filter for 'BUY' range if needed
-                    if (timeRange === 'BUY' && position?.buyDate) {
-                        const buyDate = new Date(position.buyDate).getTime();
-                        // Filter data points after buy date
-                        const filteredData = chartData.filter(d => new Date(d.date).getTime() >= buyDate);
-                        if (filteredData.length > 0) {
-                            setChartData(filteredData);
-                        } else {
-                            // If buy date is older than 5Y or no data found, show full 5Y
-                            setChartData(chartData);
-                        }
+                // Filter for 'BUY' range if needed
+                if (timeRange === 'BUY' && position?.buyDate) {
+                    const buyDate = new Date(position.buyDate).getTime();
+                    const filteredData = chartData.filter(d => new Date(d.date).getTime() >= buyDate);
+                    if (filteredData.length > 0) {
+                        setChartData(filteredData);
                     } else {
                         setChartData(chartData);
                     }
-
-                    if (Math.abs(stock.currentPrice - latestPrice) > 0.0001) {
-                        // Only update if difference is significant (floating point)
-                        updateStockPrice(stock.id, latestPrice);
-                    }
                 } else {
-                    setChartData(response.data);
+                    setChartData(chartData);
                 }
-            }
-        };
 
+                if (Math.abs(stock.currentPrice - latestPrice) > 0.0001) {
+                    updateStockPrice(stock.id, latestPrice);
+                }
+            } else {
+                setChartData(response.data);
+            }
+        }
+
+        setIsRefreshing(false);
+        setLastUpdate(new Date());
+    }, [stock, timeRange, position, updateStockPrice]);
+
+    // Initial load
+    useEffect(() => {
         loadData();
-    }, [stock?.symbol, timeRange]);
+    }, [loadData]);
+
+    // Auto-refresh every 5 minutes during trading hours (09:00-22:00)
+    useAutoRefresh({
+        onRefresh: loadData,
+        enabled: !!stock
+    });
 
     // Initialize notes
     useEffect(() => {
@@ -252,6 +241,22 @@ export function StockDetail() {
                                 </div>
                             );
                         })()}
+
+                        {/* Manual Refresh Button */}
+                        <button
+                            onClick={loadData}
+                            disabled={isRefreshing}
+                            className={cn(
+                                "mt-3 flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors",
+                                isRefreshing && "opacity-50 cursor-not-allowed"
+                            )}
+                            title="Daten aktualisieren"
+                        >
+                            <RefreshCw className={cn("size-3", isRefreshing && "animate-spin")} />
+                            <span>
+                                {isRefreshing ? 'Aktualisiere...' : lastUpdate ? `Aktualisiert vor ${Math.floor((new Date().getTime() - lastUpdate.getTime()) / 60000)} Min` : 'Daten laden'}
+                            </span>
+                        </button>
                     </div>
                 </div>
             </div>
