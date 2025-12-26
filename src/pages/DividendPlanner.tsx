@@ -293,13 +293,21 @@ export function DividendPlanner() {
                                                     </div>
                                                 ) : '-'}
                                             </td>
-                                            <td className="text-right py-3 px-4 text-muted-foreground">
-                                                {translateFrequency(stock.dividendFrequency)}
-                                                {currentDiv.periodLabel && (
-                                                    <span className="ml-2 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded">
-                                                        {currentDiv.periodLabel}
-                                                    </span>
-                                                )}
+                                            <td className="text-right py-3 px-4 text-muted-foreground align-top">
+                                                {(() => {
+                                                    const freqLabel = translateFrequency(stock.dividendFrequency);
+                                                    if (currentDiv.periodLabel) {
+                                                        return (
+                                                            <div className="grid grid-cols-[auto_24px] gap-x-0.5 justify-end items-center">
+                                                                <span>{freqLabel}</span>
+                                                                <span className="px-1.5 py-0.5 text-[10px] uppercase font-medium bg-muted text-muted-foreground border border-border rounded justify-self-end">
+                                                                    {currentDiv.periodLabel}
+                                                                </span>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return freqLabel;
+                                                })()}
                                             </td>
                                             <td className="text-right py-3 px-4 font-medium whitespace-nowrap">
                                                 {stock.dividendFrequency !== 'annually' ? `CHF ${quarterlyDividendCHF.toFixed(2)}` : ''}
