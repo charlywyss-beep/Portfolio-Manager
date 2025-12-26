@@ -25,7 +25,7 @@ export async function fetchStockHistory(
     symbol: string,
     range: TimeRange,
     _apiKey?: string // Not used for Yahoo Finance
-): Promise<{ data: ChartDataPoint[] | null, currency?: string, error?: string }> {
+): Promise<{ data: ChartDataPoint[] | null, currency?: string, error?: string, previousClose?: number }> {
     try {
         const { period, interval } = getYahooParams(range);
 
@@ -56,7 +56,6 @@ export async function fetchStockHistory(
         const timestamps = result.timestamp;
         const closes = result.indicators.quote[0].close;
 
-        // Transform to our format
         const points: ChartDataPoint[] = timestamps
             .map((timestamp: number, index: number) => {
                 const close = closes[index];
@@ -71,7 +70,8 @@ export async function fetchStockHistory(
         console.log('[Yahoo Finance Proxy] Returning', points.length, 'data points');
         return {
             data: points.length > 0 ? points : null,
-            currency: result.meta?.currency
+            currency: result.meta?.currency,
+            previousClose: result.meta?.chartPreviousClose || result.meta?.previousClose
         };
 
     } catch (error) {

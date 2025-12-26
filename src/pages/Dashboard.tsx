@@ -1,9 +1,10 @@
 
 import { useNavigate } from 'react-router-dom';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
+import { fetchStockHistory } from '../services/finnhub';
 import { ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, BarChart3, Calendar, Info, Plus, Trash2, Edit, Bell } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
@@ -31,16 +32,48 @@ const translateFrequency = (freq?: string) => {
 export function Dashboard() {
     const navigate = useNavigate();
     const { totals, upcomingDividends, positions, upcomingWatchlistDividends, bankRisks } = usePortfolioData();
-    const { history, deleteHistoryEntry } = usePortfolio();
+    const { history, deleteHistoryEntry, updateStockPrice } = usePortfolio(); // Added updateStockPrice
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [editingHistoryEntry, setEditingHistoryEntry] = useState<any>(null);
     const [hasMounted, setHasMounted] = useState(false);
     const [showPerformanceDetails, setShowPerformanceDetails] = useState(false); // NEW
+    const hasRefreshedPrices = useRef(false);
 
     useEffect(() => {
         setHasMounted(true);
     }, []);
+
+    // Auto-Refresh Prices on Mount (Once)
+    useEffect(() => {
+        const refreshPrices = async () => {
+            if (positions.length === 0 || hasRefreshedPrices.current) return;
+            hasRefreshedPrices.current = true; // Mark as started
+
+            console.log("Starting Auto-Refresh of Portfolio Prices...");
+            const uniqueStocks = Array.from(new Set(positions.map(p => p.stock))).filter(s => !!s.symbol);
+
+            await Promise.all(uniqueStocks.map(async (stock) => {
+                try {
+                    const result = await fetchStockHistory(stock.symbol!, '1D');
+                    if (result.data && result.data.length > 0) {
+                        const latestPrice = result.data[result.data.length - 1].value;
+                        const prevClose = result.previousClose;
+
+                        // Only update if changed or if prevClose was missing/wrong
+                        if (Math.abs(stock.currentPrice - latestPrice) > 0.0001 || (prevClose && stock.previousClose !== prevClose)) {
+                            console.log(`Updated ${stock.symbol}: ${latestPrice} (Prev: ${prevClose})`);
+                            updateStockPrice(stock.id, latestPrice, prevClose);
+                        }
+                    }
+                } catch (err) {
+                    console.error(`Failed to refresh ${stock.symbol}`, err);
+                }
+            }));
+        };
+
+        refreshPrices();
+    }, [positions, updateStockPrice]); // Depend on positions to ensuring we have data to refresh
     const [watchlistTimeframe, setWatchlistTimeframe] = useState<number>(90); // Default 90 days
     const [upcomingTimeframe, setUpcomingTimeframe] = useState<number>(90); // Default 90 days
     const [performancePeriod, setPerformancePeriod] = useState<string>('1D'); // Performance Period selection

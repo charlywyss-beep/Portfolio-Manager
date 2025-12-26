@@ -11,7 +11,7 @@ interface PortfolioContextType {
     updatePosition: (id: string, updates: Partial<Position>) => void;
     addStock: (stock: Omit<Stock, 'id'>) => string;
     updateStock: (id: string, updates: Partial<Stock>) => void;
-    updateStockPrice: (stockId: string, newPrice: number) => void;
+    updateStockPrice: (stockId: string, newPrice: number, newPreviousClose?: number) => void;
     updateStockDividendYield: (stockId: string, dividendYield: number) => void;
     updateStockDividend: (stockId: string, dividendData: Partial<Pick<Stock, 'dividendYield' | 'dividendAmount' | 'dividendCurrency' | 'dividendExDate' | 'dividendPayDate' | 'dividendDates' | 'dividendFrequency'>>) => void;
     addFixedDeposit: (deposit: Omit<import('../types').FixedDeposit, 'id'>) => void;
@@ -327,14 +327,18 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         setStocks(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
     };
 
-    const updateStockPrice = (stockId: string, newPrice: number) => {
-        setStocks((prev) =>
-            prev.map((s) =>
-                s.id === stockId
-                    ? { ...s, currentPrice: newPrice, previousClose: s.currentPrice }
-                    : s
-            )
-        );
+    const updateStockPrice = (id: string, newPrice: number, newPreviousClose?: number) => {
+        setStocks(stocks.map(s => {
+            if (s.id === id) {
+                return {
+                    ...s,
+                    currentPrice: newPrice,
+                    // If newPreviousClose provided, use it. Else fall back to OLD currentPrice (legacy behavior)
+                    previousClose: newPreviousClose !== undefined ? newPreviousClose : s.currentPrice
+                };
+            }
+            return s;
+        }));
     };
 
     const updateStockDividendYield = (stockId: string, dividendYield: number) => {
