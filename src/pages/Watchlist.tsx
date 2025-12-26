@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -222,7 +222,7 @@ export function Watchlist() {
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground align-top">
                                                     {stock.dividendDates && stock.dividendDates.length > 0 ? (
-                                                        <div className="text-xs whitespace-nowrap">
+                                                        <div className="grid grid-cols-[min-content_auto_auto] gap-x-1.5 justify-end items-center text-right text-xs">
                                                             {stock.dividendDates
                                                                 .map((d, i) => ({ ...d, label: stock.dividendFrequency === 'semi-annually' ? `${i + 1}.` : `Q${i + 1}` }))
                                                                 .filter(d => d.exDate)
@@ -233,16 +233,18 @@ export function Watchlist() {
                                                                     const isExpired = dDays < 0;
                                                                     const isSoon = dDays >= 0 && dDays <= 14;
                                                                     const formattedDate = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+                                                                    const colorClass = isExpired ? "text-red-500 font-medium" : isSoon ? "text-orange-500 font-medium" : "";
 
                                                                     return (
-                                                                        <span key={idx} className={isExpired ? "text-red-500 font-medium" : isSoon ? "text-orange-500 font-medium" : ""}>
-                                                                            {isSoon && '⚠️ '}
-                                                                            <span className="mr-1.5 px-1.5 py-0.5 text-[10px] uppercase font-medium bg-muted text-muted-foreground border border-border rounded">
+                                                                        <Fragment key={idx}>
+                                                                            <span className={colorClass + " justify-self-end"}>{isSoon ? '⚠️' : ''}</span>
+                                                                            <span className="px-1.5 py-0.5 text-[10px] uppercase font-medium bg-muted text-muted-foreground border border-border rounded justify-self-end">
                                                                                 {d.label}
                                                                             </span>
-                                                                            {formattedDate}
-                                                                            {idx < (stock.dividendDates?.filter(dd => dd.exDate).length ?? 0) - 1 && <br />}
-                                                                        </span>
+                                                                            <span className={colorClass + " whitespace-nowrap tabular-nums"}>
+                                                                                {formattedDate}
+                                                                            </span>
+                                                                        </Fragment>
                                                                     );
                                                                 })}
                                                         </div>
