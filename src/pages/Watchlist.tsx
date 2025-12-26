@@ -315,7 +315,7 @@ export function Watchlist() {
                                                             <ShoppingBag className="size-4" />
                                                         </button>
                                                         <button
-                                                            onClick={() => navigate(`/dividends/edit/${stock.id}`)}
+                                                            onClick={() => navigate(`/dividends/edit/${stock.id}?from=watchlist`)}
                                                             className="p-1.5 sm:p-2 hover:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg transition-colors"
                                                             title="Bearbeiten"
                                                         >

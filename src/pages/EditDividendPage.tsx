@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Trash2, Search } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
 import { useCurrencyFormatter } from '../utils/currency';
 import { fetchStockHistory } from '../services/yahoo-finance';
@@ -22,6 +21,7 @@ const getFrequencyFactor = (freq: string) => {
 export function EditDividendPage() {
     const { stockId } = useParams();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { stocks, updateStockDividend, updateStockPrice, updateStock } = usePortfolio();
 
     const [selectedStockId, setSelectedStockId] = useState(''); // Local state for selection
@@ -230,7 +230,13 @@ export function EditDividendPage() {
             dividendFrequency: frequency
         });
 
-        navigate(-1); // Go back
+        // Navigate back to watchlist if came from there, otherwise go back
+        const fromWatchlist = searchParams.get('from') === 'watchlist';
+        if (fromWatchlist) {
+            navigate('/watchlist');
+        } else {
+            navigate(-1);
+        }
     };
 
     const { rates } = useCurrencyFormatter();
