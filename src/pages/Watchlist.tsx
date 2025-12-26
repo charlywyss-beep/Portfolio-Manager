@@ -222,7 +222,7 @@ export function Watchlist() {
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground align-top">
                                                     {stock.dividendDates && stock.dividendDates.length > 0 ? (
-                                                        <div className="grid grid-cols-[16px_30px_62px] gap-x-0.5 justify-end items-center text-right text-xs">
+                                                        <div className="grid grid-cols-[16px_24px_62px] gap-x-0.5 justify-end items-center text-right text-xs">
                                                             {stock.dividendDates
                                                                 .map((d, i) => ({ ...d, label: stock.dividendFrequency === 'semi-annually' ? `${i + 1}.` : `Q${i + 1}` }))
                                                                 .filter(d => d.exDate)
@@ -261,7 +261,7 @@ export function Watchlist() {
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground align-top">
                                                     {stock.dividendDates && stock.dividendDates.length > 0 ? (
-                                                        <div className="grid grid-cols-[16px_30px_62px] gap-x-0.5 justify-end items-center text-right text-xs">
+                                                        <div className="grid grid-cols-[16px_24px_62px] gap-x-0.5 justify-end items-center text-right text-xs">
                                                             {stock.dividendDates
                                                                 .map((d, i) => ({ ...d, label: stock.dividendFrequency === 'semi-annually' ? `${i + 1}.` : `Q${i + 1}` }))
                                                                 .filter(d => d.payDate)
