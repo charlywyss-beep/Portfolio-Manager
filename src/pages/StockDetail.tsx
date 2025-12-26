@@ -197,6 +197,22 @@ export function StockDetail() {
                             </p>
                         )}
 
+                        {/* Manual Refresh Button - Always visible */}
+                        <button
+                            onClick={loadData}
+                            disabled={isRefreshing}
+                            className={cn(
+                                "mt-3 flex items-center justify-end gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors",
+                                isRefreshing && "opacity-50 cursor-not-allowed"
+                            )}
+                            title="Daten aktualisieren"
+                        >
+                            <RefreshCw className={cn("size-3", isRefreshing && "animate-spin")} />
+                            <span>
+                                {isRefreshing ? 'Aktualisiere...' : lastUpdate ? `Aktualisiert vor ${Math.floor((new Date().getTime() - lastUpdate.getTime()) / 60000)} Min` : 'Daten laden'}
+                            </span>
+                        </button>
+
                         {/* Dynamic Position Performance based on Chart Range */}
                         {(() => {
                             const position = positions.find(p => p.stockId === stock.id);
@@ -241,22 +257,6 @@ export function StockDetail() {
                                 </div>
                             );
                         })()}
-
-                        {/* Manual Refresh Button */}
-                        <button
-                            onClick={loadData}
-                            disabled={isRefreshing}
-                            className={cn(
-                                "mt-3 flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors",
-                                isRefreshing && "opacity-50 cursor-not-allowed"
-                            )}
-                            title="Daten aktualisieren"
-                        >
-                            <RefreshCw className={cn("size-3", isRefreshing && "animate-spin")} />
-                            <span>
-                                {isRefreshing ? 'Aktualisiere...' : lastUpdate ? `Aktualisiert vor ${Math.floor((new Date().getTime() - lastUpdate.getTime()) / 60000)} Min` : 'Daten laden'}
-                            </span>
-                        </button>
                     </div>
                 </div>
             </div>
