@@ -49,23 +49,42 @@ function App() {
     return 'Portfolio Manager';
   };
 
-  const NavItem = ({ to, icon: Icon, label }: { to: string, icon: any, label: string }) => (
-    <NavLink
-      to={to}
-      onClick={() => {
-        if (window.innerWidth < 1024) setIsSidebarOpen(false);
-      }}
-      className={({ isActive }) => cn(
-        "flex items-center gap-6 px-4 py-2.5 rounded-md transition-all whitespace-nowrap mx-2 mb-1",
-        isActive
-          ? "bg-primary text-primary-foreground shadow-sm"
-          : "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
-      )}
-    >
-      <Icon className="size-5 shrink-0" />
-      <span className="font-medium">{label}</span>
-    </NavLink>
-  );
+  const NavItem = ({ to, icon: Icon, label }: { to: string, icon: any, label: string }) => {
+    const location = useLocation();
+
+    // Custom active logic: Check if we're on /dividends/edit with from=watchlist
+    const isCustomActive = () => {
+      // If this is the Watchlist nav item and we're editing from watchlist
+      if (to === '/watchlist' && location.pathname.startsWith('/dividends/edit')) {
+        const searchParams = new URLSearchParams(location.search);
+        return searchParams.get('from') === 'watchlist';
+      }
+      // If this is the Dividenden nav item and we're editing from watchlist, don't highlight it
+      if (to === '/dividends' && location.pathname.startsWith('/dividends/edit')) {
+        const searchParams = new URLSearchParams(location.search);
+        return searchParams.get('from') !== 'watchlist';
+      }
+      return false;
+    };
+
+    return (
+      <NavLink
+        to={to}
+        onClick={() => {
+          if (window.innerWidth < 1024) setIsSidebarOpen(false);
+        }}
+        className={({ isActive }) => cn(
+          "flex items-center gap-6 px-4 py-2.5 rounded-md transition-all whitespace-nowrap mx-2 mb-1",
+          (isActive || isCustomActive())
+            ? "bg-primary text-primary-foreground shadow-sm"
+            : "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
+        )}
+      >
+        <Icon className="size-5 shrink-0" />
+        <span className="font-medium">{label}</span>
+      </NavLink>
+    );
+  };
 
   return (
     <ExchangeRateProvider>
@@ -104,7 +123,7 @@ function App() {
                 <h1 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">Portfolio</h1>
               </div>
               <div className="text-[10px] text-foreground font-bold font-mono mt-1 flex items-center gap-1">
-                <span>v3.11.201</span>
+                <span>v3.11.202</span>
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
               </div>
             </div>
@@ -152,7 +171,7 @@ function App() {
                   className="text-[10px] text-muted-foreground/50 hover:text-primary transition-colors"
                   title="Klicken zum Neuladen"
                 >
-                  v3.11.201
+                  v3.11.202
                 </button>
                 <h2 className="text-lg font-semibold capitalize">
                   {getPageTitle(location.pathname)}
