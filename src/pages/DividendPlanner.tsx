@@ -5,6 +5,7 @@ import { Logo } from '../components/Logo';
 
 import { useCurrencyFormatter } from '../utils/currency';
 import { getCurrentDividendPeriod, translateFrequency } from '../utils/dividend';
+import { DividendCalendarChart } from '../components/DividendCalendarChart';
 
 export function DividendPlanner() {
     const navigate = useNavigate();
