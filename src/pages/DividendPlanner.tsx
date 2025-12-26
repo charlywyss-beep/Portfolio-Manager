@@ -168,6 +168,23 @@ export function DividendPlanner() {
                 </div>
             </div>
 
+            {/* Dividend Calendar Chart */}
+            <div className="mt-8 mb-8">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                        <TrendingUp className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-bold text-foreground">Monatliche Dividenden (Geschätzt)</h2>
+                        <p className="text-sm text-muted-foreground">Prognostizierte Verteilung der Zahlungen über das Jahr</p>
+                    </div>
+                </div>
+
+                <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                    <DividendCalendarChart />
+                </div>
+            </div>
+
             {/* Main Dividend Table */}
             <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b bg-muted/30">
