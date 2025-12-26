@@ -1,4 +1,4 @@
-import { X, TrendingUp, TrendingDown } from 'lucide-react';
+import { X, TrendingUp } from 'lucide-react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 

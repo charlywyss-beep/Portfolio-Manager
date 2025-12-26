@@ -14,6 +14,7 @@ import { AddHistoryEntryModal } from '../components/AddHistoryEntryModal';
 // import { CurrencyChart } from '../components/CurrencyChart'; // Removed from dashboard
 import { DividendCalendarChart } from '../components/DividendCalendarChart';
 import { AssetAllocationChart } from '../components/AssetAllocationChart';
+import { PerformanceDetailsModal } from '../components/PerformanceDetailsModal';
 import { PieChart as PieChartIcon } from 'lucide-react';
 
 // Helper to translate frequency to German
@@ -783,6 +784,12 @@ export function Dashboard() {
                     etfValue: totals.etfValue,
                     cashValue: totals.cashValue
                 }}
+            />
+            {/* NEW: Performance Details Modal */}
+            <PerformanceDetailsModal
+                isOpen={showPerformanceDetails}
+                onClose={() => setShowPerformanceDetails(false)}
+                positions={positions}
             />
         </div >
     );
