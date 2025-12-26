@@ -210,14 +210,20 @@ export function Watchlist() {
                                                     ) : '-'}
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground align-top">
-                                                    {translateFrequency(stock.dividendFrequency)}
                                                     {(() => {
+                                                        const freqLabel = translateFrequency(stock.dividendFrequency);
                                                         const currentDiv = getCurrentDividendPeriod(stock);
-                                                        return currentDiv.periodLabel ? (
-                                                            <span className="ml-2 px-1.5 py-0.5 text-[10px] uppercase font-medium bg-muted text-muted-foreground border border-border rounded">
-                                                                {currentDiv.periodLabel}
-                                                            </span>
-                                                        ) : null;
+                                                        if (currentDiv.periodLabel) {
+                                                            return (
+                                                                <div className="grid grid-cols-[auto_24px] gap-x-0.5 justify-end items-center">
+                                                                    <span>{freqLabel}</span>
+                                                                    <span className="px-1.5 py-0.5 text-[10px] uppercase font-medium bg-muted text-muted-foreground border border-border rounded justify-self-end">
+                                                                        {currentDiv.periodLabel}
+                                                                    </span>
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return freqLabel;
                                                     })()}
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground align-top">
