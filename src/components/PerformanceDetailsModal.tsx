@@ -1,6 +1,8 @@
 import { X, TrendingUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
+import { Logo } from './Logo';
 
 interface PerformanceDetailsModalProps {
     isOpen: boolean;
@@ -10,6 +12,7 @@ interface PerformanceDetailsModalProps {
 
 export function PerformanceDetailsModal({ isOpen, onClose, positions }: PerformanceDetailsModalProps) {
     const { convertToCHF, formatCurrency } = useCurrencyFormatter();
+    const navigate = useNavigate();
 
     if (!isOpen) return null;
 
@@ -21,6 +24,11 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     });
 
     const totalGain = sortedPositions.reduce((sum, p) => sum + convertToCHF(p.dailyGain, p.stock.currency), 0);
+
+    const handleRowClick = (positionId: string) => {
+        navigate(`/stock/${positionId}`);
+        onClose();
+    };
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -50,11 +58,23 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 const isPositive = gainCHF >= 0;
 
                                 return (
-                                    <tr key={p.id} className="hover:bg-muted/20 transition-colors">
+                                    <tr
+                                        key={p.id}
+                                        onClick={() => handleRowClick(p.id)}
+                                        className="hover:bg-muted/30 transition-colors cursor-pointer group"
+                                    >
                                         <td className="py-3 px-4 font-medium">
-                                            <div className="flex flex-col">
-                                                <span>{p.stock.name}</span>
-                                                <span className="text-[10px] text-muted-foreground">{p.stock.symbol}</span>
+                                            <div className="flex items-center gap-3">
+                                                <Logo
+                                                    url={p.stock.logoUrl}
+                                                    alt={p.stock.name}
+                                                    fallback={p.stock.symbol.slice(0, 2)}
+                                                    size="size-10"
+                                                />
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="truncate group-hover:text-primary transition-colors">{p.stock.name}</span>
+                                                    <span className="text-[10px] text-muted-foreground">{p.stock.symbol}</span>
+                                                </div>
                                             </div>
                                         </td>
                                         <td className={cn("py-3 px-4 text-right font-medium", isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
