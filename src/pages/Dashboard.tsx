@@ -56,6 +56,9 @@ export function Dashboard() {
             await Promise.all(uniqueStocks.map(async (stock) => {
                 try {
                     const result = await fetchStockHistory(stock.symbol!, '1D');
+                    if (stock.symbol === 'CVX') {
+                        console.log("DEBUG CVX RAW:", result);
+                    }
                     if (result.data && result.data.length > 0) {
                         let latestPrice = result.data[result.data.length - 1].value;
                         let prevClose = result.previousClose;
