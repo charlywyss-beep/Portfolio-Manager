@@ -54,16 +54,22 @@ function App() {
 
     // Custom active logic: Check if we're on /dividends/edit with from=watchlist
     const isCustomActive = () => {
-      // If this is the Watchlist nav item and we're editing from watchlist
-      if (to === '/watchlist' && location.pathname.startsWith('/dividends/edit')) {
-        const searchParams = new URLSearchParams(location.search);
-        return searchParams.get('from') === 'watchlist';
+      const isOnDividendEdit = location.pathname.startsWith('/dividends/edit');
+      if (!isOnDividendEdit) return false;
+
+      const searchParams = new URLSearchParams(location.search);
+      const fromWatchlist = searchParams.get('from') === 'watchlist';
+
+      // If editing from watchlist, highlight Watchlist, not Dividenden
+      if (to === '/watchlist' && fromWatchlist) {
+        return true;
       }
-      // If this is the Dividenden nav item and we're editing from watchlist, don't highlight it
-      if (to === '/dividends' && location.pathname.startsWith('/dividends/edit')) {
-        const searchParams = new URLSearchParams(location.search);
-        return searchParams.get('from') !== 'watchlist';
+
+      // Don't highlight Dividenden if we're editing from watchlist
+      if (to === '/dividends' && fromWatchlist) {
+        return false;
       }
+
       return false;
     };
 
@@ -73,12 +79,27 @@ function App() {
         onClick={() => {
           if (window.innerWidth < 1024) setIsSidebarOpen(false);
         }}
-        className={({ isActive }) => cn(
-          "flex items-center gap-6 px-4 py-2.5 rounded-md transition-all whitespace-nowrap mx-2 mb-1",
-          (isActive || isCustomActive())
-            ? "bg-primary text-primary-foreground shadow-sm"
-            : "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
-        )}
+        className={({ isActive }) => {
+          // Override isActive for /dividends/edit when from=watchlist
+          const isOnDividendEdit = location.pathname.startsWith('/dividends/edit');
+          const searchParams = new URLSearchParams(location.search);
+          const fromWatchlist = searchParams.get('from') === 'watchlist';
+
+          // If we're on dividend edit from watchlist and this is the Dividenden nav item, don't highlight
+          if (to === '/dividends' && isOnDividendEdit && fromWatchlist) {
+            return cn(
+              "flex items-center gap-6 px-4 py-2.5 rounded-md transition-all whitespace-nowrap mx-2 mb-1",
+              "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
+            );
+          }
+
+          return cn(
+            "flex items-center gap-6 px-4 py-2.5 rounded-md transition-all whitespace-nowrap mx-2 mb-1",
+            (isActive || isCustomActive())
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
+          );
+        }}
       >
         <Icon className="size-5 shrink-0" />
         <span className="font-medium">{label}</span>
@@ -123,7 +144,7 @@ function App() {
                 <h1 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">Portfolio</h1>
               </div>
               <div className="text-[10px] text-foreground font-bold font-mono mt-1 flex items-center gap-1">
-                <span>v3.11.202</span>
+                <span>v3.11.203</span>
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
               </div>
             </div>
@@ -171,7 +192,7 @@ function App() {
                   className="text-[10px] text-muted-foreground/50 hover:text-primary transition-colors"
                   title="Klicken zum Neuladen"
                 >
-                  v3.11.202
+                  v3.11.203
                 </button>
                 <h2 className="text-lg font-semibold capitalize">
                   {getPageTitle(location.pathname)}
