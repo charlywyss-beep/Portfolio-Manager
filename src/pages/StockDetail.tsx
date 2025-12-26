@@ -197,23 +197,7 @@ export function StockDetail() {
                             </p>
                         )}
 
-                        {/* Manual Refresh Button - Always visible */}
-                        <button
-                            onClick={loadData}
-                            disabled={isRefreshing}
-                            className={cn(
-                                "mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-medium transition-all",
-                                "border-border bg-background hover:bg-accent hover:text-accent-foreground",
-                                "text-muted-foreground hover:border-primary/50",
-                                isRefreshing && "opacity-50 cursor-not-allowed"
-                            )}
-                            title="Daten aktualisieren"
-                        >
-                            <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
-                            <span>
-                                {isRefreshing ? 'Aktualisiere...' : lastUpdate ? `Aktualisiert vor ${Math.floor((new Date().getTime() - lastUpdate.getTime()) / 60000)} Min` : 'Daten laden'}
-                            </span>
-                        </button>
+
 
                         {/* Dynamic Position Performance based on Chart Range */}
                         {(() => {
@@ -268,9 +252,28 @@ export function StockDetail() {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Price Chart */}
                     <div className="bg-card border border-border rounded-xl p-6 shadow-sm min-h-[450px] flex flex-col">
-                        <div className="flex items-center gap-2 mb-4 shrink-0">
-                            <TrendingUp className="size-5 text-blue-500" />
-                            <h3 className="font-bold text-lg">Kursverlauf</h3>
+                        <div className="flex items-center justify-between mb-4 shrink-0">
+                            <div className="flex items-center gap-2">
+                                <TrendingUp className="size-5 text-blue-500" />
+                                <h3 className="font-bold text-lg">Kursverlauf</h3>
+                            </div>
+                            {/* Manual Refresh Button */}
+                            <button
+                                onClick={loadData}
+                                disabled={isRefreshing}
+                                className={cn(
+                                    "inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-medium transition-all",
+                                    "border-muted-foreground/30 bg-background hover:bg-accent hover:text-accent-foreground",
+                                    "text-muted-foreground hover:border-primary/70",
+                                    isRefreshing && "opacity-50 cursor-not-allowed"
+                                )}
+                                title="Daten aktualisieren"
+                            >
+                                <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
+                                <span>
+                                    {isRefreshing ? 'Aktualisiere...' : lastUpdate ? `Aktualisiert vor ${Math.floor((new Date().getTime() - lastUpdate.getTime()) / 60000)} Min` : 'Daten laden'}
+                                </span>
+                            </button>
                         </div>
                         <div className="flex-1 w-full min-h-0">
                             <PriceHistoryChart
