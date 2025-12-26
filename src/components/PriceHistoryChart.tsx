@@ -202,10 +202,29 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                             <Tooltip
                                 content={({ active, payload }) => {
                                     if (active && payload && payload.length) {
+                                        const date = new Date(payload[0].payload.date);
+                                        const isToday = new Date().toDateString() === date.toDateString();
+
                                         return (
                                             <div className="bg-popover border border-border p-3 rounded-lg shadow-lg text-sm">
                                                 <p className="text-muted-foreground mb-1">
-                                                    {new Date(payload[0].payload.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                                    {selectedRange === '1D' ? (
+                                                        <>
+                                                            {date.toLocaleDateString('de-DE', {
+                                                                weekday: 'short',
+                                                                day: '2-digit',
+                                                                month: '2-digit',
+                                                                year: 'numeric'
+                                                            })}
+                                                            {!isToday && <span className="ml-1 text-orange-500 font-medium">(Letzter Handelstag)</span>}
+                                                            <br />
+                                                            <span className="text-xs">
+                                                                {date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                                                    )}
                                                 </p>
                                                 <div className="space-y-1">
                                                     <div className="flex items-center gap-2 justify-between">
