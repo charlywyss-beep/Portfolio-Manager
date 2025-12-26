@@ -197,7 +197,7 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                                 tickFormatter={(val) => formatCurrency(val, currency)}
                                 axisLine={false}
                                 tickLine={false}
-                                width={50}
+                                width={95}
                             />
                             <Tooltip
                                 content={({ active, payload }) => {
