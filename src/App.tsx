@@ -152,7 +152,7 @@ function App() {
                   className="text-[10px] text-muted-foreground/50 hover:text-primary transition-colors"
                   title="Klicken zum Neuladen"
                 >
-                  v3.11.180
+                  v3.11.181
                 </button>
                 <h2 className="text-lg font-semibold capitalize">
                   {getPageTitle(location.pathname)}
