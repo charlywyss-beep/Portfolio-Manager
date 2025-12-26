@@ -295,7 +295,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                     </div>
                                     {/* Price */}
                                     <div className="col-span-3">
-                                        <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Kaufpreis ({isGBX ? 'GBP' : position.stock.currency})</label>
+                                        <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Preis ({isGBX ? 'GBP' : position.stock.currency})</label>
                                         <DecimalInput
                                             value={purchase.price}
                                             onChange={(val) => handleUpdatePurchase(purchase.id, 'price', parseFloat(val) || 0)}

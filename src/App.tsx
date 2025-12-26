@@ -104,7 +104,7 @@ function App() {
                 <h1 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">Portfolio</h1>
               </div>
               <div className="text-[10px] text-foreground font-bold font-mono mt-1 flex items-center gap-1">
-                <span>v3.11.196</span>
+                <span>v3.11.195</span>
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
               </div>
             </div>
@@ -152,7 +152,7 @@ function App() {
                   className="text-[10px] text-muted-foreground/50 hover:text-primary transition-colors"
                   title="Klicken zum Neuladen"
                 >
-                  v3.11.196
+                  v3.11.195
                 </button>
                 <h2 className="text-lg font-semibold capitalize">
                   {getPageTitle(location.pathname)}
