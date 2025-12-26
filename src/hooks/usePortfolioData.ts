@@ -112,7 +112,40 @@ export function usePortfolioData() {
         // NEW: Calculate Daily Performance (Sum of (Price - PrevClose) * Shares)
         const totalDailyGainForStocks = positions.reduce((sum, p) => {
             // Ensure previousClose exists and is valid
-            const prevClose = p.stock.previousClose || p.stock.currentPrice; // Fallback to 0 change if missing
+            let prevClose = p.stock.previousClose || p.stock.currentPrice; // Fallback to 0 change if missing
+
+            // Heuristic for Unit Mismatch (Pence vs GBP causing 100x diff)
+            // 1. SAFTEY: Check for GBP/GBp currencies where this issue is common.
+            const isGBP = p.stock.currency === 'GBP' || p.stock.currency === 'GBp';
+            let looksLikeUnitMismatch = false;
+
+            if (p.stock.currentPrice > 0 && prevClose > 0) {
+                const ratio = prevClose / p.stock.currentPrice;
+
+                // Check 1: Factor ~100 Mismatch
+                if (isGBP && (ratio > 50 && ratio < 150)) {
+                    prevClose = prevClose / 100;
+                    looksLikeUnitMismatch = true;
+                } else if (isGBP && (ratio < 0.02 && ratio > 0.005)) {
+                    prevClose = prevClose * 100;
+                    looksLikeUnitMismatch = true;
+                }
+
+                // Check 2: Impossible Loss (> 90% Drop) Sanity Check
+                // If we didn't fix it yet, and drop is > 90%, check if it's a unit error.
+                if (!looksLikeUnitMismatch) {
+                    const dropPercent = (p.stock.currentPrice - prevClose) / prevClose;
+                    if (dropPercent < -0.90) { // > 90% Loss
+                        // If dividing PrevClose by 100 makes it reasonable (e.g. +10% to -10% change), do it.
+                        const adjustedPrev = prevClose / 100;
+                        const adjustedDrop = (p.stock.currentPrice - adjustedPrev) / adjustedPrev;
+                        if (Math.abs(adjustedDrop) < 0.20) { // It becomes a normal fluctuation
+                            prevClose = adjustedPrev;
+                        }
+                    }
+                }
+            }
+
             const dailyChangePerShare = p.stock.currentPrice - prevClose;
             const dailyChangeTotal = dailyChangePerShare * p.shares;
 
