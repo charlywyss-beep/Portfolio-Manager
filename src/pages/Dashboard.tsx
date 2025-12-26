@@ -228,16 +228,26 @@ export function Dashboard() {
                             // Check History
                             const sortedHistory = [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                             // Find latest entry BEFORE or ON target date
-                            // Actually we want the entry closest to target date? 
-                            // Or entry that represents the STATE at that time.
-                            // find(d <= target)
                             const entry = sortedHistory.find(h => h.date <= targetDateStr) || sortedHistory[sortedHistory.length - 1];
 
                             if (entry) {
-                                // Use StockValue if available (more precise for performance), else TotalValue
-                                const pastValue = entry.stockValue || entry.totalValue;
-                                const currentVal = entry.stockValue ? totals.totalValueStock : (totals.totalValueStock + totals.totalValueBank);
-                                // Consistent Basis: If history has stockValue, compare with current Stock Value.
+                                // Determine if history entry has split data (Stock/ETF separated) to compare apples to apples
+                                const hasSplitData = entry.stockValue !== undefined || entry.etfValue !== undefined;
+
+                                let pastValue = 0;
+                                let currentVal = 0;
+
+                                if (hasSplitData) {
+                                    // History: Sum of Clean Stock + Clean ETF
+                                    pastValue = (entry.stockValue || 0) + (entry.etfValue || 0);
+                                    // Current: totals.totalValueStock is already Combined (Stock + ETF)
+                                    currentVal = totals.totalValueStock;
+                                } else {
+                                    // Legacy History: Contains only totalValue (likely including Bank)
+                                    pastValue = entry.totalValue;
+                                    // Current: Compare with Total Value (incl Bank) to match legacy scope
+                                    currentVal = totals.totalValue;
+                                }
 
                                 const change = currentVal - pastValue;
                                 displayValue = change;
