@@ -202,12 +202,14 @@ export function StockDetail() {
                             onClick={loadData}
                             disabled={isRefreshing}
                             className={cn(
-                                "mt-3 flex items-center justify-end gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors",
+                                "mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-medium transition-all",
+                                "border-border bg-background hover:bg-accent hover:text-accent-foreground",
+                                "text-muted-foreground hover:border-primary/50",
                                 isRefreshing && "opacity-50 cursor-not-allowed"
                             )}
                             title="Daten aktualisieren"
                         >
-                            <RefreshCw className={cn("size-3", isRefreshing && "animate-spin")} />
+                            <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
                             <span>
                                 {isRefreshing ? 'Aktualisiere...' : lastUpdate ? `Aktualisiert vor ${Math.floor((new Date().getTime() - lastUpdate.getTime()) / 60000)} Min` : 'Daten laden'}
                             </span>
