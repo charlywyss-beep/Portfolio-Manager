@@ -41,6 +41,7 @@ export function Dashboard() {
     }, []);
     const [watchlistTimeframe, setWatchlistTimeframe] = useState<number>(90); // Default 90 days
     const [upcomingTimeframe, setUpcomingTimeframe] = useState<number>(90); // Default 90 days
+    const [performancePeriod, setPerformancePeriod] = useState<string>('1D'); // Performance Period selection
 
 
 
@@ -179,29 +180,104 @@ export function Dashboard() {
                     </div>
                 </div>
 
-                {/* Daily Performance (Replaces Top Performer Stock) */}
+                {/* Performance Card with Timeframe Selection */}
                 <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
                     <div className="flex justify-between items-start mb-4">
                         <div className="p-2 rounded-lg bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
                             <TrendingUp className="size-6" />
                         </div>
-                        <span className={cn(
-                            "flex items-center text-sm font-medium px-2 py-1 rounded-full",
-                            totals.dailyGain >= 0 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                        )}>
-                            {totals.dailyGain >= 0 ? <ArrowUpRight className="size-4 mr-1" /> : <ArrowDownRight className="size-4 mr-1" />}
-                            {Math.abs(totals.dailyGainPercent).toFixed(2)}%
-                        </span>
+
+                        {/* Timeframe Selector */}
+                        <div className="relative">
+                            <select
+                                className="appearance-none bg-background border border-border rounded-md text-xs font-medium px-2 py-1 pr-6 cursor-pointer hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                value={performancePeriod}
+                                onChange={(e) => setPerformancePeriod(e.target.value)}
+                                title="Zeitraum auswählen"
+                            >
+                                <option value="1D">Tag</option>
+                                <option value="1W">Woche</option>
+                                <option value="1M">Monat</option>
+                                <option value="6M">6 Monate</option>
+                                <option value="1Y">Jahr</option>
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-muted-foreground">
+                                <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <p className="text-sm text-muted-foreground font-medium">Tagesperformance</p>
-                        <h3 className={cn("text-xl lg:text-2xl font-bold mt-1 tracking-tight", totals.dailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
-                            {totals.dailyGain >= 0 ? '+' : ''}{totals.dailyGain.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-2">
-                            seit gestern
-                        </p>
-                    </div>
+
+                    {/* Calculation Logic */}
+                    {(() => {
+                        let displayValue = 0;
+                        let displayPercent = 0;
+                        let displayLabel = 'seit gestern';
+                        let isDataAvailable = true;
+
+                        if (performancePeriod === '1D') {
+                            displayValue = totals.dailyGain;
+                            displayPercent = totals.dailyGainPercent;
+                        } else {
+                            // Historical Calculation
+                            const daysMap: Record<string, number> = { '1W': 7, '1M': 30, '6M': 180, '1Y': 365 };
+                            const days = daysMap[performancePeriod] || 7;
+                            const targetDate = new Date();
+                            targetDate.setDate(targetDate.getDate() - days);
+                            const targetDateStr = targetDate.toISOString().split('T')[0];
+
+                            // Check History
+                            const sortedHistory = [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                            // Find latest entry BEFORE or ON target date
+                            // Actually we want the entry closest to target date? 
+                            // Or entry that represents the STATE at that time.
+                            // find(d <= target)
+                            const entry = sortedHistory.find(h => h.date <= targetDateStr) || sortedHistory[sortedHistory.length - 1];
+
+                            if (entry) {
+                                // Use StockValue if available (more precise for performance), else TotalValue
+                                const pastValue = entry.stockValue || entry.totalValue;
+                                const currentVal = entry.stockValue ? totals.totalValueStock : (totals.totalValueStock + totals.totalValueBank);
+                                // Consistent Basis: If history has stockValue, compare with current Stock Value.
+
+                                const change = currentVal - pastValue;
+                                displayValue = change;
+                                displayPercent = pastValue !== 0 ? (change / pastValue) * 100 : 0;
+                                displayLabel = `seit ${new Date(entry.date).toLocaleDateString('de-CH')}`;
+                            } else {
+                                isDataAvailable = false;
+                            }
+                        }
+
+                        if (!isDataAvailable && performancePeriod !== '1D') {
+                            return (
+                                <div>
+                                    <p className="text-sm text-muted-foreground font-medium">Performance</p>
+                                    <p className="text-sm text-muted-foreground mt-1">Keine historischen Daten verfügbar.</p>
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <div>
+                                <p className="text-sm text-muted-foreground font-medium">Performance</p>
+                                <h3 className={cn("text-xl lg:text-2xl font-bold mt-1 tracking-tight", displayValue >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                                    {displayValue >= 0 ? '+' : ''}{displayValue.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                </h3>
+                                <div className="flex items-center gap-2 mt-2">
+                                    <span className={cn(
+                                        "flex items-center text-xs font-medium px-1.5 py-0.5 rounded-full",
+                                        displayValue >= 0 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                    )}>
+                                        {displayValue >= 0 ? <ArrowUpRight className="size-3 mr-1" /> : <ArrowDownRight className="size-3 mr-1" />}
+                                        {Math.abs(displayPercent).toFixed(2)}%
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                        {displayLabel}
+                                    </span>
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </div>
 
                 {/* Top Performer ETF */}
