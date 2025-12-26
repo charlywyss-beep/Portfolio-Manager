@@ -111,7 +111,7 @@ export function DividendPlanner() {
                         <Calendar className="size-6" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Dividenden Planer</h1>
+                        <h1 className="text-2xl font-bold tracking-tight">Dividenden</h1>
                         <p className="text-muted-foreground">Erwartete Dividendenausschüttungen</p>
                     </div>
                 </div>
