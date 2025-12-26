@@ -35,6 +35,7 @@ export function Dashboard() {
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [editingHistoryEntry, setEditingHistoryEntry] = useState<any>(null);
     const [hasMounted, setHasMounted] = useState(false);
+    const [showPerformanceDetails, setShowPerformanceDetails] = useState(false); // NEW
 
     useEffect(() => {
         setHasMounted(true);
@@ -187,22 +188,34 @@ export function Dashboard() {
                             <TrendingUp className="size-6" />
                         </div>
 
-                        {/* Timeframe Selector */}
-                        <div className="relative">
-                            <select
-                                className="appearance-none bg-background border border-border rounded-md text-xs font-medium px-2 py-1 pr-6 cursor-pointer hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                value={performancePeriod}
-                                onChange={(e) => setPerformancePeriod(e.target.value)}
-                                title="Zeitraum auswählen"
-                            >
-                                <option value="1D">Tag</option>
-                                <option value="1W">Woche</option>
-                                <option value="1M">Monat</option>
-                                <option value="6M">6 Monate</option>
-                                <option value="1Y">Jahr</option>
-                            </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-muted-foreground">
-                                <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                        <div className="flex items-center gap-2">
+                            {/* NEW: Details Button (Only for 1D) */}
+                            {performancePeriod === '1D' && (
+                                <button
+                                    onClick={() => setShowPerformanceDetails(true)}
+                                    className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20"
+                                >
+                                    Details
+                                </button>
+                            )}
+
+                            {/* Timeframe Selector */}
+                            <div className="relative">
+                                <select
+                                    className="appearance-none bg-background border border-border rounded-md text-xs font-medium px-2 py-1 pr-6 cursor-pointer hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                    value={performancePeriod}
+                                    onChange={(e) => setPerformancePeriod(e.target.value)}
+                                    title="Zeitraum auswählen"
+                                >
+                                    <option value="1D">Tag</option>
+                                    <option value="1W">Woche</option>
+                                    <option value="1M">Monat</option>
+                                    <option value="6M">6 Monate</option>
+                                    <option value="1Y">Jahr</option>
+                                </select>
+                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-muted-foreground">
+                                    <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                                </div>
                             </div>
                         </div>
                     </div>
