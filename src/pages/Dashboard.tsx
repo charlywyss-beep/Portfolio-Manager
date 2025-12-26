@@ -57,8 +57,14 @@ export function Dashboard() {
                 try {
                     const result = await fetchStockHistory(stock.symbol!, '1D');
                     if (result.data && result.data.length > 0) {
-                        const latestPrice = result.data[result.data.length - 1].value;
-                        const prevClose = result.previousClose;
+                        let latestPrice = result.data[result.data.length - 1].value;
+                        let prevClose = result.previousClose;
+
+                        // Normalize GBp (Pence) to GBP
+                        if (result.currency === 'GBp') {
+                            latestPrice /= 100;
+                            if (prevClose) prevClose /= 100;
+                        }
 
                         // Only update if changed or if prevClose was missing/wrong
                         if (Math.abs(stock.currentPrice - latestPrice) > 0.0001 || (prevClose && stock.previousClose !== prevClose)) {
