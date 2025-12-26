@@ -147,6 +147,13 @@ function App() {
                 >
                   {isSidebarOpen ? <X className="size-5" /> : <Menu className="size-5" />}
                 </button>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="text-[10px] text-muted-foreground/50 hover:text-primary transition-colors"
+                  title="Klicken zum Neuladen"
+                >
+                  v3.11.180
+                </button>
                 <h2 className="text-lg font-semibold capitalize">
                   {getPageTitle(location.pathname)}
                 </h2>
