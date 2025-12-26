@@ -25,8 +25,8 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
     const totalGain = sortedPositions.reduce((sum, p) => sum + convertToCHF(p.dailyGain, p.stock.currency), 0);
 
-    const handleRowClick = (positionId: string) => {
-        navigate(`/stock/${positionId}`);
+    const handleRowClick = (stockId: string) => {
+        navigate(`/stock/${stockId}`);
         onClose();
     };
 
@@ -60,7 +60,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 return (
                                     <tr
                                         key={p.id}
-                                        onClick={() => handleRowClick(p.id)}
+                                        onClick={() => handleRowClick(p.stock.id)}
                                         className="hover:bg-muted/30 transition-colors cursor-pointer group"
                                     >
                                         <td className="py-3 px-4 font-medium">
