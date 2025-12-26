@@ -38,7 +38,7 @@ function App() {
 
   const getPageTitle = (pathname: string) => {
     if (pathname === '/') return 'Portfolio Übersicht';
-    if (pathname === '/portfolio') return 'Meine Positionen';
+    if (pathname === '/portfolio') return 'Positionen';
     if (pathname === '/watchlist') return 'Watchlist';
     if (pathname === '/calculator') return 'Kauf / Verkauf';
     if (pathname === '/dividends') return 'Dividenden';
@@ -104,14 +104,14 @@ function App() {
                 <h1 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">Portfolio</h1>
               </div>
               <div className="text-[10px] text-foreground font-bold font-mono mt-1 flex items-center gap-1">
-                <span>v3.11.185</span>
+                <span>v3.11.186</span>
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
               </div>
             </div>
 
             <nav className="flex-1 p-4 space-y-2 w-fit">
               <NavItem to="/" icon={LayoutDashboard} label="Übersicht" />
-              <NavItem to="/portfolio" icon={Wallet} label="Meine Positionen" />
+              <NavItem to="/portfolio" icon={Wallet} label="Positionen" />
               <NavItem to="/dividends" icon={TrendingUp} label="Dividenden" />
               <NavItem to="/watchlist" icon={Eye} label="Watchlist" />
               <NavItem to="/calculator" icon={Calculator} label="Kauf / Verkauf" />
@@ -152,7 +152,7 @@ function App() {
                   className="text-[10px] text-muted-foreground/50 hover:text-primary transition-colors"
                   title="Klicken zum Neuladen"
                 >
-                  v3.11.185
+                  v3.11.186
                 </button>
                 <h2 className="text-lg font-semibold capitalize">
                   {getPageTitle(location.pathname)}
