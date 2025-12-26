@@ -145,7 +145,9 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                     {selectedRange === '1D' && data.length > 0 && (
                         <div className="mt-2 text-xs">
                             {(() => {
-                                const chartDate = new Date(data[0].date);
+                                // Check the LAST data point to see if we have today's data
+                                const lastDataPoint = data[data.length - 1];
+                                const chartDate = new Date(lastDataPoint.date);
                                 const today = new Date();
                                 const isToday = chartDate.toDateString() === today.toDateString();
 
