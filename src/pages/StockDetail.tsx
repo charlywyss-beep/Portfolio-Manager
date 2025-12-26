@@ -9,7 +9,7 @@ import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { cn } from '../utils';
 import { Logo } from '../components/Logo';
 
-import { fetchStockHistory, type TimeRange, type ChartDataPoint } from '../services/finnhub';
+import { fetchStockHistory, type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
 
 export function StockDetail() {
     const { id } = useParams();

@@ -5,7 +5,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
 import { useCurrencyFormatter } from '../utils/currency';
-import { fetchStockHistory } from '../services/finnhub';
+import { fetchStockHistory } from '../services/yahoo-finance';
 import { cn } from '../utils';
 
 // Helper to get annual factor
