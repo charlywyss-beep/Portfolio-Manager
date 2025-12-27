@@ -154,31 +154,13 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
 
                                 const today = new Date();
                                 const isToday = displayDate.toDateString() === today.toDateString();
-                                const isWeekend = today.getDay() === 0 || today.getDay() === 6;
 
-                                // Allow "Friday data on weekend" to be considered "Current" (Green) if user wants?
-                                // User said: "Aktuelle Daten 27.12. green" vs "Letzte Daten 23.12. red"
-                                // If today is Sat 27.12, and data is from Fri 26.12, it might be "Aktuelle Daten" relative to market close?
-                                // But user specifically used dates 27.12 vs 23.12. 
-                                // Let's simplify: 
-                                // Green = Date is Today OR (Date is Friday and Today is Weekend)
-                                // Red = Older than that.
+                                // User Rule:
+                                // Green = ONLY if date is strictly TODAY (Tagesaktuell)
+                                // Red = Closing price (Schlusskurs) of previous days (even if valid last trading day)
 
-                                let showGreen = isToday;
-                                let isClosingPrice = false;
-
-                                if (!showGreen && isWeekend) {
-                                    const friday = new Date();
-                                    friday.setDate(today.getDate() - (today.getDay() === 0 ? 2 : 1));
-                                    if (displayDate.toDateString() === friday.toDateString()) {
-                                        showGreen = true;
-                                        isClosingPrice = true;
-                                    }
-                                }
-
-                                const label = showGreen
-                                    ? (isClosingPrice ? 'Schlusskurs' : 'Aktuelle Daten')
-                                    : 'Letzte Daten';
+                                const showGreen = isToday;
+                                const label = showGreen ? 'Aktuelle Daten' : 'Schlusskurs';
 
                                 return (
                                     <div className={cn(
