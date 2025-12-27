@@ -147,23 +147,18 @@ export function StockDetail() {
                 const updates: any = {};
                 let hasUpdates = false;
 
+                // Always update related fields if they changed
                 if (quoteResponse.trailingPE !== undefined && quoteResponse.trailingPE !== null && Math.abs((stock.trailingPE || 0) - quoteResponse.trailingPE) > 0.01) {
                     updates.trailingPE = quoteResponse.trailingPE;
                     hasUpdates = true;
                 }
 
-                // Fallback: If trailingPE is missing, check forwardPE
-                if (!updates.trailingPE && !stock.trailingPE) {
-                    if (quoteResponse.forwardPE !== undefined && quoteResponse.forwardPE !== null) {
-                        updates.forwardPE = quoteResponse.forwardPE;
-                        // Note: we store it in forwardPE but can verify usage in UI. 
-                        // Optionally store as trailingPE if we want to force display, but better to keep separate.
-                        hasUpdates = true;
-                    }
+                if (quoteResponse.forwardPE !== undefined && quoteResponse.forwardPE !== null && Math.abs((stock.forwardPE || 0) - quoteResponse.forwardPE) > 0.01) {
+                    updates.forwardPE = quoteResponse.forwardPE;
+                    hasUpdates = true;
                 }
 
-                // EPS Update
-                if (quoteResponse.eps !== undefined && quoteResponse.eps !== null) {
+                if (quoteResponse.eps !== undefined && quoteResponse.eps !== null && Math.abs((stock.eps || 0) - quoteResponse.eps) > 0.001) {
                     updates.eps = quoteResponse.eps;
                     hasUpdates = true;
                 }
