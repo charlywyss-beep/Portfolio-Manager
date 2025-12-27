@@ -347,37 +347,42 @@ export function StockDetail() {
                         </div>
                     </div>
 
+                </div>
+
+                {/* Right Column: Stammdaten & Notes */}
+                <div className="lg:col-span-1 space-y-6">
+                    {/* Stammdaten - Moved here for compact width */}
                     <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
                         <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
                             <TrendingUp className="size-5 text-blue-500" />
                             Stammdaten
                         </h3>
-                        <div className="space-y-4">
-                            <div className="flex justify-between py-2 border-b border-border/50">
+                        <div className="space-y-3">
+                            <div className="flex justify-between py-1.5 border-b border-border/50">
                                 <span className="text-muted-foreground text-sm">Name</span>
-                                <span className="font-medium text-sm">{stock.name}</span>
+                                <span className="font-medium text-sm text-right">{stock.name}</span>
                             </div>
-                            <div className="flex justify-between py-2 border-b border-border/50">
+                            <div className="flex justify-between py-1.5 border-b border-border/50">
                                 <span className="text-muted-foreground text-sm">Symbol</span>
                                 <span className="font-medium text-sm font-mono">{stock.symbol}</span>
                             </div>
-                            <div className="flex justify-between py-2 border-b border-border/50">
+                            <div className="flex justify-between py-1.5 border-b border-border/50">
                                 <span className="text-muted-foreground text-sm">ISIN</span>
                                 <span className="font-medium text-sm font-mono">{stock.isin || '-'}</span>
                             </div>
-                            <div className="flex justify-between py-2 border-b border-border/50">
+                            <div className="flex justify-between py-1.5 border-b border-border/50">
                                 <span className="text-muted-foreground text-sm">Typ</span>
                                 <span className="font-medium text-sm capitalize">{stock.type || 'Aktie'}</span>
                             </div>
-                            <div className="flex justify-between py-2 border-b border-border/50">
+                            <div className="flex justify-between py-1.5 border-b border-border/50">
                                 <span className="text-muted-foreground text-sm">Währung</span>
                                 <span className="font-medium text-sm">{stock.currency}</span>
                             </div>
-                            <div className="flex justify-between py-2 border-b border-border/50">
+                            <div className="flex justify-between py-1.5 border-b border-border/50">
                                 <span className="text-muted-foreground text-sm">KGV (P/E)</span>
                                 <span className="font-medium text-sm">{stock.trailingPE ? stock.trailingPE.toFixed(2) : '-'}</span>
                             </div>
-                            <div className="flex justify-between py-2 border-b border-border/50">
+                            <div className="flex justify-between py-1.5 border-b border-border/50">
                                 <span className="text-muted-foreground text-sm">Div. Frequenz</span>
                                 <span className="font-medium text-sm capitalize">
                                     {stock.dividendFrequency ? (
@@ -387,7 +392,7 @@ export function StockDetail() {
                                     ) : '-'}
                                 </span>
                             </div>
-                            <div className="flex justify-between py-2 border-b border-border/50">
+                            <div className="flex justify-between py-1.5 border-b border-border/50">
                                 <span className="text-muted-foreground text-sm">Div. Rendite</span>
                                 <span className="font-medium text-sm">
                                     {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
@@ -398,38 +403,38 @@ export function StockDetail() {
                 </div>
 
                 {/* Right Column: Notes & Research */}
-                <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm h-full flex flex-col">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-bold text-lg flex items-center gap-2">
-                                <Save className="size-5 text-purple-500" />
-                                Persönliche Notizen & Analyse
-                            </h3>
-                            <button
-                                onClick={handleSaveNotes}
-                                disabled={isSaving}
-                                className={cn(
-                                    "px-4 py-2 rounded-lg text-sm font-bold transition-all",
-                                    isSaving
-                                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                        : "bg-primary text-primary-foreground hover:opacity-90"
-                                )}
-                            >
-                                {isSaving ? 'Gespeichert!' : 'Speichern'}
-                            </button>
-                        </div>
-                        <textarea
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Schreiben Sie hier Ihre Gedanken zur Aktie (z.B. Kaufgrund, Burggraben, Risiken)..."
-                            className="flex-1 min-h-[300px] w-full p-4 rounded-lg border border-border bg-background/50 resize-y focus:outline-none focus:ring-2 focus:ring-primary/20"
-                        />
-                        <p className="text-xs text-muted-foreground mt-2">
-                            * Notizen werden nur lokal gespeichert.
-                        </p>
+
+                <div className="bg-card border border-border rounded-xl p-6 shadow-sm h-full flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-bold text-lg flex items-center gap-2">
+                            <Save className="size-5 text-purple-500" />
+                            Persönliche Notizen & Analyse
+                        </h3>
+                        <button
+                            onClick={handleSaveNotes}
+                            disabled={isSaving}
+                            className={cn(
+                                "px-4 py-2 rounded-lg text-sm font-bold transition-all",
+                                isSaving
+                                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                    : "bg-primary text-primary-foreground hover:opacity-90"
+                            )}
+                        >
+                            {isSaving ? 'Gespeichert!' : 'Speichern'}
+                        </button>
                     </div>
+                    <textarea
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Schreiben Sie hier Ihre Gedanken zur Aktie (z.B. Kaufgrund, Burggraben, Risiken)..."
+                        className="flex-1 min-h-[300px] w-full p-4 rounded-lg border border-border bg-background/50 resize-y focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                        * Notizen werden nur lokal gespeichert.
+                    </p>
                 </div>
             </div>
         </div>
+
     );
 }
