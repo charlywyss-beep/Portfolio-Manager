@@ -171,7 +171,7 @@ export function StockDetail() {
                                     className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50"
                                     title="Daten aktualisieren"
                                 >
-                                    <RefreshCw className={cn("size-4", isRefreshing && "animate-spin")} />
+                                    <RefreshCw className={cn("size-5", isRefreshing && "animate-spin")} />
                                 </button>
                                 <button
                                     onClick={() => navigate(`/dividends/edit/${stock.id}`)}
