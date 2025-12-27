@@ -42,8 +42,8 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
-                <div className="flex items-center justify-between p-6 border-b border-border">
-                    <h2 className="text-xl font-bold flex items-center gap-2">
+                <div className="flex items-center justify-between p-4 border-b border-border">
+                    <h2 className="text-lg font-bold flex items-center gap-2">
                         <TrendingUp className="size-5 text-blue-500" />
                         Performance Details
                     </h2>
@@ -56,20 +56,20 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                     <table className="w-full text-sm">
                         <thead className="bg-muted/30 sticky top-0 backdrop-blur-md z-10">
                             <tr className="border-b border-border">
-                                <th className="text-left py-3 px-4 font-medium text-muted-foreground">Aktie / ETF</th>
-                                <th className="text-center py-3 px-2 font-medium text-muted-foreground" colSpan={2}>
-                                    <div className="text-xs uppercase tracking-wider">Heute</div>
+                                <th className="text-left py-2 px-4 font-medium text-muted-foreground">Aktie / ETF</th>
+                                <th className="text-right py-2 px-3 font-medium text-muted-foreground text-xs uppercase tracking-wider" colSpan={2}>
+                                    Heute
                                 </th>
-                                <th className="text-center py-3 px-2 font-medium text-muted-foreground" colSpan={2}>
-                                    <div className="text-xs uppercase tracking-wider">Gesamt</div>
+                                <th className="text-right py-2 px-3 font-medium text-muted-foreground text-xs uppercase tracking-wider" colSpan={2}>
+                                    Performance
                                 </th>
                             </tr>
                             <tr className="border-b border-border">
-                                <th className="text-left py-2 px-4"></th>
-                                <th className="text-right py-2 px-2 font-medium text-muted-foreground text-xs">%</th>
-                                <th className="text-right py-2 px-2 font-medium text-muted-foreground text-xs">CHF</th>
-                                <th className="text-right py-2 px-2 font-medium text-muted-foreground text-xs">%</th>
-                                <th className="text-right py-2 px-2 font-medium text-muted-foreground text-xs">CHF</th>
+                                <th className="text-left py-1 px-4"></th>
+                                <th className="text-right py-1 px-3 font-medium text-muted-foreground text-xs">%</th>
+                                <th className="text-right py-1 px-3 font-medium text-muted-foreground text-xs">CHF</th>
+                                <th className="text-right py-1 px-3 font-medium text-muted-foreground text-xs">%</th>
+                                <th className="text-right py-1 px-3 font-medium text-muted-foreground text-xs">CHF</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -107,17 +107,17 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                             </div>
                                         </td>
                                         {/* Daily Performance */}
-                                        <td className={cn("py-3 px-2 text-right font-medium text-xs", isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                                        <td className={cn("py-3 px-3 text-right font-medium text-xs", isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
                                             {isDailyPositive ? '+' : ''}{p.dailyGainPercent.toFixed(2)}%
                                         </td>
-                                        <td className={cn("py-3 px-2 text-right font-medium", isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                                        <td className={cn("py-3 px-3 text-right font-medium", isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
                                             {isDailyPositive ? '+' : ''}{formatCurrency(dailyGainCHF, 'CHF').replace('CHF', '').trim()}
                                         </td>
                                         {/* Total Performance */}
-                                        <td className={cn("py-3 px-2 text-right font-medium text-xs", isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                                        <td className={cn("py-3 px-3 text-right font-medium text-xs", isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
                                             {isTotalPositive ? '+' : ''}{totalGainPercent.toFixed(2)}%
                                         </td>
-                                        <td className={cn("py-3 px-2 text-right font-bold", isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                                        <td className={cn("py-3 px-3 text-right font-bold", isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
                                             {isTotalPositive ? '+' : ''}{formatCurrency(totalGainCHF, 'CHF').replace('CHF', '').trim()}
                                         </td>
                                     </tr>
@@ -128,20 +128,19 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                 </div>
 
                 <div className="p-4 border-t border-border bg-muted/20">
-                    <div className="grid grid-cols-2 gap-4 px-2">
-                        <div className="flex justify-between items-center">
-                            <span className="font-semibold text-muted-foreground text-sm">Heute Total:</span>
-                            <span className={cn("text-lg font-bold", totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
-                                {totalDailyGain >= 0 ? '+' : ''}{formatCurrency(totalDailyGain, 'CHF')}
-                            </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="font-semibold text-muted-foreground text-sm">Gesamt Total:</span>
-                            <span className={cn("text-lg font-bold", totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
-                                {totalPerformanceGain >= 0 ? '+' : ''}{formatCurrency(totalPerformanceGain, 'CHF')}
-                            </span>
-                        </div>
-                    </div>
+                    <table className="w-full text-sm">
+                        <tbody>
+                            <tr>
+                                <td className="py-1 px-4 font-semibold text-muted-foreground">Total:</td>
+                                <td className={cn("py-1 px-3 text-right font-bold", totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} colSpan={2}>
+                                    {totalDailyGain >= 0 ? '+' : ''}{formatCurrency(totalDailyGain, 'CHF')}
+                                </td>
+                                <td className={cn("py-1 px-3 text-right font-bold", totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} colSpan={2}>
+                                    {totalPerformanceGain >= 0 ? '+' : ''}{formatCurrency(totalPerformanceGain, 'CHF')}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
