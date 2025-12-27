@@ -39,12 +39,8 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     };
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-            <div className="absolute bg-black/50 rounded-xl" style={{
-                width: 'min(calc(100vw - 2rem), calc(56rem + 300px))',
-                height: 'min(calc(100vh - 2rem), calc(60vh + 240px))'
-            }}></div>
-            <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-4xl max-h-[60vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-4xl max-h-[60vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between p-4 border-b border-border">
                     <h2 className="text-lg font-bold flex items-center gap-2">
                         <TrendingUp className="size-5 text-blue-500" />
@@ -62,22 +58,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 <th className="text-left py-2 px-4 font-medium text-muted-foreground">Aktie / ETF</th>
                                 <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '95px', whiteSpace: 'nowrap' }}>
                                     {(() => {
-                                        // Check if data is fresh (from today)
-                                        const now = new Date();
-                                        const isFresh = positions.some(p => {
-                                            if (!p.stock.lastQuoteDate) return false;
-                                            const date = new Date(p.stock.lastQuoteDate);
-                                            return date.getDate() === now.getDate() &&
-                                                date.getMonth() === now.getMonth() &&
-                                                date.getFullYear() === now.getFullYear();
-                                        });
-
-                                        if (isFresh) return "Heute %";
-
-                                        // If mixed or old, try to show the most common date or just "Letzter"
+                                        // Always show the actual date, never "Heute"
                                         const dates = positions.map(p => p.stock.lastQuoteDate ? new Date(p.stock.lastQuoteDate).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' }) : '').filter(Boolean);
                                         if (dates.length > 0) {
-                                            // Simple heuristic: Take the first one (usually they update together) or generic
                                             return `Kurs ${dates[0]}`;
                                         }
                                         return "Kurs %";
@@ -85,16 +68,12 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 </th>
                                 <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '100px', whiteSpace: 'nowrap' }}>
                                     {(() => {
-                                        // Check freshness again for CHF label (could DRY this up but inline is fine for now)
-                                        const now = new Date();
-                                        const isFresh = positions.some(p => {
-                                            if (!p.stock.lastQuoteDate) return false;
-                                            const date = new Date(p.stock.lastQuoteDate);
-                                            return date.getDate() === now.getDate() &&
-                                                date.getMonth() === now.getMonth() &&
-                                                date.getFullYear() === now.getFullYear();
-                                        });
-                                        return isFresh ? "Heute CHF" : "Wert CHF";
+                                        // Always show the actual date, never "Heute"
+                                        const dates = positions.map(p => p.stock.lastQuoteDate ? new Date(p.stock.lastQuoteDate).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' }) : '').filter(Boolean);
+                                        if (dates.length > 0) {
+                                            return `${dates[0]} CHF`;
+                                        }
+                                        return "Wert CHF";
                                     })()}
                                 </th>
                                 <th style={{ width: '150px' }}></th>
