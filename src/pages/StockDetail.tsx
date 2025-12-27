@@ -166,6 +166,14 @@ export function StockDetail() {
                             <div className="flex items-center gap-3">
                                 <h1 className="text-xl md:text-3xl font-bold tracking-tight">{stock.name}</h1>
                                 <button
+                                    onClick={loadData}
+                                    disabled={isRefreshing}
+                                    className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50"
+                                    title="Daten aktualisieren"
+                                >
+                                    <RefreshCw className={cn("size-4", isRefreshing && "animate-spin")} />
+                                </button>
+                                <button
                                     onClick={() => navigate(`/dividends/edit/${stock.id}`)}
                                     className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                                     title="Daten bearbeiten"
