@@ -57,10 +57,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         <thead className="bg-muted/30 sticky top-0 backdrop-blur-md z-10">
                             <tr className="border-b border-border">
                                 <th className="text-left py-2 px-4 font-medium text-muted-foreground">Aktie / ETF</th>
-                                <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px' }}>Heute %</th>
-                                <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '100px' }}>Heute CHF</th>
-                                <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px', marginLeft: '200px' }}>Performance %</th>
-                                <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '150px' }}>Performance CHF</th>
+                                <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px', whiteSpace: 'nowrap' }}>Heute %</th>
+                                <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '100px', whiteSpace: 'nowrap' }}>Heute CHF</th>
+                                <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px', marginLeft: '300px', whiteSpace: 'nowrap' }}>Performance %</th>
+                                <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '150px', whiteSpace: 'nowrap' }}>Performance CHF</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
