@@ -619,7 +619,7 @@ export function Dashboard() {
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-2">
                             <PieChartIcon className="size-5 text-purple-500" />
-                            <h3 className="text-lg font-bold">Verteilung nach Sektor</h3>
+                            <h3 className="text-lg font-bold">Portfolio Allokation</h3>
                         </div>
                     </div>
                     <AssetAllocationChart />

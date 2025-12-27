@@ -24,7 +24,7 @@ export default async function handler(req, res) {
 
         // Fetch robust data using yahoo-finance2
         const result = await yahooFinance.quoteSummary(symbol, {
-            modules: ['price', 'summaryDetail', 'defaultKeyStatistics']
+            modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile']
         });
 
         const quote = {
@@ -35,7 +35,8 @@ export default async function handler(req, res) {
             trailingPE: result.summaryDetail?.trailingPE,
             forwardPE: result.summaryDetail?.forwardPE || result.defaultKeyStatistics?.forwardPE,
             epsTrailingTwelveMonths: result.defaultKeyStatistics?.trailingEps,
-            dividendYield: result.summaryDetail?.dividendYield ? result.summaryDetail.dividendYield * 100 : null
+            dividendYield: result.summaryDetail?.dividendYield ? result.summaryDetail.dividendYield * 100 : null,
+            country: result.summaryProfile?.country
         };
 
         const responseData = {

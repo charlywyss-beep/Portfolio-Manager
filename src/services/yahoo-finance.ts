@@ -105,6 +105,7 @@ export async function fetchStockQuote(symbol: string): Promise<{
     forwardPE: number | null,
     eps: number | null,
     dividendYield: number | null,
+    country: string | null,
     error?: string
 }> {
     try {
@@ -112,14 +113,14 @@ export async function fetchStockQuote(symbol: string): Promise<{
         const response = await fetch(url);
 
         if (!response.ok) {
-            return { price: null, currency: null, marketTime: null, trailingPE: null, forwardPE: null, eps: null, dividendYield: null, error: `API Error: ${response.status}` };
+            return { price: null, currency: null, marketTime: null, trailingPE: null, forwardPE: null, eps: null, dividendYield: null, country: null, error: `API Error: ${response.status}` };
         }
 
         const data = await response.json();
         const result = data.quoteResponse?.result?.[0];
 
         if (!result) {
-            return { price: null, currency: null, marketTime: null, trailingPE: null, forwardPE: null, eps: null, dividendYield: null, error: 'Keine Daten' };
+            return { price: null, currency: null, marketTime: null, trailingPE: null, forwardPE: null, eps: null, dividendYield: null, country: null, error: 'Keine Daten' };
         }
 
         return {
@@ -129,12 +130,13 @@ export async function fetchStockQuote(symbol: string): Promise<{
             trailingPE: result.trailingPE || null,
             forwardPE: result.forwardPE || null,
             eps: result.epsTrailingTwelveMonths || null,
-            dividendYield: result.dividendYield || null
+            dividendYield: result.dividendYield || null,
+            country: result.country || null
         };
     } catch (error) {
         console.error("Yahoo Quote Error:", error);
         return {
-            price: null, currency: null, marketTime: null, trailingPE: null, forwardPE: null, eps: null, dividendYield: null, error: 'Netzwerkfehler'
+            price: null, currency: null, marketTime: null, trailingPE: null, forwardPE: null, eps: null, dividendYield: null, country: null, error: 'Netzwerkfehler'
         };
     }
 }

@@ -7,6 +7,7 @@ export interface Stock {
     symbol: string;
     name: string;
     sector: string;
+    country?: string; // NEW: Country of the stock
     valor?: string;
     isin?: string;
     currentPrice: number;

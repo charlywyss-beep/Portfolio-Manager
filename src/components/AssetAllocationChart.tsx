@@ -10,6 +10,7 @@ export function AssetAllocationChart() {
     const { fixedDeposits: contextFixedDeposits } = usePortfolio(); // Use raw fixed deposits
     const { rates } = useExchangeRates();
     const { formatCurrency } = useCurrencyFormatter();
+    const [activeTab, setActiveTab] = useState<'sector' | 'country' | 'currency'>('sector');
     const [hasMounted, setHasMounted] = useState(false);
 
     useEffect(() => {
@@ -17,31 +18,49 @@ export function AssetAllocationChart() {
     }, []);
 
     const data = useMemo(() => {
-        const sectorMap = new Map<string, number>();
+        const map = new Map<string, number>();
 
         // 1. Add Stocks/ETFs
         positions.forEach(pos => {
-            const sector = pos.stock.sector || 'Andere';
+            let key = 'Andere';
+            if (activeTab === 'sector') key = pos.stock.sector || 'Andere';
+            else if (activeTab === 'country') key = pos.stock.country || 'Unbekannt';
+            else if (activeTab === 'currency') key = pos.stock.currency;
+
             const valCHF = convertToCHF(pos.currentValue, pos.stock.currency, rates);
-            sectorMap.set(sector, (sectorMap.get(sector) || 0) + valCHF);
+            map.set(key, (map.get(key) || 0) + valCHF);
         });
 
         // 2. Add Fixed Deposits (Cash & Vorsorge)
+        // Only relevant for Sector (Liquidität/Vorsorge) and Currency
+        // For Country, we assume "Switzerland" for now as default for local bank accounts? 
+        // Or "Cash"? Let's stick to "Schweiz" for simplicity as standard.
         if (contextFixedDeposits) {
             contextFixedDeposits.forEach(fd => {
-                const isVorsorge = fd.accountType === 'vorsorge';
-                const sector = isVorsorge ? 'Vorsorge' : 'Liquidität';
+                let key = 'Liquidität';
+                if (activeTab === 'sector') {
+                    key = fd.accountType === 'vorsorge' ? 'Vorsorge' : 'Liquidität';
+                } else if (activeTab === 'country') {
+                    key = 'Schweiz'; // Default for local accounts
+                } else if (activeTab === 'currency') {
+                    key = fd.currency;
+                }
+
                 const valCHF = convertToCHF(fd.amount, fd.currency, rates);
-                sectorMap.set(sector, (sectorMap.get(sector) || 0) + valCHF);
+                map.set(key, (map.get(key) || 0) + valCHF);
             });
         }
 
         // Convert to array and sort
-        return Array.from(sectorMap.entries())
-            .map(([name, value]) => ({ name, value }))
+        return Array.from(map.entries())
+            .map(([name, value]) => {
+                // Determine color key for consistent coloring if possible
+                return { name, value };
+            })
             .sort((a, b) => b.value - a.value);
-    }, [positions, contextFixedDeposits, rates]);
+    }, [positions, contextFixedDeposits, rates, activeTab]);
 
+    // Enhanced Color Palette
     const COLORS = [
         '#3b82f6', // blue-500
         '#10b981', // emerald-500
@@ -51,20 +70,20 @@ export function AssetAllocationChart() {
         '#ec4899', // pink-500
         '#06b6d4', // cyan-500
         '#6366f1', // indigo-500
-        '#84cc16', // lime-500 (Liquidität?)
-        '#14b8a6', // teal-500 (Vorsorge?)
+        '#84cc16', // lime-500
+        '#14b8a6', // teal-500
+        '#f43f5e', // rose-500
+        '#d946ef', // fuchsia-500
     ];
 
     const CustomTooltip = ({ active, payload }: any) => {
         if (active && payload && payload.length) {
+            // Recharts Pie Custom Tooltip gets raw payload
             return (
                 <div className="bg-popover border border-border p-3 rounded-lg shadow-lg">
                     <p className="font-bold text-sm mb-1">{payload[0].name}</p>
                     <p className="text-foreground font-bold">
                         {formatCurrency(payload[0].value, 'CHF')}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        {payload[0].payload.percent ? (payload[0].payload.percent * 100).toFixed(1) : ''}%
                     </p>
                 </div>
             );
@@ -85,14 +104,36 @@ export function AssetAllocationChart() {
     }, []);
 
     return (
-        <div className="h-[400px] w-full min-h-[300px] min-w-0 flex flex-col items-center">
+        <div className="h-[450px] w-full min-h-[300px] min-w-0 flex flex-col items-center">
+            {/* Tabs */}
+            <div className="flex p-1 bg-muted/50 rounded-lg mb-4">
+                <button
+                    onClick={() => setActiveTab('sector')}
+                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === 'sector' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                    Sektor
+                </button>
+                <button
+                    onClick={() => setActiveTab('country')}
+                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === 'country' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                    Land
+                </button>
+                <button
+                    onClick={() => setActiveTab('currency')}
+                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === 'currency' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                    Währung
+                </button>
+            </div>
+
             {hasMounted && data.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
                     <PieChart>
                         <Pie
                             data={data}
-                            cx={isMobile ? "50%" : "40%"}
-                            cy="50%"
+                            cx={isMobile ? "50%" : "50%"}
+                            cy="45%"
                             innerRadius="50%"
                             outerRadius="90%"
                             paddingAngle={2}
@@ -107,8 +148,8 @@ export function AssetAllocationChart() {
                             layout={isMobile ? "horizontal" : "vertical"}
                             verticalAlign={isMobile ? "bottom" : "middle"}
                             align={isMobile ? "center" : "right"}
-                            wrapperStyle={isMobile ? { fontSize: '12px', paddingTop: '20px' } : { fontSize: '14px', opacity: 0.9, paddingLeft: '20px' }}
-                            iconSize={isMobile ? 12 : 14}
+                            wrapperStyle={isMobile ? { fontSize: '11px', paddingTop: '20px', width: '100%' } : { fontSize: '12px', opacity: 0.9, paddingLeft: '20px', maxWidth: '40%' }}
+                            iconSize={isMobile ? 10 : 12}
                         />
                     </PieChart>
                 </ResponsiveContainer>

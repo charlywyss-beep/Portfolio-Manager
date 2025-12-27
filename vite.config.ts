@@ -25,7 +25,7 @@ export default defineConfig({
 
           // Fetch robust data using yahoo-finance2 (handles crumbs/cookies)
           const result: any = await yahooFinance.quoteSummary(symbol, {
-            modules: ['price', 'summaryDetail', 'defaultKeyStatistics']
+            modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile']
           });
 
           // Map to format expected by frontend (mimic v7 quoteResponse)
@@ -44,7 +44,9 @@ export default defineConfig({
             // If value is 0.034, it shows "0.03%". 
             // Yahoo v7 returns e.g. 3.45. yahoo-finance2 returns 0.0345.
             // So we MUST multiply by 100.
-            dividendYield: result.summaryDetail?.dividendYield ? result.summaryDetail.dividendYield * 100 : null
+            dividendYield: result.summaryDetail?.dividendYield ? result.summaryDetail.dividendYield * 100 : null,
+            // Country Data
+            country: result.summaryProfile?.country
           };
 
           const responseData = {
