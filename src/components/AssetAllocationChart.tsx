@@ -50,7 +50,13 @@ export function AssetAllocationChart() {
         // 1. Add Stocks/ETFs
         positions.forEach(pos => {
             let key = 'Andere';
-            if (activeTab === 'sector') key = pos.stock.sector || 'Andere';
+            if (activeTab === 'sector') {
+                if (pos.stock.type === 'etf') {
+                    key = 'ETF'; // Explicitly categorize ETFs
+                } else {
+                    key = pos.stock.sector || 'Andere';
+                }
+            }
             else if (activeTab === 'country') key = normalizeCountry(pos.stock.country);
             else if (activeTab === 'currency') key = pos.stock.currency;
 
