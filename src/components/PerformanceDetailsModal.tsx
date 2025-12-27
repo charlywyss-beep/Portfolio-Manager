@@ -39,8 +39,8 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-4xl max-h-[60vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between p-4 border-b border-border">
                     <h2 className="text-lg font-bold flex items-center gap-2">
                         <TrendingUp className="size-5 text-blue-500" />
@@ -53,7 +53,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
                 <div className="overflow-y-auto p-0 flex-1">
                     <table className="w-full text-sm">
-                        <thead className="bg-popover sticky top-0 z-20 shadow-sm">
+                        <thead className="bg-muted/30 sticky top-0 z-10">
                             <tr className="border-b border-border">
                                 <th className="text-left py-2 px-4 font-medium text-muted-foreground">Aktie / ETF</th>
                                 <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '95px', whiteSpace: 'nowrap' }}>

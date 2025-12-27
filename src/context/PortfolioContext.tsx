@@ -327,14 +327,15 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         setStocks(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
     };
 
-    const updateStockPrice = (id: string, newPrice: number, newPreviousClose?: number) => {
+    const updateStockPrice = (id: string, newPrice: number, newPreviousClose?: number, lastQuoteDate?: string) => {
         setStocks(stocks.map(s => {
             if (s.id === id) {
                 return {
                     ...s,
                     currentPrice: newPrice,
                     // If newPreviousClose provided, use it. Else fall back to OLD currentPrice (legacy behavior)
-                    previousClose: newPreviousClose !== undefined ? newPreviousClose : s.currentPrice
+                    previousClose: newPreviousClose !== undefined ? newPreviousClose : s.currentPrice,
+                    lastQuoteDate: lastQuoteDate || s.lastQuoteDate // Update date if provided
                 };
             }
             return s;
