@@ -62,20 +62,20 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 <th className="text-left py-2 px-4 font-medium text-muted-foreground">Aktie / ETF</th>
                                 <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '95px', whiteSpace: 'nowrap' }}>
                                     {(() => {
-                                        // Always show the actual date, never "Heute"
-                                        const dates = positions.map(p => p.stock.lastQuoteDate ? new Date(p.stock.lastQuoteDate).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' }) : '').filter(Boolean);
-                                        if (dates.length > 0) {
-                                            return `Kurs ${dates[0]}`;
+                                        // Always show the actual date from the first position
+                                        if (positions.length > 0 && positions[0].stock.lastQuoteDate) {
+                                            const date = new Date(positions[0].stock.lastQuoteDate);
+                                            return `Kurs ${date.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })}`;
                                         }
                                         return "Kurs %";
                                     })()}
                                 </th>
                                 <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '100px', whiteSpace: 'nowrap' }}>
                                     {(() => {
-                                        // Always show the actual date, never "Heute"
-                                        const dates = positions.map(p => p.stock.lastQuoteDate ? new Date(p.stock.lastQuoteDate).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' }) : '').filter(Boolean);
-                                        if (dates.length > 0) {
-                                            return `${dates[0]} CHF`;
+                                        // Always show the actual date from the first position
+                                        if (positions.length > 0 && positions[0].stock.lastQuoteDate) {
+                                            const date = new Date(positions[0].stock.lastQuoteDate);
+                                            return `${date.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })} CHF`;
                                         }
                                         return "Wert CHF";
                                     })()}
