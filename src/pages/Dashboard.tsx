@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
-import { fetchStockHistory } from '../services/yahoo-finance';
+import { fetchStockHistory, fetchStockQuote } from '../services/yahoo-finance';
 import { ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, BarChart3, Calendar, Info, Plus, Trash2, Edit, Bell } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
@@ -32,57 +32,79 @@ const translateFrequency = (freq?: string) => {
 export function Dashboard() {
     const navigate = useNavigate();
     const { totals, upcomingDividends, positions, upcomingWatchlistDividends, bankRisks } = usePortfolioData();
-    const { history, deleteHistoryEntry, updateStockPrice } = usePortfolio(); // Added updateStockPrice
+    const { history, deleteHistoryEntry, updateStockPrice, stocks, updateStock } = usePortfolio(); // Added stocks, updateStock
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [editingHistoryEntry, setEditingHistoryEntry] = useState<any>(null);
     const [hasMounted, setHasMounted] = useState(false);
     const [showPerformanceDetails, setShowPerformanceDetails] = useState(false); // NEW
     const hasRefreshedPrices = useRef(false);
+    const hasRefreshedMetadata = useRef(false); // Prevent loop
 
     useEffect(() => {
         setHasMounted(true);
     }, []);
 
-    // Auto-Refresh Prices on Mount (Once)
+    // Auto-Refresh Prices and Metadata on Mount (Once)
     useEffect(() => {
-        const refreshPrices = async () => {
-            if (positions.length === 0 || hasRefreshedPrices.current) return;
-            hasRefreshedPrices.current = true; // Mark as started
+        const refreshData = async () => {
+            if (positions.length === 0) return;
 
-            console.log("Starting Auto-Refresh of Portfolio Prices...");
-            const uniqueStocks = Array.from(new Set(positions.map(p => p.stock))).filter(s => !!s.symbol);
+            // 1. Refresh Prices (Standard)
+            if (!hasRefreshedPrices.current) {
+                hasRefreshedPrices.current = true;
+                console.log("Starting Auto-Refresh of Portfolio Prices...");
+                const uniqueStocks = Array.from(new Set(positions.map(p => p.stock))).filter(s => !!s.symbol);
 
-            await Promise.all(uniqueStocks.map(async (stock) => {
-                try {
-                    const result = await fetchStockHistory(stock.symbol!, '1D');
-                    if (stock.symbol === 'CVX') {
-                        console.log("DEBUG CVX RAW:", result);
-                    }
-                    if (result.data && result.data.length > 0) {
-                        let latestPrice = result.data[result.data.length - 1].value;
-                        let prevClose = result.previousClose;
+                await Promise.all(uniqueStocks.map(async (stock) => {
+                    try {
+                        const result = await fetchStockHistory(stock.symbol!, '1D');
+                        if (result.data && result.data.length > 0) {
+                            let latestPrice = result.data[result.data.length - 1].value;
+                            let prevClose = result.previousClose;
 
-                        // Normalize GBp (Pence) to GBP
-                        if (result.currency === 'GBp') {
-                            latestPrice /= 100;
-                            if (prevClose) prevClose /= 100;
+                            // Normalize GBp
+                            if (result.currency === 'GBp') {
+                                latestPrice /= 100;
+                                if (prevClose) prevClose /= 100;
+                            }
+
+                            if (Math.abs(stock.currentPrice - latestPrice) > 0.0001 || (prevClose && stock.previousClose !== prevClose)) {
+                                updateStockPrice(stock.id, latestPrice, prevClose);
+                            }
                         }
-
-                        // Only update if changed or if prevClose was missing/wrong
-                        if (Math.abs(stock.currentPrice - latestPrice) > 0.0001 || (prevClose && stock.previousClose !== prevClose)) {
-                            console.log(`Updated ${stock.symbol}: ${latestPrice} (Prev: ${prevClose})`);
-                            updateStockPrice(stock.id, latestPrice, prevClose);
-                        }
+                    } catch (err) {
+                        console.error(`Failed to refresh ${stock.symbol}`, err);
                     }
-                } catch (err) {
-                    console.error(`Failed to refresh ${stock.symbol}`, err);
+                }));
+            }
+
+            // 2. Refresh Metadata (Self-Healing for missing Country)
+            if (!hasRefreshedMetadata.current) {
+                // Let's just check all stocks with symbol that have no country.
+                const stocksToUpdate = stocks.filter(s => !s.country && !!s.symbol);
+
+                if (stocksToUpdate.length > 0) {
+                    hasRefreshedMetadata.current = true;
+                    console.log(`Found ${stocksToUpdate.length} stocks with missing country data. Auto-healing...`);
+
+                    await Promise.all(stocksToUpdate.map(async (stock) => {
+                        try {
+                            const result = await fetchStockQuote(stock.symbol!);
+                            if (result.country) {
+                                console.log(`Healed country for ${stock.symbol}: ${result.country}`);
+                                updateStock(stock.id, { country: result.country });
+                            }
+                        } catch (err) {
+                            console.error(`Failed to heal country for ${stock.symbol}`, err);
+                        }
+                    }));
                 }
-            }));
+            }
         };
 
-        refreshPrices();
-    }, [positions, updateStockPrice]); // Depend on positions to ensuring we have data to refresh
+        refreshData();
+    }, [positions, stocks, updateStockPrice, updateStock]);
     const [watchlistTimeframe, setWatchlistTimeframe] = useState<number>(90); // Default 90 days
     const [upcomingTimeframe, setUpcomingTimeframe] = useState<number>(90); // Default 90 days
     const [performancePeriod, setPerformancePeriod] = useState<string>('1D'); // Performance Period selection
