@@ -186,7 +186,7 @@ function App() {
 
           {/* Main Content */}
           <main className="flex-1 overflow-auto bg-background transition-all duration-300">
-            <header className="h-16 border-b border-border flex items-center justify-between px-4 md:px-8 bg-card/50 backdrop-blur-sm sticky top-0 z-40">
+            <header className="h-16 border-b border-border flex items-center justify-between px-4 md:px-8 bg-card/50 sticky top-0 z-40">
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setIsSidebarOpen(!isSidebarOpen)}
