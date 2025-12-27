@@ -15,9 +15,10 @@ interface PriceHistoryChartProps {
     selectedRange?: TimeRange;
     onRangeChange?: (range: TimeRange) => void;
     isRealtime?: boolean;
+    quoteDate?: Date | null;
 }
 
-export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, trend = 'up', historyData, selectedRange = '1Y', onRangeChange, isRealtime = false }: PriceHistoryChartProps) {
+export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, trend = 'up', historyData, selectedRange = '1Y', onRangeChange, quoteDate }: PriceHistoryChartProps) {
     const [hasMounted, setHasMounted] = useState(false);
 
     useEffect(() => {
@@ -146,49 +147,48 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                     {selectedRange === '1D' && data.length > 0 && (
                         <div className="mt-2 text-xs">
                             {(() => {
-                                // Check the LAST data point to see if we have today's data
-                                const lastDataPoint = data[data.length - 1];
-                                const chartDate = new Date(lastDataPoint.date);
+                                // Priority 1: Use Quote Date if available (Realtime)
+                                const displayDate = quoteDate || new Date(data[data.length - 1].date);
                                 const today = new Date();
-                                const isToday = chartDate.toDateString() === today.toDateString();
+                                const isToday = displayDate.toDateString() === today.toDateString();
+                                const isWeekend = today.getDay() === 0 || today.getDay() === 6;
 
-                                // If chart is stale BUT we have realtime price active, hide the warning!
-                                if (isRealtime && !isToday) {
-                                    return (
-                                        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                                            <span>
-                                                Live Kurs ({formatCurrency(currentPrice, currency)})
-                                                <span className="opacity-75 font-normal ml-1">
-                                                    vs. Chart
-                                                    ({chartDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })})
-                                                </span>
-                                            </span>
-                                        </div>
-                                    );
+                                // Allow "Friday data on weekend" to be considered "Current" (Green) if user wants?
+                                // User said: "Aktuelle Daten 27.12. green" vs "Letzte Daten 23.12. red"
+                                // If today is Sat 27.12, and data is from Fri 26.12, it might be "Aktuelle Daten" relative to market close?
+                                // But user specifically used dates 27.12 vs 23.12. 
+                                // Let's simplify: 
+                                // Green = Date is Today OR (Date is Friday and Today is Weekend)
+                                // Red = Older than that.
+
+                                let showGreen = isToday;
+                                if (!showGreen && isWeekend) {
+                                    const friday = new Date();
+                                    friday.setDate(today.getDate() - (today.getDay() === 0 ? 2 : 1));
+                                    if (displayDate.toDateString() === friday.toDateString()) {
+                                        showGreen = true;
+                                    }
                                 }
 
                                 return (
                                     <div className={cn(
                                         "inline-flex items-center gap-1.5 px-2 py-1 rounded-md font-medium",
-                                        isToday
+                                        showGreen
                                             ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                                            : "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400"
+                                            : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
                                     )}>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                                            {showGreen
+                                                ? <polyline points="20 6 9 17 4 12"></polyline> // Checkmark
+                                                : <circle cx="12" cy="12" r="10"></circle> // Alert/Circle
+                                            }
                                         </svg>
                                         <span>
-                                            {chartDate.toLocaleDateString('de-DE', {
-                                                weekday: 'short',
+                                            {showGreen ? 'Aktuelle Daten' : 'Letzte Daten'} {displayDate.toLocaleDateString('de-DE', {
                                                 day: '2-digit',
                                                 month: '2-digit',
                                                 year: 'numeric'
                                             })}
-                                            {!isToday && <span className="ml-1">(Letzter Handelstag)</span>}
                                         </span>
                                     </div>
                                 );

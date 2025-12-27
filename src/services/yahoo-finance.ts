@@ -97,30 +97,31 @@ export async function fetchCompanyLogo(query: string): Promise<string | null> {
 }
 
 // Fetch latest quote (realtime-ish)
-export async function fetchStockQuote(symbol: string): Promise<{ price: number | null, currency: string | null, error?: string }> {
+export async function fetchStockQuote(symbol: string): Promise<{ price: number | null, currency: string | null, marketTime: Date | null, error?: string }> {
     try {
         const url = `/api/yahoo-quote?symbol=${symbol}`;
         const response = await fetch(url);
 
         if (!response.ok) {
-            return { price: null, currency: null, error: `API Error: ${response.status}` };
+            return { price: null, currency: null, error: `API Error: ${response.status}`, marketTime: null };
         }
 
         const data = await response.json();
         const result = data.quoteResponse?.result?.[0];
 
         if (!result) {
-            return { price: null, currency: null, error: 'Keine Daten' };
+            return { price: null, currency: null, error: 'Keine Daten', marketTime: null };
         }
 
         return {
             price: result.regularMarketPrice,
-            currency: result.currency
+            currency: result.currency,
+            marketTime: result.regularMarketTime ? new Date(result.regularMarketTime * 1000) : null
         };
     } catch (error) {
         console.error("Yahoo Quote Error:", error);
         return {
-            price: null, currency: null, error: 'Netzwerkfehler'
+            price: null, currency: null, error: 'Netzwerkfehler', marketTime: null
         };
     }
 }

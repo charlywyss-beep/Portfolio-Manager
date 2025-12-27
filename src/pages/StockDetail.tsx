@@ -30,6 +30,7 @@ export function StockDetail() {
     const [chartData, setChartData] = useState<ChartDataPoint[] | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+    const [quoteDate, setQuoteDate] = useState<Date | null>(null);
     const [, setTimeTick] = useState(0); // Force re-render for time display
 
     // Force update "Updated X min ago" text every minute
@@ -121,7 +122,11 @@ export function StockDetail() {
         if (timeRange !== 'BUY') {
             const quoteResponse = await fetchStockQuote(stock.symbol);
             if (quoteResponse.price) {
-                console.log('[StockDetail] Quote Update:', quoteResponse.price, quoteResponse.currency);
+                console.log('[StockDetail] Quote Update:', quoteResponse.price, quoteResponse.currency, quoteResponse.marketTime);
+
+                if (quoteResponse.marketTime) {
+                    setQuoteDate(quoteResponse.marketTime);
+                }
 
                 // Check if GBP normalization needed (GBp -> GBP)
                 let finalPrice = quoteResponse.price;
@@ -316,7 +321,8 @@ export function StockDetail() {
                                 historyData={chartData}
                                 selectedRange={timeRange}
                                 onRangeChange={(range) => setTimeRange(range)}
-                                isRealtime={true} // Since we fetch Quote independently, assume Price is fresher than Chart
+                                isRealtime={true}
+                                quoteDate={quoteDate}
                             />
                         </div>
                     </div>
