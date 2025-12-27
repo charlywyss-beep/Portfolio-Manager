@@ -107,8 +107,7 @@ const getInitialSimulatorState = () => {
 export function PortfolioProvider({ children }: { children: ReactNode }) {
     const [positions, setPositions] = useState<Position[]>(() => {
         const stored = localStorage.getItem('portfolio_positions');
-        const parsed = stored ? JSON.parse(stored) : MOCK_POSITIONS;
-        return Array.isArray(parsed) ? parsed : [];
+        return stored ? JSON.parse(stored) : MOCK_POSITIONS;
     });
 
     const [stocks, setStocks] = useState<Stock[]>(() => {
@@ -120,8 +119,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
     const [fixedDeposits, setFixedDeposits] = useState<any[]>(() => {
         const stored = localStorage.getItem('portfolio_fixed_deposits');
-        const parsed = stored ? JSON.parse(stored) : [];
-        return Array.isArray(parsed) ? parsed : [];
+        return stored ? JSON.parse(stored) : [];
     });
 
     const [watchlist, setWatchlist] = useState<string[]>(() => {
