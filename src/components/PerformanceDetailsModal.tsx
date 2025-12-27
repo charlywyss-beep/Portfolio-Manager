@@ -68,8 +68,8 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 <th className="text-left py-1 px-4"></th>
                                 <th className="text-right py-1 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px' }}>%</th>
                                 <th className="text-right py-1 px-1 font-medium text-muted-foreground text-xs" style={{ width: '100px' }}>CHF</th>
-                                <th className="text-right py-1 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px', marginLeft: '200px' }}>%</th>
-                                <th className="text-right py-1 px-1 font-medium text-muted-foreground text-xs" style={{ width: '150px' }}>CHF</th>
+                                <th className="text-right py-1 font-medium text-muted-foreground text-xs" style={{ width: '60px', paddingLeft: '200px', paddingRight: '4px' }}>%</th>
+                                <th className="text-right py-1 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '150px' }}>CHF</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -114,10 +114,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                             {isDailyPositive ? '+' : ''}{formatCurrency(dailyGainCHF, 'CHF').replace('CHF', '').trim()}
                                         </td>
                                         {/* Total Performance */}
-                                        <td className={cn("py-3 px-1 text-right font-medium text-xs", isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '60px', marginLeft: '200px' }}>
+                                        <td className={cn("py-3 text-right font-medium text-xs", isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '60px', paddingLeft: '200px', paddingRight: '4px' }}>
                                             {isTotalPositive ? '+' : ''}{totalGainPercent.toFixed(2)}%
                                         </td>
-                                        <td className={cn("py-3 px-1 text-right font-bold", isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '150px' }}>
+                                        <td className={cn("py-3 text-right font-bold", isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '150px', paddingRight: '16px', paddingLeft: '4px' }}>
                                             {isTotalPositive ? '+' : ''}{formatCurrency(totalGainCHF, 'CHF').replace('CHF', '').trim()}
                                         </td>
                                     </tr>
@@ -131,8 +131,8 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 <td className={cn("py-3 px-1 text-right font-bold", totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '100px' }}>
                                     {totalDailyGain >= 0 ? '+' : ''}{formatCurrency(totalDailyGain, 'CHF')}
                                 </td>
-                                <td className="py-3 px-1" style={{ width: '60px', marginLeft: '200px' }}></td>
-                                <td className={cn("py-3 px-1 text-right font-bold", totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '150px' }}>
+                                <td className="py-3" style={{ width: '60px', paddingLeft: '200px', paddingRight: '4px' }}></td>
+                                <td className={cn("py-3 text-right font-bold", totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '150px', paddingRight: '16px', paddingLeft: '4px' }}>
                                     {totalPerformanceGain >= 0 ? '+' : ''}{formatCurrency(totalPerformanceGain, 'CHF')}
                                 </td>
                             </tr>
