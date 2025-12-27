@@ -128,21 +128,19 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                 </div>
 
                 <div className="p-4 border-t border-border bg-muted/20">
-                    <table className="w-full text-sm">
-                        <tbody>
-                            <tr>
-                                <td className="py-1 px-4 font-semibold text-muted-foreground">Total:</td>
-                                <td className="py-1 px-3"></td>
-                                <td className={cn("py-1 px-3 text-right font-bold", totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
-                                    {totalDailyGain >= 0 ? '+' : ''}{formatCurrency(totalDailyGain, 'CHF')}
-                                </td>
-                                <td className="py-1 pl-12 pr-1"></td>
-                                <td className={cn("py-1 pr-4 text-right font-bold", totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
-                                    {totalPerformanceGain >= 0 ? '+' : ''}{formatCurrency(totalPerformanceGain, 'CHF')}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div className="flex items-center">
+                        <div className="px-4 font-semibold text-muted-foreground text-sm" style={{ width: '280px' }}>Total:</div>
+                        <div className="flex-1 grid grid-cols-4 gap-0">
+                            <div className="px-3"></div>
+                            <div className={cn("px-3 text-right font-bold", totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                                {totalDailyGain >= 0 ? '+' : ''}{formatCurrency(totalDailyGain, 'CHF')}
+                            </div>
+                            <div className="pl-12 pr-1"></div>
+                            <div className={cn("pr-4 text-right font-bold", totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                                {totalPerformanceGain >= 0 ? '+' : ''}{formatCurrency(totalPerformanceGain, 'CHF')}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
