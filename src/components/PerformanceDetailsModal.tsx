@@ -68,7 +68,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 <th className="text-left py-1 px-4"></th>
                                 <th className="text-right py-1 px-2 font-medium text-muted-foreground text-xs" style={{ width: '70px' }}>%</th>
                                 <th className="text-right py-1 px-2 font-medium text-muted-foreground text-xs" style={{ width: '100px' }}>CHF</th>
-                                <th className="text-right py-1 pl-8 px-2 font-medium text-muted-foreground text-xs" style={{ width: '70px' }}>%</th>
+                                <th className="text-right py-1 px-2 font-medium text-muted-foreground text-xs" style={{ width: '70px', paddingLeft: '32px' }}>%</th>
                                 <th className="text-right py-1 px-2 font-medium text-muted-foreground text-xs" style={{ width: '150px' }}>CHF</th>
                             </tr>
                         </thead>
@@ -114,7 +114,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                             {isDailyPositive ? '+' : ''}{formatCurrency(dailyGainCHF, 'CHF').replace('CHF', '').trim()}
                                         </td>
                                         {/* Total Performance */}
-                                        <td className={cn("py-3 pl-8 px-2 text-right font-medium text-xs", isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '70px' }}>
+                                        <td className={cn("py-3 px-2 text-right font-medium text-xs", isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '70px', paddingLeft: '32px' }}>
                                             {isTotalPositive ? '+' : ''}{totalGainPercent.toFixed(2)}%
                                         </td>
                                         <td className={cn("py-3 px-2 text-right font-bold", isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '150px' }}>
@@ -131,7 +131,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 <td className={cn("py-3 px-2 text-right font-bold", totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '100px' }}>
                                     {totalDailyGain >= 0 ? '+' : ''}{formatCurrency(totalDailyGain, 'CHF')}
                                 </td>
-                                <td className="py-3 pl-8 px-2" style={{ width: '70px' }}></td>
+                                <td className="py-3 px-2" style={{ width: '70px', paddingLeft: '32px' }}></td>
                                 <td className={cn("py-3 px-2 text-right font-bold", totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '150px' }}>
                                     {totalPerformanceGain >= 0 ? '+' : ''}{formatCurrency(totalPerformanceGain, 'CHF')}
                                 </td>
