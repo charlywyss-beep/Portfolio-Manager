@@ -11,7 +11,7 @@ interface PortfolioContextType {
     updatePosition: (id: string, updates: Partial<Position>) => void;
     addStock: (stock: Omit<Stock, 'id'>) => string;
     updateStock: (id: string, updates: Partial<Stock>) => void;
-    updateStockPrice: (stockId: string, newPrice: number, newPreviousClose?: number) => void;
+    updateStockPrice: (stockId: string, newPrice: number, newPreviousClose?: number, lastQuoteDate?: string) => void;
     updateStockDividendYield: (stockId: string, dividendYield: number) => void;
     updateStockDividend: (stockId: string, dividendData: Partial<Pick<Stock, 'dividendYield' | 'dividendAmount' | 'dividendCurrency' | 'dividendExDate' | 'dividendPayDate' | 'dividendDates' | 'dividendFrequency'>>) => void;
     addFixedDeposit: (deposit: Omit<import('../types').FixedDeposit, 'id'>) => void;

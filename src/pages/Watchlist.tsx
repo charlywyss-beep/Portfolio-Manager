@@ -119,18 +119,27 @@ export function Watchlist() {
                                                 <td className="py-3 px-4 sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[140px] align-top">
                                                     <div className="absolute inset-0 bg-card -z-10" />
                                                     <div className="relative flex items-start gap-3">
-                                                        {stock.logoUrl ? (
-                                                            <img
-                                                                src={stock.logoUrl}
-                                                                alt={stock.symbol}
-                                                                className="size-8 rounded-full bg-white object-contain p-1 border border-border"
-                                                                onError={(e) => (e.currentTarget.style.display = 'none')}
-                                                            />
-                                                        ) : (
-                                                            <div className="size-8 rounded-full bg-muted flex items-center justify-center">
-                                                                <span className="font-bold text-xs">{stock.symbol.slice(0, 2)}</span>
-                                                            </div>
-                                                        )}
+                                                        <div
+                                                            className="cursor-pointer hover:scale-110 transition-transform p-1 -m-1"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigate('/portfolio');
+                                                            }}
+                                                            title="Zu den Positionen"
+                                                        >
+                                                            {stock.logoUrl ? (
+                                                                <img
+                                                                    src={stock.logoUrl}
+                                                                    alt={stock.symbol}
+                                                                    className="size-8 rounded-full bg-white object-contain p-1 border border-border"
+                                                                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                                                                />
+                                                            ) : (
+                                                                <div className="size-8 rounded-full bg-muted flex items-center justify-center">
+                                                                    <span className="font-bold text-xs">{stock.symbol.slice(0, 2)}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                         <div>
                                                             <div
                                                                 className="font-semibold cursor-pointer hover:text-primary transition-colors"

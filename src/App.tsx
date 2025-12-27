@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, useLocation, NavLink } from 'react-router-dom';
+import { Routes, Route, useLocation, NavLink, Link } from 'react-router-dom';
 import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, Menu, X, ArrowLeftRight, Landmark } from 'lucide-react';
 import { cn } from './utils';
 import { PortfolioProvider } from './context/PortfolioContext';
@@ -19,7 +19,7 @@ import { MortgageCalculator } from './pages/MortgageCalculator';
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 1024);
-  // const navigate = useNavigate(); // Unused
+
   const location = useLocation();
 
   const toggleDarkMode = () => {
@@ -127,15 +127,10 @@ function App() {
               ? "translate-x-0 w-fit"
               : "-translate-x-full w-fit lg:translate-x-0 lg:w-0 lg:border-r-0"
           )}>
-            <div
-              className="flex flex-col cursor-pointer group p-6 border-b border-border"
-              onClick={() => {
-                // Force Hard Reload by appending unique timestamp
-                const url = new URL(window.location.href);
-                url.searchParams.set('v', Date.now().toString());
-                window.location.href = url.toString();
-              }}
-              title="App neu laden (Cache leeren)"
+            <Link
+              to="/portfolio"
+              className="flex flex-col cursor-pointer group p-6 border-b border-border hover:bg-muted/50 transition-colors"
+              title="Gehe zu Positionen"
             >
               <div className="flex items-center gap-2 mb-1">
                 <div className="size-8 rounded-lg bg-primary flex items-center justify-center group-hover:scale-105 transition-transform shadow-sm">
@@ -143,9 +138,22 @@ function App() {
                 </div>
                 <h1 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">Portfolio</h1>
               </div>
-              <div className="text-[10px] text-foreground font-bold font-mono mt-1 flex items-center gap-1">
+            </Link>
+            <div
+              className="px-6 pb-4 cursor-pointer w-fit"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Force Hard Reload by appending unique timestamp
+                const url = new URL(window.location.href);
+                url.searchParams.set('v', Date.now().toString());
+                window.location.href = url.toString();
+              }}
+              title="App neu laden (Cache leeren)"
+            >
+              <div className="text-[10px] text-foreground font-bold font-mono flex items-center gap-1 group/version">
                 <span>v3.11.261</span>
-                <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
+                <span className="opacity-0 group-hover/version:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
               </div>
             </div>
 
@@ -178,7 +186,7 @@ function App() {
 
           {/* Main Content */}
           <main className="flex-1 overflow-auto bg-background transition-all duration-300">
-            <header className="h-16 border-b border-border flex items-center justify-between px-4 md:px-8 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+            <header className="h-16 border-b border-border flex items-center justify-between px-4 md:px-8 bg-card/50 backdrop-blur-sm sticky top-0 z-40">
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setIsSidebarOpen(!isSidebarOpen)}

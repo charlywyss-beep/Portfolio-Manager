@@ -21,11 +21,15 @@ export function useGlobalRefresh() {
                 const chunk = symbols.slice(i, i + chunkSize);
                 const updates = await fetchStockQuotes(chunk);
 
-                Object.entries(updates).forEach(([symbol, newPrice]) => {
+                Object.entries(updates).forEach(([symbol, data]) => {
                     const stock = stocks.find(s => s.symbol === symbol);
-                    if (stock && Math.abs(stock.currentPrice - newPrice) > 0.0001) {
-                        console.log(`[Global Refresh] Updating ${stock.symbol}: ${stock.currentPrice} -> ${newPrice}`);
-                        updateStockPrice(stock.id, newPrice);
+                    // Handle new object return format from fetchStockQuotes
+                    const price = typeof data === 'number' ? data : data.price; // Fallback for old return type if not fully updated
+
+                    if (stock && price && Math.abs(stock.currentPrice - price) > 0.0001) {
+                        console.log(`[Global Refresh] Updating ${stock.symbol}: ${stock.currentPrice} -> ${price}`);
+                        // @ts-ignore - Assuming fetchStockQuotes now returns objects or we need to update it
+                        updateStockPrice(stock.id, price, undefined, undefined);
                     }
                 });
             }

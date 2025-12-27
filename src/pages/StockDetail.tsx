@@ -45,35 +45,50 @@ export function StockDetail() {
     // Get position to determine buy date
     const position = positions.find(p => p.stockId === stock?.id);
 
+    // Use refs to access latest values without triggering re-renders
+    const stockRef = {
+        symbol: stock?.symbol,
+        id: stock?.id,
+        currentPrice: stock?.currentPrice,
+        currency: stock?.currency,
+        isin: stock?.isin,
+        trailingPE: stock?.trailingPE,
+        forwardPE: stock?.forwardPE,
+        eps: stock?.eps,
+        dividendYield: stock?.dividendYield
+    };
+
+    // Position buy date ref
+    const buyDateRef = position?.buyDate;
+
     // Load data function (memoized for auto-refresh)
     const loadData = useCallback(async () => {
-        if (!stock) {
+        const { symbol, id, currentPrice, currency, isin, trailingPE, forwardPE, eps, dividendYield } = stockRef;
+        if (!symbol || !id) {
             setChartData(null);
             return;
         }
 
         setIsRefreshing(true);
-        console.log('[StockDetail] Fetching Yahoo Finance data for:', stock.symbol, 'Range:', timeRange);
+        console.log('[StockDetail] Fetching Yahoo Finance data for:', symbol, 'Range:', timeRange);
 
         let rangeToUse = timeRange;
 
         // Handle 'BUY' range
         if (timeRange === 'BUY') {
-            if (position?.buyDate) {
+            if (buyDateRef) {
                 rangeToUse = '5Y';
             } else {
                 rangeToUse = '5Y'; // Default fallback
             }
         }
 
-        const response = await fetchStockHistory(stock.symbol, rangeToUse);
-        console.log('[Stock Detail] Yahoo Response:', response);
+        const response = await fetchStockHistory(symbol, rangeToUse);
 
         if (response.error) {
             console.warn('[StockDetail] Error from Yahoo:', response.error);
-            setChartData(null); // Fallback to simulation
+            setChartData(null);
         } else {
-            console.log('[StockDetail] Success! Data points:', response.data?.length || 0);
             setChartData(response.data);
 
             // Sync current price with latest chart data
@@ -82,12 +97,11 @@ export function StockDetail() {
 
                 // Auto-detect GBp (Pence) to GBP (Pound) conversion
                 const latestPriceRaw = chartData[chartData.length - 1].value;
-                const isGBP = stock.currency === 'GBP';
+                const isGBP = currency === 'GBP';
 
                 if (isGBP) {
-                    const isLSE = stock.symbol.toUpperCase().endsWith('.L') || stock.isin?.startsWith('GB');
+                    const isLSE = symbol.toUpperCase().endsWith('.L') || isin?.startsWith('GB');
                     if (isLSE && latestPriceRaw > 50) {
-                        console.log('[StockDetail] Normalizing GBp to GBP for chart data');
                         chartData = chartData.map(d => ({
                             ...d,
                             value: d.value / 100
@@ -98,8 +112,8 @@ export function StockDetail() {
                 const latestPrice = chartData[chartData.length - 1].value;
 
                 // Filter for 'BUY' range if needed
-                if (timeRange === 'BUY' && position?.buyDate) {
-                    const buyDate = new Date(position.buyDate).getTime();
+                if (timeRange === 'BUY' && buyDateRef) {
+                    const buyDate = new Date(buyDateRef).getTime();
                     const filteredData = chartData.filter(d => new Date(d.date).getTime() >= buyDate);
                     if (filteredData.length > 0) {
                         setChartData(filteredData);
@@ -110,75 +124,60 @@ export function StockDetail() {
                     setChartData(chartData);
                 }
 
-                if (Math.abs(stock.currentPrice - latestPrice) > 0.0001) {
-                    updateStockPrice(stock.id, latestPrice);
+                if (currentPrice !== undefined && Math.abs(currentPrice - latestPrice) > 0.0001) {
+                    updateStockPrice(id, latestPrice);
                 }
-            } else {
-                setChartData(response.data);
             }
         }
 
-        // Parallel: Fetch latest Quote (usually fresher than chart)
+        // Parallel: Fetch latest Quote
         if (timeRange !== 'BUY') {
-            const quoteResponse = await fetchStockQuote(stock.symbol);
+            const quoteResponse = await fetchStockQuote(symbol);
             if (quoteResponse.price) {
-                console.log('[StockDetail] Quote Update:', quoteResponse.price, quoteResponse.currency, quoteResponse.marketTime);
-
                 if (quoteResponse.marketTime) {
                     setQuoteDate(quoteResponse.marketTime);
                 }
 
-                // Check if GBP normalization needed (GBp -> GBP)
                 let finalPrice = quoteResponse.price;
-                if (stock.currency === 'GBP' && finalPrice > 50) {
-                    // Heuristic: If we expect GBP but price is > 50 (likely Pence), divide by 100
-                    // But only if stock.currency is explicitly GBP.
-                    // Better check: If stock symbol ends in .L, Yahoo returns GBp (Pence).
-                    if (stock.symbol.toUpperCase().endsWith('.L')) {
+                if (currency === 'GBP' && finalPrice > 50) {
+                    if (symbol.toUpperCase().endsWith('.L')) {
                         finalPrice = finalPrice / 100;
                     }
                 }
 
-                if (Math.abs(stock.currentPrice - finalPrice) > 0.0001) {
-                    updateStockPrice(stock.id, finalPrice);
+                if (currentPrice !== undefined && Math.abs(currentPrice - finalPrice) > 0.0001) {
+                    updateStockPrice(id, finalPrice, undefined, quoteResponse.marketTime ? new Date(quoteResponse.marketTime).toISOString() : undefined);
                 }
 
-                // Check for KGV/Yield updates
                 const updates: any = {};
                 let hasUpdates = false;
 
-                // Always update related fields if they changed
-                if (quoteResponse.trailingPE !== undefined && quoteResponse.trailingPE !== null && Math.abs((stock.trailingPE || 0) - quoteResponse.trailingPE) > 0.01) {
+                if (quoteResponse.trailingPE !== undefined && quoteResponse.trailingPE !== null && Math.abs((trailingPE || 0) - quoteResponse.trailingPE) > 0.01) {
                     updates.trailingPE = quoteResponse.trailingPE;
                     hasUpdates = true;
                 }
-
-                if (quoteResponse.forwardPE !== undefined && quoteResponse.forwardPE !== null && Math.abs((stock.forwardPE || 0) - quoteResponse.forwardPE) > 0.01) {
+                if (quoteResponse.forwardPE !== undefined && quoteResponse.forwardPE !== null && Math.abs((forwardPE || 0) - quoteResponse.forwardPE) > 0.01) {
                     updates.forwardPE = quoteResponse.forwardPE;
                     hasUpdates = true;
                 }
-
-                if (quoteResponse.eps !== undefined && quoteResponse.eps !== null && Math.abs((stock.eps || 0) - quoteResponse.eps) > 0.001) {
+                if (quoteResponse.eps !== undefined && quoteResponse.eps !== null && Math.abs((eps || 0) - quoteResponse.eps) > 0.001) {
                     updates.eps = quoteResponse.eps;
                     hasUpdates = true;
                 }
-
-                // Yield check (assuming Yahoo returns consistent format, usually percentage e.g. 2.5)
-                // If Yahoo returns raw (0.025), we might need * 100. Let's assume matches existing format for now or user will report.
-                if (quoteResponse.dividendYield !== undefined && quoteResponse.dividendYield !== null && Math.abs((stock.dividendYield || 0) - quoteResponse.dividendYield) > 0.01) {
+                if (quoteResponse.dividendYield !== undefined && quoteResponse.dividendYield !== null && Math.abs((dividendYield || 0) - quoteResponse.dividendYield) > 0.01) {
                     updates.dividendYield = quoteResponse.dividendYield;
                     hasUpdates = true;
                 }
 
                 if (hasUpdates) {
-                    updateStock(stock.id, updates);
+                    updateStock(id, updates);
                 }
             }
         }
 
         setIsRefreshing(false);
         setLastUpdate(new Date());
-    }, [stock, timeRange, position, updateStockPrice]);
+    }, [stock?.symbol, stock?.id, timeRange, position?.buyDate]);
 
     // Initial load
     useEffect(() => {
@@ -209,9 +208,9 @@ export function StockDetail() {
     };
 
     return (
-        <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
-            {/* Header / Navigation */}
-            <div>
+        <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500 pb-16">
+            {/* Sticky Header / Navigation */}
+            <div className="sticky top-0 -mx-6 md:-mx-8 px-6 md:px-8 py-4 z-41 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/50 shadow-sm transition-all -mt-6 md:-mt-8 mb-6">
                 <button
                     onClick={() => navigate(-1)}
                     className="flex items-center text-muted-foreground hover:text-foreground transition-colors mb-4"
@@ -222,27 +221,33 @@ export function StockDetail() {
 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
-                        <Logo
-                            url={stock.logoUrl}
-                            alt={stock.name}
-                            size="size-16"
-                            fallback={
-                                <span className="text-2xl">{stock.symbol.slice(0, 2)}</span>
-                            }
-                            className="text-2xl"
-                        />
+                        <div
+                            className="cursor-pointer hover:scale-105 transition-transform"
+                            onClick={() => navigate('/portfolio')}
+                            title="Zurück zum Portfolio"
+                        >
+                            <Logo
+                                url={stock.logoUrl}
+                                alt={stock.name}
+                                size="size-12 md:size-16"
+                                fallback={
+                                    <span className="text-xl md:text-2xl">{stock.symbol.slice(0, 2)}</span>
+                                }
+                                className="text-xl"
+                            />
+                        </div>
                         <div>
-                            <div className="flex items-center gap-3">
-                                <h1 className="text-xl md:text-3xl font-bold tracking-tight">{stock.name}</h1>
+                            <div className="flex items-center gap-2 md:gap-3">
+                                <h1 className="text-lg md:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">{stock.name}</h1>
                                 <button
                                     onClick={() => navigate(`/dividends/edit/${stock.id}`)}
-                                    className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                    className="p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                                     title="Daten bearbeiten"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
                                 </button>
                             </div>
-                            <div className="flex items-center gap-2 text-muted-foreground mt-1 text-sm md:text-base">
+                            <div className="flex items-center gap-2 text-muted-foreground mt-0.5 text-xs md:text-sm">
                                 <span className="font-bold text-foreground">{stock.symbol}</span>
                                 <span>•</span>
                                 <span>{stock.sector || 'Sektor unbekannt'}</span>
@@ -252,21 +257,19 @@ export function StockDetail() {
 
                     {/* Price Card */}
                     <div className="text-right">
-                        <p className="text-xs md:text-sm text-muted-foreground font-medium">Aktueller Kurs</p>
-                        <h2 className="text-2xl md:text-3xl font-bold">
+                        <p className="text-[10px] md:text-xs text-muted-foreground font-medium uppercase tracking-wider">Aktueller Kurs</p>
+                        <h2 className="text-xl md:text-3xl font-bold tabular-nums tracking-tight">
                             {formatCurrency(stock.currentPrice, stock.currency)}
                         </h2>
                         {stock.distributionPolicy === 'accumulating' ? (
-                            <p className="text-sm text-blue-600 dark:text-blue-400 font-medium mt-1 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded inline-block">
+                            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-0.5 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded inline-block">
                                 Thesaurierend
                             </p>
                         ) : stock.dividendYield && (
-                            <p className="text-sm text-green-600 dark:text-green-400 font-medium mt-1">
+                            <p className="text-xs text-green-600 dark:text-green-400 font-medium mt-0.5">
                                 {stock.dividendYield.toFixed(2)}% Div.Rendite
                             </p>
                         )}
-
-
 
                         {/* Dynamic Position Performance based on Chart Range */}
                         {(() => {
@@ -274,25 +277,16 @@ export function StockDetail() {
                             if (!position) return null;
 
                             // Determine start price for the period
-                            // For 1D, we ideally want previousClose, but chartData[0] is a good proxy if prevClose is missing/same
                             let referencePrice = stock.previousClose;
 
                             if (timeRange !== '1D' && chartData && chartData.length > 0) {
                                 referencePrice = chartData[0].value;
                             } else if (timeRange === '1D') {
-                                // Fallback for 1D if chart data exists but previousClose might be off? 
-                                // Actually Stick to previousClose for 1D as per standard "Day Change" definition.
-                                // But if we want to match the Chart's visual "Start", chartData[0] is often used.
-                                // Let's use chartData[0] for consistency with the chart visual, UNLESS it's 1D where Previous Close is the standard anchor.
-                                // However, user asked for "Performance to Yesterday, Week etc".
-                                // If 1D chart starts at 09:00, and previous Close was 17:30 yesterday.
                                 referencePrice = stock.previousClose || (chartData && chartData.length > 0 ? chartData[0].value : stock.currentPrice);
                             } else if (chartData && chartData.length > 0) {
                                 referencePrice = chartData[0].value;
                             }
 
-                            // If we switched ranges and chartData is updating, we might have a mismatch briefly. 
-                            // Ensure we have chartData for non-1D ranges or use valid fallback.
                             if (timeRange !== '1D' && (!chartData || chartData.length === 0)) return null;
 
                             const diffPerShare = stock.currentPrice - referencePrice;
@@ -301,12 +295,12 @@ export function StockDetail() {
                             const isPositive = totalDiff >= 0;
 
                             return (
-                                <div className="mt-2 text-right">
-                                    <p className="text-xs text-muted-foreground">Performance ({timeRange})</p>
+                                <div className="mt-1 text-right">
                                     <p className={cn(
-                                        "text-sm font-bold",
+                                        "text-xs font-bold flex items-center justify-end gap-1 tabular-nums",
                                         isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                     )}>
+                                        {isPositive ? <TrendingUp className="size-3" /> : <TrendingUp className="size-3 rotate-180" />}
                                         {isPositive ? '+' : ''}{percentChange.toFixed(2)}% ({formatCurrency(totalDiff, stock.currency)})
                                     </p>
                                 </div>

@@ -162,7 +162,7 @@ export async function fetchStockQuote(symbol: string): Promise<{
 }
 
 // Fetch multiple quotes at once
-export async function fetchStockQuotes(symbols: string[]): Promise<Record<string, number>> {
+export async function fetchStockQuotes(symbols: string[]): Promise<Record<string, { price: number, marketTime?: Date }>> {
     if (symbols.length === 0) return {};
 
     try {
@@ -178,7 +178,7 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
         const data = await response.json();
         const results = data.quoteResponse?.result || [];
 
-        const priceMap: Record<string, number> = {};
+        const updateMap: Record<string, { price: number, marketTime?: Date }> = {};
 
         results.forEach((res: any) => {
             if (res.symbol && res.regularMarketPrice) {
@@ -187,11 +187,15 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
                 if (res.currency === 'GBp' || (res.symbol.endsWith('.L') && price > 50)) {
                     price = price / 100;
                 }
-                priceMap[res.symbol] = price;
+
+                updateMap[res.symbol] = {
+                    price,
+                    marketTime: res.regularMarketTime ? new Date(res.regularMarketTime * 1000) : undefined
+                };
             }
         });
 
-        return priceMap;
+        return updateMap;
     } catch (error) {
         console.error("Batch Quote Error:", error);
         return {};

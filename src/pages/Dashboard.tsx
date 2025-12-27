@@ -15,6 +15,7 @@ import { AddHistoryEntryModal } from '../components/AddHistoryEntryModal';
 // import { CurrencyChart } from '../components/CurrencyChart'; // Removed from dashboard
 import { DividendCalendarChart } from '../components/DividendCalendarChart';
 import { AssetAllocationChart } from '../components/AssetAllocationChart';
+import { RiskAnalysisCard } from '../components/RiskAnalysisCard';
 import { PerformanceDetailsModal } from '../components/PerformanceDetailsModal';
 import { PieChart as PieChartIcon } from 'lucide-react';
 
@@ -646,6 +647,12 @@ export function Dashboard() {
                     </div>
                     <AssetAllocationChart />
                 </div>
+
+                {/* Risk Analysis Card */}
+                <div className="lg:col-span-2 p-0">
+                    <RiskAnalysisCard />
+                </div>
+
             </div>
 
 

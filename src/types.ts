@@ -11,6 +11,7 @@ export interface Stock {
     valor?: string;
     isin?: string;
     currentPrice: number;
+    lastQuoteDate?: string; // NEW: ISO timestamp of the quote
     previousClose: number; // For daily performance calculation
     currency: Currency;
     type?: 'stock' | 'etf';

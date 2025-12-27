@@ -168,28 +168,32 @@ export function DividendPlanner() {
                 </div>
             </div>
 
-            {/* Dividend Calendar Chart */}
-            <div className="mt-8 mb-8">
-                <div className="flex items-center gap-2 mb-4">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                        <TrendingUp className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                        <h2 className="text-lg font-bold text-foreground">Monatliche Dividenden (Geschätzt)</h2>
-                        <p className="text-sm text-muted-foreground">Prognostizierte Verteilung der Zahlungen über das Jahr</p>
-                    </div>
-                </div>
 
-                <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                    <DividendCalendarChart />
-                </div>
-            </div>
 
-            {/* Main Dividend Table */}
-            <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
+            {/* Main Dividend Table (Moved Up) */}
+            <div className="bg-card rounded-xl border shadow-sm overflow-hidden mt-8 mb-8">
                 <div className="flex items-center justify-between p-4 border-b bg-muted/30">
                     <h2 className="text-lg font-semibold">Erwartete Dividenden</h2>
                 </div>
+
+                {/* ... table content continues ... */}
+                {/* Note: In multi_replace, we can't easily "move" large blocks without copying them fully. 
+                   Actually, it's safer to use Single replacements if they are large or complex.
+                   Here I am DELETING the Chart (Chunk 1) and will INSERT it after the Table.
+                   But wait, the Table end is far away.
+                   Better strategy: Use READ and WRITE entire file or carefully structured chunks.
+                   
+                   Alternative:
+                   Chunk 1: Delete Chart.
+                   Chunk 2: Insert Chart AFTER the Table.
+                   BUT I don't know where the Table ends easily without reading more lines.
+                   
+                   Let's use a simpler approach:
+                   Read the file fully first?
+                   I read up to 200. Table starts at 189.
+                   I will read the rest of the file to find the end of the Table div.
+                */}
+
 
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[1000px]">
@@ -258,15 +262,27 @@ export function DividendPlanner() {
                                             <td className="py-3 px-4 sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[140px]">
                                                 <div className="absolute inset-0 bg-card -z-10" />
                                                 <div className="relative flex items-center gap-3">
-                                                    <Logo
-                                                        url={stock.logoUrl}
-                                                        alt={stock.name}
-                                                        fallback={stock.symbol.slice(0, 2)}
-                                                    />
+                                                    <div
+                                                        className="cursor-pointer hover:scale-110 transition-transform p-1 -m-1"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigate('/portfolio');
+                                                        }}
+                                                        title="Zu den Positionen"
+                                                    >
+                                                        <Logo
+                                                            url={stock.logoUrl}
+                                                            alt={stock.name}
+                                                            fallback={stock.symbol.slice(0, 2)}
+                                                        />
+                                                    </div>
                                                     <div>
                                                         <div
                                                             className="font-semibold cursor-pointer hover:text-primary transition-colors"
-                                                            onClick={() => navigate(`/stock/${stock.id}`)}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigate(`/stock/${stock.id}`);
+                                                            }}
                                                         >
                                                             {stock.name}
                                                         </div>
@@ -481,6 +497,22 @@ export function DividendPlanner() {
                     </div>
                 </div>
             )}
+            {/* Dividend Calendar Chart (Moved Down) */}
+            <div className="mt-8 mb-8">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                        <TrendingUp className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-bold text-foreground">Monatliche Dividenden (Geschätzt)</h2>
+                        <p className="text-sm text-muted-foreground">Prognostizierte Verteilung der Zahlungen über das Jahr</p>
+                    </div>
+                </div>
+
+                <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                    <DividendCalendarChart />
+                </div>
+            </div>
         </div>
     );
 }
