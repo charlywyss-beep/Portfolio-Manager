@@ -96,6 +96,20 @@ export async function fetchCompanyLogo(query: string): Promise<string | null> {
     }
 }
 
+// Manual Country Overrides for ETFs/Stocks where Yahoo API is missing/wrong
+const MANUAL_COUNTRY_OVERRIDES: Record<string, string> = {
+    'VWRA.L': 'Welt', // Vanguard FTSE All-World
+    'VWRD.L': 'Welt', // Vanguard FTSE All-World (Dist)
+    'SWDA.L': 'Welt', // iShares Core MSCI World
+    'IWDA.L': 'Welt', // iShares Core MSCI World
+    'EUNL.DE': 'Welt',
+    'CSSPX.SW': 'USA', // iShares Core S&P 500
+    'CSPX.L': 'USA',
+    'VUAA.L': 'USA',
+    'VUSA.L': 'USA',
+    'CHSPI.SW': 'Schweiz', // iShares Core SPI
+};
+
 // Fetch latest quote (realtime-ish)
 export async function fetchStockQuote(symbol: string): Promise<{
     price: number | null,
@@ -123,6 +137,12 @@ export async function fetchStockQuote(symbol: string): Promise<{
             return { price: null, currency: null, marketTime: null, trailingPE: null, forwardPE: null, eps: null, dividendYield: null, country: null, error: 'Keine Daten' };
         }
 
+        // Check Override
+        let country = result.country || null;
+        if (MANUAL_COUNTRY_OVERRIDES[symbol]) {
+            country = MANUAL_COUNTRY_OVERRIDES[symbol];
+        }
+
         return {
             price: result.regularMarketPrice,
             currency: result.currency,
@@ -131,7 +151,7 @@ export async function fetchStockQuote(symbol: string): Promise<{
             forwardPE: result.forwardPE || null,
             eps: result.epsTrailingTwelveMonths || null,
             dividendYield: result.dividendYield || null,
-            country: result.country || null
+            country: country
         };
     } catch (error) {
         console.error("Yahoo Quote Error:", error);
