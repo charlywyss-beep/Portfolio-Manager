@@ -10,7 +10,7 @@ import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { cn } from '../utils';
 import { Logo } from '../components/Logo';
 
-import { fetchStockHistory, type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
+import { fetchStockHistory, fetchStockQuote, type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
 
 export function StockDetail() {
     const { id } = useParams();
@@ -114,6 +114,29 @@ export function StockDetail() {
                 }
             } else {
                 setChartData(response.data);
+            }
+        }
+
+        // Parallel: Fetch latest Quote (usually fresher than chart)
+        if (timeRange !== 'BUY') {
+            const quoteResponse = await fetchStockQuote(stock.symbol);
+            if (quoteResponse.price) {
+                console.log('[StockDetail] Quote Update:', quoteResponse.price, quoteResponse.currency);
+
+                // Check if GBP normalization needed (GBp -> GBP)
+                let finalPrice = quoteResponse.price;
+                if (stock.currency === 'GBP' && finalPrice > 50) {
+                    // Heuristic: If we expect GBP but price is > 50 (likely Pence), divide by 100
+                    // But only if stock.currency is explicitly GBP.
+                    // Better check: If stock symbol ends in .L, Yahoo returns GBp (Pence).
+                    if (stock.symbol.toUpperCase().endsWith('.L')) {
+                        finalPrice = finalPrice / 100;
+                    }
+                }
+
+                if (Math.abs(stock.currentPrice - finalPrice) > 0.0001) {
+                    updateStockPrice(stock.id, finalPrice);
+                }
             }
         }
 

@@ -22,6 +22,15 @@ export default defineConfig({
           return `/v8/finance/chart/${symbol}?range=${period}&interval=${interval}`;
         },
       },
+      '/api/yahoo-quote': {
+        target: 'https://query1.finance.yahoo.com',
+        changeOrigin: true,
+        rewrite: (path) => {
+          const url = new URL(path, 'http://localhost');
+          const symbol = url.searchParams.get('symbol');
+          return `/v7/finance/quote?symbols=${symbol}`;
+        },
+      },
     },
   },
 })
