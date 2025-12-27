@@ -80,7 +80,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         return "Wert CHF";
                                     })()}
                                 </th>
-                                <th style={{ width: '60px' }}></th>
+                                <th style={{ width: '110px' }}></th>
                                 <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px', whiteSpace: 'nowrap' }}>Performance %</th>
                                 <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '150px', whiteSpace: 'nowrap' }}>Performance CHF</th>
                             </tr>
