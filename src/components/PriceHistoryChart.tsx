@@ -165,13 +165,20 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                                 // Red = Older than that.
 
                                 let showGreen = isToday;
+                                let isClosingPrice = false;
+
                                 if (!showGreen && isWeekend) {
                                     const friday = new Date();
                                     friday.setDate(today.getDate() - (today.getDay() === 0 ? 2 : 1));
                                     if (displayDate.toDateString() === friday.toDateString()) {
                                         showGreen = true;
+                                        isClosingPrice = true;
                                     }
                                 }
+
+                                const label = showGreen
+                                    ? (isClosingPrice ? 'Schlusskurs' : 'Aktuelle Daten')
+                                    : 'Letzte Daten';
 
                                 return (
                                     <div className={cn(
@@ -187,7 +194,7 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                                             }
                                         </svg>
                                         <span>
-                                            {showGreen ? 'Aktuelle Daten' : 'Letzte Daten'} {displayDate.toLocaleDateString('de-DE', {
+                                            {label} {displayDate.toLocaleDateString('de-DE', {
                                                 day: '2-digit',
                                                 month: '2-digit',
                                                 year: 'numeric'
