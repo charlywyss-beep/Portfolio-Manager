@@ -152,6 +152,22 @@ export function StockDetail() {
                     hasUpdates = true;
                 }
 
+                // Fallback: If trailingPE is missing, check forwardPE
+                if (!updates.trailingPE && !stock.trailingPE) {
+                    if (quoteResponse.forwardPE !== undefined && quoteResponse.forwardPE !== null) {
+                        updates.forwardPE = quoteResponse.forwardPE;
+                        // Note: we store it in forwardPE but can verify usage in UI. 
+                        // Optionally store as trailingPE if we want to force display, but better to keep separate.
+                        hasUpdates = true;
+                    }
+                }
+
+                // EPS Update
+                if (quoteResponse.eps !== undefined && quoteResponse.eps !== null) {
+                    updates.eps = quoteResponse.eps;
+                    hasUpdates = true;
+                }
+
                 // Yield check (assuming Yahoo returns consistent format, usually percentage e.g. 2.5)
                 // If Yahoo returns raw (0.025), we might need * 100. Let's assume matches existing format for now or user will report.
                 if (quoteResponse.dividendYield !== undefined && quoteResponse.dividendYield !== null && Math.abs((stock.dividendYield || 0) - quoteResponse.dividendYield) > 0.01) {
@@ -380,7 +396,11 @@ export function StockDetail() {
                             </div>
                             <div className="flex justify-between py-1.5 border-b border-border/50">
                                 <span className="text-muted-foreground text-sm">KGV (P/E)</span>
-                                <span className="font-medium text-sm">{stock.trailingPE ? stock.trailingPE.toFixed(2) : '-'}</span>
+                                <span className="font-medium text-sm">
+                                    {stock.trailingPE
+                                        ? stock.trailingPE.toFixed(2)
+                                        : (stock.forwardPE ? `${stock.forwardPE.toFixed(2)} (Fwd)` : (stock.eps && stock.eps > 0 ? (stock.currentPrice / stock.eps).toFixed(2) : '-'))}
+                                </span>
                             </div>
                             <div className="flex justify-between py-1.5 border-b border-border/50">
                                 <span className="text-muted-foreground text-sm">Div. Frequenz</span>

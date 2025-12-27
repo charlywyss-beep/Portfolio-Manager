@@ -25,6 +25,8 @@ export interface Stock {
     notes?: string; // Personal notes about the stock
     distributionPolicy?: 'distributing' | 'accumulating'; // Thesaurierend vs Ausschüttend
     trailingPE?: number; // KGV (Price-Earnings Ratio)
+    forwardPE?: number; // KGV (Forecast)
+    eps?: number; // Earnings Per Share (Trailing 12M)
 }
 
 export interface Position {
