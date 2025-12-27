@@ -23,7 +23,8 @@ export interface Stock {
     logoUrl?: string;
     targetPrice?: number; // Desired buy price (Fair Value)
     notes?: string; // Personal notes about the stock
-    distributionPolicy?: 'distributing' | 'accumulating'; // NEW: Thesaurierend vs Ausschüttend
+    distributionPolicy?: 'distributing' | 'accumulating'; // Thesaurierend vs Ausschüttend
+    trailingPE?: number; // KGV (Price-Earnings Ratio)
 }
 
 export interface Position {

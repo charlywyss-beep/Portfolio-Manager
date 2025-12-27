@@ -142,6 +142,26 @@ export function StockDetail() {
                 if (Math.abs(stock.currentPrice - finalPrice) > 0.0001) {
                     updateStockPrice(stock.id, finalPrice);
                 }
+
+                // Check for KGV/Yield updates
+                const updates: any = {};
+                let hasUpdates = false;
+
+                if (quoteResponse.trailingPE !== undefined && quoteResponse.trailingPE !== null && Math.abs((stock.trailingPE || 0) - quoteResponse.trailingPE) > 0.01) {
+                    updates.trailingPE = quoteResponse.trailingPE;
+                    hasUpdates = true;
+                }
+
+                // Yield check (assuming Yahoo returns consistent format, usually percentage e.g. 2.5)
+                // If Yahoo returns raw (0.025), we might need * 100. Let's assume matches existing format for now or user will report.
+                if (quoteResponse.dividendYield !== undefined && quoteResponse.dividendYield !== null && Math.abs((stock.dividendYield || 0) - quoteResponse.dividendYield) > 0.01) {
+                    updates.dividendYield = quoteResponse.dividendYield;
+                    hasUpdates = true;
+                }
+
+                if (hasUpdates) {
+                    updateStock(stock.id, updates);
+                }
             }
         }
 
@@ -334,23 +354,43 @@ export function StockDetail() {
                         </h3>
                         <div className="space-y-4">
                             <div className="flex justify-between py-2 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">ISIN</span>
-                                <span className="font-medium text-sm font-mono">{stock.isin || '-'}</span>
+                                <span className="text-muted-foreground text-sm">Name</span>
+                                <span className="font-medium text-sm">{stock.name}</span>
                             </div>
                             <div className="flex justify-between py-2 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Währung</span>
-                                <span className="font-medium text-sm">{stock.currency}</span>
+                                <span className="text-muted-foreground text-sm">Symbol</span>
+                                <span className="font-medium text-sm font-mono">{stock.symbol}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-border/50">
+                                <span className="text-muted-foreground text-sm">ISIN</span>
+                                <span className="font-medium text-sm font-mono">{stock.isin || '-'}</span>
                             </div>
                             <div className="flex justify-between py-2 border-b border-border/50">
                                 <span className="text-muted-foreground text-sm">Typ</span>
                                 <span className="font-medium text-sm capitalize">{stock.type || 'Aktie'}</span>
                             </div>
                             <div className="flex justify-between py-2 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Frequenz</span>
+                                <span className="text-muted-foreground text-sm">Währung</span>
+                                <span className="font-medium text-sm">{stock.currency}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-border/50">
+                                <span className="text-muted-foreground text-sm">KGV (P/E)</span>
+                                <span className="font-medium text-sm">{stock.trailingPE ? stock.trailingPE.toFixed(2) : '-'}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-border/50">
+                                <span className="text-muted-foreground text-sm">Div. Frequenz</span>
                                 <span className="font-medium text-sm capitalize">
-                                    {stock.dividendFrequency === 'quarterly' ? 'Quartalsweise' :
-                                        stock.dividendFrequency === 'monthly' ? 'Monatlich' :
-                                            stock.dividendFrequency === 'semi-annually' ? 'Halbjährlich' : 'Jährlich'}
+                                    {stock.dividendFrequency ? (
+                                        stock.dividendFrequency === 'quarterly' ? 'Quartalsweise' :
+                                            stock.dividendFrequency === 'monthly' ? 'Monatlich' :
+                                                stock.dividendFrequency === 'semi-annually' ? 'Halbjährlich' : 'Jährlich'
+                                    ) : '-'}
+                                </span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-border/50">
+                                <span className="text-muted-foreground text-sm">Div. Rendite</span>
+                                <span className="font-medium text-sm">
+                                    {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
                                 </span>
                             </div>
                         </div>
