@@ -71,7 +71,7 @@ export function Dashboard() {
                             }
 
                             if (Math.abs(stock.currentPrice - latestPrice) > 0.0001 || (prevClose && stock.previousClose !== prevClose)) {
-                                updateStockPrice(stock.id, latestPrice, prevClose);
+                                updateStockPrice(stock.id, latestPrice, prevClose, new Date().toISOString());
                             }
                         }
                     } catch (err) {

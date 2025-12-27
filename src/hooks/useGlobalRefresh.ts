@@ -29,7 +29,7 @@ export function useGlobalRefresh() {
                     if (stock && price && Math.abs(stock.currentPrice - price) > 0.0001) {
                         console.log(`[Global Refresh] Updating ${stock.symbol}: ${stock.currentPrice} -> ${price}`);
                         // @ts-ignore - Assuming fetchStockQuotes now returns objects or we need to update it
-                        updateStockPrice(stock.id, price, undefined, undefined);
+                        updateStockPrice(stock.id, price, undefined, new Date().toISOString());
                     }
                 });
             }
