@@ -60,6 +60,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         <thead className="bg-muted/30 sticky top-0 z-10">
                             <tr className="border-b border-border">
                                 <th className="text-left py-2 px-4 font-medium text-muted-foreground">Aktie / ETF</th>
+                                <th style={{ width: '20px' }}></th>
                                 <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '95px', whiteSpace: 'nowrap' }}>
                                     {(() => {
                                         // Always show the actual date from the first position
@@ -119,6 +120,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                                 </div>
                                             </div>
                                         </td>
+                                        <td style={{ width: '20px' }}></td>
                                         {/* Daily Performance */}
                                         <td className={cn("py-3 px-1 text-right font-medium text-xs", isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '60px' }}>
                                             {isDailyPositive ? '+' : ''}{p.dailyGainPercent.toFixed(2)}%
