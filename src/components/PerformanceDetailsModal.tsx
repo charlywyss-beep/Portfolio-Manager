@@ -65,7 +65,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         // Always show the actual date from the first position
                                         if (positions.length > 0 && positions[0].stock.lastQuoteDate) {
                                             const date = new Date(positions[0].stock.lastQuoteDate);
-                                            return `Kurs ${date.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })}`;
+                                            return `Kurs am: ${date.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })}`;
                                         }
                                         return "Kurs %";
                                     })()}
@@ -75,7 +75,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         // Always show the actual date from the first position
                                         if (positions.length > 0 && positions[0].stock.lastQuoteDate) {
                                             const date = new Date(positions[0].stock.lastQuoteDate);
-                                            return `${date.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })} CHF`;
+                                            return `CHF +/- am: ${date.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })}`;
                                         }
                                         return "Wert CHF";
                                     })()}
