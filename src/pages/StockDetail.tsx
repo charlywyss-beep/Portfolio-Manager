@@ -316,6 +316,7 @@ export function StockDetail() {
                                 historyData={chartData}
                                 selectedRange={timeRange}
                                 onRangeChange={(range) => setTimeRange(range)}
+                                isRealtime={true} // Since we fetch Quote independently, assume Price is fresher than Chart
                             />
                         </div>
                     </div>

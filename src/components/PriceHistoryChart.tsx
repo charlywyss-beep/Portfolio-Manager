@@ -14,9 +14,10 @@ interface PriceHistoryChartProps {
     historyData?: { date: string; value: number }[] | null;
     selectedRange?: TimeRange;
     onRangeChange?: (range: TimeRange) => void;
+    isRealtime?: boolean;
 }
 
-export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, trend = 'up', historyData, selectedRange = '1Y', onRangeChange }: PriceHistoryChartProps) {
+export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, trend = 'up', historyData, selectedRange = '1Y', onRangeChange, isRealtime = false }: PriceHistoryChartProps) {
     const [hasMounted, setHasMounted] = useState(false);
 
     useEffect(() => {
@@ -150,6 +151,22 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                                 const chartDate = new Date(lastDataPoint.date);
                                 const today = new Date();
                                 const isToday = chartDate.toDateString() === today.toDateString();
+
+                                // If chart is stale BUT we have realtime price active, hide the warning!
+                                if (isRealtime && !isToday) {
+                                    return (
+                                        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                                            <span>
+                                                Live Kurs ({formatCurrency(currentPrice, currency)})
+                                                <span className="opacity-75 font-normal ml-1">
+                                                    vs. Chart
+                                                    ({chartDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })})
+                                                </span>
+                                            </span>
+                                        </div>
+                                    );
+                                }
 
                                 return (
                                     <div className={cn(
