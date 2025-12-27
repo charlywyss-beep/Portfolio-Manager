@@ -143,6 +143,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         <tfoot className="bg-muted/20 border-t border-border">
                             <tr>
                                 <td className="py-3 px-4 font-semibold text-muted-foreground" style={{ whiteSpace: 'nowrap' }}>Total:</td>
+                                <td style={{ width: '20px' }}></td>
                                 <td className="py-3 px-1" style={{ width: '60px', whiteSpace: 'nowrap' }}></td>
                                 <td className={cn("py-3 pr-4 pl-1 text-right font-bold", totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '100px', whiteSpace: 'nowrap' }}>
                                     {totalDailyGain >= 0 ? '+' : ''}{formatCurrency(totalDailyGain, 'CHF')}
