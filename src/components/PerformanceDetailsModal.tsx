@@ -53,10 +53,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
                 <div className="overflow-y-auto p-0 flex-1">
                     <table className="w-full text-sm">
-                        <thead className="bg-muted/30 sticky top-0 backdrop-blur-md z-10">
+                        <thead className="bg-popover sticky top-0 z-20 shadow-sm">
                             <tr className="border-b border-border">
                                 <th className="text-left py-2 px-4 font-medium text-muted-foreground">Aktie / ETF</th>
-                                <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px', whiteSpace: 'nowrap' }}>
+                                <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '95px', whiteSpace: 'nowrap' }}>
                                     {(() => {
                                         // Check if data is fresh (from today)
                                         const now = new Date();
