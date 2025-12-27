@@ -25,10 +25,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
     const totalDailyGain = sortedPositions.reduce((sum, p) => sum + convertToCHF(p.dailyGain, p.stock.currency), 0);
 
-    // Calculate total performance (since purchase)
     const totalPerformanceGain = sortedPositions.reduce((sum, p) => {
         const currentValue = p.shares * p.stock.currentPrice;
-        const purchaseValue = p.purchases.reduce((pSum: number, purchase: any) =>
+        const purchaseValue = (p.purchases || []).reduce((pSum: number, purchase: any) =>
             pSum + (purchase.shares * purchase.price), 0);
         const gain = currentValue - purchaseValue;
         return sum + convertToCHF(gain, p.stock.currency);
@@ -106,7 +105,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
                                 // Calculate total performance
                                 const currentValue = p.shares * p.stock.currentPrice;
-                                const purchaseValue = p.purchases.reduce((sum: number, purchase: any) =>
+                                const purchaseValue = (p.purchases || []).reduce((sum: number, purchase: any) =>
                                     sum + (purchase.shares * purchase.price), 0);
                                 const totalGain = currentValue - purchaseValue;
                                 const totalGainCHF = convertToCHF(totalGain, p.stock.currency);

@@ -97,7 +97,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     // Wait, the Header Display wants "UI Value" (Pounds).
     // The "onUpdate" wants "Storage Value" (Pence).
     // Let's keep `purchases` state as UI Values.
-    const calculatedTotals = purchases.reduce((acc, p) => {
+    const calculatedTotals = (purchases || []).reduce((acc, p) => {
         acc.shares += p.shares;
         acc.totalNativeCost += p.shares * p.price; // Cost in UI Units
         acc.totalCHFCost += p.shares * p.price * p.fxRate;
