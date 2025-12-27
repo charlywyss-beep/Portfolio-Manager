@@ -59,7 +59,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 <th className="text-left py-2 px-4 font-medium text-muted-foreground">Aktie / ETF</th>
                                 <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px', whiteSpace: 'nowrap' }}>Heute %</th>
                                 <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '100px', whiteSpace: 'nowrap' }}>Heute CHF</th>
-                                <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px', marginLeft: '300px', whiteSpace: 'nowrap' }}>Performance %</th>
+                                <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px', marginLeft: '500px', whiteSpace: 'nowrap' }}>Performance %</th>
                                 <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '150px', whiteSpace: 'nowrap' }}>Performance CHF</th>
                             </tr>
                         </thead>
@@ -117,13 +117,13 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         </tbody>
                         <tfoot className="bg-muted/20 border-t border-border">
                             <tr>
-                                <td className="py-3 px-4 font-semibold text-muted-foreground">Total:</td>
-                                <td className="py-3 px-1" style={{ width: '60px' }}></td>
-                                <td className={cn("py-3 pr-4 pl-1 text-right font-bold", totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '100px' }}>
+                                <td className="py-3 px-4 font-semibold text-muted-foreground" style={{ whiteSpace: 'nowrap' }}>Total:</td>
+                                <td className="py-3 px-1" style={{ width: '60px', whiteSpace: 'nowrap' }}></td>
+                                <td className={cn("py-3 pr-4 pl-1 text-right font-bold", totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '100px', whiteSpace: 'nowrap' }}>
                                     {totalDailyGain >= 0 ? '+' : ''}{formatCurrency(totalDailyGain, 'CHF')}
                                 </td>
-                                <td className="py-3 px-1" style={{ width: '60px', marginLeft: '200px' }}></td>
-                                <td className={cn("py-3 pr-4 pl-1 text-right font-bold", totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '150px' }}>
+                                <td className="py-3 px-1" style={{ width: '60px', marginLeft: '500px', whiteSpace: 'nowrap' }}></td>
+                                <td className={cn("py-3 pr-4 pl-1 text-right font-bold", totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '150px', whiteSpace: 'nowrap' }}>
                                     {totalPerformanceGain >= 0 ? '+' : ''}{formatCurrency(totalPerformanceGain, 'CHF')}
                                 </td>
                             </tr>
