@@ -39,7 +39,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     };
 
     return (
-        <div className="fixed top-16 left-64 right-0 bottom-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed top-16 left-0 lg:left-[250px] right-0 bottom-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-4xl max-h-[60vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between p-4 border-b border-border">
                     <h2 className="text-lg font-bold flex items-center gap-2">
