@@ -23,7 +23,16 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
         return valB - valA;
     });
 
-    const totalGain = sortedPositions.reduce((sum, p) => sum + convertToCHF(p.dailyGain, p.stock.currency), 0);
+    const totalDailyGain = sortedPositions.reduce((sum, p) => sum + convertToCHF(p.dailyGain, p.stock.currency), 0);
+
+    // Calculate total performance (since purchase)
+    const totalPerformanceGain = sortedPositions.reduce((sum, p) => {
+        const currentValue = p.shares * p.stock.currentPrice;
+        const purchaseValue = p.purchases.reduce((pSum: number, purchase: any) =>
+            pSum + (purchase.shares * purchase.price), 0);
+        const gain = currentValue - purchaseValue;
+        return sum + convertToCHF(gain, p.stock.currency);
+    }, 0);
 
     const handleRowClick = (stockId: string) => {
         navigate(`/stock/${stockId}`);
@@ -32,11 +41,11 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between p-6 border-b border-border">
                     <h2 className="text-xl font-bold flex items-center gap-2">
                         <TrendingUp className="size-5 text-blue-500" />
-                        Tagesperformance Details
+                        Performance Details
                     </h2>
                     <button onClick={onClose} className="p-2 hover:bg-secondary rounded-full transition-colors">
                         <X className="size-5" />
@@ -48,14 +57,34 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         <thead className="bg-muted/30 sticky top-0 backdrop-blur-md z-10">
                             <tr className="border-b border-border">
                                 <th className="text-left py-3 px-4 font-medium text-muted-foreground">Aktie / ETF</th>
-                                <th className="text-right py-3 px-4 font-medium text-muted-foreground">%</th>
-                                <th className="text-right py-3 px-4 font-medium text-muted-foreground">Gewinn/Verlust</th>
+                                <th className="text-center py-3 px-2 font-medium text-muted-foreground" colSpan={2}>
+                                    <div className="text-xs uppercase tracking-wider">Heute</div>
+                                </th>
+                                <th className="text-center py-3 px-2 font-medium text-muted-foreground" colSpan={2}>
+                                    <div className="text-xs uppercase tracking-wider">Gesamt</div>
+                                </th>
+                            </tr>
+                            <tr className="border-b border-border">
+                                <th className="text-left py-2 px-4"></th>
+                                <th className="text-right py-2 px-2 font-medium text-muted-foreground text-xs">%</th>
+                                <th className="text-right py-2 px-2 font-medium text-muted-foreground text-xs">CHF</th>
+                                <th className="text-right py-2 px-2 font-medium text-muted-foreground text-xs">%</th>
+                                <th className="text-right py-2 px-2 font-medium text-muted-foreground text-xs">CHF</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
                             {sortedPositions.map((p) => {
-                                const gainCHF = convertToCHF(p.dailyGain, p.stock.currency);
-                                const isPositive = gainCHF >= 0;
+                                const dailyGainCHF = convertToCHF(p.dailyGain, p.stock.currency);
+                                const isDailyPositive = dailyGainCHF >= 0;
+
+                                // Calculate total performance
+                                const currentValue = p.shares * p.stock.currentPrice;
+                                const purchaseValue = p.purchases.reduce((sum: number, purchase: any) =>
+                                    sum + (purchase.shares * purchase.price), 0);
+                                const totalGain = currentValue - purchaseValue;
+                                const totalGainCHF = convertToCHF(totalGain, p.stock.currency);
+                                const totalGainPercent = purchaseValue > 0 ? ((currentValue - purchaseValue) / purchaseValue) * 100 : 0;
+                                const isTotalPositive = totalGainCHF >= 0;
 
                                 return (
                                     <tr
@@ -77,11 +106,19 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className={cn("py-3 px-4 text-right font-medium", isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
-                                            {isPositive ? '+' : ''}{p.dailyGainPercent.toFixed(2)}%
+                                        {/* Daily Performance */}
+                                        <td className={cn("py-3 px-2 text-right font-medium text-xs", isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                                            {isDailyPositive ? '+' : ''}{p.dailyGainPercent.toFixed(2)}%
                                         </td>
-                                        <td className={cn("py-3 px-4 text-right font-bold", isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
-                                            {isPositive ? '+' : ''}{formatCurrency(gainCHF, 'CHF').replace('CHF', '')}
+                                        <td className={cn("py-3 px-2 text-right font-medium", isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                                            {isDailyPositive ? '+' : ''}{formatCurrency(dailyGainCHF, 'CHF').replace('CHF', '').trim()}
+                                        </td>
+                                        {/* Total Performance */}
+                                        <td className={cn("py-3 px-2 text-right font-medium text-xs", isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                                            {isTotalPositive ? '+' : ''}{totalGainPercent.toFixed(2)}%
+                                        </td>
+                                        <td className={cn("py-3 px-2 text-right font-bold", isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                                            {isTotalPositive ? '+' : ''}{formatCurrency(totalGainCHF, 'CHF').replace('CHF', '').trim()}
                                         </td>
                                     </tr>
                                 );
@@ -91,11 +128,19 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                 </div>
 
                 <div className="p-4 border-t border-border bg-muted/20">
-                    <div className="flex justify-between items-center px-2">
-                        <span className="font-semibold text-muted-foreground">Total (Aktien & ETFs)</span>
-                        <span className={cn("text-lg font-bold", totalGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
-                            {totalGain >= 0 ? '+' : ''}{formatCurrency(totalGain, 'CHF')}
-                        </span>
+                    <div className="grid grid-cols-2 gap-4 px-2">
+                        <div className="flex justify-between items-center">
+                            <span className="font-semibold text-muted-foreground text-sm">Heute Total:</span>
+                            <span className={cn("text-lg font-bold", totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                                {totalDailyGain >= 0 ? '+' : ''}{formatCurrency(totalDailyGain, 'CHF')}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="font-semibold text-muted-foreground text-sm">Gesamt Total:</span>
+                            <span className={cn("text-lg font-bold", totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                                {totalPerformanceGain >= 0 ? '+' : ''}{formatCurrency(totalPerformanceGain, 'CHF')}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
