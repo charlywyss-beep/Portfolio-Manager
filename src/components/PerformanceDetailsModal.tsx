@@ -60,7 +60,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 <th className="text-right py-2 pl-8 pr-3 font-medium text-muted-foreground text-xs uppercase tracking-wider" colSpan={2}>
                                     Heute
                                 </th>
-                                <th className="text-right py-2 pl-12 pr-4 font-medium text-muted-foreground text-xs uppercase tracking-wider" colSpan={2}>
+                                <th className="text-right py-2 pr-4 font-medium text-muted-foreground text-xs uppercase tracking-wider" colSpan={2} style={{ paddingLeft: '200px' }}>
                                     Performance
                                 </th>
                             </tr>
