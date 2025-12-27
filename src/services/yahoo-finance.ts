@@ -119,6 +119,45 @@ export async function fetchStockQuote(symbol: string): Promise<{ price: number |
         };
     } catch (error) {
         console.error("Yahoo Quote Error:", error);
-        return { price: null, currency: null, error: 'Netzwerkfehler' };
+        return {
+            price: null, currency: null, error: 'Netzwerkfehler'
+        };
+    }
+}
+
+// Fetch multiple quotes at once
+export async function fetchStockQuotes(symbols: string[]): Promise<Record<string, number>> {
+    if (symbols.length === 0) return {};
+
+    try {
+        const symbolStr = symbols.join(',');
+        const url = `/api/yahoo-quote?symbol=${symbolStr}`;
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            console.error(`API Error: ${response.status}`);
+            return {};
+        }
+
+        const data = await response.json();
+        const results = data.quoteResponse?.result || [];
+
+        const priceMap: Record<string, number> = {};
+
+        results.forEach((res: any) => {
+            if (res.symbol && res.regularMarketPrice) {
+                // Heuristic: Detect Pence (similar to single fetch)
+                let price = res.regularMarketPrice;
+                if (res.currency === 'GBp' || (res.symbol.endsWith('.L') && price > 50)) {
+                    price = price / 100;
+                }
+                priceMap[res.symbol] = price;
+            }
+        });
+
+        return priceMap;
+    } catch (error) {
+        console.error("Batch Quote Error:", error);
+        return {};
     }
 }
