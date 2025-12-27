@@ -1,5 +1,4 @@
-// Vercel Serverless Function - Yahoo Finance Quote Proxy
-// Fetches the latest quote (realtime-ish) instead of historical chart data
+import yahooFinance from 'yahoo-finance2';
 
 export default async function handler(req, res) {
     // Enable CORS for your frontend
@@ -19,18 +18,41 @@ export default async function handler(req, res) {
     }
 
     try {
-        const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`;
+        console.log('[Vercel Quote Proxy] Fetching quote for:', symbol);
 
-        console.log('[Vercel Quote Proxy] Fetching:', url);
+        // Fetch robust data using yahoo-finance2
+        const result = await yahooFinance.quoteSummary(symbol, {
+            modules: ['price', 'summaryDetail', 'defaultKeyStatistics']
+        });
 
-        const response = await fetch(url);
-        const data = await response.json();
+        const quote = {
+            symbol: symbol,
+            regularMarketPrice: result.price?.regularMarketPrice,
+            currency: result.price?.currency,
+            regularMarketTime: result.price?.regularMarketTime ? new Date(result.price.regularMarketTime).getTime() / 1000 : null,
+            trailingPE: result.summaryDetail?.trailingPE,
+            forwardPE: result.summaryDetail?.forwardPE || result.defaultKeyStatistics?.forwardPE,
+            epsTrailingTwelveMonths: result.defaultKeyStatistics?.trailingEps,
+            dividendYield: result.summaryDetail?.dividendYield ? result.summaryDetail.dividendYield * 100 : null
+        };
+
+        const responseData = {
+            quoteResponse: {
+                result: [quote],
+                error: null
+            }
+        };
 
         console.log('[Vercel Quote Proxy] Success');
-
-        return res.status(200).json(data);
+        return res.status(200).json(responseData);
     } catch (error) {
-        console.error('[Vercel Quote Proxy] Error:', error);
-        return res.status(500).json({ error: 'Failed to fetch quote data' });
+        console.error('[Vercel Quote Proxy] Error:', error.message || error);
+        // Fallback or error response
+        return res.status(200).json({
+            quoteResponse: {
+                result: [],
+                error: error.message || 'Failed to fetch data'
+            }
+        });
     }
 }

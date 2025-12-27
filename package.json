@@ -1,7 +1,7 @@
 {
   "name": "portfolio-manager",
   "private": true,
-  "version": "3.11.257",
+  "version": "3.11.260",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -20,7 +20,8 @@
     "react-router-dom": "^7.10.1",
     "recharts": "^3.5.1",
     "tailwind-merge": "^3.4.0",
-    "xlsx-js-style": "^1.2.0"
+    "xlsx-js-style": "^1.2.0",
+    "yahoo-finance2": "^3.10.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
