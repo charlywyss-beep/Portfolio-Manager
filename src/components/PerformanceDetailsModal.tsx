@@ -57,12 +57,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         <thead className="bg-muted/30 sticky top-0 backdrop-blur-md z-10">
                             <tr className="border-b border-border">
                                 <th className="text-left py-2 px-4 font-medium text-muted-foreground">Aktie / ETF</th>
-                                <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px' }}></th>
-                                <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs uppercase tracking-wider" style={{ width: '100px', paddingLeft: '200px' }}>
+                                <th className="text-right py-2 pr-3 font-medium text-muted-foreground text-xs uppercase tracking-wider" colSpan={2} style={{ paddingLeft: '200px' }}>
                                     Heute
                                 </th>
-                                <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px', paddingLeft: '200px' }}></th>
-                                <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs uppercase tracking-wider" style={{ width: '150px' }}>
+                                <th className="text-right py-2 pr-4 font-medium text-muted-foreground text-xs uppercase tracking-wider" colSpan={2} style={{ paddingLeft: '200px' }}>
                                     Performance
                                 </th>
                             </tr>
