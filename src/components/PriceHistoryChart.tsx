@@ -143,12 +143,15 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                             <span>{formatCurrency(minPrice, currency)}</span>
                         </div>
                     </div>
-                    {/* Date Indicator for 1D Chart */}
-                    {selectedRange === '1D' && data.length > 0 && (
+                    {/* Date Indicator for 1D Chart - Only show for REAL data */}
+                    {selectedRange === '1D' && historyData && historyData.length > 0 && (
                         <div className="mt-2 text-xs">
                             {(() => {
                                 // Priority 1: Use Quote Date if available (Realtime)
-                                const displayDate = quoteDate || new Date(data[data.length - 1].date);
+                                const displayDate = quoteDate || (data.length > 0 ? new Date(data[data.length - 1].date) : null);
+
+                                if (!displayDate) return null; // Don't show anything if no date
+
                                 const today = new Date();
                                 const isToday = displayDate.toDateString() === today.toDateString();
                                 const isWeekend = today.getDay() === 0 || today.getDay() === 6;
