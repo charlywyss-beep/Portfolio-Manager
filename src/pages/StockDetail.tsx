@@ -262,9 +262,9 @@ export function StockDetail() {
                                 onClick={loadData}
                                 disabled={isRefreshing}
                                 className={cn(
-                                    "inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-medium transition-all",
-                                    "border-muted-foreground/30 bg-background hover:bg-accent hover:text-accent-foreground",
-                                    "text-muted-foreground hover:border-primary/70",
+                                    "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
+                                    "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                    "active:scale-95",
                                     isRefreshing && "opacity-50 cursor-not-allowed"
                                 )}
                                 title="Daten aktualisieren"
