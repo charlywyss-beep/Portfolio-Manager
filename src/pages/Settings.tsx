@@ -1,12 +1,11 @@
 import { useState, useRef } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+
 import { Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 
 
 export function Settings() {
     const { positions, stocks, fixedDeposits, history, watchlist, importData, mortgageData } = usePortfolio();
-    const [fmpApiKey, setFmpApiKey] = useLocalStorage('fmp_api_key', '');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [importMessage, setImportMessage] = useState('');
@@ -175,37 +174,7 @@ export function Settings() {
                 </div>
             </div>
 
-            {/* API Keys Card */}
-            <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-4">
-                <div className="flex items-center gap-3 text-blue-600 dark:text-blue-500">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                        <span className="font-bold text-lg">API</span>
-                    </div>
-                    <h2 className="text-lg font-semibold">Externe Datenquellen</h2>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                    Optional: Fügen Sie eigene API-Keys hinzu, um die Datenqualität zu verbessern.
-                </p>
 
-                <div className="space-y-4 pt-2">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Financial Modeling Prep (FMP) API Key</label>
-                        <input
-                            type="password"
-                            value={fmpApiKey}
-                            onChange={(e) => setFmpApiKey(e.target.value)}
-                            className="w-full px-3 py-2 rounded-md border border-input bg-background/50 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            placeholder="FMP API Key eingeben"
-                        />
-                        <p className="text-[10px] text-muted-foreground">
-                            Für besseren Realtime-Support (z.B. CH/DE Aktien).
-                            <a href="https://site.financialmodelingprep.com/developer/docs" target="_blank" rel="noopener noreferrer" className="ml-1 underline hover:text-primary">
-                                Key holen (Free)
-                            </a>
-                        </p>
-                    </div>
-                </div>
-            </div>
 
 
             {/* Danger Zone */}
