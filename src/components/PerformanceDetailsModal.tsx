@@ -59,7 +59,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 <th className="text-left py-2 px-4 font-medium text-muted-foreground">Aktie / ETF</th>
                                 <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px', whiteSpace: 'nowrap' }}>Heute %</th>
                                 <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '100px', whiteSpace: 'nowrap' }}>Heute CHF</th>
-                                <th style={{ width: '500px' }}></th>
+                                <th style={{ width: '350px' }}></th>
                                 <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px', whiteSpace: 'nowrap' }}>Performance %</th>
                                 <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '150px', whiteSpace: 'nowrap' }}>Performance CHF</th>
                             </tr>
