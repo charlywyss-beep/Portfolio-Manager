@@ -30,6 +30,16 @@ export function StockDetail() {
     const [chartData, setChartData] = useState<ChartDataPoint[] | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+    const [, setTimeTick] = useState(0); // Force re-render for time display
+
+    // Force update "Updated X min ago" text every minute
+    useEffect(() => {
+        if (!lastUpdate) return;
+        const interval = setInterval(() => {
+            setTimeTick(t => t + 1);
+        }, 60000);
+        return () => clearInterval(interval);
+    }, [lastUpdate]);
 
     // Get position to determine buy date
     const position = positions.find(p => p.stockId === stock?.id);
