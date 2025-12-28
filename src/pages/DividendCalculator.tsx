@@ -396,6 +396,9 @@ export function DividendCalculator() {
     const [showStockList, setShowStockList] = useState(false);
     const [hasMounted, setHasMounted] = useState(false);
 
+    // Autofill Prevention State
+    const [isNameReadOnly, setIsNameReadOnly] = useState(true);
+
     useEffect(() => {
         setHasMounted(true);
     }, []);
@@ -957,12 +960,14 @@ export function DividendCalculator() {
                                             <label className="text-sm font-medium">Aktien Name</label>
                                             <input required
                                                 type="text"
-                                                id="calc_stock_name_input"
+                                                id="calc_stock_name_input_v2"
                                                 autoComplete="off"
+                                                readOnly={isNameReadOnly}
+                                                onFocus={() => setIsNameReadOnly(false)}
                                                 data-lpignore="true"
                                                 data-1p-ignore="true"
                                                 data-form-type="other"
-                                                name="calc_stock_name_field"
+                                                name="calc_stock_name_field_v2"
                                                 placeholder="z.B. Nestlé S.A."
                                                 className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                                 value={simName} onChange={e => updateSimulatorState({ simName: e.target.value })} />
