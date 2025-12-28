@@ -59,14 +59,19 @@ function App() {
 
       const searchParams = new URLSearchParams(location.search);
       const fromWatchlist = searchParams.get('from') === 'watchlist';
+      const fromPortfolio = searchParams.get('from') === 'portfolio';
 
-      // If editing from watchlist, highlight Watchlist, not Dividenden
+      // If editing from watchlist, highlight Watchlist
       if (to === '/watchlist' && fromWatchlist) {
         return true;
       }
+      // If editing from portfolio, highlight Portfolio
+      if (to === '/portfolio' && fromPortfolio) {
+        return true;
+      }
 
-      // Don't highlight Dividenden if we're editing from watchlist
-      if (to === '/dividends' && fromWatchlist) {
+      // Don't highlight Dividenden if we're editing from watchlist OR portfolio
+      if (to === '/dividends' && (fromWatchlist || fromPortfolio)) {
         return false;
       }
 
@@ -84,9 +89,10 @@ function App() {
           const isOnDividendEdit = location.pathname.startsWith('/dividends/edit');
           const searchParams = new URLSearchParams(location.search);
           const fromWatchlist = searchParams.get('from') === 'watchlist';
+          const fromPortfolio = searchParams.get('from') === 'portfolio';
 
-          // If we're on dividend edit from watchlist and this is the Dividenden nav item, don't highlight
-          if (to === '/dividends' && isOnDividendEdit && fromWatchlist) {
+          // If we're on dividend edit from watchlist/portfolio and this is the Dividenden nav item, don't highlight
+          if (to === '/dividends' && isOnDividendEdit && (fromWatchlist || fromPortfolio)) {
             return cn(
               "flex items-center gap-6 px-4 py-2.5 rounded-md transition-all whitespace-nowrap mx-2 mb-1",
               "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
@@ -152,7 +158,7 @@ function App() {
               title="App neu laden (Cache leeren)"
             >
               <div className="text-[10px] text-foreground font-bold font-mono flex items-center gap-1 group/version">
-                <span>v3.11.306</span>
+                <span>v3.11.307</span>
                 <span className="opacity-0 group-hover/version:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
               </div>
             </div>
@@ -200,7 +206,7 @@ function App() {
                   className="text-[10px] text-muted-foreground/50 hover:text-primary transition-colors"
                   title="Klicken zum Neuladen"
                 >
-                  v3.11.306
+                  v3.11.307
                 </button>
                 <h2 className="text-lg font-semibold capitalize">
                   {getPageTitle(location.pathname)}

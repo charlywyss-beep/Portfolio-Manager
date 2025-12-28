@@ -209,7 +209,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                             {/* Left Column: Logo & Name */}
                             <div className="flex items-center gap-3 overflow-hidden justify-start">
                                 <Link
-                                    to={`/dividends/edit/${position.stock.id}`}
+                                    to={`/dividends/edit/${position.stock.id}?from=portfolio`}
                                     className="cursor-pointer hover:opacity-80 transition-opacity block"
                                     onClick={(e) => {
                                         // Allow default navigation (Link) but also close modal
