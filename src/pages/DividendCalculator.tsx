@@ -1049,7 +1049,7 @@ export function DividendCalculator() {
                                                     aria-label="ISIN"
                                                 />
                                             </div>
-                                            <div className="space-y-2 col-span-1">
+                                            <div className="space-y-2 col-start-2">
                                                 <div className="flex justify-between items-center">
                                                     <label className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">
                                                         Aktueller Aktien Kurs {simCurrency ? `(${simCurrency === 'GBp' ? 'GBP' : simCurrency})` : ''}
