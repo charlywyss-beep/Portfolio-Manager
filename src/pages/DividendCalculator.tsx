@@ -1012,13 +1012,37 @@ export function DividendCalculator() {
                                                             const results = await searchStocks(simIsin);
                                                             if (results && results.length > 0) {
                                                                 const best = results[0];
+
+                                                                // 1. Basic Info from Search
                                                                 updateSimulatorState({
                                                                     simName: best.longname || best.shortname || best.symbol,
                                                                     simSymbol: best.symbol,
                                                                     simType: best.typeDisp === 'ETF' || best.quoteType === 'ETF' ? 'etf' : 'stock'
                                                                 });
-                                                                // Optional: Trigger price fetch immediately?
-                                                                // For now just fill name/symbol as requested.
+
+                                                                // 2. Fetch Details (Price & Currency)
+                                                                // We reuse the exact logic from "Kurs laden" button
+                                                                // The file has fetchStockHistory imported. 
+                                                                // Let's use fetchStockHistory like the button does.
+
+                                                                try {
+                                                                    const res = await fetchStockHistory(best.symbol, '1D');
+                                                                    if (res.data && res.data.length > 0) {
+                                                                        let val = res.data[res.data.length - 1].value;
+                                                                        const curr = res.currency || 'CHF'; // API often returns currency in meta
+
+                                                                        // GBp check
+                                                                        if (curr === 'GBp') {
+                                                                            const isLSE = best.symbol.toUpperCase().endsWith('.L') || (simIsin && simIsin.startsWith('GB'));
+                                                                            if (isLSE && val > 50) val /= 100;
+                                                                            updateSimulatorState({ simCurrency: 'GBP', price: val });
+                                                                        } else {
+                                                                            updateSimulatorState({ simCurrency: curr, price: val });
+                                                                        }
+                                                                    }
+                                                                } catch (err) {
+                                                                    console.error("Auto-fetch price failed", err);
+                                                                }
                                                             }
                                                         }
                                                     }}

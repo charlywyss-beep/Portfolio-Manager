@@ -65,6 +65,30 @@ export default defineConfig({
           res.end(JSON.stringify({ quoteResponse: { result: [], error: error.message } }));
         }
       });
+
+      // Search Middleware
+      server.middlewares.use('/api/yahoo-search', async (req, res, _next) => {
+        try {
+          const url = new URL(req.url!, `http://${req.headers.host}`);
+          const query = url.searchParams.get('query');
+
+          if (!query) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Query required' }));
+            return;
+          }
+
+          console.log(`[Yahoo Middleware] Searching for ${query}`);
+          const result = await yahooFinance.search(query);
+
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(result));
+        } catch (error: any) {
+          console.error('[Yahoo Middleware] Search Error:', error.message);
+          res.statusCode = 200;
+          res.end(JSON.stringify({ quotes: [], error: error.message }));
+        }
+      });
     }
   }],
   base: './',
