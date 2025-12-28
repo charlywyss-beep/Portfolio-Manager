@@ -80,9 +80,10 @@ export function DividendCalculator() {
     }, [simulatorState.simCurrency, simulatorState.price, simulatorState.dividend, updateSimulatorState]);
 
     // Load planned purchase from URL parameter
+    const loadedRef = useRef(false);
     useEffect(() => {
         const stockId = searchParams.get('stock');
-        if (stockId && stockId !== 'new') {
+        if (stockId && stockId !== 'new' && !loadedRef.current) {
             const stock = stocks.find(s => s.id === stockId);
             if (stock?.plannedPurchase) {
                 const pp = stock.plannedPurchase;
@@ -97,9 +98,15 @@ export function DividendCalculator() {
                     simSymbol: stock.symbol,
                     simIsin: stock.isin || ''
                 });
+                loadedRef.current = true;
             }
         }
+        // Reset flag when stock parameter changes
+        if (!stockId) {
+            loadedRef.current = false;
+        }
     }, [searchParams, stocks, updateSimulatorState]);
+
 
 
     // PDF Export Handler
