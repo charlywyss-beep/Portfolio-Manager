@@ -411,38 +411,8 @@ export function StockDetail() {
                     </div>
                 </div>
 
-                {/* Right Column: Notes & Quick Links Grid */}
-                <div className="grid grid-cols-2 gap-6">
-                    {/* Notes Card */}
-                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-bold text-lg flex items-center gap-2">
-                                <Save className="size-5 text-purple-500" />
-                                Persönliche Notizen & Analyse
-                            </h3>
-                            <button
-                                onClick={handleSaveNotes}
-                                className={cn(
-                                    'px-4 py-2 rounded-lg font-medium text-sm transition-all',
-                                    isSaving
-                                        ? 'bg-green-500 text-white'
-                                        : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                                )}
-                            >
-                                {isSaving ? 'Gespeichert!' : 'Speichern'}
-                            </button>
-                        </div>
-                        <textarea
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Schreiben Sie hier Ihre Gedanken zur Aktie (z.B. Kaufgrund, Burggraben, Risiken)..."
-                            className="flex-1 min-h-[300px] w-full p-4 rounded-lg border border-border bg-background/50 resize-y focus:outline-none focus:ring-2 focus:ring-primary/20"
-                        />
-                        <p className="text-xs text-muted-foreground mt-2">
-                            * Notizen werden nur lokal gespeichert.
-                        </p>
-                    </div>
-
+                {/* Right Column: Quick Links & Notes (Vertical Stack) */}
+                <div className="flex flex-col gap-6">
                     {/* Quick Links Card */}
                     <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
                         <h3 className="font-bold text-lg mb-4">Quick Links</h3>
@@ -512,6 +482,36 @@ export function StockDetail() {
                                 </div>
                             )}
                         </div>
+                    </div>
+
+                    {/* Notes Card */}
+                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-bold text-lg flex items-center gap-2">
+                                <Save className="size-5 text-purple-500" />
+                                Persönliche Notizen & Analyse
+                            </h3>
+                            <button
+                                onClick={handleSaveNotes}
+                                className={cn(
+                                    'px-4 py-2 rounded-lg font-medium text-sm transition-all',
+                                    isSaving
+                                        ? 'bg-green-500 text-white'
+                                        : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                                )}
+                            >
+                                {isSaving ? 'Gespeichert!' : 'Speichern'}
+                            </button>
+                        </div>
+                        <textarea
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            placeholder="Schreiben Sie hier Ihre Gedanken zur Aktie (z.B. Kaufgrund, Burggraben, Risiken)..."
+                            className="flex-1 min-h-[300px] w-full p-4 rounded-lg border border-border bg-background/50 resize-y focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        />
+                        <p className="text-xs text-muted-foreground mt-2">
+                            * Notizen werden nur lokal gespeichert.
+                        </p>
                     </div>
                 </div>
             </div>
