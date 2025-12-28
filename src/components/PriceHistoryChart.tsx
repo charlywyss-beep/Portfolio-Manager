@@ -240,7 +240,7 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                                 hide={false}
                                 orientation="right"
                                 tick={{ fontSize: 10, fill: '#888' }}
-                                tickFormatter={(val) => formatCurrency(val, currency)}
+                                tickFormatter={(val) => formatCurrency(val, currency, false)}
                                 axisLine={false}
                                 tickLine={false}
                                 width={95}
