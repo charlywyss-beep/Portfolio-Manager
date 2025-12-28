@@ -957,7 +957,9 @@ export function DividendCalculator() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium">Aktien Name</label>
+                                            <label className="text-sm font-medium">
+                                                {simulatorState.simType === 'etf' ? 'ETF Name' : 'Aktien Name'}
+                                            </label>
                                             <input required
                                                 type="text"
                                                 id="calc_stock_name_input_v2"
