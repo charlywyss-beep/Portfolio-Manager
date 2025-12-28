@@ -85,19 +85,35 @@ export function DividendCalculator() {
         const stockId = searchParams.get('stock');
         if (stockId && stockId !== 'new' && stockId !== lastLoadedStockIdRef.current) {
             const stock = stocks.find(s => s.id === stockId);
-            if (stock?.plannedPurchase) {
-                const pp = stock.plannedPurchase;
-                updateSimulatorState({
-                    selectedStockId: stockId,
-                    shares: pp.shares,
-                    price: pp.pricePerShare,
-                    dividend: pp.dividendPerShare,
-                    simCurrency: pp.currency,
-                    mode: 'buy',
-                    simName: stock.name,
-                    simSymbol: stock.symbol,
-                    simIsin: stock.isin || ''
-                });
+            if (stock) {
+                if (stock.plannedPurchase) {
+                    // Load with planned purchase data
+                    const pp = stock.plannedPurchase;
+                    updateSimulatorState({
+                        selectedStockId: stockId,
+                        shares: pp.shares,
+                        price: pp.pricePerShare,
+                        dividend: pp.dividendPerShare,
+                        simCurrency: pp.currency,
+                        mode: 'buy',
+                        simName: stock.name,
+                        simSymbol: stock.symbol,
+                        simIsin: stock.isin || ''
+                    });
+                } else {
+                    // Load stock selection without planned data
+                    updateSimulatorState({
+                        selectedStockId: stockId,
+                        mode: 'buy',
+                        simName: stock.name,
+                        simSymbol: stock.symbol,
+                        simIsin: stock.isin || '',
+                        simCurrency: stock.currency,
+                        simType: stock.type,
+                        price: stock.currentPrice,
+                        dividend: stock.dividendAmount || 0
+                    });
+                }
                 lastLoadedStockIdRef.current = stockId;
             }
         }
@@ -106,6 +122,7 @@ export function DividendCalculator() {
             lastLoadedStockIdRef.current = null;
         }
     }, [searchParams, stocks, updateSimulatorState]);
+
 
 
 
