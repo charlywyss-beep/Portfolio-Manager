@@ -411,41 +411,42 @@ export function StockDetail() {
                     </div>
                 </div>
 
-                {/* Right Column: Notes & Research */}
-
-                <div className="bg-card border border-border rounded-xl p-6 shadow-sm h-full flex flex-col">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-bold text-lg flex items-center gap-2">
-                            <Save className="size-5 text-purple-500" />
-                            Persönliche Notizen & Analyse
-                        </h3>
-                        <button
-                            onClick={handleSaveNotes}
-                            disabled={isSaving}
-                            className={cn(
-                                "px-4 py-2 rounded-lg text-sm font-bold transition-all",
-                                isSaving
-                                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                    : "bg-primary text-primary-foreground hover:opacity-90"
-                            )}
-                        >
-                            {isSaving ? 'Gespeichert!' : 'Speichern'}
-                        </button>
+                {/* Right Column: Notes & Quick Links Grid */}
+                <div className="grid grid-cols-2 gap-6">
+                    {/* Notes Card */}
+                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-bold text-lg flex items-center gap-2">
+                                <Save className="size-5 text-purple-500" />
+                                Persönliche Notizen & Analyse
+                            </h3>
+                            <button
+                                onClick={saveNotes}
+                                className={cn(
+                                    'px-4 py-2 rounded-lg font-medium text-sm transition-all',
+                                    isSaving
+                                        ? 'bg-green-500 text-white'
+                                        : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                                )}
+                            >
+                                {isSaving ? 'Gespeichert!' : 'Speichern'}
+                            </button>
+                        </div>
+                        <textarea
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            placeholder="Schreiben Sie hier Ihre Gedanken zur Aktie (z.B. Kaufgrund, Burggraben, Risiken)..."
+                            className="flex-1 min-h-[300px] w-full p-4 rounded-lg border border-border bg-background/50 resize-y focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        />
+                        <p className="text-xs text-muted-foreground mt-2">
+                            * Notizen werden nur lokal gespeichert.
+                        </p>
                     </div>
-                    <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        placeholder="Schreiben Sie hier Ihre Gedanken zur Aktie (z.B. Kaufgrund, Burggraben, Risiken)..."
-                        className="flex-1 min-h-[300px] w-full p-4 rounded-lg border border-border bg-background/50 resize-y focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
-                    <p className="text-xs text-muted-foreground mt-2">
-                        * Notizen werden nur lokal gespeichert.
-                    </p>
 
-                    {/* Quick Links Section */}
-                    <div className="mt-6 pt-6 border-t border-border">
-                        <h4 className="font-semibold text-md mb-3">Quick Links</h4>
-                        <div className="space-y-3">
+                    {/* Quick Links Card */}
+                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
+                        <h3 className="font-bold text-lg mb-4">Quick Links</h3>
+                        <div className="space-y-3 flex-1">
                             {/* Input for adding new links */}
                             <div className="flex gap-2">
                                 <input
@@ -468,7 +469,7 @@ export function StockDetail() {
                                             input.value = '';
                                         }
                                     }}
-                                    className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                                    className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
                                 >
                                     + Hinzufügen
                                 </button>
@@ -498,6 +499,16 @@ export function StockDetail() {
                                             </button>
                                         </div>
                                     ))}
+                                </div>
+                            )}
+
+                            {/* Empty state */}
+                            {(!stock?.quickLinks || stock.quickLinks.length === 0) && (
+                                <div className="flex-1 flex items-center justify-center text-center p-8">
+                                    <p className="text-sm text-muted-foreground">
+                                        Keine Links gespeichert.<br />
+                                        Füge Chart- oder Finanz-URLs hinzu.
+                                    </p>
                                 </div>
                             )}
                         </div>
