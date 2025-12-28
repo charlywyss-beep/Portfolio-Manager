@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Calculator, Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw } from 'lucide-react';
-import { fetchStockHistory } from '../services/yahoo-finance';
+import { fetchStockHistory, searchStocks } from '../services/yahoo-finance';
 
 // Helper component for comma-friendly number input
 const LocalNumberInput = ({ value, onChange, className, step = "any", title, placeholder }: {
@@ -1002,8 +1002,28 @@ export function DividendCalculator() {
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm font-medium">ISIN (Optional)</label>
-                                                <input placeholder="z.B. CH00..." className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
-                                                    value={simIsin} onChange={e => updateSimulatorState({ simIsin: e.target.value })} aria-label="ISIN" />
+                                                <input
+                                                    placeholder="z.B. CH00..."
+                                                    className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                                    value={simIsin}
+                                                    onChange={e => updateSimulatorState({ simIsin: e.target.value })}
+                                                    onKeyDown={async (e) => {
+                                                        if (e.key === 'Enter' && simIsin.length > 5) {
+                                                            const results = await searchStocks(simIsin);
+                                                            if (results && results.length > 0) {
+                                                                const best = results[0];
+                                                                updateSimulatorState({
+                                                                    simName: best.longname || best.shortname || best.symbol,
+                                                                    simSymbol: best.symbol,
+                                                                    simType: best.typeDisp === 'ETF' || best.quoteType === 'ETF' ? 'etf' : 'stock'
+                                                                });
+                                                                // Optional: Trigger price fetch immediately?
+                                                                // For now just fill name/symbol as requested.
+                                                            }
+                                                        }
+                                                    }}
+                                                    aria-label="ISIN"
+                                                />
                                             </div>
                                             <div className="space-y-2 col-span-2">
                                                 <div className="flex justify-between items-center">

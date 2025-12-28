@@ -201,3 +201,21 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
         return {};
     }
 }
+// Search for stocks/ISIN
+export async function searchStocks(query: string): Promise<any[]> {
+    try {
+        const url = `/api/yahoo-search?query=${encodeURIComponent(query)}`;
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            console.error(`Search API Error: ${response.status}`);
+            return [];
+        }
+
+        const data = await response.json();
+        return data.quotes || [];
+    } catch (error) {
+        console.error("Search API Error:", error);
+        return [];
+    }
+}
