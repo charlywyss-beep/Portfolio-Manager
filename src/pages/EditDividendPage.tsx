@@ -287,7 +287,7 @@ export function EditDividendPage() {
     return (
         <div className="min-h-screen bg-background pb-20">
             {/* Header */}
-            <div className="flex items-center gap-4 p-4 border-b border-border bg-card sticky top-0 z-10 w-full">
+            <div className="flex items-center gap-4 p-4 border-b border-border bg-card sticky top-16 z-30 w-full transition-all">
                 <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-muted rounded-full">
                     <ArrowLeft className="size-6" />
                 </button>
