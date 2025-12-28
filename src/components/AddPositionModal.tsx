@@ -309,8 +309,13 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Name</label>
                                     <input required
+                                        type="text"
+                                        id="input_instrument_name"
                                         autoComplete="off"
-                                        name="stock_name"
+                                        data-lpignore="true"
+                                        data-1p-ignore="true"
+                                        data-form-type="other"
+                                        name="input_instrument_name_field"
                                         placeholder="z.B. Nestlé S.A."
                                         className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                         value={newStock.name} onChange={e => setNewStock({ ...newStock, name: e.target.value })} />
