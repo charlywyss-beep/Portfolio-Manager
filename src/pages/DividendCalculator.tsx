@@ -886,8 +886,14 @@ export function DividendCalculator() {
                                                                                 {stock.name}
                                                                                 {stock.type === 'etf' && <span className="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-1.5 py-0.5 rounded">ETF</span>}
                                                                             </div>
-                                                                            <div className="text-sm text-muted-foreground">
-                                                                                {stock.symbol} • {stock.sector}
+                                                                            <div className="text-sm text-muted-foreground flex items-center gap-2">
+                                                                                <span className="font-mono">{stock.symbol}</span>
+                                                                                {stock.isin && (
+                                                                                    <>
+                                                                                        <span>•</span>
+                                                                                        <span className="font-mono text-xs">{stock.isin}</span>
+                                                                                    </>
+                                                                                )}
                                                                             </div>
                                                                         </div>
                                                                         <div className="text-right">
