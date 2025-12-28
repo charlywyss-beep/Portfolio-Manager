@@ -270,69 +270,67 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
                     {/* Purchases List */}
                     <div className="p-6 space-y-4 flex-1">
-                        <div className="space-y-3">
+                        {/* Header Row */}
+                        <div className="grid grid-cols-12 gap-3 px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase bg-muted/50 rounded-lg mb-2">
+                            <div className="col-span-3">Datum</div>
+                            <div className="col-span-2 text-center">Stück</div>
+                            <div className="col-span-3 text-center">Kaufpreis ({isGBX ? 'GBP' : position.stock.currency})</div>
+                            <div className="col-span-3 text-center">
+                                <div>Wechselkurs</div>
+                                <div className="font-normal normal-case text-[9px] opacity-70">CHF pro 1 {isGBX ? 'GBP' : position.stock.currency}</div>
+                            </div>
+                            <div className="col-span-1"></div>
+                        </div>
+
+                        <div className="space-y-2">
                             {purchases.map((purchase) => (
-                                <div key={purchase.id} className="grid grid-cols-12 gap-3 items-end bg-card p-3 rounded-lg border border-border shadow-sm group hover:border-primary/30 transition-colors">
+                                <div key={purchase.id} className="grid grid-cols-12 gap-3 items-center bg-card p-2 rounded-lg border border-border/50 shadow-sm group hover:border-primary/30 transition-colors">
                                     {/* Date */}
                                     <div className="col-span-3">
-                                        <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Datum</label>
                                         <input
                                             type="date"
                                             value={purchase.date}
                                             onChange={(e) => handleUpdatePurchase(purchase.id, 'date', e.target.value)}
-                                            className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary"
+                                            className="w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary"
                                         />
                                     </div>
                                     {/* Shares */}
                                     <div className="col-span-2">
-                                        <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Stück</label>
                                         <DecimalInput
                                             value={purchase.shares}
                                             onChange={(val) => handleUpdatePurchase(purchase.id, 'shares', parseFloat(val) || 0)}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary text-center"
+                                            className="w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary text-center"
                                         />
                                     </div>
                                     {/* Price */}
                                     <div className="col-span-3">
-                                        <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Kaufpreis ({isGBX ? 'GBP' : position.stock.currency})</label>
                                         <DecimalInput
                                             value={purchase.price}
                                             onChange={(val) => handleUpdatePurchase(purchase.id, 'price', parseFloat(val) || 0)}
                                             maxDecimals={isGBX ? 4 : 2}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary text-center"
+                                            className="w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary text-center"
                                         />
                                     </div>
+                                    {/* FX Rate */}
                                     <div className="col-span-3">
-                                        <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
-                                            <div className="flex justify-between items-center">
-                                                <span>Wechselkurs</span>
-                                                {position.stock.currency !== 'CHF' && (
-                                                    <div className="flex items-center gap-2">
-
-
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="font-normal normal-case text-[9px] opacity-80">CHF pro 1 {isGBX ? 'GBP' : position.stock.currency}</div>
-                                        </label>
                                         <DecimalInput
                                             value={purchase.fxRate}
                                             onChange={(val) => handleUpdatePurchase(purchase.id, 'fxRate', parseFloat(val) || 0)}
                                             disabled={position.stock.currency === 'CHF'}
                                             maxDecimals={4}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full h-9 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary disabled:opacity-50 text-center"
+                                            className="w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary disabled:opacity-50 text-center"
                                         />
                                     </div>
                                     {/* Delete Row */}
-                                    <div className="col-span-1 flex justify-center pb-1">
+                                    <div className="col-span-1 flex justify-center">
                                         {purchases.length > 1 && (
                                             <button
                                                 type="button"
                                                 onClick={() => handleRemovePurchase(purchase.id)}
-                                                className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                                className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100"
                                                 title="Eintrag entfernen"
                                             >
                                                 <Trash2 className="size-4" />
