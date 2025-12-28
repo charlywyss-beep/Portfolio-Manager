@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { X, Save, Trash2, Plus, Pencil } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import type { Stock, Purchase } from '../types';
@@ -208,13 +208,14 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                         <div className="p-4 bg-muted/30 border-b border-border grid grid-cols-3 items-center gap-4">
                             {/* Left Column: Logo & Name */}
                             <div className="flex items-center gap-3 overflow-hidden justify-start">
-                                <div
-                                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                                <Link
+                                    to={`/stock/${position.stock.id}`}
+                                    className="cursor-pointer hover:opacity-80 transition-opacity block"
                                     onClick={(e) => {
-                                        e.preventDefault();
+                                        // Allow default navigation (Link) but also close modal
+                                        // We do NOT call preventDefault because we WANT the navigation.
                                         e.stopPropagation();
                                         onClose();
-                                        navigate(`/stock/${position.stock.id}`);
                                     }}
                                     title="Zu Stammdaten wechseln"
                                 >
@@ -224,7 +225,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                         fallback={position.stock.symbol.slice(0, 2)}
                                         size="size-10"
                                     />
-                                </div>
+                                </Link>
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-start gap-2 group/edit w-full">
                                         <textarea
