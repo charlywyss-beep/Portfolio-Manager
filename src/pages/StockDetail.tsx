@@ -421,7 +421,7 @@ export function StockDetail() {
                                 Persönliche Notizen & Analyse
                             </h3>
                             <button
-                                onClick={saveNotes}
+                                onClick={handleSaveNotes}
                                 className={cn(
                                     'px-4 py-2 rounded-lg font-medium text-sm transition-all',
                                     isSaving
