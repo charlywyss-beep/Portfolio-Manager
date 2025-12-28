@@ -237,48 +237,46 @@ export function Watchlist() {
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground align-top">
                                                     {stock.dividendDates && stock.dividendDates.length > 0 ? (
-                                                        {
-                                                            stock.dividendDates && stock.dividendDates.length > 0 ? (
-                                                                <div className="grid grid-cols-[30px_70px] gap-x-1 justify-end items-center text-right text-sm">
-                                                                    {stock.dividendDates
-                                                                        .map((d, i) => ({ ...d, label: stock.dividendFrequency === 'semi-annually' ? `${i + 1}.` : `Q${i + 1}` }))
-                                                                        .filter(d => d.exDate)
-                                                                        .sort((a, b) => new Date(a.exDate).getTime() - new Date(b.exDate).getTime())
-                                                                        .map((d, idx) => {
-                                                                            const dateObj = new Date(d.exDate);
-                                                                            const dDays = Math.ceil((dateObj.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                                                                            const isPast = dDays < 0;
-                                                                            const isSoon = dDays >= 0 && dDays <= 14;
-                                                                            const formattedDate = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
-                                                                            const colorClass = isPast ? "text-green-600 font-medium" : isSoon ? "text-orange-500 font-medium" : "";
+                                                        <div className="grid grid-cols-[30px_70px] gap-x-1 justify-end items-center text-right text-sm">
+                                                            {stock.dividendDates
+                                                                .map((d, i) => ({ ...d, label: stock.dividendFrequency === 'semi-annually' ? `${i + 1}.` : `Q${i + 1}` }))
+                                                                .filter(d => d.exDate)
+                                                                .sort((a, b) => new Date(a.exDate).getTime() - new Date(b.exDate).getTime())
+                                                                .map((d, idx) => {
+                                                                    const dateObj = new Date(d.exDate);
+                                                                    const dDays = Math.ceil((dateObj.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                                                                    const isPast = dDays < 0;
+                                                                    const isSoon = dDays >= 0 && dDays <= 14;
+                                                                    const formattedDate = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+                                                                    const colorClass = isPast ? "text-green-600 font-medium" : isSoon ? "text-orange-500 font-medium" : "";
 
-                                                                            return (
-                                                                                <Fragment key={idx}>
-                                                                                    <span className="px-1.5 py-0.5 text-[10px] uppercase font-medium bg-muted text-muted-foreground border border-border rounded justify-self-end">
-                                                                                        {d.label}
-                                                                                    </span>
-                                                                                    <span className={colorClass + " whitespace-nowrap tabular-nums"}>
-                                                                                        {formattedDate}
-                                                                                    </span>
-                                                                                </Fragment>
-                                                                            );
-                                                                        })}
-                                                                </div>
-                                                            ) : (
-                                                                <div className={(() => {
-                                                                    const dDays = stock.dividendExDate ? Math.ceil((new Date(stock.dividendExDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                                                    if (dDays !== null && dDays < 0) return "text-sm whitespace-nowrap text-green-600 font-medium"; // Past -> Green
-                                                                    if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-sm whitespace-nowrap text-orange-500 font-medium"; // Soon -> Orange
-                                                                    return "text-sm whitespace-nowrap";
-                                                                })()}>
-                                                                    {stock.dividendExDate ? new Date(stock.dividendExDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
-                                                                </div>
-                                                            )
-                                                        }
+                                                                    return (
+                                                                        <Fragment key={idx}>
+                                                                            <span className="px-1.5 py-0.5 text-xs uppercase font-medium bg-muted text-muted-foreground border border-border rounded justify-self-end">
+                                                                                {d.label}
+                                                                            </span>
+                                                                            <span className={colorClass + " whitespace-nowrap tabular-nums"}>
+                                                                                {formattedDate}
+                                                                            </span>
+                                                                        </Fragment>
+                                                                    );
+                                                                })}
+                                                        </div>
+                                                    ) : (
+                                                        <div className={(() => {
+                                                            const dDays = stock.dividendExDate ? Math.ceil((new Date(stock.dividendExDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                                                            if (dDays !== null && dDays < 0) return "text-sm whitespace-nowrap text-green-600 font-medium"; // Past -> Green
+                                                            if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-sm whitespace-nowrap text-orange-500 font-medium"; // Soon -> Orange
+                                                            return "text-sm whitespace-nowrap";
+                                                        })()}>
+                                                            {stock.dividendExDate ? new Date(stock.dividendExDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
+                                                        </div>
+                                                    )
+                                                    }
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground align-top">
                                                     {stock.dividendDates && stock.dividendDates.length > 0 ? (
-                                                        <div className="grid grid-cols-[24px_50px] gap-x-1 justify-end items-center text-right text-xs">
+                                                        <div className="grid grid-cols-[30px_70px] gap-x-1 justify-end items-center text-right text-sm">
                                                             {stock.dividendDates
                                                                 .map((d, i) => ({ ...d, label: stock.dividendFrequency === 'semi-annually' ? `${i + 1}.` : `Q${i + 1}` }))
                                                                 .filter(d => d.payDate)
@@ -301,7 +299,7 @@ export function Watchlist() {
 
                                                                     return (
                                                                         <Fragment key={idx}>
-                                                                            <span className="px-1.5 py-0.5 text-[10px] uppercase font-medium bg-muted text-muted-foreground border border-border rounded justify-self-end">
+                                                                            <span className="px-1.5 py-0.5 text-xs uppercase font-medium bg-muted text-muted-foreground border border-border rounded justify-self-end">
                                                                                 {d.label}
                                                                             </span>
                                                                             <span className={colorClass + " whitespace-nowrap tabular-nums"}>
