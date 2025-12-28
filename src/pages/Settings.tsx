@@ -174,8 +174,76 @@ export function Settings() {
                 </div>
             </div>
 
+            {/* Stock Management */}
+            <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-4">
+                <div className="flex items-center gap-3 text-primary mb-4">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                        <FileJson className="size-5" />
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-semibold">Stock-Verwaltung</h2>
+                        <p className="text-sm text-muted-foreground">Alte/nicht verwendete Aktien löschen</p>
+                    </div>
+                </div>
 
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {stocks.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">Keine Stocks vorhanden</p>
+                    ) : (
+                        stocks.map(stock => {
+                            const isInPortfolio = positions.some(p => p.stockId === stock.id);
+                            const isInWatchlist = watchlist.includes(stock.id);
+                            const isActive = isInPortfolio || isInWatchlist;
 
+                            return (
+                                <div key={stock.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/50">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-semibold">{stock.name}</span>
+                                            <span className="text-sm text-muted-foreground">({stock.symbol})</span>
+                                            {stock.type === 'etf' && (
+                                                <span className="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-1.5 py-0.5 rounded">ETF</span>
+                                            )}
+                                        </div>
+                                        {stock.isin && (
+                                            <div className="text-xs text-muted-foreground font-mono">{stock.isin}</div>
+                                        )}
+                                        {isActive && (
+                                            <div className="text-xs text-green-600 dark:text-green-400 mt-1">
+                                                {isInPortfolio && '✓ In Portfolio'}
+                                                {isInPortfolio && isInWatchlist && ' • '}
+                                                {isInWatchlist && '✓ In Watchlist'}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            if (window.confirm(`"${stock.name}" wirklich löschen?`)) {
+                                                const updatedStocks = stocks.filter(s => s.id !== stock.id);
+                                                importData({
+                                                    positions,
+                                                    stocks: updatedStocks,
+                                                    fixedDeposits,
+                                                    history,
+                                                    watchlist
+                                                });
+                                            }
+                                        }}
+                                        disabled={isActive}
+                                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${isActive
+                                            ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
+                                            : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-900/30'
+                                            }`}
+                                        title={isActive ? 'Aktiv in Portfolio oder Watchlist - nicht löschbar' : 'Löschen'}
+                                    >
+                                        {isActive ? 'Aktiv' : 'Löschen'}
+                                    </button>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+            </div>
 
             {/* Danger Zone */}
             <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/20 rounded-xl p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
