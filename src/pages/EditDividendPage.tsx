@@ -545,7 +545,7 @@ export function EditDividendPage() {
                                     <div className="flex justify-between items-center py-2 px-3 bg-muted/30 rounded-lg border border-border/50 mb-2">
                                         <label className="text-sm font-medium text-muted-foreground">Kaufpreis Ø</label>
                                         <span className="font-mono font-medium">
-                                            {useCurrencyFormatter().format(
+                                            {formatCurrency(
                                                 positions.find(p => p.stockId === currentStockId)?.buyPriceAvg || 0,
                                                 stocks.find(s => s.id === currentStockId)?.currency || 'CHF'
                                             )}
