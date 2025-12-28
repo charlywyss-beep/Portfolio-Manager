@@ -237,7 +237,7 @@ export function Watchlist() {
                                                 </td>
                                                 <td className="text-right py-3 px-4 text-muted-foreground align-top">
                                                     {stock.dividendDates && stock.dividendDates.length > 0 ? (
-                                                        <div className="grid grid-cols-[16px_24px_50px] gap-x-0.5 justify-end items-center text-right text-xs">
+                                                        <div className="grid grid-cols-[24px_50px] gap-x-1 justify-end items-center text-right text-xs">
                                                             {stock.dividendDates
                                                                 .map((d, i) => ({ ...d, label: stock.dividendFrequency === 'semi-annually' ? `${i + 1}.` : `Q${i + 1}` }))
                                                                 .filter(d => d.exDate)
@@ -245,14 +245,13 @@ export function Watchlist() {
                                                                 .map((d, idx) => {
                                                                     const dateObj = new Date(d.exDate);
                                                                     const dDays = Math.ceil((dateObj.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                                                                    const isExpired = dDays < 0;
+                                                                    const isPast = dDays < 0;
                                                                     const isSoon = dDays >= 0 && dDays <= 14;
                                                                     const formattedDate = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
-                                                                    const colorClass = isExpired ? "text-red-500 font-medium" : isSoon ? "text-orange-500 font-medium" : "";
+                                                                    const colorClass = isPast ? "text-green-600 font-medium" : isSoon ? "text-orange-500 font-medium" : "";
 
                                                                     return (
                                                                         <Fragment key={idx}>
-                                                                            <span className={colorClass + " justify-self-end"}>{isSoon ? '⚠️' : ''}</span>
                                                                             <span className="px-1.5 py-0.5 text-[10px] uppercase font-medium bg-muted text-muted-foreground border border-border rounded justify-self-end">
                                                                                 {d.label}
                                                                             </span>
@@ -266,11 +265,11 @@ export function Watchlist() {
                                                     ) : (
                                                         <div className={(() => {
                                                             const dDays = stock.dividendExDate ? Math.ceil((new Date(stock.dividendExDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                                            if (dDays !== null && dDays < 0) return "text-xs whitespace-nowrap text-red-500 font-medium";
-                                                            if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-xs whitespace-nowrap text-orange-500 font-medium";
+                                                            if (dDays !== null && dDays < 0) return "text-xs whitespace-nowrap text-green-600 font-medium"; // Past -> Green
+                                                            if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-xs whitespace-nowrap text-orange-500 font-medium"; // Soon -> Orange
                                                             return "text-xs whitespace-nowrap";
                                                         })()}>
-                                                            {isExSoon && '⚠️ '}{stock.dividendExDate ? new Date(stock.dividendExDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
+                                                            {stock.dividendExDate ? new Date(stock.dividendExDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
                                                         </div>
                                                     )}
                                                 </td>
