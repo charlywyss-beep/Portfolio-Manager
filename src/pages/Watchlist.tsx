@@ -149,6 +149,11 @@ export function Watchlist() {
                                                                 {smartWrap(stock.name)}
                                                             </div>
                                                             <div className="text-xs text-muted-foreground">{stock.symbol}</div>
+                                                            {stock.plannedShares && stock.plannedPrice && (
+                                                                <div className="text-[10px] text-blue-600 dark:text-blue-400 font-medium mt-1 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded inline-block">
+                                                                    Geplant: {stock.plannedShares} Stk @ {formatCurrency(stock.plannedPrice, stock.currency, false)}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </td>

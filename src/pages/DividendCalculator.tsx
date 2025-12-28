@@ -65,7 +65,7 @@ import { cn } from '../utils';
 export function DividendCalculator() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { stocks, addStock, addToWatchlist, simulatorState, updateSimulatorState, positions, addPosition, updatePosition, deletePosition } = usePortfolio();
+    const { stocks, addStock, addToWatchlist, updateStock, simulatorState, updateSimulatorState, positions, addPosition, updatePosition, deletePosition } = usePortfolio();
     const { rates } = useExchangeRates();
 
     // Catch-all: Ensure GBp is always converted to GBP on mount/update
@@ -684,6 +684,12 @@ export function DividendCalculator() {
         const fromWatchlist = searchParams.get('from') === 'watchlist';
 
         if (selectedStockId && selectedStockId !== 'new') {
+            // Save planned purchase data
+            updateStock(selectedStockId, {
+                plannedShares: shares,
+                plannedPrice: price,
+                plannedDividend: dividend
+            });
             addToWatchlist(selectedStockId);
             setShowSuccess(true);
             setTimeout(() => {
@@ -705,7 +711,10 @@ export function DividendCalculator() {
                 sector: simulatorState.simSector || 'Simuliert',
                 dividendAmount: dividend,
                 dividendYield: price > 0 ? (dividend / price) * 100 : 0,
-                dividendFrequency: 'annually'
+                dividendFrequency: 'annually',
+                plannedShares: shares,
+                plannedPrice: price,
+                plannedDividend: dividend
             });
             addToWatchlist(newId);
             updateSimulatorState({ selectedStockId: newId });

@@ -32,6 +32,9 @@ export interface Stock {
     logoUrl?: string;
     targetPrice?: number; // Desired buy price (Fair Value)
     notes?: string; // Personal notes about the stock
+    plannedShares?: number; // Planned number of shares to buy (from simulator)
+    plannedPrice?: number; // Planned buy price (from simulator)
+    plannedDividend?: number; // Expected dividend amount (from simulator)
     distributionPolicy?: 'distributing' | 'accumulating'; // Thesaurierend vs Ausschüttend
     trailingPE?: number; // KGV (Price-Earnings Ratio)
     forwardPE?: number; // KGV (Forecast)
