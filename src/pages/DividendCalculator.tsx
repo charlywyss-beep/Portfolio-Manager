@@ -878,9 +878,19 @@ export function DividendCalculator() {
                                                                         onClick={() => handleStockSelect(stock.id)}
                                                                         className="w-full p-3 hover:bg-muted transition-colors text-left flex items-center gap-3"
                                                                     >
-                                                                        <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
-                                                                            {stock.symbol.slice(0, 2)}
-                                                                        </div>
+                                                                        {stock.logoUrl ? (
+                                                                            <div className="size-10 rounded-lg p-1 bg-white border border-border flex items-center justify-center overflow-hidden">
+                                                                                <img
+                                                                                    src={stock.logoUrl}
+                                                                                    alt={stock.name}
+                                                                                    className="w-full h-full object-contain"
+                                                                                />
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
+                                                                                {stock.symbol.slice(0, 2)}
+                                                                            </div>
+                                                                        )}
                                                                         <div className="flex-1">
                                                                             <div className="font-semibold flex items-center gap-2">
                                                                                 {stock.name}
