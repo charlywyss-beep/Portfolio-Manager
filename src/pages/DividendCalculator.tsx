@@ -1263,7 +1263,40 @@ export function DividendCalculator() {
                                         </select>
                                     </div>
                                 )}
+                                {/* Execute Action */}
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={onExecute}
+                                        disabled={shares <= 0 || price <= 0 || (mode === 'buy' && selectedStockId === 'new' && (!simName || !simSymbol))}
+                                        className={`flex-1 py-2 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-sm ${showSuccess
+                                            ? 'bg-green-600 text-white hover:bg-green-700'
+                                            : mode === 'buy'
+                                                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                                : 'bg-red-600 text-white hover:bg-red-700'
+                                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                        {showSuccess ? <Check size={16} /> : (mode === 'buy' ? <Plus size={16} /> : <Coins size={16} />)}
+                                        {showSuccess
+                                            ? 'Ausgeführt!'
+                                            : searchParams.get('from') === 'portfolio'
+                                                ? 'Position hinzufügen'
+                                                : mode === 'buy'
+                                                    ? 'Kaufen & Ins Depot übernehmen'
+                                                    : 'Verkaufen & Ausbuchen'
+                                        }
+                                    </button>
+                                </div>
 
+                                {/* Watchlist Action */}
+                                {mode === 'buy' && (
+                                    <button
+                                        onClick={handleAddToWatchlist}
+                                        className="w-full py-2 rounded-md font-medium text-sm bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 transition-colors shadow-sm"
+                                    >
+                                        <Eye size={16} />
+                                        In Watchlist speichern
+                                    </button>
+                                )}
                             </div>
 
                             <div className="space-y-4">
@@ -1573,41 +1606,7 @@ export function DividendCalculator() {
                                     </div>
                                 )}
 
-                                {/* Execute Action */}
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={onExecute}
-                                        disabled={shares <= 0 || price <= 0 || (mode === 'buy' && selectedStockId === 'new' && (!simName || !simSymbol))}
-                                        className={`flex-1 py-2 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-sm ${showSuccess
-                                            ? 'bg-green-600 text-white hover:bg-green-700'
-                                            : mode === 'buy'
-                                                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                                : 'bg-red-600 text-white hover:bg-red-700'
-                                            } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                    >
-                                        {showSuccess ? <Check size={16} /> : (mode === 'buy' ? <Plus size={16} /> : <Coins size={16} />)}
-                                        {showSuccess
-                                            ? 'Ausgeführt!'
-                                            : searchParams.get('from') === 'portfolio'
-                                                ? 'Position hinzufügen'
-                                                : mode === 'buy'
-                                                    ? 'Kaufen & Ins Depot übernehmen'
-                                                    : 'Verkaufen & Ausbuchen'
-                                        }
-                                    </button>
 
-                                </div>
-
-                                {/* Watchlist Action (Full Width) */}
-                                {mode === 'buy' && (
-                                    <button
-                                        onClick={handleAddToWatchlist}
-                                        className="w-full py-2 rounded-md font-medium text-sm border border-border bg-background hover:bg-accent text-foreground flex items-center justify-center gap-2 transition-colors"
-                                    >
-                                        <Eye size={16} />
-                                        In Watchlist speichern
-                                    </button>
-                                )}
                             </div>
                         </div>
                     </div>
