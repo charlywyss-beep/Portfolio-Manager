@@ -80,10 +80,10 @@ export function DividendCalculator() {
     }, [simulatorState.simCurrency, simulatorState.price, simulatorState.dividend, updateSimulatorState]);
 
     // Load planned purchase from URL parameter
-    const loadedRef = useRef(false);
+    const lastLoadedStockIdRef = useRef<string | null>(null);
     useEffect(() => {
         const stockId = searchParams.get('stock');
-        if (stockId && stockId !== 'new' && !loadedRef.current) {
+        if (stockId && stockId !== 'new' && stockId !== lastLoadedStockIdRef.current) {
             const stock = stocks.find(s => s.id === stockId);
             if (stock?.plannedPurchase) {
                 const pp = stock.plannedPurchase;
@@ -98,12 +98,12 @@ export function DividendCalculator() {
                     simSymbol: stock.symbol,
                     simIsin: stock.isin || ''
                 });
-                loadedRef.current = true;
+                lastLoadedStockIdRef.current = stockId;
             }
         }
-        // Reset flag when stock parameter changes
+        // Reset when no stock parameter
         if (!stockId) {
-            loadedRef.current = false;
+            lastLoadedStockIdRef.current = null;
         }
     }, [searchParams, stocks, updateSimulatorState]);
 
