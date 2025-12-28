@@ -22,7 +22,7 @@ export function EditDividendPage() {
     const { stockId } = useParams();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { stocks, updateStockDividend, updateStockPrice, updateStock } = usePortfolio();
+    const { stocks, positions, updateStockDividend, updateStockPrice, updateStock } = usePortfolio();
 
     const [selectedStockId, setSelectedStockId] = useState(''); // Local state for selection
     const [symbol, setSymbol] = useState(''); // NEW: Allow editing symbol
@@ -239,7 +239,7 @@ export function EditDividendPage() {
         }
     };
 
-    const { rates } = useCurrencyFormatter();
+    const { rates, formatCurrency } = useCurrencyFormatter();
 
     const convertAmount = (val: number, from: Currency | string, to: Currency | string) => {
         if (!rates || from === to) return val;
@@ -539,6 +539,20 @@ export function EditDividendPage() {
                             {/* Price Section */}
                             <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4">
                                 <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Kursdaten</h3>
+
+                                {/* Kaufpreis Average Display */}
+                                {stocks.find(s => s.id === currentStockId) && positions.find(p => p.stockId === currentStockId) && (
+                                    <div className="flex justify-between items-center py-2 px-3 bg-muted/30 rounded-lg border border-border/50 mb-2">
+                                        <label className="text-sm font-medium text-muted-foreground">Kaufpreis Ø</label>
+                                        <span className="font-mono font-medium">
+                                            {useCurrencyFormatter().format(
+                                                positions.find(p => p.stockId === currentStockId)?.buyPriceAvg || 0,
+                                                stocks.find(s => s.id === currentStockId)?.currency || 'CHF'
+                                            )}
+                                        </span>
+                                    </div>
+                                )}
+
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="flex flex-col h-full gap-2">
                                         <div className="flex justify-between items-center min-h-[28px]">
