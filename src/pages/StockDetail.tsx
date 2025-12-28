@@ -409,6 +409,36 @@ export function StockDetail() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Kursdaten - New Section */}
+                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                            Kursdaten
+                        </h3>
+                        <div className="space-y-3">
+                            {/* Kaufpreis (Avg Buy Price) - Only if position exists */}
+                            {positions.find(p => p.stockId === stock.id) && (
+                                <div className="flex justify-between py-1.5 border-b border-border/50">
+                                    <span className="text-muted-foreground text-sm">Kaufpreis Ø</span>
+                                    <span className="font-medium text-sm">
+                                        {formatCurrency(positions.find(p => p.stockId === stock.id)?.buyPriceAvg || 0, stock.currency)}
+                                    </span>
+                                </div>
+                            )}
+
+                            <div className="flex justify-between py-1.5 border-b border-border/50">
+                                <span className="text-muted-foreground text-sm">Aktueller Kurs</span>
+                                <span className="font-medium text-sm">{formatCurrency(stock.currentPrice, stock.currency)}</span>
+                            </div>
+
+                            <div className="flex justify-between py-1.5 border-b border-border/50">
+                                <span className="text-muted-foreground text-sm">Kauflimit</span>
+                                <span className="font-medium text-sm">
+                                    {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency) : '-'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Right Column: Quick Links & Notes (Vertical Stack) */}

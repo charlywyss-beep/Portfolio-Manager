@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Save, Trash2, Plus, Pencil } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import type { Stock, Purchase } from '../types';
@@ -207,12 +208,21 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                         <div className="p-4 bg-muted/30 border-b border-border grid grid-cols-3 items-center gap-4">
                             {/* Left Column: Logo & Name */}
                             <div className="flex items-center gap-3 overflow-hidden justify-start">
-                                <Logo
-                                    url={position.stock.logoUrl}
-                                    alt={stockName}
-                                    fallback={position.stock.symbol.slice(0, 2)}
-                                    size="size-10"
-                                />
+                                <div
+                                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => {
+                                        onClose();
+                                        navigate(`/stock/${position.stock.id}`);
+                                    }}
+                                    title="Zu Stammdaten wechseln"
+                                >
+                                    <Logo
+                                        url={position.stock.logoUrl}
+                                        alt={stockName}
+                                        fallback={position.stock.symbol.slice(0, 2)}
+                                        size="size-10"
+                                    />
+                                </div>
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-start gap-2 group/edit w-full">
                                         <textarea
@@ -383,5 +393,6 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                     </form>
                 </div>
             </div>
-            );
+        </div>
+    );
 }
