@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, Save, TrendingUp, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Save, TrendingUp, RefreshCw, Trash2 } from 'lucide-react';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { cn } from '../utils';
@@ -412,7 +412,7 @@ export function StockDetail() {
                 </div>
 
                 {/* Right Column: Quick Links & Notes (Vertical Stack) */}
-                <div className="flex flex-col gap-6">
+                <div className="lg:col-span-3 flex flex-col gap-6">
                     {/* Quick Links Card */}
                     <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
                         <h3 className="font-bold text-lg mb-4">Quick Links</h3>
@@ -463,9 +463,10 @@ export function StockDetail() {
                                             </a>
                                             <button
                                                 onClick={() => removeQuickLink(stock.id, link.id)}
-                                                className="opacity-0 group-hover:opacity-100 px-2 py-1 text-xs text-destructive hover:bg-destructive/10 rounded transition-all"
+                                                className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all opacity-70 hover:opacity-100"
+                                                title="Link entfernen"
                                             >
-                                                ×
+                                                <Trash2 className="size-4" />
                                             </button>
                                         </div>
                                     ))}
