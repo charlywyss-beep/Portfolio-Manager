@@ -181,209 +181,207 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-            <div className="absolute bg-black/50 backdrop-blur-sm rounded-xl" style={{
-                width: 'min(calc(100vw - 2rem), calc(48rem + 300px))',
-                height: 'min(calc(100vh - 2rem), calc(90vh + 240px))'
-            }}></div>
-            <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10">
-                {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-border">
-                    <div>
-                        <h2 className="text-xl font-bold">Position bearbeiten</h2>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Erfassen Sie hier alle einzelnen Käufe. Der Durchschnitt wird automatisch berechnet.
-                        </p>
-                    </div>
-                    <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors" title="Schließen">
-                        <X className="size-5" />
-                    </button>
-                </div>
-
-                {/* Content */}
-                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto flex flex-col">
-
-                    {/* Stock Info Bar */}
-                    {/* Stock Info Bar */}
-                    {/* Stock Info Bar */}
-                    <div className="p-4 bg-muted/30 border-b border-border grid grid-cols-3 items-center gap-4">
-                        {/* Left Column: Logo & Name */}
-                        <div className="flex items-center gap-3 overflow-hidden justify-start">
-                            <Logo
-                                url={position.stock.logoUrl}
-                                alt={stockName}
-                                fallback={position.stock.symbol.slice(0, 2)}
-                                size="size-10"
-                            />
-                            <div className="min-w-0 flex-1">
-                                <div className="flex items-start gap-2 group/edit w-full">
-                                    <textarea
-                                        ref={inputRef}
-                                        className="w-full text-base font-semibold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground resize-y min-h-[28px] overflow-hidden leading-snug"
-                                        value={stockName}
-                                        onChange={(e) => {
-                                            setStockName(e.target.value);
-                                            // Auto-resize
-                                            e.target.style.height = 'auto';
-                                            e.target.style.height = e.target.scrollHeight + 'px';
-                                        }}
-                                        onFocus={(e) => {
-                                            e.target.style.height = 'auto';
-                                            e.target.style.height = e.target.scrollHeight + 'px';
-                                        }}
-                                        rows={1}
-                                        placeholder="Name der Position"
-                                        style={{ height: 'auto' }}
-                                    />
-                                    <Pencil
-                                        className="size-3.5 text-muted-foreground opacity-50 group-hover/edit:opacity-100 transition-opacity shrink-0 cursor-pointer hover:text-primary mt-1.5"
-                                        onClick={() => inputRef.current?.focus()}
-                                    />
-                                </div>
-                                <div className="text-xs text-muted-foreground mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
-                                    {position.stock.symbol} • Aktuell: {position.stock.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: position.stock.currency })}
-                                </div>
-                            </div>
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
+            <div className="relative pointer-events-auto" style={{ padding: '120px 150px' }}>
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm rounded-xl"></div>
+                <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-3xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative z-10 max-h-[calc(100vh-240px)]">
+                    {/* Header */}
+                    <div className="flex items-center justify-between p-6 border-b border-border">
+                        <div>
+                            <h2 className="text-xl font-bold">Position bearbeiten</h2>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Erfassen Sie hier alle einzelnen Käufe. Der Durchschnitt wird automatisch berechnet.
+                            </p>
                         </div>
-
-                        {/* Middle Column: FX Info */}
-                        <div className="flex justify-center">
-                            {rates && position.stock.currency !== 'CHF' && rates[isGBX ? 'GBP' : position.stock.currency] && (
-                                <div className="px-4 py-2 bg-background/50 rounded-lg border border-border/50 flex flex-col items-center justify-center min-w-[120px]">
-                                    <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">WECHSELKURS</div>
-                                    <div className="font-mono font-medium text-sm text-primary">
-                                        1 {isGBX ? 'GBP' : position.stock.currency} = {(1 / rates[isGBX ? 'GBP' : position.stock.currency]).toFixed(2)} CHF
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Right Column: New Balance */}
-                        <div className="flex justify-end">
-                            <div className="text-right px-4 py-2 bg-primary/5 rounded-lg border border-primary/10">
-                                <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">NEUER BESTAND</div>
-                                <div className="font-mono font-bold text-lg text-primary">
-                                    {calculatedTotals.shares.toLocaleString('de-CH')} Stk
-                                </div>
-                                <div className="text-[10px] text-muted-foreground">
-                                    Ø {calculatedAvgPriceUI.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {isGBX ? 'GBP' : position.stock.currency}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Purchases List */}
-                    <div className="p-6 space-y-4 flex-1">
-                        {/* Header Row */}
-                        <div className="grid grid-cols-12 gap-3 px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase bg-muted/50 rounded-lg mb-2">
-                            <div className="col-span-3">Datum</div>
-                            <div className="col-span-2 text-center">Stück</div>
-                            <div className="col-span-3 text-center">Kaufpreis ({isGBX ? 'GBP' : position.stock.currency})</div>
-                            <div className="col-span-3 text-center">
-                                <div>Wechselkurs</div>
-                                <div className="font-normal normal-case text-[9px] opacity-70">CHF pro 1 {isGBX ? 'GBP' : position.stock.currency}</div>
-                            </div>
-                            <div className="col-span-1"></div>
-                        </div>
-
-                        <div className="space-y-2">
-                            {purchases.map((purchase) => (
-                                <div key={purchase.id} className="grid grid-cols-12 gap-3 items-center bg-card p-2 rounded-lg border border-border/50 shadow-sm group hover:border-primary/30 transition-colors">
-                                    {/* Date */}
-                                    <div className="col-span-3">
-                                        <input
-                                            type="date"
-                                            value={purchase.date}
-                                            onChange={(e) => handleUpdatePurchase(purchase.id, 'date', e.target.value)}
-                                            className="w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary"
-                                        />
-                                    </div>
-                                    {/* Shares */}
-                                    <div className="col-span-2">
-                                        <DecimalInput
-                                            value={purchase.shares}
-                                            onChange={(val) => handleUpdatePurchase(purchase.id, 'shares', parseFloat(val) || 0)}
-                                            onFocus={(e) => e.target.select()}
-                                            className="w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary text-center"
-                                        />
-                                    </div>
-                                    {/* Price */}
-                                    <div className="col-span-3">
-                                        <DecimalInput
-                                            value={purchase.price}
-                                            onChange={(val) => handleUpdatePurchase(purchase.id, 'price', parseFloat(val) || 0)}
-                                            maxDecimals={isGBX ? 4 : 2}
-                                            onFocus={(e) => e.target.select()}
-                                            className="w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary text-center"
-                                        />
-                                    </div>
-                                    {/* FX Rate */}
-                                    <div className="col-span-3">
-                                        <DecimalInput
-                                            value={purchase.fxRate}
-                                            onChange={(val) => handleUpdatePurchase(purchase.id, 'fxRate', parseFloat(val) || 0)}
-                                            disabled={position.stock.currency === 'CHF'}
-                                            maxDecimals={4}
-                                            onFocus={(e) => e.target.select()}
-                                            className="w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary disabled:opacity-50 text-center"
-                                        />
-                                    </div>
-                                    {/* Delete Row */}
-                                    <div className="col-span-1 flex justify-center">
-                                        {purchases.length > 1 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemovePurchase(purchase.id)}
-                                                className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100"
-                                                title="Eintrag entfernen"
-                                            >
-                                                <Trash2 className="size-4" />
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={handleAddPurchase}
-                            className="w-full py-2 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
-                        >
-                            <Plus className="size-4" />
-                            Weiteren Kauf hinzufügen
+                        <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors" title="Schließen">
+                            <X className="size-5" />
                         </button>
                     </div>
 
-                    {/* Footer Actions */}
-                    <div className="flex items-center gap-3 p-6 border-t border-border bg-muted/10">
-                        <button
-                            type="button"
-                            onClick={handleDelete}
-                            className="p-2.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors border border-transparent hover:border-red-200 dark:hover:border-red-900"
-                            title="Position löschen"
-                        >
-                            <Trash2 className="size-5" />
-                        </button>
-                        <div className="flex-1 flex gap-3">
+                    {/* Content */}
+                    <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto flex flex-col">
+
+                        {/* Stock Info Bar */}
+                        {/* Stock Info Bar */}
+                        {/* Stock Info Bar */}
+                        <div className="p-4 bg-muted/30 border-b border-border grid grid-cols-3 items-center gap-4">
+                            {/* Left Column: Logo & Name */}
+                            <div className="flex items-center gap-3 overflow-hidden justify-start">
+                                <Logo
+                                    url={position.stock.logoUrl}
+                                    alt={stockName}
+                                    fallback={position.stock.symbol.slice(0, 2)}
+                                    size="size-10"
+                                />
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-start gap-2 group/edit w-full">
+                                        <textarea
+                                            ref={inputRef}
+                                            className="w-full text-base font-semibold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground resize-y min-h-[28px] overflow-hidden leading-snug"
+                                            value={stockName}
+                                            onChange={(e) => {
+                                                setStockName(e.target.value);
+                                                // Auto-resize
+                                                e.target.style.height = 'auto';
+                                                e.target.style.height = e.target.scrollHeight + 'px';
+                                            }}
+                                            onFocus={(e) => {
+                                                e.target.style.height = 'auto';
+                                                e.target.style.height = e.target.scrollHeight + 'px';
+                                            }}
+                                            rows={1}
+                                            placeholder="Name der Position"
+                                            style={{ height: 'auto' }}
+                                        />
+                                        <Pencil
+                                            className="size-3.5 text-muted-foreground opacity-50 group-hover/edit:opacity-100 transition-opacity shrink-0 cursor-pointer hover:text-primary mt-1.5"
+                                            onClick={() => inputRef.current?.focus()}
+                                        />
+                                    </div>
+                                    <div className="text-xs text-muted-foreground mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                                        {position.stock.symbol} • Aktuell: {position.stock.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: position.stock.currency })}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Middle Column: FX Info */}
+                            <div className="flex justify-center">
+                                {rates && position.stock.currency !== 'CHF' && rates[isGBX ? 'GBP' : position.stock.currency] && (
+                                    <div className="px-4 py-2 bg-background/50 rounded-lg border border-border/50 flex flex-col items-center justify-center min-w-[120px]">
+                                        <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">WECHSELKURS</div>
+                                        <div className="font-mono font-medium text-sm text-primary">
+                                            1 {isGBX ? 'GBP' : position.stock.currency} = {(1 / rates[isGBX ? 'GBP' : position.stock.currency]).toFixed(2)} CHF
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Right Column: New Balance */}
+                            <div className="flex justify-end">
+                                <div className="text-right px-4 py-2 bg-primary/5 rounded-lg border border-primary/10">
+                                    <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">NEUER BESTAND</div>
+                                    <div className="font-mono font-bold text-lg text-primary">
+                                        {calculatedTotals.shares.toLocaleString('de-CH')} Stk
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground">
+                                        Ø {calculatedAvgPriceUI.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {isGBX ? 'GBP' : position.stock.currency}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Purchases List */}
+                        <div className="p-6 space-y-4 flex-1">
+                            {/* Header Row */}
+                            <div className="grid grid-cols-12 gap-3 px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase bg-muted/50 rounded-lg mb-2">
+                                <div className="col-span-3">Datum</div>
+                                <div className="col-span-2 text-center">Stück</div>
+                                <div className="col-span-3 text-center">Kaufpreis ({isGBX ? 'GBP' : position.stock.currency})</div>
+                                <div className="col-span-3 text-center">
+                                    <div>Wechselkurs</div>
+                                    <div className="font-normal normal-case text-[9px] opacity-70">CHF pro 1 {isGBX ? 'GBP' : position.stock.currency}</div>
+                                </div>
+                                <div className="col-span-1"></div>
+                            </div>
+
+                            <div className="space-y-2">
+                                {purchases.map((purchase) => (
+                                    <div key={purchase.id} className="grid grid-cols-12 gap-3 items-center bg-card p-2 rounded-lg border border-border/50 shadow-sm group hover:border-primary/30 transition-colors">
+                                        {/* Date */}
+                                        <div className="col-span-3">
+                                            <input
+                                                type="date"
+                                                value={purchase.date}
+                                                onChange={(e) => handleUpdatePurchase(purchase.id, 'date', e.target.value)}
+                                                className="w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary"
+                                            />
+                                        </div>
+                                        {/* Shares */}
+                                        <div className="col-span-2">
+                                            <DecimalInput
+                                                value={purchase.shares}
+                                                onChange={(val) => handleUpdatePurchase(purchase.id, 'shares', parseFloat(val) || 0)}
+                                                onFocus={(e) => e.target.select()}
+                                                className="w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary text-center"
+                                            />
+                                        </div>
+                                        {/* Price */}
+                                        <div className="col-span-3">
+                                            <DecimalInput
+                                                value={purchase.price}
+                                                onChange={(val) => handleUpdatePurchase(purchase.id, 'price', parseFloat(val) || 0)}
+                                                maxDecimals={isGBX ? 4 : 2}
+                                                onFocus={(e) => e.target.select()}
+                                                className="w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary text-center"
+                                            />
+                                        </div>
+                                        {/* FX Rate */}
+                                        <div className="col-span-3">
+                                            <DecimalInput
+                                                value={purchase.fxRate}
+                                                onChange={(val) => handleUpdatePurchase(purchase.id, 'fxRate', parseFloat(val) || 0)}
+                                                disabled={position.stock.currency === 'CHF'}
+                                                maxDecimals={4}
+                                                onFocus={(e) => e.target.select()}
+                                                className="w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary disabled:opacity-50 text-center"
+                                            />
+                                        </div>
+                                        {/* Delete Row */}
+                                        <div className="col-span-1 flex justify-center">
+                                            {purchases.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemovePurchase(purchase.id)}
+                                                    className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100"
+                                                    title="Eintrag entfernen"
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
                             <button
                                 type="button"
-                                onClick={onClose}
-                                className="flex-1 px-4 py-2.5 border border-border rounded-lg hover:bg-muted font-medium transition-colors"
+                                onClick={handleAddPurchase}
+                                className="w-full py-2 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
                             >
-                                Abbrechen
-                            </button>
-                            <button
-                                type="submit"
-                                className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium transition-colors flex items-center justify-center gap-2"
-                            >
-                                <Save className="size-4" />
-                                Speichern
+                                <Plus className="size-4" />
+                                Weiteren Kauf hinzufügen
                             </button>
                         </div>
-                    </div>
-                </form>
+
+                        {/* Footer Actions */}
+                        <div className="flex items-center gap-3 p-6 border-t border-border bg-muted/10">
+                            <button
+                                type="button"
+                                onClick={handleDelete}
+                                className="p-2.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors border border-transparent hover:border-red-200 dark:hover:border-red-900"
+                                title="Position löschen"
+                            >
+                                <Trash2 className="size-5" />
+                            </button>
+                            <div className="flex-1 flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="flex-1 px-4 py-2.5 border border-border rounded-lg hover:bg-muted font-medium transition-colors"
+                                >
+                                    Abbrechen
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Save className="size-4" />
+                                    Speichern
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
-    );
+            );
 }
