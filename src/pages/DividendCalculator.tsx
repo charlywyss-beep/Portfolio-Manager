@@ -954,8 +954,17 @@ export function DividendCalculator() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium">Name</label>
-                                            <input required placeholder="z.B. Nestlé S.A." className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                            <label className="text-sm font-medium">Aktien Name</label>
+                                            <input required
+                                                type="text"
+                                                id="calc_stock_name_input"
+                                                autoComplete="off"
+                                                data-lpignore="true"
+                                                data-1p-ignore="true"
+                                                data-form-type="other"
+                                                name="calc_stock_name_field"
+                                                placeholder="z.B. Nestlé S.A."
+                                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                                 value={simName} onChange={e => updateSimulatorState({ simName: e.target.value })} />
                                         </div>
                                         <div className="space-y-2">
