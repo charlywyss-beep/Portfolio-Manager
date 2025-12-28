@@ -353,8 +353,8 @@ export function DividendPlanner() {
                                                 <div className="flex flex-col items-end gap-1">
                                                     <span className={(() => {
                                                         const dDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                                        if (dDays !== null && dDays < 0) return "text-red-500 font-medium";
-                                                        if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-orange-500 font-medium";
+                                                        if (dDays !== null && dDays < 0) return "text-green-600 font-medium"; // Past -> Green
+                                                        if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-orange-500 font-medium"; // Soon -> Orange
                                                         return "";
                                                     })()}>
                                                         {currentDiv.exDate
@@ -371,9 +371,18 @@ export function DividendPlanner() {
                                             <td className="text-right py-3 px-4 text-muted-foreground">
                                                 <div className="flex flex-col items-end gap-1">
                                                     <span className={(() => {
-                                                        const dDays = currentDiv.payDate ? Math.ceil((new Date(currentDiv.payDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                                        if (dDays !== null && dDays < 0) return "text-red-500 font-medium";
-                                                        if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-orange-500 font-medium";
+                                                        const payDays = currentDiv.payDate ? Math.ceil((new Date(currentDiv.payDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                                                        const exDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+
+                                                        // Paid (Past) -> Green
+                                                        if (payDays !== null && payDays < 0) return "text-green-600 font-medium";
+
+                                                        // Ex-Date passed + Pay-Date future -> Orange (Waiting for payment)
+                                                        if (exDays !== null && exDays < 0 && payDays !== null && payDays >= 0) return "text-orange-500 font-medium";
+
+                                                        // Soon check (fallback if Ex-Date not available or future)
+                                                        if (payDays !== null && payDays >= 0 && payDays <= 14) return "text-orange-500 font-medium";
+
                                                         return "";
                                                     })()}>
                                                         {currentDiv.payDate
