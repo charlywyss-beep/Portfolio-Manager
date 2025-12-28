@@ -9,6 +9,28 @@ export interface QuickLink {
     createdAt: string;
 }
 
+export interface PlannedPurchase {
+    shares: number;
+    pricePerShare: number;
+    currency: Currency;
+    volumeNative: number; // Total value in native currency
+    volumeCHF: number; // Total value in CHF
+    fees: {
+        courtage: number;
+        stampDuty: number;
+        exchangeFee: number;
+        fxMarkup: number;
+        total: number;
+        currency: string; // CHF or NATIVE
+    };
+    totalInvestmentCHF: number; // Volume + Fees in CHF
+    dividendPerShare: number;
+    annualDividendCHF?: number;
+    netYield?: number; // Percentage
+    savedAt: string; // ISO timestamp
+}
+
+
 export interface Stock {
     id: string;
     symbol: string;
@@ -32,9 +54,7 @@ export interface Stock {
     logoUrl?: string;
     targetPrice?: number; // Desired buy price (Fair Value)
     notes?: string; // Personal notes about the stock
-    plannedShares?: number; // Planned number of shares to buy (from simulator)
-    plannedPrice?: number; // Planned buy price (from simulator)
-    plannedDividend?: number; // Expected dividend amount (from simulator)
+    plannedPurchase?: PlannedPurchase; // Complete planned purchase simulation data
     distributionPolicy?: 'distributing' | 'accumulating'; // Thesaurierend vs Ausschüttend
     trailingPE?: number; // KGV (Price-Earnings Ratio)
     forwardPE?: number; // KGV (Forecast)

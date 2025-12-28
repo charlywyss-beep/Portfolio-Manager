@@ -149,11 +149,6 @@ export function Watchlist() {
                                                                 {smartWrap(stock.name)}
                                                             </div>
                                                             <div className="text-xs text-muted-foreground">{stock.symbol}</div>
-                                                            {stock.plannedShares && stock.plannedPrice && (
-                                                                <div className="text-[10px] text-blue-600 dark:text-blue-400 font-medium mt-1 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded inline-block">
-                                                                    Geplant: {stock.plannedShares} Stk @ {formatCurrency(stock.plannedPrice, stock.currency, false)}
-                                                                </div>
-                                                            )}
                                                         </div>
                                                     </div>
                                                 </td>
@@ -338,9 +333,15 @@ export function Watchlist() {
                                                     <div className="absolute inset-0 bg-card -z-10" />
                                                     <div className="relative flex items-center justify-center gap-0 sm:gap-1 opacity-100 transition-opacity">
                                                         <button
-                                                            onClick={() => setBuyStock(stock)}
+                                                            onClick={() => {
+                                                                if (stock.plannedPurchase) {
+                                                                    navigate(`/calculator?stock=${stock.id}&from=watchlist`);
+                                                                } else {
+                                                                    setBuyStock(stock);
+                                                                }
+                                                            }}
                                                             className="p-1.5 sm:p-2 hover:bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg transition-colors"
-                                                            title="Kaufen (ins Depot übernehmen)"
+                                                            title={stock.plannedPurchase ? "Geplanten Kauf laden" : "Kaufen (ins Depot übernehmen)"}
                                                         >
                                                             <ShoppingBag className="size-4" />
                                                         </button>

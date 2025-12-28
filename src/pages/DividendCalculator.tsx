@@ -79,6 +79,29 @@ export function DividendCalculator() {
         }
     }, [simulatorState.simCurrency, simulatorState.price, simulatorState.dividend, updateSimulatorState]);
 
+    // Load planned purchase from URL parameter
+    useEffect(() => {
+        const stockId = searchParams.get('stock');
+        if (stockId && stockId !== 'new') {
+            const stock = stocks.find(s => s.id === stockId);
+            if (stock?.plannedPurchase) {
+                const pp = stock.plannedPurchase;
+                updateSimulatorState({
+                    selectedStockId: stockId,
+                    shares: pp.shares,
+                    price: pp.pricePerShare,
+                    dividend: pp.dividendPerShare,
+                    simCurrency: pp.currency,
+                    mode: 'buy',
+                    simName: stock.name,
+                    simSymbol: stock.symbol,
+                    simIsin: stock.isin || ''
+                });
+            }
+        }
+    }, [searchParams, stocks, updateSimulatorState]);
+
+
     // PDF Export Handler
     const handleExportPDF = () => {
         const doc = new jsPDF();
@@ -684,12 +707,29 @@ export function DividendCalculator() {
         const fromWatchlist = searchParams.get('from') === 'watchlist';
 
         if (selectedStockId && selectedStockId !== 'new') {
-            // Save planned purchase data
-            updateStock(selectedStockId, {
-                plannedShares: shares,
-                plannedPrice: price,
-                plannedDividend: dividend
-            });
+            // Save complete planned purchase data
+            const plannedPurchase: import('../types').PlannedPurchase = {
+                shares,
+                pricePerShare: price,
+                currency: simCurrency as import('../types').Currency,
+                volumeNative,
+                volumeCHF,
+                fees: {
+                    courtage: calcCourtage,
+                    stampDuty: calcStamp,
+                    exchangeFee: fees.exchangeFee,
+                    fxMarkup: fees.fxMarkupPercent,
+                    total: totalFees,
+                    currency: displayFeeCurrency
+                },
+                totalInvestmentCHF: totalInvestCHF,
+                dividendPerShare: dividend,
+                annualDividendCHF,
+                netYield,
+                savedAt: new Date().toISOString()
+            };
+
+            updateStock(selectedStockId, { plannedPurchase });
             addToWatchlist(selectedStockId);
             setShowSuccess(true);
             setTimeout(() => {
@@ -699,6 +739,28 @@ export function DividendCalculator() {
         } else {
             // Create New Stock
             if (!simName || !simSymbol) return;
+
+            const plannedPurchase: import('../types').PlannedPurchase = {
+                shares,
+                pricePerShare: price,
+                currency: simCurrency as import('../types').Currency,
+                volumeNative,
+                volumeCHF,
+                fees: {
+                    courtage: calcCourtage,
+                    stampDuty: calcStamp,
+                    exchangeFee: fees.exchangeFee,
+                    fxMarkup: fees.fxMarkupPercent,
+                    total: totalFees,
+                    currency: displayFeeCurrency
+                },
+                totalInvestmentCHF: totalInvestCHF,
+                dividendPerShare: dividend,
+                annualDividendCHF,
+                netYield,
+                savedAt: new Date().toISOString()
+            };
+
             const newId = addStock({
                 symbol: simSymbol,
                 name: simName,
@@ -712,9 +774,7 @@ export function DividendCalculator() {
                 dividendAmount: dividend,
                 dividendYield: price > 0 ? (dividend / price) * 100 : 0,
                 dividendFrequency: 'annually',
-                plannedShares: shares,
-                plannedPrice: price,
-                plannedDividend: dividend
+                plannedPurchase
             });
             addToWatchlist(newId);
             updateSimulatorState({ selectedStockId: newId });
