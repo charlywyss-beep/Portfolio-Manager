@@ -210,7 +210,9 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                             <div className="flex items-center gap-3 overflow-hidden justify-start">
                                 <div
                                     className="cursor-pointer hover:opacity-80 transition-opacity"
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
                                         onClose();
                                         navigate(`/stock/${position.stock.id}`);
                                     }}
