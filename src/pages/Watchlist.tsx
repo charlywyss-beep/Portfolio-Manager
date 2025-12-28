@@ -333,15 +333,9 @@ export function Watchlist() {
                                                     <div className="absolute inset-0 bg-card -z-10" />
                                                     <div className="relative flex items-center justify-center gap-0 sm:gap-1 opacity-100 transition-opacity">
                                                         <button
-                                                            onClick={() => {
-                                                                if (stock.plannedPurchase) {
-                                                                    navigate(`/calculator?stock=${stock.id}&from=watchlist`);
-                                                                } else {
-                                                                    setBuyStock(stock);
-                                                                }
-                                                            }}
+                                                            onClick={() => navigate(`/calculator?stock=${stock.id}&from=watchlist`)}
                                                             className="p-1.5 sm:p-2 hover:bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg transition-colors"
-                                                            title={stock.plannedPurchase ? "Geplanten Kauf laden" : "Kaufen (ins Depot übernehmen)"}
+                                                            title="Kaufen (Simulation im Calculator)"
                                                         >
                                                             <ShoppingBag className="size-4" />
                                                         </button>
