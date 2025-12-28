@@ -2,6 +2,13 @@ export type Currency = 'EUR' | 'USD' | 'CHF' | 'GBp' | 'GBP';
 
 
 
+export interface QuickLink {
+    id: string;
+    url: string;
+    label?: string;
+    createdAt: string;
+}
+
 export interface Stock {
     id: string;
     symbol: string;
@@ -29,6 +36,7 @@ export interface Stock {
     trailingPE?: number; // KGV (Price-Earnings Ratio)
     forwardPE?: number; // KGV (Forecast)
     eps?: number; // Earnings Per Share (Trailing 12M)
+    quickLinks?: QuickLink[]; // NEW: Custom URLs for charts, financial sites, etc.
 }
 
 export interface Position {

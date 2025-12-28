@@ -25,6 +25,9 @@ interface PortfolioContextType {
     watchlist: string[];
     addToWatchlist: (stockId: string) => void;
     removeFromWatchlist: (stockId: string) => void;
+    addQuickLink: (stockId: string, url: string, label?: string) => void;
+    removeQuickLink: (stockId: string, linkId: string) => void;
+
 
     // Simulator Persistence
     simulatorState: {
@@ -323,6 +326,36 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         setWatchlist((prev) => prev.filter((id) => id !== stockId));
     };
 
+    const addQuickLink = (stockId: string, url: string, label?: string) => {
+        setStocks(prev => prev.map(stock => {
+            if (stock.id === stockId) {
+                const newLink: import('../types').QuickLink = {
+                    id: crypto.randomUUID(),
+                    url,
+                    label,
+                    createdAt: new Date().toISOString()
+                };
+                return {
+                    ...stock,
+                    quickLinks: [...(stock.quickLinks || []), newLink]
+                };
+            }
+            return stock;
+        }));
+    };
+
+    const removeQuickLink = (stockId: string, linkId: string) => {
+        setStocks(prev => prev.map(stock => {
+            if (stock.id === stockId && stock.quickLinks) {
+                return {
+                    ...stock,
+                    quickLinks: stock.quickLinks.filter(link => link.id !== linkId)
+                };
+            }
+            return stock;
+        }));
+    };
+
     const updateStock = (id: string, updates: Partial<Stock>) => {
         setStocks(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
     };
@@ -436,6 +469,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 watchlist,
                 addToWatchlist,
                 removeFromWatchlist,
+                addQuickLink,
+                removeQuickLink,
                 finnhubApiKey,
                 setFinnhubApiKey,
                 simulatorState,

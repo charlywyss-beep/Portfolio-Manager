@@ -15,7 +15,7 @@ import { fetchStockHistory, fetchStockQuote, type TimeRange, type ChartDataPoint
 export function StockDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { stocks, positions, updateStock, updateStockPrice } = usePortfolio();
+    const { stocks, positions, updateStock, updateStockPrice, addQuickLink, removeQuickLink } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
 
     // Find stock by ID or Symbol (case-insensitive)
@@ -441,6 +441,67 @@ export function StockDetail() {
                     <p className="text-xs text-muted-foreground mt-2">
                         * Notizen werden nur lokal gespeichert.
                     </p>
+
+                    {/* Quick Links Section */}
+                    <div className="mt-6 pt-6 border-t border-border">
+                        <h4 className="font-semibold text-md mb-3">Quick Links</h4>
+                        <div className="space-y-3">
+                            {/* Input for adding new links */}
+                            <div className="flex gap-2">
+                                <input
+                                    type="url"
+                                    placeholder="URL einfügen oder reinziehen..."
+                                    className="flex-1 px-3 py-2 text-sm rounded-lg border border-border bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && stock && e.currentTarget.value.trim()) {
+                                            const url = e.currentTarget.value.trim();
+                                            addQuickLink(stock.id, url);
+                                            e.currentTarget.value = '';
+                                        }
+                                    }}
+                                />
+                                <button
+                                    onClick={(e) => {
+                                        const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                                        if (stock && input.value.trim()) {
+                                            addQuickLink(stock.id, input.value.trim());
+                                            input.value = '';
+                                        }
+                                    }}
+                                    className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                                >
+                                    + Hinzufügen
+                                </button>
+                            </div>
+
+                            {/* List of saved links */}
+                            {stock?.quickLinks && stock.quickLinks.length > 0 && (
+                                <div className="space-y-2">
+                                    {stock.quickLinks.map((link) => (
+                                        <div
+                                            key={link.id}
+                                            className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group"
+                                        >
+                                            <a
+                                                href={link.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex-1 text-sm text-primary hover:underline truncate"
+                                            >
+                                                {link.label || link.url}
+                                            </a>
+                                            <button
+                                                onClick={() => removeQuickLink(stock.id, link.id)}
+                                                className="opacity-0 group-hover:opacity-100 px-2 py-1 text-xs text-destructive hover:bg-destructive/10 rounded transition-all"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
