@@ -44,7 +44,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                 width: 'min(calc(100vw - 2rem), calc(56rem + 300px))',
                 height: 'min(calc(100vh - 2rem), calc(85vh + 240px))'
             }}></div>
-            <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-4xl max-h-[85vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10">
+            <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-[95vw] md:max-w-4xl max-h-[85vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10">
                 <div className="flex items-center justify-between p-4 border-b border-border">
                     <h2 className="text-lg font-bold flex items-center gap-2">
                         <TrendingUp className="size-5 text-blue-500" />
@@ -56,7 +56,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                 </div>
 
                 <div className="overflow-y-auto p-0 flex-1">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-xs md:text-sm">
                         <thead className="bg-muted/30 sticky top-0 z-10">
                             <tr className="border-b border-border">
                                 <th className="text-left py-2 px-4 font-medium text-muted-foreground">Aktie / ETF</th>
