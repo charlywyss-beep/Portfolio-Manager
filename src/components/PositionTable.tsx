@@ -46,7 +46,11 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                         </thead>
                         <tbody className="divide-y divide-border">
                             {data.map((pos) => (
-                                <tr key={pos.id} className="group hover:bg-muted/30 transition-colors">
+                                <tr key={pos.id} className={cn(
+                                    "group hover:bg-muted/30 transition-colors",
+                                    pos.stock.marketState === 'REGULAR' && "bg-green-500/10 dark:bg-green-500/20 hover:bg-green-500/20 dark:hover:bg-green-500/30",
+                                    (pos.stock.marketState === 'CLOSED' || pos.stock.marketState === 'POST' || pos.stock.marketState === 'PRE') && "bg-red-500/10 dark:bg-red-500/20 hover:bg-red-500/20 dark:hover:bg-red-500/30"
+                                )}>
                                     <td className="px-4 py-3 sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                         <div className="absolute inset-0 bg-card -z-10" />
                                         <div className="relative flex items-center gap-3">
@@ -62,7 +66,15 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                                 >
                                                     {pos.stock.name}
                                                 </div>
-                                                <div className="text-xs font-mono text-muted-foreground">{pos.stock.symbol}</div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="text-xs font-mono text-muted-foreground">{pos.stock.symbol}</div>
+                                                    {pos.stock.marketState === 'REGULAR' && (
+                                                        <div className="size-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" title="Markt geöffnet" />
+                                                    )}
+                                                    {(pos.stock.marketState === 'CLOSED' || pos.stock.marketState === 'POST' || pos.stock.marketState === 'PRE') && (
+                                                        <div className="size-2 rounded-full bg-red-500/50" title="Markt geschlossen" />
+                                                    )}
+                                                </div>
                                                 <div className="text-[10px] text-muted-foreground/80">{pos.stock.sector}</div>
                                             </div>
                                         </div>

@@ -60,6 +60,7 @@ export interface Stock {
     forwardPE?: number; // KGV (Forecast)
     eps?: number; // Earnings Per Share (Trailing 12M)
     quickLinks?: QuickLink[]; // NEW: Custom URLs for charts, financial sites, etc.
+    marketState?: 'REGULAR' | 'CLOSED' | 'PRE' | 'POST' | 'PREPRE' | 'POSTPOST'; // Yahoo Finance Market State
 }
 
 export interface Position {
