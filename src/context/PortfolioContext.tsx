@@ -65,7 +65,7 @@ interface PortfolioContextType {
     // Global Refresh
     lastGlobalRefresh: Date | null;
     isGlobalRefreshing: boolean;
-    refreshAllPrices: () => Promise<void>;
+    refreshAllPrices: (force?: boolean) => Promise<void>;
 }
 
 const defaultSimulatorState = {
@@ -413,10 +413,20 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         }));
     };
 
-    const refreshAllPrices = async () => {
+    const refreshAllPrices = async (force: boolean = false) => {
         if (isGlobalRefreshing) return;
+
+        // Throttle: If last refresh was less than 2 minutes ago, and this is NOT a forced refresh, skip.
+        if (!force && lastGlobalRefresh) {
+            const timeSinceLastRefresh = new Date().getTime() - lastGlobalRefresh.getTime();
+            if (timeSinceLastRefresh < 2 * 60 * 1000) { // 2 minutes cooldown
+                console.log("Global Refresh: Throttled (Last refresh was recent). Skipping.");
+                return;
+            }
+        }
+
         setIsGlobalRefreshing(true);
-        console.log("Global Refresh: Starting...");
+        console.log("Global Refresh: Starting...", { force });
 
         try {
             // 1. Collect all symbols
@@ -427,9 +437,6 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
             }
 
             // 2. Fetch all quotes in batch
-            // We need to import fetchStockQuotes dynamically or move it to imports
-            // Since it's an external service function, let's assume it's available via import
-            // Note: We need to add the import at the top of the file
             const updates = await fetchStockQuotes(symbols);
 
             // 3. Update State
@@ -449,7 +456,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
     // Auto-refresh every 5 minutes (Global)
     useAutoRefresh({
-        onRefresh: refreshAllPrices,
+        onRefresh: () => refreshAllPrices(false),
         intervalMs: 5 * 60 * 1000,
         enabled: true
     });

@@ -78,7 +78,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                     </h2>
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={refreshAllPrices}
+                            onClick={() => refreshAllPrices(true)}
                             disabled={isGlobalRefreshing}
                             className={cn(
                                 "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
@@ -141,9 +141,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         className={cn(
                                             "hover:bg-muted/30 transition-colors cursor-pointer group border-b border-border/50",
                                             p.stock.marketState === 'REGULAR'
-                                                ? "bg-green-500/10 dark:bg-green-500/20 hover:bg-green-500/20 dark:hover:bg-green-500/30"
+                                                ? "bg-green-500/15 dark:bg-green-500/25 hover:bg-green-500/25 dark:hover:bg-green-500/35"
                                                 : p.stock.marketState
-                                                    ? "bg-red-500/10 dark:bg-red-500/20 hover:bg-red-500/20 dark:hover:bg-red-500/30"
+                                                    ? "bg-red-500/15 dark:bg-red-500/25 hover:bg-red-500/25 dark:hover:bg-red-500/35"
                                                     : ""
                                         )}
                                     >

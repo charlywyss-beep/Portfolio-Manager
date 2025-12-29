@@ -130,7 +130,7 @@ export function Portfolio() {
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
                     <button
-                        onClick={refreshAllPrices}
+                        onClick={() => refreshAllPrices(true)}
                         disabled={isGlobalRefreshing}
                         className={cn(
                             "flex items-center justify-center p-2 rounded-lg border transition-all shadow-sm",

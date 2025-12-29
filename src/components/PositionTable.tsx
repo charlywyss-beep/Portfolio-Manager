@@ -48,8 +48,11 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                             {data.map((pos) => (
                                 <tr key={pos.id} className={cn(
                                     "group hover:bg-muted/30 transition-colors",
-                                    pos.stock.marketState === 'REGULAR' && "bg-green-500/10 dark:bg-green-500/20 hover:bg-green-500/20 dark:hover:bg-green-500/30",
-                                    (pos.stock.marketState === 'CLOSED' || pos.stock.marketState === 'POST' || pos.stock.marketState === 'PRE') && "bg-red-500/10 dark:bg-red-500/20 hover:bg-red-500/20 dark:hover:bg-red-500/30"
+                                    pos.stock.marketState === 'REGULAR'
+                                        ? "bg-green-500/15 dark:bg-green-500/25 hover:bg-green-500/25 dark:hover:bg-green-500/35"
+                                        : pos.stock.marketState
+                                            ? "bg-red-500/15 dark:bg-red-500/25 hover:bg-red-500/25 dark:hover:bg-red-500/35"
+                                            : ""
                                 )}>
                                     <td className="px-4 py-3 sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                         <div className="absolute inset-0 bg-card -z-10" />
