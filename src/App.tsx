@@ -158,7 +158,7 @@ function App() {
               title="App neu laden (Cache leeren)"
             >
               <div className="text-[10px] text-foreground font-bold font-mono flex items-center gap-1 group/version">
-                <span>v3.11.390</span>
+                <span>v3.11.391</span>
                 <span className="opacity-0 group-hover/version:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
               </div>
             </div>
