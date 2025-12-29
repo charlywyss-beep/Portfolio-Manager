@@ -114,7 +114,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                                     size="size-10"
                                                 />
                                                 <div className="flex flex-col min-w-0">
-                                                    <span className="break-words group-hover:text-primary transition-colors">{p.stock.name}</span>
+                                                    <div className="break-words whitespace-normal text-sm group-hover:text-primary transition-colors leading-tight">{p.stock.name}</div>
                                                     <span className="text-[10px] text-muted-foreground">{p.stock.symbol}</span>
                                                 </div>
                                             </div>
