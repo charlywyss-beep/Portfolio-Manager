@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Plus, Search, PieChart, BarChart3, Landmark } from 'lucide-react';
+import { Plus, Search, PieChart, BarChart3, Landmark, RefreshCw } from 'lucide-react';
 import { useCurrencyFormatter } from '../utils/currency';
+import { cn } from '../utils'; // Import cn
 import { EditPositionModal } from '../components/EditPositionModal';
 import { AddFixedDepositModal } from '../components/AddFixedDepositModal';
 import { PositionTable } from '../components/PositionTable';
@@ -10,7 +11,7 @@ import { VorsorgeSection } from '../components/VorsorgeSection';
 import { FixedDepositTable } from '../components/FixedDepositTable';
 
 export function Portfolio() {
-    const { positions: rawPositions, stocks, deletePosition, updatePosition } = usePortfolio();
+    const { positions: rawPositions, stocks, deletePosition, updatePosition, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh } = usePortfolio();
     const navigate = useNavigate();
     const [isAddFixedDepositModalOpen, setIsAddFixedDepositModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -127,20 +128,33 @@ export function Portfolio() {
                         className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
                     />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto">
+                    <button
+                        onClick={refreshAllPrices}
+                        disabled={isGlobalRefreshing}
+                        className={cn(
+                            "flex items-center justify-center p-2 rounded-lg border transition-all shadow-sm",
+                            isGlobalRefreshing ? "bg-muted text-muted-foreground" : "bg-card hover:bg-muted text-foreground border-border",
+                            "active:scale-95"
+                        )}
+                        title={lastGlobalRefresh ? `Aktualisiert: ${lastGlobalRefresh.toLocaleTimeString()}` : "Preise aktualisieren"}
+                    >
+                        <RefreshCw className={cn("size-4", isGlobalRefreshing && "animate-spin")} />
+                    </button>
                     <button
                         onClick={() => setIsAddFixedDepositModalOpen(true)}
-                        className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-medium text-sm border border-border"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-medium text-sm border border-border"
                     >
                         <Landmark className="size-4" />
-                        <span>Bank / Vorsorge</span>
+                        <span className="hidden sm:inline">Bank / Vorsorge</span>
+                        <span className="sm:hidden">Bank</span>
                     </button>
                     <button
                         onClick={() => navigate('/calculator?mode=buy&from=portfolio')}
-                        className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium text-sm"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium text-sm"
                     >
                         <Plus className="size-4" />
-                        <span>Aktie / ETF</span>
+                        <span>Neu</span>
                     </button>
                 </div>
             </div>
