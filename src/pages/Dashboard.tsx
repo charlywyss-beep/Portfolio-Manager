@@ -372,7 +372,7 @@ export function Dashboard() {
 
                     {/* Top Performer ETF */}
                     {/* Top Performers (ETF & Stock) */}
-                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
+                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm order-4">
                         <div className="flex justify-between items-start mb-4">
                             <div className="p-2 rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
                                 <TrendingUp className="size-6" />
