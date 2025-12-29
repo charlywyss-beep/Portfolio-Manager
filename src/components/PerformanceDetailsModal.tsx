@@ -134,6 +134,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 const totalGainCHF = convertToCHF(totalGain, p.stock.currency);
                                 const totalGainPercent = purchaseValue > 0 ? ((currentValue - purchaseValue) / purchaseValue) * 100 : 0;
                                 const isTotalPositive = totalGainCHF >= 0;
+                                const displayState = p.stock.marketState || estimateMarketState(p.stock.symbol, p.stock.currency);
 
                                 return (
                                     <tr
@@ -141,11 +142,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         onClick={() => handleRowClick(p.stock.id)}
                                         className={cn(
                                             "hover:bg-muted/30 transition-colors cursor-pointer group border-b border-border/50",
-                                            p.stock.marketState === 'REGULAR'
+                                            displayState === 'REGULAR'
                                                 ? "bg-green-500/15 dark:bg-green-500/25 hover:bg-green-500/25 dark:hover:bg-green-500/35"
-                                                : p.stock.marketState
-                                                    ? "bg-red-500/15 dark:bg-red-500/25 hover:bg-red-500/25 dark:hover:bg-red-500/35"
-                                                    : ""
+                                                : "bg-red-500/15 dark:bg-red-500/25 hover:bg-red-500/25 dark:hover:bg-red-500/35"
                                         )}
                                     >
                                         <td className="py-3 px-4 font-medium">
@@ -159,14 +158,11 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                                 <div className="flex flex-col min-w-0">
                                                     <div className="flex items-center gap-2">
                                                         <div className="break-words whitespace-pre-line text-sm group-hover:text-primary transition-colors leading-tight">{p.stock.name}</div>
-                                                        {(() => {
-                                                            const displayState = p.stock.marketState || estimateMarketState(p.stock.symbol, p.stock.currency);
-                                                            return displayState === 'REGULAR' ? (
-                                                                <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title="Markt geöffnet" />
-                                                            ) : (
-                                                                <div className="size-2.5 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${displayState})`} />
-                                                            );
-                                                        })()}
+                                                        {displayState === 'REGULAR' ? (
+                                                            <div className="size-2.5 flex-shrink-0 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title="Markt geöffnet" />
+                                                        ) : (
+                                                            <div className="size-2.5 flex-shrink-0 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${displayState})`} />
+                                                        )}
                                                     </div>
                                                     <span className="text-[10px] text-muted-foreground">{p.stock.symbol}</span>
                                                 </div>

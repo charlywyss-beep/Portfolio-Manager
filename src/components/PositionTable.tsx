@@ -46,152 +46,152 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {data.map((pos) => (
-                                <tr key={pos.id} className={cn(
-                                    "group hover:bg-muted/30 transition-colors",
-                                    pos.stock.marketState === 'REGULAR'
-                                        ? "bg-green-500/15 dark:bg-green-500/25 hover:bg-green-500/25 dark:hover:bg-green-500/35"
-                                        : pos.stock.marketState
-                                            ? "bg-red-500/15 dark:bg-red-500/25 hover:bg-red-500/25 dark:hover:bg-red-500/35"
-                                            : ""
-                                )}>
-                                    <td className="px-4 py-3 sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                        <div className="absolute inset-0 bg-card -z-10" />
-                                        <div className="relative flex items-center gap-3">
-                                            <Logo
-                                                url={pos.stock.logoUrl}
-                                                alt={pos.stock.name}
-                                                fallback={pos.stock.symbol.slice(0, 2)}
-                                            />
-                                            <div className="min-w-0 flex-1 flex flex-col items-start gap-0.5">
-                                                <div
-                                                    className="font-semibold text-foreground cursor-pointer hover:text-primary transition-colors text-sm whitespace-pre-line"
-                                                    onClick={() => navigate(`/stock/${pos.stock.id}`)}
-                                                >
-                                                    {pos.stock.name}
+                            {data.map((pos) => {
+                                const displayState = pos.stock.marketState || estimateMarketState(pos.stock.symbol, pos.stock.currency);
+                                return (
+                                    <tr key={pos.id} className={cn(
+                                        "group hover:bg-muted/30 transition-colors",
+                                        displayState === 'REGULAR'
+                                            ? "bg-green-500/15 dark:bg-green-500/25 hover:bg-green-500/25 dark:hover:bg-green-500/35"
+                                            : "bg-red-500/15 dark:bg-red-500/25 hover:bg-red-500/25 dark:hover:bg-red-500/35"
+                                    )}>
+                                        <td className="px-4 py-3 sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                            <div className="absolute inset-0 bg-card -z-10" />
+                                            <div className="relative flex items-center gap-3">
+                                                <Logo
+                                                    url={pos.stock.logoUrl}
+                                                    alt={pos.stock.name}
+                                                    fallback={pos.stock.symbol.slice(0, 2)}
+                                                />
+                                                <div className="min-w-0 flex-1 flex flex-col items-start gap-0.5">
+                                                    <div
+                                                        className="font-semibold text-foreground cursor-pointer hover:text-primary transition-colors text-sm whitespace-pre-line"
+                                                        onClick={() => navigate(`/stock/${pos.stock.id}`)}
+                                                    >
+                                                        {pos.stock.name}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="text-xs font-mono text-muted-foreground">{pos.stock.symbol}</div>
+                                                        {(() => {
+                                                            const displayState = pos.stock.marketState || estimateMarketState(pos.stock.symbol, pos.stock.currency);
+                                                            return displayState === 'REGULAR' ? (
+                                                                <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title="Markt geöffnet" />
+                                                            ) : (
+                                                                <div className="size-2.5 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${displayState})`} />
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                    <div className="text-[10px] text-muted-foreground/80">{pos.stock.sector}</div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="text-xs font-mono text-muted-foreground">{pos.stock.symbol}</div>
-                                                    {(() => {
-                                                        const displayState = pos.stock.marketState || estimateMarketState(pos.stock.symbol, pos.stock.currency);
-                                                        return displayState === 'REGULAR' ? (
-                                                            <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title="Markt geöffnet" />
-                                                        ) : (
-                                                            <div className="size-2.5 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${displayState})`} />
-                                                        );
-                                                    })()}
-                                                </div>
-                                                <div className="text-[10px] text-muted-foreground/80">{pos.stock.sector}</div>
                                             </div>
-                                        </div>
-                                    </td>
+                                        </td>
 
-                                    {/* Valor / ISIN */}
-                                    <td className="px-4 py-3">
-                                        <div className="text-xs space-y-0.5">
-                                            {pos.stock.valor && (
-                                                <div className="font-mono">
-                                                    <span className="text-muted-foreground">Valor: </span>
-                                                    <span className="font-medium">{pos.stock.valor}</span>
-                                                </div>
-                                            )}
-                                            {pos.stock.isin && (
-                                                <div className="font-mono text-muted-foreground truncate" title={pos.stock.isin}>
-                                                    {pos.stock.isin}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </td>
+                                        {/* Valor / ISIN */}
+                                        <td className="px-4 py-3">
+                                            <div className="text-xs space-y-0.5">
+                                                {pos.stock.valor && (
+                                                    <div className="font-mono">
+                                                        <span className="text-muted-foreground">Valor: </span>
+                                                        <span className="font-medium">{pos.stock.valor}</span>
+                                                    </div>
+                                                )}
+                                                {pos.stock.isin && (
+                                                    <div className="font-mono text-muted-foreground truncate" title={pos.stock.isin}>
+                                                        {pos.stock.isin}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
 
-                                    {/* Anzahl */}
-                                    <td className="px-4 py-3 text-right font-medium">{pos.shares}</td>
+                                        {/* Anzahl */}
+                                        <td className="px-4 py-3 text-right font-medium">{pos.shares}</td>
 
-                                    {/* Kauf Kurs */}
-                                    <td className="px-4 py-3 text-right">
-                                        <div className="flex flex-col items-end">
-                                            <span className="font-medium whitespace-nowrap">{formatCurrency(pos.buyPriceAvg, pos.stock.currency, false)}</span>
-                                            {pos.stock.currency !== 'CHF' && (
-                                                <span className="font-medium whitespace-nowrap">
-                                                    {formatCurrency(pos.buyValueCHF / pos.shares, 'CHF', false)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
+                                        {/* Kauf Kurs */}
+                                        <td className="px-4 py-3 text-right">
+                                            <div className="flex flex-col items-end">
+                                                <span className="font-medium whitespace-nowrap">{formatCurrency(pos.buyPriceAvg, pos.stock.currency, false)}</span>
+                                                {pos.stock.currency !== 'CHF' && (
+                                                    <span className="font-medium whitespace-nowrap">
+                                                        {formatCurrency(pos.buyValueCHF / pos.shares, 'CHF', false)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
 
-                                    {/* Kauf Wert */}
-                                    <td className="px-4 py-3 text-right font-medium">
-                                        <div className="flex flex-col items-end">
-                                            <span className="font-medium whitespace-nowrap">{formatCurrency(pos.buyValue, pos.stock.currency, false)}</span>
-                                            {pos.stock.currency !== 'CHF' && (
-                                                <span className="font-medium whitespace-nowrap">
-                                                    {formatCurrency(pos.buyValueCHF, 'CHF', false)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
+                                        {/* Kauf Wert */}
+                                        <td className="px-4 py-3 text-right font-medium">
+                                            <div className="flex flex-col items-end">
+                                                <span className="font-medium whitespace-nowrap">{formatCurrency(pos.buyValue, pos.stock.currency, false)}</span>
+                                                {pos.stock.currency !== 'CHF' && (
+                                                    <span className="font-medium whitespace-nowrap">
+                                                        {formatCurrency(pos.buyValueCHF, 'CHF', false)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
 
-                                    {/* Aktueller Kurs */}
-                                    <td className="px-4 py-3 text-right">
-                                        <div className="flex flex-col items-end">
-                                            <span className="font-medium whitespace-nowrap">{formatCurrency(pos.stock.currentPrice, pos.stock.currency, false)}</span>
-                                            {pos.stock.currency !== 'CHF' && (
-                                                <span className="font-medium whitespace-nowrap">
-                                                    {formatCurrency(convertToCHF(pos.stock.currentPrice, pos.stock.currency), 'CHF', false)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
+                                        {/* Aktueller Kurs */}
+                                        <td className="px-4 py-3 text-right">
+                                            <div className="flex flex-col items-end">
+                                                <span className="font-medium whitespace-nowrap">{formatCurrency(pos.stock.currentPrice, pos.stock.currency, false)}</span>
+                                                {pos.stock.currency !== 'CHF' && (
+                                                    <span className="font-medium whitespace-nowrap">
+                                                        {formatCurrency(convertToCHF(pos.stock.currentPrice, pos.stock.currency), 'CHF', false)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
 
-                                    {/* Aktueller Wert */}
-                                    <td className="px-4 py-3 text-right font-bold">
-                                        <div className="flex flex-col items-end">
-                                            <span className="font-medium whitespace-nowrap">{formatCurrency(pos.currentValue, pos.stock.currency, false)}</span>
-                                            {pos.stock.currency !== 'CHF' && (
-                                                <span className="font-medium whitespace-nowrap">
-                                                    {formatCurrency(convertToCHF(pos.currentValue, pos.stock.currency), 'CHF', false)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
+                                        {/* Aktueller Wert */}
+                                        <td className="px-4 py-3 text-right font-bold">
+                                            <div className="flex flex-col items-end">
+                                                <span className="font-medium whitespace-nowrap">{formatCurrency(pos.currentValue, pos.stock.currency, false)}</span>
+                                                {pos.stock.currency !== 'CHF' && (
+                                                    <span className="font-medium whitespace-nowrap">
+                                                        {formatCurrency(convertToCHF(pos.currentValue, pos.stock.currency), 'CHF', false)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
 
-                                    {/* Gesamt +/- */}
-                                    <td className="px-4 py-3 text-right">
-                                        <div className="flex flex-col items-end gap-0.5">
-                                            {/* Native Gain/Loss */}
-                                            {(() => {
-                                                const nativeGain = pos.gainLossTotal;
-                                                const chfGain = pos.gainLossTotalCHF;
-                                                const isNativeCHF = pos.stock.currency === 'CHF';
+                                        {/* Gesamt +/- */}
+                                        <td className="px-4 py-3 text-right">
+                                            <div className="flex flex-col items-end gap-0.5">
+                                                {/* Native Gain/Loss */}
+                                                {(() => {
+                                                    const nativeGain = pos.gainLossTotal;
+                                                    const chfGain = pos.gainLossTotalCHF;
+                                                    const isNativeCHF = pos.stock.currency === 'CHF';
 
-                                                return (
-                                                    <>
-                                                        <div className={cn(
-                                                            "flex items-center justify-end gap-1.5 font-medium tabular-nums",
-                                                            nativeGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                                        )} title="Gewinn/Verlust (Native)">
-                                                            <span>
-                                                                {nativeGain >= 0 ? '+' : ''}{nativeGain.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                            </span>
-                                                            <span className="w-8 text-left text-[11px] uppercase text-current/80 sm:text-sm sm:w-8 translate-y-[0.5px]">
-                                                                {pos.stock.currency === 'GBp' ? 'GBP' : pos.stock.currency}
-                                                            </span>
-                                                        </div>
-
-                                                        {!isNativeCHF && (
+                                                    return (
+                                                        <>
                                                             <div className={cn(
                                                                 "flex items-center justify-end gap-1.5 font-medium tabular-nums",
-                                                                chfGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                                            )} title="Gewinn/Verlust in CHF">
+                                                                nativeGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                                            )} title="Gewinn/Verlust (Native)">
                                                                 <span>
-                                                                    {chfGain >= 0 ? '+' : ''}{chfGain.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                                    {nativeGain >= 0 ? '+' : ''}{nativeGain.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                                 </span>
                                                                 <span className="w-8 text-left text-[11px] uppercase text-current/80 sm:text-sm sm:w-8 translate-y-[0.5px]">
-                                                                    CHF
+                                                                    {pos.stock.currency === 'GBp' ? 'GBP' : pos.stock.currency}
                                                                 </span>
                                                             </div>
-                                                        )}
 
-                                                        {/* Forex Impact (Optional, keep if needed or tabularize it too?) 
+                                                            {!isNativeCHF && (
+                                                                <div className={cn(
+                                                                    "flex items-center justify-end gap-1.5 font-medium tabular-nums",
+                                                                    chfGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                                                )} title="Gewinn/Verlust in CHF">
+                                                                    <span>
+                                                                        {chfGain >= 0 ? '+' : ''}{chfGain.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                                    </span>
+                                                                    <span className="w-8 text-left text-[11px] uppercase text-current/80 sm:text-sm sm:w-8 translate-y-[0.5px]">
+                                                                        CHF
+                                                                    </span>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Forex Impact (Optional, keep if needed or tabularize it too?) 
                                                             Original: (Währung: +5'704.93 CHF)
                                                             This is usually small text below. Standardizing it might make it too prominent?
                                                             The user explicitly asked for tabular alignment for "+/-". 
@@ -199,60 +199,61 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                                             Or should I align it too? 
                                                             The screenshot shows separate lines. I will keep it simple for now, focusing on the main numbers.
                                                         */}
-                                                        {!isNativeCHF && (
-                                                            <div className={cn(
-                                                                "text-xs whitespace-nowrap mt-0.5 text-right",
-                                                                pos.forexImpactCHF >= 0 ? "text-emerald-600/80 dark:text-emerald-400/80" : "text-rose-600/80 dark:text-rose-400/80"
-                                                            )} title="Anteil Währungsgewinn/-verlust">
-                                                                (Währung: {pos.forexImpactCHF >= 0 ? '+' : ''}{pos.forexImpactCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF)
-                                                            </div>
-                                                        )}
-                                                    </>
-                                                );
-                                            })()}
-                                        </div>
-                                    </td>
+                                                            {!isNativeCHF && (
+                                                                <div className={cn(
+                                                                    "text-xs whitespace-nowrap mt-0.5 text-right",
+                                                                    pos.forexImpactCHF >= 0 ? "text-emerald-600/80 dark:text-emerald-400/80" : "text-rose-600/80 dark:text-rose-400/80"
+                                                                )} title="Anteil Währungsgewinn/-verlust">
+                                                                    (Währung: {pos.forexImpactCHF >= 0 ? '+' : ''}{pos.forexImpactCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF)
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    );
+                                                })()}
+                                            </div>
+                                        </td>
 
-                                    {/* Gesamt % +/- */}
-                                    <td className="px-4 py-3 text-right">
-                                        <div className={cn(
-                                            "flex items-center justify-end gap-1 font-medium",
-                                            pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                        )}>
-                                            {pos.gainLossTotal >= 0 ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
-                                            {pos.gainLossTotal >= 0 ? '+' : ''}{pos.gainLossTotalPercent.toFixed(2)}%
-                                        </div>
-                                    </td>
+                                        {/* Gesamt % +/- */}
+                                        <td className="px-4 py-3 text-right">
+                                            <div className={cn(
+                                                "flex items-center justify-end gap-1 font-medium",
+                                                pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                            )}>
+                                                {pos.gainLossTotal >= 0 ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
+                                                {pos.gainLossTotal >= 0 ? '+' : ''}{pos.gainLossTotalPercent.toFixed(2)}%
+                                            </div>
+                                        </td>
 
-                                    {/* Aktionen */}
-                                    <td className="px-1 py-3 sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                        <div className="absolute inset-0 bg-card -z-10" />
-                                        <div className="relative flex items-center justify-center gap-1">
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedPosition(pos);
-                                                    setIsEditModalOpen(true);
-                                                }}
-                                                className="p-1 hover:bg-muted rounded text-primary transition-colors"
-                                                title="Position bearbeiten (Kauf/Verkauf/Korrektur)"
-                                            >
-                                                <Edit className="size-3.5" />
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    if (confirm(`Position "${pos.stock.name}" wirklich löschen?`)) {
-                                                        deletePosition(pos.id);
-                                                    }
-                                                }}
-                                                className="text-muted-foreground hover:text-red-600 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
-                                                title="Position löschen"
-                                            >
-                                                <Trash2 className="size-4" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                        {/* Aktionen */}
+                                        <td className="px-1 py-3 sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                            <div className="absolute inset-0 bg-card -z-10" />
+                                            <div className="relative flex items-center justify-center gap-1">
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedPosition(pos);
+                                                        setIsEditModalOpen(true);
+                                                    }}
+                                                    className="p-1 hover:bg-muted rounded text-primary transition-colors"
+                                                    title="Position bearbeiten (Kauf/Verkauf/Korrektur)"
+                                                >
+                                                    <Edit className="size-3.5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        if (confirm(`Position "${pos.stock.name}" wirklich löschen?`)) {
+                                                            deletePosition(pos.id);
+                                                        }
+                                                    }}
+                                                    className="text-muted-foreground hover:text-red-600 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                                                    title="Position löschen"
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                             {data.length === 0 && (
                                 <tr>
                                     <td colSpan={10} className="px-4 py-12 text-center text-muted-foreground">
