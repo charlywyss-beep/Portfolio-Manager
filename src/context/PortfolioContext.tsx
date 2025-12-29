@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { Position, Stock } from '../types';
 import { MOCK_POSITIONS, MOCK_STOCKS } from '../data/mockData';
+import { fetchStockQuotes } from '../services/yahoo-finance';
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
 
 interface PortfolioContextType {
     positions: Position[];
@@ -60,6 +62,10 @@ interface PortfolioContextType {
     // Mortgage Persistence
     mortgageData: import('../types').MortgageData;
     updateMortgageData: (data: Partial<import('../types').MortgageData>) => void;
+    // Global Refresh
+    lastGlobalRefresh: Date | null;
+    isGlobalRefreshing: boolean;
+    refreshAllPrices: () => Promise<void>;
 }
 
 const defaultSimulatorState = {
@@ -138,6 +144,10 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         localStorage.setItem('portfolio_positions', JSON.stringify(positions));
     }, [positions]);
+
+    // Global Refresh State
+    const [lastGlobalRefresh, setLastGlobalRefresh] = useState<Date | null>(null);
+    const [isGlobalRefreshing, setIsGlobalRefreshing] = useState(false);
 
     useEffect(() => {
         localStorage.setItem('portfolio_finnhub_api_key', finnhubApiKey);
@@ -375,6 +385,63 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         }));
     };
 
+    // Helper to update multiple stocks at once (batch update)
+    const updateStockPricesBatch = (updates: Record<string, { price: number, marketTime?: Date }>) => {
+        setStocks(prev => prev.map(s => {
+            const update = updates[s.symbol];
+            if (update) {
+                return {
+                    ...s,
+                    currentPrice: update.price,
+                    // Legacy behavior: If no invalid previousClose logic exists, keep as is.
+                    // Ideally we should track previousClose separately but for now we just update current.
+                    lastQuoteDate: update.marketTime ? update.marketTime.toISOString() : s.lastQuoteDate
+                };
+            }
+            return s;
+        }));
+    };
+
+    const refreshAllPrices = async () => {
+        if (isGlobalRefreshing) return;
+        setIsGlobalRefreshing(true);
+        console.log("Global Refresh: Starting...");
+
+        try {
+            // 1. Collect all symbols
+            const symbols = stocks.map(s => s.symbol).filter(Boolean);
+            if (symbols.length === 0) {
+                setIsGlobalRefreshing(false);
+                return;
+            }
+
+            // 2. Fetch all quotes in batch
+            // We need to import fetchStockQuotes dynamically or move it to imports
+            // Since it's an external service function, let's assume it's available via import
+            // Note: We need to add the import at the top of the file
+            const updates = await fetchStockQuotes(symbols);
+
+            // 3. Update State
+            if (Object.keys(updates).length > 0) {
+                updateStockPricesBatch(updates);
+                setLastGlobalRefresh(new Date());
+                console.log("Global Refresh: Updated", Object.keys(updates).length, "stocks");
+            }
+
+        } catch (e) {
+            console.error("Global Refresh Failed", e);
+        } finally {
+            setIsGlobalRefreshing(false);
+        }
+    };
+
+    // Auto-refresh every 5 minutes (Global)
+    useAutoRefresh({
+        onRefresh: refreshAllPrices,
+        intervalMs: 5 * 60 * 1000,
+        enabled: true
+    });
+
     const updateStockDividendYield = (stockId: string, dividendYield: number) => {
         setStocks((prev) =>
             prev.map((s) =>
@@ -476,7 +543,10 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 simulatorState,
                 updateSimulatorState,
                 mortgageData,
-                updateMortgageData
+                updateMortgageData,
+                lastGlobalRefresh,
+                isGlobalRefreshing,
+                refreshAllPrices
             }}
         >
             {children}
