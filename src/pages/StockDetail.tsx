@@ -212,13 +212,28 @@ export function StockDetail() {
         <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500 pb-16">
             {/* Sticky Header / Navigation */}
             <div className="sticky top-0 -mx-6 md:-mx-8 px-6 md:px-8 py-4 z-41 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/50 shadow-sm transition-all -mt-6 md:-mt-8 mb-6">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="flex items-center text-muted-foreground hover:text-foreground transition-colors mb-4"
-                >
-                    <ArrowLeft className="size-4 mr-1" />
-                    {searchParams.get('from') === 'performance' ? 'Zurück zu Performance Details' : 'Zurück'}
-                </button>
+                <div className="flex items-center gap-3 mb-4">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        <ArrowLeft className="size-4 mr-1" />
+                        Zurück
+                    </button>
+
+                    {searchParams.get('from') === 'performance' && (
+                        <>
+                            <span className="text-muted-foreground">•</span>
+                            <button
+                                onClick={() => navigate(-1)}
+                                className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium"
+                            >
+                                <ArrowLeft className="size-4 mr-1" />
+                                Zurück zu Performance Details
+                            </button>
+                        </>
+                    )}
+                </div>
 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
