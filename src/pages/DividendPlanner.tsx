@@ -278,7 +278,7 @@ export function DividendPlanner() {
                                                     </div>
                                                     <div>
                                                         <div
-                                                            className="font-semibold cursor-pointer hover:text-primary transition-colors"
+                                                            className="font-semibold cursor-pointer hover:text-primary transition-colors whitespace-pre-line"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 navigate(`/stock/${stock.id}`);

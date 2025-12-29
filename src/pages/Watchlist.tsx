@@ -3,7 +3,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { useNavigate } from 'react-router-dom';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { smartWrap } from '../utils/text';
+
 import { getCurrentDividendPeriod, translateFrequency } from '../utils/dividend';
 import { Eye, Plus, Trash2, Edit, ShoppingBag } from 'lucide-react';
 
@@ -139,11 +139,11 @@ export function Watchlist() {
                                                         </div>
                                                         <div>
                                                             <div
-                                                                className="font-semibold cursor-pointer hover:text-primary transition-colors"
+                                                                className="font-semibold cursor-pointer hover:text-primary transition-colors whitespace-pre-line"
                                                                 onClick={() => navigate(`/stock/${stock.id}`)}
                                                             >
-                                                                {/* Smart Wrap: Prevent wrapping for short names (e.g. Swiss Re), allow for long names */}
-                                                                {smartWrap(stock.name)}
+                                                                {/* Smart Wrap removed to allow manual line breaks via whitespace-pre-line */}
+                                                                {stock.name}
                                                             </div>
                                                             <div className="text-xs text-muted-foreground">{stock.symbol}</div>
                                                         </div>
