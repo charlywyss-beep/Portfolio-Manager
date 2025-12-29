@@ -225,7 +225,7 @@ export function StockDetail() {
                         <>
                             <span className="text-muted-foreground">•</span>
                             <button
-                                onClick={() => navigate(-1)}
+                                onClick={() => navigate('/?openPerformance=true')}
                                 className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium"
                             >
                                 <ArrowLeft className="size-4 mr-1" />

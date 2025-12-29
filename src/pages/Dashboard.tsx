@@ -1,5 +1,5 @@
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useState, useEffect, useRef } from 'react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
@@ -32,6 +32,7 @@ const translateFrequency = (freq?: string) => {
 
 export function Dashboard() {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { totals, upcomingDividends, positions, upcomingWatchlistDividends, bankRisks } = usePortfolioData();
     const { history, deleteHistoryEntry, updateStockPrice, stocks, updateStock } = usePortfolio(); // Added stocks, updateStock
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
@@ -44,6 +45,14 @@ export function Dashboard() {
 
     useEffect(() => {
         setHasMounted(true);
+
+        // Auto-open Performance Modal if openPerformance parameter is present
+        if (searchParams.get('openPerformance') === 'true') {
+            setShowPerformanceDetails(true);
+            // Remove the parameter from URL
+            searchParams.delete('openPerformance');
+            setSearchParams(searchParams, { replace: true });
+        }
     }, []);
 
     // Auto-Refresh Prices and Metadata on Mount (Once)
