@@ -66,8 +66,11 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                                 >
                                                     {pos.stock.name}
                                                 </div>
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-1">
                                                     <div className="text-xs font-mono text-muted-foreground">{pos.stock.symbol}</div>
+                                                    {/* DEBUG: Show raw state to diagnose mobile issue */}
+                                                    <span className="text-[10px] text-pink-500 font-bold px-1">{pos.stock.marketState || 'NULL'}</span>
+
                                                     {pos.stock.marketState === 'REGULAR' && (
                                                         <div className="size-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" title="Markt geöffnet" />
                                                     )}
