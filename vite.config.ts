@@ -13,45 +13,64 @@ export default defineConfig({
       server.middlewares.use('/api/yahoo-quote', async (req, res, _next) => {
         try {
           const url = new URL(req.url!, `http://${req.headers.host}`);
-          const symbol = url.searchParams.get('symbol');
+          const symbolParam = url.searchParams.get('symbol');
 
-          if (!symbol) {
+          if (!symbolParam) {
             res.statusCode = 400;
             res.end(JSON.stringify({ error: 'Symbol required' }));
             return;
           }
 
-          console.log(`[Yahoo Middleware] Fetching quote for ${symbol}`);
+          console.log(`[Yahoo Middleware] Fetching quote for ${symbolParam}`);
 
-          // Fetch robust data using yahoo-finance2 (handles crumbs/cookies)
-          const result: any = await yahooFinance.quoteSummary(symbol, {
-            modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile']
-          });
+          let results = [];
 
-          // Map to format expected by frontend (mimic v7 quoteResponse)
-          const quote = {
-            symbol: symbol,
-            regularMarketPrice: result.price?.regularMarketPrice,
-            currency: result.price?.currency,
-            regularMarketTime: result.price?.regularMarketTime ? new Date(result.price.regularMarketTime).getTime() / 1000 : null,
-            // KGV / Yield Data
-            trailingPE: result.summaryDetail?.trailingPE,
-            forwardPE: result.summaryDetail?.forwardPE || result.defaultKeyStatistics?.forwardPE,
-            epsTrailingTwelveMonths: result.defaultKeyStatistics?.trailingEps,
-            // Convert decimal yield (0.034) to percentage (3.4) for UI consistency if needed, 
-            // OR frontend expects decimal? 
-            // Previous code: `stock.dividendYield.toFixed(2)%`. If value is 3.4, it shows "3.40%". 
-            // If value is 0.034, it shows "0.03%". 
-            // Yahoo v7 returns e.g. 3.45. yahoo-finance2 returns 0.0345.
-            // So we MUST multiply by 100.
-            dividendYield: result.summaryDetail?.dividendYield ? result.summaryDetail.dividendYield * 100 : null,
-            // Country Data
-            country: result.summaryProfile?.country
-          };
+          if (symbolParam.includes(',')) {
+            // BATCH REQUEST: Use quote() which supports multiple symbols
+            const symbols = symbolParam.split(',');
+            const quoteResults = await yahooFinance.quote(symbols);
+
+            // Map flat quote objects to our schema
+            results = quoteResults.map((q: any) => ({
+              symbol: q.symbol,
+              regularMarketPrice: q.regularMarketPrice,
+              currency: q.currency,
+              regularMarketTime: q.regularMarketTime ? new Date(q.regularMarketTime).getTime() / 1000 : null,
+              marketState: q.marketState,
+              trailingPE: q.trailingPE,
+              forwardPE: q.forwardPE,
+              epsTrailingTwelveMonths: q.epsTrailingTwelveMonths,
+              dividendYield: q.dividendYield, // usually percentage in quote()
+              country: null // quote() often lacks country, but acceptable for batch view
+            }));
+
+          } else {
+            // SINGLE REQUEST: Use quoteSummary() for rich details
+            const result: any = await yahooFinance.quoteSummary(symbolParam, {
+              modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile']
+            });
+
+            // Map structured result to our schema
+            results = [{
+              symbol: symbolParam,
+              regularMarketPrice: result.price?.regularMarketPrice,
+              currency: result.price?.currency,
+              regularMarketTime: result.price?.regularMarketTime ? new Date(result.price.regularMarketTime).getTime() / 1000 : null,
+              marketState: result.price?.marketState,
+              // KGV / Yield Data
+              trailingPE: result.summaryDetail?.trailingPE,
+              forwardPE: result.summaryDetail?.forwardPE || result.defaultKeyStatistics?.forwardPE,
+              epsTrailingTwelveMonths: result.defaultKeyStatistics?.trailingEps,
+              // quoteSummary dividendYield is decimal, need * 100
+              dividendYield: result.summaryDetail?.dividendYield ? result.summaryDetail.dividendYield * 100 : null,
+              // Country Data
+              country: result.summaryProfile?.country
+            }];
+          }
 
           const responseData = {
             quoteResponse: {
-              result: [quote],
+              result: results,
               error: null
             }
           };
@@ -60,7 +79,6 @@ export default defineConfig({
           res.end(JSON.stringify(responseData));
         } catch (error: any) {
           console.error('[Yahoo Middleware] Error:', error.message);
-          // Fallback to empty if not found, to avoid breaking UI
           res.statusCode = 200;
           res.end(JSON.stringify({ quoteResponse: { result: [], error: error.message } }));
         }
