@@ -105,7 +105,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         onClick={() => handleRowClick(p.stock.id)}
                                         className="hover:bg-muted/30 transition-colors cursor-pointer group"
                                     >
-                                        <td className="py-3 px-4 font-medium">
+                                        <td className="py-3 px-4 font-medium max-w-[130px] md:max-w-[300px]">
                                             <div className="flex items-center gap-3">
                                                 <Logo
                                                     url={p.stock.logoUrl}
