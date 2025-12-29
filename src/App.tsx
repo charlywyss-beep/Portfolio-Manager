@@ -158,7 +158,7 @@ function App() {
               title="App neu laden (Cache leeren)"
             >
               <div className="text-[10px] text-foreground font-bold font-mono flex items-center gap-1 group/version">
-                <span>v3.11.391</span>
+                <span>v3.11.392</span>
                 <span className="opacity-0 group-hover/version:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
               </div>
             </div>
@@ -207,10 +207,10 @@ function App() {
                     url.searchParams.set('v', Date.now().toString());
                     window.location.href = url.toString();
                   }}
-                  className="text-[10px] text-muted-foreground/50 hover:text-primary transition-colors"
+                  className="text-xs font-semibold text-foreground/90 hover:text-primary transition-colors bg-secondary/20 hover:bg-secondary/40 px-2 py-0.5 rounded"
                   title="Klicken zum Neuladen (Cache leeren)"
                 >
-                  v3.11.390
+                  v3.11.392
                 </button>
                 <h2 className="text-lg font-semibold capitalize">
                   {getPageTitle(location.pathname)}

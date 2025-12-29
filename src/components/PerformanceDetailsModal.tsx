@@ -1,6 +1,6 @@
 import { X, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { Logo } from './Logo';
@@ -28,6 +28,16 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
         return () => {
             document.body.style.overflow = 'unset';
         };
+    }, [isOpen]);
+
+    // Force re-render every minute to update the "Updated X min ago" text
+    const [, setTick] = useState(0);
+    useEffect(() => {
+        if (!isOpen) return;
+        const timer = setInterval(() => {
+            setTick(t => t + 1);
+        }, 60000);
+        return () => clearInterval(timer);
     }, [isOpen]);
 
     if (!isOpen) return null;
