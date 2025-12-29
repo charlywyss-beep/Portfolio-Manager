@@ -22,7 +22,7 @@ export function Watchlist() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
             {/* Header */}
-            <div className="border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 sticky top-0 z-10">
+            <div className="border-b bg-card sticky top-0 z-50">
                 <div className="w-full px-4 py-4 md:px-4">
                     <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
@@ -75,7 +75,7 @@ export function Watchlist() {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-border">
-                                    <th className="text-left py-3 px-4 font-semibold sticky left-0 z-30 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[140px]">Aktie</th>
+                                    <th className="text-left py-3 px-4 font-semibold sticky left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[140px]">Aktie</th>
                                     <th className="text-right py-3 px-2 sm:px-4 font-semibold whitespace-nowrap">Aktueller Kurs</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Kauflimit</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Rendite %</th>
@@ -83,7 +83,7 @@ export function Watchlist() {
                                     <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">EX-Tag</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zahl-Tag</th>
-                                    <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                    <th className="px-1 py-3 text-center sticky right-0 bg-card z-30 w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -326,7 +326,7 @@ export function Watchlist() {
                                                         </div>
                                                     )}
                                                 </td>
-                                                <td className="px-1 py-3 text-center sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <td className="px-1 py-3 text-center sticky right-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                     <div className="absolute inset-0 bg-card -z-10" />
                                                     <div className="relative flex items-center justify-center gap-0 sm:gap-1 opacity-100 transition-opacity">
                                                         <button
