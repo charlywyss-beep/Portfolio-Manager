@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
-import { fetchStockHistory, fetchStockQuote } from '../services/yahoo-finance';
+import { fetchStockHistory } from '../services/yahoo-finance';
 import { ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, BarChart3, Calendar, Info, Plus, Trash2, Edit, Bell } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
@@ -34,7 +34,7 @@ export function Dashboard() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { totals, upcomingDividends, positions, upcomingWatchlistDividends, bankRisks } = usePortfolioData();
-    const { history, deleteHistoryEntry, updateStockPrice, stocks, updateStock } = usePortfolio(); // Added stocks, updateStock
+    const { history, deleteHistoryEntry, updateStockPrice, stocks, updateStock, refreshAllPrices } = usePortfolio(); // Added stocks, updateStock, refreshAllPrices
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [editingHistoryEntry, setEditingHistoryEntry] = useState<any>(null);
@@ -90,25 +90,17 @@ export function Dashboard() {
             }
 
             // 2. Refresh Metadata (Self-Healing for missing Country)
+            // 2. Refresh Metadata (Self-Healing for missing MarketState or Country)
             if (!hasRefreshedMetadata.current) {
-                // Let's just check all stocks with symbol that have no country.
-                const stocksToUpdate = stocks.filter(s => !s.country && !!s.symbol);
+                // Check if any stock with a symbol is missing 'marketState' (causes Gray Dots) or 'country'
+                const missingMetadata = stocks.some(s => !!s.symbol && (!s.marketState || !s.country));
 
-                if (stocksToUpdate.length > 0) {
+                if (missingMetadata) {
                     hasRefreshedMetadata.current = true;
-                    console.log(`Found ${stocksToUpdate.length} stocks with missing country data. Auto-healing...`);
+                    console.log("Missing metadata detected (Market State/Country). Forcing Global Refresh to fix visuals...");
 
-                    await Promise.all(stocksToUpdate.map(async (stock) => {
-                        try {
-                            const result = await fetchStockQuote(stock.symbol!);
-                            if (result.country) {
-                                console.log(`Healed country for ${stock.symbol}: ${result.country}`);
-                                updateStock(stock.id, { country: result.country });
-                            }
-                        } catch (err) {
-                            console.error(`Failed to heal country for ${stock.symbol}`, err);
-                        }
-                    }));
+                    // Force a global refresh (true = ignore throttle) to get market states immediately
+                    await refreshAllPrices(true);
                 }
             }
         };
