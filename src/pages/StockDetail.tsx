@@ -254,11 +254,12 @@ export function StockDetail() {
                         <div>
                             <div className="flex items-center gap-2 md:gap-3">
                                 <h1 className="text-lg md:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">{stock.name}</h1>
-                                {stock.marketState === 'REGULAR' && (
+                                {stock.marketState === 'REGULAR' ? (
                                     <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] cursor-help" title="Markt geöffnet" />
-                                )}
-                                {(stock.marketState === 'CLOSED' || stock.marketState === 'POST' || stock.marketState === 'PRE') && (
-                                    <div className="size-2.5 rounded-full bg-red-500/50 cursor-help" title="Markt geschlossen" />
+                                ) : stock.marketState ? (
+                                    <div className="size-2.5 rounded-full bg-red-500/50 cursor-help" title={`Markt geschlossen (${stock.marketState})`} />
+                                ) : (
+                                    <div className="size-2.5 rounded-full bg-gray-400/30 cursor-help" title="Status unbekannt" />
                                 )}
                                 <button
                                     onClick={() => navigate(`/dividends/edit/${stock.id}`)}
