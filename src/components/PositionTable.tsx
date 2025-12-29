@@ -3,6 +3,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
 import { Logo } from './Logo';
+import { estimateMarketState } from '../utils/market';
 import { Edit, Trash2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 interface PositionTableProps {
@@ -71,13 +72,14 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <div className="text-xs font-mono text-muted-foreground">{pos.stock.symbol}</div>
-                                                    {pos.stock.marketState === 'REGULAR' ? (
-                                                        <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title="Markt geöffnet" />
-                                                    ) : !pos.stock.marketState ? (
-                                                        <div className="size-2.5 rounded-full bg-gray-400/50 border border-background" title="Status unbekannt" />
-                                                    ) : (
-                                                        <div className="size-2.5 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${pos.stock.marketState})`} />
-                                                    )}
+                                                    {(() => {
+                                                        const displayState = pos.stock.marketState || estimateMarketState(pos.stock.symbol, pos.stock.currency);
+                                                        return displayState === 'REGULAR' ? (
+                                                            <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title="Markt geöffnet" />
+                                                        ) : (
+                                                            <div className="size-2.5 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${displayState})`} />
+                                                        );
+                                                    })()}
                                                 </div>
                                                 <div className="text-[10px] text-muted-foreground/80">{pos.stock.sector}</div>
                                             </div>

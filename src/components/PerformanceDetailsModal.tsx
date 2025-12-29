@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { Logo } from './Logo';
+import { estimateMarketState } from '../utils/market';
 import { RefreshCw } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 
@@ -158,13 +159,14 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                                 <div className="flex flex-col min-w-0">
                                                     <div className="flex items-center gap-2">
                                                         <div className="break-words whitespace-pre-line text-sm group-hover:text-primary transition-colors leading-tight">{p.stock.name}</div>
-                                                        {p.stock.marketState === 'REGULAR' ? (
-                                                            <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title="Markt geöffnet" />
-                                                        ) : p.stock.marketState ? (
-                                                            <div className="size-2.5 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${p.stock.marketState})`} />
-                                                        ) : (
-                                                            <div className="size-2.5 rounded-full bg-gray-400/50 border border-background" title="Status unbekannt" />
-                                                        )}
+                                                        {(() => {
+                                                            const displayState = p.stock.marketState || estimateMarketState(p.stock.symbol, p.stock.currency);
+                                                            return displayState === 'REGULAR' ? (
+                                                                <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title="Markt geöffnet" />
+                                                            ) : (
+                                                                <div className="size-2.5 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${displayState})`} />
+                                                            );
+                                                        })()}
                                                     </div>
                                                     <span className="text-[10px] text-muted-foreground">{p.stock.symbol}</span>
                                                 </div>
