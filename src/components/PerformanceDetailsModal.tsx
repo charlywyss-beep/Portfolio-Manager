@@ -128,7 +128,11 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                     <tr
                                         key={p.id}
                                         onClick={() => handleRowClick(p.stock.id)}
-                                        className="hover:bg-muted/30 transition-colors cursor-pointer group"
+                                        className={cn(
+                                            "hover:bg-muted/30 transition-colors cursor-pointer group border-b border-border/50",
+                                            p.stock.marketState === 'REGULAR' && "bg-green-500/5 hover:bg-green-500/10",
+                                            (p.stock.marketState === 'CLOSED' || p.stock.marketState === 'POST' || p.stock.marketState === 'PRE') && "bg-red-500/5 hover:bg-red-500/10"
+                                        )}
                                     >
                                         <td className="py-3 px-4 font-medium">
                                             <div className="flex items-center gap-3">

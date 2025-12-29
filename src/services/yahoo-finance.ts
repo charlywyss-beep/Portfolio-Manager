@@ -120,6 +120,7 @@ export async function fetchStockQuote(symbol: string): Promise<{
     eps: number | null,
     dividendYield: number | null,
     country: string | null,
+    marketState?: string | null,
     error?: string
 }> {
     try {
@@ -151,7 +152,8 @@ export async function fetchStockQuote(symbol: string): Promise<{
             forwardPE: result.forwardPE || null,
             eps: result.epsTrailingTwelveMonths || null,
             dividendYield: result.dividendYield || null,
-            country: country
+            country: country,
+            marketState: result.marketState || null
         };
     } catch (error) {
         console.error("Yahoo Quote Error:", error);
@@ -162,7 +164,7 @@ export async function fetchStockQuote(symbol: string): Promise<{
 }
 
 // Fetch multiple quotes at once
-export async function fetchStockQuotes(symbols: string[]): Promise<Record<string, { price: number, marketTime?: Date }>> {
+export async function fetchStockQuotes(symbols: string[]): Promise<Record<string, { price: number, marketTime?: Date, marketState?: string | null }>> {
     if (symbols.length === 0) return {};
 
     try {
@@ -178,7 +180,7 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
         const data = await response.json();
         const results = data.quoteResponse?.result || [];
 
-        const updateMap: Record<string, { price: number, marketTime?: Date }> = {};
+        const updateMap: Record<string, { price: number, marketTime?: Date, marketState?: string | null }> = {};
 
         results.forEach((res: any) => {
             if (res.symbol && res.regularMarketPrice) {
@@ -190,7 +192,8 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
 
                 updateMap[res.symbol] = {
                     price,
-                    marketTime: res.regularMarketTime ? new Date(res.regularMarketTime * 1000) : undefined
+                    marketTime: res.regularMarketTime ? new Date(res.regularMarketTime * 1000) : undefined,
+                    marketState: res.marketState || null
                 };
             }
         });
