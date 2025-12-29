@@ -1,5 +1,6 @@
 import { X, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { Logo } from './Logo';
@@ -13,6 +14,18 @@ interface PerformanceDetailsModalProps {
 export function PerformanceDetailsModal({ isOpen, onClose, positions }: PerformanceDetailsModalProps) {
     const { convertToCHF, formatCurrency } = useCurrencyFormatter();
     const navigate = useNavigate();
+
+    // Prevent body scroll when modal is open
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
