@@ -106,9 +106,6 @@ export function Watchlist() {
                                     </tr>
                                 ) : (
                                     watchlistStocks.map((stock) => {
-                                        const daysToEx = stock.dividendExDate ? Math.ceil((new Date(stock.dividendExDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                        const isExSoon = daysToEx !== null && daysToEx >= 0 && daysToEx <= 14;
-
                                         // Valuation Logic
                                         const hasTarget = !!stock.targetPrice;
                                         const isUndervalued = hasTarget && stock.currentPrice <= (stock.targetPrice || 0);

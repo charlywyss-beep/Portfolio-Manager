@@ -742,7 +742,7 @@ export function DividendCalculator() {
                     courtage: calcCourtage,
                     stampDuty: calcStamp,
                     exchangeFee: fees.exchangeFee,
-                    fxMarkup: fees.fxMarkupPercent,
+                    fxMarkup: fees.fxMarkupPercent || 0,
                     total: totalFees,
                     currency: displayFeeCurrency
                 },
@@ -774,7 +774,7 @@ export function DividendCalculator() {
                     courtage: calcCourtage,
                     stampDuty: calcStamp,
                     exchangeFee: fees.exchangeFee,
-                    fxMarkup: fees.fxMarkupPercent,
+                    fxMarkup: fees.fxMarkupPercent || 0,
                     total: totalFees,
                     currency: displayFeeCurrency
                 },
