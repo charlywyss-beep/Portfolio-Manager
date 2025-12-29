@@ -42,9 +42,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
             <div className="absolute bg-black/50 rounded-xl" style={{
                 width: 'min(calc(100vw - 2rem), calc(56rem + 300px))',
-                height: 'min(calc(100vh - 2rem), calc(85vh + 240px))'
+                height: 'min(calc(100vh - 2rem), calc(60vh + 240px))'
             }}></div>
-            <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-4xl max-h-[85vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10">
+            <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-4xl max-h-[60vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10">
                 <div className="flex items-center justify-between p-4 border-b border-border">
                     <h2 className="text-lg font-bold flex items-center gap-2">
                         <TrendingUp className="size-5 text-blue-500" />
