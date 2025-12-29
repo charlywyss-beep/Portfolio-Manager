@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
 import { fetchStockHistory, fetchStockQuote } from '../services/yahoo-finance';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, BarChart3, Calendar, Info, Plus, Trash2, Edit, Bell, Wallet } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, BarChart3, Calendar, Info, Plus, Trash2, Edit, Bell } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
 import { smartWrap } from '../utils/text';
@@ -151,23 +151,6 @@ export function Dashboard() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-            {/* Header */}
-            <div className="border-b bg-card sticky top-0 z-[100]">
-                <div className="w-full px-4 py-4 md:px-4">
-                    <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                            <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 text-emerald-600 dark:text-emerald-400">
-                                <Wallet className="size-6" />
-                            </div>
-                            <div>
-                                <h1 className="text-3xl font-bold tracking-tight">Portfolio</h1>
-                                <p className="text-muted-foreground">Übersicht und Performance</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
                 {/* Risk Warnings */}
                 {bankRisks.length > 0 && (

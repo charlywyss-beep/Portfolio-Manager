@@ -158,7 +158,7 @@ function App() {
               title="App neu laden (Cache leeren)"
             >
               <div className="text-[10px] text-foreground font-bold font-mono flex items-center gap-1 group/version">
-                <span>v3.11.344</span>
+                <span>v3.11.346</span>
                 <span className="opacity-0 group-hover/version:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
               </div>
             </div>
@@ -192,7 +192,7 @@ function App() {
 
           {/* Main Content */}
           <main className="flex-1 overflow-auto bg-background transition-all duration-300">
-            <header className="h-16 border-b border-border flex items-center justify-between px-4 md:px-8 bg-card/50 sticky top-0 z-40">
+            <header className="h-16 border-b border-border flex items-center justify-between px-4 md:px-8 bg-card sticky top-0 z-[200]">
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -206,7 +206,7 @@ function App() {
                   className="text-[10px] text-muted-foreground/50 hover:text-primary transition-colors"
                   title="Klicken zum Neuladen"
                 >
-                  v3.11.344
+                  v3.11.346
                 </button>
                 <h2 className="text-lg font-semibold capitalize">
                   {getPageTitle(location.pathname)}
