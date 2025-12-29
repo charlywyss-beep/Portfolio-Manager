@@ -480,7 +480,7 @@ export function Dashboard() {
                                                 <img
                                                     src={div.stock.logoUrl}
                                                     alt={div.stock.name}
-                                                    className="size-8 rounded-lg bg-white object-contain p-1 border border-border"
+                                                    className="h-8 w-auto max-w-12 rounded-lg bg-white object-contain p-1 border border-border"
                                                     onError={(e) => (e.currentTarget.style.display = 'none')}
                                                 />
                                             )}
@@ -566,7 +566,7 @@ export function Dashboard() {
                                                     <img
                                                         src={item.stock.logoUrl}
                                                         alt={item.stock.name}
-                                                        className="size-8 rounded-lg bg-white object-contain p-1 border border-border cursor-pointer hover:opacity-80 transition-opacity"
+                                                        className="h-8 w-auto max-w-12 rounded-lg bg-white object-contain p-1 border border-border cursor-pointer hover:opacity-80 transition-opacity"
                                                         onClick={() => navigate('/watchlist')}
                                                         onError={(e) => (e.currentTarget.style.display = 'none')}
                                                     />

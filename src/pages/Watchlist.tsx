@@ -128,7 +128,7 @@ export function Watchlist() {
                                                                 <img
                                                                     src={stock.logoUrl}
                                                                     alt={stock.symbol}
-                                                                    className="size-8 rounded-lg bg-white object-contain p-1 border border-border"
+                                                                    className="h-8 w-auto max-w-12 rounded-lg bg-white object-contain p-1 border border-border"
                                                                     onError={(e) => (e.currentTarget.style.display = 'none')}
                                                                 />
                                                             ) : (
