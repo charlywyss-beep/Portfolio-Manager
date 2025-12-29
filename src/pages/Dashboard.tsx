@@ -231,7 +231,7 @@ export function Dashboard() {
                     </div>
 
                     {/* Projected Dividends */}
-                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm order-3 md:order-2">
+                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm order-4 md:order-2">
                         <div className="flex justify-between items-start mb-4">
                             <div className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
                                 <TrendingUp className="size-6" />
@@ -372,7 +372,7 @@ export function Dashboard() {
 
                     {/* Top Performer ETF */}
                     {/* Top Performers (ETF & Stock) */}
-                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm order-4">
+                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm order-3">
                         <div className="flex justify-between items-start mb-4">
                             <div className="p-2 rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
                                 <TrendingUp className="size-6" />
