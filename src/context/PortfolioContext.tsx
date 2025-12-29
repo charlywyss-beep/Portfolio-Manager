@@ -433,9 +433,10 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
             // 3. Update State
             if (Object.keys(updates).length > 0) {
                 updateStockPricesBatch(updates);
-                setLastGlobalRefresh(new Date());
                 console.log("Global Refresh: Updated", Object.keys(updates).length, "stocks");
             }
+            // Always update the timestamp to show we checked
+            setLastGlobalRefresh(new Date());
 
         } catch (e) {
             console.error("Global Refresh Failed", e);
