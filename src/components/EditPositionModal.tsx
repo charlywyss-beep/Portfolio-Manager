@@ -185,7 +185,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
             <div className="relative pointer-events-auto" style={{ padding: '120px 150px' }}>
                 <div className="absolute inset-0 bg-black/50 backdrop-blur-sm rounded-xl"></div>
-                <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-3xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative z-10 max-h-[calc(100vh-240px)]">
+                <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-full md:max-w-4xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative z-10 max-h-[calc(100vh-240px)]">
                     {/* Header */}
                     <div className="flex items-center justify-between p-6 border-b border-border">
                         <div>
