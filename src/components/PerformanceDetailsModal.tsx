@@ -62,24 +62,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 <th className="text-left py-2 px-4 font-medium text-muted-foreground">Aktie / ETF</th>
                                 <th style={{ width: '20px' }}></th>
                                 <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '95px', whiteSpace: 'nowrap' }}>
-                                    {(() => {
-                                        // Always show the actual date from the first position
-                                        if (positions.length > 0 && positions[0].stock.lastQuoteDate) {
-                                            const date = new Date(positions[0].stock.lastQuoteDate);
-                                            return `Kurs am: ${date.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })}`;
-                                        }
-                                        return "Kurs %";
-                                    })()}
+                                    Kurs am: {new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })}
                                 </th>
                                 <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '100px', whiteSpace: 'nowrap' }}>
-                                    {(() => {
-                                        // Always show the actual date from the first position
-                                        if (positions.length > 0 && positions[0].stock.lastQuoteDate) {
-                                            const date = new Date(positions[0].stock.lastQuoteDate);
-                                            return `CHF +/- am: ${date.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })}`;
-                                        }
-                                        return "Wert CHF";
-                                    })()}
+                                    CHF +/- am: {new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })}
                                 </th>
                                 <th style={{ width: '110px' }}></th>
                                 <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px', whiteSpace: 'nowrap' }}>Performance %</th>
