@@ -146,8 +146,17 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     }, [positions]);
 
     // Global Refresh State
-    const [lastGlobalRefresh, setLastGlobalRefresh] = useState<Date | null>(null);
+    const [lastGlobalRefresh, setLastGlobalRefresh] = useState<Date | null>(() => {
+        const stored = localStorage.getItem('portfolio_last_global_refresh');
+        return stored ? new Date(stored) : null;
+    });
     const [isGlobalRefreshing, setIsGlobalRefreshing] = useState(false);
+
+    useEffect(() => {
+        if (lastGlobalRefresh) {
+            localStorage.setItem('portfolio_last_global_refresh', lastGlobalRefresh.toISOString());
+        }
+    }, [lastGlobalRefresh]);
 
     useEffect(() => {
         localStorage.setItem('portfolio_finnhub_api_key', finnhubApiKey);
