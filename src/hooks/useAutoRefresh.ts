@@ -16,6 +16,12 @@ export function useAutoRefresh({
     enabled = true
 }: UseAutoRefreshOptions) {
     const intervalRef = useRef<number | null>(null);
+    const onRefreshRef = useRef(onRefresh);
+
+    // Update ref when onRefresh changes
+    useEffect(() => {
+        onRefreshRef.current = onRefresh;
+    }, [onRefresh]);
 
     useEffect(() => {
         if (!enabled) return;
@@ -52,7 +58,10 @@ export function useAutoRefresh({
             if (isTradingHours() && !document.hidden) {
                 intervalRef.current = setInterval(() => {
                     if (isTradingHours()) {
-                        onRefresh();
+                        // Use ref to avoid dependency loop or resetting interval when callback changes
+                        if (onRefreshRef.current) {
+                            onRefreshRef.current();
+                        }
                     } else {
                         // Stop interval if outside trading hours
                         if (intervalRef.current) {
@@ -77,5 +86,7 @@ export function useAutoRefresh({
             }
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
-    }, [onRefresh, intervalMs, enabled]);
+        // Removed `onRefresh` from dependency array to prevent interval reset on callback change
+        // We handle callback updates via the separate useEffect above
+    }, [intervalMs, enabled]);
 }
