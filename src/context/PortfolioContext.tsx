@@ -3,6 +3,7 @@ import type { Position, Stock } from '../types';
 import { MOCK_POSITIONS, MOCK_STOCKS } from '../data/mockData';
 import { fetchStockQuotes } from '../services/yahoo-finance';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
+import { estimateMarketState } from '../utils/market';
 
 interface PortfolioContextType {
     positions: Position[];
@@ -399,14 +400,20 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         setStocks(prev => prev.map(s => {
             const update = updates[s.symbol];
             if (update) {
+                // Fallback Logic: If API returns null/undefined for marketState, estimate it locally
+                let finalMarketState = update.marketState;
+                if (!finalMarketState) {
+                    finalMarketState = estimateMarketState(s.symbol, s.currency);
+                    // console.log(`Fallback Market State for ${s.symbol}: ${finalMarketState}`);
+                }
+
                 return {
                     ...s,
                     currentPrice: update.price,
                     // Legacy behavior: If no invalid previousClose logic exists, keep as is.
                     // Ideally we should track previousClose separately but for now we just update current.
-                    // Ideally we should track previousClose separately but for now we just update current.
                     lastQuoteDate: update.marketTime ? update.marketTime.toISOString() : s.lastQuoteDate,
-                    marketState: update.marketState as any // Cast to specific union type
+                    marketState: finalMarketState as any // Cast to specific union type
                 };
             }
             return s;
