@@ -105,14 +105,18 @@ export function DividendPlanner() {
     return (
         <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600 dark:text-green-400">
-                        <Calendar className="size-6" />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Dividenden</h1>
-                        <p className="text-muted-foreground">Erwartete Dividendenausschüttungen</p>
+            <div className="border-b bg-card sticky top-0 z-[100]">
+                <div className="w-full px-4 py-4 md:px-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600 dark:text-green-400">
+                                <Calendar className="size-6" />
+                            </div>
+                            <div>
+                                <h1 className="text-3xl font-bold tracking-tight">Dividenden</h1>
+                                <p className="text-muted-foreground">Erwartete Dividendenausschüttungen</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
