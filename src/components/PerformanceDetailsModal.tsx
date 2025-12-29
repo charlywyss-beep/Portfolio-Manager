@@ -105,7 +105,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         onClick={() => handleRowClick(p.stock.id)}
                                         className="hover:bg-muted/30 transition-colors cursor-pointer group"
                                     >
-                                        <td className="py-3 px-4 font-medium max-w-[130px] md:max-w-[300px]">
+                                        <td className="py-3 px-4 font-medium">
                                             <div className="flex items-center gap-3">
                                                 <Logo
                                                     url={p.stock.logoUrl}
@@ -113,7 +113,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                                     fallback={p.stock.symbol.slice(0, 2)}
                                                     size="size-10"
                                                 />
-                                                <div className="flex flex-col flex-1 min-w-0">
+                                                <div className="flex flex-col min-w-0">
                                                     <span className="break-words group-hover:text-primary transition-colors">{p.stock.name}</span>
                                                     <span className="text-[10px] text-muted-foreground">{p.stock.symbol}</span>
                                                 </div>
