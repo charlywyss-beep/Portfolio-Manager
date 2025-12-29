@@ -231,7 +231,7 @@ export function Dashboard() {
                     </div>
 
                     {/* Projected Dividends */}
-                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
+                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm order-2 md:order-1">
                         <div className="flex justify-between items-start mb-4">
                             <div className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
                                 <TrendingUp className="size-6" />
@@ -249,7 +249,7 @@ export function Dashboard() {
                     </div>
 
                     {/* Performance Card with Timeframe Selection */}
-                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm">
+                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm order-1 md:order-2">
                         <div className="flex justify-between items-start mb-4">
                             <div className="p-2 rounded-lg bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
                                 <TrendingUp className="size-6" />
