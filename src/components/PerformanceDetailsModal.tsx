@@ -47,7 +47,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     }, 0);
 
     const handleRowClick = (stockId: string) => {
-        navigate(`/stock/${stockId}`);
+        navigate(`/stock/${stockId}?from=performance`);
         onClose();
     };
 

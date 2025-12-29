@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
@@ -15,6 +15,7 @@ import { fetchStockHistory, fetchStockQuote, type TimeRange, type ChartDataPoint
 export function StockDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { stocks, positions, updateStock, updateStockPrice, addQuickLink, removeQuickLink } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
 
@@ -216,7 +217,7 @@ export function StockDetail() {
                     className="flex items-center text-muted-foreground hover:text-foreground transition-colors mb-4"
                 >
                     <ArrowLeft className="size-4 mr-1" />
-                    Zurück
+                    {searchParams.get('from') === 'performance' ? 'Zurück zu Performance Details' : 'Zurück'}
                 </button>
 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
