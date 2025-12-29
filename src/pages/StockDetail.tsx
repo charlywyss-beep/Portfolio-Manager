@@ -16,7 +16,7 @@ export function StockDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { stocks, positions, updateStock, updateStockPrice, addQuickLink, removeQuickLink, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh } = usePortfolio();
+    const { stocks, positions, updateStock, updateStockPrice, addQuickLink, removeQuickLink } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
 
     // Find stock by ID or Symbol (case-insensitive)
@@ -29,17 +29,19 @@ export function StockDetail() {
     const [isSaving, setIsSaving] = useState(false);
     const [timeRange, setTimeRange] = useState<TimeRange>('1D');
     const [chartData, setChartData] = useState<ChartDataPoint[] | null>(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
     const [quoteDate, setQuoteDate] = useState<Date | null>(null);
     const [, setTimeTick] = useState(0); // Force re-render for time display
 
-    // Force update "Updated X min ago" text every minute based on GLOBAL refresh
+    // Force update "Updated X min ago" text every minute
     useEffect(() => {
-        if (!lastGlobalRefresh) return;
+        if (!lastUpdate) return;
         const interval = setInterval(() => {
             setTimeTick(t => t + 1);
         }, 60000);
         return () => clearInterval(interval);
-    }, [lastGlobalRefresh]);
+    }, [lastUpdate]);
 
     // Get position to determine buy date
     const position = positions.find(p => p.stockId === stock?.id);
@@ -68,6 +70,7 @@ export function StockDetail() {
             return;
         }
 
+        setIsRefreshing(true);
         console.log('[StockDetail] Fetching Yahoo Finance data for:', symbol, 'Range:', timeRange);
 
         let rangeToUse = timeRange;
@@ -172,6 +175,8 @@ export function StockDetail() {
                 }
             }
         }
+        setIsRefreshing(false);
+        setLastUpdate(new Date());
     }, [stock?.symbol, stock?.id, timeRange, position?.buyDate]);
 
     // Initial load
@@ -332,29 +337,19 @@ export function StockDetail() {
                             </div>
                             {/* Manual Refresh Button */}
                             <button
-                                onClick={() => {
-                                    refreshAllPrices();
-                                    // Optionally trigger local loadData to ensure chart is synced if needed
-                                    // But loadData depends on stock state which will be updated by refreshAllPrices
-                                    // So we just rely on global refresh
-                                    loadData();
-                                }}
-                                disabled={isGlobalRefreshing}
+                                onClick={loadData}
+                                disabled={isRefreshing}
                                 className={cn(
                                     "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
                                     "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
                                     "active:scale-95",
-                                    isGlobalRefreshing && "opacity-50 cursor-not-allowed"
+                                    isRefreshing && "opacity-50 cursor-not-allowed"
                                 )}
-                                title="Alle Aktienpreise aktualisieren"
+                                title="Daten aktualisieren"
                             >
-                                <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
+                                <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
                                 <span>
-                                    {isGlobalRefreshing
-                                        ? 'Aktualisiere...'
-                                        : lastGlobalRefresh
-                                            ? `Aktualisiert vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
-                                            : 'Daten laden'}
+                                    {isRefreshing ? 'Aktualisiere...' : lastUpdate ? `Aktualisiert vor ${Math.floor((new Date().getTime() - lastUpdate.getTime()) / 60000)} Min` : 'Daten laden'}
                                 </span>
                             </button>
                         </div>
