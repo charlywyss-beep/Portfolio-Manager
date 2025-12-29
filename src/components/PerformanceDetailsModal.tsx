@@ -84,7 +84,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                     ? 'Aktualisiere...'
                                     : lastGlobalRefresh
                                         ? `Aktualisiert vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
-                                        : 'Daten laden'}
+                                        : 'Jetzt aktualisieren'}
                             </span>
                         </button>
                         <button onClick={onClose} className="p-2 hover:bg-secondary rounded-full transition-colors">

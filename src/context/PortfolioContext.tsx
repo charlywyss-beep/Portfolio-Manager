@@ -435,12 +435,12 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 updateStockPricesBatch(updates);
                 console.log("Global Refresh: Updated", Object.keys(updates).length, "stocks");
             }
-            // Always update the timestamp to show we checked
-            setLastGlobalRefresh(new Date());
 
         } catch (e) {
             console.error("Global Refresh Failed", e);
         } finally {
+            // Always set timestamp to show we checked (even if no updates or error)
+            setLastGlobalRefresh(new Date());
             setIsGlobalRefreshing(false);
         }
     };
