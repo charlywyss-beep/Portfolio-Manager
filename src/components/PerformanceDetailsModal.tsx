@@ -130,8 +130,11 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         onClick={() => handleRowClick(p.stock.id)}
                                         className={cn(
                                             "hover:bg-muted/30 transition-colors cursor-pointer group border-b border-border/50",
-                                            p.stock.marketState === 'REGULAR' && "bg-green-500/10 dark:bg-green-500/20 hover:bg-green-500/20 dark:hover:bg-green-500/30",
-                                            (p.stock.marketState === 'CLOSED' || p.stock.marketState === 'POST' || p.stock.marketState === 'PRE') && "bg-red-500/10 dark:bg-red-500/20 hover:bg-red-500/20 dark:hover:bg-red-500/30"
+                                            p.stock.marketState === 'REGULAR'
+                                                ? "bg-green-500/10 dark:bg-green-500/20 hover:bg-green-500/20 dark:hover:bg-green-500/30"
+                                                : p.stock.marketState
+                                                    ? "bg-red-500/10 dark:bg-red-500/20 hover:bg-red-500/20 dark:hover:bg-red-500/30"
+                                                    : ""
                                         )}
                                     >
                                         <td className="py-3 px-4 font-medium">
@@ -145,12 +148,11 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                                 <div className="flex flex-col min-w-0">
                                                     <div className="flex items-center gap-2">
                                                         <div className="break-words whitespace-pre-line text-sm group-hover:text-primary transition-colors leading-tight">{p.stock.name}</div>
-                                                        {p.stock.marketState === 'REGULAR' && (
+                                                        {p.stock.marketState === 'REGULAR' ? (
                                                             <div className="size-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" title="Markt geöffnet" />
-                                                        )}
-                                                        {(p.stock.marketState === 'CLOSED' || p.stock.marketState === 'POST' || p.stock.marketState === 'PRE') && (
-                                                            <div className="size-2 rounded-full bg-red-500/50" title="Markt geschlossen" />
-                                                        )}
+                                                        ) : p.stock.marketState ? (
+                                                            <div className="size-2 rounded-full bg-red-500/50" title={`Markt geschlossen (${p.stock.marketState})`} />
+                                                        ) : null}
                                                     </div>
                                                     <span className="text-[10px] text-muted-foreground">{p.stock.symbol}</span>
                                                 </div>

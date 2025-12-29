@@ -36,6 +36,8 @@ export function useAutoRefresh({
                 }
             } else {
                 // Resume when tab becomes visible
+                // Trigger immediate refresh to prevent stale data
+                onRefresh();
                 startInterval();
             }
         };
