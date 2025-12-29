@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { Logo } from './Logo';
+import { RefreshCw } from 'lucide-react';
+import { usePortfolio } from '../context/PortfolioContext';
 
 interface PerformanceDetailsModalProps {
     isOpen: boolean;
@@ -13,6 +15,7 @@ interface PerformanceDetailsModalProps {
 
 export function PerformanceDetailsModal({ isOpen, onClose, positions }: PerformanceDetailsModalProps) {
     const { convertToCHF, formatCurrency } = useCurrencyFormatter();
+    const { refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh } = usePortfolio();
     const navigate = useNavigate();
 
     // Prevent body scroll when modal is open
@@ -63,9 +66,31 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         <TrendingUp className="size-5 text-blue-500" />
                         Performance Details
                     </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-secondary rounded-full transition-colors">
-                        <X className="size-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={refreshAllPrices}
+                            disabled={isGlobalRefreshing}
+                            className={cn(
+                                "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
+                                "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                "active:scale-95",
+                                isGlobalRefreshing && "opacity-50 cursor-not-allowed"
+                            )}
+                            title="Alle Aktienpreise aktualisieren"
+                        >
+                            <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
+                            <span>
+                                {isGlobalRefreshing
+                                    ? 'Aktualisiere...'
+                                    : lastGlobalRefresh
+                                        ? `Aktualisiert vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                        : 'Daten laden'}
+                            </span>
+                        </button>
+                        <button onClick={onClose} className="p-2 hover:bg-secondary rounded-full transition-colors">
+                            <X className="size-5" />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="overflow-y-auto p-0 flex-1">
