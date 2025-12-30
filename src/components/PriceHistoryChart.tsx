@@ -173,7 +173,7 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                                     <div className={cn(
                                         "inline-flex items-center gap-1.5 px-2 py-1 rounded-md font-medium",
                                         showGreen
-                                            ? (isDelayed ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400")
+                                            ? (isDelayed ? "bg-yellow-100 dark:bg-yellow-500/20 text-yellow-950 dark:text-yellow-200" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400")
                                             : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
                                     )}>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
