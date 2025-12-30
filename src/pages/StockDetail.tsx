@@ -415,16 +415,12 @@ export function StockDetail() {
                                 <span className="font-medium text-sm">{formatCurrency(stock.currentPrice, stock.currency)}</span>
                             </div>
 
-                            {/* Added Open and Previous Close */}
+                            {/* Added Open and Previous Close in one line */}
                             <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Eröffnung</span>
-                                <span className="font-medium text-sm">
-                                    {stock.open ? formatCurrency(stock.open, stock.currency) : '-'}
+                                <span className="text-muted-foreground text-sm">Eröffnung / Vortag</span>
+                                <span className="font-medium text-sm text-right">
+                                    {stock.open ? formatCurrency(stock.open, stock.currency) : '-'} / {formatCurrency(stock.previousClose, stock.currency)}
                                 </span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Vortag</span>
-                                <span className="font-medium text-sm">{formatCurrency(stock.previousClose, stock.currency)}</span>
                             </div>
 
                             <div className="flex justify-between py-1.5 border-b border-border/50">
