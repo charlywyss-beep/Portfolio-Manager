@@ -74,7 +74,7 @@ export function StockDetail() {
             return;
         }
 
-        const { symbol, id, currency, isin, trailingPE, forwardPE, eps, dividendYield, previousClose: currentPreviousClose } = currentStock;
+        const { symbol, id, currency, isin, trailingPE, forwardPE, eps, dividendYield } = currentStock;
 
         setIsRefreshing(true);
         // console.log('[StockDetail] Fetching Yahoo Finance data for:', symbol, 'Range:', timeRange);
@@ -180,27 +180,30 @@ export function StockDetail() {
                 }
 
                 // FIX: Update open and previousClose if changed
+                // STRICT MODE: Do NOT update 'open' or 'previousClose' from StockDetail refresh.
+                // These are daily anchors that should be controlled by the main Batch Refresh (List) to ensure consistency.
+                // Allowing Single-Quote updates here causes "jumping" values if Yahoo's single-quote API differs from the batch API.
+                /*
                 if (quoteResponse.open !== undefined && quoteResponse.open !== null && Math.abs((currentStock.open || 0) - quoteResponse.open) > 0.0001) {
                     updates.open = quoteResponse.open;
                     hasUpdates = true;
                 }
-
+                
                 // CRITICAL FIX: Only update previousClose if we DON'T have one yet.
-                // This prevents the Detail view (Single Quote) from overwriting the List view (Batch Quote).
-                // Batch Quote is generally more stable for the Portfolio Overview.
                 const weHaveValidPrevClose = currentPreviousClose && currentPreviousClose > 0;
-
+                
                 if (quoteResponse.previousClose !== undefined && quoteResponse.previousClose !== null) {
-                    // Check if we strictly need to update
-                    if (!weHaveValidPrevClose) {
+                     if (!weHaveValidPrevClose) {
                         updates.previousClose = quoteResponse.previousClose;
                         hasUpdates = true;
                         console.log(`[StockDetail] Accepting previousClose from Single Quote (was missing): ${quoteResponse.previousClose}`);
-                    } else {
-                        // Log usage of existing
-                        // console.log(`[StockDetail] Ignoring previousClose from Single Quote (${quoteResponse.previousClose}) because we have valid: ${currentPreviousClose}`);
-                    }
+                     }
                 }
+                */
+
+                // Special Case: If previousClose is TOTALLY missing (e.g. data loss), allow one-time repair?
+                // For now, strict disable to cure the "jumping".
+                // If the user needs to fix missing data, the main "Refresh All" in Portfolio page will handle it.
 
                 if (hasUpdates) {
                     updateStock(id, updates);
