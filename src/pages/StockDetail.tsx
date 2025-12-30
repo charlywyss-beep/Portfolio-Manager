@@ -152,11 +152,8 @@ export function StockDetail() {
                 }
 
                 let finalPrice = quoteResponse.price;
-                if (currency === 'GBP' && finalPrice > 50) {
-                    if (symbol.toUpperCase().endsWith('.L')) {
-                        finalPrice = finalPrice / 100;
-                    }
-                }
+                // GBp Logic moved to yahoo-finance.ts service to ensure consistency between Single/Batch
+                // if (currency === 'GBP' && finalPrice > 50) { ... }
 
                 if (currentStock.currentPrice !== undefined && Math.abs(currentStock.currentPrice - finalPrice) > 0.0001) {
                     updateStockPrice(id, finalPrice, undefined, quoteResponse.marketTime ? new Date(quoteResponse.marketTime).toISOString() : undefined);

@@ -126,7 +126,8 @@ export async function fetchStockQuote(symbol: string): Promise<{
     error?: string
 }> {
     try {
-        const url = `/api/yahoo-quote?symbol=${symbol}&t=${Date.now()}`;
+        // Remove timestamp to align caching behavior with batch request
+        const url = `/api/yahoo-quote?symbol=${symbol}`;
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -146,8 +147,24 @@ export async function fetchStockQuote(symbol: string): Promise<{
             country = MANUAL_COUNTRY_OVERRIDES[symbol];
         }
 
+        // Standardize GBp logic (SAME AS BATCH)
+        let price = result.regularMarketPrice;
+        let open = result.regularMarketOpen;
+        let previousClose = result.regularMarketPreviousClose;
+
+        const isPence = result.currency === 'GBp';
+        const isLSE = symbol.endsWith('.L');
+        // Heuristic like in batch
+        const isLikelyPence = isLSE && price > 50 && result.currency !== 'USD' && result.currency !== 'EUR' && result.currency !== 'CHF';
+
+        if (isPence || isLikelyPence) {
+            price = price / 100;
+            if (open) open = open / 100;
+            if (previousClose) previousClose = previousClose / 100;
+        }
+
         return {
-            price: result.regularMarketPrice,
+            price,
             currency: result.currency,
             marketTime: result.regularMarketTime ? new Date(result.regularMarketTime * 1000) : null,
             trailingPE: result.trailingPE || null,
@@ -156,8 +173,8 @@ export async function fetchStockQuote(symbol: string): Promise<{
             dividendYield: result.dividendYield || null,
             country: country,
             marketState: result.marketState || null,
-            open: result.regularMarketOpen || null,
-            previousClose: result.regularMarketPreviousClose || null
+            open: open || null,
+            previousClose: previousClose || null
         };
     } catch (error) {
         console.error("Yahoo Quote Error:", error);
