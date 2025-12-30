@@ -405,28 +405,28 @@ export function StockDetail() {
                                 <div className="flex justify-between py-1.5 border-b border-border/50">
                                     <span className="text-muted-foreground text-sm">Kaufpreis Ø</span>
                                     <span className="font-medium text-sm">
-                                        {formatCurrency(positions.find(p => p.stockId === stock.id)?.buyPriceAvg || 0, stock.currency)}
+                                        {formatCurrency(positions.find(p => p.stockId === stock.id)?.buyPriceAvg || 0, stock.currency, false)}
                                     </span>
                                 </div>
                             )}
 
                             <div className="flex justify-between py-1.5 border-b border-border/50">
                                 <span className="text-muted-foreground text-sm">Aktueller Kurs</span>
-                                <span className="font-medium text-sm">{formatCurrency(stock.currentPrice, stock.currency)}</span>
+                                <span className="font-medium text-sm">{formatCurrency(stock.currentPrice, stock.currency, false)}</span>
                             </div>
 
                             {/* Added Open and Previous Close in one line */}
                             <div className="flex justify-between py-1.5 border-b border-border/50">
                                 <span className="text-muted-foreground text-sm">Eröffnung / Vortag</span>
                                 <span className="font-medium text-sm text-right">
-                                    {stock.open ? formatCurrency(stock.open, stock.currency) : '-'} / {formatCurrency(stock.previousClose, stock.currency)}
+                                    {stock.open ? formatCurrency(stock.open, stock.currency, false) : '-'} / {formatCurrency(stock.previousClose, stock.currency, false)}
                                 </span>
                             </div>
 
                             <div className="flex justify-between py-1.5 border-b border-border/50">
                                 <span className="text-muted-foreground text-sm">Kauflimit</span>
                                 <span className="font-medium text-sm">
-                                    {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency) : '-'}
+                                    {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
                                 </span>
                             </div>
                         </div>
