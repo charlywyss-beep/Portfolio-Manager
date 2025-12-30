@@ -85,7 +85,13 @@ export function StockDetail() {
             }
         }
 
-        const response = await fetchStockHistory(symbol, rangeToUse);
+        let response = await fetchStockHistory(symbol, rangeToUse);
+
+        // FALLBACK: If 1D data is empty (common for EU stocks), try 1W
+        if ((!response.data || response.data.length === 0) && rangeToUse === '1D') {
+            console.warn('[StockDetail] 1D data empty, trying fallback to 1W for', symbol);
+            response = await fetchStockHistory(symbol, '1W');
+        }
 
         if (response.error) {
             console.warn('[StockDetail] Error from Yahoo:', response.error);
