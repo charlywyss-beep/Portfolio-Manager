@@ -34,6 +34,8 @@ export default defineConfig({
             results = quoteResults.map((q: any) => ({
               symbol: q.symbol,
               regularMarketPrice: q.regularMarketPrice,
+              regularMarketOpen: q.regularMarketOpen,
+              regularMarketPreviousClose: q.regularMarketPreviousClose,
               currency: q.currency,
               regularMarketTime: q.regularMarketTime ? new Date(q.regularMarketTime).getTime() / 1000 : null,
               marketState: q.marketState,
@@ -54,6 +56,8 @@ export default defineConfig({
             results = [{
               symbol: symbolParam,
               regularMarketPrice: result.price?.regularMarketPrice,
+              regularMarketOpen: result.price?.regularMarketOpen,
+              regularMarketPreviousClose: result.price?.regularMarketPreviousClose,
               currency: result.price?.currency,
               regularMarketTime: result.price?.regularMarketTime ? new Date(result.price.regularMarketTime).getTime() / 1000 : null,
               marketState: result.price?.marketState,
