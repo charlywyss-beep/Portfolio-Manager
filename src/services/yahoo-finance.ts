@@ -121,6 +121,8 @@ export async function fetchStockQuote(symbol: string): Promise<{
     dividendYield: number | null,
     country: string | null,
     marketState?: string | null,
+    open?: number | null,
+    previousClose?: number | null,
     error?: string
 }> {
     try {
@@ -128,14 +130,14 @@ export async function fetchStockQuote(symbol: string): Promise<{
         const response = await fetch(url);
 
         if (!response.ok) {
-            return { price: null, currency: null, marketTime: null, trailingPE: null, forwardPE: null, eps: null, dividendYield: null, country: null, error: `API Error: ${response.status}` };
+            return { price: null, currency: null, marketTime: null, trailingPE: null, forwardPE: null, eps: null, dividendYield: null, country: null, error: `API Error: ${response.status}`, open: null, previousClose: null };
         }
 
         const data = await response.json();
         const result = data.quoteResponse?.result?.[0];
 
         if (!result) {
-            return { price: null, currency: null, marketTime: null, trailingPE: null, forwardPE: null, eps: null, dividendYield: null, country: null, error: 'Keine Daten' };
+            return { price: null, currency: null, marketTime: null, trailingPE: null, forwardPE: null, eps: null, dividendYield: null, country: null, error: 'Keine Daten', open: null, previousClose: null };
         }
 
         // Check Override
@@ -153,7 +155,9 @@ export async function fetchStockQuote(symbol: string): Promise<{
             eps: result.epsTrailingTwelveMonths || null,
             dividendYield: result.dividendYield || null,
             country: country,
-            marketState: result.marketState || null
+            marketState: result.marketState || null,
+            open: result.regularMarketOpen || null,
+            previousClose: result.regularMarketPreviousClose || null
         };
     } catch (error) {
         console.error("Yahoo Quote Error:", error);

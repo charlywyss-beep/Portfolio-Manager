@@ -342,7 +342,7 @@ export function StockDetail() {
                     {/* Price Chart */}
                     <div className="bg-card border border-border rounded-xl p-6 shadow-sm min-h-[450px] flex flex-col">
                         <div className="flex items-center justify-between mb-4 shrink-0">
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-12">
                                 <div className="flex items-center gap-2">
                                     <TrendingUp className="size-5 text-blue-500" />
                                     <h3 className="font-bold text-lg">Kursverlauf</h3>
@@ -393,7 +393,50 @@ export function StockDetail() {
 
                 {/* Right Column: Stammdaten & Notes */}
                 <div className="lg:col-span-1 space-y-6">
-                    {/* Stammdaten - Moved here for compact width */}
+
+                    {/* Kursdaten - Moved to TOP as requested */}
+                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                            Kursdaten
+                        </h3>
+                        <div className="space-y-3">
+                            {/* Kaufpreis (Avg Buy Price) - Only if position exists */}
+                            {positions.find(p => p.stockId === stock.id) && (
+                                <div className="flex justify-between py-1.5 border-b border-border/50">
+                                    <span className="text-muted-foreground text-sm">Kaufpreis Ø</span>
+                                    <span className="font-medium text-sm">
+                                        {formatCurrency(positions.find(p => p.stockId === stock.id)?.buyPriceAvg || 0, stock.currency)}
+                                    </span>
+                                </div>
+                            )}
+
+                            <div className="flex justify-between py-1.5 border-b border-border/50">
+                                <span className="text-muted-foreground text-sm">Aktueller Kurs</span>
+                                <span className="font-medium text-sm">{formatCurrency(stock.currentPrice, stock.currency)}</span>
+                            </div>
+
+                            {/* Added Open and Previous Close */}
+                            <div className="flex justify-between py-1.5 border-b border-border/50">
+                                <span className="text-muted-foreground text-sm">Eröffnung</span>
+                                <span className="font-medium text-sm">
+                                    {stock.open ? formatCurrency(stock.open, stock.currency) : '-'}
+                                </span>
+                            </div>
+                            <div className="flex justify-between py-1.5 border-b border-border/50">
+                                <span className="text-muted-foreground text-sm">Vortag</span>
+                                <span className="font-medium text-sm">{formatCurrency(stock.previousClose, stock.currency)}</span>
+                            </div>
+
+                            <div className="flex justify-between py-1.5 border-b border-border/50">
+                                <span className="text-muted-foreground text-sm">Kauflimit</span>
+                                <span className="font-medium text-sm">
+                                    {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency) : '-'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Stammdaten - Moved below Kursdaten */}
                     <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
                         <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
                             <TrendingUp className="size-5 text-blue-500" />
@@ -442,36 +485,6 @@ export function StockDetail() {
                                 <span className="text-muted-foreground text-sm">Div. Rendite</span>
                                 <span className="font-medium text-sm">
                                     {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Kursdaten - New Section */}
-                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                            Kursdaten
-                        </h3>
-                        <div className="space-y-3">
-                            {/* Kaufpreis (Avg Buy Price) - Only if position exists */}
-                            {positions.find(p => p.stockId === stock.id) && (
-                                <div className="flex justify-between py-1.5 border-b border-border/50">
-                                    <span className="text-muted-foreground text-sm">Kaufpreis Ø</span>
-                                    <span className="font-medium text-sm">
-                                        {formatCurrency(positions.find(p => p.stockId === stock.id)?.buyPriceAvg || 0, stock.currency)}
-                                    </span>
-                                </div>
-                            )}
-
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Aktueller Kurs</span>
-                                <span className="font-medium text-sm">{formatCurrency(stock.currentPrice, stock.currency)}</span>
-                            </div>
-
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Kauflimit</span>
-                                <span className="font-medium text-sm">
-                                    {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency) : '-'}
                                 </span>
                             </div>
                         </div>

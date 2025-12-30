@@ -42,6 +42,7 @@ export interface Stock {
     currentPrice: number;
     lastQuoteDate?: string; // NEW: ISO timestamp of the quote
     previousClose: number; // For daily performance calculation
+    open?: number; // NEW: Opening price
     currency: Currency;
     type?: 'stock' | 'etf';
     dividendYield?: number; // Percentage (e.g., 3.5 for 3.5%)
