@@ -122,24 +122,7 @@ export function StockDetail() {
                     }
                 }
 
-                const latestPrice = chartData[chartData.length - 1].value;
-
-                // Filter for 'BUY' range if needed
-                if (timeRange === 'BUY' && buyDateRef) {
-                    const buyDate = new Date(buyDateRef).getTime();
-                    const filteredData = chartData.filter(d => new Date(d.date).getTime() >= buyDate);
-                    if (filteredData.length > 0) {
-                        setChartData(filteredData);
-                    } else {
-                        setChartData(chartData);
-                    }
-                } else {
-                    setChartData(chartData);
-                }
-
-                if (currentStock.currentPrice !== undefined && Math.abs(currentStock.currentPrice - latestPrice) > 0.0001) {
-                    updateStockPrice(id, latestPrice);
-                }
+                // const latestPrice = chartData[chartData.length - 1].value;
             }
         }
 
