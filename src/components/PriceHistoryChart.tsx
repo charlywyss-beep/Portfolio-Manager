@@ -108,11 +108,11 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
     const performance = startPrice !== 0 ? ((endPrice - startPrice) / startPrice) * 100 : 0;
     const isPositive = performance >= 0;
 
-    // Calculate CHF Difference
-    const { convertToCHF } = useCurrencyFormatter();
+    // Calculate Difference (Native)
     const diffNative = endPrice - startPrice;
-    const diffCHF = currency !== 'CHF' ? convertToCHF(diffNative, currency) : diffNative;
-    const diffCHFFormatted = (diffCHF > 0 ? '+' : '') + diffCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' CHF';
+
+    // Format native difference
+    const diffNativeFormatted = (diffNative > 0 ? '+' : '') + formatCurrency(diffNative, currency, false);
 
     // Calculate Min/Max for the current range
     const prices = data.map(d => d.value);
@@ -128,7 +128,7 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                         <div className={cn("font-bold flex items-center gap-1", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
                             <span className="text-xl">
                                 {performance > 0 ? '+' : ''}{performance.toFixed(2)}%
-                                {currency !== 'CHF' && <span className="ml-1 opacity-80 text-lg">({diffCHFFormatted})</span>}
+                                <span className="ml-2 opacity-80 text-lg">{diffNativeFormatted}</span>
                             </span>
                         </div>
                     </div>
