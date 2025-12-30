@@ -191,7 +191,9 @@ export function StockDetail() {
                     updates.open = quoteResponse.open;
                     hasUpdates = true;
                 }
-                if (quoteResponse.previousClose !== undefined && quoteResponse.previousClose !== null && Math.abs((stockRef.previousClose || 0) - quoteResponse.previousClose) > 0.0001) {
+                // FIX: Only update previousClose if it's missing. Do NOT overwrite an existing valid previousClose
+                // to prevent flapping between potentially different API data sources (Chart vs Quote vs Batch).
+                if (quoteResponse.previousClose !== undefined && quoteResponse.previousClose !== null && (!stockRef.previousClose || stockRef.previousClose === 0)) {
                     updates.previousClose = quoteResponse.previousClose;
                     hasUpdates = true;
                 }

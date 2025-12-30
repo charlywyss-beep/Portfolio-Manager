@@ -201,7 +201,7 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
 
                 updateMap[res.symbol] = {
                     price,
-                    previousClose: res.regularMarketPreviousClose || undefined,
+                    previousClose: (res.regularMarketPreviousClose && (isPence || isLikelyPence)) ? res.regularMarketPreviousClose / 100 : (res.regularMarketPreviousClose || undefined),
                     marketTime: res.regularMarketTime ? new Date(res.regularMarketTime * 1000) : undefined,
                     marketState: res.marketState || null
                 };
