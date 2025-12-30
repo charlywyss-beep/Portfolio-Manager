@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
@@ -16,7 +16,7 @@ import { fetchStockHistory, fetchStockQuote, type TimeRange, type ChartDataPoint
 export function StockDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
+    // const [searchParams] = useSearchParams();
     const { stocks, positions, updateStock, updateStockPrice, addQuickLink, removeQuickLink } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
 
@@ -362,15 +362,13 @@ export function StockDetail() {
 
                             {/* Center: Back Button (Absolute Center) */}
                             <div className="justify-self-center w-full flex justify-center">
-                                {searchParams.get('from') === 'performance' && (
-                                    <button
-                                        onClick={() => navigate('/?openPerformance=true')}
-                                        className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-3 py-1.5 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
-                                    >
-                                        <ArrowLeft className="size-3 md:size-4 mr-1.5" />
-                                        Zurück zur Performance
-                                    </button>
-                                )}
+                                <button
+                                    onClick={() => navigate('/?openPerformance=true')}
+                                    className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-3 py-1.5 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
+                                >
+                                    <ArrowLeft className="size-3 md:size-4 mr-1.5" />
+                                    Zurück zur Performance
+                                </button>
                             </div>
 
                             {/* Right: Refresh Button */}
