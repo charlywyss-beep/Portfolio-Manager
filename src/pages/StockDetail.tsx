@@ -402,6 +402,7 @@ export function StockDetail() {
                                 onRangeChange={(range) => setTimeRange(range)}
                                 isRealtime={true}
                                 quoteDate={quoteDate}
+                                previousClose={stock.previousClose}
                             />
                         </div>
                     </div>

@@ -16,9 +16,10 @@ interface PriceHistoryChartProps {
     onRangeChange?: (range: TimeRange) => void;
     isRealtime?: boolean;
     quoteDate?: Date | null;
+    previousClose?: number; // New prop for 1D baseline
 }
 
-export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, trend = 'up', historyData, selectedRange = '1Y', onRangeChange, quoteDate }: PriceHistoryChartProps) {
+export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, trend = 'up', historyData, selectedRange = '1Y', onRangeChange, quoteDate, previousClose }: PriceHistoryChartProps) {
     const [hasMounted, setHasMounted] = useState(false);
 
     useEffect(() => {
@@ -103,7 +104,13 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
     }, [currentPrice, selectedRange, volatility, trend, historyData]);
 
     // Calculate performance for the selected range
-    const startPrice = data[0]?.value || 0;
+    let startPrice = data[0]?.value || 0;
+
+    // For 1D, force startPrice to be Previous Close if available, to match "Daily Change" logic
+    if (selectedRange === '1D' && previousClose && previousClose > 0) {
+        startPrice = previousClose;
+    }
+
     const endPrice = data[data.length - 1]?.value || 0;
     const performance = startPrice !== 0 ? ((endPrice - startPrice) / startPrice) * 100 : 0;
     const isPositive = performance >= 0;
