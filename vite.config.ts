@@ -56,8 +56,8 @@ export default defineConfig({
             results = [{
               symbol: symbolParam,
               regularMarketPrice: result.price?.regularMarketPrice,
-              regularMarketOpen: result.price?.regularMarketOpen,
-              regularMarketPreviousClose: result.price?.regularMarketPreviousClose,
+              regularMarketOpen: result.price?.regularMarketOpen || result.summaryDetail?.open,
+              regularMarketPreviousClose: result.price?.regularMarketPreviousClose || result.summaryDetail?.previousClose,
               currency: result.price?.currency,
               regularMarketTime: result.price?.regularMarketTime ? new Date(result.price.regularMarketTime).getTime() / 1000 : null,
               marketState: result.price?.marketState,
