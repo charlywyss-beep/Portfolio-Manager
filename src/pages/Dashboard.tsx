@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
-import { fetchStockHistory } from '../services/yahoo-finance';
 import { ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, BarChart3, Calendar, Info, Plus, Trash2, Edit, Bell } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
@@ -61,32 +60,13 @@ export function Dashboard() {
             if (positions.length === 0) return;
 
             // 1. Refresh Prices (Standard)
+            // 1. Refresh Prices (Standard)
+            // FIX: Use centralized refreshAllPrices instead of fetching individual histories.
+            // Fetching history here was causing data inconsistency (Chart Price vs Quote Price).
             if (!hasRefreshedPrices.current) {
                 hasRefreshedPrices.current = true;
-                console.log("Starting Auto-Refresh of Portfolio Prices...");
-                const uniqueStocks = Array.from(new Set(positions.map(p => p.stock))).filter(s => !!s.symbol);
-
-                await Promise.all(uniqueStocks.map(async (stock) => {
-                    try {
-                        const result = await fetchStockHistory(stock.symbol!, '1D');
-                        if (result.data && result.data.length > 0) {
-                            let latestPrice = result.data[result.data.length - 1].value;
-                            let prevClose = result.previousClose;
-
-                            // Normalize GBp
-                            if (result.currency === 'GBp') {
-                                latestPrice /= 100;
-                                if (prevClose) prevClose /= 100;
-                            }
-
-                            if (Math.abs(stock.currentPrice - latestPrice) > 0.0001 || (prevClose && stock.previousClose !== prevClose)) {
-                                updateStockPrice(stock.id, latestPrice, prevClose, new Date().toISOString());
-                            }
-                        }
-                    } catch (err) {
-                        console.error(`Failed to refresh ${stock.symbol}`, err);
-                    }
-                }));
+                console.log("Starting Dashboard Auto-Refresh (Centralized)...");
+                refreshAllPrices();
             }
 
             // 2. Refresh Metadata (Self-Healing for missing Country)
