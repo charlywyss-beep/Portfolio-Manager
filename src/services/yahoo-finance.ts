@@ -126,7 +126,7 @@ export async function fetchStockQuote(symbol: string): Promise<{
     error?: string
 }> {
     try {
-        const url = `/api/yahoo-quote?symbol=${symbol}`;
+        const url = `/api/yahoo-quote?symbol=${symbol}&t=${Date.now()}`;
         const response = await fetch(url);
 
         if (!response.ok) {
