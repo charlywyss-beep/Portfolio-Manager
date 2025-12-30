@@ -142,9 +142,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         onClick={() => handleRowClick(p.stock.id)}
                                         className={cn(
                                             "hover:bg-muted/30 transition-colors cursor-pointer group border-b border-border/50",
-                                            displayState === 'REGULAR'
-                                                ? "bg-green-500/15 dark:bg-green-500/25 hover:bg-green-500/25 dark:hover:bg-green-500/35"
-                                                : "bg-red-500/15 dark:bg-red-500/25 hover:bg-red-500/25 dark:hover:bg-red-500/35"
+                                            isDailyPositive
+                                                ? "bg-green-500/5 dark:bg-green-500/10 hover:bg-green-500/10 dark:hover:bg-green-500/20"
+                                                : "bg-red-500/5 dark:bg-red-500/10 hover:bg-red-500/10 dark:hover:bg-red-500/20"
                                         )}
                                     >
                                         <td className="py-3 px-4 font-medium">
