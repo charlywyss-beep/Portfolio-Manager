@@ -324,10 +324,7 @@ export function PriceHistoryChart({
             <p className="text-[10px] text-muted-foreground text-center mt-2 italic">
                 {historyData && historyData.length > 0 ? '* Reale Marktdaten von Yahoo Finance' : '* Simulierter Chartverlauf (Demo-Modus)'}
             </p>
-            {/* Debug Info - Remove before production */}
-            <p className="text-[9px] text-muted-foreground/50 text-center">
-                DBG: Range={selectedRange}, PrevClose={previousClose}, Current={currentPrice}, StartP={startPrice.toFixed(2)}
-            </p>
+
         </div >
     );
 }
