@@ -30,6 +30,8 @@ export default async function handler(req, res) {
         const quote = {
             symbol: symbol,
             regularMarketPrice: result.price?.regularMarketPrice,
+            regularMarketOpen: result.price?.regularMarketOpen || result.summaryDetail?.open,
+            regularMarketPreviousClose: result.price?.regularMarketPreviousClose || result.summaryDetail?.previousClose,
             currency: result.price?.currency,
             regularMarketTime: result.price?.regularMarketTime ? new Date(result.price.regularMarketTime).getTime() / 1000 : null,
             trailingPE: result.summaryDetail?.trailingPE,

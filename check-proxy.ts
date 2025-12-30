@@ -2,7 +2,7 @@
 import http from 'http';
 
 function checkProxy() {
-    const url = 'http://localhost:5173/api/yahoo-quote?symbol=R6C0.DE';
+    const url = 'http://localhost:5173/api/yahoo-quote?symbol=BATS.L';
     console.log(`Fetching from ${url}...`);
 
     http.get(url, (res) => {

@@ -1,9 +1,10 @@
 
-import yahooFinance from 'yahoo-finance2';
+import YahooFinance from 'yahoo-finance2';
+const yahooFinance = new YahooFinance();
 
 async function test() {
     try {
-        const symbol = 'R6C0.DE';
+        const symbol = 'BATS.L';
         console.log(`Fetching ${symbol}...`);
 
         // Try simple quote first
