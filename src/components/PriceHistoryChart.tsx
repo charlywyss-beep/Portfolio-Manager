@@ -161,8 +161,8 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
 
                                 const showGreen = isToday;
 
-                                // Check for delay (greater than 20 minutes)
-                                const isDelayed = isToday && (today.getTime() - displayDate.getTime() > 20 * 60 * 1000);
+                                // Check for delay (greater than 15 minutes)
+                                const isDelayed = isToday && (today.getTime() - displayDate.getTime() > 15 * 60 * 1000);
 
                                 let label = 'Schlusskurs';
                                 if (showGreen) {
