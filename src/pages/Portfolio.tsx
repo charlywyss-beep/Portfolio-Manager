@@ -94,8 +94,35 @@ export function Portfolio() {
         pos.stock.isin?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const stockPositions = filteredPositions.filter(p => !p.stock.type || p.stock.type === 'stock');
-    const etfPositions = filteredPositions.filter(p => p.stock.type === 'etf');
+
+    // Sorting
+    const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'currency' | 'value' | 'performance', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
+
+    const getSortedPositions = (posList: any[]) => {
+        return [...posList].sort((a, b) => {
+            if (sortConfig.key === 'name') {
+                return a.stock.name.localeCompare(b.stock.name);
+            }
+            if (sortConfig.key === 'currency') {
+                // Primary: Currency, Secondary: Name
+                const currComp = a.stock.currency.localeCompare(b.stock.currency);
+                if (currComp !== 0) return currComp;
+                return a.stock.name.localeCompare(b.stock.name);
+            }
+            if (sortConfig.key === 'value') {
+                return b.currentValueCHF - a.currentValueCHF; // High to Low
+            }
+            if (sortConfig.key === 'performance') {
+                return b.gainLossTotalPercent - a.gainLossTotalPercent; // Best first
+            }
+            return 0;
+        });
+    };
+
+    const sortedFilteredPositions = getSortedPositions(filteredPositions);
+
+    const stockPositions = sortedFilteredPositions.filter(p => !p.stock.type || p.stock.type === 'stock');
+    const etfPositions = sortedFilteredPositions.filter(p => p.stock.type === 'etf');
 
     const handleUpdate = (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number, newPurchases?: any[]) => {
         const updates: any = { shares: newShares };
@@ -127,6 +154,20 @@ export function Portfolio() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
                     />
+                </div>
+                {/* SORT CONTROL */}
+                <div className="flex items-center gap-2">
+                    <select
+                        className="pl-3 pr-8 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer"
+                        value={sortConfig.key}
+                        onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
+                        style={{ backgroundImage: 'none' }} // Remove default arrow if needed, but standard is fine
+                    >
+                        <option value="name">Name (A-Z)</option>
+                        <option value="currency">Währung</option>
+                        <option value="value">Wert (Hoch-Tief)</option>
+                        <option value="performance">Performance (Beste)</option>
+                    </select>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
                     <button
