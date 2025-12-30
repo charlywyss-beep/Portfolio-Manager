@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
@@ -54,34 +54,30 @@ export function StockDetail() {
     // Get position to determine buy date
     const position = positions.find(p => p.stockId === stock?.id);
 
-    // Use refs to access latest values without triggering re-renders
-    const stockRef = {
-        symbol: stock?.symbol,
-        id: stock?.id,
-        currentPrice: stock?.currentPrice,
-        currency: stock?.currency,
-        isin: stock?.isin,
-        trailingPE: stock?.trailingPE,
-        forwardPE: stock?.forwardPE,
-        eps: stock?.eps,
-        dividendYield: stock?.dividendYield,
-        open: stock?.open,
-        previousClose: stock?.previousClose
-    };
+
 
     // Position buy date ref
     const buyDateRef = position?.buyDate;
 
     // Load data function (memoized for auto-refresh)
+    // Use a Ref to always access the LATEST stock state in callbacks without recreating them
+    const latestStockRef = useRef(stock);
+    useEffect(() => {
+        latestStockRef.current = stock;
+    }, [stock]);
+
+    // Load data function (memoized for auto-refresh)
     const loadData = useCallback(async () => {
-        const { symbol, id, currentPrice, currency, isin, trailingPE, forwardPE, eps, dividendYield } = stockRef;
-        if (!symbol || !id) {
+        const currentStock = latestStockRef.current;
+        if (!currentStock?.symbol || !currentStock?.id) {
             setChartData(null);
             return;
         }
 
+        const { symbol, id, currency, isin, trailingPE, forwardPE, eps, dividendYield, previousClose: currentPreviousClose } = currentStock;
+
         setIsRefreshing(true);
-        console.log('[StockDetail] Fetching Yahoo Finance data for:', symbol, 'Range:', timeRange);
+        // console.log('[StockDetail] Fetching Yahoo Finance data for:', symbol, 'Range:', timeRange);
 
         let rangeToUse = timeRange;
 
@@ -141,7 +137,7 @@ export function StockDetail() {
                     setChartData(chartData);
                 }
 
-                if (currentPrice !== undefined && Math.abs(currentPrice - latestPrice) > 0.0001) {
+                if (currentStock.currentPrice !== undefined && Math.abs(currentStock.currentPrice - latestPrice) > 0.0001) {
                     updateStockPrice(id, latestPrice);
                 }
             }
@@ -162,7 +158,7 @@ export function StockDetail() {
                     }
                 }
 
-                if (currentPrice !== undefined && Math.abs(currentPrice - finalPrice) > 0.0001) {
+                if (currentStock.currentPrice !== undefined && Math.abs(currentStock.currentPrice - finalPrice) > 0.0001) {
                     updateStockPrice(id, finalPrice, undefined, quoteResponse.marketTime ? new Date(quoteResponse.marketTime).toISOString() : undefined);
                 }
 
@@ -187,15 +183,26 @@ export function StockDetail() {
                 }
 
                 // FIX: Update open and previousClose if changed
-                if (quoteResponse.open !== undefined && quoteResponse.open !== null && Math.abs((stockRef.open || 0) - quoteResponse.open) > 0.0001) {
+                if (quoteResponse.open !== undefined && quoteResponse.open !== null && Math.abs((currentStock.open || 0) - quoteResponse.open) > 0.0001) {
                     updates.open = quoteResponse.open;
                     hasUpdates = true;
                 }
-                // FIX: Only update previousClose if it's missing. Do NOT overwrite an existing valid previousClose
-                // to prevent flapping between potentially different API data sources (Chart vs Quote vs Batch).
-                if (quoteResponse.previousClose !== undefined && quoteResponse.previousClose !== null && (!stockRef.previousClose || stockRef.previousClose === 0)) {
-                    updates.previousClose = quoteResponse.previousClose;
-                    hasUpdates = true;
+
+                // CRITICAL FIX: Only update previousClose if we DON'T have one yet.
+                // This prevents the Detail view (Single Quote) from overwriting the List view (Batch Quote).
+                // Batch Quote is generally more stable for the Portfolio Overview.
+                const weHaveValidPrevClose = currentPreviousClose && currentPreviousClose > 0;
+
+                if (quoteResponse.previousClose !== undefined && quoteResponse.previousClose !== null) {
+                    // Check if we strictly need to update
+                    if (!weHaveValidPrevClose) {
+                        updates.previousClose = quoteResponse.previousClose;
+                        hasUpdates = true;
+                        console.log(`[StockDetail] Accepting previousClose from Single Quote (was missing): ${quoteResponse.previousClose}`);
+                    } else {
+                        // Log usage of existing
+                        // console.log(`[StockDetail] Ignoring previousClose from Single Quote (${quoteResponse.previousClose}) because we have valid: ${currentPreviousClose}`);
+                    }
                 }
 
                 if (hasUpdates) {
@@ -205,7 +212,7 @@ export function StockDetail() {
         }
         setIsRefreshing(false);
         setLastUpdate(new Date());
-    }, [stock?.symbol, stock?.id, timeRange, position?.buyDate]);
+    }, [timeRange, position?.buyDate]); // removed stock dependencies to avoid recreation loop, relies on Ref
 
     // Initial load
     useEffect(() => {
