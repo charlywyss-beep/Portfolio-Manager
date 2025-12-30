@@ -33,14 +33,21 @@ export function StockDetail() {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
     const [quoteDate, setQuoteDate] = useState<Date | null>(null);
-    const [, setTimeTick] = useState(0); // Force re-render for time display
+    const [minutesAgo, setMinutesAgo] = useState(0);
 
-    // Force update "Updated X min ago" text every minute
+    // Update time ago string every minute
     useEffect(() => {
         if (!lastUpdate) return;
-        const interval = setInterval(() => {
-            setTimeTick(t => t + 1);
-        }, 60000);
+
+        const updateDiff = () => {
+            const diff = Math.floor((new Date().getTime() - lastUpdate.getTime()) / 60000);
+            setMinutesAgo(diff);
+        };
+
+        // Initial update
+        updateDiff();
+
+        const interval = setInterval(updateDiff, 5000); // Check every 5 seconds to be precise enough (doesn't hurt performance)
         return () => clearInterval(interval);
     }, [lastUpdate]);
 
@@ -364,7 +371,7 @@ export function StockDetail() {
                             >
                                 <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
                                 <span>
-                                    {isRefreshing ? 'Aktualisiere...' : lastUpdate ? `Aktualisiert vor ${Math.floor((new Date().getTime() - lastUpdate.getTime()) / 60000)} Min` : 'Daten laden'}
+                                    {isRefreshing ? 'Aktualisiere...' : lastUpdate ? `Aktualisiert vor ${minutesAgo} Min` : 'Daten laden'}
                                 </span>
                             </button>
                         </div>
