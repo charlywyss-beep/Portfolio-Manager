@@ -398,11 +398,11 @@ export function StockDetail() {
                                 currency={stock.currency}
                                 trend={stock.dividendYield && stock.dividendYield > 2 ? 'up' : 'neutral'}
                                 historyData={chartData}
-                                selectedRange={timeRange}
                                 onRangeChange={(range) => setTimeRange(range)}
                                 isRealtime={true}
                                 quoteDate={quoteDate}
                                 previousClose={stock.previousClose}
+                                isMarketOpen={(stock.marketState || estimateMarketState(stock.symbol, stock.currency)) === 'REGULAR'}
                             />
                         </div>
                     </div>

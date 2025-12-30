@@ -16,10 +16,22 @@ interface PriceHistoryChartProps {
     onRangeChange?: (range: TimeRange) => void;
     isRealtime?: boolean;
     quoteDate?: Date | null;
-    previousClose?: number; // New prop for 1D baseline
+    previousClose?: number;
+    isMarketOpen?: boolean;
 }
 
-export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, trend = 'up', historyData, selectedRange = '1Y', onRangeChange, quoteDate, previousClose }: PriceHistoryChartProps) {
+export function PriceHistoryChart({
+    currentPrice,
+    currency,
+    volatility = 0.02,
+    trend = 'up',
+    historyData,
+    selectedRange = '1Y',
+    onRangeChange,
+    quoteDate,
+    previousClose,
+    isMarketOpen = true
+}: PriceHistoryChartProps) {
     const [hasMounted, setHasMounted] = useState(false);
 
     useEffect(() => {
@@ -33,17 +45,9 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
 
     // Use simulated data if no historyData is provided
     const data = useMemo(() => {
-        // If we have real data, we expect the parent to filter/fetch it based on range.
-        // For simplicity, if historyData is filtered by parent, just use it.
-        // If historyData contains ALL points, we might need to filter.
-        // But for this implementation, let's assume parent handles fetching for the range.
         if (historyData && historyData.length > 0) {
             return historyData;
         }
-
-        // ... (mock generation) ...
-
-
 
         const points = [];
         const now = new Date();
@@ -67,8 +71,6 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
         const hoursTotal = days * 24;
         const iterations = Math.ceil(hoursTotal / intervalHours);
 
-        // Adjust starting price target based on trend to ensure end price is close to currentPrice
-        // This is a naive simulation: we walk backwards
         for (let i = 0; i < iterations; i++) {
             const date = new Date(now);
             date.setTime(date.getTime() - (i * intervalHours * 60 * 60 * 1000));
@@ -81,15 +83,8 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
             // Random walk
             const change = 1 + (Math.random() * volatility * 2 - volatility);
 
-            // Apply slight trend bias backwards (if trend is up, historically it was lower, so we divide?)
-            // Actually simpler: just random walk and then reverse the array, 
-            // but ensuring the LAST point matches currentPrice is tricky with random walk from start.
-            // So we walk backwards from currentPrice.
-
-            // If trend is 'up', historical prices should generally be lower → price * (1 - bias)
-            // If trend is 'down', historical prices should be higher → price * (1 + bias)
             let bias = 0;
-            if (trend === 'up') bias = -0.0005; // small daily drift up means backwards it goes down
+            if (trend === 'up') bias = -0.0005;
             if (trend === 'down') bias = 0.0005;
 
             price = price * (change + bias);
@@ -168,29 +163,32 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                                 const isToday = displayDate.toDateString() === today.toDateString();
 
                                 // User Rule:
-                                // Green = ONLY if date is strictly TODAY (Tagesaktuell)
-                                // Red = Closing price (Schlusskurs) of previous days (even if valid last trading day)
+                                // Green = ONLY if date is strictly TODAY (Tagesaktuell) AND Market Open
+                                // Red = Closing price (Schlusskurs) of previous days OR if market is explicitly closed
+                                // Yellow = Delayed
 
-                                const showGreen = isToday;
 
-                                // Check for delay (greater than 15 minutes)
-                                const isDelayed = isToday && (today.getTime() - displayDate.getTime() > 15 * 60 * 1000);
+
+                                // Check for delay (greater than 15 minutes) - Only relevant if market is open
+                                const isDelayed = isToday && isMarketOpen && (today.getTime() - displayDate.getTime() > 15 * 60 * 1000);
 
                                 let label = 'Schlusskurs';
-                                if (showGreen) {
+                                if (isToday && isMarketOpen) {
                                     label = isDelayed ? 'Verzögerte Daten' : 'Aktuelle Daten';
+                                } else if (isToday && !isMarketOpen) {
+                                    label = 'Schlusskurs'; // Today but closed (e.g. early close)
                                 }
 
                                 return (
                                     <div className={cn(
                                         "inline-flex items-center gap-1.5 px-2 py-1 rounded-md font-medium",
-                                        showGreen
+                                        (isToday && isMarketOpen)
                                             ? (isDelayed ? "bg-yellow-100 dark:bg-yellow-500/20 text-yellow-950 dark:text-yellow-200" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400")
                                             : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
                                     )}>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            {showGreen && !isDelayed
-                                                ? <polyline points="20 6 9 17 4 12"></polyline> // Checkmark for Realtime
+                                            {(isToday && isMarketOpen && !isDelayed)
+                                                ? <polyline points="20 6 9 17 4 12"></polyline> // Checkmark for Realtime Open
                                                 : (isDelayed
                                                     ? <circle cx="12" cy="12" r="10"></circle>  // Circle for Delayed
                                                     : <circle cx="12" cy="12" r="10"></circle>  // Circle for Closed
