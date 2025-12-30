@@ -411,10 +411,6 @@ export function StockDetail() {
                         <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
                             Kursdaten
                         </h3>
-                        {/* Temporary Debug Info */}
-                        <div className="text-[10px] text-muted-foreground font-mono mb-2 p-1 bg-secondary/10 rounded">
-                            DEBUG: O={stock.open ?? 'null'} / PC={stock.previousClose ?? 'null'} / P={stock.currentPrice}
-                        </div>
                         <div className="space-y-3">
                             {/* Kaufpreis (Avg Buy Price) - Only if position exists */}
                             {positions.find(p => p.stockId === stock.id) && (
