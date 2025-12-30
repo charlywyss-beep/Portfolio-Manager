@@ -160,20 +160,31 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
                                 // Red = Closing price (Schlusskurs) of previous days (even if valid last trading day)
 
                                 const showGreen = isToday;
-                                const label = showGreen ? 'Aktuelle Daten' : 'Schlusskurs';
+
+                                // Check for delay (greater than 20 minutes)
+                                const isDelayed = isToday && (today.getTime() - displayDate.getTime() > 20 * 60 * 1000);
+
+                                let label = 'Schlusskurs';
+                                if (showGreen) {
+                                    label = isDelayed ? 'Verzögerte Daten' : 'Aktuelle Daten';
+                                }
 
                                 return (
                                     <div className={cn(
                                         "inline-flex items-center gap-1.5 px-2 py-1 rounded-md font-medium",
                                         showGreen
-                                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                                            ? (isDelayed ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400")
                                             : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
                                     )}>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            {showGreen
-                                                ? <polyline points="20 6 9 17 4 12"></polyline> // Checkmark
-                                                : <circle cx="12" cy="12" r="10"></circle> // Alert/Circle
+                                            {showGreen && !isDelayed
+                                                ? <polyline points="20 6 9 17 4 12"></polyline> // Checkmark for Realtime
+                                                : (isDelayed
+                                                    ? <circle cx="12" cy="12" r="10"></circle>  // Circle for Delayed
+                                                    : <circle cx="12" cy="12" r="10"></circle>  // Circle for Closed
+                                                )
                                             }
+                                            {isDelayed && <path d="M12 6v6l4 2"></path>} {/* Clock icon for delay */}
                                         </svg>
                                         <span>
                                             {label} {displayDate.toLocaleDateString('de-DE', {
