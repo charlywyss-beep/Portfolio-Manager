@@ -111,7 +111,12 @@ export function PriceHistoryChart({ currentPrice, currency, volatility = 0.02, t
         startPrice = previousClose;
     }
 
-    const endPrice = data[data.length - 1]?.value || 0;
+    let endPrice = data[data.length - 1]?.value || 0;
+    // For 1D, force endPrice to be currentPrice to match the List/Quote (avoid chart data lag)
+    if (selectedRange === '1D' && currentPrice > 0) {
+        endPrice = currentPrice;
+    }
+
     const performance = startPrice !== 0 ? ((endPrice - startPrice) / startPrice) * 100 : 0;
     const isPositive = performance >= 0;
 
