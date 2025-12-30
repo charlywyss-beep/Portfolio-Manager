@@ -234,18 +234,7 @@ export function StockDetail() {
                         Zurück
                     </button>
 
-                    {searchParams.get('from') === 'performance' && (
-                        <>
-                            <span className="text-muted-foreground">•</span>
-                            <button
-                                onClick={() => navigate('/?openPerformance=true')}
-                                className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium"
-                            >
-                                <ArrowLeft className="size-4 mr-1" />
-                                Zurück zu Performance Details
-                            </button>
-                        </>
-                    )}
+                    {/* Button moved to Chart Header */}
                 </div>
 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -353,9 +342,20 @@ export function StockDetail() {
                     {/* Price Chart */}
                     <div className="bg-card border border-border rounded-xl p-6 shadow-sm min-h-[450px] flex flex-col">
                         <div className="flex items-center justify-between mb-4 shrink-0">
-                            <div className="flex items-center gap-2">
-                                <TrendingUp className="size-5 text-blue-500" />
-                                <h3 className="font-bold text-lg">Kursverlauf</h3>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                    <TrendingUp className="size-5 text-blue-500" />
+                                    <h3 className="font-bold text-lg">Kursverlauf</h3>
+                                </div>
+                                {searchParams.get('from') === 'performance' && (
+                                    <button
+                                        onClick={() => navigate('/?openPerformance=true')}
+                                        className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-2 py-1 rounded-md"
+                                    >
+                                        <ArrowLeft className="size-3 md:size-4 mr-1" />
+                                        Zurück zur Performance
+                                    </button>
+                                )}
                             </div>
                             {/* Manual Refresh Button */}
                             <button
