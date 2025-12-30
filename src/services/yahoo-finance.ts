@@ -184,9 +184,14 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
 
         results.forEach((res: any) => {
             if (res.symbol && res.regularMarketPrice) {
-                // Heuristic: Detect Pence (similar to single fetch)
+                // Heuristic: Detect Pence (GBp) vs Pounds (GBP)
+                // VWRA.L trades in USD, so we must NOT divide by 100 if currency is USD/EUR.
                 let price = res.regularMarketPrice;
-                if (res.currency === 'GBp' || (res.symbol.endsWith('.L') && price > 50)) {
+                const isPence = res.currency === 'GBp';
+                const isLSE = res.symbol.endsWith('.L');
+                const isLikelyPence = isLSE && price > 50 && res.currency !== 'USD' && res.currency !== 'EUR' && res.currency !== 'CHF';
+
+                if (isPence || isLikelyPence) {
                     price = price / 100;
                 }
 
