@@ -735,6 +735,7 @@ export function DividendCalculator() {
             const plannedPurchase: import('../types').PlannedPurchase = {
                 shares,
                 pricePerShare: price,
+                previousClose: price,
                 currency: simCurrency as import('../types').Currency,
                 volumeNative,
                 volumeCHF,
@@ -767,6 +768,7 @@ export function DividendCalculator() {
             const plannedPurchase: import('../types').PlannedPurchase = {
                 shares,
                 pricePerShare: price,
+                previousClose: price,
                 currency: simCurrency as import('../types').Currency,
                 volumeNative,
                 volumeCHF,

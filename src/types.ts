@@ -10,6 +10,8 @@ export interface QuickLink {
 }
 
 export interface PlannedPurchase {
+    previousClose: number;
+    open?: number;
     shares: number;
     pricePerShare: number;
     currency: Currency;

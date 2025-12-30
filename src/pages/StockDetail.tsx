@@ -64,7 +64,9 @@ export function StockDetail() {
         trailingPE: stock?.trailingPE,
         forwardPE: stock?.forwardPE,
         eps: stock?.eps,
-        dividendYield: stock?.dividendYield
+        dividendYield: stock?.dividendYield,
+        open: stock?.open,
+        previousClose: stock?.previousClose
     };
 
     // Position buy date ref
@@ -181,6 +183,16 @@ export function StockDetail() {
                 }
                 if (quoteResponse.dividendYield !== undefined && quoteResponse.dividendYield !== null && Math.abs((dividendYield || 0) - quoteResponse.dividendYield) > 0.01) {
                     updates.dividendYield = quoteResponse.dividendYield;
+                    hasUpdates = true;
+                }
+
+                // FIX: Update open and previousClose if changed
+                if (quoteResponse.open !== undefined && quoteResponse.open !== null && Math.abs((stockRef.open || 0) - quoteResponse.open) > 0.0001) {
+                    updates.open = quoteResponse.open;
+                    hasUpdates = true;
+                }
+                if (quoteResponse.previousClose !== undefined && quoteResponse.previousClose !== null && Math.abs((stockRef.previousClose || 0) - quoteResponse.previousClose) > 0.0001) {
+                    updates.previousClose = quoteResponse.previousClose;
                     hasUpdates = true;
                 }
 
