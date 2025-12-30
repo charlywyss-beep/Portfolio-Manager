@@ -386,8 +386,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 return {
                     ...s,
                     currentPrice: newPrice,
-                    // If newPreviousClose provided, use it. Else fall back to OLD currentPrice (legacy behavior)
-                    previousClose: newPreviousClose !== undefined ? newPreviousClose : s.currentPrice,
+                    // Fix: Only update previousClose if explicitly provided. Do NOT fallback to currentPrice.
+                    previousClose: (newPreviousClose !== undefined && newPreviousClose !== null) ? newPreviousClose : s.previousClose,
                     lastQuoteDate: lastQuoteDate || s.lastQuoteDate // Update date if provided
                 };
             }
