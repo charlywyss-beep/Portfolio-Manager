@@ -168,7 +168,7 @@ export async function fetchStockQuote(symbol: string): Promise<{
 }
 
 // Fetch multiple quotes at once
-export async function fetchStockQuotes(symbols: string[]): Promise<Record<string, { price: number, marketTime?: Date, marketState?: string | null }>> {
+export async function fetchStockQuotes(symbols: string[]): Promise<Record<string, { price: number, previousClose?: number, marketTime?: Date, marketState?: string | null }>> {
     if (symbols.length === 0) return {};
 
     try {
@@ -184,7 +184,7 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
         const data = await response.json();
         const results = data.quoteResponse?.result || [];
 
-        const updateMap: Record<string, { price: number, marketTime?: Date, marketState?: string | null }> = {};
+        const updateMap: Record<string, { price: number, previousClose?: number, marketTime?: Date, marketState?: string | null }> = {};
 
         results.forEach((res: any) => {
             if (res.symbol && res.regularMarketPrice) {
@@ -201,6 +201,7 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
 
                 updateMap[res.symbol] = {
                     price,
+                    previousClose: res.regularMarketPreviousClose || undefined,
                     marketTime: res.regularMarketTime ? new Date(res.regularMarketTime * 1000) : undefined,
                     marketState: res.marketState || null
                 };

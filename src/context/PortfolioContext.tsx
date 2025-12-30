@@ -396,7 +396,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     };
 
     // Helper to update multiple stocks at once (batch update)
-    const updateStockPricesBatch = (updates: Record<string, { price: number, marketTime?: Date, marketState?: string | null }>) => {
+    const updateStockPricesBatch = (updates: Record<string, { price: number, previousClose?: number, marketTime?: Date, marketState?: string | null }>) => {
         setStocks(prev => prev.map(s => {
             const update = updates[s.symbol];
             if (update) {
@@ -410,8 +410,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 return {
                     ...s,
                     currentPrice: update.price,
-                    // Legacy behavior: If no invalid previousClose logic exists, keep as is.
-                    // Ideally we should track previousClose separately but for now we just update current.
+                    previousClose: update.previousClose !== undefined ? update.previousClose : s.previousClose,
                     lastQuoteDate: update.marketTime ? update.marketTime.toISOString() : s.lastQuoteDate,
                     marketState: finalMarketState as any // Cast to specific union type
                 };
