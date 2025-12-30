@@ -339,7 +339,7 @@ export function StockDetail() {
                                         isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                     )}>
                                         {isPositive ? <TrendingUp className="size-3" /> : <TrendingUp className="size-3 rotate-180" />}
-                                        {isPositive ? '+' : ''}{percentChange.toFixed(2)}% ({formatCurrency(totalDiff, stock.currency)})
+                                        {isPositive ? '+' : ''}{percentChange.toFixed(2)}% {formatCurrency(totalDiff, stock.currency)}
                                     </p>
                                 </div>
                             );
