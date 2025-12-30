@@ -43,7 +43,7 @@ export function useAutoRefresh({
             } else {
                 // Resume when tab becomes visible
                 // Trigger immediate refresh to prevent stale data
-                onRefresh();
+                onRefreshRef.current();
                 startInterval();
             }
         };
@@ -59,9 +59,7 @@ export function useAutoRefresh({
                 intervalRef.current = setInterval(() => {
                     if (isTradingHours()) {
                         // Use ref to avoid dependency loop or resetting interval when callback changes
-                        if (onRefreshRef.current) {
-                            onRefreshRef.current();
-                        }
+                        onRefreshRef.current();
                     } else {
                         // Stop interval if outside trading hours
                         if (intervalRef.current) {
