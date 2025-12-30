@@ -23,22 +23,47 @@ export default async function handler(req, res) {
         console.log('[Vercel Quote Proxy] Fetching quote for:', symbol);
 
         // Fetch robust data using yahoo-finance2
-        const result = await yahooFinance.quoteSummary(symbol, {
-            modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile']
-        });
+        // We fetch BOTH quote() (simple, robust) and quoteSummary() (rich details) to ensure we get data
+        const [quoteBasic, quoteSummary] = await Promise.all([
+            yahooFinance.quote(symbol).catch(() => null),
+            yahooFinance.quoteSummary(symbol, {
+                modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile']
+            }).catch(() => null)
+        ]);
 
+        if (!quoteSummary && !quoteBasic) {
+            throw new Error('No data found');
+        }
+
+        // Helper to get value from either source
+        const getVal = (path, subPath) => {
+            if (quoteBasic && quoteBasic[path] !== undefined && quoteBasic[path] !== null) return quoteBasic[path];
+            if (quoteSummary) {
+                // Handle nested paths for quoteSummary modules
+                if (subPath && quoteSummary[path] && quoteSummary[path][subPath] !== undefined) return quoteSummary[path][subPath];
+                if (!subPath && quoteSummary[path] !== undefined) return quoteSummary[path];
+            }
+            return null;
+        };
+
+        // Prioritize quoteBasic for price data as it's often more reliable for international stocks
         const quote = {
             symbol: symbol,
-            regularMarketPrice: result.price?.regularMarketPrice,
-            regularMarketOpen: result.price?.regularMarketOpen || result.summaryDetail?.open,
-            regularMarketPreviousClose: result.price?.regularMarketPreviousClose || result.summaryDetail?.previousClose,
-            currency: result.price?.currency,
-            regularMarketTime: result.price?.regularMarketTime ? new Date(result.price.regularMarketTime).getTime() / 1000 : null,
-            trailingPE: result.summaryDetail?.trailingPE,
-            forwardPE: result.summaryDetail?.forwardPE || result.defaultKeyStatistics?.forwardPE,
-            epsTrailingTwelveMonths: result.defaultKeyStatistics?.trailingEps,
-            dividendYield: result.summaryDetail?.dividendYield ? result.summaryDetail.dividendYield * 100 : null,
-            country: result.summaryProfile?.country
+            regularMarketPrice: quoteBasic?.regularMarketPrice || quoteSummary?.price?.regularMarketPrice,
+            // Try ALL sources for Open
+            regularMarketOpen: quoteBasic?.regularMarketOpen || quoteSummary?.price?.regularMarketOpen || quoteSummary?.summaryDetail?.open,
+            // Try ALL sources for Prev Close
+            regularMarketPreviousClose: quoteBasic?.regularMarketPreviousClose || quoteSummary?.price?.regularMarketPreviousClose || quoteSummary?.summaryDetail?.previousClose,
+            currency: quoteBasic?.currency || quoteSummary?.price?.currency,
+
+            regularMarketTime: (quoteBasic?.regularMarketTime || quoteSummary?.price?.regularMarketTime) ?
+                new Date((quoteBasic?.regularMarketTime || quoteSummary?.price?.regularMarketTime)).getTime() / 1000 : null,
+
+            trailingPE: quoteBasic?.trailingPE || quoteSummary?.summaryDetail?.trailingPE,
+            forwardPE: quoteBasic?.forwardPE || quoteSummary?.summaryDetail?.forwardPE || quoteSummary?.defaultKeyStatistics?.forwardPE,
+            epsTrailingTwelveMonths: quoteBasic?.epsTrailingTwelveMonths || quoteSummary?.defaultKeyStatistics?.trailingEps,
+            dividendYield: (quoteSummary?.summaryDetail?.dividendYield) ? quoteSummary.summaryDetail.dividendYield * 100 : (quoteBasic?.dividendYield || null),
+            country: quoteSummary?.summaryProfile?.country || null
         };
 
         const responseData = {

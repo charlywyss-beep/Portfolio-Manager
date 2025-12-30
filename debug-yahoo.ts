@@ -4,7 +4,7 @@ const yahooFinance = new YahooFinance();
 
 async function test() {
     try {
-        const symbol = 'BATS.L';
+        const symbol = 'NESN.SW';
         console.log(`Fetching ${symbol}...`);
 
         // Try simple quote first
