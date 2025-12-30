@@ -371,7 +371,7 @@ export function StockDetail() {
                             >
                                 <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
                                 <span>
-                                    {isRefreshing ? 'Aktualisiere...' : lastUpdate ? `Aktualisiert vor ${minutesAgo} Min` : 'Daten laden'}
+                                    {isRefreshing ? 'Lade Daten...' : lastUpdate ? `Abfrage vor ${minutesAgo} Min` : 'Daten laden'}
                                 </span>
                             </button>
                         </div>
