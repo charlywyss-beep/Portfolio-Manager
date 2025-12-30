@@ -398,6 +398,7 @@ export function StockDetail() {
                                 currency={stock.currency}
                                 trend={stock.dividendYield && stock.dividendYield > 2 ? 'up' : 'neutral'}
                                 historyData={chartData}
+                                selectedRange={timeRange}
                                 onRangeChange={(range) => setTimeRange(range)}
                                 isRealtime={true}
                                 quoteDate={quoteDate}
