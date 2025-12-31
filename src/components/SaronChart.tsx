@@ -152,7 +152,8 @@ export const SaronChart = () => {
                                 fontSize={12}
                                 tickLine={false}
                                 axisLine={false}
-                                interval={Math.floor(data.length / 6)}
+                                ticks={data.filter(d => d.date.startsWith('Jan')).map(d => d.date)}
+                                interval={0}
                             />
                             <YAxis
                                 stroke="hsl(var(--muted-foreground))"
