@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Building, Calculator, Plus, Trash2, Landmark, Percent } from 'lucide-react';
+import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet } from 'lucide-react';
 import { cn } from '../utils';
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
 
@@ -11,7 +11,7 @@ import type { MortgageTranche } from '../types';
 export const MortgageCalculator = () => {
     const { mortgageData, updateMortgageData } = usePortfolio();
 
-    const { propertyValue, maintenanceRate, yearlyAmortization, tranches } = mortgageData;
+    const { propertyValue, maintenanceRate, yearlyAmortization, tranches, budgetItems } = mortgageData;
 
     const setPropertyValue = (val: number) => updateMortgageData({ propertyValue: val });
     const setMaintenanceRate = (val: number) => updateMortgageData({ maintenanceRate: val });
@@ -300,6 +300,93 @@ export const MortgageCalculator = () => {
                             <div className="h-full bg-blue-500 w-[var(--width)]" style={{ '--width': `${(monthlyData.interest / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>
                             <div className="h-full bg-emerald-500 w-[var(--width)]" style={{ '--width': `${(monthlyData.amortization / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>
                             <div className="h-full bg-amber-500 w-[var(--width)]" style={{ '--width': `${(monthlyData.maintenance / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>
+                        </div>
+                    </div>
+
+                    {/* NEW: Budget Plan */}
+                    <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+                        <div className="p-6 border-b border-border flex justify-between items-center">
+                            <h2 className="text-lg font-semibold flex items-center gap-2">
+                                <Wallet className="size-5 text-primary" />
+                                Budget Plan & Lebenshaltung
+                            </h2>
+                            <button
+                                onClick={() => {
+                                    const newItems = [...(budgetItems || []), { id: crypto.randomUUID(), name: 'Versicherungen', amount: 0 }];
+                                    updateMortgageData({ budgetItems: newItems });
+                                }}
+                                className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
+                            >
+                                <Plus className="size-4" /> Add Item
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            <div className="space-y-3">
+                                {(budgetItems || []).map((item, index) => (
+                                    <div key={item.id} className="grid grid-cols-12 gap-2 items-center bg-accent/30 p-2 rounded-lg">
+                                        <div className="col-span-6">
+                                            <input
+                                                value={item.name}
+                                                onChange={(e) => {
+                                                    const newItems = [...(budgetItems || [])];
+                                                    newItems[index] = { ...item, name: e.target.value };
+                                                    updateMortgageData({ budgetItems: newItems });
+                                                }}
+                                                className="w-full bg-transparent border-none text-sm focus:ring-0 p-0 font-medium"
+                                                placeholder="Name (z.B. Essen)"
+                                            />
+                                        </div>
+                                        <div className="col-span-4 relative">
+                                            <div className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">CHF</div>
+                                            <DecimalInput
+                                                value={item.amount}
+                                                onChange={(val) => {
+                                                    const newItems = [...(budgetItems || [])];
+                                                    newItems[index] = { ...item, amount: parseFloat(val) || 0 };
+                                                    updateMortgageData({ budgetItems: newItems });
+                                                }}
+                                                className="w-full bg-background border border-input rounded px-2 py-1 pl-8 text-sm text-right h-8"
+                                            />
+                                        </div>
+                                        <div className="col-span-2 flex justify-end">
+                                            <button
+                                                onClick={() => {
+                                                    const newItems = (budgetItems || []).filter(i => i.id !== item.id);
+                                                    updateMortgageData({ budgetItems: newItems });
+                                                }}
+                                                className="text-muted-foreground hover:text-destructive p-1"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {(budgetItems || []).length === 0 && (
+                                    <div className="text-center text-sm text-muted-foreground py-4 border border-dashed rounded-lg">
+                                        Noch keine Ausgaben erfasst.
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Totals Section */}
+                            <div className="space-y-2 pt-4 border-t border-border">
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-muted-foreground">Wohnkosten (Hypothek + NK)</span>
+                                    <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(totalMonthlyCost)} / Mt</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-muted-foreground">Budget Ausgaben</span>
+                                    <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format((budgetItems || []).reduce((sum, i) => sum + i.amount, 0))} / Mt</span>
+                                </div>
+                                <div className="my-2 border-t border-border" />
+                                <div className="flex justify-between items-center font-bold text-lg">
+                                    <span>Gesamtausgaben</span>
+                                    <span className="text-primary font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(totalMonthlyCost + (budgetItems || []).reduce((sum, i) => sum + i.amount, 0))} / Mt</span>
+                                </div>
+                                <div className="flex justify-end text-xs text-muted-foreground">
+                                    ≈ {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format((totalMonthlyCost + (budgetItems || []).reduce((sum, i) => sum + i.amount, 0)) * 12)} / Jahr
+                                </div>
+                            </div>
                         </div>
                     </div>
 

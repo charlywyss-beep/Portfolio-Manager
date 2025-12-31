@@ -133,9 +133,16 @@ export interface MortgageTranche {
     rate: number;
 }
 
+export interface BudgetEntry {
+    id: string;
+    name: string;
+    amount: number; // Monthly
+}
+
 export interface MortgageData {
     propertyValue: number;
     maintenanceRate: number;
     yearlyAmortization: number;
     tranches: MortgageTranche[];
+    budgetItems?: BudgetEntry[];
 }

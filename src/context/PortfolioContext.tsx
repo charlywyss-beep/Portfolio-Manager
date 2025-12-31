@@ -504,7 +504,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 tranches: [
                     { id: '1', name: 'Festhypothek 5 Jahre', amount: 400000, rate: 1.5 },
                     { id: '2', name: 'SARON Indikativ', amount: 200000, rate: 2.1 },
-                ]
+                ],
+                budgetItems: []
             };
         }
     });
