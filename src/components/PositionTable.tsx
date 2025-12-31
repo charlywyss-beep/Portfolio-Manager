@@ -67,7 +67,17 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                                     <div className="flex items-center gap-2">
                                                         <div className="text-xs font-mono text-muted-foreground">{pos.stock.symbol}</div>
                                                         {(() => {
-                                                            const displayState = pos.stock.marketState || estimateMarketState(pos.stock.symbol, pos.stock.currency);
+                                                            // Trust Time over Stale API Data
+                                                            // If API says REGULAR but our time says CLOSED, it's likely stale data.
+                                                            // We prioritize the local calculation for "Live" status indication.
+                                                            const calculatedState = estimateMarketState(pos.stock.symbol, pos.stock.currency);
+                                                            const apiState = pos.stock.marketState;
+
+                                                            // Hybrid Logic: Use Calculated State if API is missing OR if Calculated says CLOSED (overriding stale REGULAR)
+                                                            // But if Calculated says REGULAR (e.g. valid hours) and API says CLOSED (Holiday), we might want API?
+                                                            // For now, let's trust the Calculate State for likely opening hours to fix the "Green at Night" bug.
+                                                            const displayState = calculatedState === 'CLOSED' ? 'CLOSED' : (apiState || calculatedState);
+
                                                             return displayState === 'REGULAR' ? (
                                                                 <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title="Markt geöffnet" />
                                                             ) : (
