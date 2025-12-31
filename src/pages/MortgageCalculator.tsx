@@ -303,6 +303,9 @@ export const MortgageCalculator = () => {
                         </div>
                     </div>
 
+                    {/* SARON Chart */}
+                    <SaronChart />
+
                     {/* Tranche Visual */}
                     {tranches.length > 0 && (
                         <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
@@ -334,9 +337,6 @@ export const MortgageCalculator = () => {
                             </div>
                         </div>
                     )}
-
-                    {/* SARON Chart */}
-                    <SaronChart />
 
                 </div>
             </div>
