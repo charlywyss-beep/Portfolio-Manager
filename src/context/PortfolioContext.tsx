@@ -484,20 +484,37 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     };
 
     const [mortgageData, setMortgageData] = useState<import('../types').MortgageData>(() => {
-        const stored = localStorage.getItem('portfolio_mortgage_data');
-        return stored ? JSON.parse(stored) : {
-            propertyValue: 1000000,
-            maintenanceRate: 0.7,
-            yearlyAmortization: 10000,
-            tranches: [
-                { id: '1', name: 'Festhypothek 5 Jahre', amount: 400000, rate: 1.5 },
-                { id: '2', name: 'SARON Indikativ', amount: 200000, rate: 2.1 },
-            ]
-        };
+        try {
+            const stored = localStorage.getItem('portfolio_mortgage_data_v2');
+            return stored ? JSON.parse(stored) : {
+                propertyValue: 1000000,
+                maintenanceRate: 0.7,
+                yearlyAmortization: 10000,
+                tranches: [
+                    { id: '1', name: 'Festhypothek 5 Jahre', amount: 400000, rate: 1.5 },
+                    { id: '2', name: 'SARON Indikativ', amount: 200000, rate: 2.1 },
+                ]
+            };
+        } catch (e) {
+            console.error("Failed to load mortgage data:", e);
+            return {
+                propertyValue: 1000000,
+                maintenanceRate: 0.7,
+                yearlyAmortization: 10000,
+                tranches: [
+                    { id: '1', name: 'Festhypothek 5 Jahre', amount: 400000, rate: 1.5 },
+                    { id: '2', name: 'SARON Indikativ', amount: 200000, rate: 2.1 },
+                ]
+            };
+        }
     });
 
     useEffect(() => {
-        localStorage.setItem('portfolio_mortgage_data', JSON.stringify(mortgageData));
+        try {
+            localStorage.setItem('portfolio_mortgage_data_v2', JSON.stringify(mortgageData));
+        } catch (e) {
+            console.error("Failed to save mortgage data:", e);
+        }
     }, [mortgageData]);
 
     const updateMortgageData = (newData: Partial<import('../types').MortgageData>) => {
