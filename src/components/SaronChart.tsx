@@ -11,33 +11,37 @@ interface SaronDataPoint {
 
 const DEFAULT_DATA: SaronDataPoint[] = [
     { date: 'Jan 20', rate: -0.75 },
-    { date: 'Jun 20', rate: -0.75 },
+    { date: 'Apr 20', rate: -0.75 },
+    { date: 'Jul 20', rate: -0.75 },
+    { date: 'Okt 20', rate: -0.75 },
     { date: 'Jan 21', rate: -0.75 },
-    { date: 'Jun 21', rate: -0.75 },
+    { date: 'Apr 21', rate: -0.75 },
+    { date: 'Jul 21', rate: -0.75 },
+    { date: 'Okt 21', rate: -0.75 },
     { date: 'Jan 22', rate: -0.75 },
-    { date: 'Jun 22', rate: -0.25 },
-    { date: 'Sep 22', rate: 0.50 },
-    { date: 'Dez 22', rate: 1.00 },
-    { date: 'Mar 23', rate: 1.50 },
-    { date: 'Jun 23', rate: 1.75 },
-    { date: 'Sep 23', rate: 1.75 },
-    { date: 'Dez 23', rate: 1.75 },
-    { date: 'Mar 24', rate: 1.50 },
-    { date: 'Jun 24', rate: 1.25 },
-    { date: 'Sep 24', rate: 1.00 },
-    { date: 'Dez 24', rate: 0.80 },
-    { date: 'Mar 25', rate: 0.50 },
-    { date: 'Jun 25', rate: 0.25 },
-    { date: 'Sep 25', rate: 0.00 },
-    { date: 'Dez 25', rate: 0.00 },
-    { date: 'Mar 26', rate: 0.00, isForecast: true },
-    { date: 'Jun 26', rate: 0.00, isForecast: true },
+    { date: 'Apr 22', rate: -0.75 },
+    { date: 'Jul 22', rate: -0.25 },
+    { date: 'Okt 22', rate: 0.50 },
+    { date: 'Jan 23', rate: 1.00 },
+    { date: 'Apr 23', rate: 1.50 },
+    { date: 'Jul 23', rate: 1.75 },
+    { date: 'Okt 23', rate: 1.75 },
+    { date: 'Jan 24', rate: 1.75 },
+    { date: 'Apr 24', rate: 1.50 },
+    { date: 'Jul 24', rate: 1.25 },
+    { date: 'Okt 24', rate: 1.00 },
+    { date: 'Jan 25', rate: 0.80 },
+    { date: 'Apr 25', rate: 0.50 },
+    { date: 'Jul 25', rate: 0.25 },
+    { date: 'Okt 25', rate: 0.00 },
+    { date: 'Jan 26', rate: 0.00, isForecast: true },
+    { date: 'Apr 26', rate: 0.00, isForecast: true },
 ];
 
 export const SaronChart = () => {
     const [data, setData] = useState<SaronDataPoint[]>(() => {
         try {
-            const saved = localStorage.getItem('saron_data_v2');
+            const saved = localStorage.getItem('saron_data_v3');
             return saved ? JSON.parse(saved) : DEFAULT_DATA;
         } catch (e) {
             return DEFAULT_DATA;
@@ -49,7 +53,7 @@ export const SaronChart = () => {
     const [newRate, setNewRate] = useState<number>(0);
 
     useEffect(() => {
-        localStorage.setItem('saron_data_v2', JSON.stringify(data));
+        localStorage.setItem('saron_data_v3', JSON.stringify(data));
     }, [data]);
 
     const handleAdd = () => {
