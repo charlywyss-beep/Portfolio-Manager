@@ -47,14 +47,8 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                         </thead>
                         <tbody className="divide-y divide-border">
                             {data.map((pos) => {
-                                const displayState = pos.stock.marketState || estimateMarketState(pos.stock.symbol, pos.stock.currency);
                                 return (
-                                    <tr key={pos.id} className={cn(
-                                        "group hover:bg-muted/30 transition-colors",
-                                        displayState === 'REGULAR'
-                                            ? "bg-green-500/15 dark:bg-green-500/25 hover:bg-green-500/25 dark:hover:bg-green-500/35"
-                                            : "bg-red-500/15 dark:bg-red-500/25 hover:bg-red-500/25 dark:hover:bg-red-500/35"
-                                    )}>
+                                    <tr key={pos.id} className="group hover:bg-muted/30 transition-colors border-b border-border/50 last:border-0 border-l border-r border-transparent hover:border-border/50">
                                         <td className="px-4 py-3 sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center gap-3">
