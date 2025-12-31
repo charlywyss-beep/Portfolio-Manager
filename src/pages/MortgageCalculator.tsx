@@ -223,92 +223,12 @@ export const MortgageCalculator = () => {
                         </div>
                     </div>
 
-                </div>
-
-                {/* RIGHT COLUMN: RESULTS */}
-                <div className="space-y-6">
-
-                    {/* Key Metrics Cards */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
-                            <div className="text-sm text-muted-foreground mb-1">Belehnung (LTV)</div>
-                            <div className={cn("text-2xl font-bold font-mono", ltv > 80 ? "text-destructive" : ltv > 66 ? "text-amber-500" : "text-emerald-500")}>
-                                {ltv.toFixed(1)}%
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                                {ltv > 80 ? "Kritisch (>80%)" : ltv > 66 ? "2. Hypothek (>66%)" : "1. Hypothek (≤66%)"}
-                            </div>
-                        </div>
-                        <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
-                            <div className="text-sm text-muted-foreground mb-1">Mischzinssatz</div>
-                            <div className="text-2xl font-bold text-foreground font-mono">
-                                {weightedRate.toFixed(2)}%
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                                Gewichtet nach Betrag
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Monthly Cost Breakdown */}
-                    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-                        <div className="p-6 border-b border-border">
-                            <h2 className="text-lg font-semibold flex items-center gap-2">
-                                <Calculator className="size-5 text-primary" />
-                                Monatliche Kosten
-                            </h2>
-                        </div>
-                        <div className="p-6 space-y-6">
-                            <div className="flex items-center justify-center py-2">
-                                <div className="text-center">
-                                    <div className="text-sm text-muted-foreground mb-1">Total pro Monat</div>
-                                    <div className="text-4xl font-bold tracking-tight text-foreground font-mono">
-                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(totalMonthlyCost)}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-3">
-                                {/* Interest Row */}
-                                <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                                        <span>Hypothekarzinsen</span>
-                                    </div>
-                                    <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(monthlyData.interest)}</span>
-                                </div>
-                                {/* Amortization Row */}
-                                <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                                        <span>Amortisation</span>
-                                    </div>
-                                    <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(monthlyData.amortization)}</span>
-                                </div>
-                                {/* Maintenance Row */}
-                                <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                                        <span>Unterhalt & Nebenkosten</span>
-                                    </div>
-                                    <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(monthlyData.maintenance)}</span>
-                                </div>
-                            </div>
-                        </div>
-                        {/* Simple Visual Bar */}
-                        <div className="h-4 w-full flex">
-                            <div className="h-full bg-blue-500 w-[var(--width)]" style={{ '--width': `${(monthlyData.interest / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>
-                            <div className="h-full bg-emerald-500 w-[var(--width)]" style={{ '--width': `${(monthlyData.amortization / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>
-                            <div className="h-full bg-amber-500 w-[var(--width)]" style={{ '--width': `${(monthlyData.maintenance / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>
-                        </div>
-                    </div>
-
                     {/* NEW: Budget Plan */}
                     <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
                         <div className="p-6 border-b border-border flex justify-between items-center">
                             <h2 className="text-lg font-semibold flex items-center gap-2">
                                 <Wallet className="size-5 text-primary" />
-                                Budget Plan & Lebenshaltung
+                                Budget Plan
                             </h2>
                             <button
                                 onClick={() => {
@@ -425,8 +345,83 @@ export const MortgageCalculator = () => {
 
                 </div>
 
-                {/* RIGHT COLUMN: CHARTS */}
+                {/* RIGHT COLUMN: RESULTS */}
                 <div className="space-y-6">
+
+                    {/* Key Metrics Cards */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+                            <div className="text-sm text-muted-foreground mb-1">Belehnung (LTV)</div>
+                            <div className={cn("text-2xl font-bold font-mono", ltv > 80 ? "text-destructive" : ltv > 66 ? "text-amber-500" : "text-emerald-500")}>
+                                {ltv.toFixed(1)}%
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                                {ltv > 80 ? "Kritisch (>80%)" : ltv > 66 ? "2. Hypothek (>66%)" : "1. Hypothek (≤66%)"}
+                            </div>
+                        </div>
+                        <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+                            <div className="text-sm text-muted-foreground mb-1">Mischzinssatz</div>
+                            <div className="text-2xl font-bold text-foreground font-mono">
+                                {weightedRate.toFixed(2)}%
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                                Gewichtet nach Betrag
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Monthly Cost Breakdown */}
+                    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+                        <div className="p-6 border-b border-border">
+                            <h2 className="text-lg font-semibold flex items-center gap-2">
+                                <Calculator className="size-5 text-primary" />
+                                Monatliche Kosten
+                            </h2>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            <div className="flex items-center justify-center py-2">
+                                <div className="text-center">
+                                    <div className="text-sm text-muted-foreground mb-1">Total pro Monat</div>
+                                    <div className="text-4xl font-bold tracking-tight text-foreground font-mono">
+                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(totalMonthlyCost)}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                {/* Interest Row */}
+                                <div className="flex items-center justify-between text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                                        <span>Hypothekarzinsen</span>
+                                    </div>
+                                    <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(monthlyData.interest)}</span>
+                                </div>
+                                {/* Amortization Row */}
+                                <div className="flex items-center justify-between text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                                        <span>Amortisation</span>
+                                    </div>
+                                    <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(monthlyData.amortization)}</span>
+                                </div>
+                                {/* Maintenance Row */}
+                                <div className="flex items-center justify-between text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                                        <span>Unterhalt & Nebenkosten</span>
+                                    </div>
+                                    <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(monthlyData.maintenance)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {/* Simple Visual Bar */}
+                        <div className="h-4 w-full flex">
+                            <div className="h-full bg-blue-500 w-[var(--width)]" style={{ '--width': `${(monthlyData.interest / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>
+                            <div className="h-full bg-emerald-500 w-[var(--width)]" style={{ '--width': `${(monthlyData.amortization / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>
+                            <div className="h-full bg-amber-500 w-[var(--width)]" style={{ '--width': `${(monthlyData.maintenance / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>
+                        </div>
+                    </div>
 
                     {/* SARON Chart */}
                     <SaronChart />
