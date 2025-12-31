@@ -136,7 +136,8 @@ export interface MortgageTranche {
 export interface BudgetEntry {
     id: string;
     name: string;
-    amount: number; // Monthly
+    amount: number;
+    frequency: 'monthly' | 'yearly';
 }
 
 export interface MortgageData {
