@@ -26,16 +26,18 @@ const DEFAULT_DATA: SaronDataPoint[] = [
     { date: 'Jun 24', rate: 1.25 },
     { date: 'Sep 24', rate: 1.00 },
     { date: 'Dez 24', rate: 0.80 },
-    { date: 'Mar 25', rate: 0.75, isForecast: true },
-    { date: 'Jun 25', rate: 0.60, isForecast: true },
-    { date: 'Sep 25', rate: 0.50, isForecast: true },
-    { date: 'Dez 25', rate: 0.50, isForecast: true },
+    { date: 'Mar 25', rate: 0.50 },
+    { date: 'Jun 25', rate: 0.25 },
+    { date: 'Sep 25', rate: 0.00 },
+    { date: 'Dez 25', rate: 0.00 },
+    { date: 'Mar 26', rate: 0.00, isForecast: true },
+    { date: 'Jun 26', rate: 0.00, isForecast: true },
 ];
 
 export const SaronChart = () => {
     const [data, setData] = useState<SaronDataPoint[]>(() => {
         try {
-            const saved = localStorage.getItem('saron_data');
+            const saved = localStorage.getItem('saron_data_v2');
             return saved ? JSON.parse(saved) : DEFAULT_DATA;
         } catch (e) {
             return DEFAULT_DATA;
@@ -47,7 +49,7 @@ export const SaronChart = () => {
     const [newRate, setNewRate] = useState<number>(0);
 
     useEffect(() => {
-        localStorage.setItem('saron_data', JSON.stringify(data));
+        localStorage.setItem('saron_data_v2', JSON.stringify(data));
     }, [data]);
 
     const handleAdd = () => {
