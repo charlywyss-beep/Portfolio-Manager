@@ -243,365 +243,364 @@ export function StockDetail() {
 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
-                        <div
-                            className="cursor-pointer hover:scale-105 transition-transform"
-                            onClick={() => navigate('/portfolio')}
-                            title="Zurück zum Portfolio"
-                        >
-                            <Logo
-                                url={stock.logoUrl}
-                                alt={stock.name}
-                                size="size-12 md:size-16"
-                                fallback={
-                                    <span className="text-xl md:text-2xl">{stock.symbol.slice(0, 2)}</span>
-                                }
-                                className="text-xl"
-                            />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2 md:gap-3">
-                                <h1 className="text-lg md:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">{stock.name}</h1>
-                                {(() => {
-                                    const displayState = stock.marketState || estimateMarketState(stock.symbol, stock.currency);
-                                    return displayState === 'REGULAR' ? (
-                                        <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] cursor-help border border-background" title="Markt geöffnet" />
-                                    ) : (
-                                        <div className="size-2.5 rounded-full bg-red-500 cursor-help border border-background" title={`Markt geschlossen (${displayState})`} />
-                                    );
-                                })()}
-                                <button
-                                    onClick={() => navigate(`/dividends/edit/${stock.id}`)}
-                                    className="p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                                    title="Daten bearbeiten"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
-                                </button>
-                            </div>
-                            <div className="flex items-center gap-2 text-muted-foreground mt-0.5 text-xs md:text-sm">
-                                <span className="font-bold text-foreground">{stock.symbol}</span>
-                                <span>•</span>
-                                <span>{stock.sector || 'Sektor unbekannt'}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Price Card */}
-                    <div className="text-right">
-                        <p className="text-[10px] md:text-xs text-muted-foreground font-medium uppercase tracking-wider">Aktueller Kurs</p>
-                        <h2 className="text-xl md:text-3xl font-bold tabular-nums tracking-tight">
-                            {formatCurrency(stock.currentPrice, stock.currency)}
-                        </h2>
-                        {stock.distributionPolicy === 'accumulating' ? (
-                            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-0.5 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded inline-block">
-                                Thesaurierend
-                            </p>
-                        ) : stock.dividendYield && (
-                            <p className="text-xs text-green-600 dark:text-green-400 font-medium mt-0.5">
-                                {stock.dividendYield.toFixed(2)}% Div.Rendite
-                            </p>
-                        )}
-
-                        {/* Dynamic Position Performance based on Chart Range */}
-                        {(() => {
-                            const position = positions.find(p => p.stockId === stock.id);
-                            if (!position) return null;
-
-                            // Determine start price for the period
-                            let referencePrice = stock.previousClose;
-
-                            if (timeRange !== '1D' && chartData && chartData.length > 0) {
-                                referencePrice = chartData[0].value;
-                            } else if (timeRange === '1D') {
-                                referencePrice = stock.previousClose || (chartData && chartData.length > 0 ? chartData[0].value : stock.currentPrice);
-                            } else if (chartData && chartData.length > 0) {
-                                referencePrice = chartData[0].value;
-                            }
-
-                            if (timeRange !== '1D' && (!chartData || chartData.length === 0)) return null;
-
-                            const diffPerShare = stock.currentPrice - referencePrice;
-                            const totalDiff = diffPerShare * position.shares;
-                            const percentChange = referencePrice > 0 ? (diffPerShare / referencePrice) * 100 : 0;
-                            const isPositive = totalDiff >= 0;
-
-                            return (
-                                <div className="mt-1 text-right">
-                                    <p className={cn(
-                                        "text-xs font-bold flex items-center justify-end gap-1 tabular-nums",
-                                        isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                    )}>
-                                        {isPositive ? <TrendingUp className="size-3" /> : <TrendingUp className="size-3 rotate-180" />}
-                                        {isPositive ? '+' : ''}{percentChange.toFixed(2)}% {formatCurrency(totalDiff, stock.currency)}
-                                    </p>
-                                </div>
-                            );
-                        })()}
-                    </div>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column: Stats & Chart */}
-                <div className="lg:col-span-2 space-y-6">
-                    {/* Price Chart */}
-                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm min-h-[450px] flex flex-col">
-                        <div className="grid grid-cols-3 items-center mb-4 shrink-0">
-                            {/* Left: Title */}
-                            <div className="justify-self-start flex items-center gap-2">
-                                <TrendingUp className="size-5 text-blue-500" />
-                                <h3 className="font-bold text-lg">Kursverlauf</h3>
-                            </div>
-
-                            {/* Center: Back Button (Absolute Center) */}
-                            <div className="justify-self-center w-full flex justify-center">
-                                <button
-                                    onClick={() => navigate('/?openPerformance=true')}
-                                    className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-3 py-1.5 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
-                                >
-                                    <ArrowLeft className="size-3 md:size-4 mr-1.5" />
-                                    Zurück zur Performance
-                                </button>
-                            </div>
-
-                            {/* Right: Refresh Button */}
-                            <div className="justify-self-end">
-                                <button
-                                    onClick={loadData}
-                                    disabled={isRefreshing}
-                                    className={cn(
-                                        "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
-                                        "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                                        "active:scale-95",
-                                        isRefreshing && "opacity-50 cursor-not-allowed"
-                                    )}
-                                    title="Daten aktualisieren"
-                                >
-                                    <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
-                                    <span>
-                                        {isRefreshing ? 'Lade Daten...' : lastUpdate ? `Abfrage vor ${minutesAgo} Min` : 'Daten laden'}
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
-                        {/* Price History Chart */}
-                        <div className="flex-1 w-full min-h-0">
-                            <PriceHistoryChart
-                                currentPrice={stock.currentPrice}
-                                currency={stock.currency}
-                                trend={stock.dividendYield && stock.dividendYield > 2 ? 'up' : 'neutral'}
-                                historyData={chartData}
-                                selectedRange={timeRange}
-                                onRangeChange={(range) => setTimeRange(range)}
-                                isRealtime={true}
-                                quoteDate={quoteDate}
-                                previousClose={stock.previousClose}
-                                isMarketOpen={(stock.marketState || estimateMarketState(stock.symbol, stock.currency)) === 'REGULAR'}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Right Column: Stammdaten & Notes */}
-                <div className="lg:col-span-1 space-y-6">
-
-                    {/* Kursdaten - Moved to TOP as requested */}
-                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                            Kursdaten
-                        </h3>
-                        <div className="space-y-3">
-                            {/* Kaufpreis (Avg Buy Price) - Only if position exists */}
-                            {positions.find(p => p.stockId === stock.id) && (
-                                <div className="flex justify-between py-1.5 border-b border-border/50">
-                                    <span className="text-muted-foreground text-sm">Kaufpreis Ø</span>
-                                    <span className="font-medium text-sm">
-                                        {formatCurrency(positions.find(p => p.stockId === stock.id)?.buyPriceAvg || 0, stock.currency, false)}
-                                    </span>
-                                </div>
-                            )}
-
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Aktueller Kurs</span>
-                                <span className="font-medium text-sm">{formatCurrency(stock.currentPrice, stock.currency, false)}</span>
-                            </div>
-
-                            {/* Added Open and Previous Close in one line */}
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Eröffnung / Vortag</span>
-                                <span className="font-medium text-sm text-right">
-                                    {stock.open ? formatCurrency(stock.open, stock.currency, false) : '-'} / {formatCurrency(stock.previousClose, stock.currency, false)}
-                                </span>
-                            </div>
-
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Kauflimit</span>
-                                <span className="font-medium text-sm">
-                                    {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Stammdaten - Moved below Kursdaten */}
-                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                            <TrendingUp className="size-5 text-blue-500" />
-                            Stammdaten
-                        </h3>
-                        <div className="space-y-3">
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Name</span>
-                                <span className="font-medium text-sm text-right">{stock.name}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Symbol</span>
-                                <span className="font-medium text-sm font-mono">{stock.symbol}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">ISIN</span>
-                                <span className="font-medium text-sm font-mono">{stock.isin || '-'}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Typ</span>
-                                <span className="font-medium text-sm capitalize">{stock.type || 'Aktie'}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Währung</span>
-                                <span className="font-medium text-sm">{stock.currency}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">KGV (P/E)</span>
-                                <span className="font-medium text-sm">
-                                    {stock.trailingPE
-                                        ? stock.trailingPE.toFixed(2)
-                                        : (stock.forwardPE ? `${stock.forwardPE.toFixed(2)} (Fwd)` : (stock.eps && stock.eps > 0 ? (stock.currentPrice / stock.eps).toFixed(2) : '-'))}
-                                </span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Div. Frequenz</span>
-                                <span className="font-medium text-sm capitalize">
-                                    {stock.dividendFrequency ? (
-                                        stock.dividendFrequency === 'quarterly' ? 'Quartalsweise' :
-                                            stock.dividendFrequency === 'monthly' ? 'Monatlich' :
-                                                stock.dividendFrequency === 'semi-annually' ? 'Halbjährlich' : 'Jährlich'
-                                    ) : '-'}
-                                </span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Div. Rendite</span>
-                                <span className="font-medium text-sm">
-                                    {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Right Column: Quick Links & Notes (Vertical Stack) */}
-                <div className="lg:col-span-3 flex flex-col gap-6">
-                    {/* Quick Links Card */}
-                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
-                        <h3 className="font-bold text-lg mb-4">Quick Links</h3>
-                        <div className="space-y-3 flex-1">
-                            {/* Input for adding new links */}
-                            <div className="flex gap-2">
-                                <input
-                                    type="url"
-                                    placeholder="URL einfügen oder reinziehen..."
-                                    className="flex-1 px-3 py-2 text-sm rounded-lg border border-border bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && stock && e.currentTarget.value.trim()) {
-                                            const url = e.currentTarget.value.trim();
-                                            addQuickLink(stock.id, url);
-                                            e.currentTarget.value = '';
-                                        }
-                                    }}
-                                />
-                                <button
-                                    onClick={(e) => {
-                                        const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                                        if (stock && input.value.trim()) {
-                                            addQuickLink(stock.id, input.value.trim());
-                                            input.value = '';
-                                        }
-                                    }}
-                                    className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
-                                >
-                                    + Hinzufügen
-                                </button>
-                            </div>
-
-                            {/* List of saved links */}
-                            {stock?.quickLinks && stock.quickLinks.length > 0 && (
-                                <div className="space-y-2">
-                                    {stock.quickLinks.map((link) => (
-                                        <div
-                                            key={link.id}
-                                            className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group"
-                                        >
-                                            <a
-                                                href={link.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex-1 text-sm text-primary hover:underline truncate"
-                                            >
-                                                {link.label || link.url}
-                                            </a>
-                                            <button
-                                                onClick={() => removeQuickLink(stock.id, link.id)}
-                                                className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all opacity-70 hover:opacity-100"
-                                                title="Link entfernen"
-                                            >
-                                                <Trash2 className="size-4" />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* Empty state */}
-                            {(!stock?.quickLinks || stock.quickLinks.length === 0) && (
-                                <div className="flex-1 flex items-center justify-center text-center p-8">
-                                    <p className="text-sm text-muted-foreground">
-                                        Keine Links gespeichert.<br />
-                                        Füge Chart- oder Finanz-URLs hinzu.
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Notes Card */}
-                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-bold text-lg flex items-center gap-2">
-                                <Save className="size-5 text-purple-500" />
-                                Persönliche Notizen & Analyse
-                            </h3>
-                            <button
-                                onClick={handleSaveNotes}
-                                className={cn(
-                                    'px-4 py-2 rounded-lg font-medium text-sm transition-all',
-                                    isSaving
-                                        ? 'bg-green-500 text-white'
-                                        : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                                )}
+                        <div className="flex items-center gap-4">
+                            <div
+                                className="bg-card rounded-xl"
                             >
-                                {isSaving ? 'Gespeichert!' : 'Speichern'}
-                            </button>
+                                <Logo
+                                    url={stock.logoUrl}
+                                    alt={stock.name}
+                                    size="size-12 md:size-16"
+                                    fallback={
+                                        <span className="text-xl md:text-2xl">{stock.symbol.slice(0, 2)}</span>
+                                    }
+                                    className="text-xl"
+                                />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2 md:gap-3">
+                                    <h1 className="text-lg md:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">{stock.name}</h1>
+                                    {(() => {
+                                        const displayState = stock.marketState || estimateMarketState(stock.symbol, stock.currency);
+                                        return displayState === 'REGULAR' ? (
+                                            <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] cursor-help border border-background" title="Markt geöffnet" />
+                                        ) : (
+                                            <div className="size-2.5 rounded-full bg-red-500 cursor-help border border-background" title={`Markt geschlossen (${displayState})`} />
+                                        );
+                                    })()}
+                                    <button
+                                        onClick={() => navigate(`/dividends/edit/${stock.id}`)}
+                                        className="p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                        title="Daten bearbeiten"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                                    </button>
+                                </div>
+                                <div className="flex items-center gap-2 text-muted-foreground mt-0.5 text-xs md:text-sm">
+                                    <span className="font-bold text-foreground">{stock.symbol}</span>
+                                    <span>•</span>
+                                    <span>{stock.sector || 'Sektor unbekannt'}</span>
+                                </div>
+                            </div>
                         </div>
-                        <textarea
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Schreiben Sie hier Ihre Gedanken zur Aktie (z.B. Kaufgrund, Burggraben, Risiken)..."
-                            className="flex-1 min-h-[300px] w-full p-4 rounded-lg border border-border bg-background/50 resize-y focus:outline-none focus:ring-2 focus:ring-primary/20"
-                        />
-                        <p className="text-xs text-muted-foreground mt-2">
-                            * Notizen werden nur lokal gespeichert.
-                        </p>
+
+                        {/* Price Card */}
+                        <div className="text-right">
+                            <p className="text-[10px] md:text-xs text-muted-foreground font-medium uppercase tracking-wider">Aktueller Kurs</p>
+                            <h2 className="text-xl md:text-3xl font-bold tabular-nums tracking-tight">
+                                {formatCurrency(stock.currentPrice, stock.currency)}
+                            </h2>
+                            {stock.distributionPolicy === 'accumulating' ? (
+                                <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-0.5 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded inline-block">
+                                    Thesaurierend
+                                </p>
+                            ) : stock.dividendYield && (
+                                <p className="text-xs text-green-600 dark:text-green-400 font-medium mt-0.5">
+                                    {stock.dividendYield.toFixed(2)}% Div.Rendite
+                                </p>
+                            )}
+
+                            {/* Dynamic Position Performance based on Chart Range */}
+                            {(() => {
+                                const position = positions.find(p => p.stockId === stock.id);
+                                if (!position) return null;
+
+                                // Determine start price for the period
+                                let referencePrice = stock.previousClose;
+
+                                if (timeRange !== '1D' && chartData && chartData.length > 0) {
+                                    referencePrice = chartData[0].value;
+                                } else if (timeRange === '1D') {
+                                    referencePrice = stock.previousClose || (chartData && chartData.length > 0 ? chartData[0].value : stock.currentPrice);
+                                } else if (chartData && chartData.length > 0) {
+                                    referencePrice = chartData[0].value;
+                                }
+
+                                if (timeRange !== '1D' && (!chartData || chartData.length === 0)) return null;
+
+                                const diffPerShare = stock.currentPrice - referencePrice;
+                                const totalDiff = diffPerShare * position.shares;
+                                const percentChange = referencePrice > 0 ? (diffPerShare / referencePrice) * 100 : 0;
+                                const isPositive = totalDiff >= 0;
+
+                                return (
+                                    <div className="mt-1 text-right">
+                                        <p className={cn(
+                                            "text-xs font-bold flex items-center justify-end gap-1 tabular-nums",
+                                            isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                        )}>
+                                            {isPositive ? <TrendingUp className="size-3" /> : <TrendingUp className="size-3 rotate-180" />}
+                                            {isPositive ? '+' : ''}{percentChange.toFixed(2)}% {formatCurrency(totalDiff, stock.currency)}
+                                        </p>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left Column: Stats & Chart */}
+                    <div className="lg:col-span-2 space-y-6">
+                        {/* Price Chart */}
+                        <div className="bg-card border border-border rounded-xl p-6 shadow-sm min-h-[450px] flex flex-col">
+                            <div className="grid grid-cols-3 items-center mb-4 shrink-0">
+                                {/* Left: Title */}
+                                <div className="justify-self-start flex items-center gap-2">
+                                    <TrendingUp className="size-5 text-blue-500" />
+                                    <h3 className="font-bold text-lg">Kursverlauf</h3>
+                                </div>
+
+                                {/* Center: Back Button (Absolute Center) */}
+                                <div className="justify-self-center w-full flex justify-center">
+                                    <button
+                                        onClick={() => navigate('/?openPerformance=true')}
+                                        className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-3 py-1.5 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
+                                    >
+                                        <ArrowLeft className="size-3 md:size-4 mr-1.5" />
+                                        Zurück zur Performance
+                                    </button>
+                                </div>
+
+                                {/* Right: Refresh Button */}
+                                <div className="justify-self-end">
+                                    <button
+                                        onClick={loadData}
+                                        disabled={isRefreshing}
+                                        className={cn(
+                                            "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
+                                            "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                            "active:scale-95",
+                                            isRefreshing && "opacity-50 cursor-not-allowed"
+                                        )}
+                                        title="Daten aktualisieren"
+                                    >
+                                        <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
+                                        <span>
+                                            {isRefreshing ? 'Lade Daten...' : lastUpdate ? `Abfrage vor ${minutesAgo} Min` : 'Daten laden'}
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                            {/* Price History Chart */}
+                            <div className="flex-1 w-full min-h-0">
+                                <PriceHistoryChart
+                                    currentPrice={stock.currentPrice}
+                                    currency={stock.currency}
+                                    trend={stock.dividendYield && stock.dividendYield > 2 ? 'up' : 'neutral'}
+                                    historyData={chartData}
+                                    selectedRange={timeRange}
+                                    onRangeChange={(range) => setTimeRange(range)}
+                                    isRealtime={true}
+                                    quoteDate={quoteDate}
+                                    previousClose={stock.previousClose}
+                                    isMarketOpen={(stock.marketState || estimateMarketState(stock.symbol, stock.currency)) === 'REGULAR'}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column: Stammdaten & Notes */}
+                    <div className="lg:col-span-1 space-y-6">
+
+                        {/* Kursdaten - Moved to TOP as requested */}
+                        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                                Kursdaten
+                            </h3>
+                            <div className="space-y-3">
+                                {/* Kaufpreis (Avg Buy Price) - Only if position exists */}
+                                {positions.find(p => p.stockId === stock.id) && (
+                                    <div className="flex justify-between py-1.5 border-b border-border/50">
+                                        <span className="text-muted-foreground text-sm">Kaufpreis Ø</span>
+                                        <span className="font-medium text-sm">
+                                            {formatCurrency(positions.find(p => p.stockId === stock.id)?.buyPriceAvg || 0, stock.currency, false)}
+                                        </span>
+                                    </div>
+                                )}
+
+                                <div className="flex justify-between py-1.5 border-b border-border/50">
+                                    <span className="text-muted-foreground text-sm">Aktueller Kurs</span>
+                                    <span className="font-medium text-sm">{formatCurrency(stock.currentPrice, stock.currency, false)}</span>
+                                </div>
+
+                                {/* Added Open and Previous Close in one line */}
+                                <div className="flex justify-between py-1.5 border-b border-border/50">
+                                    <span className="text-muted-foreground text-sm">Eröffnung / Vortag</span>
+                                    <span className="font-medium text-sm text-right">
+                                        {stock.open ? formatCurrency(stock.open, stock.currency, false) : '-'} / {formatCurrency(stock.previousClose, stock.currency, false)}
+                                    </span>
+                                </div>
+
+                                <div className="flex justify-between py-1.5 border-b border-border/50">
+                                    <span className="text-muted-foreground text-sm">Kauflimit</span>
+                                    <span className="font-medium text-sm">
+                                        {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Stammdaten - Moved below Kursdaten */}
+                        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                                <TrendingUp className="size-5 text-blue-500" />
+                                Stammdaten
+                            </h3>
+                            <div className="space-y-3">
+                                <div className="flex justify-between py-1.5 border-b border-border/50">
+                                    <span className="text-muted-foreground text-sm">Name</span>
+                                    <span className="font-medium text-sm text-right">{stock.name}</span>
+                                </div>
+                                <div className="flex justify-between py-1.5 border-b border-border/50">
+                                    <span className="text-muted-foreground text-sm">Symbol</span>
+                                    <span className="font-medium text-sm font-mono">{stock.symbol}</span>
+                                </div>
+                                <div className="flex justify-between py-1.5 border-b border-border/50">
+                                    <span className="text-muted-foreground text-sm">ISIN</span>
+                                    <span className="font-medium text-sm font-mono">{stock.isin || '-'}</span>
+                                </div>
+                                <div className="flex justify-between py-1.5 border-b border-border/50">
+                                    <span className="text-muted-foreground text-sm">Typ</span>
+                                    <span className="font-medium text-sm capitalize">{stock.type || 'Aktie'}</span>
+                                </div>
+                                <div className="flex justify-between py-1.5 border-b border-border/50">
+                                    <span className="text-muted-foreground text-sm">Währung</span>
+                                    <span className="font-medium text-sm">{stock.currency}</span>
+                                </div>
+                                <div className="flex justify-between py-1.5 border-b border-border/50">
+                                    <span className="text-muted-foreground text-sm">KGV (P/E)</span>
+                                    <span className="font-medium text-sm">
+                                        {stock.trailingPE
+                                            ? stock.trailingPE.toFixed(2)
+                                            : (stock.forwardPE ? `${stock.forwardPE.toFixed(2)} (Fwd)` : (stock.eps && stock.eps > 0 ? (stock.currentPrice / stock.eps).toFixed(2) : '-'))}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between py-1.5 border-b border-border/50">
+                                    <span className="text-muted-foreground text-sm">Div. Frequenz</span>
+                                    <span className="font-medium text-sm capitalize">
+                                        {stock.dividendFrequency ? (
+                                            stock.dividendFrequency === 'quarterly' ? 'Quartalsweise' :
+                                                stock.dividendFrequency === 'monthly' ? 'Monatlich' :
+                                                    stock.dividendFrequency === 'semi-annually' ? 'Halbjährlich' : 'Jährlich'
+                                        ) : '-'}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between py-1.5 border-b border-border/50">
+                                    <span className="text-muted-foreground text-sm">Div. Rendite</span>
+                                    <span className="font-medium text-sm">
+                                        {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column: Quick Links & Notes (Vertical Stack) */}
+                    <div className="lg:col-span-3 flex flex-col gap-6">
+                        {/* Quick Links Card */}
+                        <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
+                            <h3 className="font-bold text-lg mb-4">Quick Links</h3>
+                            <div className="space-y-3 flex-1">
+                                {/* Input for adding new links */}
+                                <div className="flex gap-2">
+                                    <input
+                                        type="url"
+                                        placeholder="URL einfügen oder reinziehen..."
+                                        className="flex-1 px-3 py-2 text-sm rounded-lg border border-border bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && stock && e.currentTarget.value.trim()) {
+                                                const url = e.currentTarget.value.trim();
+                                                addQuickLink(stock.id, url);
+                                                e.currentTarget.value = '';
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        onClick={(e) => {
+                                            const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                                            if (stock && input.value.trim()) {
+                                                addQuickLink(stock.id, input.value.trim());
+                                                input.value = '';
+                                            }
+                                        }}
+                                        className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
+                                    >
+                                        + Hinzufügen
+                                    </button>
+                                </div>
+
+                                {/* List of saved links */}
+                                {stock?.quickLinks && stock.quickLinks.length > 0 && (
+                                    <div className="space-y-2">
+                                        {stock.quickLinks.map((link) => (
+                                            <div
+                                                key={link.id}
+                                                className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group"
+                                            >
+                                                <a
+                                                    href={link.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex-1 text-sm text-primary hover:underline truncate"
+                                                >
+                                                    {link.label || link.url}
+                                                </a>
+                                                <button
+                                                    onClick={() => removeQuickLink(stock.id, link.id)}
+                                                    className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all opacity-70 hover:opacity-100"
+                                                    title="Link entfernen"
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Empty state */}
+                                {(!stock?.quickLinks || stock.quickLinks.length === 0) && (
+                                    <div className="flex-1 flex items-center justify-center text-center p-8">
+                                        <p className="text-sm text-muted-foreground">
+                                            Keine Links gespeichert.<br />
+                                            Füge Chart- oder Finanz-URLs hinzu.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Notes Card */}
+                        <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="font-bold text-lg flex items-center gap-2">
+                                    <Save className="size-5 text-purple-500" />
+                                    Persönliche Notizen & Analyse
+                                </h3>
+                                <button
+                                    onClick={handleSaveNotes}
+                                    className={cn(
+                                        'px-4 py-2 rounded-lg font-medium text-sm transition-all',
+                                        isSaving
+                                            ? 'bg-green-500 text-white'
+                                            : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                                    )}
+                                >
+                                    {isSaving ? 'Gespeichert!' : 'Speichern'}
+                                </button>
+                            </div>
+                            <textarea
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                placeholder="Schreiben Sie hier Ihre Gedanken zur Aktie (z.B. Kaufgrund, Burggraben, Risiken)..."
+                                className="flex-1 min-h-[300px] w-full p-4 rounded-lg border border-border bg-background/50 resize-y focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                            <p className="text-xs text-muted-foreground mt-2">
+                                * Notizen werden nur lokal gespeichert.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
+            );
 }
