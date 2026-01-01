@@ -75,15 +75,13 @@ export function getCurrentDividendPeriod(stock: Stock): CurrentDividendInfo {
         }
 
         // If we fall through here, ALL dates are past the buffer. 
-        // We should show the LAST period (Paid) or reset?
-        // Usually means we wait for next year's dates. 
-        // Let's show the last one with status 'paid' to indicate "Year Done"
-        const last = sortedDates[sortedDates.length - 1];
+        // We assume the current cycle is done, so we display the start of the NEXT cycle (e.g. Q1).
+        // We don't have the new dates yet, so we return undefined dates.
         return {
-            exDate: last.exDate,
-            payDate: last.payDate,
-            status: 'paid',
-            periodLabel: stock.dividendFrequency === 'quarterly' ? 'Q4' : (stock.dividendFrequency === 'semi-annually' ? '' : 'Ende')
+            exDate: undefined,
+            payDate: undefined,
+            status: 'upcoming',
+            periodLabel: stock.dividendFrequency === 'quarterly' ? 'Q1' : (stock.dividendFrequency === 'semi-annually' ? '' : 'Ende')
         };
     }
 
