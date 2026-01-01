@@ -244,7 +244,16 @@ export function StockDetail() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                         <div
-                            className="bg-card rounded-xl"
+                            className={cn(
+                                "bg-card rounded-xl",
+                                positions.find(p => p.stockId === stock.id) && "cursor-pointer hover:scale-105 transition-transform"
+                            )}
+                            onClick={() => {
+                                if (positions.find(p => p.stockId === stock.id)) {
+                                    navigate('/portfolio');
+                                }
+                            }}
+                            title={positions.find(p => p.stockId === stock.id) ? "Zurück zum Portfolio" : undefined}
                         >
                             <Logo
                                 url={stock.logoUrl}

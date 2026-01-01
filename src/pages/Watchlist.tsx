@@ -13,7 +13,7 @@ import type { Stock } from '../types';
 
 export function Watchlist() {
     const navigate = useNavigate();
-    const { stocks, watchlist, removeFromWatchlist, addPosition } = usePortfolio(); // Get addPosition
+    const { stocks, watchlist, positions, removeFromWatchlist, addPosition } = usePortfolio(); // Get positions
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
 
@@ -112,13 +112,23 @@ export function Watchlist() {
                                         const isUndervalued = hasTarget && stock.currentPrice <= (stock.targetPrice || 0);
                                         const overvaluationPercent = hasTarget ? ((stock.currentPrice - (stock.targetPrice || 0)) / (stock.targetPrice || 1)) * 100 : 0;
 
+                                        // Check if position exists using the positions array from context
+                                        const hasPosition = positions.some(p => p.stockId === stock.id);
+
                                         return (
                                             <tr key={stock.id} className="hover:bg-muted/50 transition-colors group">
                                                 <td className="py-3 px-4 sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[140px] align-top">
                                                     <div className="absolute inset-0 bg-card -z-10" />
                                                     <div className="relative flex items-start gap-3">
                                                         <div
-                                                            className="-m-0.5"
+                                                            className={hasPosition ? "cursor-pointer hover:scale-110 transition-transform -m-0.5" : "-m-0.5"}
+                                                            onClick={(e) => {
+                                                                if (hasPosition) {
+                                                                    e.stopPropagation();
+                                                                    navigate('/portfolio');
+                                                                }
+                                                            }}
+                                                            title={hasPosition ? "Zu den Positionen" : undefined}
                                                         >
                                                             <Logo
                                                                 url={stock.logoUrl}
