@@ -186,7 +186,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
 
     const addStock = (stockData: Omit<Stock, 'id'>) => {
-        const newId = `stock_${Date.now()}_${Math.random().toString(36).substr(2, 9)} `;
+        const newId = `stock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const newStock: Stock = {
             ...stockData,
             id: newId,
@@ -262,7 +262,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
             // Create new position
             const newPosition: Position = {
                 ...position,
-                id: `pos_${Date.now()}_${Math.random().toString(36).substr(2, 9)} `,
+                id: `pos_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 // Ensure new position gets the FX rate (or 1 as default if somehow missing)
                 averageEntryFxRate: position.averageEntryFxRate || 1,
                 purchases: incomingPurchases
@@ -285,7 +285,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     const addFixedDeposit = (deposit: Omit<import('../types').FixedDeposit, 'id'>) => {
         const newDeposit = {
             ...deposit,
-            id: `fd_${Date.now()}_${Math.random().toString(36).substr(2, 9)} `,
+            id: `fd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         };
         setFixedDeposits((prev) => [...prev, newDeposit]);
     };
@@ -315,7 +315,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     const addHistoryEntry = (entry: Omit<import('../types').PortfolioHistoryEntry, 'id'>) => {
         const newEntry = {
             ...entry,
-            id: `hist_${Date.now()}_${Math.random().toString(36).substr(2, 9)} `,
+            id: `hist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         };
         setHistory((prev) => {
             const updated = [...prev, newEntry];

@@ -22,7 +22,7 @@ export function StockDetail() {
 
     // Find stock by ID or Symbol (case-insensitive)
     const stock = stocks.find(s =>
-        s.id === id ||
+        s.id.trim() === id?.trim() ||
         s.symbol.toLowerCase() === id?.toLowerCase()
     );
 
