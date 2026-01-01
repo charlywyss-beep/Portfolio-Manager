@@ -121,9 +121,9 @@ export function Watchlist() {
                                                             className="cursor-pointer hover:scale-110 transition-transform -m-0.5"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                navigate('/portfolio');
+                                                                navigate(`/stock/${stock.id}`);
                                                             }}
-                                                            title="Zu den Positionen"
+                                                            title="Zu den Details"
                                                         >
                                                             <Logo
                                                                 url={stock.logoUrl}
