@@ -118,12 +118,7 @@ export function Watchlist() {
                                                     <div className="absolute inset-0 bg-card -z-10" />
                                                     <div className="relative flex items-start gap-3">
                                                         <div
-                                                            className="cursor-pointer hover:scale-110 transition-transform -m-0.5"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                navigate(`/stock/${stock.id}`);
-                                                            }}
-                                                            title="Zu den Details"
+                                                            className="-m-0.5"
                                                         >
                                                             <Logo
                                                                 url={stock.logoUrl}
