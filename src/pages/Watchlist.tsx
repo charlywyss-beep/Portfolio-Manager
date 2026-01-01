@@ -6,6 +6,7 @@ import { useCurrencyFormatter } from '../utils/currency';
 
 import { getCurrentDividendPeriod, translateFrequency } from '../utils/dividend';
 import { Eye, Plus, Trash2, Edit, ShoppingBag } from 'lucide-react';
+import { Logo } from '../components/Logo';
 
 import { AddPositionModal } from '../components/AddPositionModal'; // Import AddPositionModal
 import type { Stock } from '../types';
@@ -117,25 +118,21 @@ export function Watchlist() {
                                                     <div className="absolute inset-0 bg-card -z-10" />
                                                     <div className="relative flex items-start gap-3">
                                                         <div
-                                                            className="cursor-pointer hover:scale-110 transition-transform p-1 -m-1"
+                                                            className="cursor-pointer hover:scale-110 transition-transform -m-0.5"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 navigate('/portfolio');
                                                             }}
                                                             title="Zu den Positionen"
                                                         >
-                                                            {stock.logoUrl ? (
-                                                                <img
-                                                                    src={stock.logoUrl}
-                                                                    alt={stock.symbol}
-                                                                    className="h-8 w-auto max-w-12 rounded-lg bg-white object-contain p-1 border border-border"
-                                                                    onError={(e) => (e.currentTarget.style.display = 'none')}
-                                                                />
-                                                            ) : (
-                                                                <div className="size-8 rounded-full bg-muted flex items-center justify-center">
+                                                            <Logo
+                                                                url={stock.logoUrl}
+                                                                alt={stock.symbol}
+                                                                size="size-8"
+                                                                fallback={
                                                                     <span className="font-bold text-xs">{stock.symbol.slice(0, 2)}</span>
-                                                                </div>
-                                                            )}
+                                                                }
+                                                            />
                                                         </div>
                                                         <div>
                                                             <div
