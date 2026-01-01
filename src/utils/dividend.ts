@@ -14,7 +14,7 @@ export interface CurrentDividendInfo {
 export const translateFrequency = (freq?: string) => {
     switch (freq) {
         case 'quarterly': return 'p.Q.';
-        case 'semi-annually': return 'Halbjährlich';
+        case 'semi-annually': return 'Halbjähr.';
         case 'annually': return 'Jährlich';
         case 'monthly': return 'Monatlich';
         default: return 'Jährlich';
@@ -83,7 +83,7 @@ export function getCurrentDividendPeriod(stock: Stock): CurrentDividendInfo {
             exDate: last.exDate,
             payDate: last.payDate,
             status: 'paid',
-            periodLabel: stock.dividendFrequency === 'quarterly' ? 'Q4' : 'Ende'
+            periodLabel: stock.dividendFrequency === 'quarterly' ? 'Q4' : (stock.dividendFrequency === 'semi-annually' ? '' : 'Ende')
         };
     }
 
