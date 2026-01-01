@@ -1,4 +1,6 @@
 import { CurrencyChart } from '../components/CurrencyChart';
+import { CurrencyGainCalculator } from '../components/CurrencyGainCalculator';
+import { ShareCalculator } from '../components/ShareCalculator';
 import { ArrowLeftRight } from 'lucide-react';
 
 export function ExchangeRates() {
@@ -17,6 +19,9 @@ export function ExchangeRates() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <CurrencyChart inverse={false} />
                 <CurrencyChart inverse={true} />
+
+                <CurrencyGainCalculator />
+                <ShareCalculator />
             </div>
         </div>
     );

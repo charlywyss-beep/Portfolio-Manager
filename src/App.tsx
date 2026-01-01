@@ -42,7 +42,7 @@ function App() {
     if (pathname === '/watchlist') return 'Watchlist';
     if (pathname === '/calculator') return 'Kauf / Verkauf';
     if (pathname === '/dividends') return 'Dividenden';
-    if (pathname === '/mortgage') return 'Hypotheken Rechner';
+    if (pathname === '/mortgage') return 'Budget';
     if (pathname === '/exchange-rates') return 'Wechselkurse';
     if (pathname === '/settings') return 'Einstellungen';
     if (pathname.startsWith('/stock/')) return 'Aktien Details';
@@ -169,7 +169,7 @@ function App() {
               <NavItem to="/dividends" icon={TrendingUp} label="Dividenden" />
               <NavItem to="/watchlist" icon={Eye} label="Watchlist" />
               <NavItem to="/calculator" icon={Calculator} label="Kauf / Verkauf" />
-              <NavItem to="/mortgage" icon={Landmark} label="Hypotheken" />
+              <NavItem to="/mortgage" icon={Landmark} label="Budget" />
 
 
 

@@ -1,17 +1,19 @@
 import { useMemo } from 'react';
-import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet } from 'lucide-react';
+import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { cn } from '../utils';
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
 
 import { SaronChart } from '../components/SaronChart';
 import { DecimalInput } from '../components/DecimalInput';
 import { usePortfolio } from '../context/PortfolioContext';
-import type { MortgageTranche } from '../types';
+import type { MortgageTranche, BudgetEntry } from '../types';
 
 export const MortgageCalculator = () => {
     const { mortgageData, updateMortgageData } = usePortfolio();
 
-    const { propertyValue, maintenanceRate, yearlyAmortization, tranches, budgetItems } = mortgageData;
+    const { propertyValue, maintenanceRate, yearlyAmortization, tranches, budgetItems, incomeItems } = mortgageData;
 
     const setPropertyValue = (val: number) => updateMortgageData({ propertyValue: val });
     const setMaintenanceRate = (val: number) => updateMortgageData({ maintenanceRate: val });
@@ -59,6 +61,216 @@ export const MortgageCalculator = () => {
     };
 
     const totalMonthlyCost = monthlyData.interest + monthlyData.amortization + monthlyData.maintenance;
+
+    const exportToPDF = () => {
+        const doc = new jsPDF();
+
+        doc.setFontSize(18);
+        doc.text('Budget Plan Übersicht', 14, 20);
+        doc.setFontSize(9);
+        doc.text(`Erstellt am: ${new Date().toLocaleDateString('de-CH')}`, 14, 26);
+
+        // Helper to sort items: Monthly first, then Yearly
+        const sortItemsByFrequency = (items: BudgetEntry[]) => {
+            return [...(items || [])].sort((a, b) => {
+                const freqA = a.frequency || 'monthly';
+                const freqB = b.frequency || 'monthly';
+                if (freqA === freqB) return 0;
+                return freqA === 'monthly' ? -1 : 1;
+            });
+        };
+
+        const sortedIncomeItems = sortItemsByFrequency(incomeItems || []);
+        const sortedBudgetItems = sortItemsByFrequency(budgetItems || []);
+
+        // Calculate Totals
+        const totalIncomeMonthly = sortedIncomeItems.reduce((sum: number, i: BudgetEntry) => {
+            const freq = i.frequency || 'monthly';
+            return sum + (freq === 'yearly' ? i.amount / 12 : i.amount);
+        }, 0);
+
+        const totalExpensesMonthly = sortedBudgetItems.reduce((sum: number, i: BudgetEntry) => {
+            const freq = i.frequency || 'monthly';
+            return sum + (freq === 'yearly' ? i.amount / 12 : i.amount);
+        }, 0);
+
+        const totalAvailable = totalIncomeMonthly - (totalMonthlyCost + totalExpensesMonthly);
+
+        // Helper to format currency for PDF (Number + CHF suffix)
+        const formatCurrencyPDF = (amount: number) => {
+            return new Intl.NumberFormat('de-CH', {
+                style: 'decimal',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount) + ' CHF';
+        };
+
+        // Shared table options for consistent styling
+        const getTableOptions = (startY: number, head: any[][], body: any[][], headColor: [number, number, number], foot?: any[][]) => {
+            return {
+                startY,
+                head,
+                body,
+                foot,
+                theme: 'striped' as const,
+                headStyles: {
+                    fillColor: headColor
+                },
+                footStyles: {
+                    fillColor: headColor
+                },
+                columnStyles: {
+                    0: { halign: 'left' as const },   // Name -> Left
+                    1: { halign: 'right' as const },  // Frequency -> Right
+                    2: { halign: 'right' as const }   // Amount -> Right
+                },
+                didParseCell: (data: any) => {
+                    // Explicitly enforce header and footer alignment to match body columns
+                    if (data.section === 'head' || data.section === 'foot') {
+                        if (data.column.index === 0) {
+                            data.cell.styles.halign = 'left';
+                        } else {
+                            data.cell.styles.halign = 'right';
+                        }
+                    }
+                }
+            };
+        };
+
+        const headers = [
+            [
+                { content: 'Quelle', styles: { halign: 'left' as const } },
+                { content: 'Frequenz', styles: { halign: 'right' as const } },
+                { content: 'Betrag', styles: { halign: 'right' as const } }
+            ]
+        ];
+
+        // Income Table
+        doc.setFontSize(12);
+        doc.text('Einnahmen', 14, 35);
+
+        const incomeData = sortedIncomeItems.map(item => [
+            item.name || 'Unbenannt',
+            (item.frequency || 'monthly') === 'monthly' ? 'Monatlich' : 'Jährlich',
+            formatCurrencyPDF(item.amount)
+        ]);
+
+        const incomeFooter = [
+            [
+                { content: 'Total ø Monatlich', styles: { halign: 'left' as const } },
+                { content: '', styles: { halign: 'right' as const } },
+                { content: formatCurrencyPDF(totalIncomeMonthly), styles: { halign: 'right' as const } }
+            ]
+        ];
+
+        autoTable(doc, getTableOptions(38, headers, incomeData, [16, 185, 129], incomeFooter));
+
+        // Expenses Table
+        let finalY = (doc as any).lastAutoTable.finalY + 8;
+        doc.setFontSize(12);
+        doc.text('Ausgaben Budget', 14, finalY);
+
+        const expenseData = sortedBudgetItems.map(item => [
+            item.name || 'Unbenannt',
+            (item.frequency || 'monthly') === 'monthly' ? 'Monatlich' : 'Jährlich',
+            formatCurrencyPDF(item.amount)
+        ]);
+
+        const expenseHeaders = [
+            [
+                { content: 'Posten', styles: { halign: 'left' as const } },
+                { content: 'Frequenz', styles: { halign: 'right' as const } },
+                { content: 'Betrag', styles: { halign: 'right' as const } }
+            ]
+        ];
+
+        const expenseFooter = [
+            [
+                { content: 'Total ø Monatlich', styles: { halign: 'left' as const } },
+                { content: '', styles: { halign: 'right' as const } },
+                { content: formatCurrencyPDF(totalExpensesMonthly), styles: { halign: 'right' as const } }
+            ]
+        ];
+
+        autoTable(doc, getTableOptions(finalY + 3, expenseHeaders, expenseData, [59, 130, 246], expenseFooter));
+
+        // Summary Table
+        finalY = (doc as any).lastAutoTable.finalY + 8;
+        doc.setFontSize(12);
+        doc.text('Zusammenfassung Monatlich', 14, finalY);
+
+        const summaryHeaders = [
+            [
+                { content: 'Kategorie', styles: { halign: 'left' as const } },
+                { content: 'Betrag', styles: { halign: 'right' as const } }
+            ]
+        ];
+
+        // Monthly Summary Data with conditional styling
+        const isMonthlyPositive = totalAvailable > 0;
+        const monthlySummaryStyle = {
+            fillColor: isMonthlyPositive ? [220, 252, 231] as [number, number, number] : [254, 226, 226] as [number, number, number], // green-100 : red-100
+            fontStyle: 'bold' as const
+        };
+
+        const summaryData = [
+            ['Total Einnahmen', formatCurrencyPDF(totalIncomeMonthly)],
+            ['Wohnkosten Hypothek + NK', formatCurrencyPDF(totalMonthlyCost)],
+            ['Budget Ausgaben', formatCurrencyPDF(totalExpensesMonthly)],
+            [
+                { content: 'Verfügbar Sparquote', styles: monthlySummaryStyle },
+                { content: formatCurrencyPDF(totalAvailable), styles: { ...monthlySummaryStyle, halign: 'right' as const } }
+            ]
+        ];
+
+        autoTable(doc, {
+            startY: finalY + 3,
+            head: summaryHeaders,
+            body: summaryData,
+            theme: 'grid',
+            headStyles: { fillColor: [75, 85, 99] }, // Gray
+            columnStyles: {
+                0: { halign: 'left', cellWidth: 120 }, // Fixed width for Category
+                1: { halign: 'right', fontStyle: 'bold' } // Amount -> Right
+            }
+        });
+
+        // Yearly Summary Table
+        finalY = (doc as any).lastAutoTable.finalY + 10;
+
+        doc.setFontSize(12);
+        doc.text('Zusammenfassung Jährlich', 14, finalY);
+
+        const isYearlyPositive = (totalAvailable * 12) > 0;
+        const yearlySummaryStyle = {
+            fillColor: isYearlyPositive ? [220, 252, 231] as [number, number, number] : [254, 226, 226] as [number, number, number],
+            fontStyle: 'bold' as const
+        };
+
+        const summaryDataYearly = [
+            ['Total Einnahmen', formatCurrencyPDF(totalIncomeMonthly * 12)],
+            ['Wohnkosten Hypothek + NK', formatCurrencyPDF(totalMonthlyCost * 12)],
+            ['Budget Ausgaben', formatCurrencyPDF(totalExpensesMonthly * 12)],
+            [
+                { content: 'Verfügbar Sparquote', styles: yearlySummaryStyle },
+                { content: formatCurrencyPDF(totalAvailable * 12), styles: { ...yearlySummaryStyle, halign: 'right' as const } }
+            ]
+        ];
+
+        autoTable(doc, {
+            startY: finalY + 3,
+            head: summaryHeaders,
+            body: summaryDataYearly,
+            theme: 'grid',
+            headStyles: { fillColor: [75, 85, 99] }, // Gray
+            columnStyles: {
+                0: { halign: 'left', cellWidth: 120 }, // Fixed width for Category
+                1: { halign: 'right', fontStyle: 'bold' } // Amount -> Right
+            }
+        });
+
+        doc.save('budget_plan.pdf');
+    };
 
     const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444']; // emerald, blue, amber, red
 
@@ -223,6 +435,95 @@ export const MortgageCalculator = () => {
                         </div>
                     </div>
 
+                    {/* NEW: Income Plan */}
+                    <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+                        <div className="p-4 border-b border-border flex justify-between items-center">
+                            <h2 className="text-lg font-semibold flex items-center gap-2">
+                                <Wallet className="size-5 text-emerald-500" />
+                                Einnahmen
+                            </h2>
+                            <button
+                                onClick={() => {
+                                    const newItems = [...(incomeItems || []), { id: crypto.randomUUID(), name: '', amount: 0, frequency: 'monthly' as const }];
+                                    updateMortgageData({ incomeItems: newItems });
+                                }}
+                                className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
+                            >
+                                <Plus className="size-4" /> Add Income
+                            </button>
+                        </div>
+                        <div className="p-4 space-y-2">
+                            <div className="space-y-1">
+                                {(incomeItems || []).map((item: BudgetEntry, index: number) => (
+                                    <div key={item.id} className="grid grid-cols-12 gap-2 items-center bg-accent/30 px-2 py-0.5 rounded-lg">
+                                        <div className="col-span-5">
+                                            <input
+                                                value={item.name}
+                                                onChange={(e) => {
+                                                    const newItems = [...(incomeItems || [])];
+                                                    newItems[index] = { ...item, name: e.target.value };
+                                                    updateMortgageData({ incomeItems: newItems });
+                                                }}
+                                                className="w-full bg-transparent border-none text-sm focus:ring-0 p-0 font-medium h-7"
+                                                placeholder="Quelle (z.B. Lohn)"
+                                            />
+                                        </div>
+                                        <div className="col-span-3">
+                                            <select
+                                                value={item.frequency || 'monthly'}
+                                                onChange={(e) => {
+                                                    const newItems = [...(incomeItems || [])];
+                                                    newItems[index] = { ...item, frequency: e.target.value as 'monthly' | 'yearly' };
+                                                    updateMortgageData({ incomeItems: newItems });
+                                                }}
+                                                className="w-full bg-background border border-input rounded px-1 py-0 text-xs h-7"
+                                            >
+                                                <option value="monthly">Monatlich</option>
+                                                <option value="yearly">Jährlich</option>
+                                            </select>
+                                        </div>
+                                        <div className="col-span-3 relative">
+                                            <div className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">CHF</div>
+                                            <DecimalInput
+                                                value={item.amount}
+                                                onChange={(val) => {
+                                                    const newItems = [...(incomeItems || [])];
+                                                    newItems[index] = { ...item, amount: parseFloat(val) || 0 };
+                                                    updateMortgageData({ incomeItems: newItems });
+                                                }}
+                                                className="w-full bg-background border border-input rounded px-1 py-0 pl-8 text-sm text-right h-7"
+                                            />
+                                        </div>
+                                        <div className="col-span-1 flex justify-end">
+                                            <button
+                                                onClick={() => {
+                                                    const newItems = (incomeItems || []).filter((i: BudgetEntry) => i.id !== item.id);
+                                                    updateMortgageData({ incomeItems: newItems });
+                                                }}
+                                                className="text-muted-foreground hover:text-destructive p-1"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {(incomeItems || []).length === 0 && (
+                                    <div className="text-center text-sm text-muted-foreground py-4 border border-dashed rounded-lg">
+                                        Noch keine Einnahmen erfasst.
+                                    </div>
+                                )}
+                            </div>
+                            <div className="pt-2 flex justify-end text-sm font-medium">
+                                Total: {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                    (incomeItems || []).reduce((sum: number, i: BudgetEntry) => {
+                                        const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
+                                        return sum + monthlyAmount;
+                                    }, 0)
+                                )} / Mt
+                            </div>
+                        </div>
+                    </div>
+
                     {/* NEW: Budget Plan */}
                     <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
                         <div className="p-6 border-b border-border flex justify-between items-center">
@@ -230,20 +531,29 @@ export const MortgageCalculator = () => {
                                 <Wallet className="size-5 text-primary" />
                                 Budget Plan
                             </h2>
-                            <button
-                                onClick={() => {
-                                    const newItems = [...(budgetItems || []), { id: crypto.randomUUID(), name: 'Versicherungen', amount: 0, frequency: 'monthly' as const }];
-                                    updateMortgageData({ budgetItems: newItems });
-                                }}
-                                className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
-                            >
-                                <Plus className="size-4" /> Add Item
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={exportToPDF}
+                                    className="text-sm bg-secondary/80 text-secondary-foreground hover:bg-secondary px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
+                                    title="Als PDF exportieren"
+                                >
+                                    <Download className="size-4" /> PDF
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const newItems = [...(budgetItems || []), { id: crypto.randomUUID(), name: '', amount: 0, frequency: 'monthly' as const }];
+                                        updateMortgageData({ budgetItems: newItems });
+                                    }}
+                                    className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
+                                >
+                                    <Plus className="size-4" /> Add Item
+                                </button>
+                            </div>
                         </div>
-                        <div className="p-6 space-y-6">
-                            <div className="space-y-3">
-                                {(budgetItems || []).map((item, index) => (
-                                    <div key={item.id} className="grid grid-cols-12 gap-2 items-center bg-accent/30 p-2 rounded-lg">
+                        <div className="p-4 space-y-2">
+                            <div className="space-y-1">
+                                {(budgetItems || []).map((item: BudgetEntry, index: number) => (
+                                    <div key={item.id} className="grid grid-cols-12 gap-2 items-center bg-accent/30 px-2 py-0.5 rounded-lg">
                                         <div className="col-span-5">
                                             <input
                                                 value={item.name}
@@ -252,7 +562,7 @@ export const MortgageCalculator = () => {
                                                     newItems[index] = { ...item, name: e.target.value };
                                                     updateMortgageData({ budgetItems: newItems });
                                                 }}
-                                                className="w-full bg-transparent border-none text-sm focus:ring-0 p-0 font-medium"
+                                                className="w-full bg-transparent border-none text-sm focus:ring-0 p-0 font-medium h-7"
                                                 placeholder="Name (z.B. Essen)"
                                             />
                                         </div>
@@ -264,7 +574,7 @@ export const MortgageCalculator = () => {
                                                     newItems[index] = { ...item, frequency: e.target.value as 'monthly' | 'yearly' };
                                                     updateMortgageData({ budgetItems: newItems });
                                                 }}
-                                                className="w-full bg-background border border-input rounded px-2 py-1 text-xs h-8"
+                                                className="w-full bg-background border border-input rounded px-1 py-0 text-xs h-7"
                                             >
                                                 <option value="monthly">Monatlich</option>
                                                 <option value="yearly">Jährlich</option>
@@ -279,13 +589,13 @@ export const MortgageCalculator = () => {
                                                     newItems[index] = { ...item, amount: parseFloat(val) || 0 };
                                                     updateMortgageData({ budgetItems: newItems });
                                                 }}
-                                                className="w-full bg-background border border-input rounded px-2 py-1 pl-8 text-sm text-right h-8"
+                                                className="w-full bg-background border border-input rounded px-1 py-0 pl-8 text-sm text-right h-7"
                                             />
                                         </div>
                                         <div className="col-span-1 flex justify-end">
                                             <button
                                                 onClick={() => {
-                                                    const newItems = (budgetItems || []).filter(i => i.id !== item.id);
+                                                    const newItems = (budgetItems || []).filter((i: BudgetEntry) => i.id !== item.id);
                                                     updateMortgageData({ budgetItems: newItems });
                                                 }}
                                                 className="text-muted-foreground hover:text-destructive p-1"
@@ -303,7 +613,24 @@ export const MortgageCalculator = () => {
                             </div>
 
                             {/* Totals Section */}
+                            {/* Totals Section */}
+
+                            {/* Totals Section */}
                             <div className="space-y-2 pt-4 border-t border-border">
+                                {/* Income Summary */}
+                                <div className="flex justify-between items-center text-sm text-emerald-500">
+                                    <span>Total Einnahmen</span>
+                                    <span className="font-mono">
+                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                            (incomeItems || []).reduce((sum: number, i: BudgetEntry) => {
+                                                const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
+                                                return sum + monthlyAmount;
+                                            }, 0)
+                                        )} / Mt
+                                    </span>
+                                </div>
+                                <div className="my-1 border-t border-border border-dashed opacity-50" />
+
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-muted-foreground">Wohnkosten (Hypothek + NK)</span>
                                     <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(totalMonthlyCost)} / Mt</span>
@@ -312,31 +639,45 @@ export const MortgageCalculator = () => {
                                     <span className="text-muted-foreground">Budget Ausgaben (ø Monatlich)</span>
                                     <span className="font-mono">
                                         {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
-                                            (budgetItems || []).reduce((sum, i) => {
+                                            (budgetItems || []).reduce((sum: number, i: BudgetEntry) => {
                                                 const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
                                                 return sum + monthlyAmount;
                                             }, 0)
                                         )} / Mt
                                     </span>
                                 </div>
-                                <div className="my-2 border-t border-border" />
-                                <div className="flex justify-between items-center font-bold text-lg">
+
+                                <div className="flex justify-between items-center font-bold text-sm pt-1">
                                     <span>Gesamtausgaben</span>
-                                    <span className="text-primary font-mono">
-                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
-                                            totalMonthlyCost + (budgetItems || []).reduce((sum, i) => {
+                                    <span className="text-destructive font-mono">
+                                        - {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                            totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => {
                                                 const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
                                                 return sum + monthlyAmount;
                                             }, 0)
+                                        )} / Mt
+                                    </span>
+                                </div>
+
+                                <div className="my-2 border-t-2 border-border" />
+
+                                <div className="flex justify-between items-center font-bold text-lg">
+                                    <span>Verfügbar (Sparquote)</span>
+                                    <span className={cn("font-mono",
+                                        ((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) - (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))) > 0
+                                            ? "text-primary"
+                                            : "text-destructive"
+                                    )}>
+                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                            ((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0)) -
+                                            (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))
                                         )} / Mt
                                     </span>
                                 </div>
                                 <div className="flex justify-end text-xs text-muted-foreground">
                                     ≈ {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
-                                        (totalMonthlyCost * 12) + (budgetItems || []).reduce((sum, i) => {
-                                            const yearlyAmount = i.frequency === 'yearly' ? i.amount : i.amount * 12;
-                                            return sum + yearlyAmount;
-                                        }, 0)
+                                        (((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0)) -
+                                            (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))) * 12
                                     )} / Jahr
                                 </div>
                             </div>

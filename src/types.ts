@@ -146,4 +146,5 @@ export interface MortgageData {
     yearlyAmortization: number;
     tranches: MortgageTranche[];
     budgetItems?: BudgetEntry[];
+    incomeItems?: BudgetEntry[];
 }
