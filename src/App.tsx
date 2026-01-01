@@ -4,6 +4,7 @@ import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as
 import { cn } from './utils';
 import { PortfolioProvider } from './context/PortfolioContext';
 import { ExchangeRateProvider } from './context/ExchangeRateContext';
+import packageJson from '../package.json';
 
 import { Dashboard } from './pages/Dashboard';
 import { Portfolio } from './pages/Portfolio';
@@ -158,7 +159,7 @@ function App() {
               title="App neu laden (Cache leeren)"
             >
               <div className="text-[10px] text-foreground font-bold font-mono flex items-center gap-1 group/version">
-                <span>v3.11.460</span>
+                <span>v{packageJson.version}</span>
                 <span className="opacity-0 group-hover/version:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
               </div>
             </div>
@@ -210,7 +211,7 @@ function App() {
                   className="text-xs font-semibold text-foreground/90 hover:text-primary transition-colors bg-secondary/20 hover:bg-secondary/40 px-2 py-0.5 rounded"
                   title="Klicken zum Neuladen (Cache leeren)"
                 >
-                  v3.11.460
+                  v{packageJson.version}
                 </button>
                 <h2 className="text-lg font-semibold capitalize">
                   {getPageTitle(location.pathname)}
