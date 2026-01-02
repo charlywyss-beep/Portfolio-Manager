@@ -67,21 +67,17 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                                     <div className="flex items-center gap-2">
                                                         <div className="text-xs font-mono text-muted-foreground">{pos.stock.symbol}</div>
                                                         {(() => {
-                                                            // Trust Time over Stale API Data
-                                                            // If API says REGULAR but our time says CLOSED, it's likely stale data.
-                                                            // We prioritize the local calculation for "Live" status indication.
+                                                            // STRICT Time-Based Logic (Synced with StockDetail v3.11.481)
+                                                            // We trust the Clock (estimateMarketState). 
+                                                            // If it's trading hours -> Green. Else -> Red.
+                                                            // We ignore 'apiState' for the dot color to avoid "Green at Night" or "Red at Day" due to API delays.
                                                             const calculatedState = estimateMarketState(pos.stock.symbol, pos.stock.currency);
-                                                            const apiState = pos.stock.marketState;
+                                                            const isMarketOpen = calculatedState === 'REGULAR';
 
-                                                            // Hybrid Logic: Use Calculated State if API is missing OR if Calculated says CLOSED (overriding stale REGULAR)
-                                                            // But if Calculated says REGULAR (e.g. valid hours) and API says CLOSED (Holiday), we might want API?
-                                                            // For now, let's trust the Calculate State for likely opening hours to fix the "Green at Night" bug.
-                                                            const displayState = calculatedState === 'CLOSED' ? 'CLOSED' : (apiState || calculatedState);
-
-                                                            return displayState === 'REGULAR' ? (
-                                                                <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title="Markt geöffnet" />
+                                                            return isMarketOpen ? (
+                                                                <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calculatedState})`} />
                                                             ) : (
-                                                                <div className="size-2.5 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${displayState})`} />
+                                                                <div className="size-2.5 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${calculatedState})`} />
                                                             );
                                                         })()}
                                                     </div>
