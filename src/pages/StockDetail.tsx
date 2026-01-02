@@ -269,27 +269,24 @@ export function StockDetail() {
                             <div className="flex items-center gap-2 md:gap-3">
                                 <h1 className="text-lg md:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">{stock.name}</h1>
                                 {(() => {
-                                    // User Rule (v3.11.480):
-                                    // Trust Calculation (Time) > Yahoo API
-                                    // If our Math says "It is trading time" (REGULAR), we show Green.
-                                    // This fixes EU showing "Closed" because Yahoo often reports "CLOSED" on delayed feeds.
-                                    // This also fixes US showing "Open" in Pre-Market (Math says CLOSED until 14:30 UTC).
+                                    // User Rule (v3.11.481):
+                                    // STRICT Time-Based Logic for the Status Dot.
+                                    // - API data can be stale ("REGULAR" from yesterday) -> Causes False Green for US in Morning.
+                                    // - API data can be delayed ("CLOSED" while active) -> Causes False Red for EU in Morning.
+                                    // SOLUTION: We trust the Clock (estimateMarketState).
+                                    // If it's trading hours -> Green. Else -> Red.
 
                                     const calculatedState = estimateMarketState(stock.symbol, stock.currency);
-                                    const apiState = stock.marketState;
+                                    const isMarketOpen = calculatedState === 'REGULAR';
 
-                                    // Priority Logic:
-                                    // 1. If Math says REGULAR -> Force REGULAR (Green)
-                                    // 2. Else use API State (e.g. PRE, POST, CLOSED)
-                                    // 3. Fallback to Math (CLOSED)
-                                    const displayState = (calculatedState === 'REGULAR') ? 'REGULAR' : (apiState || calculatedState);
-
-                                    const isMarketOpen = displayState === 'REGULAR' || displayState === 'OPEN';
+                                    // For the tooltip label, we can still show what the API thinks if we want, or just the calc state.
+                                    // Let's show the calc state to be consistent with the color.
+                                    const displayLabel = calculatedState;
 
                                     return isMarketOpen ? (
-                                        <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] cursor-help border border-background" title={`Markt geöffnet (${displayState})`} />
+                                        <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] cursor-help border border-background" title={`Markt geöffnet (${displayLabel})`} />
                                     ) : (
-                                        <div className="size-2.5 rounded-full bg-red-500 cursor-help border border-background" title={`Markt geschlossen (${displayState})`} />
+                                        <div className="size-2.5 rounded-full bg-red-500 cursor-help border border-background" title={`Markt geschlossen (${displayLabel})`} />
                                     );
                                 })()}
                                 <button

@@ -135,12 +135,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 const totalGainPercent = purchaseValue > 0 ? ((currentValue - purchaseValue) / purchaseValue) * 100 : 0;
                                 const isTotalPositive = totalGainCHF >= 0;
 
+                                // Market State Logic (v3.11.481):
+                                // Strict Time-based.
                                 const calcState = estimateMarketState(p.stock.symbol, p.stock.currency);
-                                const apiState = p.stock.marketState;
-
-                                // Priority: Math (REGULAR) > API > Math (CLOSED)
-                                const displayState = (calcState === 'REGULAR') ? 'REGULAR' : (apiState || calcState);
-                                const isMarketOpen = displayState === 'REGULAR' || displayState === 'OPEN';
+                                const isMarketOpen = calcState === 'REGULAR'; // Only Regular Trading Hours = Green
 
                                 return (
                                     <tr
@@ -165,9 +163,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                                     <div className="flex items-center gap-2">
                                                         <div className="break-words whitespace-pre-line text-sm group-hover:text-primary transition-colors leading-tight">{p.stock.name}</div>
                                                         {isMarketOpen ? (
-                                                            <div className="size-2.5 flex-shrink-0 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${displayState})`} />
+                                                            <div className="size-2.5 flex-shrink-0 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
                                                         ) : (
-                                                            <div className="size-2.5 flex-shrink-0 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${displayState})`} />
+                                                            <div className="size-2.5 flex-shrink-0 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${calcState})`} />
                                                         )}
                                                     </div>
                                                     <span className="text-[10px] text-muted-foreground">{p.stock.symbol}</span>
