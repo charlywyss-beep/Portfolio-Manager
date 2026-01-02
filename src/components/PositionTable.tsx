@@ -35,7 +35,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                     <table className="w-full text-sm text-left">
                         <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
                             <tr>
-                                <th className="px-4 py-3 min-w-[140px] sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Name</th>
+                                <th className="px-4 py-3 min-w-[140px] sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Name</th>
                                 <th className="px-4 py-3 min-w-[100px]">ISIN</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap">Anzahl</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap">Ø Kauf</th>
@@ -44,14 +44,14 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                 <th className="px-4 py-3 text-right whitespace-nowrap">Wert</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap">+/-</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap">%</th>
-                                <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky right-0 bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
                             {data.map((pos) => {
                                 return (
                                     <tr key={pos.id} className="group hover:bg-muted/30 transition-colors border-b border-border/50 last:border-0 border-l border-r border-transparent hover:border-border/50">
-                                        <td className="px-4 py-3 sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <td className="px-4 py-3 sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center gap-3">
                                                 <Logo
@@ -225,7 +225,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                             </div>
                                         </td>
 
-                                        <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky right-0 z-40 group-hover:bg-muted transition-colors">
+                                        <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px z-40 group-hover:bg-muted transition-colors">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center justify-center gap-1">
                                                 <button
