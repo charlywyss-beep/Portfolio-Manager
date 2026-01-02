@@ -53,8 +53,8 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                 <th className="px-4 py-3 sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] lg:w-[250px] min-w-[180px] lg:min-w-[250px] max-w-[180px] lg:max-w-[250px]">Bank / Institut</th>
                                 <th className="px-4 py-3 w-[130px] lg:w-[150px] min-w-[130px] lg:min-w-[150px] max-w-[130px] lg:max-w-[150px]">Konto-Typ</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">Vermögen</th>
-                                <th className="pl-4 pr-8 py-3 min-w-[300px]">Fortschritt 2025</th>
-                                <th className="text-right py-3 px-2 w-[80px] sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                <th className="px-4 py-3 min-w-[300px]">Fortschritt 2025</th>
+                                <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky right-0 bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -103,7 +103,7 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                                 {fd.amount.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
                                             </span>
                                         </td>
-                                        <td className="pl-4 pr-8 py-3">
+                                        <td className="px-4 py-3">
                                             <div className="flex flex-col gap-1.5">
                                                 <div className="flex justify-between text-xs font-medium">
                                                     <span>
@@ -118,9 +118,9 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="text-right py-3 px-2 sticky right-0 z-10 bg-card group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky right-0 z-40 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                             <div className="absolute inset-0 bg-card -z-10" />
-                                            <div className="relative flex items-center justify-end gap-1">
+                                            <div className="relative flex items-center justify-center gap-1">
                                                 <button
                                                     onClick={() => {
                                                         setEditingFixedDeposit(fd);
