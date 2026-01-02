@@ -226,7 +226,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                             </div>
                                         </td>
 
-                                        <td className="text-right py-3 px-2 sticky right-0 bg-card z-10 group-hover:bg-muted transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <td className="text-right py-3 px-2 sticky right-0 bg-card group-hover:bg-muted transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                             <div className="flex items-center justify-end gap-1">
                                                 <button
                                                     onClick={() => {
