@@ -60,10 +60,11 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                         <tbody className="divide-y divide-border">
                             {filteredVorsorge.map(fd => {
                                 const limit = 7258;
-                                // Calculate current based on manual or auto
-                                const currentMonth = new Date().getMonth() + 1;
+                                // Berechne aktuell basierend auf manuell oder auto
+                                // Nur abgeschlossene Monate zählen (Januar = 0, wenn wir im Januar sind)
+                                const completedMonths = new Date().getMonth();  // 0-11 (nur abgeschlossene Monate)
                                 const calculatedAuto = fd.autoContribution && fd.monthlyContribution
-                                    ? fd.monthlyContribution * currentMonth
+                                    ? fd.monthlyContribution * completedMonths
                                     : 0;
 
                                 const current = fd.autoContribution
