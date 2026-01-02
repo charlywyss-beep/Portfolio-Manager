@@ -279,7 +279,7 @@ export function DividendPlanner() {
                     <table className="w-full min-w-[1000px]">
                         <thead>
                             <tr className="border-b border-border">
-                                <th className="text-left py-3 px-4 font-semibold sticky left-0 z-30 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[140px]">Aktie</th>
+                                <th className="text-left py-3 px-4 font-semibold sticky -left-px z-30 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[140px]">Aktie</th>
                                 <th className="text-right py-3 px-4 font-semibold">Anteile</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Rendite %</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Div./Akt.</th>
@@ -288,7 +288,7 @@ export function DividendPlanner() {
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">EX-Tag</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zahl-Tag</th>
-                                <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky right-0 bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -487,7 +487,7 @@ export function DividendPlanner() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky right-0 bg-card z-40 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                            <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px bg-card z-40 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                 <div className="absolute inset-0 bg-card -z-10" />
                                                 <div className="relative flex items-center justify-end gap-1">
                                                     <button
@@ -520,14 +520,14 @@ export function DividendPlanner() {
                             <table className="w-full min-w-[1000px]">
                                 <thead>
                                     <tr className="border-b border-border">
-                                        <th className="text-left py-3 px-4 font-semibold sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Bank / Institut</th>
+                                        <th className="text-left py-3 px-4 font-semibold sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Bank / Institut</th>
                                         <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Betrag</th>
                                         <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zins %</th>
                                         <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Ø Monatlich</th>
                                         <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Frequenz</th>
                                         <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Quartalsweise</th>
                                         <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
-                                        <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky right-0 bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                        <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -535,7 +535,7 @@ export function DividendPlanner() {
                                         const isNegative = data.isNegative;
                                         return (
                                             <tr key={data.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group">
-                                                <td className="py-3 px-4 sticky left-0 z-10 bg-card group-hover:bg-muted/50 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <td className="py-3 px-4 sticky -left-px z-10 bg-card group-hover:bg-muted/50 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                     <div className="flex items-center gap-3">
                                                         <Logo
                                                             url={data.logoUrl}
@@ -568,7 +568,7 @@ export function DividendPlanner() {
                                                 <td className={`text-right py-3 px-4 font-semibold whitespace-nowrap ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                                                     {isNegative ? '-' : '+'} CHF {Math.abs(data.annual).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
-                                                <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky right-0 bg-card z-40 group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px bg-card z-40 group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                     <div className="flex items-center justify-end gap-1">
                                                         <button
                                                             onClick={() => navigate('/portfolio')}

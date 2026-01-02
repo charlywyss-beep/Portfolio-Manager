@@ -177,7 +177,7 @@ export function Watchlist() {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-border">
-                                    <th className="text-left py-3 px-4 font-semibold sticky left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[140px]">Aktie</th>
+                                    <th className="text-left py-3 px-4 font-semibold sticky -left-px z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[140px]">Aktie</th>
                                     <th className="text-right py-3 px-2 sm:px-4 font-semibold whitespace-nowrap">Aktueller Kurs</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Kauflimit</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Rendite %</th>
@@ -185,7 +185,7 @@ export function Watchlist() {
                                     <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">EX-Tag</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zahl-Tag</th>
-                                    <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky right-0 bg-card z-30 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                    <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px bg-card z-30 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -440,7 +440,7 @@ export function Watchlist() {
                                                         </div>
                                                     )}
                                                 </td>
-                                                <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky right-0 z-20 bg-card group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px z-20 bg-card group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                     <div className="absolute inset-0 bg-card -z-10" />
                                                     <div className="relative flex items-center justify-end gap-0 sm:gap-1 opacity-100 transition-opacity">
                                                         <button
