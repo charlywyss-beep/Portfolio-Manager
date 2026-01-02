@@ -91,9 +91,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         >
                             <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
                             <span>
-                                ? 'Aktualisiere...'
-                                : lastGlobalRefresh
-                                ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                {isGlobalRefreshing
+                                    ? 'Aktualisiere...'
+                                    : lastGlobalRefresh
+                                        ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
                                         : 'Jetzt aktualisieren'}
                             </span>
                         </button>
