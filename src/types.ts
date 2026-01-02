@@ -147,4 +147,5 @@ export interface MortgageData {
     tranches: MortgageTranche[];
     budgetItems?: BudgetEntry[];
     incomeItems?: BudgetEntry[];
+    autoCosts?: BudgetEntry[]; // NEW: Auto/Car costs
 }

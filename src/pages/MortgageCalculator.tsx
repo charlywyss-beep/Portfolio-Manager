@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download } from 'lucide-react';
+import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { cn } from '../utils';
@@ -13,7 +13,7 @@ import type { MortgageTranche, BudgetEntry } from '../types';
 export const MortgageCalculator = () => {
     const { mortgageData, updateMortgageData } = usePortfolio();
 
-    const { propertyValue, maintenanceRate, yearlyAmortization, tranches, budgetItems, incomeItems } = mortgageData;
+    const { propertyValue, maintenanceRate, yearlyAmortization, tranches, budgetItems, incomeItems, autoCosts } = mortgageData;
 
     const setPropertyValue = (val: number) => updateMortgageData({ propertyValue: val });
     const setMaintenanceRate = (val: number) => updateMortgageData({ maintenanceRate: val });
@@ -82,6 +82,7 @@ export const MortgageCalculator = () => {
 
         const sortedIncomeItems = sortItemsByFrequency(incomeItems || []);
         const sortedBudgetItems = sortItemsByFrequency(budgetItems || []);
+        const sortedAutoCosts = sortItemsByFrequency(autoCosts || []);
 
         // Calculate Totals
         const totalIncomeMonthly = sortedIncomeItems.reduce((sum: number, i: BudgetEntry) => {
@@ -94,7 +95,12 @@ export const MortgageCalculator = () => {
             return sum + (freq === 'yearly' ? i.amount / 12 : i.amount);
         }, 0);
 
-        const totalAvailable = totalIncomeMonthly - (totalMonthlyCost + totalExpensesMonthly);
+        const totalAutoCostsMonthly = sortedAutoCosts.reduce((sum: number, i: BudgetEntry) => {
+            const freq = i.frequency || 'monthly';
+            return sum + (freq === 'yearly' ? i.amount / 12 : i.amount);
+        }, 0);
+
+        const totalAvailable = totalIncomeMonthly - (totalMonthlyCost + totalExpensesMonthly + totalAutoCostsMonthly);
 
         // Helper to format currency for PDF (Number + CHF suffix)
         const formatCurrencyPDF = (amount: number) => {
@@ -194,6 +200,27 @@ export const MortgageCalculator = () => {
 
         autoTable(doc, getTableOptions(finalY + 3, expenseHeaders, expenseData, [59, 130, 246], expenseFooter));
 
+        // Auto Costs Table
+        finalY = (doc as any).lastAutoTable.finalY + 8;
+        doc.setFontSize(12);
+        doc.text('Auto Kosten', 14, finalY);
+
+        const autoCostsData = sortedAutoCosts.map(item => [
+            item.name || 'Unbenannt',
+            (item.frequency || 'monthly') === 'monthly' ? 'Monatlich' : 'Jährlich',
+            formatCurrencyPDF(item.amount)
+        ]);
+
+        const autoCostsFooter = [
+            [
+                { content: 'Total ø Monatlich', styles: { halign: 'left' as const } },
+                { content: '', styles: { halign: 'right' as const } },
+                { content: formatCurrencyPDF(totalAutoCostsMonthly), styles: { halign: 'right' as const } }
+            ]
+        ];
+
+        autoTable(doc, getTableOptions(finalY + 3, headers, autoCostsData, [33, 150, 243], autoCostsFooter));
+
         // Summary Table
         finalY = (doc as any).lastAutoTable.finalY + 8;
         doc.setFontSize(12);
@@ -217,6 +244,7 @@ export const MortgageCalculator = () => {
             ['Total Einnahmen', formatCurrencyPDF(totalIncomeMonthly)],
             ['Wohnkosten Hypothek + NK', formatCurrencyPDF(totalMonthlyCost)],
             ['Budget Ausgaben', formatCurrencyPDF(totalExpensesMonthly)],
+            ['Auto Kosten', formatCurrencyPDF(totalAutoCostsMonthly)],
             [
                 { content: 'Verfügbar Sparquote', styles: monthlySummaryStyle },
                 { content: formatCurrencyPDF(totalAvailable), styles: { ...monthlySummaryStyle, halign: 'right' as const } }
@@ -251,6 +279,7 @@ export const MortgageCalculator = () => {
             ['Total Einnahmen', formatCurrencyPDF(totalIncomeMonthly * 12)],
             ['Wohnkosten Hypothek + NK', formatCurrencyPDF(totalMonthlyCost * 12)],
             ['Budget Ausgaben', formatCurrencyPDF(totalExpensesMonthly * 12)],
+            ['Auto Kosten', formatCurrencyPDF(totalAutoCostsMonthly * 12)],
             [
                 { content: 'Verfügbar Sparquote', styles: yearlySummaryStyle },
                 { content: formatCurrencyPDF(totalAvailable * 12), styles: { ...yearlySummaryStyle, halign: 'right' as const } }
@@ -646,12 +675,28 @@ export const MortgageCalculator = () => {
                                         )} / Mt
                                     </span>
                                 </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-muted-foreground">Auto Kosten (ø Monatlich)</span>
+                                    <span className="font-mono">
+                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                            (autoCosts || []).reduce((sum: number, i: BudgetEntry) => {
+                                                const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
+                                                return sum + monthlyAmount;
+                                            }, 0)
+                                        )} / Mt
+                                    </span>
+                                </div>
 
                                 <div className="flex justify-between items-center font-bold text-sm pt-1">
                                     <span>Gesamtausgaben</span>
                                     <span className="text-destructive font-mono">
                                         - {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
-                                            totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => {
+                                            totalMonthlyCost +
+                                            (budgetItems || []).reduce((sum: number, i: BudgetEntry) => {
+                                                const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
+                                                return sum + monthlyAmount;
+                                            }, 0) +
+                                            (autoCosts || []).reduce((sum: number, i: BudgetEntry) => {
                                                 const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
                                                 return sum + monthlyAmount;
                                             }, 0)
@@ -664,22 +709,111 @@ export const MortgageCalculator = () => {
                                 <div className="flex justify-between items-center font-bold text-lg">
                                     <span>Verfügbar (Sparquote)</span>
                                     <span className={cn("font-mono",
-                                        ((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) - (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))) > 0
+                                        ((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) - (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) + (autoCosts || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))) > 0
                                             ? "text-primary"
                                             : "text-destructive"
                                     )}>
                                         {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
                                             ((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0)) -
-                                            (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))
+                                            (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) + (autoCosts || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))
                                         )} / Mt
                                     </span>
                                 </div>
                                 <div className="flex justify-end text-xs text-muted-foreground">
                                     ≈ {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
                                         (((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0)) -
-                                            (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))) * 12
+                                            (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) + (autoCosts || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))) * 12
                                     )} / Jahr
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* NEW: Auto Costs Card */}
+                    <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+                        <div className="p-6 border-b border-border flex justify-between items-center">
+                            <h2 className="text-lg font-semibold flex items-center gap-2">
+                                <Car className="size-5 text-blue-500" />
+                                Auto Kosten
+                            </h2>
+                            <button
+                                onClick={() => {
+                                    const newItems = [...(autoCosts || []), { id: crypto.randomUUID(), name: '', amount: 0, frequency: 'monthly' as const }];
+                                    updateMortgageData({ autoCosts: newItems });
+                                }}
+                                className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
+                            >
+                                <Plus className="size-4" /> Add Item
+                            </button>
+                        </div>
+                        <div className="p-4 space-y-2">
+                            <div className="space-y-1">
+                                {(autoCosts || []).map((item: BudgetEntry, index: number) => (
+                                    <div key={item.id} className="grid grid-cols-12 gap-2 items-center bg-accent/30 px-2 py-0.5 rounded-lg">
+                                        <div className="col-span-5">
+                                            <input
+                                                value={item.name}
+                                                onChange={(e) => {
+                                                    const newItems = [...(autoCosts || [])];
+                                                    newItems[index] = { ...item, name: e.target.value };
+                                                    updateMortgageData({ autoCosts: newItems });
+                                                }}
+                                                className="w-full bg-transparent border-none text-sm focus:ring-0 p-0 font-medium h-7"
+                                                placeholder="z.B. Versicherung"
+                                            />
+                                        </div>
+                                        <div className="col-span-3">
+                                            <select
+                                                value={item.frequency || 'monthly'}
+                                                onChange={(e) => {
+                                                    const newItems = [...(autoCosts || [])];
+                                                    newItems[index] = { ...item, frequency: e.target.value as 'monthly' | 'yearly' };
+                                                    updateMortgageData({ autoCosts: newItems });
+                                                }}
+                                                className="w-full bg-background border border-input rounded px-1 py-0 text-xs h-7"
+                                            >
+                                                <option value="monthly">Monatlich</option>
+                                                <option value="yearly">Jährlich</option>
+                                            </select>
+                                        </div>
+                                        <div className="col-span-3 relative">
+                                            <div className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">CHF</div>
+                                            <DecimalInput
+                                                value={item.amount}
+                                                onChange={(val) => {
+                                                    const newItems = [...(autoCosts || [])];
+                                                    newItems[index] = { ...item, amount: parseFloat(val) || 0 };
+                                                    updateMortgageData({ autoCosts: newItems });
+                                                }}
+                                                className="w-full bg-background border border-input rounded px-1 py-0 pl-8 text-sm text-right h-7"
+                                            />
+                                        </div>
+                                        <div className="col-span-1 flex justify-end">
+                                            <button
+                                                onClick={() => {
+                                                    const newItems = (autoCosts || []).filter((i: BudgetEntry) => i.id !== item.id);
+                                                    updateMortgageData({ autoCosts: newItems });
+                                                }}
+                                                className="text-muted-foreground hover:text-destructive p-1"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {(autoCosts || []).length === 0 && (
+                                    <div className="text-center text-sm text-muted-foreground py-4 border border-dashed rounded-lg">
+                                        Noch keine Auto Kosten erfasst.
+                                    </div>
+                                )}
+                            </div>
+                            <div className="pt-2 flex justify-end text-sm font-medium">
+                                Total: {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                    (autoCosts || []).reduce((sum: number, i: BudgetEntry) => {
+                                        const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
+                                        return sum + monthlyAmount;
+                                    }, 0)
+                                )} / Mt
                             </div>
                         </div>
                     </div>
