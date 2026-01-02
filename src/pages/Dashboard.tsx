@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, BarChart3, Calendar, Info, Plus, Trash2, Edit, Bell } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, BarChart3, Calendar, Info, Plus, Trash2, Edit, Bell, RefreshCw } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
 import { smartWrap } from '../utils/text';
@@ -33,7 +33,7 @@ export function Dashboard() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { totals, upcomingDividends, positions, upcomingWatchlistDividends, bankRisks } = usePortfolioData();
-    const { history, deleteHistoryEntry, updateStockPrice, stocks, updateStock, refreshAllPrices } = usePortfolio(); // Added stocks, updateStock, refreshAllPrices
+    const { history, deleteHistoryEntry, updateStockPrice, stocks, updateStock, refreshAllPrices, isGlobalRefreshing } = usePortfolio(); // Added isGlobalRefreshing
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [editingHistoryEntry, setEditingHistoryEntry] = useState<any>(null);
@@ -239,12 +239,25 @@ export function Dashboard() {
                             <div className="flex items-center gap-2">
                                 {/* NEW: Details Button (Only for 1D) */}
                                 {performancePeriod === '1D' && (
-                                    <button
-                                        onClick={() => setShowPerformanceDetails(true)}
-                                        className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20"
-                                    >
-                                        Details
-                                    </button>
+                                    <>
+                                        <button
+                                            onClick={() => refreshAllPrices(true)}
+                                            disabled={isGlobalRefreshing}
+                                            title="Preise jetzt aktualisieren"
+                                            className={cn(
+                                                "p-1.5 mr-1 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground",
+                                                isGlobalRefreshing && "animate-spin cursor-not-allowed"
+                                            )}
+                                        >
+                                            <RefreshCw className="size-3.5" />
+                                        </button>
+                                        <button
+                                            onClick={() => setShowPerformanceDetails(true)}
+                                            className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20"
+                                        >
+                                            Details
+                                        </button>
+                                    </>
                                 )}
 
                                 {/* Timeframe Selector */}
