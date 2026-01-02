@@ -142,11 +142,11 @@ export function StockDetail() {
                 let priceSourceDate = quoteResponse.marketTime ? new Date(quoteResponse.marketTime).toISOString() : undefined;
 
                 // CHECK: If Chart Data is available (1D), it is often more real-time than Quote.
-                if (localChartData && localChartData.length > 0 && timeRange === '1D') {
+                if (false) { // Disabled Old Logic
                     const lastChartPoint = localChartData[localChartData.length - 1];
                     const chartPrice = lastChartPoint.value;
 
-                    console.log(`[StockDetail] Compare: Chart (${chartPrice}) vs Quote (${bestPrice}). TimeRange: ${timeRange}`);
+                    // Chart logic moved to useEffect
 
                     // Prioritize Chart Price for 1D view
                     if (chartPrice) {
@@ -234,6 +234,18 @@ export function StockDetail() {
             setNotes(stock.notes || '');
         }
     }, [stock]);
+
+    // NEW: Sync Chart Data to Header Price (Reactive)
+    useEffect(() => {
+        if (timeRange === '1D' && chartData && chartData.length > 0 && stock) {
+            const lastPoint = chartData[chartData.length - 1];
+            if (lastPoint && lastPoint.value) {
+                // Only update if price is different or newer
+                // The PortfolioContext protection will handle staler dates
+                updateStockPrice(stock.id, lastPoint.value, undefined, lastPoint.date);
+            }
+        }
+    }, [chartData, timeRange, stock?.id]); // update when chart data changes
 
     if (!stock) return <div className="p-8">Aktie nicht gefunden.</div>;
 

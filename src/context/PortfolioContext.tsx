@@ -383,6 +383,16 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     const updateStockPrice = (id: string, newPrice: number, newPreviousClose?: number, lastQuoteDate?: string) => {
         setStocks(prev => prev.map(s => {
             if (s.id === id) {
+                // PROTECTION: If new data is older than existing data, skip update.
+                if (s.lastQuoteDate && lastQuoteDate) {
+                    const existingDate = new Date(s.lastQuoteDate);
+                    const newDate = new Date(lastQuoteDate);
+                    // Tolerance: 1 minute (to avoid skipping close-calls or same-time updates)
+                    if (newDate.getTime() < existingDate.getTime() - 60000) {
+                        return s;
+                    }
+                }
+
                 return {
                     ...s,
                     currentPrice: newPrice,
