@@ -253,7 +253,7 @@ export function Dashboard() {
                                         onClick={() => refreshAllPrices(true)}
                                         disabled={isGlobalRefreshing}
                                         className={cn(
-                                            "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm w-full",
+                                            "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
                                             "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
                                             "active:scale-95",
                                             isGlobalRefreshing && "opacity-50 cursor-not-allowed"
