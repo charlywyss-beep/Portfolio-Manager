@@ -196,7 +196,7 @@ export function DividendPlanner() {
                 <div className="flex items-center justify-between p-4 border-b bg-muted/30">
                     <h2 className="text-lg font-semibold">Erwartete Dividenden</h2>
                     <button
-                        onClick={(e) => { e.preventDefault(); refreshAllPrices(); }}
+                        onClick={() => refreshAllPrices()}
                         disabled={isGlobalRefreshing}
                         className={cn(
                             "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
