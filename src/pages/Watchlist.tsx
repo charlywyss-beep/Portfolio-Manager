@@ -19,10 +19,40 @@ export function Watchlist() {
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
 
+    // Sorting
+    const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'yield' | 'gap', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
+
     // Filter stocks that are in the watchlist
     const watchlistStocks = stocks
         .filter(s => watchlist.includes(s.id))
-        .sort((a, b) => a.name.localeCompare(b.name));
+        .sort((a, b) => {
+            if (sortConfig.key === 'name') {
+                return a.name.localeCompare(b.name);
+            }
+            if (sortConfig.key === 'yield') {
+                const yieldA = a.dividendYield || 0;
+                const yieldB = b.dividendYield || 0;
+                return yieldB - yieldA; // Descending
+            }
+            if (sortConfig.key === 'gap') {
+                // Sort by how close to target price (gap percent)
+                // Smallest gap first? Or largest potential? Let's say: Undervalued (Gap > 0) first.
+                // Or simply: Current / Target ratio?
+                // Gap % = (Current - Target) / Target
+                // If Target undefined, use Infinity
+                const targetA = a.targetPrice || 0;
+                const targetB = b.targetPrice || 0;
+                if (!targetA) return 1;
+                if (!targetB) return -1;
+
+                // Gap: (Current - Target) / Target. Negative is good (Undervalued)
+                const gapA = (a.currentPrice - targetA) / targetA;
+                const gapB = (b.currentPrice - targetB) / targetB;
+
+                return gapA - gapB; // Ascending (Most undervalued first)
+            }
+            return 0;
+        });
 
     // Force re-render every minute to update the "Updated X min ago" text
     // Also trigger auto-refresh after 5 minutes
@@ -75,40 +105,51 @@ export function Watchlist() {
                             </div>
                         </div>
 
-                        <button
-                            onClick={() => refreshAllPrices(true)}
-                            disabled={isGlobalRefreshing}
-                            className={cn(
-                                "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
-                                "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                                "active:scale-95",
-                                isGlobalRefreshing && "opacity-50 cursor-not-allowed"
-                            )}
-                            title="Alle Aktienpreise aktualisieren"
-                        >
-                            <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
-                            <span>
-                                {isGlobalRefreshing
-                                    ? 'Aktualisiere...'
-                                    : lastGlobalRefresh
-                                        ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
-                                        : 'Jetzt aktualisieren'}
-                            </span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <select
+                                className="hidden md:block pl-3 pr-8 py-1.5 rounded-lg border border-border bg-card text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer"
+                                value={sortConfig.key}
+                                onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
+                            >
+                                <option value="name">Name (A-Z)</option>
+                                <option value="yield">Rendite %</option>
+                                <option value="gap">Kauflimit (Gap)</option>
+                            </select>
 
-                        <button
-                            onClick={() => {
-                                navigate('/calculator?mode=new&from=watchlist');
-                            }}
-                            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm"
-                        >
-                            <Plus className="size-4" />
-                            <span>Aktie hinzufügen</span>
-                        </button>
+                            <button
+                                onClick={() => refreshAllPrices(true)}
+                                disabled={isGlobalRefreshing}
+                                className={cn(
+                                    "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
+                                    "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                    "active:scale-95",
+                                    isGlobalRefreshing && "opacity-50 cursor-not-allowed"
+                                )}
+                                title="Alle Aktienpreise aktualisieren"
+                            >
+                                <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
+                                <span>
+                                    {isGlobalRefreshing
+                                        ? 'Aktualisiere...'
+                                        : lastGlobalRefresh
+                                            ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                            : 'Jetzt aktualisieren'}
+                                </span>
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    navigate('/calculator?mode=new&from=watchlist');
+                                }}
+                                className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm"
+                            >
+                                <Plus className="size-4" />
+                                <span>Aktie hinzufügen</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-
             <div className="w-full px-2 py-4 md:px-4">
                 <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
                     <div className="flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-muted/30 gap-2">
