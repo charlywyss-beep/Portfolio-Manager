@@ -390,7 +390,7 @@ export function Dashboard() {
                     {/* Top Performer ETF */}
                     {/* Top Performers (ETF & Stock) */}
                     {/* Top TopPerformers Card (Replaces Legacy Hardcoded Card) */}
-                    <TopPerformersCard />
+                    <TopPerformersCard className="order-3" />
                 </div >
 
                 {/* Reordered: Dividends & Watchlist */}

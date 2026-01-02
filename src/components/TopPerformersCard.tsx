@@ -4,7 +4,7 @@ import { Logo } from './Logo';
 import { useCurrencyFormatter } from '../utils/currency';
 import { TrendingUp } from 'lucide-react';
 
-export function TopPerformersCard() {
+export function TopPerformersCard({ className }: { className?: string }) {
     const { positions } = usePortfolioData();
     const { convertToCHF, formatCurrency } = useCurrencyFormatter();
 
@@ -25,8 +25,13 @@ export function TopPerformersCard() {
 
         const enriched = positions.map(getPerformance);
 
-        const etfs = enriched.filter(p => p.stock.type === 'ETF').sort((a, b) => b.totalGainPercent - a.totalGainPercent);
-        const stocks = enriched.filter(p => p.stock.type === 'Stock').sort((a, b) => b.totalGainPercent - a.totalGainPercent);
+        const etfs = enriched
+            .filter(p => p.stock.type?.toLowerCase() === 'etf')
+            .sort((a, b) => b.totalGainPercent - a.totalGainPercent);
+
+        const stocks = enriched
+            .filter(p => !p.stock.type || p.stock.type?.toLowerCase() === 'stock')
+            .sort((a, b) => b.totalGainPercent - a.totalGainPercent);
 
         return {
             topEtf: etfs[0],
@@ -53,7 +58,7 @@ export function TopPerformersCard() {
                         size="size-10" // Prominent Logo size
                         className="rounded-lg shadow-sm"
                     />
-                    <div>
+                    <div className="min-w-0">
                         <h4 className="font-bold text-sm truncate max-w-[150px] md:max-w-[200px]" title={item.stock.name}>
                             {item.stock.name}
                         </h4>
@@ -70,13 +75,12 @@ export function TopPerformersCard() {
     };
 
     return (
-        <div className="p-4 rounded-xl bg-card border border-border shadow-sm h-full flex flex-col gap-4">
+        <div className={`p-6 rounded-xl bg-card border border-border shadow-sm h-full flex flex-col gap-4 ${className || ''}`}>
             <div className="flex items-center gap-2 mb-2">
-                <div className="p-2 bg-purple-500/10 rounded-lg">
-                    <TrendingUp className="size-5 text-purple-500" />
+                <div className="p-2 rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                    <TrendingUp className="size-6" />
                 </div>
                 {/* <h3 className="font-bold text-lg">Top Performer</h3> */}
-                {/* Screenshot didn't show header text, just icon. But accessible header is good. */}
             </div>
 
             <div className="flex flex-col gap-6">
