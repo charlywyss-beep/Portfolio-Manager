@@ -707,10 +707,10 @@ export const MortgageCalculator = () => {
                                 <div className="my-2 border-t-2 border-border" />
 
                                 <div className="flex justify-between items-center font-bold text-lg">
-                                    <span>Verfügbar (Sparquote)</span>
+                                    <span>Verfügbar Sparquote</span>
                                     <span className={cn("font-mono",
                                         ((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) - (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) + (autoCosts || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))) > 0
-                                            ? "text-primary"
+                                            ? "text-emerald-500"
                                             : "text-destructive"
                                     )}>
                                         {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
@@ -724,7 +724,7 @@ export const MortgageCalculator = () => {
                                     <span className={cn("font-mono",
                                         (((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0)) -
                                             (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) + (autoCosts || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))) * 12 > 0
-                                            ? "text-primary"
+                                            ? "text-emerald-500"
                                             : "text-destructive"
                                     )}>
                                         ≈ {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
