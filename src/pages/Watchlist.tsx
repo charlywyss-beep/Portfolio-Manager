@@ -5,15 +5,16 @@ import { useNavigate } from 'react-router-dom';
 import { useCurrencyFormatter } from '../utils/currency';
 
 import { getCurrentDividendPeriod, translateFrequency } from '../utils/dividend';
-import { Eye, Plus, Trash2, Edit, ShoppingBag } from 'lucide-react';
+import { Eye, Plus, Trash2, Edit, ShoppingBag, RefreshCw } from 'lucide-react';
 import { Logo } from '../components/Logo';
+import { cn } from '../utils';
 
 import { AddPositionModal } from '../components/AddPositionModal'; // Import AddPositionModal
 import type { Stock } from '../types';
 
 export function Watchlist() {
     const navigate = useNavigate();
-    const { stocks, watchlist, positions, removeFromWatchlist, addPosition } = usePortfolio(); // Get positions
+    const { stocks, watchlist, positions, removeFromWatchlist, addPosition, lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices } = usePortfolio(); // Get positions + refresh
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
 
@@ -35,6 +36,27 @@ export function Watchlist() {
                                 <p className="text-muted-foreground">Aktien beobachten und Dividenden prüfen</p>
                             </div>
                         </div>
+
+                        <button
+                            onClick={() => refreshAllPrices()}
+                            disabled={isGlobalRefreshing}
+                            className={cn(
+                                "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
+                                "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                "active:scale-95",
+                                isGlobalRefreshing && "opacity-50 cursor-not-allowed"
+                            )}
+                            title="Alle Aktienpreise aktualisieren"
+                        >
+                            <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
+                            <span>
+                                {isGlobalRefreshing
+                                    ? 'Aktualisiere...'
+                                    : lastGlobalRefresh
+                                        ? `Aktualisiert vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                        : 'Jetzt aktualisieren'}
+                            </span>
+                        </button>
 
                         <button
                             onClick={() => {
