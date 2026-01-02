@@ -4,6 +4,7 @@ import { MOCK_POSITIONS, MOCK_STOCKS } from '../data/mockData';
 import { fetchStockQuotes } from '../services/yahoo-finance';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { estimateMarketState } from '../utils/market';
+import { processMonthlyContributions } from '../utils/vorsorge';
 
 interface PortfolioContextType {
     positions: Position[];
@@ -145,6 +146,15 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         localStorage.setItem('portfolio_positions', JSON.stringify(positions));
     }, [positions]);
+
+    // Auto-process monthly Säule 3a contributions on app load
+    useEffect(() => {
+        const processedDeposits = processMonthlyContributions(fixedDeposits);
+        // Only update if something changed
+        if (JSON.stringify(processedDeposits) !== JSON.stringify(fixedDeposits)) {
+            setFixedDeposits(processedDeposits);
+        }
+    }, []); // Run only once on mount
 
     // Global Refresh State
     const [lastGlobalRefresh, setLastGlobalRefresh] = useState<Date | null>(() => {
