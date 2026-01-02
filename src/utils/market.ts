@@ -34,6 +34,16 @@ export function estimateMarketState(symbol: string, currency: string): 'REGULAR'
     // 3. Check by Symbol Suffix (More accurate than currency)
     const suffix = symbol?.split('.').pop()?.toUpperCase();
 
+    // Specific Market Holidays (Fixed Dates)
+    // Switzerland (SIX): Jan 2 (Berchtoldstag), May 1 (Labor), Aug 1 (National), Dec 26 (St. Stephens)
+    const isSwiss = suffix === 'SW' || currency === 'CHF';
+    if (isSwiss) {
+        if (month === 0 && date === 2) return 'CLOSED';
+        if (month === 4 && date === 1) return 'CLOSED';
+        if (month === 7 && date === 1) return 'CLOSED';
+        if (month === 11 && date === 26) return 'CLOSED';
+    }
+
     // European Markets (.L = LSE, .SW = SIX, .DE/.F = Germany, .AS = Amsterdam, .PA = Paris, .MI = Milan)
     if (['L', 'SW', 'DE', 'F', 'AS', 'PA', 'MI', 'MC'].includes(suffix || '')) {
         // Exchange Hours in UTC:
