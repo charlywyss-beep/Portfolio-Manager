@@ -50,7 +50,8 @@ export function DividendPlanner() {
                 divCurrency
             };
         })
-        .filter(Boolean);
+        .filter(Boolean)
+        .sort((a, b) => a!.stock.name.localeCompare(b!.stock.name));
 
     // Calculate Annual Net Bank Impact (Interest - Fees)
     const annualBankNet = fixedDeposits.reduce((sum, deposit) => {
