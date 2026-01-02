@@ -440,8 +440,9 @@ export function Watchlist() {
                                                         </div>
                                                     )}
                                                 </td>
-                                                <td className="text-right py-3 px-2 sticky right-0 bg-card group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                                    <div className="flex items-center justify-end gap-0 sm:gap-1 opacity-100 transition-opacity">
+                                                <td className="text-right py-3 px-2 sticky right-0 z-20 bg-card group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                    <div className="absolute inset-0 bg-card -z-10" />
+                                                    <div className="relative flex items-center justify-end gap-0 sm:gap-1 opacity-100 transition-opacity">
                                                         <button
                                                             onClick={() => navigate(`/calculator?stock=${stock.id}&from=watchlist`)}
                                                             className="p-1.5 sm:p-2 hover:bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg transition-colors"

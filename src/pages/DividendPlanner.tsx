@@ -487,8 +487,9 @@ export function DividendPlanner() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="text-right py-3 px-2 sticky right-0 bg-card group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                                <div className="flex items-center justify-end gap-1">
+                                            <td className="text-right py-3 px-2 sticky right-0 bg-card z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <div className="absolute inset-0 bg-card -z-10" />
+                                                <div className="relative flex items-center justify-end gap-1">
                                                     <button
                                                         onClick={() => navigate(`/dividends/edit/${stock.id}`)}
                                                         className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
