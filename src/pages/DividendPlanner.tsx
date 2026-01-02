@@ -213,7 +213,7 @@ export function DividendPlanner() {
                 <div className="flex items-center justify-between p-4 border-b bg-muted/30">
                     <h2 className="text-lg font-semibold">Erwartete Dividenden</h2>
                     <button
-                        onClick={() => refreshAllPrices()}
+                        onClick={() => refreshAllPrices(true)}
                         disabled={isGlobalRefreshing}
                         className={cn(
                             "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
@@ -228,7 +228,7 @@ export function DividendPlanner() {
                             {isGlobalRefreshing
                                 ? 'Aktualisiere...'
                                 : lastGlobalRefresh
-                                    ? `Aktualisiert vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                    ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
                                     : 'Jetzt aktualisieren'}
                         </span>
                     </button>
