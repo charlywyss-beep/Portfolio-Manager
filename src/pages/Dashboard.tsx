@@ -253,14 +253,14 @@ export function Dashboard() {
                                         onClick={() => refreshAllPrices(true)}
                                         disabled={isGlobalRefreshing}
                                         className={cn(
-                                            "flex items-center justify-center gap-2 px-2 py-1 rounded-lg border text-xs font-medium transition-all shadow-sm w-full",
+                                            "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm w-full",
                                             "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
                                             "active:scale-95",
                                             isGlobalRefreshing && "opacity-50 cursor-not-allowed"
                                         )}
                                         title="Preise jetzt aktualisieren"
                                     >
-                                        <RefreshCw className={cn("size-3", isGlobalRefreshing && "animate-spin")} />
+                                        <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
                                         <span className="hidden sm:inline">
                                             {isGlobalRefreshing
                                                 ? 'Aktualisiere...'
