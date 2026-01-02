@@ -112,6 +112,8 @@ export function StockDetail() {
 
                 // Auto-detect GBp (Pence) to GBP (Pound) conversion
                 const latestPriceRaw = localChartData[localChartData.length - 1].value;
+                console.log(`[StockDetail] Chart Data Loaded. Points: ${localChartData.length}. Latest Raw: ${latestPriceRaw}`);
+
                 const isGBP = currency === 'GBP';
 
                 if (isGBP) {
@@ -146,12 +148,16 @@ export function StockDetail() {
                     const lastChartPoint = localChartData[localChartData.length - 1];
                     const chartPrice = lastChartPoint.value;
 
+                    console.log(`[StockDetail] Compare: Chart (${chartPrice}) vs Quote (${bestPrice}). TimeRange: ${timeRange}`);
+
                     // Prioritize Chart Price for 1D view
                     if (chartPrice) {
                         console.log(`[StockDetail] Using Chart Price (${chartPrice}) over Quote Price (${bestPrice})`);
                         bestPrice = chartPrice;
                         priceSourceDate = lastChartPoint.date;
                     }
+                } else {
+                    console.log(`[StockDetail] Skip Chart Sync. LocalData: ${localChartData?.length}, Range: ${timeRange}`);
                 }
 
                 if (bestPrice && currentStock.currentPrice !== undefined && Math.abs(currentStock.currentPrice - bestPrice) > 0.0001) {
