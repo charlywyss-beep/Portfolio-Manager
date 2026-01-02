@@ -719,11 +719,19 @@ export const MortgageCalculator = () => {
                                         )} / Mt
                                     </span>
                                 </div>
-                                <div className="flex justify-end text-xs text-muted-foreground">
-                                    ≈ {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
-                                        (((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0)) -
-                                            (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) + (autoCosts || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))) * 12
-                                    )} / Jahr
+                                <div className={cn("flex justify-between items-center font-bold text-lg",
+                                    (((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0)) -
+                                        (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) + (autoCosts || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))) * 12 > 0
+                                        ? "text-primary"
+                                        : "text-destructive"
+                                )}>
+                                    <span>Verfügbar (Sparquote) Jahr</span>
+                                    <span className="font-mono">
+                                        ≈ {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                            (((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0)) -
+                                                (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) + (autoCosts || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))) * 12
+                                        )} / Jahr
+                                    </span>
                                 </div>
                             </div>
                         </div>
