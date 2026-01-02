@@ -487,8 +487,7 @@ export function DividendPlanner() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="min-w-[100px] px-1 py-3 text-center sticky right-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                                <div className="absolute inset-0 bg-card -z-10" />
+                                            <td className="px-4 py-3 text-center sticky right-0 bg-card group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                 <div className="relative flex items-center justify-center">
                                                     <button
                                                         onClick={() => navigate(`/dividends/edit/${stock.id}`)}
@@ -568,7 +567,7 @@ export function DividendPlanner() {
                                                 <td className={`text-right py-3 px-4 font-semibold whitespace-nowrap ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                                                     {isNegative ? '-' : '+'} CHF {Math.abs(data.annual).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
-                                                <td className="min-w-[100px] text-right py-3 px-4 sticky right-0 z-20 bg-card group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <td className="text-right py-3 px-4 sticky right-0 bg-card group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                     <div className="flex items-center justify-end gap-1">
                                                         <button
                                                             onClick={() => navigate('/portfolio')}

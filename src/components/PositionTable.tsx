@@ -227,8 +227,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                         </td>
 
                                         {/* Aktionen */}
-                                        <td className="min-w-[100px] px-1 py-3 sticky right-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                            <div className="absolute inset-0 bg-card -z-10" />
+                                        <td className="px-4 py-3 sticky right-0 bg-card group-hover:bg-muted transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                             <div className="relative flex items-center justify-center gap-1">
                                                 <button
                                                     onClick={() => {
