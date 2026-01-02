@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 import { Plus, Search, PieChart, BarChart3, Landmark, RefreshCw } from 'lucide-react';
@@ -19,6 +19,41 @@ export function Portfolio() {
     const [editingFixedDeposit, setEditingFixedDeposit] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const { convertToCHF } = useCurrencyFormatter();
+
+    // Force re-render every minute to update the "Updated X min ago" text
+    // Also trigger auto-refresh after 5 minutes
+    const [, setTick] = useState(0);
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTick(t => t + 1);
+
+            // Auto-refresh if last refresh was more than 5 minutes ago
+            if (lastGlobalRefresh) {
+                const minutesSinceRefresh = Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000);
+                if (minutesSinceRefresh >= 5 && !isGlobalRefreshing) {
+                    refreshAllPrices();
+                }
+            }
+        }, 60000); // 60000ms = 1 minute
+
+        // iOS Safari: Check on visibility change (when tab becomes visible again)
+        const handleVisibilityChange = () => {
+            if (!document.hidden && lastGlobalRefresh) {
+                const minutesSinceRefresh = Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000);
+                if (minutesSinceRefresh >= 5 && !isGlobalRefreshing) {
+                    refreshAllPrices();
+                }
+                setTick(t => t + 1); // Force re-render to update displayed time
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            clearInterval(timer);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices]);
 
     // Enrich positions with stock data and calculations
     const positions = rawPositions.map((pos) => {
@@ -171,18 +206,6 @@ export function Portfolio() {
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
                     <button
-                        onClick={() => refreshAllPrices(true)}
-                        disabled={isGlobalRefreshing}
-                        className={cn(
-                            "flex items-center justify-center p-2 rounded-lg border transition-all shadow-sm",
-                            isGlobalRefreshing ? "bg-muted text-muted-foreground" : "bg-card hover:bg-muted text-foreground border-border",
-                            "active:scale-95"
-                        )}
-                        title={lastGlobalRefresh ? `Aktualisiert: ${lastGlobalRefresh.toLocaleTimeString()}` : "Preise aktualisieren"}
-                    >
-                        <RefreshCw className={cn("size-4", isGlobalRefreshing && "animate-spin")} />
-                    </button>
-                    <button
                         onClick={() => setIsAddFixedDepositModalOpen(true)}
                         className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-medium text-sm border border-border"
                     >
@@ -208,6 +231,28 @@ export function Portfolio() {
                 emptyMessage={searchTerm ? 'Keine Aktien gefunden.' : 'Noch keine Aktien im Depot.'}
                 setSelectedPosition={setSelectedPosition}
                 setIsEditModalOpen={setIsEditModalOpen}
+                headerAction={
+                    <button
+                        onClick={() => refreshAllPrices(true)}
+                        disabled={isGlobalRefreshing}
+                        className={cn(
+                            "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
+                            "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                            "active:scale-95",
+                            isGlobalRefreshing && "opacity-50 cursor-not-allowed"
+                        )}
+                        title="Alle Aktienpreise aktualisieren"
+                    >
+                        <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
+                        <span>
+                            {isGlobalRefreshing
+                                ? 'Aktualisiere...'
+                                : lastGlobalRefresh
+                                    ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                    : 'Jetzt aktualisieren'}
+                        </span>
+                    </button>
+                }
             />
 
             {/* ETFs Table */}

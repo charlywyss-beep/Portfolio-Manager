@@ -13,9 +13,10 @@ interface PositionTableProps {
     emptyMessage: string;
     setSelectedPosition: (pos: any) => void;
     setIsEditModalOpen: (open: boolean) => void;
+    headerAction?: React.ReactNode;
 }
 
-export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelectedPosition, setIsEditModalOpen }: PositionTableProps) {
+export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelectedPosition, setIsEditModalOpen, headerAction }: PositionTableProps) {
     const { deletePosition } = usePortfolio();
     const navigate = useNavigate();
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
@@ -26,6 +27,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                 <Icon className="size-6 text-primary" />
                 <h2 className="text-xl font-bold tracking-tight">{title}</h2>
                 <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{data.length} Positionen</span>
+                {headerAction && <div className="ml-auto">{headerAction}</div>}
             </div>
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
