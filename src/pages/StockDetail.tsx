@@ -415,7 +415,7 @@ export function StockDetail() {
                                 isRealtime={true}
                                 quoteDate={quoteDate}
                                 previousClose={stock.previousClose}
-                                isMarketOpen={(stock.marketState || estimateMarketState(stock.symbol, stock.currency)) === 'REGULAR'}
+                                isMarketOpen={estimateMarketState(stock.symbol, stock.currency) === 'REGULAR'}
                             />
                         </div>
                     </div>
