@@ -98,6 +98,8 @@ export function StockDetail() {
             response = await fetchStockHistory(symbol, '1W');
         }
 
+        let localChartData: any[] | null = null;
+
         if (response.error) {
             console.warn('[StockDetail] Error from Yahoo:', response.error);
             setChartData(null);
@@ -106,19 +108,21 @@ export function StockDetail() {
 
             // Sync current price with latest chart data
             if (response.data && response.data.length > 0) {
-                let chartData = response.data;
+                localChartData = response.data;
 
                 // Auto-detect GBp (Pence) to GBP (Pound) conversion
-                const latestPriceRaw = chartData[chartData.length - 1].value;
+                const latestPriceRaw = localChartData[localChartData.length - 1].value;
                 const isGBP = currency === 'GBP';
 
                 if (isGBP) {
                     const isLSE = symbol.toUpperCase().endsWith('.L') || isin?.startsWith('GB');
                     if (isLSE && latestPriceRaw > 50) {
-                        chartData = chartData.map(d => ({
+                        localChartData = localChartData.map(d => ({
                             ...d,
                             value: d.value / 100
                         }));
+                        // Also update state with corrected data
+                        setChartData(localChartData);
                     }
                 }
 
@@ -138,8 +142,8 @@ export function StockDetail() {
                 let priceSourceDate = quoteResponse.marketTime ? new Date(quoteResponse.marketTime).toISOString() : undefined;
 
                 // CHECK: If Chart Data is available (1D), it is often more real-time than Quote.
-                if (chartData && chartData.length > 0 && timeRange === '1D') {
-                    const lastChartPoint = chartData[chartData.length - 1];
+                if (localChartData && localChartData.length > 0 && timeRange === '1D') {
+                    const lastChartPoint = localChartData[localChartData.length - 1];
                     const chartPrice = lastChartPoint.value;
 
                     // Prioritize Chart Price for 1D view
