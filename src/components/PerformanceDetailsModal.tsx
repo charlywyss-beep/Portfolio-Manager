@@ -43,11 +43,22 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
     if (!isOpen) return null;
 
-    // Sort positions by daily gain descending
+    // Sort positions: Stocks first (A-Z), then ETFs (A-Z)
     const sortedPositions = [...positions].sort((a, b) => {
-        const valA = convertToCHF(a.dailyGain, a.stock.currency);
-        const valB = convertToCHF(b.dailyGain, b.stock.currency);
-        return valB - valA;
+        // 1. Sort by Type (Stock before ETF)
+        const typeA = a.stock.type?.toLowerCase() || 'stock';
+        const typeB = b.stock.type?.toLowerCase() || 'stock';
+
+        // Custom order: stock comes before etf
+        const isEtfA = typeA === 'etf';
+        const isEtfB = typeB === 'etf';
+
+        if (isEtfA !== isEtfB) {
+            return isEtfA ? 1 : -1; // Stocks first
+        }
+
+        // 2. Sort by Name (A-Z)
+        return a.stock.name.localeCompare(b.stock.name);
     });
 
     const totalDailyGain = sortedPositions.reduce((sum, p) => sum + convertToCHF(p.dailyGain, p.stock.currency), 0);
