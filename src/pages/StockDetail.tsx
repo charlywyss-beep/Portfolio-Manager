@@ -134,26 +134,24 @@ export function StockDetail() {
                     setQuoteDate(quoteResponse.marketTime);
                 }
 
-                let finalPrice = quoteResponse.price;
-                // GBp Logic moved to yahoo-finance.ts service to ensure consistency between Single/Batch
-                // if (currency === 'GBP' && finalPrice > 50) { ... }
+                let bestPrice = quoteResponse.price;
+                let priceSourceDate = quoteResponse.marketTime ? new Date(quoteResponse.marketTime).toISOString() : undefined;
 
-                if (currentStock.currentPrice !== undefined && Math.abs(currentStock.currentPrice - finalPrice) > 0.0001) {
-                    updateStockPrice(id, finalPrice, undefined, quoteResponse.marketTime ? new Date(quoteResponse.marketTime).toISOString() : undefined);
-                }
-
-                // CHECK: If Chart Data is significantly newer/different than Quote Price, prioritize Chart Price?
-                // Often Chart (v8) is more real-time than Quote (v7/v10 delayed).
-                if (chartData && chartData.length > 0) {
+                // CHECK: If Chart Data is available (1D), it is often more real-time than Quote.
+                if (chartData && chartData.length > 0 && timeRange === '1D') {
                     const lastChartPoint = chartData[chartData.length - 1];
                     const chartPrice = lastChartPoint.value;
-                    // If Chart Price is valid and significantly different from Quote Price, and current range is 1D (Intraday)
-                    if (chartPrice && Math.abs(chartPrice - finalPrice) > 0.01 && timeRange === '1D') {
-                        console.log(`[StockDetail] Preferring Chart Price (${chartPrice}) over Quote Price (${finalPrice})`);
-                        if (Math.abs(currentStock.currentPrice! - chartPrice) > 0.0001) {
-                            updateStockPrice(id, chartPrice, undefined, lastChartPoint.date);
-                        }
+
+                    // Prioritize Chart Price for 1D view
+                    if (chartPrice) {
+                        console.log(`[StockDetail] Using Chart Price (${chartPrice}) over Quote Price (${bestPrice})`);
+                        bestPrice = chartPrice;
+                        priceSourceDate = lastChartPoint.date;
                     }
+                }
+
+                if (bestPrice && currentStock.currentPrice !== undefined && Math.abs(currentStock.currentPrice - bestPrice) > 0.0001) {
+                    updateStockPrice(id, bestPrice, undefined, priceSourceDate);
                 }
 
                 const updates: any = {};
