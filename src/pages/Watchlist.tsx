@@ -8,6 +8,7 @@ import { getCurrentDividendPeriod, translateFrequency } from '../utils/dividend'
 import { Eye, Plus, Trash2, Edit, ShoppingBag, RefreshCw } from 'lucide-react';
 import { Logo } from '../components/Logo';
 import { cn } from '../utils';
+import { estimateMarketState } from '../utils/market';
 
 import { AddPositionModal } from '../components/AddPositionModal'; // Import AddPositionModal
 import type { Stock } from '../types';
@@ -162,12 +163,23 @@ export function Watchlist() {
                                                             />
                                                         </div>
                                                         <div>
-                                                            <div
-                                                                className="font-semibold cursor-pointer hover:text-primary transition-colors whitespace-pre-line"
-                                                                onClick={() => navigate(`/stock/${stock.id}`)}
-                                                            >
-                                                                {/* Smart Wrap removed to allow manual line breaks via whitespace-pre-line */}
-                                                                {stock.name}
+                                                            <div className="flex items-center gap-2">
+                                                                <div
+                                                                    className="font-semibold cursor-pointer hover:text-primary transition-colors whitespace-pre-line"
+                                                                    onClick={() => navigate(`/stock/${stock.id}`)}
+                                                                >
+                                                                    {/* Smart Wrap removed to allow manual line breaks via whitespace-pre-line */}
+                                                                    {stock.name}
+                                                                </div>
+                                                                {(() => {
+                                                                    const calcState = estimateMarketState(stock.symbol, stock.currency);
+                                                                    const isMarketOpen = calcState === 'REGULAR';
+                                                                    return isMarketOpen ? (
+                                                                        <div className="size-2.5 flex-shrink-0 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
+                                                                    ) : (
+                                                                        <div className="size-2.5 flex-shrink-0 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${calcState})`} />
+                                                                    );
+                                                                })()}
                                                             </div>
                                                             <div className="text-xs text-muted-foreground">{stock.symbol}</div>
                                                         </div>
