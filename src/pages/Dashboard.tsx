@@ -389,69 +389,8 @@ export function Dashboard() {
 
                     {/* Top Performer ETF */}
                     {/* Top Performers (ETF & Stock) */}
-                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm order-3">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="p-2 rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
-                                <TrendingUp className="size-6" />
-                            </div>
-                        </div>
-                        <div>
-                            {(() => {
-                                const topEtf = positions
-                                    .filter(p => p.stock.type === 'etf')
-                                    .sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0];
-
-                                const topStock = positions
-                                    .filter(p => !p.stock.type || p.stock.type === 'stock')
-                                    .sort((a, b) => b.gainLossPercent - a.gainLossPercent)[0];
-
-                                if (!topEtf && !topStock) {
-                                    return <span className="text-sm text-muted-foreground">Keine Daten</span>;
-                                }
-
-                                return (
-                                    <div className="space-y-4">
-                                        {/* Top ETF */}
-                                        {topEtf && (
-                                            <div>
-                                                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Top ETF</p>
-                                                <h3
-                                                    className="text-lg font-bold mt-0.5 tracking-tight cursor-pointer hover:text-primary transition-colors truncate"
-                                                    onClick={() => navigate(`/stock/${topEtf.stock.id}`)}
-                                                    title={topEtf.stock.name}
-                                                >
-                                                    {smartWrap(topEtf.stock.name)}
-                                                </h3>
-                                                <p className="text-sm text-green-600 dark:text-green-400 font-medium">
-                                                    +{topEtf.gainLossPercent.toFixed(2)}% ({convertToCHF(topEtf.gainLoss, topEtf.stock.currency).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })})
-                                                </p>
-                                            </div>
-                                        )}
-
-                                        {/* Divider if both exist */}
-                                        {topEtf && topStock && <div className="h-px bg-border/50" />}
-
-                                        {/* Top Stock */}
-                                        {topStock && (
-                                            <div>
-                                                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Top Aktie</p>
-                                                <h3
-                                                    className="text-lg font-bold mt-0.5 tracking-tight cursor-pointer hover:text-primary transition-colors truncate"
-                                                    onClick={() => navigate(`/stock/${topStock.stock.id}`)}
-                                                    title={topStock.stock.name}
-                                                >
-                                                    {smartWrap(topStock.stock.name)}
-                                                </h3>
-                                                <p className="text-sm text-green-600 dark:text-green-400 font-medium">
-                                                    +{topStock.gainLossPercent.toFixed(2)}% ({convertToCHF(topStock.gainLoss, topStock.stock.currency).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })})
-                                                </p>
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })()}
-                        </div>
-                    </div>
+                    {/* Top TopPerformers Card (Replaces Legacy Hardcoded Card) */}
+                    <TopPerformersCard />
                 </div >
 
                 {/* Reordered: Dividends & Watchlist */}
@@ -669,14 +608,11 @@ export function Dashboard() {
                     </div>
 
                     {/* Risk Analysis Card */}
-                    <div className="p-0">
+                    <div className="lg:col-span-2 p-0">
                         <RiskAnalysisCard />
                     </div>
 
-                    {/* Top TopPerformers Card */}
-                    <div className="p-0">
-                        <TopPerformersCard />
-                    </div>
+                    {/* Removed duplicate TopPerformersCard */}
 
                 </div >
 
