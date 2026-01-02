@@ -60,7 +60,7 @@ export function EditDividendPage() {
             setPrice(stock.currentPrice ? stock.currentPrice.toFixed(2) : '');
             setTargetPrice(stock.targetPrice ? stock.targetPrice.toFixed(2) : '');
             setAmount(stock.dividendAmount?.toString() || '');
-            setYieldPercent(stock.dividendYield?.toString() || '');
+            setYieldPercent(stock.dividendYield ? stock.dividendYield.toFixed(2) : '');
             setCurrency(stock.dividendCurrency || stock.currency);
             setLogoUrl(stock.logoUrl || '');
             setExDate(stock.dividendExDate || '');
