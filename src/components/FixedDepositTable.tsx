@@ -35,7 +35,7 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                 </button>
             </div>
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto overscroll-x-none">
                     <table className="w-full text-sm text-left">
                         <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
                             <tr>

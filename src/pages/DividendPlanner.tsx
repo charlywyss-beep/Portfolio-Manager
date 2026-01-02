@@ -275,7 +275,7 @@ export function DividendPlanner() {
                 </div>
 
 
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto overscroll-x-none">
                     <table className="w-full min-w-[1000px]">
                         <thead>
                             <tr className="border-b border-border">
@@ -516,7 +516,7 @@ export function DividendPlanner() {
                             <h2 className="text-lg font-semibold">Bank Erträge & Gebühren</h2>
                         </div>
 
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto overscroll-x-none">
                             <table className="w-full min-w-[1000px]">
                                 <thead>
                                     <tr className="border-b border-border">

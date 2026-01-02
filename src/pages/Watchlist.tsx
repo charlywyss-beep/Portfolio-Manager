@@ -173,7 +173,7 @@ export function Watchlist() {
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto overscroll-x-none">
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-border">
