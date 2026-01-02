@@ -400,6 +400,17 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         setStocks(prev => prev.map(s => {
             const update = updates[s.symbol];
             if (update) {
+                // PROTECTION: If we already have a newer quote (e.g. from Realtime Chart), DO NOT overwrite with older batch data.
+                if (s.lastQuoteDate && update.marketTime) {
+                    const existingDate = new Date(s.lastQuoteDate);
+                    const newDate = new Date(update.marketTime);
+                    // If new data is older than existing data (by > 1 minute tolerance), skip update for this stock.
+                    if (newDate.getTime() < existingDate.getTime() - 60000) {
+                        // console.log(`[PortfolioContext] Skipping stale update for ${s.symbol}. Existing: ${s.lastQuoteDate}, New: ${update.marketTime.toISOString()}`);
+                        return s;
+                    }
+                }
+
                 // Fallback Logic: If API returns null/undefined for marketState, estimate it locally
                 let finalMarketState = update.marketState;
                 if (!finalMarketState) {
