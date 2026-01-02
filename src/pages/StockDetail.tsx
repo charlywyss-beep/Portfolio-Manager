@@ -130,7 +130,8 @@ export function StockDetail() {
             }
         }
 
-        // Parallel: Fetch latest Quote
+        // Parallel: Fetch latest Quote (METADATA ONLY)
+        // STRICT: Price is handled by Chart Sync (useEffect). Quote is only for PE/EPS/Yield.
         if (timeRange !== 'BUY') {
             const quoteResponse = await fetchStockQuote(symbol);
             if (quoteResponse.price) {
@@ -138,29 +139,8 @@ export function StockDetail() {
                     setQuoteDate(quoteResponse.marketTime);
                 }
 
-                let bestPrice = quoteResponse.price;
-                let priceSourceDate = quoteResponse.marketTime ? new Date(quoteResponse.marketTime).toISOString() : undefined;
-
-                // CHECK: If Chart Data is available (1D), it is often more real-time than Quote.
-                if (false) { // Disabled Old Logic
-                    const lastChartPoint = localChartData[localChartData.length - 1];
-                    const chartPrice = lastChartPoint.value;
-
-                    // Chart logic moved to useEffect
-
-                    // Prioritize Chart Price for 1D view
-                    if (chartPrice) {
-                        console.log(`[StockDetail] Using Chart Price (${chartPrice}) over Quote Price (${bestPrice})`);
-                        bestPrice = chartPrice;
-                        priceSourceDate = lastChartPoint.date;
-                    }
-                } else {
-                    console.log(`[StockDetail] Skip Chart Sync. LocalData: ${localChartData?.length}, Range: ${timeRange}`);
-                }
-
-                if (bestPrice && (currentStock.currentPrice === undefined || Math.abs(currentStock.currentPrice - bestPrice) > 0.0001)) {
-                    updateStockPrice(id, bestPrice, undefined, priceSourceDate);
-                }
+                // Removed: Logic that updated price from Quote or merged Chart/Quote.
+                // Principle: "Chart has the truth for current price."
 
                 const updates: any = {};
                 let hasUpdates = false;
