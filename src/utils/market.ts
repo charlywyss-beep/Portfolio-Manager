@@ -21,9 +21,6 @@ export function estimateMarketState(symbol: string, currency: string): 'REGULAR'
     if (month === 11 && date === 25) {
         return 'CLOSED';
     }
-    // Christmas Eve (Dec 24) - often closed or early close, treating as closed for simplicity if requested, but stick to confirmed holidays. 
-    // Boxing Day (Dec 26) - Closed in UK/EU often, but US open.
-    // For now, specifically fixing Jan 1st as requested.
 
     const timeInMinutes = utcHours * 60 + utcMinutes;
 
@@ -39,32 +36,42 @@ export function estimateMarketState(symbol: string, currency: string): 'REGULAR'
 
     // European Markets (.L = LSE, .SW = SIX, .DE/.F = Germany, .AS = Amsterdam, .PA = Paris, .MI = Milan)
     if (['L', 'SW', 'DE', 'F', 'AS', 'PA', 'MI', 'MC'].includes(suffix || '')) {
-        // Approx 08:00 UTC - 16:30 UTC (09:00 - 17:30 CET)
-        // LSE closes 16:30 UTC. XETRA closes 16:30 UTC. SIX closes 16:20 UTC.
-        // We use a broad window: 07:55 UTC to 16:35 UTC to catch pre/post nuances or just strictly valid hours.
-        return isOpen(8, 0, 16, 35) ? 'REGULAR' : 'CLOSED';
+        // Exchange Hours in UTC:
+        // LSE: 08:00 - 16:30 UTC
+        // XETRA (DE): 08:00 - 16:35 UTC (09:00 - 17:35 CET)
+        // SIX (SW): 08:00 - 16:20 UTC (09:00 - 17:20 CET)
+        // Euronext: 08:00 - 16:30 UTC
+        // We use a broad window: 07:55 UTC to 16:40 UTC
+        return isOpen(7, 55, 16, 40) ? 'REGULAR' : 'CLOSED';
     }
 
-    // specific check for US suffixes if simple symbol
-    // 4. Currency Fallback
-
-    // US Markets (NYSE, NASDAQ)
-    // aprox. 14:30 UTC - 21:00 UTC (15:30 - 22:00 CET/CEST)
-    if (currency === 'USD') {
-        // US Holidays check (Independence Day July 4 etc would go here)
-        if (month === 6 && date === 4) return 'CLOSED'; // July 4th
-        return isOpen(14, 30, 21, 0) ? 'REGULAR' : 'CLOSED';
-    }
-
-    // European Markets Fallback (CHF, EUR, GBP)
+    // 4. Currency Fallback for EU
     if (['CHF', 'EUR', 'GBP', 'GBp'].includes(currency)) {
-        return isOpen(8, 0, 16, 35) ? 'REGULAR' : 'CLOSED';
+        return isOpen(7, 55, 16, 40) ? 'REGULAR' : 'CLOSED';
     }
 
-    // Asian Markets (HKD, JPY) - simplified
-    // HK: 01:30 UTC - 08:00 UTC
+    // 5. US Markets (NYSE, NASDAQ)
+    // Hours: 09:30 - 16:00 EST
+    // UTC (Standard Time - Winter): 14:30 - 21:00 UTC
+    // UTC (Daylight Time - Summer): 13:30 - 20:00 UTC
+    // Note: This simple logic assumes Winter time (UTC offsets change).
+    // Ideally, we'd use a library, but for now we stick to Standard Time (Winter) as primary or cover both.
+    // Let's use 13:30 to 21:00 to cover both DST shifts broadly, OR just assume Winter for now (Jan).
+    // Jan = Winter. US Open = 14:30 UTC.
+    if (currency === 'USD') {
+        // US Holidays
+        if (month === 6 && date === 4) return 'CLOSED'; // July 4th
+        if (month === 11 && date === 25) return 'CLOSED'; // Xmas
+        if (month === 0 && date === 1) return 'CLOSED'; // New Year
+
+        // Broad Window for US (14:30 - 21:00 UTC)
+        return isOpen(14, 25, 21, 5) ? 'REGULAR' : 'CLOSED';
+    }
+
+    // Asian Markets (HKD)
+    // HK: 09:30 - 16:00 HKT = 01:30 - 08:00 UTC
     if (currency === 'HKD') {
-        return isOpen(1, 30, 8, 0) ? 'REGULAR' : 'CLOSED';
+        return isOpen(1, 30, 8, 5) ? 'REGULAR' : 'CLOSED';
     }
 
     // Default

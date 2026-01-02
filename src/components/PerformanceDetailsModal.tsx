@@ -134,7 +134,13 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 const totalGainCHF = convertToCHF(totalGain, p.stock.currency);
                                 const totalGainPercent = purchaseValue > 0 ? ((currentValue - purchaseValue) / purchaseValue) * 100 : 0;
                                 const isTotalPositive = totalGainCHF >= 0;
-                                const displayState = p.stock.marketState || estimateMarketState(p.stock.symbol, p.stock.currency);
+
+                                // Market State Logic:
+                                // 1. Prefer Yahoo's explicit state if available.
+                                // 2. Fallback to time-based estimation.
+                                // 3. We do NOT override with "Today" date check anymore, because US Pre-market (today) counts as "Closed" for the user.
+                                const state = p.stock.marketState || estimateMarketState(p.stock.symbol, p.stock.currency);
+                                const isMarketOpen = state === 'REGULAR' || state === 'OPEN'; // Only Regular Trading counts as Green
 
                                 return (
                                     <tr
@@ -158,10 +164,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                                 <div className="flex flex-col min-w-0">
                                                     <div className="flex items-center gap-2">
                                                         <div className="break-words whitespace-pre-line text-sm group-hover:text-primary transition-colors leading-tight">{p.stock.name}</div>
-                                                        {displayState === 'REGULAR' ? (
-                                                            <div className="size-2.5 flex-shrink-0 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title="Markt geöffnet" />
+                                                        {isMarketOpen ? (
+                                                            <div className="size-2.5 flex-shrink-0 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${state})`} />
                                                         ) : (
-                                                            <div className="size-2.5 flex-shrink-0 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${displayState})`} />
+                                                            <div className="size-2.5 flex-shrink-0 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${state})`} />
                                                         )}
                                                     </div>
                                                     <span className="text-[10px] text-muted-foreground">{p.stock.symbol}</span>
