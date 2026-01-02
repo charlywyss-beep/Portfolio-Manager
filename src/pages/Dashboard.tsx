@@ -33,7 +33,7 @@ export function Dashboard() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { totals, upcomingDividends, positions, upcomingWatchlistDividends, bankRisks } = usePortfolioData();
-    const { history, deleteHistoryEntry, updateStockPrice, stocks, updateStock, refreshAllPrices, isGlobalRefreshing } = usePortfolio(); // Added isGlobalRefreshing
+    const { history, deleteHistoryEntry, updateStockPrice, stocks, updateStock, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh } = usePortfolio(); // Added isGlobalRefreshing, lastGlobalRefresh
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [editingHistoryEntry, setEditingHistoryEntry] = useState<any>(null);
@@ -41,6 +41,15 @@ export function Dashboard() {
     const [showPerformanceDetails, setShowPerformanceDetails] = useState(false); // NEW
     const hasRefreshedPrices = useRef(false);
     const hasRefreshedMetadata = useRef(false); // Prevent loop
+
+    // Force re-render every minute to update the "Updated X min ago" text
+    const [, setTick] = useState(0);
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTick(t => t + 1);
+        }, 60000);
+        return () => clearInterval(timer);
+    }, []);
 
     useEffect(() => {
         setHasMounted(true);
@@ -243,13 +252,22 @@ export function Dashboard() {
                                         <button
                                             onClick={() => refreshAllPrices(true)}
                                             disabled={isGlobalRefreshing}
-                                            title="Preise jetzt aktualisieren"
                                             className={cn(
-                                                "p-1.5 mr-1 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground",
-                                                isGlobalRefreshing && "animate-spin cursor-not-allowed"
+                                                "flex items-center gap-2 px-2 py-1 rounded-lg border text-xs font-medium transition-all shadow-sm mr-2",
+                                                "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                                "active:scale-95",
+                                                isGlobalRefreshing && "opacity-50 cursor-not-allowed"
                                             )}
+                                            title="Preise jetzt aktualisieren"
                                         >
-                                            <RefreshCw className="size-3.5" />
+                                            <RefreshCw className={cn("size-3", isGlobalRefreshing && "animate-spin")} />
+                                            <span className="hidden sm:inline">
+                                                {isGlobalRefreshing
+                                                    ? 'Aktualisiere...'
+                                                    : lastGlobalRefresh
+                                                        ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                                        : 'Aktualisieren'}
+                                            </span>
                                         </button>
                                         <button
                                             onClick={() => setShowPerformanceDetails(true)}
