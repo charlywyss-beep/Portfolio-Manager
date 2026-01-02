@@ -288,7 +288,7 @@ export function DividendPlanner() {
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">EX-Tag</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zahl-Tag</th>
-                                <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                <th className="text-right py-3 px-2 w-[80px] sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -487,9 +487,8 @@ export function DividendPlanner() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="px-1 py-3 text-center sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                                <div className="absolute inset-0 bg-card -z-10" />
-                                                <div className="relative flex items-center justify-center">
+                                            <td className="text-right py-3 px-2 sticky right-0 bg-card z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <div className="flex items-center justify-end gap-1">
                                                     <button
                                                         onClick={() => navigate(`/dividends/edit/${stock.id}`)}
                                                         className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
@@ -527,7 +526,7 @@ export function DividendPlanner() {
                                         <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Frequenz</th>
                                         <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Quartalsweise</th>
                                         <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
-                                        <th className="text-right py-3 px-4 w-24 sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
+                                        <th className="text-right py-3 px-2 w-[80px] sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -568,7 +567,7 @@ export function DividendPlanner() {
                                                 <td className={`text-right py-3 px-4 font-semibold whitespace-nowrap ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                                                     {isNegative ? '-' : '+'} CHF {Math.abs(data.annual).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
-                                                <td className="text-right py-3 px-4 sticky right-0 bg-card group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <td className="text-right py-3 px-2 sticky right-0 bg-card group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                     <div className="flex items-center justify-end gap-1">
                                                         <button
                                                             onClick={() => navigate('/portfolio')}

@@ -44,7 +44,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                 <th className="px-4 py-3 text-right whitespace-nowrap">Wert</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap">+/-</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap">%</th>
-                                <th className="px-2 py-3 text-center sticky right-0 bg-card z-10 w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                <th className="text-right py-3 px-2 w-[80px] sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -226,9 +226,8 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                             </div>
                                         </td>
 
-                                        {/* Aktionen */}
-                                        <td className="pl-4 pr-2 py-3 sticky right-0 z-10 bg-card group-hover:bg-muted transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                            <div className="relative flex items-center justify-end gap-1">
+                                        <td className="text-right py-3 px-2 sticky right-0 bg-card z-10 group-hover:bg-muted transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                            <div className="flex items-center justify-end gap-1">
                                                 <button
                                                     onClick={() => {
                                                         setSelectedPosition(pos);

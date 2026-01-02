@@ -54,7 +54,7 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                 <th className="px-4 py-3 w-[130px] lg:w-[150px] min-w-[130px] lg:min-w-[150px] max-w-[130px] lg:max-w-[150px]">Konto-Typ</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">Vermögen</th>
                                 <th className="px-4 py-3 min-w-[300px]">Fortschritt 2025</th>
-                                <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                <th className="text-right py-3 px-2 w-[80px] sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -118,9 +118,8 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-1 py-3 sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                            <div className="absolute inset-0 bg-card -z-10" />
-                                            <div className="relative flex items-center justify-center gap-1">
+                                        <td className="text-right py-3 px-2 sticky right-0 z-10 bg-card group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                            <div className="flex items-center justify-end gap-1">
                                                 <button
                                                     onClick={() => {
                                                         setEditingFixedDeposit(fd);
