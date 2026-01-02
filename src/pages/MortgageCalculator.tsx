@@ -687,9 +687,9 @@ export const MortgageCalculator = () => {
                                     </span>
                                 </div>
 
-                                <div className="flex justify-between items-center font-bold text-sm pt-1">
+                                <div className="flex justify-between items-center font-bold text-lg pt-1">
                                     <span>Gesamtausgaben</span>
-                                    <span className="text-destructive font-mono">
+                                    <span className="text-red-400 font-mono">
                                         - {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
                                             totalMonthlyCost +
                                             (budgetItems || []).reduce((sum: number, i: BudgetEntry) => {
