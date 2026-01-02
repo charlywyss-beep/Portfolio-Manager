@@ -1,4 +1,4 @@
-import { useState, Fragment } from 'react';
+import { useState, Fragment, useEffect } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -21,6 +21,15 @@ export function Watchlist() {
 
     // Filter stocks that are in the watchlist
     const watchlistStocks = stocks.filter(s => watchlist.includes(s.id));
+
+    // Force re-render every minute to update the "Updated X min ago" text
+    const [, setTick] = useState(0);
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTick(t => t + 1);
+        }, 60000); // 60000ms = 1 minute
+        return () => clearInterval(timer);
+    }, []);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">

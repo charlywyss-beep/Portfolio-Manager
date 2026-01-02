@@ -4,6 +4,7 @@ import { Calendar, TrendingUp, Edit, Trash2, RefreshCw } from 'lucide-react';
 import { Logo } from '../components/Logo';
 import { cn } from '../utils';
 import { estimateMarketState } from '../utils/market';
+import { useState, useEffect } from 'react';
 
 import { useCurrencyFormatter } from '../utils/currency';
 import { getCurrentDividendPeriod, translateFrequency } from '../utils/dividend';
@@ -103,6 +104,15 @@ export function DividendPlanner() {
             isNegative: netAnnual < 0
         };
     }).filter((d: any) => d && Math.abs(d.annual) > 0.01);
+
+    // Force re-render every minute to update the "Updated X min ago" text
+    const [, setTick] = useState(0);
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTick(t => t + 1);
+        }, 60000); // 60000ms = 1 minute
+        return () => clearInterval(timer);
+    }, []);
 
     return (
         <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
