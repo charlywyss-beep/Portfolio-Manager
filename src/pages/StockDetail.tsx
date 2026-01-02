@@ -269,19 +269,25 @@ export function StockDetail() {
                             <div className="flex items-center gap-2 md:gap-3">
                                 <h1 className="text-lg md:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">{stock.name}</h1>
                                 {(() => {
-                                    // Override Market State: If we have a Quote Date from TODAY, we treat it as OPEN/REGULAR visually
-                                    // This prevents "Closed" (Red) status when Yahoo API flags market as Closed but we represent trading day data.
-                                    let displayState = stock.marketState || estimateMarketState(stock.symbol, stock.currency);
+                                    // User Rule (v3.11.480):
+                                    // Trust Calculation (Time) > Yahoo API
+                                    // If our Math says "It is trading time" (REGULAR), we show Green.
+                                    // This fixes EU showing "Closed" because Yahoo often reports "CLOSED" on delayed feeds.
+                                    // This also fixes US showing "Open" in Pre-Market (Math says CLOSED until 14:30 UTC).
 
-                                    if (quoteDate) {
-                                        const isToday = new Date().toDateString() === new Date(quoteDate).toDateString();
-                                        if (isToday) {
-                                            displayState = 'REGULAR';
-                                        }
-                                    }
+                                    const calculatedState = estimateMarketState(stock.symbol, stock.currency);
+                                    const apiState = stock.marketState;
 
-                                    return displayState === 'REGULAR' ? (
-                                        <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] cursor-help border border-background" title="Markt geöffnet (Aktive Daten)" />
+                                    // Priority Logic:
+                                    // 1. If Math says REGULAR -> Force REGULAR (Green)
+                                    // 2. Else use API State (e.g. PRE, POST, CLOSED)
+                                    // 3. Fallback to Math (CLOSED)
+                                    const displayState = (calculatedState === 'REGULAR') ? 'REGULAR' : (apiState || calculatedState);
+
+                                    const isMarketOpen = displayState === 'REGULAR' || displayState === 'OPEN';
+
+                                    return isMarketOpen ? (
+                                        <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] cursor-help border border-background" title={`Markt geöffnet (${displayState})`} />
                                     ) : (
                                         <div className="size-2.5 rounded-full bg-red-500 cursor-help border border-background" title={`Markt geschlossen (${displayState})`} />
                                     );
