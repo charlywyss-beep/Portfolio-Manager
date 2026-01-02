@@ -1,7 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Calendar, TrendingUp, Edit, Trash2 } from 'lucide-react';
+import { Calendar, TrendingUp, Edit, Trash2, RefreshCw } from 'lucide-react';
 import { Logo } from '../components/Logo';
+import { cn } from '../utils';
+import { estimateMarketState } from '../utils/market';
 
 import { useCurrencyFormatter } from '../utils/currency';
 import { getCurrentDividendPeriod, translateFrequency } from '../utils/dividend';
@@ -9,7 +11,7 @@ import { DividendCalendarChart } from '../components/DividendCalendarChart';
 
 export function DividendPlanner() {
     const navigate = useNavigate();
-    const { stocks, positions, fixedDeposits, deleteFixedDeposit } = usePortfolio();
+    const { stocks, positions, fixedDeposits, deleteFixedDeposit, lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices } = usePortfolio();
     const { convertToCHF } = useCurrencyFormatter();
 
     // Calculate projected dividends from yield
@@ -174,6 +176,26 @@ export function DividendPlanner() {
             <div className="bg-card rounded-xl border shadow-sm overflow-hidden mt-8 mb-8">
                 <div className="flex items-center justify-between p-4 border-b bg-muted/30">
                     <h2 className="text-lg font-semibold">Erwartete Dividenden</h2>
+                    <button
+                        onClick={(e) => { e.preventDefault(); refreshAllPrices(); }}
+                        disabled={isGlobalRefreshing}
+                        className={cn(
+                            "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
+                            "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                            "active:scale-95",
+                            isGlobalRefreshing && "opacity-50 cursor-not-allowed"
+                        )}
+                        title="Alle Aktienpreise aktualisieren"
+                    >
+                        <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
+                        <span>
+                            {isGlobalRefreshing
+                                ? 'Aktualisiere...'
+                                : lastGlobalRefresh
+                                    ? `Aktualisiert vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                    : 'Jetzt aktualisieren'}
+                        </span>
+                    </button>
                 </div>
 
                 {/* ... table content continues ... */}
@@ -277,14 +299,25 @@ export function DividendPlanner() {
                                                         />
                                                     </div>
                                                     <div>
-                                                        <div
-                                                            className="font-semibold cursor-pointer hover:text-primary transition-colors whitespace-pre-line"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                navigate(`/stock/${stock.id}`);
-                                                            }}
-                                                        >
-                                                            {stock.name}
+                                                        <div className="flex items-center gap-2">
+                                                            <div
+                                                                className="font-semibold cursor-pointer hover:text-primary transition-colors whitespace-pre-line"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    navigate(`/stock/${stock.id}`);
+                                                                }}
+                                                            >
+                                                                {stock.name}
+                                                            </div>
+                                                            {(() => {
+                                                                const calcState = estimateMarketState(stock.symbol, stock.currency);
+                                                                const isMarketOpen = calcState === 'REGULAR';
+                                                                return isMarketOpen ? (
+                                                                    <div className="size-2.5 flex-shrink-0 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
+                                                                ) : (
+                                                                    <div className="size-2.5 flex-shrink-0 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${calcState})`} />
+                                                                );
+                                                            })()}
                                                         </div>
                                                         <div className="text-xs text-muted-foreground">{stock.symbol}</div>
                                                     </div>
