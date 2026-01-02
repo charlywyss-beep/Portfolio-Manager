@@ -23,13 +23,22 @@ export function Watchlist() {
     const watchlistStocks = stocks.filter(s => watchlist.includes(s.id));
 
     // Force re-render every minute to update the "Updated X min ago" text
+    // Also trigger auto-refresh after 5 minutes
     const [, setTick] = useState(0);
     useEffect(() => {
         const timer = setInterval(() => {
             setTick(t => t + 1);
+            
+            // Auto-refresh if last refresh was more than 5 minutes ago
+            if (lastGlobalRefresh) {
+                const minutesSinceRefresh = Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000);
+                if (minutesSinceRefresh >= 5 && !isGlobalRefreshing) {
+                    refreshAllPrices();
+                }
+            }
         }, 60000); // 60000ms = 1 minute
         return () => clearInterval(timer);
-    }, []);
+    }, [lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">

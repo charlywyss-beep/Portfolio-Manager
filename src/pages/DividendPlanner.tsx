@@ -106,13 +106,22 @@ export function DividendPlanner() {
     }).filter((d: any) => d && Math.abs(d.annual) > 0.01);
 
     // Force re-render every minute to update the "Updated X min ago" text
+    // Also trigger auto-refresh after 5 minutes
     const [, setTick] = useState(0);
     useEffect(() => {
         const timer = setInterval(() => {
             setTick(t => t + 1);
+
+            // Auto-refresh if last refresh was more than 5 minutes ago
+            if (lastGlobalRefresh) {
+                const minutesSinceRefresh = Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000);
+                if (minutesSinceRefresh >= 5 && !isGlobalRefreshing) {
+                    refreshAllPrices();
+                }
+            }
         }, 60000); // 60000ms = 1 minute
         return () => clearInterval(timer);
-    }, []);
+    }, [lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices]);
 
     return (
         <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
