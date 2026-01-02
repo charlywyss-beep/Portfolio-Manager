@@ -20,7 +20,9 @@ export function Watchlist() {
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
 
     // Filter stocks that are in the watchlist
-    const watchlistStocks = stocks.filter(s => watchlist.includes(s.id));
+    const watchlistStocks = stocks
+        .filter(s => watchlist.includes(s.id))
+        .sort((a, b) => a.name.localeCompare(b.name));
 
     // Force re-render every minute to update the "Updated X min ago" text
     // Also trigger auto-refresh after 5 minutes
