@@ -29,7 +29,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                 <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{data.length} Positionen</span>
                 {headerAction && <div className="ml-auto">{headerAction}</div>}
             </div>
-            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden overflow-clip">
                 <div className="overflow-x-auto overscroll-x-none">
 
                     <table className="w-full text-sm text-left">
@@ -225,7 +225,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                             </div>
                                         </td>
 
-                                        <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky right-0 z-40 group-hover:bg-muted transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky right-0 z-40 group-hover:bg-muted transition-colors">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center justify-center gap-1">
                                                 <button
