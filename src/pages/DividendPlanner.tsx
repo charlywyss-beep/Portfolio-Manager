@@ -120,7 +120,24 @@ export function DividendPlanner() {
                 }
             }
         }, 60000); // 60000ms = 1 minute
-        return () => clearInterval(timer);
+
+        // iOS Safari: Check on visibility change (when tab becomes visible again)
+        const handleVisibilityChange = () => {
+            if (!document.hidden && lastGlobalRefresh) {
+                const minutesSinceRefresh = Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000);
+                if (minutesSinceRefresh >= 5 && !isGlobalRefreshing) {
+                    refreshAllPrices();
+                }
+                setTick(t => t + 1); // Force re-render to update displayed time
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            clearInterval(timer);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, [lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices]);
 
     return (

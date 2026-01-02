@@ -28,7 +28,7 @@ export function Watchlist() {
     useEffect(() => {
         const timer = setInterval(() => {
             setTick(t => t + 1);
-            
+
             // Auto-refresh if last refresh was more than 5 minutes ago
             if (lastGlobalRefresh) {
                 const minutesSinceRefresh = Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000);
@@ -37,7 +37,24 @@ export function Watchlist() {
                 }
             }
         }, 60000); // 60000ms = 1 minute
-        return () => clearInterval(timer);
+
+        // iOS Safari: Check on visibility change (when tab becomes visible again)
+        const handleVisibilityChange = () => {
+            if (!document.hidden && lastGlobalRefresh) {
+                const minutesSinceRefresh = Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000);
+                if (minutesSinceRefresh >= 5 && !isGlobalRefreshing) {
+                    refreshAllPrices();
+                }
+                setTick(t => t + 1); // Force re-render to update displayed time
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            clearInterval(timer);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, [lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices]);
 
     return (
