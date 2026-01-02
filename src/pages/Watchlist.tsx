@@ -184,7 +184,7 @@ export function Watchlist() {
                                     <th className="text-right py-3 px-4 font-semibold">Dividende</th>
                                     <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">EX-Tag</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zahl-Tag</th>
+                                    <th className="text-right py-3 pl-4 pr-8 font-semibold whitespace-nowrap">Zahl-Tag</th>
                                     <th className="text-right py-3 px-2 w-[80px] sticky right-0 bg-card z-30 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                                 </tr>
                             </thead>
@@ -385,7 +385,7 @@ export function Watchlist() {
                                                     )
                                                     }
                                                 </td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground align-top">
+                                                <td className="text-right py-3 pl-4 pr-8 text-muted-foreground align-top">
                                                     {stock.dividendDates && stock.dividendDates.length > 0 ? (
                                                         <div className="grid grid-cols-[30px_70px] gap-x-1 justify-end items-center text-right text-sm">
                                                             {stock.dividendDates

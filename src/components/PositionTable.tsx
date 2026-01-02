@@ -43,7 +43,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                 <th className="px-4 py-3 text-right whitespace-nowrap">Kurs</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap">Wert</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap">+/-</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap">%</th>
+                                <th className="pl-4 pr-8 py-3 text-right whitespace-nowrap">%</th>
                                 <th className="text-right py-3 px-2 w-[80px] sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
@@ -216,7 +216,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                         </td>
 
                                         {/* Gesamt % +/- */}
-                                        <td className="px-4 py-3 text-right">
+                                        <td className="pl-4 pr-8 py-3 text-right">
                                             <div className={cn(
                                                 "flex items-center justify-end gap-1 font-medium",
                                                 pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"

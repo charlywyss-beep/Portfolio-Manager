@@ -287,7 +287,7 @@ export function DividendPlanner() {
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Quartalsweise</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">EX-Tag</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zahl-Tag</th>
+                                <th className="text-right py-3 pl-4 pr-8 font-semibold whitespace-nowrap">Zahl-Tag</th>
                                 <th className="text-right py-3 px-2 w-[80px] sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
@@ -459,7 +459,7 @@ export function DividendPlanner() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="text-right py-3 px-4 text-muted-foreground">
+                                            <td className="text-right py-3 pl-4 pr-8 text-muted-foreground">
                                                 <div className="flex flex-col items-end gap-1">
                                                     <span className={(() => {
                                                         const payDays = currentDiv.payDate ? Math.ceil((new Date(currentDiv.payDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
@@ -525,7 +525,7 @@ export function DividendPlanner() {
                                         <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Ø Monatlich</th>
                                         <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Frequenz</th>
                                         <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Quartalsweise</th>
-                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
+                                        <th className="text-right py-3 pl-4 pr-8 font-semibold whitespace-nowrap">Jährlich</th>
                                         <th className="text-right py-3 px-2 w-[80px] sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                                     </tr>
                                 </thead>
@@ -564,7 +564,7 @@ export function DividendPlanner() {
                                                 <td className={`text-right py-3 px-4 font-medium whitespace-nowrap ${isNegative ? 'text-red-600/70' : 'text-green-600/70'}`}>
                                                     {isNegative ? '-' : '+'} CHF {Math.abs(data.quarterly).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
-                                                <td className={`text-right py-3 px-4 font-semibold whitespace-nowrap ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                                <td className={`text-right py-3 pl-4 pr-8 font-semibold whitespace-nowrap ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                                                     {isNegative ? '-' : '+'} CHF {Math.abs(data.annual).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
                                                 <td className="text-right py-3 px-2 sticky right-0 bg-card group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
