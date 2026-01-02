@@ -141,7 +141,7 @@ export function Watchlist() {
 
                         <div className="flex items-center gap-2 ml-auto">
                             <select
-                                className="hidden md:block pl-3 pr-8 py-1.5 rounded-lg border border-border bg-background text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer"
+                                className="pl-3 pr-8 py-1.5 rounded-lg border border-border bg-card text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer"
                                 value={sortConfig.key}
                                 onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
                             >
