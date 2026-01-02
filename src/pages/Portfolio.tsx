@@ -191,19 +191,7 @@ export function Portfolio() {
                     />
                 </div>
                 {/* SORT CONTROL */}
-                <div className="flex items-center gap-2">
-                    <select
-                        className="pl-3 pr-8 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer"
-                        value={sortConfig.key}
-                        onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
-                        style={{ backgroundImage: 'none' }} // Remove default arrow if needed, but standard is fine
-                    >
-                        <option value="name">Name (A-Z)</option>
-                        <option value="currency">Währung</option>
-                        <option value="value">Wert (Hoch-Tief)</option>
-                        <option value="performance">Performance (Beste)</option>
-                    </select>
-                </div>
+                {/* SORT CONTROL REMOVED */}
                 <div className="flex gap-2 w-full sm:w-auto">
                     <button
                         onClick={() => setIsAddFixedDepositModalOpen(true)}
@@ -232,26 +220,38 @@ export function Portfolio() {
                 setSelectedPosition={setSelectedPosition}
                 setIsEditModalOpen={setIsEditModalOpen}
                 headerAction={
-                    <button
-                        onClick={() => refreshAllPrices(true)}
-                        disabled={isGlobalRefreshing}
-                        className={cn(
-                            "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
-                            "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                            "active:scale-95",
-                            isGlobalRefreshing && "opacity-50 cursor-not-allowed"
-                        )}
-                        title="Alle Aktienpreise aktualisieren"
-                    >
-                        <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
-                        <span>
-                            {isGlobalRefreshing
-                                ? 'Aktualisiere...'
-                                : lastGlobalRefresh
-                                    ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
-                                    : 'Jetzt aktualisieren'}
-                        </span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <select
+                            className="hidden md:block pl-3 pr-8 py-1.5 rounded-lg border border-border bg-card text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer"
+                            value={sortConfig.key}
+                            onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
+                        >
+                            <option value="name">Name (A-Z)</option>
+                            <option value="currency">Währung</option>
+                            <option value="value">Wert (Hoch-Tief)</option>
+                            <option value="performance">Performance (Beste)</option>
+                        </select>
+                        <button
+                            onClick={() => refreshAllPrices(true)}
+                            disabled={isGlobalRefreshing}
+                            className={cn(
+                                "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
+                                "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                "active:scale-95",
+                                isGlobalRefreshing && "opacity-50 cursor-not-allowed"
+                            )}
+                            title="Alle Aktienpreise aktualisieren"
+                        >
+                            <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
+                            <span>
+                                {isGlobalRefreshing
+                                    ? 'Aktualisiere...'
+                                    : lastGlobalRefresh
+                                        ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                        : 'Jetzt aktualisieren'}
+                            </span>
+                        </button>
+                    </div>
                 }
             />
 
