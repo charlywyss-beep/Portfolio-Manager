@@ -381,7 +381,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     };
 
     const updateStockPrice = (id: string, newPrice: number, newPreviousClose?: number, lastQuoteDate?: string) => {
-        setStocks(stocks.map(s => {
+        setStocks(prev => prev.map(s => {
             if (s.id === id) {
                 return {
                     ...s,
