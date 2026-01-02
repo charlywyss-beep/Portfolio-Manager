@@ -245,14 +245,14 @@ export function Dashboard() {
                                 <TrendingUp className="size-6" />
                             </div>
 
-                            <div className="flex flex-col items-end gap-2">
+                            <div className="flex flex-col items-end gap-2 w-full max-w-[200px]">
                                 {/* NEW: Details Button (Only for 1D) */}
                                 {performancePeriod === '1D' && (
                                     <button
                                         onClick={() => refreshAllPrices(true)}
                                         disabled={isGlobalRefreshing}
                                         className={cn(
-                                            "flex items-center gap-2 px-2 py-1 rounded-lg border text-xs font-medium transition-all shadow-sm",
+                                            "flex items-center justify-center gap-2 px-2 py-1 rounded-lg border text-xs font-medium transition-all shadow-sm w-full",
                                             "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
                                             "active:scale-95",
                                             isGlobalRefreshing && "opacity-50 cursor-not-allowed"
@@ -270,7 +270,7 @@ export function Dashboard() {
                                     </button>
                                 )}
 
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center justify-end gap-2 w-full">
                                     {performancePeriod === '1D' && (
                                         <button
                                             onClick={() => setShowPerformanceDetails(true)}
