@@ -288,8 +288,12 @@ export function EditDividendPage() {
         <div className="min-h-screen bg-background pb-20">
             {/* Header */}
             <div className="flex items-center gap-4 p-4 border-b border-border bg-card/50 sticky top-16 z-30 w-full transition-all">
-                <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-muted rounded-full">
-                    <ArrowLeft className="size-6" />
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-3 py-1.5 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
+                >
+                    <ArrowLeft className="size-3 md:size-4 mr-1.5" />
+                    Zurück
                 </button>
                 <div className="flex-1 flex items-center gap-3">
                     {logoUrl && (

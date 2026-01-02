@@ -232,9 +232,9 @@ export function StockDetail() {
                 <div className="flex items-center gap-3 mb-4">
                     <button
                         onClick={() => navigate(-1)}
-                        className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
+                        className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-3 py-1.5 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
                     >
-                        <ArrowLeft className="size-4 mr-1" />
+                        <ArrowLeft className="size-3 md:size-4 mr-1.5" />
                         Zurück
                     </button>
 
