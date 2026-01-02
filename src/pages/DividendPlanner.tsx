@@ -273,350 +273,348 @@ export function DividendPlanner() {
                         </button>
                     </div>
                 </div>
-            </div>
 
-
-            <div className="overflow-x-auto">
-                <table className="w-full min-w-[1000px]">
-                    <thead>
-                        <tr className="border-b border-border">
-                            <th className="text-left py-3 px-4 font-semibold sticky left-0 z-30 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[140px]">Aktie</th>
-                            <th className="text-right py-3 px-4 font-semibold">Anteile</th>
-                            <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Rendite %</th>
-                            <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Div./Akt.</th>
-                            <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
-                            <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Quartalsweise</th>
-                            <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
-                            <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">EX-Tag</th>
-                            <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zahl-Tag</th>
-                            <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {projectedDividends.length === 0 ? (
-                            <tr>
-                                <td colSpan={10} className="text-center py-8 text-muted-foreground">
-                                    Keine Dividenden-Aktien im Portfolio
-                                </td>
-                            </tr>
-                        ) : (
-                            projectedDividends.map((data: any) => {
-                                const { position, stock, annualDividendNative, annualDividendCHF, quarterlyDividendCHF, divCurrency } = data!;
-
-                                // Annual Display Logic
-                                let annualDisplay: React.ReactNode;
-                                if (divCurrency !== 'CHF') {
-                                    // Manual Format for Tabular Alignment
-                                    const annualNative = annualDividendNative || 0;
-                                    let displayAnnualNative = annualNative;
-                                    let displayAnnualCurrency = divCurrency;
-                                    if (divCurrency === 'GBp') {
-                                        displayAnnualNative /= 100;
-                                        displayAnnualCurrency = 'GBP';
-                                    }
-
-                                    annualDisplay = (
-                                        <div className="flex flex-col items-end gap-0.5">
-                                            <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
-                                                <span>{displayAnnualNative.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                                <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">{displayAnnualCurrency}</span>
-                                            </div>
-                                            <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
-                                                <span>{annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                                <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">CHF</span>
-                                            </div>
-                                        </div>
-                                    );
-                                } else {
-                                    annualDisplay = (
-                                        <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
-                                            <span>{annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                            <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">CHF</span>
-                                        </div>
-                                    );
-                                }
-
-                                const currentDiv = getCurrentDividendPeriod(stock);
-
-                                return (
-                                    <tr key={position.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group">
-                                        <td className="py-3 px-4 sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[140px]">
-                                            <div className="absolute inset-0 bg-card -z-10" />
-                                            <div className="relative flex items-center gap-3">
-                                                <div
-                                                    className="cursor-pointer hover:scale-110 transition-transform p-1 -m-1"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigate('/portfolio');
-                                                    }}
-                                                    title="Zu den Positionen"
-                                                >
-                                                    <Logo
-                                                        url={stock.logoUrl}
-                                                        alt={stock.name}
-                                                        fallback={stock.symbol.slice(0, 2)}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <div
-                                                            className="font-semibold cursor-pointer hover:text-primary transition-colors whitespace-pre-line"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                navigate(`/stock/${stock.id}`);
-                                                            }}
-                                                        >
-                                                            {stock.name}
-                                                        </div>
-                                                        {(() => {
-                                                            const calcState = estimateMarketState(stock.symbol, stock.currency);
-                                                            const isMarketOpen = calcState === 'REGULAR';
-                                                            return isMarketOpen ? (
-                                                                <div className="size-2.5 flex-shrink-0 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
-                                                            ) : (
-                                                                <div className="size-2.5 flex-shrink-0 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${calcState})`} />
-                                                            );
-                                                        })()}
-                                                    </div>
-                                                    <div className="text-xs text-muted-foreground">{stock.symbol}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="text-right py-3 px-4 font-medium">{position.shares}</td>
-                                        <td className="text-right py-3 px-4 text-green-600 dark:text-green-400 font-medium">
-                                            {stock.dividendYield?.toFixed(2)}%
-                                        </td>
-                                        <td className="text-right py-3 px-4 font-medium">
-                                            {stock.dividendAmount ? (
-                                                <div className="flex flex-col items-end gap-0.5">
-                                                    {(() => {
-                                                        // Native Line
-                                                        let displayAmount = stock.dividendAmount || 0;
-                                                        let displayCurrency = divCurrency;
-                                                        if (divCurrency === 'GBp') {
-                                                            displayAmount /= 100;
-                                                            displayCurrency = 'GBP';
-                                                        }
-
-                                                        // CHF Line
-                                                        const chfAmount = convertToCHF(stock.dividendAmount || 0, divCurrency);
-
-                                                        return (
-                                                            <>
-                                                                <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
-                                                                    <span>{displayAmount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                                                    <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">{displayCurrency}</span>
-                                                                </div>
-                                                                {divCurrency !== 'CHF' && (
-                                                                    <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
-                                                                        <span>{chfAmount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                                                        <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">CHF</span>
-                                                                    </div>
-                                                                )}
-                                                            </>
-                                                        );
-                                                    })()}
-                                                </div>
-                                            ) : '-'}
-                                        </td>
-                                        <td className="text-right py-3 px-4 text-muted-foreground align-top">
-                                            {(() => {
-                                                const freqLabel = translateFrequency(stock.dividendFrequency);
-                                                if (currentDiv.periodLabel) {
-                                                    return (
-                                                        <div className="grid grid-cols-[auto_24px] gap-x-0.5 justify-end items-center">
-                                                            <span>{freqLabel}</span>
-                                                            <span className="px-1.5 py-0.5 text-[10px] uppercase font-medium bg-muted text-muted-foreground border border-border rounded justify-self-end">
-                                                                {currentDiv.periodLabel}
-                                                            </span>
-                                                        </div>
-                                                    );
-                                                }
-                                                return freqLabel;
-                                            })()}
-                                        </td>
-                                        <td className="text-right py-3 px-4 font-medium whitespace-nowrap">
-                                            {stock.dividendFrequency !== 'annually' ? `CHF ${quarterlyDividendCHF.toFixed(2)}` : ''}
-                                        </td>
-                                        <td className="text-right py-3 px-4 font-semibold whitespace-nowrap">
-                                            {annualDisplay}
-                                        </td>
-                                        <td className="text-right py-3 px-4 text-muted-foreground">
-                                            <div className="flex flex-col items-end gap-1">
-                                                <span className={(() => {
-                                                    const dDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                                    if (dDays !== null && dDays < 0) return "text-green-600 font-medium"; // Past -> Green
-                                                    if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-orange-500 font-medium"; // Soon -> Orange
-                                                    return "";
-                                                })()}>
-                                                    {currentDiv.exDate
-                                                        ? new Date(currentDiv.exDate).toLocaleDateString('de-DE')
-                                                        : '-'}
-                                                </span>
-                                                {currentDiv.status === 'ex-dividend' && (
-                                                    <span className="text-[10px] font-bold text-orange-500 bg-orange-100 dark:bg-orange-950/50 px-1.5 py-0.5 rounded">
-                                                        Ex-Div
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="text-right py-3 px-4 text-muted-foreground">
-                                            <div className="flex flex-col items-end gap-1">
-                                                <span className={(() => {
-                                                    const payDays = currentDiv.payDate ? Math.ceil((new Date(currentDiv.payDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                                    const exDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-
-                                                    // Paid (Past) -> Green
-                                                    if (payDays !== null && payDays < 0) return "text-green-600 font-medium";
-
-                                                    // Ex-Date passed + Pay-Date future -> Orange (Waiting for payment)
-                                                    if (exDays !== null && exDays < 0 && payDays !== null && payDays >= 0) return "text-orange-500 font-medium";
-
-                                                    // Soon check (fallback if Ex-Date not available or future)
-                                                    if (payDays !== null && payDays >= 0 && payDays <= 14) return "text-orange-500 font-medium";
-
-                                                    return "";
-                                                })()}>
-                                                    {currentDiv.payDate
-                                                        ? new Date(currentDiv.payDate).toLocaleDateString('de-DE')
-                                                        : '-'}
-                                                </span>
-                                                {currentDiv.status === 'paid' && (
-                                                    <span className="text-[10px] font-bold text-green-600 bg-green-100 dark:bg-green-950/50 px-1.5 py-0.5 rounded flex items-center gap-1">
-                                                        Bezahlt
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-1 py-3 text-center sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                            <div className="absolute inset-0 bg-card -z-10" />
-                                            <div className="relative flex items-center justify-center">
-                                                <button
-                                                    onClick={() => navigate(`/dividends/edit/${stock.id}`)}
-                                                    className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
-                                                    title="Bearbeiten"
-                                                >
-                                                    <Edit className="size-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })
-                        )}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-            {/* Bank Accounts Section */ }
-    {
-        bankRows.length > 0 && (
-            <div className="bg-card rounded-xl border shadow-sm overflow-hidden animate-in slide-in-from-bottom-4 duration-700">
-                <div className="flex items-center justify-between p-4 border-b bg-muted/30">
-                    <h2 className="text-lg font-semibold">Bank Erträge & Gebühren</h2>
-                </div>
 
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[1000px]">
                         <thead>
                             <tr className="border-b border-border">
-                                <th className="text-left py-3 px-4 font-semibold sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Bank / Institut</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Betrag</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zins %</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Ø Monatlich</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Frequenz</th>
+                                <th className="text-left py-3 px-4 font-semibold sticky left-0 z-30 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[140px]">Aktie</th>
+                                <th className="text-right py-3 px-4 font-semibold">Anteile</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Rendite %</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Div./Akt.</th>
+                                <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Quartalsweise</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
-                                <th className="text-right py-3 px-4 w-24 sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">EX-Tag</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zahl-Tag</th>
+                                <th className="px-1 py-3 text-center sticky right-0 bg-card z-10 w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {bankRows.map((data: any) => {
-                                const isNegative = data.isNegative;
-                                return (
-                                    <tr key={data.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group">
-                                        <td className="py-3 px-4 sticky left-0 z-10 bg-card group-hover:bg-muted/50 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                            <div className="flex items-center gap-3">
-                                                <Logo
-                                                    url={data.logoUrl}
-                                                    alt={data.name}
-                                                    fallback="BK"
-                                                />
-                                                <div>
-                                                    <div className="font-semibold">{data.name}</div>
-                                                    <div className={`text-xs font-medium ${isNegative ? 'text-red-500' : 'text-green-600'}`}>
-                                                        {isNegative ? 'Konto-Gebühren' : 'Bank-Zinsen'}
-                                                    </div>
+                            {projectedDividends.length === 0 ? (
+                                <tr>
+                                    <td colSpan={10} className="text-center py-8 text-muted-foreground">
+                                        Keine Dividenden-Aktien im Portfolio
+                                    </td>
+                                </tr>
+                            ) : (
+                                projectedDividends.map((data: any) => {
+                                    const { position, stock, annualDividendNative, annualDividendCHF, quarterlyDividendCHF, divCurrency } = data!;
+
+                                    // Annual Display Logic
+                                    let annualDisplay: React.ReactNode;
+                                    if (divCurrency !== 'CHF') {
+                                        // Manual Format for Tabular Alignment
+                                        const annualNative = annualDividendNative || 0;
+                                        let displayAnnualNative = annualNative;
+                                        let displayAnnualCurrency = divCurrency;
+                                        if (divCurrency === 'GBp') {
+                                            displayAnnualNative /= 100;
+                                            displayAnnualCurrency = 'GBP';
+                                        }
+
+                                        annualDisplay = (
+                                            <div className="flex flex-col items-end gap-0.5">
+                                                <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
+                                                    <span>{displayAnnualNative.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                    <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">{displayAnnualCurrency}</span>
+                                                </div>
+                                                <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
+                                                    <span>{annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                    <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">CHF</span>
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td className="text-right py-3 px-4 font-medium whitespace-nowrap">
-                                            CHF {data.depositAmount?.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                        </td>
-                                        <td className="text-right py-3 px-4 text-muted-foreground">
-                                            {data.yield > 0 ? `${data.yield.toFixed(2)}%` : '-'}
-                                        </td>
-                                        <td className={`text-right py-3 px-4 font-medium whitespace-nowrap ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                                            {isNegative ? '-' : '+'} {Math.abs(data.annual / 12).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
-                                        </td>
-                                        <td className="text-right py-3 px-4 text-muted-foreground">
-                                            Jährlich
-                                        </td>
-                                        <td className={`text-right py-3 px-4 font-medium whitespace-nowrap ${isNegative ? 'text-red-600/70' : 'text-green-600/70'}`}>
-                                            {isNegative ? '-' : '+'} CHF {Math.abs(data.quarterly).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                        </td>
-                                        <td className={`text-right py-3 px-4 font-semibold whitespace-nowrap ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                                            {isNegative ? '-' : '+'} CHF {Math.abs(data.annual).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                        </td>
-                                        <td className="text-right py-3 px-4 sticky right-0 bg-card group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                            <div className="flex items-center justify-end gap-1">
-                                                <button
-                                                    onClick={() => navigate('/portfolio')}
-                                                    className="p-2 hover:bg-background rounded-md transition-colors text-muted-foreground hover:text-foreground"
-                                                    title="Zu den Konten"
-                                                >
-                                                    <Edit className="size-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        if (window.confirm('Wollen Sie dieses Bankkonto wirklich löschen?')) {
-                                                            deleteFixedDeposit(data.id);
-                                                        }
-                                                    }}
-                                                    className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 rounded-md transition-colors"
-                                                    title="Löschen"
-                                                >
-                                                    <Trash2 className="size-4" />
-                                                </button>
+                                        );
+                                    } else {
+                                        annualDisplay = (
+                                            <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
+                                                <span>{annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">CHF</span>
                                             </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                                        );
+                                    }
+
+                                    const currentDiv = getCurrentDividendPeriod(stock);
+
+                                    return (
+                                        <tr key={position.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group">
+                                            <td className="py-3 px-4 sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[140px]">
+                                                <div className="absolute inset-0 bg-card -z-10" />
+                                                <div className="relative flex items-center gap-3">
+                                                    <div
+                                                        className="cursor-pointer hover:scale-110 transition-transform p-1 -m-1"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigate('/portfolio');
+                                                        }}
+                                                        title="Zu den Positionen"
+                                                    >
+                                                        <Logo
+                                                            url={stock.logoUrl}
+                                                            alt={stock.name}
+                                                            fallback={stock.symbol.slice(0, 2)}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <div
+                                                                className="font-semibold cursor-pointer hover:text-primary transition-colors whitespace-pre-line"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    navigate(`/stock/${stock.id}`);
+                                                                }}
+                                                            >
+                                                                {stock.name}
+                                                            </div>
+                                                            {(() => {
+                                                                const calcState = estimateMarketState(stock.symbol, stock.currency);
+                                                                const isMarketOpen = calcState === 'REGULAR';
+                                                                return isMarketOpen ? (
+                                                                    <div className="size-2.5 flex-shrink-0 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
+                                                                ) : (
+                                                                    <div className="size-2.5 flex-shrink-0 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${calcState})`} />
+                                                                );
+                                                            })()}
+                                                        </div>
+                                                        <div className="text-xs text-muted-foreground">{stock.symbol}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="text-right py-3 px-4 font-medium">{position.shares}</td>
+                                            <td className="text-right py-3 px-4 text-green-600 dark:text-green-400 font-medium">
+                                                {stock.dividendYield?.toFixed(2)}%
+                                            </td>
+                                            <td className="text-right py-3 px-4 font-medium">
+                                                {stock.dividendAmount ? (
+                                                    <div className="flex flex-col items-end gap-0.5">
+                                                        {(() => {
+                                                            // Native Line
+                                                            let displayAmount = stock.dividendAmount || 0;
+                                                            let displayCurrency = divCurrency;
+                                                            if (divCurrency === 'GBp') {
+                                                                displayAmount /= 100;
+                                                                displayCurrency = 'GBP';
+                                                            }
+
+                                                            // CHF Line
+                                                            const chfAmount = convertToCHF(stock.dividendAmount || 0, divCurrency);
+
+                                                            return (
+                                                                <>
+                                                                    <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
+                                                                        <span>{displayAmount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                                        <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">{displayCurrency}</span>
+                                                                    </div>
+                                                                    {divCurrency !== 'CHF' && (
+                                                                        <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
+                                                                            <span>{chfAmount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                                            <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">CHF</span>
+                                                                        </div>
+                                                                    )}
+                                                                </>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                ) : '-'}
+                                            </td>
+                                            <td className="text-right py-3 px-4 text-muted-foreground align-top">
+                                                {(() => {
+                                                    const freqLabel = translateFrequency(stock.dividendFrequency);
+                                                    if (currentDiv.periodLabel) {
+                                                        return (
+                                                            <div className="grid grid-cols-[auto_24px] gap-x-0.5 justify-end items-center">
+                                                                <span>{freqLabel}</span>
+                                                                <span className="px-1.5 py-0.5 text-[10px] uppercase font-medium bg-muted text-muted-foreground border border-border rounded justify-self-end">
+                                                                    {currentDiv.periodLabel}
+                                                                </span>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return freqLabel;
+                                                })()}
+                                            </td>
+                                            <td className="text-right py-3 px-4 font-medium whitespace-nowrap">
+                                                {stock.dividendFrequency !== 'annually' ? `CHF ${quarterlyDividendCHF.toFixed(2)}` : ''}
+                                            </td>
+                                            <td className="text-right py-3 px-4 font-semibold whitespace-nowrap">
+                                                {annualDisplay}
+                                            </td>
+                                            <td className="text-right py-3 px-4 text-muted-foreground">
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span className={(() => {
+                                                        const dDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                                                        if (dDays !== null && dDays < 0) return "text-green-600 font-medium"; // Past -> Green
+                                                        if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-orange-500 font-medium"; // Soon -> Orange
+                                                        return "";
+                                                    })()}>
+                                                        {currentDiv.exDate
+                                                            ? new Date(currentDiv.exDate).toLocaleDateString('de-DE')
+                                                            : '-'}
+                                                    </span>
+                                                    {currentDiv.status === 'ex-dividend' && (
+                                                        <span className="text-[10px] font-bold text-orange-500 bg-orange-100 dark:bg-orange-950/50 px-1.5 py-0.5 rounded">
+                                                            Ex-Div
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="text-right py-3 px-4 text-muted-foreground">
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span className={(() => {
+                                                        const payDays = currentDiv.payDate ? Math.ceil((new Date(currentDiv.payDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                                                        const exDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+
+                                                        // Paid (Past) -> Green
+                                                        if (payDays !== null && payDays < 0) return "text-green-600 font-medium";
+
+                                                        // Ex-Date passed + Pay-Date future -> Orange (Waiting for payment)
+                                                        if (exDays !== null && exDays < 0 && payDays !== null && payDays >= 0) return "text-orange-500 font-medium";
+
+                                                        // Soon check (fallback if Ex-Date not available or future)
+                                                        if (payDays !== null && payDays >= 0 && payDays <= 14) return "text-orange-500 font-medium";
+
+                                                        return "";
+                                                    })()}>
+                                                        {currentDiv.payDate
+                                                            ? new Date(currentDiv.payDate).toLocaleDateString('de-DE')
+                                                            : '-'}
+                                                    </span>
+                                                    {currentDiv.status === 'paid' && (
+                                                        <span className="text-[10px] font-bold text-green-600 bg-green-100 dark:bg-green-950/50 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                            Bezahlt
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-1 py-3 text-center sticky right-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <div className="absolute inset-0 bg-card -z-10" />
+                                                <div className="relative flex items-center justify-center">
+                                                    <button
+                                                        onClick={() => navigate(`/dividends/edit/${stock.id}`)}
+                                                        className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
+                                                        title="Bearbeiten"
+                                                    >
+                                                        <Edit className="size-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
-        )
-    }
-    {/* Dividend Calendar Chart (Moved Down) */ }
-    <div className="mt-8 mb-8">
-        <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 bg-primary/10 rounded-lg">
-                <TrendingUp className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-                <h2 className="text-lg font-bold text-foreground">Monatliche Dividenden (Geschätzt)</h2>
-                <p className="text-sm text-muted-foreground">Prognostizierte Verteilung der Zahlungen über das Jahr</p>
-            </div>
-        </div>
 
-        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-            <DividendCalendarChart />
+            {/* Bank Accounts Section */}
+            {
+                bankRows.length > 0 && (
+                    <div className="bg-card rounded-xl border shadow-sm overflow-hidden animate-in slide-in-from-bottom-4 duration-700">
+                        <div className="flex items-center justify-between p-4 border-b bg-muted/30">
+                            <h2 className="text-lg font-semibold">Bank Erträge & Gebühren</h2>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-[1000px]">
+                                <thead>
+                                    <tr className="border-b border-border">
+                                        <th className="text-left py-3 px-4 font-semibold sticky left-0 z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Bank / Institut</th>
+                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Betrag</th>
+                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zins %</th>
+                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Ø Monatlich</th>
+                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Frequenz</th>
+                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Quartalsweise</th>
+                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
+                                        <th className="text-right py-3 px-4 w-24 sticky right-0 bg-card z-10 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {bankRows.map((data: any) => {
+                                        const isNegative = data.isNegative;
+                                        return (
+                                            <tr key={data.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group">
+                                                <td className="py-3 px-4 sticky left-0 z-10 bg-card group-hover:bg-muted/50 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                    <div className="flex items-center gap-3">
+                                                        <Logo
+                                                            url={data.logoUrl}
+                                                            alt={data.name}
+                                                            fallback="BK"
+                                                        />
+                                                        <div>
+                                                            <div className="font-semibold">{data.name}</div>
+                                                            <div className={`text-xs font-medium ${isNegative ? 'text-red-500' : 'text-green-600'}`}>
+                                                                {isNegative ? 'Konto-Gebühren' : 'Bank-Zinsen'}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="text-right py-3 px-4 font-medium whitespace-nowrap">
+                                                    CHF {data.depositAmount?.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </td>
+                                                <td className="text-right py-3 px-4 text-muted-foreground">
+                                                    {data.yield > 0 ? `${data.yield.toFixed(2)}%` : '-'}
+                                                </td>
+                                                <td className={`text-right py-3 px-4 font-medium whitespace-nowrap ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                                    {isNegative ? '-' : '+'} {Math.abs(data.annual / 12).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                                </td>
+                                                <td className="text-right py-3 px-4 text-muted-foreground">
+                                                    Jährlich
+                                                </td>
+                                                <td className={`text-right py-3 px-4 font-medium whitespace-nowrap ${isNegative ? 'text-red-600/70' : 'text-green-600/70'}`}>
+                                                    {isNegative ? '-' : '+'} CHF {Math.abs(data.quarterly).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </td>
+                                                <td className={`text-right py-3 px-4 font-semibold whitespace-nowrap ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                                    {isNegative ? '-' : '+'} CHF {Math.abs(data.annual).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </td>
+                                                <td className="text-right py-3 px-4 sticky right-0 bg-card group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <button
+                                                            onClick={() => navigate('/portfolio')}
+                                                            className="p-2 hover:bg-background rounded-md transition-colors text-muted-foreground hover:text-foreground"
+                                                            title="Zu den Konten"
+                                                        >
+                                                            <Edit className="size-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                if (window.confirm('Wollen Sie dieses Bankkonto wirklich löschen?')) {
+                                                                    deleteFixedDeposit(data.id);
+                                                                }
+                                                            }}
+                                                            className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 rounded-md transition-colors"
+                                                            title="Löschen"
+                                                        >
+                                                            <Trash2 className="size-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )
+            }
+            {/* Dividend Calendar Chart (Moved Down) */}
+            <div className="mt-8 mb-8">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                        <TrendingUp className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-bold text-foreground">Monatliche Dividenden (Geschätzt)</h2>
+                        <p className="text-sm text-muted-foreground">Prognostizierte Verteilung der Zahlungen über das Jahr</p>
+                    </div>
+                </div>
+
+                <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                    <DividendCalendarChart />
+                </div>
+            </div>
         </div>
-    </div>
-        </div >
-        </div >
     );
 }
