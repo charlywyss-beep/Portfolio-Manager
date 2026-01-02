@@ -245,55 +245,58 @@ export function Dashboard() {
                                 <TrendingUp className="size-6" />
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-col items-end gap-2">
                                 {/* NEW: Details Button (Only for 1D) */}
                                 {performancePeriod === '1D' && (
-                                    <>
-                                        <button
-                                            onClick={() => refreshAllPrices(true)}
-                                            disabled={isGlobalRefreshing}
-                                            className={cn(
-                                                "flex items-center gap-2 px-2 py-1 rounded-lg border text-xs font-medium transition-all shadow-sm mr-2",
-                                                "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                                                "active:scale-95",
-                                                isGlobalRefreshing && "opacity-50 cursor-not-allowed"
-                                            )}
-                                            title="Preise jetzt aktualisieren"
-                                        >
-                                            <RefreshCw className={cn("size-3", isGlobalRefreshing && "animate-spin")} />
-                                            <span className="hidden sm:inline">
-                                                {isGlobalRefreshing
-                                                    ? 'Aktualisiere...'
-                                                    : lastGlobalRefresh
-                                                        ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
-                                                        : 'Aktualisieren'}
-                                            </span>
-                                        </button>
+                                    <button
+                                        onClick={() => refreshAllPrices(true)}
+                                        disabled={isGlobalRefreshing}
+                                        className={cn(
+                                            "flex items-center gap-2 px-2 py-1 rounded-lg border text-xs font-medium transition-all shadow-sm",
+                                            "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                            "active:scale-95",
+                                            isGlobalRefreshing && "opacity-50 cursor-not-allowed"
+                                        )}
+                                        title="Preise jetzt aktualisieren"
+                                    >
+                                        <RefreshCw className={cn("size-3", isGlobalRefreshing && "animate-spin")} />
+                                        <span className="hidden sm:inline">
+                                            {isGlobalRefreshing
+                                                ? 'Aktualisiere...'
+                                                : lastGlobalRefresh
+                                                    ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                                    : 'Aktualisieren'}
+                                        </span>
+                                    </button>
+                                )}
+
+                                <div className="flex items-center gap-2">
+                                    {performancePeriod === '1D' && (
                                         <button
                                             onClick={() => setShowPerformanceDetails(true)}
                                             className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20"
                                         >
                                             Details
                                         </button>
-                                    </>
-                                )}
+                                    )}
 
-                                {/* Timeframe Selector */}
-                                <div className="relative">
-                                    <select
-                                        className="appearance-none bg-background border border-border rounded-md text-xs font-medium px-2 py-1 pr-6 cursor-pointer hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                        value={performancePeriod}
-                                        onChange={(e) => setPerformancePeriod(e.target.value)}
-                                        title="Zeitraum auswählen"
-                                    >
-                                        <option value="1D">Tag</option>
-                                        <option value="1W">Woche</option>
-                                        <option value="1M">Monat</option>
-                                        <option value="6M">6 Monate</option>
-                                        <option value="1Y">Jahr</option>
-                                    </select>
-                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-muted-foreground">
-                                        <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                                    {/* Timeframe Selector */}
+                                    <div className="relative">
+                                        <select
+                                            className="appearance-none bg-background border border-border rounded-md text-xs font-medium px-2 py-1 pr-6 cursor-pointer hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                            value={performancePeriod}
+                                            onChange={(e) => setPerformancePeriod(e.target.value)}
+                                            title="Zeitraum auswählen"
+                                        >
+                                            <option value="1D">Tag</option>
+                                            <option value="1W">Woche</option>
+                                            <option value="1M">Monat</option>
+                                            <option value="6M">6 Monate</option>
+                                            <option value="1Y">Jahr</option>
+                                        </select>
+                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-muted-foreground">
+                                            <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -379,8 +382,9 @@ export function Dashboard() {
                                     </div>
                                 </div>
                             );
-                        })()}
-                    </div>
+                        })()
+                        }
+                    </div >
 
                     {/* Top Performer ETF */}
                     {/* Top Performers (ETF & Stock) */}
@@ -447,12 +451,12 @@ export function Dashboard() {
                             })()}
                         </div>
                     </div>
-                </div>
+                </div >
 
                 {/* Reordered: Dividends & Watchlist */}
-                <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
+                < div className="grid grid-cols-1 lg:grid-cols-7 gap-6" >
                     {/* Upcoming Dividends List */}
-                    <div className="col-span-1 lg:col-span-3 p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm">
+                    < div className="col-span-1 lg:col-span-3 p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm" >
                         <div className="flex items-center justify-between mb-4 md:mb-6">
                             <div className="flex items-center gap-3">
                                 <h3 className="text-lg font-bold">Nächste Dividenden Auszahlungen</h3>
@@ -539,105 +543,107 @@ export function Dashboard() {
                                 })}
                             {upcomingDividends.length === 0 && <p className="text-sm text-muted-foreground">Keine anstehenden Dividenden.</p>}
                         </div>
-                    </div>
+                    </div >
 
                     {/* Watchlist Opportunities (Blue Info Cards) */}
-                    {upcomingWatchlistDividends.length > 0 && (
-                        <div className="col-span-1 lg:col-span-4 p-6 rounded-xl bg-card border border-border shadow-sm">
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-3">
-                                    <h3 className="text-lg font-bold text-blue-800 dark:text-blue-400">Watchlist Chancen</h3>
-                                    <Info className="size-5 text-blue-500" />
+                    {
+                        upcomingWatchlistDividends.length > 0 && (
+                            <div className="col-span-1 lg:col-span-4 p-6 rounded-xl bg-card border border-border shadow-sm">
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <h3 className="text-lg font-bold text-blue-800 dark:text-blue-400">Watchlist Chancen</h3>
+                                        <Info className="size-5 text-blue-500" />
+                                    </div>
+                                    <select
+                                        value={watchlistTimeframe}
+                                        onChange={(e) => setWatchlistTimeframe(Number(e.target.value))}
+                                        className="text-xs px-2 py-1 rounded border border-border bg-background"
+                                        title="Zeitraum auswählen"
+                                        aria-label="Zeitraum auswählen"
+                                    >
+                                        <option value={90}>3 Monate</option>
+                                        <option value={180}>6 Monate</option>
+                                        <option value={270}>9 Monate</option>
+                                        <option value={365}>1 Jahr</option>
+                                    </select>
                                 </div>
-                                <select
-                                    value={watchlistTimeframe}
-                                    onChange={(e) => setWatchlistTimeframe(Number(e.target.value))}
-                                    className="text-xs px-2 py-1 rounded border border-border bg-background"
-                                    title="Zeitraum auswählen"
-                                    aria-label="Zeitraum auswählen"
-                                >
-                                    <option value={90}>3 Monate</option>
-                                    <option value={180}>6 Monate</option>
-                                    <option value={270}>9 Monate</option>
-                                    <option value={365}>1 Jahr</option>
-                                </select>
-                            </div>
-                            <div className="space-y-4 flex-1 overflow-y-auto max-h-[500px]">
-                                {filteredWatchlistDividends.length > 0 ? (
-                                    filteredWatchlistDividends.map((item, idx) => {
-                                        // Filter dates again for display based on selection
-                                        const visibleDates = item.exDates.filter(date => {
-                                            const diffTime = new Date(date).getTime() - new Date().getTime();
-                                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                            return diffDays <= watchlistTimeframe;
-                                        });
+                                <div className="space-y-4 flex-1 overflow-y-auto max-h-[500px]">
+                                    {filteredWatchlistDividends.length > 0 ? (
+                                        filteredWatchlistDividends.map((item, idx) => {
+                                            // Filter dates again for display based on selection
+                                            const visibleDates = item.exDates.filter(date => {
+                                                const diffTime = new Date(date).getTime() - new Date().getTime();
+                                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                return diffDays <= watchlistTimeframe;
+                                            });
 
-                                        return (
-                                            <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-transparent border-b-border hover:bg-muted/50 transition-colors">
-                                                <div className="flex items-center gap-3">
-                                                    {item.stock.logoUrl && (
-                                                        <img
-                                                            src={item.stock.logoUrl}
-                                                            alt={item.stock.name}
-                                                            className="h-8 w-auto max-w-12 rounded-lg bg-white object-contain p-1 border border-border cursor-pointer hover:opacity-80 transition-opacity"
-                                                            onClick={() => navigate('/watchlist')}
-                                                            onError={(e) => (e.currentTarget.style.display = 'none')}
-                                                        />
-                                                    )}
-                                                    <div>
-                                                        <p className="font-bold text-lg text-foreground cursor-pointer hover:text-primary transition-colors leading-tight mb-1" onClick={() => navigate(`/stock/${item.stock.symbol}`)}>
-                                                            {item.stock.name}
-                                                        </p>
-                                                        <div className="flex flex-wrap flex-col items-start gap-1 mt-0.5">
-                                                            {visibleDates.map((date, dIdx) => {
-                                                                const daysToEx = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                                                                // Find corresponding pay date
-                                                                const dateObj = item.stock.dividendDates?.find(d => d.exDate === date);
-                                                                const payDate = dateObj?.payDate || (item.stock.dividendExDate === date ? item.stock.dividendPayDate : null);
+                                            return (
+                                                <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-transparent border-b-border hover:bg-muted/50 transition-colors">
+                                                    <div className="flex items-center gap-3">
+                                                        {item.stock.logoUrl && (
+                                                            <img
+                                                                src={item.stock.logoUrl}
+                                                                alt={item.stock.name}
+                                                                className="h-8 w-auto max-w-12 rounded-lg bg-white object-contain p-1 border border-border cursor-pointer hover:opacity-80 transition-opacity"
+                                                                onClick={() => navigate('/watchlist')}
+                                                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                                                            />
+                                                        )}
+                                                        <div>
+                                                            <p className="font-bold text-lg text-foreground cursor-pointer hover:text-primary transition-colors leading-tight mb-1" onClick={() => navigate(`/stock/${item.stock.symbol}`)}>
+                                                                {item.stock.name}
+                                                            </p>
+                                                            <div className="flex flex-wrap flex-col items-start gap-1 mt-0.5">
+                                                                {visibleDates.map((date, dIdx) => {
+                                                                    const daysToEx = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                                                                    // Find corresponding pay date
+                                                                    const dateObj = item.stock.dividendDates?.find(d => d.exDate === date);
+                                                                    const payDate = dateObj?.payDate || (item.stock.dividendExDate === date ? item.stock.dividendPayDate : null);
 
-                                                                return (
-                                                                    <div key={dIdx} className="flex flex-col gap-0.5">
-                                                                        <div className="flex items-center gap-2">
-                                                                            <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold shadow-sm whitespace-nowrap w-[110px] justify-center text-center flex-shrink-0">
-                                                                                <Bell className="size-3 flex-shrink-0" />
-                                                                                <span>Ex in {daysToEx} Tagen</span>
+                                                                    return (
+                                                                        <div key={dIdx} className="flex flex-col gap-0.5">
+                                                                            <div className="flex items-center gap-2">
+                                                                                <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold shadow-sm whitespace-nowrap w-[110px] justify-center text-center flex-shrink-0">
+                                                                                    <Bell className="size-3 flex-shrink-0" />
+                                                                                    <span>Ex in {daysToEx} Tagen</span>
+                                                                                </div>
+                                                                                <span className="text-xs font-medium text-muted-foreground">{new Date(date).toLocaleDateString('de-DE')}</span>
                                                                             </div>
-                                                                            <span className="text-xs font-medium text-muted-foreground">{new Date(date).toLocaleDateString('de-DE')}</span>
+                                                                            {payDate && (
+                                                                                <p className="text-xs font-medium text-muted-foreground pl-1">
+                                                                                    Zahltag: {new Date(payDate).toLocaleDateString('de-DE')}
+                                                                                </p>
+                                                                            )}
                                                                         </div>
-                                                                        {payDate && (
-                                                                            <p className="text-xs font-medium text-muted-foreground pl-1">
-                                                                                Zahltag: {new Date(payDate).toLocaleDateString('de-DE')}
-                                                                            </p>
-                                                                        )}
-                                                                    </div>
-                                                                );
-                                                            })}
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col items-end">
+                                                        <div className="px-3 py-1 text-center min-w-[80px]">
+                                                            <p className="font-bold text-xl md:text-2xl text-green-600 dark:text-green-400">
+                                                                {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}% ` : '-'}
+                                                            </p>
+                                                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mt-0.5">Rendite</p>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="flex flex-col items-end">
-                                                    <div className="px-3 py-1 text-center min-w-[80px]">
-                                                        <p className="font-bold text-xl md:text-2xl text-green-600 dark:text-green-400">
-                                                            {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}% ` : '-'}
-                                                        </p>
-                                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mt-0.5">Rendite</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                ) : (
-                                    <p className="text-sm text-muted-foreground text-center py-4">
-                                        Keine Chancen im gewählten Zeitraum.
-                                    </p>
-                                )}
+                                            );
+                                        })
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground text-center py-4">
+                                            Keine Chancen im gewählten Zeitraum.
+                                        </p>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    )}
-                </div>
+                        )
+                    }
+                </div >
 
                 {/* NEW: Advanced Charts Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                < div className="grid grid-cols-1 lg:grid-cols-2 gap-6" >
                     {/* Dividend Calendar */}
                     {/* Dividend Calendar */}
                     <div className="p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm">
@@ -666,11 +672,11 @@ export function Dashboard() {
                         <RiskAnalysisCard />
                     </div>
 
-                </div>
+                </div >
 
 
                 {/* Bottom Section: Dividends & Chart */}
-                <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
+                < div className="grid grid-cols-1 lg:grid-cols-7 gap-6" >
 
                     <div className="col-span-1 lg:col-span-7 p-6 rounded-xl bg-card border border-border shadow-sm">
                         <div className="flex items-center justify-between mb-6">
@@ -847,14 +853,16 @@ export function Dashboard() {
                 </div >
 
                 {/* Modals */}
-                {editingHistoryEntry && (
-                    <AddHistoryEntryModal
-                        isOpen={!!editingHistoryEntry}
-                        onClose={() => setEditingHistoryEntry(null)}
-                        editingEntry={editingHistoryEntry}
-                        mode="edit"
-                    />
-                )}
+                {
+                    editingHistoryEntry && (
+                        <AddHistoryEntryModal
+                            isOpen={!!editingHistoryEntry}
+                            onClose={() => setEditingHistoryEntry(null)}
+                            editingEntry={editingHistoryEntry}
+                            mode="edit"
+                        />
+                    )
+                }
                 <AddHistoryEntryModal
                     isOpen={isHistoryModalOpen}
                     onClose={() => {
@@ -875,7 +883,7 @@ export function Dashboard() {
                     onClose={() => setShowPerformanceDetails(false)}
                     positions={positions}
                 />
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
