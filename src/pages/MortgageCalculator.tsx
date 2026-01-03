@@ -22,9 +22,7 @@ export const MortgageCalculator = () => {
     const [isAutoOpen, setIsAutoOpen] = useState(true);
     const [isHeatingCalcOpen, setIsHeatingCalcOpen] = useState(false);
 
-    const [newPurchaseDate, setNewPurchaseDate] = useState('');
-    const [newPurchaseLiters, setNewPurchaseLiters] = useState(0);
-    const [newPurchasePrice, setNewPurchasePrice] = useState(0);
+
 
     // Fahrkosten Berechnung
     const calculatedMonthlyFuelCost = useMemo(() => {
@@ -964,9 +962,25 @@ export const MortgageCalculator = () => {
                         <div className="p-6 border-b border-border flex justify-between items-center cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setIsHeatingCalcOpen(!isHeatingCalcOpen)}>
                             <h2 className="text-lg font-semibold flex items-center gap-2">
                                 <Fuel className="size-5 text-orange-500" />
-                                Heizöl Tracker & Statistik
+                                Heizöl Kosten
                                 {isHeatingCalcOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
                             </h2>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newPurchase: OilPurchase = {
+                                        id: crypto.randomUUID(),
+                                        date: new Date().toISOString().split('T')[0], // Default to today
+                                        liters: 0,
+                                        pricePer100L: 0
+                                    };
+                                    updateMortgageData({ oilPurchases: [...(oilPurchases || []), newPurchase] });
+                                    if (!isHeatingCalcOpen) setIsHeatingCalcOpen(true);
+                                }}
+                                className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
+                            >
+                                <Plus className="size-4" /> Add Item
+                            </button>
                         </div>
                         {isHeatingCalcOpen && (
                             <div className="p-6 border-b border-border space-y-4">
@@ -982,14 +996,57 @@ export const MortgageCalculator = () => {
 
                                 {/* Purchases Table */}
                                 <div className="space-y-2">
-                                    <h4 className="text-xs font-semibold uppercase text-muted-foreground">Einkäufe</h4>
+                                    <div className="grid grid-cols-12 gap-2 text-[10px] uppercase font-semibold text-muted-foreground mb-1 px-2">
+                                        <div className="col-span-3">Datum</div>
+                                        <div className="col-span-3 text-right">Liter</div>
+                                        <div className="col-span-3 text-right">CHF / 100L</div>
+                                        <div className="col-span-2 text-right">Total</div>
+                                        <div className="col-span-1"></div>
+                                    </div>
+
                                     <div className="space-y-2">
                                         {(oilPurchases || []).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((purchase) => (
-                                            <div key={purchase.id} className="grid grid-cols-12 gap-2 items-center bg-background/50 p-2 rounded border border-border/50 text-sm">
-                                                <div className="col-span-3 text-xs">{new Date(purchase.date).toLocaleDateString()}</div>
-                                                <div className="col-span-2 text-right font-mono">{purchase.liters} L</div>
-                                                <div className="col-span-3 text-right font-mono">CHF {purchase.pricePer100L}/100L</div>
-                                                <div className="col-span-3 text-right font-mono font-medium">CHF {(purchase.liters * (purchase.pricePer100L / 100)).toFixed(0)}</div>
+                                            <div key={purchase.id} className="grid grid-cols-12 gap-2 items-center bg-accent/30 p-2 rounded border border-border/50 text-sm">
+                                                <div className="col-span-3">
+                                                    <input
+                                                        type="date"
+                                                        value={purchase.date}
+                                                        onChange={(e) => {
+                                                            const newPurchases = (oilPurchases || []).map(p => p.id === purchase.id ? { ...p, date: e.target.value } : p);
+                                                            updateMortgageData({ oilPurchases: newPurchases });
+                                                        }}
+                                                        className="w-full bg-background border border-input rounded px-2 py-1 text-xs h-7"
+                                                    />
+                                                </div>
+                                                <div className="col-span-3 flex justify-end">
+                                                    <div className="w-24 relative">
+                                                        <DecimalInput
+                                                            value={purchase.liters}
+                                                            onChange={(val) => {
+                                                                const newPurchases = (oilPurchases || []).map(p => p.id === purchase.id ? { ...p, liters: parseFloat(val) || 0 } : p);
+                                                                updateMortgageData({ oilPurchases: newPurchases });
+                                                            }}
+                                                            className="w-full bg-background border border-input rounded px-2 py-1 text-xs h-7 pr-6 text-right"
+                                                        />
+                                                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">L</span>
+                                                    </div>
+                                                </div>
+                                                <div className="col-span-3 flex justify-end">
+                                                    <div className="w-24 relative">
+                                                        <div className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">CHF</div>
+                                                        <DecimalInput
+                                                            value={purchase.pricePer100L}
+                                                            onChange={(val) => {
+                                                                const newPurchases = (oilPurchases || []).map(p => p.id === purchase.id ? { ...p, pricePer100L: parseFloat(val) || 0 } : p);
+                                                                updateMortgageData({ oilPurchases: newPurchases });
+                                                            }}
+                                                            className="w-full bg-background border border-input rounded px-2 py-1 text-xs h-7 pl-8 text-right bg-transparent"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="col-span-2 text-right font-mono font-medium text-xs">
+                                                    CHF {(purchase.liters * (purchase.pricePer100L / 100)).toFixed(0)}
+                                                </div>
                                                 <div className="col-span-1 flex justify-end">
                                                     <button
                                                         onClick={() => {
@@ -1003,58 +1060,11 @@ export const MortgageCalculator = () => {
                                                 </div>
                                             </div>
                                         ))}
-                                    </div>
-
-                                    {/* Add New Purchase Row */}
-                                    <div className="grid grid-cols-12 gap-2 items-end pt-2">
-                                        <div className="col-span-3">
-                                            <label className="text-[10px] text-muted-foreground block mb-1">Datum</label>
-                                            <input
-                                                type="date"
-                                                value={newPurchaseDate}
-                                                onChange={(e) => setNewPurchaseDate(e.target.value)}
-                                                className="w-full bg-background border border-input rounded px-2 py-1 text-xs h-8"
-                                            />
-                                        </div>
-                                        <div className="col-span-3">
-                                            <label className="text-[10px] text-muted-foreground block mb-1">Liter</label>
-                                            <DecimalInput
-                                                value={newPurchaseLiters}
-                                                onChange={(val) => setNewPurchaseLiters(parseFloat(val) || 0)}
-                                                className="w-full bg-background border border-input rounded px-2 py-1 text-xs h-8"
-                                                placeholder="3000"
-                                            />
-                                        </div>
-                                        <div className="col-span-3">
-                                            <label className="text-[10px] text-muted-foreground block mb-1">CHF / 100L</label>
-                                            <DecimalInput
-                                                value={newPurchasePrice}
-                                                onChange={(val) => setNewPurchasePrice(parseFloat(val) || 0)}
-                                                className="w-full bg-background border border-input rounded px-2 py-1 text-xs h-8"
-                                                placeholder="122"
-                                            />
-                                        </div>
-                                        <div className="col-span-3">
-                                            <button
-                                                onClick={() => {
-                                                    if (!newPurchaseDate || !newPurchaseLiters || !newPurchasePrice) return;
-                                                    const newPurchase: OilPurchase = {
-                                                        id: crypto.randomUUID(),
-                                                        date: newPurchaseDate,
-                                                        liters: newPurchaseLiters,
-                                                        pricePer100L: newPurchasePrice
-                                                    };
-                                                    updateMortgageData({ oilPurchases: [...(oilPurchases || []), newPurchase] });
-                                                    setNewPurchaseLiters(0);
-                                                    setNewPurchasePrice(0);
-                                                    setNewPurchaseDate('');
-                                                }}
-                                                disabled={!newPurchaseDate || !newPurchaseLiters || !newPurchasePrice}
-                                                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 px-2 py-1 rounded text-xs h-8 flex items-center justify-center gap-1 disabled:opacity-50"
-                                            >
-                                                <Plus className="size-3" /> Add
-                                            </button>
-                                        </div>
+                                        {(oilPurchases || []).length === 0 && (
+                                            <div className="text-center text-sm text-muted-foreground py-4 border border-dashed rounded-lg">
+                                                Noch keine Einkäufe erfasst.
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
