@@ -1289,12 +1289,12 @@ export const MortgageCalculator = () => {
                                 </div>
 
                                 {/* Price Inputs */}
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-4 bg-accent/30 p-3 rounded-lg border border-border/50">
                                     <div className="space-y-1">
                                         <label className="text-sm font-medium text-foreground block">
                                             Hochtarif (Total) <span className="opacity-70 text-xs font-normal text-muted-foreground block">Energie + Netz + Abgaben</span>
                                         </label>
-                                        <div className="relative">
+                                        <div className="relative w-[140px]">
                                             <DecimalInput
                                                 value={electricityPriceHT || 0}
                                                 onChange={(val) => updateMortgageData({ electricityPriceHT: parseFloat(val) || 0 })}
@@ -1307,7 +1307,7 @@ export const MortgageCalculator = () => {
                                         <label className="text-sm font-medium text-foreground block">
                                             Niedertarif (Total) <span className="opacity-70 text-xs font-normal text-muted-foreground block">Energie + Netz + Abgaben</span>
                                         </label>
-                                        <div className="relative">
+                                        <div className="relative w-[140px]">
                                             <DecimalInput
                                                 value={electricityPriceNT || 0}
                                                 onChange={(val) => updateMortgageData({ electricityPriceNT: parseFloat(val) || 0 })}
