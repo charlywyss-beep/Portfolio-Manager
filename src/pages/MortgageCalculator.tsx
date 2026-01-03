@@ -779,6 +779,17 @@ export const MortgageCalculator = () => {
                                         <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(monthlyData.interest + monthlyData.amortization + monthlyData.maintenance)} / Mt</span>
                                     </div>
                                     <div className="flex justify-between items-center text-sm">
+                                        <span className="text-muted-foreground">Auto Kosten (ø Monatlich)</span>
+                                        <span className="font-mono">
+                                            {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                                (autoCosts || []).reduce((sum: number, i: BudgetEntry) => {
+                                                    const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
+                                                    return sum + monthlyAmount;
+                                                }, 0)
+                                            )} / Mt
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
                                         <span className="text-muted-foreground">Heizöl (ø Monatlich)</span>
                                         <span className="font-mono text-orange-600 dark:text-orange-400">
                                             {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format((oilStats?.avgCostPerYear || 0) / 12)} / Mt
@@ -795,17 +806,6 @@ export const MortgageCalculator = () => {
                                         <span className="font-mono">
                                             {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
                                                 (budgetItems || []).reduce((sum: number, i: BudgetEntry) => {
-                                                    const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
-                                                    return sum + monthlyAmount;
-                                                }, 0)
-                                            )} / Mt
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-muted-foreground">Auto Kosten (ø Monatlich)</span>
-                                        <span className="font-mono">
-                                            {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
-                                                (autoCosts || []).reduce((sum: number, i: BudgetEntry) => {
                                                     const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
                                                     return sum + monthlyAmount;
                                                 }, 0)
@@ -1330,9 +1330,46 @@ export const MortgageCalculator = () => {
                                     </div>
                                 </div>
 
+                                {/* Current Reading Display (Latest) */}
+                                {electricityReadings && electricityReadings.length > 0 && (() => {
+                                    const sortedReadings = [...electricityReadings].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                                    const latest = sortedReadings[0];
+                                    return (
+                                        <div className="mt-6 border-t border-border pt-4">
+                                            <h4 className="text-xl font-semibold mb-4 text-foreground">Aktueller Zählerstand</h4>
+
+                                            <div className="space-y-3 font-medium">
+                                                <div className="flex items-center justify-between bg-muted/30 p-1 rounded-md">
+                                                    <span className="text-muted-foreground w-32 text-right pr-4 text-base">Stand HT</span>
+                                                    <div className="flex-1 flex justify-center">
+                                                        <div className="bg-[#a3cc29] text-white px-4 py-1 rounded text-lg font-mono tracking-wider shadow-sm min-w-[120px] text-center">
+                                                            {latest.valueHT.toLocaleString('de-CH')}
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-muted-foreground w-16 pl-2 text-base">kWh</span>
+                                                </div>
+
+                                                <div className="flex items-center justify-between bg-muted/30 p-1 rounded-md">
+                                                    <span className="text-muted-foreground w-32 text-right pr-4 text-base">Stand NT</span>
+                                                    <div className="flex-1 flex justify-center">
+                                                        <div className="bg-[#a3cc29] text-white px-4 py-1 rounded text-lg font-mono tracking-wider shadow-sm min-w-[120px] text-center">
+                                                            {latest.valueNT.toLocaleString('de-CH')}
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-muted-foreground w-16 pl-2 text-base">kWh</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-3 text-base text-foreground">
+                                                Ablesedatum: <span className="font-medium">{new Date(latest.date).toLocaleDateString('de-CH')}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+
                                 {/* Stats */}
                                 {electricityStats ? (
-                                    <div className="mt-4 pt-4 border-t border-border space-y-2">
+                                    <div className="mt-8 pt-6 border-t border-border space-y-2">
                                         <h4 className="text-sm font-semibold uppercase text-muted-foreground mb-2">Statistik (Ø Jährlich)</h4>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="bg-yellow-500/10 p-3 rounded">
