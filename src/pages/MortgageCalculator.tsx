@@ -1342,9 +1342,15 @@ export const MortgageCalculator = () => {
                                                 <div className="flex items-center justify-between bg-muted/30 p-1 rounded-md">
                                                     <span className="text-muted-foreground w-32 text-right pr-4 text-base">Stand HT</span>
                                                     <div className="flex-1 flex justify-center">
-                                                        <div className="bg-[#a3cc29] text-white px-4 py-1 rounded text-lg font-mono tracking-wider shadow-sm min-w-[120px] text-center">
-                                                            {latest.valueHT.toLocaleString('de-CH')}
-                                                        </div>
+                                                        <DecimalInput
+                                                            value={latest.valueHT}
+                                                            onChange={(val) => {
+                                                                const newReadings = electricityReadings.map(r => r.id === latest.id ? { ...r, valueHT: parseFloat(val) || 0 } : r);
+                                                                updateMortgageData({ electricityReadings: newReadings });
+                                                            }}
+                                                            onFocus={(e) => e.target.select()}
+                                                            className="bg-[#a3cc29] text-white px-2 py-1 rounded text-lg font-mono tracking-wider shadow-sm w-[140px] text-center border-none focus:ring-2 focus:ring-primary outline-none"
+                                                        />
                                                     </div>
                                                     <span className="text-muted-foreground w-16 pl-2 text-base">kWh</span>
                                                 </div>
@@ -1352,9 +1358,15 @@ export const MortgageCalculator = () => {
                                                 <div className="flex items-center justify-between bg-muted/30 p-1 rounded-md">
                                                     <span className="text-muted-foreground w-32 text-right pr-4 text-base">Stand NT</span>
                                                     <div className="flex-1 flex justify-center">
-                                                        <div className="bg-[#a3cc29] text-white px-4 py-1 rounded text-lg font-mono tracking-wider shadow-sm min-w-[120px] text-center">
-                                                            {latest.valueNT.toLocaleString('de-CH')}
-                                                        </div>
+                                                        <DecimalInput
+                                                            value={latest.valueNT}
+                                                            onChange={(val) => {
+                                                                const newReadings = electricityReadings.map(r => r.id === latest.id ? { ...r, valueNT: parseFloat(val) || 0 } : r);
+                                                                updateMortgageData({ electricityReadings: newReadings });
+                                                            }}
+                                                            onFocus={(e) => e.target.select()}
+                                                            className="bg-[#a3cc29] text-white px-2 py-1 rounded text-lg font-mono tracking-wider shadow-sm w-[140px] text-center border-none focus:ring-2 focus:ring-primary outline-none"
+                                                        />
                                                     </div>
                                                     <span className="text-muted-foreground w-16 pl-2 text-base">kWh</span>
                                                 </div>
