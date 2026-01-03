@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car, ChevronDown, ChevronUp, Fuel, Zap, User, FileText, Gauge } from 'lucide-react';
+import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car, ChevronDown, ChevronUp, Fuel, Zap, User, FileText, Gauge, Droplets } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { cn } from '../utils';
@@ -13,15 +13,23 @@ import type { MortgageTranche, BudgetEntry, OilPurchase, ElectricityReading } fr
 export const MortgageCalculator = () => {
     const { mortgageData, updateMortgageData } = usePortfolio();
 
-    const { propertyValue, maintenanceRate, yearlyAmortization, tranches, budgetItems, incomeItems, autoCosts, fuelPricePerLiter, consumptionPer100km, dailyKm, workingDaysPerMonth, oilTankCapacity, oilPurchases, electricityReadings, electricityPriceHT, electricityPriceNT, electricityCustomerNumber, electricityContractNumber, electricityMeterNumber } = mortgageData;
+    const { propertyValue, maintenanceRate, yearlyAmortization, tranches, budgetItems, incomeItems, autoCosts, fuelPricePerLiter, consumptionPer100km, dailyKm, workingDaysPerMonth, oilTankCapacity, oilPurchases, electricityReadings, electricityPriceHT, electricityPriceNT, electricityCustomerNumber, electricityContractNumber, electricityMeterNumber, waterHistory } = mortgageData;
 
     const [isFuelCalcOpen, setIsFuelCalcOpen] = useState(false);
 
     // Collapsible states for cards (default: expanded)
-    const [isBudgetOpen, setIsBudgetOpen] = useState(true);
+    const [isBudgetOpen, setIsBudgetOpen] = useState(false);
+    const [isIncomeOpen, setIsIncomeOpen] = useState(false);
+    const [isPropertyOpen, setIsPropertyOpen] = useState(false);
+    const [isFinanceOpen, setIsFinanceOpen] = useState(false);
     const [isAutoOpen, setIsAutoOpen] = useState(false);
     const [isHeatingCalcOpen, setIsHeatingCalcOpen] = useState(false);
     const [isElectricityOpen, setIsElectricityOpen] = useState(false);
+    const [isWaterOpen, setIsWaterOpen] = useState(false);
+
+    // Water entry form state
+
+
 
 
     // Fahrkosten Berechnung
@@ -120,6 +128,22 @@ export const MortgageCalculator = () => {
         };
     }, [electricityReadings, electricityPriceHT, electricityPriceNT]);
 
+    // Water Statistics
+    const waterStats = useMemo(() => {
+        if (!waterHistory || waterHistory.length === 0) return null;
+
+        const totalCost = waterHistory.reduce((sum, entry) => sum + entry.costTotal, 0);
+        const avgCostPerYear = totalCost / waterHistory.length;
+
+        // Calculate average usage just for completeness (optional)
+        const totalUsage = waterHistory.reduce((sum, entry) => sum + entry.usage, 0);
+        const avgUsagePerYear = totalUsage / waterHistory.length;
+
+        return {
+            avgCostPerYear,
+            avgUsagePerYear
+        };
+    }, [waterHistory]);
 
     const setPropertyValue = (val: number) => updateMortgageData({ propertyValue: val });
     const setMaintenanceRate = (val: number) => updateMortgageData({ maintenanceRate: val });
@@ -170,7 +194,8 @@ export const MortgageCalculator = () => {
         + monthlyData.amortization
         + monthlyData.maintenance
         + ((oilStats?.avgCostPerYear || 0) / 12)
-        + ((electricityStats?.annualCost || 0) / 12);
+        + ((electricityStats?.annualCost || 0) / 12)
+        + ((waterStats?.avgCostPerYear || 0) / 12);
 
     const exportToPDF = () => {
         const doc = new jsPDF();
@@ -422,7 +447,7 @@ export const MortgageCalculator = () => {
         <div className="p-6 space-y-6 max-w-7xl mx-auto pb-24">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Hypotheken Rechner</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Budget Planer</h1>
                     <p className="text-muted-foreground mt-1">
                         Optimieren Sie Ihren Finanzierungsmix und berechnen Sie die monatliche Tragbarkeit.
                     </p>
@@ -433,235 +458,256 @@ export const MortgageCalculator = () => {
                 {/* LEFT COLUMN: INPUTS */}
                 <div className="space-y-6">
 
-                    {/* Property & Maintenance */}
-                    <div className="bg-card rounded-xl border border-border p-6 shadow-sm space-y-4">
-                        <h2 className="text-lg font-semibold flex items-center gap-2">
-                            <Building className="size-5 text-primary" />
-                            Immobilie & Nebenkosten
-                        </h2>
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Immobilienwert</label>
-                                <div className="relative">
-                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-8 h-4 flex items-center justify-center text-xs">
-                                        CHF
-                                    </div>
-                                    <DecimalInput
-                                        value={propertyValue}
-                                        onChange={(val) => setPropertyValue(parseFloat(val) || 0)}
-                                        className={cn(inputClass, "pl-14")}
-                                    />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Unterhalt & Nebenkosten (%)</label>
-                                <div className="relative">
-                                    <Percent className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
-                                    <DecimalInput
-                                        value={maintenanceRate}
-                                        onChange={(val) => setMaintenanceRate(parseFloat(val) || 0)}
-                                        className={cn(inputClass, "pl-9")}
-                                    />
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                    ≈ {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(yearlyMaintenance / 12)} / Monat
-                                </p>
-                            </div>
-                            <div className="space-y-2 sm:col-span-2">
-                                <label className="text-sm font-medium">Amortisation (Jährlich)</label>
-                                <div className="relative">
-                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-8 h-4 flex items-center justify-center text-xs">
-                                        CHF
-                                    </div>
-                                    <DecimalInput
-                                        value={yearlyAmortization}
-                                        onChange={(val) => setYearlyAmortization(parseFloat(val) || 0)}
-                                        className={cn(inputClass, "pl-14")}
-                                    />
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                    Pflicht bei Belehnung &gt; 66% (2. Hypothek). Üblich: ~1% vom Immobilienwert.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Mortgage Tranches */}
-                    <div className="bg-card rounded-xl border border-border p-6 shadow-sm space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-semibold flex items-center gap-2">
-                                <Landmark className="size-5 text-primary" />
-                                Finanzierungsmix
-                            </h2>
-                            <button
-                                onClick={addTranche}
-                                className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
-                            >
-                                <Plus className="size-4" /> Add
-                            </button>
-                        </div>
-
-                        <div className="space-y-3">
-                            {tranches.map((tranche, index) => (
-                                <div key={tranche.id} className="grid grid-cols-12 gap-2 items-end bg-accent/30 p-3 rounded-lg border border-transparent hover:border-border transition-all">
-                                    <div className="col-span-5 sm:col-span-5 space-y-1">
-                                        <label className="text-xs text-muted-foreground">{index + 1}. Hypothek</label>
-                                        <select
-                                            value={tranche.name}
-                                            onChange={(e) => updateTranche(tranche.id, 'name', e.target.value)}
-                                            className={inputClass}
-                                        >
-                                            <option value="" disabled>Bitte wählen...</option>
-                                            <optgroup label="SARON / Markt">
-                                                <option value="SARON Indikativ">SARON Indikativ</option>
-                                                <option value="SARON HYPO 3 Jahre">SARON HYPO 3 Jahre</option>
-                                            </optgroup>
-                                            <optgroup label="Festhypotheken">
-                                                <option value="Festhypothek 2 Jahre">Festhypothek 2 Jahre</option>
-                                                <option value="Festhypothek 3 Jahre">Festhypothek 3 Jahre</option>
-                                                <option value="Festhypothek 4 Jahre">Festhypothek 4 Jahre</option>
-                                                <option value="Festhypothek 5 Jahre">Festhypothek 5 Jahre</option>
-                                                <option value="Festhypothek 6 Jahre">Festhypothek 6 Jahre</option>
-                                                <option value="Festhypothek 7 Jahre">Festhypothek 7 Jahre</option>
-                                                {/* Extended for completeness */}
-                                                <option value="Festhypothek 8 Jahre">Festhypothek 8 Jahre</option>
-                                                <option value="Festhypothek 9 Jahre">Festhypothek 9 Jahre</option>
-                                                <option value="Festhypothek 10 Jahre">Festhypothek 10 Jahre</option>
-                                            </optgroup>
-                                        </select>
-                                    </div>
-                                    <div className="col-span-4 sm:col-span-3 space-y-1">
-                                        <label className="text-xs text-muted-foreground">Betrag</label>
-                                        <DecimalInput
-                                            value={tranche.amount}
-                                            onChange={(val) => updateTranche(tranche.id, 'amount', parseFloat(val) || 0)}
-                                            className={inputClass}
-                                        />
-                                    </div>
-                                    <div className="col-span-2 sm:col-span-3 space-y-1">
-                                        <label className="text-xs text-muted-foreground">Zins (%)</label>
-                                        <DecimalInput
-                                            value={tranche.rate}
-                                            onChange={(val) => updateTranche(tranche.id, 'rate', parseFloat(val) || 0)}
-                                            className={inputClass}
-                                        />
-                                    </div>
-                                    <div className="col-span-1 flex justify-center pb-2">
-                                        <button
-                                            onClick={() => removeTranche(tranche.id)}
-                                            className="text-muted-foreground hover:text-destructive transition-colors"
-                                            title="Entfernen"
-                                        >
-                                            <Trash2 className="size-4" />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-
-                            {tranches.length === 0 && (
-                                <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed border-border rounded-lg">
-                                    Keine Tranchen vorhanden. Fügen Sie eine Hypothek hinzu.
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex justify-between items-center text-sm px-2 pt-2 border-t border-border">
-                            <span className="text-muted-foreground">Total Hypothekardschuld</span>
-                            <span className="font-mono font-bold">
-                                {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(totalDebt)}
-                            </span>
-                        </div>
-                    </div>
 
                     {/* NEW: Income Plan */}
                     <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
-                        <div className="p-4 border-b border-border flex justify-between items-center">
+                        <div className="p-6 border-b border-border flex justify-between items-center cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setIsIncomeOpen(!isIncomeOpen)}>
                             <h2 className="text-lg font-semibold flex items-center gap-2">
                                 <Wallet className="size-5 text-emerald-500" />
                                 Einnahmen
+                                {isIncomeOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
                             </h2>
                             <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     const newItems = [...(incomeItems || []), { id: crypto.randomUUID(), name: '', amount: 0, frequency: 'monthly' as const }];
                                     updateMortgageData({ incomeItems: newItems });
                                 }}
                                 className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
                             >
-                                <Plus className="size-4" /> Add Income
+                                <Plus className="size-4" /> Eingabe
                             </button>
                         </div>
-                        <div className="p-4 space-y-2">
-                            <div className="space-y-1">
-                                {(incomeItems || []).map((item: BudgetEntry, index: number) => (
-                                    <div key={item.id} className="grid grid-cols-12 gap-2 items-center bg-accent/30 px-2 py-0.5 rounded-lg">
-                                        <div className="col-span-5">
-                                            <input
-                                                value={item.name}
-                                                onChange={(e) => {
-                                                    const newItems = [...(incomeItems || [])];
-                                                    newItems[index] = { ...item, name: e.target.value };
-                                                    updateMortgageData({ incomeItems: newItems });
-                                                }}
-                                                className="w-full bg-transparent border-none text-sm focus:ring-0 p-0 font-medium h-7"
-                                                placeholder="Quelle (z.B. Lohn)"
-                                            />
+                        {isIncomeOpen && (
+                            <div className="p-4 space-y-2">
+                                <div className="space-y-1">
+                                    {(incomeItems || []).map((item: BudgetEntry, index: number) => (
+                                        <div key={item.id} className="grid grid-cols-12 gap-2 items-center bg-accent/30 px-2 py-0.5 rounded-lg">
+                                            <div className="col-span-5">
+                                                <input
+                                                    value={item.name}
+                                                    onChange={(e) => {
+                                                        const newItems = [...(incomeItems || [])];
+                                                        newItems[index] = { ...item, name: e.target.value };
+                                                        updateMortgageData({ incomeItems: newItems });
+                                                    }}
+                                                    className="w-full bg-transparent border-none text-sm focus:ring-0 p-0 font-medium h-7"
+                                                    placeholder="Quelle (z.B. Lohn)"
+                                                />
+                                            </div>
+                                            <div className="col-span-3">
+                                                <select
+                                                    value={item.frequency || 'monthly'}
+                                                    onChange={(e) => {
+                                                        const newItems = [...(incomeItems || [])];
+                                                        newItems[index] = { ...item, frequency: e.target.value as 'monthly' | 'yearly' };
+                                                        updateMortgageData({ incomeItems: newItems });
+                                                    }}
+                                                    className="w-full bg-background border border-input rounded px-1 py-0 text-xs h-7"
+                                                >
+                                                    <option value="monthly">Monatlich</option>
+                                                    <option value="yearly">Jährlich</option>
+                                                </select>
+                                            </div>
+                                            <div className="col-span-3 relative">
+                                                <div className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">CHF</div>
+                                                <DecimalInput
+                                                    value={item.amount}
+                                                    onChange={(val) => {
+                                                        const newItems = [...(incomeItems || [])];
+                                                        newItems[index] = { ...item, amount: parseFloat(val) || 0 };
+                                                        updateMortgageData({ incomeItems: newItems });
+                                                    }}
+                                                    className="w-full bg-background border border-input rounded px-1 py-0 pl-8 text-sm text-right h-7"
+                                                />
+                                            </div>
+                                            <div className="col-span-1 flex justify-end">
+                                                <button
+                                                    onClick={() => {
+                                                        const newItems = (incomeItems || []).filter((i: BudgetEntry) => i.id !== item.id);
+                                                        updateMortgageData({ incomeItems: newItems });
+                                                    }}
+                                                    className="text-muted-foreground hover:text-destructive p-1"
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className="col-span-3">
-                                            <select
-                                                value={item.frequency || 'monthly'}
-                                                onChange={(e) => {
-                                                    const newItems = [...(incomeItems || [])];
-                                                    newItems[index] = { ...item, frequency: e.target.value as 'monthly' | 'yearly' };
-                                                    updateMortgageData({ incomeItems: newItems });
-                                                }}
-                                                className="w-full bg-background border border-input rounded px-1 py-0 text-xs h-7"
-                                            >
-                                                <option value="monthly">Monatlich</option>
-                                                <option value="yearly">Jährlich</option>
-                                            </select>
+                                    ))}
+                                    {(incomeItems || []).length === 0 && (
+                                        <div className="text-center text-sm text-muted-foreground py-4 border border-dashed rounded-lg">
+                                            Noch keine Einnahmen erfasst.
                                         </div>
-                                        <div className="col-span-3 relative">
-                                            <div className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">CHF</div>
-                                            <DecimalInput
-                                                value={item.amount}
-                                                onChange={(val) => {
-                                                    const newItems = [...(incomeItems || [])];
-                                                    newItems[index] = { ...item, amount: parseFloat(val) || 0 };
-                                                    updateMortgageData({ incomeItems: newItems });
-                                                }}
-                                                className="w-full bg-background border border-input rounded px-1 py-0 pl-8 text-sm text-right h-7"
-                                            />
-                                        </div>
-                                        <div className="col-span-1 flex justify-end">
-                                            <button
-                                                onClick={() => {
-                                                    const newItems = (incomeItems || []).filter((i: BudgetEntry) => i.id !== item.id);
-                                                    updateMortgageData({ incomeItems: newItems });
-                                                }}
-                                                className="text-muted-foreground hover:text-destructive p-1"
-                                            >
-                                                <Trash2 className="size-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                                {(incomeItems || []).length === 0 && (
-                                    <div className="text-center text-sm text-muted-foreground py-4 border border-dashed rounded-lg">
-                                        Noch keine Einnahmen erfasst.
-                                    </div>
-                                )}
+                                    )}
+                                </div>
+                                <div className="pt-2 flex justify-end text-sm font-medium">
+                                    Total: {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                        (incomeItems || []).reduce((sum: number, i: BudgetEntry) => {
+                                            const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
+                                            return sum + monthlyAmount;
+                                        }, 0)
+                                    )} / Mt
+                                </div>
                             </div>
-                            <div className="pt-2 flex justify-end text-sm font-medium">
-                                Total: {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
-                                    (incomeItems || []).reduce((sum: number, i: BudgetEntry) => {
-                                        const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
-                                        return sum + monthlyAmount;
-                                    }, 0)
-                                )} / Mt
-                            </div>
-                        </div>
+                        )}
                     </div>
+
+                    {/* Property & Maintenance */}
+                    <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+                        <div className="p-6 border-b border-border flex justify-between items-center cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setIsPropertyOpen(!isPropertyOpen)}>
+                            <h2 className="text-lg font-semibold flex items-center gap-2">
+                                <Building className="size-5 text-primary" />
+                                Immobilie & Nebenkosten
+                                {isPropertyOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
+                            </h2>
+                        </div>
+                        {isPropertyOpen && (
+                            <div className="p-6 space-y-4">
+
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Immobilienwert</label>
+                                        <div className="relative">
+                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-8 h-4 flex items-center justify-center text-xs">
+                                                CHF
+                                            </div>
+                                            <DecimalInput
+                                                value={propertyValue}
+                                                onChange={(val) => setPropertyValue(parseFloat(val) || 0)}
+                                                className={cn(inputClass, "pl-14")}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Unterhalt & Nebenkosten (%)</label>
+                                        <div className="relative">
+                                            <Percent className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
+                                            <DecimalInput
+                                                value={maintenanceRate}
+                                                onChange={(val) => setMaintenanceRate(parseFloat(val) || 0)}
+                                                className={cn(inputClass, "pl-9")}
+                                            />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            ≈ {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(yearlyMaintenance / 12)} / Monat
+                                        </p>
+                                    </div>
+                                    <div className="space-y-2 sm:col-span-2">
+                                        <label className="text-sm font-medium">Amortisation (Jährlich)</label>
+                                        <div className="relative">
+                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-8 h-4 flex items-center justify-center text-xs">
+                                                CHF
+                                            </div>
+                                            <DecimalInput
+                                                value={yearlyAmortization}
+                                                onChange={(val) => setYearlyAmortization(parseFloat(val) || 0)}
+                                                className={cn(inputClass, "pl-14")}
+                                            />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            Pflicht bei Belehnung &gt; 66% (2. Hypothek). Üblich: ~1% vom Immobilienwert.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+
+                    {/* Mortgage Tranches */}
+                    <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+                        <div className="p-6 border-b border-border flex justify-between items-center cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setIsFinanceOpen(!isFinanceOpen)}>
+                            <h2 className="text-lg font-semibold flex items-center gap-2">
+                                <Landmark className="size-5 text-primary" />
+                                Finanzierungsmix
+                                {isFinanceOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
+                            </h2>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    addTranche();
+                                }}
+                                className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
+                            >
+                                <Plus className="size-4" /> Eingabe
+                            </button>
+                        </div>
+                        {isFinanceOpen && (
+                            <div className="p-6 space-y-4">
+                                <div className="space-y-3">
+                                    {tranches.map((tranche, index) => (
+                                        <div key={tranche.id} className="grid grid-cols-12 gap-2 items-end bg-accent/30 p-3 rounded-lg border border-transparent hover:border-border transition-all">
+                                            <div className="col-span-5 sm:col-span-5 space-y-1">
+                                                <label className="text-xs text-muted-foreground">{index + 1}. Hypothek</label>
+                                                <select
+                                                    value={tranche.name}
+                                                    onChange={(e) => updateTranche(tranche.id, 'name', e.target.value)}
+                                                    className={inputClass}
+                                                >
+                                                    <option value="" disabled>Bitte wählen...</option>
+                                                    <optgroup label="SARON / Markt">
+                                                        <option value="SARON Indikativ">SARON Indikativ</option>
+                                                        <option value="SARON HYPO 3 Jahre">SARON HYPO 3 Jahre</option>
+                                                    </optgroup>
+                                                    <optgroup label="Festhypotheken">
+                                                        <option value="Festhypothek 2 Jahre">Festhypothek 2 Jahre</option>
+                                                        <option value="Festhypothek 3 Jahre">Festhypothek 3 Jahre</option>
+                                                        <option value="Festhypothek 4 Jahre">Festhypothek 4 Jahre</option>
+                                                        <option value="Festhypothek 5 Jahre">Festhypothek 5 Jahre</option>
+                                                        <option value="Festhypothek 6 Jahre">Festhypothek 6 Jahre</option>
+                                                        <option value="Festhypothek 7 Jahre">Festhypothek 7 Jahre</option>
+                                                        {/* Extended for completeness */}
+                                                        <option value="Festhypothek 8 Jahre">Festhypothek 8 Jahre</option>
+                                                        <option value="Festhypothek 9 Jahre">Festhypothek 9 Jahre</option>
+                                                        <option value="Festhypothek 10 Jahre">Festhypothek 10 Jahre</option>
+                                                    </optgroup>
+                                                </select>
+                                            </div>
+                                            <div className="col-span-4 sm:col-span-3 space-y-1">
+                                                <label className="text-xs text-muted-foreground">Betrag</label>
+                                                <DecimalInput
+                                                    value={tranche.amount}
+                                                    onChange={(val) => updateTranche(tranche.id, 'amount', parseFloat(val) || 0)}
+                                                    className={inputClass}
+                                                />
+                                            </div>
+                                            <div className="col-span-2 sm:col-span-3 space-y-1">
+                                                <label className="text-xs text-muted-foreground">Zins (%)</label>
+                                                <DecimalInput
+                                                    value={tranche.rate}
+                                                    onChange={(val) => updateTranche(tranche.id, 'rate', parseFloat(val) || 0)}
+                                                    className={inputClass}
+                                                />
+                                            </div>
+                                            <div className="col-span-1 flex justify-center pb-2">
+                                                <button
+                                                    onClick={() => removeTranche(tranche.id)}
+                                                    className="text-muted-foreground hover:text-destructive transition-colors"
+                                                    title="Entfernen"
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {tranches.length === 0 && (
+                                        <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed border-border rounded-lg">
+                                            Keine Tranchen vorhanden. Fügen Sie eine Hypothek hinzu.
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex justify-between items-center text-sm px-2 pt-2 border-t border-border">
+                                    <span className="text-muted-foreground">Total Hypothekardschuld</span>
+                                    <span className="font-mono font-bold">
+                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(totalDebt)}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
 
                     {/* NEW: Budget Plan */}
                     <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
@@ -686,7 +732,7 @@ export const MortgageCalculator = () => {
                                     }}
                                     className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
                                 >
-                                    <Plus className="size-4" /> Add Item
+                                    <Plus className="size-4" /> Eingabe
                                 </button>
                             </div>
                         </div>
@@ -802,6 +848,12 @@ export const MortgageCalculator = () => {
                                         </span>
                                     </div>
                                     <div className="flex justify-between items-center text-sm">
+                                        <span className="text-muted-foreground">Wasser (ø Monatlich)</span>
+                                        <span className="font-mono text-blue-600 dark:text-blue-400">
+                                            {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format((waterStats?.avgCostPerYear || 0) / 12)} / Mt
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
                                         <span className="text-muted-foreground">Budget Ausgaben (ø Monatlich)</span>
                                         <span className="font-mono">
                                             {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
@@ -880,7 +932,7 @@ export const MortgageCalculator = () => {
                                 }}
                                 className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
                             >
-                                <Plus className="size-4" /> Add Item
+                                <Plus className="size-4" /> Eingabe
                             </button>
                         </div>
                         {isAutoOpen && (
@@ -1041,7 +1093,7 @@ export const MortgageCalculator = () => {
                                 }}
                                 className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
                             >
-                                <Plus className="size-4" /> Add Item
+                                <Plus className="size-4" /> Eingabe
                             </button>
                         </div>
                         {isHeatingCalcOpen && (
@@ -1184,7 +1236,7 @@ export const MortgageCalculator = () => {
                                 }}
                                 className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
                             >
-                                <Plus className="size-4" /> Add Reading
+                                <Plus className="size-4" /> Eingabe
                             </button>
                         </div>
                         {isElectricityOpen && (
@@ -1416,6 +1468,174 @@ export const MortgageCalculator = () => {
                         )}
                     </div>
 
+                    {/* NEW: Wasser Kosten Card */}
+                    <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+                        <div className="p-6 border-b border-border flex justify-between items-center cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setIsWaterOpen(!isWaterOpen)}>
+                            <h2 className="text-lg font-semibold flex items-center gap-2">
+                                <Droplets className="size-5 text-blue-500" />
+                                Wasser Kosten
+                                {isWaterOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
+                            </h2>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newEntry = {
+                                        id: crypto.randomUUID(),
+                                        year: new Date().getFullYear(),
+                                        messpunkt: '',
+                                        usage: 0,
+                                        costFresh: 0,
+                                        costWaste: 0,
+                                        costTotal: 0,
+                                        date: new Date().toISOString()
+                                    };
+                                    updateMortgageData({ waterHistory: [...(waterHistory || []), newEntry] });
+                                    if (!isWaterOpen) setIsWaterOpen(true);
+                                }}
+                                className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
+                            >
+                                <Plus className="size-4" /> Eingabe
+                            </button>
+                        </div>
+                        {isWaterOpen && (
+                            <div className="p-6 border-b border-border space-y-6">
+                                {/* Water History Table */}
+                                <div className="space-y-2">
+
+                                    {(waterHistory || []).length > 0 ? (
+                                        <div className="space-y-2">
+                                            <div className="flex gap-2 text-[10px] uppercase font-semibold text-muted-foreground mb-1 px-2">
+                                                <div className="w-[130px]">Datum</div>
+                                                <div className="w-[90px] text-right">Zählerstand</div>
+                                                <div className="w-[70px] text-right">m³</div>
+                                                <div className="w-[100px] text-right">Frischwasser</div>
+                                                <div className="w-[100px] text-right">Abwasser</div>
+                                                <div className="w-[100px] text-right">Total</div>
+                                                <div className="w-[30px]"></div>
+                                            </div>
+                                            {(waterHistory || []).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((entry: any) => (
+                                                <div key={entry.id} className="flex gap-2 items-center bg-accent/30 p-2 rounded border border-border/50 text-sm">
+                                                    <div className="w-[130px]">
+                                                        <input
+                                                            type="date"
+                                                            value={entry.date}
+                                                            onChange={(e) => {
+                                                                const dateVal = e.target.value;
+                                                                const newYear = dateVal ? parseInt(dateVal.split('-')[0]) : entry.year;
+                                                                const newHistory = (waterHistory || []).map((h: any) => h.id === entry.id ? { ...h, date: dateVal, year: newYear } : h);
+                                                                updateMortgageData({ waterHistory: newHistory });
+                                                            }}
+                                                            className="w-full bg-background border border-input rounded px-2 py-1.5 text-sm h-9"
+                                                        />
+                                                    </div>
+                                                    <div className="w-[90px]">
+                                                        <input
+                                                            type="text"
+                                                            value={entry.messpunkt}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value.replace(/[^0-9]/g, '');
+                                                                const newHistory = (waterHistory || []).map((h: any) => h.id === entry.id ? { ...h, messpunkt: val } : h);
+                                                                updateMortgageData({ waterHistory: newHistory });
+                                                            }}
+                                                            maxLength={6}
+                                                            className="w-full bg-background border border-input rounded px-2 py-1.5 text-sm h-9 text-right"
+                                                        />
+                                                    </div>
+                                                    <div className="w-[70px]">
+                                                        <input
+                                                            type="text"
+                                                            value={entry.usage}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value.replace(/[^0-9]/g, '');
+                                                                const newHistory = (waterHistory || []).map((h: any) => h.id === entry.id ? { ...h, usage: parseInt(val) || 0 } : h);
+                                                                updateMortgageData({ waterHistory: newHistory });
+                                                            }}
+                                                            maxLength={5}
+                                                            className="w-full bg-background border border-input rounded px-2 py-1.5 text-sm h-9 text-right"
+                                                        />
+                                                    </div>
+                                                    <div className="w-[100px]">
+                                                        <DecimalInput
+                                                            value={entry.costFresh}
+                                                            onChange={(val) => {
+                                                                const newHistory = (waterHistory || []).map((h: any) => h.id === entry.id ? { ...h, costFresh: parseFloat(val) || 0 } : h);
+                                                                updateMortgageData({ waterHistory: newHistory });
+                                                            }}
+                                                            className="w-full bg-background border border-input rounded px-2 py-1.5 text-sm h-9 text-right"
+                                                        />
+                                                    </div>
+                                                    <div className="w-[100px]">
+                                                        <DecimalInput
+                                                            value={entry.costWaste}
+                                                            onChange={(val) => {
+                                                                const newHistory = (waterHistory || []).map((h: any) => h.id === entry.id ? { ...h, costWaste: parseFloat(val) || 0 } : h);
+                                                                updateMortgageData({ waterHistory: newHistory });
+                                                            }}
+                                                            className="w-full bg-background border border-input rounded px-2 py-1.5 text-sm h-9 text-right"
+                                                        />
+                                                    </div>
+                                                    <div className="w-[100px]">
+                                                        <DecimalInput
+                                                            value={entry.costTotal}
+                                                            onChange={(val) => {
+                                                                const newHistory = (waterHistory || []).map((h: any) => h.id === entry.id ? { ...h, costTotal: parseFloat(val) || 0 } : h);
+                                                                updateMortgageData({ waterHistory: newHistory });
+                                                            }}
+                                                            className="w-full bg-background border border-input rounded px-2 py-1.5 text-sm h-9 text-right"
+                                                        />
+                                                    </div>
+                                                    <div className="w-[30px] flex justify-end">
+                                                        <button
+                                                            onClick={() => {
+                                                                const newHistory = waterHistory?.filter((e: any) => e.id !== entry.id);
+                                                                updateMortgageData({ waterHistory: newHistory });
+                                                            }}
+                                                            className="text-muted-foreground hover:text-destructive p-1"
+                                                        >
+                                                            <Trash2 className="size-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center text-sm text-muted-foreground py-6 border border-dashed rounded-lg">
+                                            Noch keine Einträge erfasst.
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Statistics */}
+                                {(waterHistory || []).length > 0 && (() => {
+                                    const sorted = [...(waterHistory || [])].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                                    const latest = sorted[0];
+                                    return (
+                                        <div className="mt-6 pt-6 border-t border-border space-y-2">
+                                            <h4 className="text-sm font-semibold uppercase text-muted-foreground mb-2">Aktuellste Daten ({latest.year})</h4>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="bg-blue-500/10 p-3 rounded">
+                                                    <div className="text-sm text-muted-foreground">Verbrauch</div>
+                                                    <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                                                        {latest.usage.toFixed(1)} m³
+                                                    </div>
+                                                </div>
+                                                <div className="bg-blue-500/10 p-3 rounded">
+                                                    <div className="text-sm text-muted-foreground">Kosten</div>
+                                                    <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(latest.costTotal)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="text-center text-sm text-muted-foreground mt-1">
+                                                monatlich ca. {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(latest.costTotal / 12)}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                        )}
+                    </div>
+
                 </div>
 
                 {/* RIGHT COLUMN: RESULTS */}
@@ -1533,6 +1753,6 @@ export const MortgageCalculator = () => {
 
                 </div>
             </div>
-        </div>
+        </div >
     );
 };

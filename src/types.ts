@@ -181,4 +181,26 @@ export interface MortgageData {
     electricityCustomerNumber?: string;
     electricityContractNumber?: string;
     electricityMeterNumber?: string;
+
+    // Wasser (Vereinfachtes Modell)
+    waterHistory?: WaterYearlyEntry[];
+    waterCustomerNumber?: string;
+    waterMeterNumber?: string;
+}
+
+export interface WaterYearlyEntry {
+    id: string;
+    year: number;
+    date: string; // z.B. "2023-12-31"
+    messpunkt: string; // Zählerstand
+    usage: number; // Verbrauch m3
+    costFresh: number; // Trinkwasser Kosten
+    costWaste: number; // Abwasser Kosten
+    costTotal: number; // Totalbetrag
+}
+
+export interface WaterReading { // Deprecated but keeping for type safety during migration if needed, though strictly unused now
+    id: string;
+    date: string;
+    value: number;
 }

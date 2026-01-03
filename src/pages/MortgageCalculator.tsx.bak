@@ -1,0 +1,74 @@
+// This part is tricky to do with replace_file_content because we are moving large chunks.
+// It's safer to read the whole file and rewrite it, or carefully use multi_replace.
+// However, I can't read the whole file in one go (limited buffer).
+// I have readlines 450-1000.
+// I know the order of blocks:
+// 1. Budget Plan (468-673)
+// 2. Property & Maintenance (677-735)
+// 3. Mortgage Tranches (738-831)
+// 4. Income Plan (834-925)
+// 5. Auto Costs (930-...)
+
+// New Order:
+// 1. Income Plan (Einnahmen)
+// 2. Budget Plan
+// 3. Property & Maintenance (Immobilie)
+// 4. Mortgage Tranches (Finanzierung)
+// 5. Auto Costs
+// ...
+
+// I will assume the user wants 'Budget Plan' second because previously they wanted it top.
+// 'Einnahmen' is now #1.
+
+// I will use `multi_replace_file_content` to SWAP content? No, that's messy.
+// I will use `replace_file_content` to blank out 'Einnahmen' from its current spot, and then Insert it at the top.
+
+// Step 1: Read 'Einnahmen' content into a variable (I have it from view_file).
+// Step 2: Delete 'Einnahmen' block.
+// Step 3: Insert 'Einnahmen' block before 'Budget Plan' block.
+
+// Einnahmen Block (Lines 834-925 in view)
+// STARTS: {/* NEW: Income Plan */} (Line 833)
+// ENDS: </div> (Line 925)
+
+// Budget Plan Block (Lines 468-673 in view)
+// STARTS: {/* NEW: Budget Plan */} (Line 468)
+
+// Strategy:
+// 1. Remove 833-925.
+// 2. Insert that content at 468.
+// BE CAREFUL: Removing 833-925 changes line numbers for insertion if I insert second.
+// BUT 468 is BEFORE 833, so if I insert first, then delete, the delete range shifts.
+// If I delete first (later in file), the insert point (earlier) stays same? No, lines don't shift above the delete point.
+// Correct: If I delete 833-925, any line < 833 is unaffected.
+// So safe order is: Delete the lower block, then Insert at upper block.
+
+// Wait, I can do this in one `multi_replace_file_content` call?
+// "ReplacementChunks":
+// 1. Range: 833-925, Content: "" (Empty string - Delete)
+// 2. Range: 468-468, Content: "<EinnahmenContent>\n{/* NEW: Budget Plan */}" (Insert before)
+
+// Let's verify exact range of Einnahmen block.
+// Line 833: {/* NEW: Income Plan */}
+// Line 925: </div>
+// Line 926: (Empty lines?)
+// Line 929: {/* NEW: Auto Costs Card */}
+
+// So if I traverse lines 833 to 928 (inclusive of some newlines), I can remove it cleanly.
+
+// Content to Insert:
+// I need to reconstruct the EXACT content of Einnahmen.
+// I have the view output.
+// I will copy-paste it carefully.
+
+// Let's dry run the removal range.
+// Start: 833
+// End: 928 (Just before Auto Costs)
+
+// Let's dry run the insertion point.
+// Start: 468 (The line `{/* NEW: Budget Plan */}`)
+// Replacement: <IncomeBlock> + "\n" + `{/* NEW: Budget Plan */}`
+
+// Is there any risk of stale file view?
+// I just read the file. It should be fine.
+
