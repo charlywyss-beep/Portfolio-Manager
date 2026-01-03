@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car, ChevronDown, ChevronUp, Fuel, Zap } from 'lucide-react';
+import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car, ChevronDown, ChevronUp, Fuel, Zap, User, FileText, Gauge } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { cn } from '../utils';
@@ -13,7 +13,7 @@ import type { MortgageTranche, BudgetEntry, OilPurchase, ElectricityReading } fr
 export const MortgageCalculator = () => {
     const { mortgageData, updateMortgageData } = usePortfolio();
 
-    const { propertyValue, maintenanceRate, yearlyAmortization, tranches, budgetItems, incomeItems, autoCosts, fuelPricePerLiter, consumptionPer100km, dailyKm, workingDaysPerMonth, oilTankCapacity, oilPurchases, electricityReadings, electricityPriceHT, electricityPriceNT } = mortgageData;
+    const { propertyValue, maintenanceRate, yearlyAmortization, tranches, budgetItems, incomeItems, autoCosts, fuelPricePerLiter, consumptionPer100km, dailyKm, workingDaysPerMonth, oilTankCapacity, oilPurchases, electricityReadings, electricityPriceHT, electricityPriceNT, electricityCustomerNumber, electricityContractNumber, electricityMeterNumber } = mortgageData;
 
     const [isFuelCalcOpen, setIsFuelCalcOpen] = useState(false);
 
@@ -1188,40 +1188,87 @@ export const MortgageCalculator = () => {
                             </button>
                         </div>
                         {isElectricityOpen && (
-                            <div className="p-6 border-b border-border space-y-4">
+                            <div className="p-6 border-b border-border space-y-6">
+
+                                {/* Metadata Section (Kundennummer, etc.) */}
+                                <div className="grid grid-cols-3 gap-4 bg-accent/20 p-3 rounded-lg border border-border/50">
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase font-semibold">
+                                            <User className="size-3" />
+                                            Kundennummer
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={electricityCustomerNumber || ''}
+                                            onChange={(e) => updateMortgageData({ electricityCustomerNumber: e.target.value })}
+                                            onFocus={(e) => e.target.select()}
+                                            className="w-full bg-background border border-input rounded px-2 py-1.5 text-sm font-medium focus:ring-1 focus:ring-primary"
+                                            placeholder="z.B. 129865"
+                                        />
+                                    </div>
+                                    <div className="space-y-1 border-l border-border/50 pl-4">
+                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase font-semibold">
+                                            <FileText className="size-3" />
+                                            Vertragskonto
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={electricityContractNumber || ''}
+                                            onChange={(e) => updateMortgageData({ electricityContractNumber: e.target.value })}
+                                            onFocus={(e) => e.target.select()}
+                                            className="w-full bg-background border border-input rounded px-2 py-1.5 text-sm font-medium focus:ring-1 focus:ring-primary"
+                                            placeholder="z.B. 530160"
+                                        />
+                                    </div>
+                                    <div className="space-y-1 border-l border-border/50 pl-4">
+                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase font-semibold">
+                                            <Gauge className="size-3" />
+                                            Zähler
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={electricityMeterNumber || ''}
+                                            onChange={(e) => updateMortgageData({ electricityMeterNumber: e.target.value })}
+                                            onFocus={(e) => e.target.select()}
+                                            className="w-full bg-background border border-input rounded px-2 py-1.5 text-sm font-medium focus:ring-1 focus:ring-primary"
+                                            placeholder="z.B. 53212"
+                                        />
+                                    </div>
+                                </div>
+
                                 {/* Price Inputs */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <label className="text-xs text-muted-foreground block">
-                                            Hochtarif (Total) <span className="opacity-50 text-[10px] block">Energie + Netz + Abgaben</span>
+                                        <label className="text-sm font-medium text-foreground block">
+                                            Hochtarif (Total) <span className="opacity-70 text-xs font-normal text-muted-foreground block">Energie + Netz + Abgaben</span>
                                         </label>
                                         <div className="relative">
                                             <DecimalInput
                                                 value={electricityPriceHT || 0}
                                                 onChange={(val) => updateMortgageData({ electricityPriceHT: parseFloat(val) || 0 })}
-                                                className="w-full bg-background border border-input rounded px-2 py-1.5 pl-2 pr-10 text-sm"
+                                                className="w-full bg-background border border-input rounded px-3 py-2 pl-3 pr-16 text-base"
                                             />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">Rp./kWh</span>
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">Rp./kWh</span>
                                         </div>
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs text-muted-foreground block">
-                                            Niedertarif (Total) <span className="opacity-50 text-[10px] block">Energie + Netz + Abgaben</span>
+                                        <label className="text-sm font-medium text-foreground block">
+                                            Niedertarif (Total) <span className="opacity-70 text-xs font-normal text-muted-foreground block">Energie + Netz + Abgaben</span>
                                         </label>
                                         <div className="relative">
                                             <DecimalInput
                                                 value={electricityPriceNT || 0}
                                                 onChange={(val) => updateMortgageData({ electricityPriceNT: parseFloat(val) || 0 })}
-                                                className="w-full bg-background border border-input rounded px-2 py-1.5 pl-2 pr-10 text-sm"
+                                                className="w-full bg-background border border-input rounded px-3 py-2 pl-3 pr-16 text-base"
                                             />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">Rp./kWh</span>
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">Rp./kWh</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Reading List */}
                                 <div className="space-y-2 pt-2">
-                                    <div className="grid grid-cols-12 gap-2 text-[10px] uppercase font-semibold text-muted-foreground mb-1 px-2">
+                                    <div className="grid grid-cols-12 gap-2 text-xs uppercase font-semibold text-muted-foreground mb-1 px-2">
                                         <div className="col-span-4">Datum</div>
                                         <div className="col-span-3 text-right">HT Stand</div>
                                         <div className="col-span-3 text-right">NT Stand</div>
@@ -1230,7 +1277,7 @@ export const MortgageCalculator = () => {
 
                                     <div className="space-y-2">
                                         {(electricityReadings || []).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((reading) => (
-                                            <div key={reading.id} className="grid grid-cols-12 gap-2 items-center bg-accent/30 p-2 rounded border border-border/50 text-sm">
+                                            <div key={reading.id} className="grid grid-cols-12 gap-2 items-center bg-accent/30 p-2 rounded border border-border/50 text-base">
                                                 <div className="col-span-4">
                                                     <input
                                                         type="date"
@@ -1239,7 +1286,7 @@ export const MortgageCalculator = () => {
                                                             const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, date: e.target.value } : r);
                                                             updateMortgageData({ electricityReadings: newReadings });
                                                         }}
-                                                        className="w-full bg-background border border-input rounded px-2 py-1 text-xs h-7"
+                                                        className="w-full bg-background border border-input rounded px-3 py-1.5 text-sm h-9"
                                                     />
                                                 </div>
                                                 <div className="col-span-3">
@@ -1249,7 +1296,7 @@ export const MortgageCalculator = () => {
                                                             const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueHT: parseFloat(val) || 0 } : r);
                                                             updateMortgageData({ electricityReadings: newReadings });
                                                         }}
-                                                        className="w-full bg-background border border-input rounded px-2 py-1 text-xs h-7 text-right"
+                                                        className="w-full bg-background border border-input rounded px-3 py-1.5 text-sm h-9 text-right"
                                                     />
                                                 </div>
                                                 <div className="col-span-3">
@@ -1259,7 +1306,7 @@ export const MortgageCalculator = () => {
                                                             const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueNT: parseFloat(val) || 0 } : r);
                                                             updateMortgageData({ electricityReadings: newReadings });
                                                         }}
-                                                        className="w-full bg-background border border-input rounded px-2 py-1 text-xs h-7 text-right"
+                                                        className="w-full bg-background border border-input rounded px-3 py-1.5 text-sm h-9 text-right"
                                                     />
                                                 </div>
                                                 <div className="col-span-1 flex justify-end">
@@ -1270,13 +1317,13 @@ export const MortgageCalculator = () => {
                                                         }}
                                                         className="text-muted-foreground hover:text-destructive"
                                                     >
-                                                        <Trash2 className="size-3" />
+                                                        <Trash2 className="size-4" />
                                                     </button>
                                                 </div>
                                             </div>
                                         ))}
                                         {(electricityReadings || []).length === 0 && (
-                                            <div className="text-center text-sm text-muted-foreground py-4 border border-dashed rounded-lg">
+                                            <div className="text-center text-sm text-muted-foreground py-6 border border-dashed rounded-lg">
                                                 Noch keine Zählerstände erfasst.
                                             </div>
                                         )}
@@ -1286,33 +1333,33 @@ export const MortgageCalculator = () => {
                                 {/* Stats */}
                                 {electricityStats ? (
                                     <div className="mt-4 pt-4 border-t border-border space-y-2">
-                                        <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Statistik (Ø Jährlich)</h4>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div className="bg-yellow-500/10 p-2 rounded">
-                                                <div className="text-xs text-muted-foreground">Verbrauch</div>
-                                                <div className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
+                                        <h4 className="text-sm font-semibold uppercase text-muted-foreground mb-2">Statistik (Ø Jährlich)</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-yellow-500/10 p-3 rounded">
+                                                <div className="text-sm text-muted-foreground">Verbrauch</div>
+                                                <div className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
                                                     {(electricityStats.annualUsageHT + electricityStats.annualUsageNT).toFixed(0)} kWh
                                                 </div>
-                                                <div className="text-[10px] text-muted-foreground">
+                                                <div className="text-xs text-muted-foreground">
                                                     HT: {electricityStats.annualUsageHT.toFixed(0)} / NT: {electricityStats.annualUsageNT.toFixed(0)}
                                                 </div>
                                             </div>
-                                            <div className="bg-yellow-500/10 p-2 rounded">
-                                                <div className="text-xs text-muted-foreground">Kosten</div>
-                                                <div className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
+                                            <div className="bg-yellow-500/10 p-3 rounded">
+                                                <div className="text-sm text-muted-foreground">Kosten</div>
+                                                <div className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
                                                     {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(electricityStats.annualCost)}
                                                 </div>
-                                                <div className="text-[10px] text-muted-foreground">
+                                                <div className="text-xs text-muted-foreground">
                                                     HT: {electricityStats.avgCostHT.toFixed(0)} / NT: {electricityStats.avgCostNT.toFixed(0)}
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="text-center text-xs text-muted-foreground mt-1">
+                                        <div className="text-center text-sm text-muted-foreground mt-1">
                                             monatlich ca. {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(electricityStats.annualCost / 12)}
                                         </div>
                                     </div>
                                 ) : (
-                                    <p className="text-xs text-muted-foreground italic mt-4 text-center">
+                                    <p className="text-sm text-muted-foreground italic mt-6 text-center">
                                         Erfassen Sie mindestens 2 Zählerstände für Statistiken.
                                     </p>
                                 )}

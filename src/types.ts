@@ -178,4 +178,7 @@ export interface MortgageData {
     electricityPriceHT?: number; // Rp. / kWh (Total)
     electricityPriceNT?: number; // Rp. / kWh (Total)
     electricityReadings?: ElectricityReading[];
+    electricityCustomerNumber?: string;
+    electricityContractNumber?: string;
+    electricityMeterNumber?: string;
 }

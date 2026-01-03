@@ -76,6 +76,11 @@ export const DecimalInput = ({
         if (props.onBlur) props.onBlur(e);
     };
 
+    const handleFocus = (e: FocusEvent<HTMLInputElement>) => {
+        e.target.select();
+        if (props.onFocus) props.onFocus(e);
+    };
+
     return (
         <input
             {...props}
@@ -84,6 +89,7 @@ export const DecimalInput = ({
             value={localValue}
             onChange={handleChange}
             onBlur={handleBlur}
+            onFocus={handleFocus}
             className={cn(className)}
         />
     );
