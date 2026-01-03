@@ -63,7 +63,7 @@ export const MortgageCalculator = () => {
         if (totalDays === 0) return null;
 
         const avgLitersPerDay = totalLitersConsumed / totalDays;
-        const avgCostPerDay = totalCost / totalDays;
+
 
         // Avg Price per 100L (weighted) - includes ALL purchases
         const totalLitersForPrice = sorted.reduce((sum, p) => sum + p.liters, 0);
