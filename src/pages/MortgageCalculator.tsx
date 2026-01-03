@@ -13,11 +13,9 @@ import type { MortgageTranche, BudgetEntry } from '../types';
 export const MortgageCalculator = () => {
     const { mortgageData, updateMortgageData } = usePortfolio();
 
-    const { propertyValue, maintenanceRate, yearlyAmortization, tranches, budgetItems, incomeItems, autoCosts, fuelPricePerLiter, consumptionPer100km, dailyKm, workingDaysPerMonth, carPurchasePrice, depreciationYears } = mortgageData;
+    const { propertyValue, maintenanceRate, yearlyAmortization, tranches, budgetItems, incomeItems, autoCosts, fuelPricePerLiter, consumptionPer100km, dailyKm, workingDaysPerMonth } = mortgageData;
 
-    // Accordion states for calculators
     const [isFuelCalcOpen, setIsFuelCalcOpen] = useState(false);
-    const [isDepreciationOpen, setIsDepreciationOpen] = useState(false);
 
     // Collapsible states for cards (default: expanded)
     const [isBudgetOpen, setIsBudgetOpen] = useState(true);
@@ -31,13 +29,6 @@ export const MortgageCalculator = () => {
         const days = workingDaysPerMonth || 22;
         return (consumption / 100) * km * fuel * days;
     }, [fuelPricePerLiter, consumptionPer100km, dailyKm, workingDaysPerMonth]);
-
-    // Abschreibung Berechnung
-    const calculatedYearlyDepreciation = useMemo(() => {
-        const price = carPurchasePrice || 0;
-        const years = depreciationYears || 1;
-        return years > 0 ? price / years : 0;
-    }, [carPurchasePrice, depreciationYears]);
 
     const setPropertyValue = (val: number) => updateMortgageData({ propertyValue: val });
     const setMaintenanceRate = (val: number) => updateMortgageData({ maintenanceRate: val });
@@ -915,58 +906,6 @@ export const MortgageCalculator = () => {
                                     )}
                                 </div>
 
-                                {/* Abschreibung Info (Accordion) */}
-                                <div className="mt-3 border-t border-border pt-4">
-                                    <button
-                                        onClick={() => setIsDepreciationOpen(!isDepreciationOpen)}
-                                        className="w-full flex items-center justify-between text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                                    >
-                                        <span className="flex items-center gap-2">
-                                            <Calculator className="size-4" />
-                                            Abschreibung (Steuer-Info)
-                                        </span>
-                                        {isDepreciationOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-                                    </button>
-                                    {isDepreciationOpen && (
-                                        <div className="mt-3 space-y-3 bg-accent/30 rounded-lg p-3">
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div className="space-y-1">
-                                                    <label className="text-xs text-muted-foreground">Kaufpreis CHF</label>
-                                                    <DecimalInput
-                                                        value={carPurchasePrice || 0}
-                                                        onChange={(val) => updateMortgageData({ carPurchasePrice: parseFloat(val) || 0 })}
-                                                        className="w-full bg-background border border-input rounded px-2 py-1 text-sm h-8"
-                                                    />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <label className="text-xs text-muted-foreground">Abschr. Jahre</label>
-                                                    <DecimalInput
-                                                        value={depreciationYears || 5}
-                                                        onChange={(val) => updateMortgageData({ depreciationYears: parseFloat(val) || 5 })}
-                                                        className="w-full bg-background border border-input rounded px-2 py-1 text-sm h-8"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="space-y-1 pt-2 border-t border-border">
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-sm text-muted-foreground">Jährliche Abschreibung:</span>
-                                                    <span className="font-mono font-bold text-amber-500">
-                                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(calculatedYearlyDepreciation)} / Jahr
-                                                    </span>
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-sm text-muted-foreground">Monatlich:</span>
-                                                    <span className="font-mono text-amber-500">
-                                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(calculatedYearlyDepreciation / 12)} / Mt
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <p className="text-xs text-muted-foreground italic">
-                                                Nur zur Information (Steuererklärung). Nicht im Budget-Total enthalten.
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
                             </div>
                         )}
                     </div>
