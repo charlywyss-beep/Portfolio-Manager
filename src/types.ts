@@ -154,7 +154,14 @@ export interface MortgageData {
     consumptionPer100km?: number;    // L/100km
     dailyKm?: number;                // km/Tag
     workingDaysPerMonth?: number;    // Arbeitstage/Monat (Default: 22)
-    // Heizkosten-Rechner
-    heatingPricePerUnit?: number;    // CHF per unit (L for oil, kWh for gas/electricity)
-    heatingYearlyConsumption?: number; // Yearly consumption in units
+    // Heizöl-Tracker
+    oilTankCapacity?: number;      // Tank capacity in liters (z.B. 5000)
+    oilPurchases?: OilPurchase[];  // Purchase history
+}
+
+export interface OilPurchase {
+    id: string;
+    date: string;           // ISO date (YYYY-MM-DD)
+    liters: number;         // Amount filled (e.g., 3000)
+    pricePer100L: number;   // Price per 100L in CHF (e.g., 122)
 }
