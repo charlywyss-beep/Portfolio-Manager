@@ -149,4 +149,12 @@ export interface MortgageData {
     budgetItems?: BudgetEntry[];
     incomeItems?: BudgetEntry[];
     autoCosts?: BudgetEntry[]; // NEW: Auto/Car costs
+    // Fahrkosten-Rechner
+    fuelPricePerLiter?: number;      // CHF/L
+    consumptionPer100km?: number;    // L/100km
+    dailyKm?: number;                // km/Tag
+    workingDaysPerMonth?: number;    // Arbeitstage/Monat (Default: 22)
+    // Abschreibung (Steuer-Info)
+    carPurchasePrice?: number;       // Kaufpreis CHF
+    depreciationYears?: number;      // Jahre
 }
