@@ -65,14 +65,14 @@ export const MortgageCalculator = () => {
         const avgLitersPerDay = totalLitersConsumed / totalDays;
         const avgCostPerDay = totalCost / totalDays;
 
-        // Avg Price per 100L (weighted)
+        // Avg Price per 100L (weighted) - includes ALL purchases
         const totalLitersForPrice = sorted.reduce((sum, p) => sum + p.liters, 0);
         const totalPrice = sorted.reduce((sum, p) => sum + (p.liters * (p.pricePer100L / 100)), 0);
-        const avgPricePer100L = (totalPrice / totalLitersForPrice) * 100;
+        const avgPricePer100L = totalLitersForPrice > 0 ? (totalPrice / totalLitersForPrice) * 100 : 0;
 
         return {
             avgLitersPerYear: avgLitersPerDay * 365,
-            avgCostPerYear: avgCostPerDay * 365,
+            avgCostPerYear: (avgLitersPerDay * 365) * (avgPricePer100L / 100),
             avgPricePer100L
         };
     }, [oilPurchases]);
