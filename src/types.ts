@@ -141,27 +141,41 @@ export interface BudgetEntry {
     frequency: 'monthly' | 'yearly';
 }
 
-export interface MortgageData {
-    propertyValue: number;
-    maintenanceRate: number;
-    yearlyAmortization: number;
-    tranches: MortgageTranche[];
-    budgetItems?: BudgetEntry[];
-    incomeItems?: BudgetEntry[];
-    autoCosts?: BudgetEntry[]; // Auto/Car costs
-    // Fahrkosten-Rechner
-    fuelPricePerLiter?: number;      // CHF/L
-    consumptionPer100km?: number;    // L/100km
-    dailyKm?: number;                // km/Tag
-    workingDaysPerMonth?: number;    // Arbeitstage/Monat (Default: 22)
-    // Heizöl-Tracker
-    oilTankCapacity?: number;      // Tank capacity in liters (z.B. 5000)
-    oilPurchases?: OilPurchase[];  // Purchase history
-}
-
 export interface OilPurchase {
     id: string;
     date: string;           // ISO date (YYYY-MM-DD)
     liters: number;         // Amount filled (e.g., 3000)
     pricePer100L: number;   // Price per 100L in CHF (e.g., 122)
+}
+
+export interface ElectricityReading {
+    id: string;
+    date: string;
+    valueHT: number; // Hochtarif Zählerstand
+    valueNT: number; // Niedertarif Zählerstand
+}
+
+export interface MortgageData {
+    propertyValue: number;
+    maintenanceRate: number; // in %
+    yearlyAmortization: number;
+    tranches: MortgageTranche[];
+    budgetItems: BudgetEntry[]; // Monthly/Yearly expenses
+    incomeItems: BudgetEntry[]; // Monthly/Yearly income
+    autoCosts: BudgetEntry[]; // Auto expenses
+
+    // Fahrkosten Rechner Variables
+    fuelPricePerLiter?: number;
+    consumptionPer100km?: number;
+    dailyKm?: number;
+    workingDaysPerMonth?: number;
+
+    // Heizöl Variable
+    oilTankCapacity?: number;
+    oilPurchases?: OilPurchase[];
+
+    // Strom Variable
+    electricityPriceHT?: number; // Rp. / kWh (Total)
+    electricityPriceNT?: number; // Rp. / kWh (Total)
+    electricityReadings?: ElectricityReading[];
 }

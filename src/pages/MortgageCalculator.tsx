@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car, ChevronDown, ChevronUp, Fuel } from 'lucide-react';
+import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car, ChevronDown, ChevronUp, Fuel, Zap } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { cn } from '../utils';
@@ -8,20 +8,20 @@ import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip as Rec
 import { SaronChart } from '../components/SaronChart';
 import { DecimalInput } from '../components/DecimalInput';
 import { usePortfolio } from '../context/PortfolioContext';
-import type { MortgageTranche, BudgetEntry, OilPurchase } from '../types';
+import type { MortgageTranche, BudgetEntry, OilPurchase, ElectricityReading } from '../types';
 
 export const MortgageCalculator = () => {
     const { mortgageData, updateMortgageData } = usePortfolio();
 
-    const { propertyValue, maintenanceRate, yearlyAmortization, tranches, budgetItems, incomeItems, autoCosts, fuelPricePerLiter, consumptionPer100km, dailyKm, workingDaysPerMonth, oilTankCapacity, oilPurchases } = mortgageData;
+    const { propertyValue, maintenanceRate, yearlyAmortization, tranches, budgetItems, incomeItems, autoCosts, fuelPricePerLiter, consumptionPer100km, dailyKm, workingDaysPerMonth, oilTankCapacity, oilPurchases, electricityReadings, electricityPriceHT, electricityPriceNT } = mortgageData;
 
     const [isFuelCalcOpen, setIsFuelCalcOpen] = useState(false);
 
     // Collapsible states for cards (default: expanded)
     const [isBudgetOpen, setIsBudgetOpen] = useState(true);
-    const [isAutoOpen, setIsAutoOpen] = useState(true);
+    const [isAutoOpen, setIsAutoOpen] = useState(false);
     const [isHeatingCalcOpen, setIsHeatingCalcOpen] = useState(false);
-
+    const [isElectricityOpen, setIsElectricityOpen] = useState(false);
 
 
     // Fahrkosten Berechnung
@@ -44,8 +44,7 @@ export const MortgageCalculator = () => {
         let totalDays = 0;
 
         // Calculate intervals
-        // Assumption: Tank is always filled to max. 
-        // Consumption between P1 and P2 is equal to the amount filled at P2.
+        // Assumption: Consumption between P1 and P2 is equal to the amount filled at P2.
         for (let i = 1; i < sorted.length; i++) {
             const prev = sorted[i - 1];
             const curr = sorted[i];
@@ -61,19 +60,66 @@ export const MortgageCalculator = () => {
         if (totalDays === 0) return null;
 
         const avgLitersPerDay = totalLitersConsumed / totalDays;
-
-
-        // Avg Price per 100L (weighted) - includes ALL purchases
-        const totalLitersForPrice = sorted.reduce((sum, p) => sum + p.liters, 0);
-        const totalPrice = sorted.reduce((sum, p) => sum + (p.liters * (p.pricePer100L / 100)), 0);
-        const avgPricePer100L = totalLitersForPrice > 0 ? (totalPrice / totalLitersForPrice) * 100 : 0;
+        const avgPricePer100L = totalCost / (totalLitersConsumed / 100);
 
         return {
             avgLitersPerYear: avgLitersPerDay * 365,
-            avgCostPerYear: (avgLitersPerDay * 365) * (avgPricePer100L / 100),
-            avgPricePer100L
+            avgCostPerYear: (avgLitersPerDay * 365) * (avgPricePer100L / 100)
         };
     }, [oilPurchases]);
+
+    // Strom Statistik
+    const electricityStats = useMemo(() => {
+        if (!electricityReadings || electricityReadings.length < 2) return null;
+
+        const sorted = [...electricityReadings].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        let totalUsageHT = 0;
+        let totalUsageNT = 0;
+        let totalDays = 0;
+
+        // Preise in CHF umrechnen (Eingabe ist in Rp.)
+        const priceHT = (electricityPriceHT || 0) / 100;
+        const priceNT = (electricityPriceNT || 0) / 100;
+
+        for (let i = 1; i < sorted.length; i++) {
+            const prev = sorted[i - 1];
+            const curr = sorted[i];
+
+            const days = (new Date(curr.date).getTime() - new Date(prev.date).getTime()) / (1000 * 3600 * 24);
+            if (days <= 0) continue;
+
+            const usageHT = curr.valueHT - prev.valueHT;
+            const usageNT = curr.valueNT - prev.valueNT;
+
+            // Ignore resets or negative usage (meter replacement/rollover not handled for simplicity unless explicit)
+            if (usageHT >= 0) totalUsageHT += usageHT;
+            if (usageNT >= 0) totalUsageNT += usageNT;
+
+            totalDays += days;
+        }
+
+        if (totalDays === 0) return null;
+
+        // Annualize
+        const avgUsageHTPerDay = totalUsageHT / totalDays;
+        const avgUsageNTPerDay = totalUsageNT / totalDays;
+
+        const annualUsageHT = avgUsageHTPerDay * 365;
+        const annualUsageNT = avgUsageNTPerDay * 365;
+
+        const annualCostHT = annualUsageHT * priceHT;
+        const annualCostNT = annualUsageNT * priceNT;
+
+        return {
+            annualUsageHT,
+            annualUsageNT,
+            annualCost: annualCostHT + annualCostNT,
+            avgCostHT: annualCostHT,
+            avgCostNT: annualCostNT
+        };
+    }, [electricityReadings, electricityPriceHT, electricityPriceNT]);
+
 
     const setPropertyValue = (val: number) => updateMortgageData({ propertyValue: val });
     const setMaintenanceRate = (val: number) => updateMortgageData({ maintenanceRate: val });
@@ -120,7 +166,11 @@ export const MortgageCalculator = () => {
         maintenance: yearlyMaintenance / 12,
     };
 
-    const totalMonthlyCost = monthlyData.interest + monthlyData.amortization + monthlyData.maintenance;
+    const totalMonthlyCost = monthlyData.interest
+        + monthlyData.amortization
+        + monthlyData.maintenance
+        + ((oilStats?.avgCostPerYear || 0) / 12)
+        + ((electricityStats?.annualCost || 0) / 12);
 
     const exportToPDF = () => {
         const doc = new jsPDF();
@@ -726,7 +776,19 @@ export const MortgageCalculator = () => {
 
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-muted-foreground">Wohnkosten (Hypothek + NK)</span>
-                                        <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(totalMonthlyCost)} / Mt</span>
+                                        <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(monthlyData.interest + monthlyData.amortization + monthlyData.maintenance)} / Mt</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-muted-foreground">Heizöl (ø Monatlich)</span>
+                                        <span className="font-mono text-orange-600 dark:text-orange-400">
+                                            {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format((oilStats?.avgCostPerYear || 0) / 12)} / Mt
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-muted-foreground">Strom (ø Monatlich)</span>
+                                        <span className="font-mono text-yellow-600 dark:text-yellow-400">
+                                            {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format((electricityStats?.annualCost || 0) / 12)} / Mt
+                                        </span>
                                     </div>
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-muted-foreground">Budget Ausgaben (ø Monatlich)</span>
@@ -1094,6 +1156,164 @@ export const MortgageCalculator = () => {
                                 ) : (
                                     <p className="text-xs text-muted-foreground italic mt-4 text-center">
                                         Erfassen Sie mindestens 2 Einkäufe für Statistiken.
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* NEW: Strom Kosten Card */}
+                    <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+                        <div className="p-6 border-b border-border flex justify-between items-center cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setIsElectricityOpen(!isElectricityOpen)}>
+                            <h2 className="text-lg font-semibold flex items-center gap-2">
+                                <Zap className="size-5 text-yellow-500" />
+                                Strom Kosten
+                                {isElectricityOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
+                            </h2>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newReading: ElectricityReading = {
+                                        id: crypto.randomUUID(),
+                                        date: new Date().toISOString().split('T')[0],
+                                        valueHT: 0,
+                                        valueNT: 0
+                                    };
+                                    updateMortgageData({ electricityReadings: [...(electricityReadings || []), newReading] });
+                                    if (!isElectricityOpen) setIsElectricityOpen(true);
+                                }}
+                                className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
+                            >
+                                <Plus className="size-4" /> Add Reading
+                            </button>
+                        </div>
+                        {isElectricityOpen && (
+                            <div className="p-6 border-b border-border space-y-4">
+                                {/* Price Inputs */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground block">
+                                            Hochtarif (Total) <span className="opacity-50 text-[10px] block">Energie + Netz + Abgaben</span>
+                                        </label>
+                                        <div className="relative">
+                                            <DecimalInput
+                                                value={electricityPriceHT || 0}
+                                                onChange={(val) => updateMortgageData({ electricityPriceHT: parseFloat(val) || 0 })}
+                                                className="w-full bg-background border border-input rounded px-2 py-1.5 pl-2 pr-10 text-sm"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">Rp./kWh</span>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-muted-foreground block">
+                                            Niedertarif (Total) <span className="opacity-50 text-[10px] block">Energie + Netz + Abgaben</span>
+                                        </label>
+                                        <div className="relative">
+                                            <DecimalInput
+                                                value={electricityPriceNT || 0}
+                                                onChange={(val) => updateMortgageData({ electricityPriceNT: parseFloat(val) || 0 })}
+                                                className="w-full bg-background border border-input rounded px-2 py-1.5 pl-2 pr-10 text-sm"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">Rp./kWh</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Reading List */}
+                                <div className="space-y-2 pt-2">
+                                    <div className="grid grid-cols-12 gap-2 text-[10px] uppercase font-semibold text-muted-foreground mb-1 px-2">
+                                        <div className="col-span-4">Datum</div>
+                                        <div className="col-span-3 text-right">HT Stand</div>
+                                        <div className="col-span-3 text-right">NT Stand</div>
+                                        <div className="col-span-1"></div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        {(electricityReadings || []).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((reading) => (
+                                            <div key={reading.id} className="grid grid-cols-12 gap-2 items-center bg-accent/30 p-2 rounded border border-border/50 text-sm">
+                                                <div className="col-span-4">
+                                                    <input
+                                                        type="date"
+                                                        value={reading.date}
+                                                        onChange={(e) => {
+                                                            const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, date: e.target.value } : r);
+                                                            updateMortgageData({ electricityReadings: newReadings });
+                                                        }}
+                                                        className="w-full bg-background border border-input rounded px-2 py-1 text-xs h-7"
+                                                    />
+                                                </div>
+                                                <div className="col-span-3">
+                                                    <DecimalInput
+                                                        value={reading.valueHT}
+                                                        onChange={(val) => {
+                                                            const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueHT: parseFloat(val) || 0 } : r);
+                                                            updateMortgageData({ electricityReadings: newReadings });
+                                                        }}
+                                                        className="w-full bg-background border border-input rounded px-2 py-1 text-xs h-7 text-right"
+                                                    />
+                                                </div>
+                                                <div className="col-span-3">
+                                                    <DecimalInput
+                                                        value={reading.valueNT}
+                                                        onChange={(val) => {
+                                                            const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueNT: parseFloat(val) || 0 } : r);
+                                                            updateMortgageData({ electricityReadings: newReadings });
+                                                        }}
+                                                        className="w-full bg-background border border-input rounded px-2 py-1 text-xs h-7 text-right"
+                                                    />
+                                                </div>
+                                                <div className="col-span-1 flex justify-end">
+                                                    <button
+                                                        onClick={() => {
+                                                            const newReadings = electricityReadings?.filter(r => r.id !== reading.id);
+                                                            updateMortgageData({ electricityReadings: newReadings });
+                                                        }}
+                                                        className="text-muted-foreground hover:text-destructive"
+                                                    >
+                                                        <Trash2 className="size-3" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {(electricityReadings || []).length === 0 && (
+                                            <div className="text-center text-sm text-muted-foreground py-4 border border-dashed rounded-lg">
+                                                Noch keine Zählerstände erfasst.
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Stats */}
+                                {electricityStats ? (
+                                    <div className="mt-4 pt-4 border-t border-border space-y-2">
+                                        <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Statistik (Ø Jährlich)</h4>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div className="bg-yellow-500/10 p-2 rounded">
+                                                <div className="text-xs text-muted-foreground">Verbrauch</div>
+                                                <div className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
+                                                    {(electricityStats.annualUsageHT + electricityStats.annualUsageNT).toFixed(0)} kWh
+                                                </div>
+                                                <div className="text-[10px] text-muted-foreground">
+                                                    HT: {electricityStats.annualUsageHT.toFixed(0)} / NT: {electricityStats.annualUsageNT.toFixed(0)}
+                                                </div>
+                                            </div>
+                                            <div className="bg-yellow-500/10 p-2 rounded">
+                                                <div className="text-xs text-muted-foreground">Kosten</div>
+                                                <div className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
+                                                    {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(electricityStats.annualCost)}
+                                                </div>
+                                                <div className="text-[10px] text-muted-foreground">
+                                                    HT: {electricityStats.avgCostHT.toFixed(0)} / NT: {electricityStats.avgCostNT.toFixed(0)}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-center text-xs text-muted-foreground mt-1">
+                                            monatlich ca. {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(electricityStats.annualCost / 12)}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-muted-foreground italic mt-4 text-center">
+                                        Erfassen Sie mindestens 2 Zählerstände für Statistiken.
                                     </p>
                                 )}
                             </div>
