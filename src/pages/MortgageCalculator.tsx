@@ -13,13 +13,14 @@ import type { MortgageTranche, BudgetEntry } from '../types';
 export const MortgageCalculator = () => {
     const { mortgageData, updateMortgageData } = usePortfolio();
 
-    const { propertyValue, maintenanceRate, yearlyAmortization, tranches, budgetItems, incomeItems, autoCosts, fuelPricePerLiter, consumptionPer100km, dailyKm, workingDaysPerMonth } = mortgageData;
+    const { propertyValue, maintenanceRate, yearlyAmortization, tranches, budgetItems, incomeItems, autoCosts, fuelPricePerLiter, consumptionPer100km, dailyKm, workingDaysPerMonth, heatingPricePerUnit, heatingYearlyConsumption } = mortgageData;
 
     const [isFuelCalcOpen, setIsFuelCalcOpen] = useState(false);
 
     // Collapsible states for cards (default: expanded)
     const [isBudgetOpen, setIsBudgetOpen] = useState(true);
     const [isAutoOpen, setIsAutoOpen] = useState(true);
+    const [isHeatingCalcOpen, setIsHeatingCalcOpen] = useState(false);
 
     // Fahrkosten Berechnung
     const calculatedMonthlyFuelCost = useMemo(() => {
@@ -29,6 +30,13 @@ export const MortgageCalculator = () => {
         const days = workingDaysPerMonth || 22;
         return (consumption / 100) * km * fuel * days;
     }, [fuelPricePerLiter, consumptionPer100km, dailyKm, workingDaysPerMonth]);
+
+    // Heizkosten Berechnung (Öl: Preis/L × Jahresverbrauch L / 12)
+    const calculatedMonthlyHeatingCost = useMemo(() => {
+        const price = heatingPricePerUnit || 0;
+        const yearly = heatingYearlyConsumption || 0;
+        return (price * yearly) / 12;
+    }, [heatingPricePerUnit, heatingYearlyConsumption]);
 
     const setPropertyValue = (val: number) => updateMortgageData({ propertyValue: val });
     const setMaintenanceRate = (val: number) => updateMortgageData({ maintenanceRate: val });
@@ -654,6 +662,59 @@ export const MortgageCalculator = () => {
                                     {(budgetItems || []).length === 0 && (
                                         <div className="text-center text-sm text-muted-foreground py-4 border border-dashed rounded-lg">
                                             Noch keine Ausgaben erfasst.
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Heizkosten Rechner (Accordion) */}
+                                <div className="mt-4 border-t border-border pt-4">
+                                    <button
+                                        onClick={() => setIsHeatingCalcOpen(!isHeatingCalcOpen)}
+                                        className="w-full flex items-center justify-between text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <Fuel className="size-4" />
+                                            Heizkosten Rechner (Öl)
+                                        </span>
+                                        {isHeatingCalcOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                                    </button>
+                                    {isHeatingCalcOpen && (
+                                        <div className="mt-3 space-y-3 bg-accent/30 rounded-lg p-3">
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1">
+                                                    <label className="text-xs text-muted-foreground">Heizöl CHF/L</label>
+                                                    <DecimalInput
+                                                        value={heatingPricePerUnit || 0}
+                                                        onChange={(val) => updateMortgageData({ heatingPricePerUnit: parseFloat(val) || 0 })}
+                                                        className="w-full bg-background border border-input rounded px-2 py-1 text-sm h-8"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-xs text-muted-foreground">Verbrauch L/Jahr</label>
+                                                    <DecimalInput
+                                                        value={heatingYearlyConsumption || 0}
+                                                        onChange={(val) => updateMortgageData({ heatingYearlyConsumption: parseFloat(val) || 0 })}
+                                                        className="w-full bg-background border border-input rounded px-2 py-1 text-sm h-8"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1 pt-2 border-t border-border">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm text-muted-foreground">Jährliche Heizkosten:</span>
+                                                    <span className="font-mono font-bold text-amber-500">
+                                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format((heatingPricePerUnit || 0) * (heatingYearlyConsumption || 0))} / Jahr
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm text-muted-foreground">Monatlich:</span>
+                                                    <span className="font-mono font-bold text-amber-500">
+                                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(calculatedMonthlyHeatingCost)} / Mt
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground italic">
+                                                Übertragen Sie diesen Wert manuell in Budget-Ausgaben (z.B. "Heizöl").
+                                            </p>
                                         </div>
                                     )}
                                 </div>

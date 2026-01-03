@@ -154,4 +154,7 @@ export interface MortgageData {
     consumptionPer100km?: number;    // L/100km
     dailyKm?: number;                // km/Tag
     workingDaysPerMonth?: number;    // Arbeitstage/Monat (Default: 22)
+    // Heizkosten-Rechner
+    heatingPricePerUnit?: number;    // CHF per unit (L for oil, kWh for gas/electricity)
+    heatingYearlyConsumption?: number; // Yearly consumption in units
 }
