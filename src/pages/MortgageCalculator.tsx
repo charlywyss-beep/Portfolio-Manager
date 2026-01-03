@@ -19,6 +19,10 @@ export const MortgageCalculator = () => {
     const [isFuelCalcOpen, setIsFuelCalcOpen] = useState(false);
     const [isDepreciationOpen, setIsDepreciationOpen] = useState(false);
 
+    // Collapsible states for cards (default: expanded)
+    const [isBudgetOpen, setIsBudgetOpen] = useState(true);
+    const [isAutoOpen, setIsAutoOpen] = useState(true);
+
     // Fahrkosten Berechnung
     const calculatedMonthlyFuelCost = useMemo(() => {
         const fuel = fuelPricePerLiter || 0;
@@ -575,12 +579,13 @@ export const MortgageCalculator = () => {
 
                     {/* NEW: Budget Plan */}
                     <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
-                        <div className="p-6 border-b border-border flex justify-between items-center">
+                        <div className="p-6 border-b border-border flex justify-between items-center cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setIsBudgetOpen(!isBudgetOpen)}>
                             <h2 className="text-lg font-semibold flex items-center gap-2">
                                 <Wallet className="size-5 text-primary" />
                                 Budget Plan
+                                {isBudgetOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
                             </h2>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                                 <button
                                     onClick={exportToPDF}
                                     className="text-sm bg-secondary/80 text-secondary-foreground hover:bg-secondary px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
@@ -599,173 +604,177 @@ export const MortgageCalculator = () => {
                                 </button>
                             </div>
                         </div>
-                        <div className="p-4 space-y-2">
-                            <div className="space-y-1">
-                                {(budgetItems || []).map((item: BudgetEntry, index: number) => (
-                                    <div key={item.id} className="grid grid-cols-12 gap-2 items-center bg-accent/30 px-2 py-0.5 rounded-lg">
-                                        <div className="col-span-5">
-                                            <input
-                                                value={item.name}
-                                                onChange={(e) => {
-                                                    const newItems = [...(budgetItems || [])];
-                                                    newItems[index] = { ...item, name: e.target.value };
-                                                    updateMortgageData({ budgetItems: newItems });
-                                                }}
-                                                className="w-full bg-transparent border-none text-sm focus:ring-0 p-0 font-medium h-7"
-                                                placeholder="Name (z.B. Essen)"
-                                            />
+                        {isBudgetOpen && (
+                            <div className="p-4 space-y-2">
+                                <div className="space-y-1">
+                                    {(budgetItems || []).map((item: BudgetEntry, index: number) => (
+                                        <div key={item.id} className="grid grid-cols-12 gap-2 items-center bg-accent/30 px-2 py-0.5 rounded-lg">
+                                            <div className="col-span-5">
+                                                <input
+                                                    value={item.name}
+                                                    onChange={(e) => {
+                                                        const newItems = [...(budgetItems || [])];
+                                                        newItems[index] = { ...item, name: e.target.value };
+                                                        updateMortgageData({ budgetItems: newItems });
+                                                    }}
+                                                    className="w-full bg-transparent border-none text-sm focus:ring-0 p-0 font-medium h-7"
+                                                    placeholder="Name (z.B. Essen)"
+                                                />
+                                            </div>
+                                            <div className="col-span-3">
+                                                <select
+                                                    value={item.frequency || 'monthly'}
+                                                    onChange={(e) => {
+                                                        const newItems = [...(budgetItems || [])];
+                                                        newItems[index] = { ...item, frequency: e.target.value as 'monthly' | 'yearly' };
+                                                        updateMortgageData({ budgetItems: newItems });
+                                                    }}
+                                                    className="w-full bg-background border border-input rounded px-1 py-0 text-xs h-7"
+                                                >
+                                                    <option value="monthly">Monatlich</option>
+                                                    <option value="yearly">Jährlich</option>
+                                                </select>
+                                            </div>
+                                            <div className="col-span-3 relative">
+                                                <div className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">CHF</div>
+                                                <DecimalInput
+                                                    value={item.amount}
+                                                    onChange={(val) => {
+                                                        const newItems = [...(budgetItems || [])];
+                                                        newItems[index] = { ...item, amount: parseFloat(val) || 0 };
+                                                        updateMortgageData({ budgetItems: newItems });
+                                                    }}
+                                                    className="w-full bg-background border border-input rounded px-1 py-0 pl-8 text-sm text-right h-7"
+                                                />
+                                            </div>
+                                            <div className="col-span-1 flex justify-end">
+                                                <button
+                                                    onClick={() => {
+                                                        const newItems = (budgetItems || []).filter((i: BudgetEntry) => i.id !== item.id);
+                                                        updateMortgageData({ budgetItems: newItems });
+                                                    }}
+                                                    className="text-muted-foreground hover:text-destructive p-1"
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className="col-span-3">
-                                            <select
-                                                value={item.frequency || 'monthly'}
-                                                onChange={(e) => {
-                                                    const newItems = [...(budgetItems || [])];
-                                                    newItems[index] = { ...item, frequency: e.target.value as 'monthly' | 'yearly' };
-                                                    updateMortgageData({ budgetItems: newItems });
-                                                }}
-                                                className="w-full bg-background border border-input rounded px-1 py-0 text-xs h-7"
-                                            >
-                                                <option value="monthly">Monatlich</option>
-                                                <option value="yearly">Jährlich</option>
-                                            </select>
+                                    ))}
+                                    {(budgetItems || []).length === 0 && (
+                                        <div className="text-center text-sm text-muted-foreground py-4 border border-dashed rounded-lg">
+                                            Noch keine Ausgaben erfasst.
                                         </div>
-                                        <div className="col-span-3 relative">
-                                            <div className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">CHF</div>
-                                            <DecimalInput
-                                                value={item.amount}
-                                                onChange={(val) => {
-                                                    const newItems = [...(budgetItems || [])];
-                                                    newItems[index] = { ...item, amount: parseFloat(val) || 0 };
-                                                    updateMortgageData({ budgetItems: newItems });
-                                                }}
-                                                className="w-full bg-background border border-input rounded px-1 py-0 pl-8 text-sm text-right h-7"
-                                            />
-                                        </div>
-                                        <div className="col-span-1 flex justify-end">
-                                            <button
-                                                onClick={() => {
-                                                    const newItems = (budgetItems || []).filter((i: BudgetEntry) => i.id !== item.id);
-                                                    updateMortgageData({ budgetItems: newItems });
-                                                }}
-                                                className="text-muted-foreground hover:text-destructive p-1"
-                                            >
-                                                <Trash2 className="size-4" />
-                                            </button>
-                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Totals Section */}
+                                {/* Totals Section */}
+
+                                {/* Totals Section */}
+                                <div className="space-y-2 pt-4 border-t border-border">
+                                    {/* Income Summary */}
+                                    <div className="flex justify-between items-center text-sm text-emerald-500">
+                                        <span>Total Einnahmen</span>
+                                        <span className="font-mono">
+                                            {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                                (incomeItems || []).reduce((sum: number, i: BudgetEntry) => {
+                                                    const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
+                                                    return sum + monthlyAmount;
+                                                }, 0)
+                                            )} / Mt
+                                        </span>
                                     </div>
-                                ))}
-                                {(budgetItems || []).length === 0 && (
-                                    <div className="text-center text-sm text-muted-foreground py-4 border border-dashed rounded-lg">
-                                        Noch keine Ausgaben erfasst.
+                                    <div className="my-1 border-t border-border border-dashed opacity-50" />
+
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-muted-foreground">Wohnkosten (Hypothek + NK)</span>
+                                        <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(totalMonthlyCost)} / Mt</span>
                                     </div>
-                                )}
-                            </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-muted-foreground">Budget Ausgaben (ø Monatlich)</span>
+                                        <span className="font-mono">
+                                            {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                                (budgetItems || []).reduce((sum: number, i: BudgetEntry) => {
+                                                    const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
+                                                    return sum + monthlyAmount;
+                                                }, 0)
+                                            )} / Mt
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-muted-foreground">Auto Kosten (ø Monatlich)</span>
+                                        <span className="font-mono">
+                                            {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                                (autoCosts || []).reduce((sum: number, i: BudgetEntry) => {
+                                                    const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
+                                                    return sum + monthlyAmount;
+                                                }, 0)
+                                            )} / Mt
+                                        </span>
+                                    </div>
 
-                            {/* Totals Section */}
-                            {/* Totals Section */}
+                                    <div className="flex justify-between items-center font-bold text-lg pt-1">
+                                        <span>Gesamtausgaben</span>
+                                        <span className="text-red-400 font-mono">
+                                            - {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                                totalMonthlyCost +
+                                                (budgetItems || []).reduce((sum: number, i: BudgetEntry) => {
+                                                    const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
+                                                    return sum + monthlyAmount;
+                                                }, 0) +
+                                                (autoCosts || []).reduce((sum: number, i: BudgetEntry) => {
+                                                    const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
+                                                    return sum + monthlyAmount;
+                                                }, 0)
+                                            )} / Mt
+                                        </span>
+                                    </div>
 
-                            {/* Totals Section */}
-                            <div className="space-y-2 pt-4 border-t border-border">
-                                {/* Income Summary */}
-                                <div className="flex justify-between items-center text-sm text-emerald-500">
-                                    <span>Total Einnahmen</span>
-                                    <span className="font-mono">
-                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
-                                            (incomeItems || []).reduce((sum: number, i: BudgetEntry) => {
-                                                const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
-                                                return sum + monthlyAmount;
-                                            }, 0)
-                                        )} / Mt
-                                    </span>
-                                </div>
-                                <div className="my-1 border-t border-border border-dashed opacity-50" />
+                                    <div className="my-2 border-t-2 border-border" />
 
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-muted-foreground">Wohnkosten (Hypothek + NK)</span>
-                                    <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(totalMonthlyCost)} / Mt</span>
-                                </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-muted-foreground">Budget Ausgaben (ø Monatlich)</span>
-                                    <span className="font-mono">
-                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
-                                            (budgetItems || []).reduce((sum: number, i: BudgetEntry) => {
-                                                const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
-                                                return sum + monthlyAmount;
-                                            }, 0)
-                                        )} / Mt
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-muted-foreground">Auto Kosten (ø Monatlich)</span>
-                                    <span className="font-mono">
-                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
-                                            (autoCosts || []).reduce((sum: number, i: BudgetEntry) => {
-                                                const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
-                                                return sum + monthlyAmount;
-                                            }, 0)
-                                        )} / Mt
-                                    </span>
-                                </div>
-
-                                <div className="flex justify-between items-center font-bold text-lg pt-1">
-                                    <span>Gesamtausgaben</span>
-                                    <span className="text-red-400 font-mono">
-                                        - {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
-                                            totalMonthlyCost +
-                                            (budgetItems || []).reduce((sum: number, i: BudgetEntry) => {
-                                                const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
-                                                return sum + monthlyAmount;
-                                            }, 0) +
-                                            (autoCosts || []).reduce((sum: number, i: BudgetEntry) => {
-                                                const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
-                                                return sum + monthlyAmount;
-                                            }, 0)
-                                        )} / Mt
-                                    </span>
-                                </div>
-
-                                <div className="my-2 border-t-2 border-border" />
-
-                                <div className="flex justify-between items-center font-bold text-lg">
-                                    <span>Verfügbar Sparquote</span>
-                                    <span className={cn("font-mono",
-                                        ((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) - (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) + (autoCosts || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))) > 0
-                                            ? "text-emerald-500"
-                                            : "text-destructive"
-                                    )}>
-                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
-                                            ((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0)) -
-                                            (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) + (autoCosts || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))
-                                        )} / Mt
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center font-bold text-lg">
-                                    <span>Verfügbar Sparquote</span>
-                                    <span className={cn("font-mono",
-                                        (((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0)) -
-                                            (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) + (autoCosts || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))) * 12 > 0
-                                            ? "text-emerald-500"
-                                            : "text-destructive"
-                                    )}>
-                                        ≈ {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                    <div className="flex justify-between items-center font-bold text-lg">
+                                        <span>Verfügbar Sparquote</span>
+                                        <span className={cn("font-mono",
+                                            ((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) - (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) + (autoCosts || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))) > 0
+                                                ? "text-emerald-500"
+                                                : "text-destructive"
+                                        )}>
+                                            {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                                ((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0)) -
+                                                (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) + (autoCosts || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))
+                                            )} / Mt
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center font-bold text-lg">
+                                        <span>Verfügbar Sparquote</span>
+                                        <span className={cn("font-mono",
                                             (((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0)) -
-                                                (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) + (autoCosts || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))) * 12
-                                        )} / Jahr
-                                    </span>
+                                                (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) + (autoCosts || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))) * 12 > 0
+                                                ? "text-emerald-500"
+                                                : "text-destructive"
+                                        )}>
+                                            ≈ {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                                (((incomeItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0)) -
+                                                    (totalMonthlyCost + (budgetItems || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0) + (autoCosts || []).reduce((sum: number, i: BudgetEntry) => sum + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0))) * 12
+                                            )} / Jahr
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                     </div>
 
                     {/* NEW: Auto Costs Card */}
                     <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
-                        <div className="p-6 border-b border-border flex justify-between items-center">
+                        <div className="p-6 border-b border-border flex justify-between items-center cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setIsAutoOpen(!isAutoOpen)}>
                             <h2 className="text-lg font-semibold flex items-center gap-2">
                                 <Car className="size-5 text-blue-500" />
                                 Auto Kosten
+                                {isAutoOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
                             </h2>
                             <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     const newItems = [...(autoCosts || []), { id: crypto.randomUUID(), name: '', amount: 0, frequency: 'monthly' as const }];
                                     updateMortgageData({ autoCosts: newItems });
                                 }}
@@ -774,190 +783,192 @@ export const MortgageCalculator = () => {
                                 <Plus className="size-4" /> Add Item
                             </button>
                         </div>
-                        <div className="p-4 space-y-2">
-                            <div className="space-y-1">
-                                {(autoCosts || []).map((item: BudgetEntry, index: number) => (
-                                    <div key={item.id} className="grid grid-cols-12 gap-2 items-center bg-accent/30 px-2 py-0.5 rounded-lg">
-                                        <div className="col-span-5">
-                                            <input
-                                                value={item.name}
-                                                onChange={(e) => {
-                                                    const newItems = [...(autoCosts || [])];
-                                                    newItems[index] = { ...item, name: e.target.value };
-                                                    updateMortgageData({ autoCosts: newItems });
-                                                }}
-                                                className="w-full bg-transparent border-none text-sm focus:ring-0 p-0 font-medium h-7"
-                                                placeholder="z.B. Versicherung"
-                                            />
+                        {isAutoOpen && (
+                            <div className="p-4 space-y-2">
+                                <div className="space-y-1">
+                                    {(autoCosts || []).map((item: BudgetEntry, index: number) => (
+                                        <div key={item.id} className="grid grid-cols-12 gap-2 items-center bg-accent/30 px-2 py-0.5 rounded-lg">
+                                            <div className="col-span-5">
+                                                <input
+                                                    value={item.name}
+                                                    onChange={(e) => {
+                                                        const newItems = [...(autoCosts || [])];
+                                                        newItems[index] = { ...item, name: e.target.value };
+                                                        updateMortgageData({ autoCosts: newItems });
+                                                    }}
+                                                    className="w-full bg-transparent border-none text-sm focus:ring-0 p-0 font-medium h-7"
+                                                    placeholder="z.B. Versicherung"
+                                                />
+                                            </div>
+                                            <div className="col-span-3">
+                                                <select
+                                                    value={item.frequency || 'monthly'}
+                                                    onChange={(e) => {
+                                                        const newItems = [...(autoCosts || [])];
+                                                        newItems[index] = { ...item, frequency: e.target.value as 'monthly' | 'yearly' };
+                                                        updateMortgageData({ autoCosts: newItems });
+                                                    }}
+                                                    className="w-full bg-background border border-input rounded px-1 py-0 text-xs h-7"
+                                                >
+                                                    <option value="monthly">Monatlich</option>
+                                                    <option value="yearly">Jährlich</option>
+                                                </select>
+                                            </div>
+                                            <div className="col-span-3 relative">
+                                                <div className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">CHF</div>
+                                                <DecimalInput
+                                                    value={item.amount}
+                                                    onChange={(val) => {
+                                                        const newItems = [...(autoCosts || [])];
+                                                        newItems[index] = { ...item, amount: parseFloat(val) || 0 };
+                                                        updateMortgageData({ autoCosts: newItems });
+                                                    }}
+                                                    className="w-full bg-background border border-input rounded px-1 py-0 pl-8 text-sm text-right h-7"
+                                                />
+                                            </div>
+                                            <div className="col-span-1 flex justify-end">
+                                                <button
+                                                    onClick={() => {
+                                                        const newItems = (autoCosts || []).filter((i: BudgetEntry) => i.id !== item.id);
+                                                        updateMortgageData({ autoCosts: newItems });
+                                                    }}
+                                                    className="text-muted-foreground hover:text-destructive p-1"
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className="col-span-3">
-                                            <select
-                                                value={item.frequency || 'monthly'}
-                                                onChange={(e) => {
-                                                    const newItems = [...(autoCosts || [])];
-                                                    newItems[index] = { ...item, frequency: e.target.value as 'monthly' | 'yearly' };
-                                                    updateMortgageData({ autoCosts: newItems });
-                                                }}
-                                                className="w-full bg-background border border-input rounded px-1 py-0 text-xs h-7"
-                                            >
-                                                <option value="monthly">Monatlich</option>
-                                                <option value="yearly">Jährlich</option>
-                                            </select>
+                                    ))}
+                                    {(autoCosts || []).length === 0 && (
+                                        <div className="text-center text-sm text-muted-foreground py-4 border border-dashed rounded-lg">
+                                            Noch keine Auto Kosten erfasst.
                                         </div>
-                                        <div className="col-span-3 relative">
-                                            <div className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">CHF</div>
-                                            <DecimalInput
-                                                value={item.amount}
-                                                onChange={(val) => {
-                                                    const newItems = [...(autoCosts || [])];
-                                                    newItems[index] = { ...item, amount: parseFloat(val) || 0 };
-                                                    updateMortgageData({ autoCosts: newItems });
-                                                }}
-                                                className="w-full bg-background border border-input rounded px-1 py-0 pl-8 text-sm text-right h-7"
-                                            />
-                                        </div>
-                                        <div className="col-span-1 flex justify-end">
-                                            <button
-                                                onClick={() => {
-                                                    const newItems = (autoCosts || []).filter((i: BudgetEntry) => i.id !== item.id);
-                                                    updateMortgageData({ autoCosts: newItems });
-                                                }}
-                                                className="text-muted-foreground hover:text-destructive p-1"
-                                            >
-                                                <Trash2 className="size-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                                {(autoCosts || []).length === 0 && (
-                                    <div className="text-center text-sm text-muted-foreground py-4 border border-dashed rounded-lg">
-                                        Noch keine Auto Kosten erfasst.
-                                    </div>
-                                )}
-                            </div>
-                            <div className="pt-2 flex justify-end text-sm font-medium">
-                                Total: {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
-                                    (autoCosts || []).reduce((sum: number, i: BudgetEntry) => {
-                                        const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
-                                        return sum + monthlyAmount;
-                                    }, 0)
-                                )} / Mt
-                            </div>
+                                    )}
+                                </div>
+                                <div className="pt-2 flex justify-end text-sm font-medium">
+                                    Total: {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                        (autoCosts || []).reduce((sum: number, i: BudgetEntry) => {
+                                            const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
+                                            return sum + monthlyAmount;
+                                        }, 0)
+                                    )} / Mt
+                                </div>
 
-                            {/* Fahrkosten Rechner (Accordion) */}
-                            <div className="mt-4 border-t border-border pt-4">
-                                <button
-                                    onClick={() => setIsFuelCalcOpen(!isFuelCalcOpen)}
-                                    className="w-full flex items-center justify-between text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                    <span className="flex items-center gap-2">
-                                        <Fuel className="size-4" />
-                                        Fahrkosten Rechner
-                                    </span>
-                                    {isFuelCalcOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-                                </button>
-                                {isFuelCalcOpen && (
-                                    <div className="mt-3 space-y-3 bg-accent/30 rounded-lg p-3">
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-muted-foreground">Benzin CHF/L</label>
-                                                <DecimalInput
-                                                    value={fuelPricePerLiter || 0}
-                                                    onChange={(val) => updateMortgageData({ fuelPricePerLiter: parseFloat(val) || 0 })}
-                                                    className="w-full bg-background border border-input rounded px-2 py-1 text-sm h-8"
-                                                />
+                                {/* Fahrkosten Rechner (Accordion) */}
+                                <div className="mt-4 border-t border-border pt-4">
+                                    <button
+                                        onClick={() => setIsFuelCalcOpen(!isFuelCalcOpen)}
+                                        className="w-full flex items-center justify-between text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <Fuel className="size-4" />
+                                            Fahrkosten Rechner
+                                        </span>
+                                        {isFuelCalcOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                                    </button>
+                                    {isFuelCalcOpen && (
+                                        <div className="mt-3 space-y-3 bg-accent/30 rounded-lg p-3">
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1">
+                                                    <label className="text-xs text-muted-foreground">Benzin CHF/L</label>
+                                                    <DecimalInput
+                                                        value={fuelPricePerLiter || 0}
+                                                        onChange={(val) => updateMortgageData({ fuelPricePerLiter: parseFloat(val) || 0 })}
+                                                        className="w-full bg-background border border-input rounded px-2 py-1 text-sm h-8"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-xs text-muted-foreground">Verbrauch L/100km</label>
+                                                    <DecimalInput
+                                                        value={consumptionPer100km || 0}
+                                                        onChange={(val) => updateMortgageData({ consumptionPer100km: parseFloat(val) || 0 })}
+                                                        className="w-full bg-background border border-input rounded px-2 py-1 text-sm h-8"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-xs text-muted-foreground">km / Tag</label>
+                                                    <DecimalInput
+                                                        value={dailyKm || 0}
+                                                        onChange={(val) => updateMortgageData({ dailyKm: parseFloat(val) || 0 })}
+                                                        className="w-full bg-background border border-input rounded px-2 py-1 text-sm h-8"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-xs text-muted-foreground">Arbeitstage / Mt</label>
+                                                    <DecimalInput
+                                                        value={workingDaysPerMonth || 22}
+                                                        onChange={(val) => updateMortgageData({ workingDaysPerMonth: parseFloat(val) || 22 })}
+                                                        className="w-full bg-background border border-input rounded px-2 py-1 text-sm h-8"
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-muted-foreground">Verbrauch L/100km</label>
-                                                <DecimalInput
-                                                    value={consumptionPer100km || 0}
-                                                    onChange={(val) => updateMortgageData({ consumptionPer100km: parseFloat(val) || 0 })}
-                                                    className="w-full bg-background border border-input rounded px-2 py-1 text-sm h-8"
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-muted-foreground">km / Tag</label>
-                                                <DecimalInput
-                                                    value={dailyKm || 0}
-                                                    onChange={(val) => updateMortgageData({ dailyKm: parseFloat(val) || 0 })}
-                                                    className="w-full bg-background border border-input rounded px-2 py-1 text-sm h-8"
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-muted-foreground">Arbeitstage / Mt</label>
-                                                <DecimalInput
-                                                    value={workingDaysPerMonth || 22}
-                                                    onChange={(val) => updateMortgageData({ workingDaysPerMonth: parseFloat(val) || 22 })}
-                                                    className="w-full bg-background border border-input rounded px-2 py-1 text-sm h-8"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between items-center pt-2 border-t border-border">
-                                            <span className="text-sm text-muted-foreground">Berechnete Fahrkosten:</span>
-                                            <span className="font-mono font-bold text-blue-500">
-                                                {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(calculatedMonthlyFuelCost)} / Mt
-                                            </span>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground italic">
-                                            Übertragen Sie diesen Wert manuell in "Fahrkosten" oben.
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Abschreibung Info (Accordion) */}
-                            <div className="mt-3 border-t border-border pt-4">
-                                <button
-                                    onClick={() => setIsDepreciationOpen(!isDepreciationOpen)}
-                                    className="w-full flex items-center justify-between text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                    <span className="flex items-center gap-2">
-                                        <Calculator className="size-4" />
-                                        Abschreibung (Steuer-Info)
-                                    </span>
-                                    {isDepreciationOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-                                </button>
-                                {isDepreciationOpen && (
-                                    <div className="mt-3 space-y-3 bg-accent/30 rounded-lg p-3">
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-muted-foreground">Kaufpreis CHF</label>
-                                                <DecimalInput
-                                                    value={carPurchasePrice || 0}
-                                                    onChange={(val) => updateMortgageData({ carPurchasePrice: parseFloat(val) || 0 })}
-                                                    className="w-full bg-background border border-input rounded px-2 py-1 text-sm h-8"
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-xs text-muted-foreground">Abschr. Jahre</label>
-                                                <DecimalInput
-                                                    value={depreciationYears || 5}
-                                                    onChange={(val) => updateMortgageData({ depreciationYears: parseFloat(val) || 5 })}
-                                                    className="w-full bg-background border border-input rounded px-2 py-1 text-sm h-8"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-1 pt-2 border-t border-border">
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-sm text-muted-foreground">Jährliche Abschreibung:</span>
-                                                <span className="font-mono font-bold text-amber-500">
-                                                    {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(calculatedYearlyDepreciation)} / Jahr
+                                            <div className="flex justify-between items-center pt-2 border-t border-border">
+                                                <span className="text-sm text-muted-foreground">Berechnete Fahrkosten:</span>
+                                                <span className="font-mono font-bold text-blue-500">
+                                                    {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(calculatedMonthlyFuelCost)} / Mt
                                                 </span>
                                             </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-sm text-muted-foreground">Monatlich:</span>
-                                                <span className="font-mono text-amber-500">
-                                                    {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(calculatedYearlyDepreciation / 12)} / Mt
-                                                </span>
-                                            </div>
+                                            <p className="text-xs text-muted-foreground italic">
+                                                Übertragen Sie diesen Wert manuell in "Fahrkosten" oben.
+                                            </p>
                                         </div>
-                                        <p className="text-xs text-muted-foreground italic">
-                                            Nur zur Information (Steuererklärung). Nicht im Budget-Total enthalten.
-                                        </p>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
+
+                                {/* Abschreibung Info (Accordion) */}
+                                <div className="mt-3 border-t border-border pt-4">
+                                    <button
+                                        onClick={() => setIsDepreciationOpen(!isDepreciationOpen)}
+                                        className="w-full flex items-center justify-between text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <Calculator className="size-4" />
+                                            Abschreibung (Steuer-Info)
+                                        </span>
+                                        {isDepreciationOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                                    </button>
+                                    {isDepreciationOpen && (
+                                        <div className="mt-3 space-y-3 bg-accent/30 rounded-lg p-3">
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1">
+                                                    <label className="text-xs text-muted-foreground">Kaufpreis CHF</label>
+                                                    <DecimalInput
+                                                        value={carPurchasePrice || 0}
+                                                        onChange={(val) => updateMortgageData({ carPurchasePrice: parseFloat(val) || 0 })}
+                                                        className="w-full bg-background border border-input rounded px-2 py-1 text-sm h-8"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-xs text-muted-foreground">Abschr. Jahre</label>
+                                                    <DecimalInput
+                                                        value={depreciationYears || 5}
+                                                        onChange={(val) => updateMortgageData({ depreciationYears: parseFloat(val) || 5 })}
+                                                        className="w-full bg-background border border-input rounded px-2 py-1 text-sm h-8"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1 pt-2 border-t border-border">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm text-muted-foreground">Jährliche Abschreibung:</span>
+                                                    <span className="font-mono font-bold text-amber-500">
+                                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(calculatedYearlyDepreciation)} / Jahr
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm text-muted-foreground">Monatlich:</span>
+                                                    <span className="font-mono text-amber-500">
+                                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(calculatedYearlyDepreciation / 12)} / Mt
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground italic">
+                                                Nur zur Information (Steuererklärung). Nicht im Budget-Total enthalten.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
 
                 </div>
