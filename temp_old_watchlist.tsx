@@ -244,9 +244,9 @@ export function Watchlist() {
                                                             <div className="flex items-center gap-2">
                                                                 <div
                                                                     className="font-semibold cursor-pointer hover:text-primary transition-colors whitespace-pre-line"
-                                                                    title={stock.name}
                                                                     onClick={() => navigate(`/stock/${stock.id}`)}
                                                                 >
+                                                                    {/* Smart Wrap removed to allow manual line breaks via whitespace-pre-line */}
                                                                     {stock.name}
                                                                 </div>
                                                                 {(() => {
@@ -498,6 +498,6 @@ export function Watchlist() {
                     // navigate('/portfolio');
                 }}
             />
-        </div>
+        </div >
     );
 }
