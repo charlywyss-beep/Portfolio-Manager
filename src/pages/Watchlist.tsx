@@ -174,7 +174,7 @@ export function Watchlist() {
                     </div>
 
                     <div className="overflow-x-auto overscroll-x-none">
-                        <table className="w-full text-sm text-left">
+                        <table className="w-full text-sm text-left" style={{ tableLayout: 'fixed' }}>
                             <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
                                 <tr>
                                     <th className="px-4 py-3 min-w-[140px] sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktie</th>
