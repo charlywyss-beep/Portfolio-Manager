@@ -174,17 +174,17 @@ export function Watchlist() {
                     </div>
 
                     <div className="overflow-x-auto overscroll-x-none">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-border">
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
+                                <tr>
                                     <th className="px-4 py-3 min-w-[140px] sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktie</th>
-                                    <th className="text-right py-3 px-2 sm:px-4 font-semibold whitespace-nowrap">Aktueller Kurs</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Kauflimit</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Rendite %</th>
-                                    <th className="text-right py-3 px-4 font-semibold">Dividende</th>
-                                    <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">EX-Tag</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zahl-Tag</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">Aktueller Kurs</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">Kauflimit</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">Rendite %</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">Dividende</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">Frequenz</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">EX-Tag</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">Zahl-Tag</th>
                                     <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                                 </tr>
                             </thead>
