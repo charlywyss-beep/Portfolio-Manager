@@ -218,7 +218,7 @@ export function Watchlist() {
 
                                         return (
                                             <tr key={stock.id} className="group hover:bg-muted/30 transition-colors">
-                                                <td className="px-4 py-3 sticky -left-px z-10 bg-card group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <td className="px-4 py-3 max-w-[140px] sticky -left-px z-10 bg-card group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                     <div className="relative flex items-center gap-3">
                                                         <div
                                                             className={hasPosition ? "cursor-pointer hover:scale-110 transition-transform -m-0.5" : "-m-0.5"}
