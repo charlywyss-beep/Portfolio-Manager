@@ -244,7 +244,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                                             deletePosition(pos.id);
                                                         }
                                                     }}
-                                                    className="text-muted-foreground hover:text-red-600 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                                                    className="p-1.5 sm:p-2 hover:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg transition-colors"
                                                     title="Position löschen"
                                                 >
                                                     <Trash2 className="size-4" />
