@@ -35,7 +35,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                     <table className="w-full text-sm text-left">
                         <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
                             <tr>
-                                <th className="px-4 py-3 min-w-[140px] sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Name</th>
+                                <th className="px-4 py-3 min-w-[160px] md:w-[100px] md:max-w-[100px] sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Name</th>
                                 <th className="px-4 py-3 min-w-[100px]">ISIN</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap">Anzahl</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap">Ø Kauf</th>
@@ -51,7 +51,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                             {data.map((pos) => {
                                 return (
                                     <tr key={pos.id} className="group hover:bg-muted/30 transition-colors border-b border-border/50 last:border-0 border-l border-r border-transparent hover:border-border/50">
-                                        <td className="px-4 py-3 sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <td className="px-4 py-3 min-w-[160px] md:w-[100px] md:max-w-[100px] sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center gap-3">
                                                 <Logo
