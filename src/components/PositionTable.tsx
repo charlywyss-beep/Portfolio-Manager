@@ -33,18 +33,18 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                 <div className="overflow-x-auto overscroll-x-none">
 
                     <table className="w-full text-sm text-left">
-                        <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
-                            <tr>
-                                <th className="px-4 py-3 min-w-[160px] md:w-[100px] md:max-w-[100px] sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Name</th>
-                                <th className="px-4 py-3 min-w-[100px]">ISIN</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap">Anzahl</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap">Ø Kauf</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap">Invest</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap">Kurs</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap">Wert</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap">+/-</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap">%</th>
-                                <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                        <thead>
+                            <tr className="border-b border-border">
+                                <th className="text-left py-3 px-4 font-semibold min-w-[160px] md:w-[100px] md:max-w-[100px] sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktie</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">ISIN</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Anzahl</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Ø Kauf</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Invest</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Kurs</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Wert</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">+/-</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">%</th>
+                                <th className="text-right py-3 px-2 w-[80px] sticky -right-px bg-card z-30 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
