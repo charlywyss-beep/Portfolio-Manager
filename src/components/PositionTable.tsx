@@ -89,8 +89,8 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                         </td>
 
                                         {/* Valor / ISIN */}
-                                        <td className="px-4 py-3">
-                                            <div className="text-xs space-y-0.5">
+                                        <td className="px-4 py-3 text-right">
+                                            <div className="text-xs space-y-0.5 flex flex-col items-end">
                                                 {pos.stock.valor && (
                                                     <div className="font-mono">
                                                         <span className="text-muted-foreground">Valor: </span>
