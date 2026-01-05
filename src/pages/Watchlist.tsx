@@ -178,13 +178,13 @@ export function Watchlist() {
                             <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider border-b border-border">
                                 <tr>
                                     <th className="px-4 py-3 min-w-[140px] sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktie</th>
-                                    <th className="px-4 py-3 text-right whitespace-nowrap">Aktueller Kurs</th>
-                                    <th className="px-4 py-3 text-right whitespace-nowrap">Kauflimit</th>
-                                    <th className="px-4 py-3 text-right whitespace-nowrap">Rendite %</th>
-                                    <th className="px-4 py-3 text-right whitespace-nowrap">Dividende</th>
-                                    <th className="px-4 py-3 text-right whitespace-nowrap">Frequenz</th>
-                                    <th className="px-4 py-3 text-right whitespace-nowrap">EX-Tag</th>
-                                    <th className="px-4 py-3 text-right whitespace-nowrap">Zahl-Tag</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap max-w-[120px]">Aktueller Kurs</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap max-w-[100px]">Kauflimit</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap max-w-[90px]">Rendite %</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap max-w-[100px]">Dividende</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap max-w-[90px]">Frequenz</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap max-w-[90px]">EX-Tag</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap max-w-[90px]">Zahl-Tag</th>
                                     <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                                 </tr>
                             </thead>
