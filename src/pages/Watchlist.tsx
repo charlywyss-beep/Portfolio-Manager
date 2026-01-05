@@ -177,14 +177,14 @@ export function Watchlist() {
                         <table className="w-full text-sm text-left">
                             <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider border-b border-border">
                                 <tr>
-                                    <th className="px-4 py-3 min-w-[140px] sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktie</th>
-                                    <th className="px-4 py-3 text-right whitespace-nowrap max-w-[120px]">Aktueller Kurs</th>
-                                    <th className="px-4 py-3 text-right whitespace-nowrap max-w-[100px]">Kauflimit</th>
-                                    <th className="px-4 py-3 text-right whitespace-nowrap max-w-[90px]">Rendite %</th>
-                                    <th className="px-4 py-3 text-right whitespace-nowrap max-w-[100px]">Dividende</th>
-                                    <th className="px-4 py-3 text-right whitespace-nowrap max-w-[90px]">Frequenz</th>
-                                    <th className="px-4 py-3 text-right whitespace-nowrap max-w-[90px]">EX-Tag</th>
-                                    <th className="px-4 py-3 text-right whitespace-nowrap max-w-[90px]">Zahl-Tag</th>
+                                    <th className="px-4 py-3 max-w-[140px] sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktie</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">Aktueller Kurs</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">Kauflimit</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">Rendite %</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">Dividende</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">Frequenz</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">EX-Tag</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">Zahl-Tag</th>
                                     <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                                 </tr>
                             </thead>
@@ -218,8 +218,7 @@ export function Watchlist() {
 
                                         return (
                                             <tr key={stock.id} className="group hover:bg-muted/30 transition-colors">
-                                                <td className="px-4 py-3 sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                                    <div className="absolute inset-0 bg-card -z-10" />
+                                                <td className="px-4 py-3 sticky -left-px z-10 bg-card group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                     <div className="relative flex items-center gap-3">
                                                         <div
                                                             className={hasPosition ? "cursor-pointer hover:scale-110 transition-transform -m-0.5" : "-m-0.5"}
@@ -440,8 +439,7 @@ export function Watchlist() {
                                                         </div>
                                                     )}
                                                 </td>
-                                                <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px z-40 group-hover:bg-muted transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                                    <div className="absolute inset-0 bg-card -z-10" />
+                                                <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px z-40 bg-card group-hover:bg-muted transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                     <div className="relative flex items-center justify-end gap-0 sm:gap-1 opacity-100 transition-opacity">
                                                         <button
                                                             onClick={() => navigate(`/calculator?stock=${stock.id}&from=watchlist`)}
