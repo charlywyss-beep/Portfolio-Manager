@@ -177,7 +177,9 @@ export function Watchlist() {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-border">
-                                    <th className="text-left py-3 px-4 font-semibold sticky -left-px z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[220px] min-w-[220px] max-w-[220px]">Aktie</th>
+                                    <th className="p-0 text-left font-semibold sticky -left-px z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <div className="w-[200px] py-3 px-4">Aktie</div>
+                                    </th>
                                     <th className="text-right py-3 px-2 sm:px-4 font-semibold whitespace-nowrap">Aktueller Kurs</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Kauflimit</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Rendite %</th>
@@ -218,9 +220,10 @@ export function Watchlist() {
 
                                         return (
                                             <tr key={stock.id} className="hover:bg-muted/50 transition-colors group">
-                                                <td className="py-3 px-4 sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] min-w-[180px] max-w-[180px] align-top">
+                                                <td className="p-0 sticky left-0 z-20 group-hover:bg-muted/50 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] align-top">
                                                     <div className="absolute inset-0 bg-card -z-10" />
-                                                    <div className="relative flex items-start gap-3">
+                                                    {/* Fixed Width Container */}
+                                                    <div className="w-[200px] p-3 pl-4 flex items-start gap-3">
                                                         <div
                                                             className={hasPosition ? "cursor-pointer hover:scale-110 transition-transform -m-0.5" : "-m-0.5"}
                                                             onClick={(e) => {
