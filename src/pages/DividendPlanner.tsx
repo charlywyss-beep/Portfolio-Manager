@@ -277,17 +277,17 @@ export function DividendPlanner() {
 
                 <div className="overflow-x-auto overscroll-x-none">
                     <table className="w-full min-w-[1000px]">
-                        <thead className="sticky top-0 z-50 bg-card">
+                        <thead>
                             <tr className="border-b border-border">
-                                <th className="text-left py-3 px-4 font-semibold sticky -left-px z-50 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[160px] md:w-[100px] md:max-w-[100px]">Aktie</th>
-                                <th className="text-right py-3 px-4 font-semibold bg-card">Anteile</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap bg-card">Rendite %</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap bg-card">Div./Akt.</th>
-                                <th className="text-right py-3 px-4 font-semibold bg-card">Frequenz</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap bg-card">Quartalsweise</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap bg-card">Jährlich</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap bg-card">EX-Tag</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap bg-card">Zahl-Tag</th>
+                                <th className="text-left py-3 px-4 font-semibold sticky -left-px z-30 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[160px] md:w-[100px] md:max-w-[100px]">Aktie</th>
+                                <th className="text-right py-3 px-4 font-semibold">Anteile</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Rendite %</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Div./Akt.</th>
+                                <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Quartalsweise</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">EX-Tag</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zahl-Tag</th>
                                 <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
