@@ -177,9 +177,7 @@ export function Watchlist() {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-border">
-                                    <th className="text-left py-3 px-4 font-semibold sticky -left-px z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]" style={{ width: '200px', minWidth: '200px', maxWidth: '200px' }}>
-                                        Aktie
-                                    </th>
+                                    <th className="px-4 py-3 min-w-[140px] sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktie</th>
                                     <th className="text-right py-3 px-2 sm:px-4 font-semibold whitespace-nowrap">Aktueller Kurs</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Kauflimit</th>
                                     <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Rendite %</th>
@@ -219,10 +217,10 @@ export function Watchlist() {
                                         const hasPosition = positions.some(p => p.stockId === stock.id);
 
                                         return (
-                                            <tr key={stock.id} className="hover:bg-muted/50 transition-colors group">
-                                                <td className="py-3 px-4 sticky left-0 z-20 group-hover:bg-muted/50 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] align-top" style={{ width: '200px', minWidth: '200px', maxWidth: '200px' }}>
+                                            <tr key={stock.id} className="group hover:bg-muted/30 transition-colors">
+                                                <td className="px-4 py-3 sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                     <div className="absolute inset-0 bg-card -z-10" />
-                                                    <div className="relative flex items-start gap-3">
+                                                    <div className="relative flex items-center gap-3">
                                                         <div
                                                             className={hasPosition ? "cursor-pointer hover:scale-110 transition-transform -m-0.5" : "-m-0.5"}
                                                             onClick={(e) => {
@@ -242,10 +240,10 @@ export function Watchlist() {
                                                                 }
                                                             />
                                                         </div>
-                                                        <div className="min-w-0 flex-1">
+                                                        <div className="min-w-0 flex-1 flex flex-col items-start gap-0.5">
                                                             <div className="flex items-center gap-2">
                                                                 <div
-                                                                    className="font-semibold cursor-pointer hover:text-primary transition-colors whitespace-pre-line truncate block"
+                                                                    className="font-semibold cursor-pointer hover:text-primary transition-colors text-sm whitespace-pre-line"
                                                                     title={stock.name}
                                                                     onClick={() => navigate(`/stock/${stock.id}`)}
                                                                 >
