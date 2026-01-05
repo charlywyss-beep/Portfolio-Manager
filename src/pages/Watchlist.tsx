@@ -175,17 +175,17 @@ export function Watchlist() {
 
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead>
+                            <thead className="sticky top-0 z-50 bg-card">
                                 <tr className="border-b border-border">
-                                    <th className="text-left py-3 px-4 font-semibold sticky left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[160px] md:w-[100px] md:max-w-[100px]">Aktie</th>
-                                    <th className="text-right py-3 px-2 sm:px-4 font-semibold whitespace-nowrap">Aktueller Kurs</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Kauflimit</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Rendite %</th>
-                                    <th className="text-right py-3 px-4 font-semibold">Dividende</th>
-                                    <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">EX-Tag</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zahl-Tag</th>
-                                    <th className="text-right py-3 px-2 w-[80px] sticky right-0 bg-card z-30 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                    <th className="text-left py-3 px-4 font-semibold sticky left-0 z-50 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[160px] md:w-[100px] md:max-w-[100px]">Aktie</th>
+                                    <th className="text-right py-3 px-2 sm:px-4 font-semibold whitespace-nowrap bg-card">Aktueller Kurs</th>
+                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap bg-card">Kauflimit</th>
+                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap bg-card">Rendite %</th>
+                                    <th className="text-right py-3 px-4 font-semibold bg-card">Dividende</th>
+                                    <th className="text-right py-3 px-4 font-semibold bg-card">Frequenz</th>
+                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap bg-card">EX-Tag</th>
+                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap bg-card">Zahl-Tag</th>
+                                    <th className="text-right py-3 px-2 w-[80px] sticky right-0 bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
