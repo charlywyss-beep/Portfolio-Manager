@@ -173,7 +173,7 @@ export function Watchlist() {
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-280px)]">
                         <table className="w-full">
                             <thead className="sticky top-0 z-50 bg-card">
                                 <tr className="border-b border-border">
