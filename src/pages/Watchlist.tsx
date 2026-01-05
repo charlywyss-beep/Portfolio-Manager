@@ -218,7 +218,7 @@ export function Watchlist() {
 
                                         return (
                                             <tr key={stock.id} className="hover:bg-muted/50 transition-colors group">
-                                                <td className="py-3 px-4 sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[220px] min-w-[220px] max-w-[220px] align-top">
+                                                <td className="py-3 px-4 sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] min-w-[180px] max-w-[180px] align-top">
                                                     <div className="absolute inset-0 bg-card -z-10" />
                                                     <div className="relative flex items-start gap-3">
                                                         <div
@@ -240,13 +240,13 @@ export function Watchlist() {
                                                                 }
                                                             />
                                                         </div>
-                                                        <div>
+                                                        <div className="min-w-0 flex-1">
                                                             <div className="flex items-center gap-2">
                                                                 <div
-                                                                    className="font-semibold cursor-pointer hover:text-primary transition-colors whitespace-pre-line"
+                                                                    className="font-semibold cursor-pointer hover:text-primary transition-colors whitespace-pre-line truncate block"
+                                                                    title={stock.name}
                                                                     onClick={() => navigate(`/stock/${stock.id}`)}
                                                                 >
-                                                                    {/* Smart Wrap removed to allow manual line breaks via whitespace-pre-line */}
                                                                     {stock.name}
                                                                 </div>
                                                                 {(() => {
