@@ -1,9 +1,8 @@
 
 import { useMemo, useState, useEffect } from 'react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from 'recharts';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
-
 import { type TimeRange } from '../services/yahoo-finance';
 
 interface PriceHistoryChartProps {
@@ -18,6 +17,7 @@ interface PriceHistoryChartProps {
     quoteDate?: Date | null;
     previousClose?: number;
     isMarketOpen?: boolean;
+    purchasePrice?: number;
 }
 
 export function PriceHistoryChart({
@@ -30,7 +30,8 @@ export function PriceHistoryChart({
     onRangeChange,
     quoteDate,
     previousClose,
-    isMarketOpen = true
+    isMarketOpen = true,
+    purchasePrice
 }: PriceHistoryChartProps) {
     const [hasMounted, setHasMounted] = useState(false);
 
@@ -150,84 +151,71 @@ export function PriceHistoryChart({
                             <span>{formatCurrency(minPrice, currency)}</span>
                         </div>
                     </div>
-                    {/* Date Indicator for 1D Chart - Only show for REAL data */}
-                    {selectedRange === '1D' && historyData && historyData.length > 0 && (
-                        <div className="mt-2 text-xs">
-                            {(() => {
-                                // Priority 1: Use Quote Date if available (Realtime)
-                                const displayDate = quoteDate || (data.length > 0 ? new Date(data[data.length - 1].date) : null);
-
-                                if (!displayDate) return null; // Don't show anything if no date
-
-                                const today = new Date();
-                                const isToday = displayDate.toDateString() === today.toDateString();
-
-                                // User Rule:
-                                // Green = ONLY if date is strictly TODAY (Tagesaktuell) AND Market Open
-                                // Red = Closing price (Schlusskurs) of previous days OR if market is explicitly closed
-                                // Yellow = Delayed
-
-
-
-                                // Check for delay (greater than 15 minutes) - Only relevant if market is open
-                                const isDelayed = isToday && isMarketOpen && (today.getTime() - displayDate.getTime() > 15 * 60 * 1000);
-
-                                let label = 'Schlusskurs';
-                                if (isToday && isMarketOpen) {
-                                    label = isDelayed ? 'Verzögerte Daten' : 'Aktuelle Daten';
-                                } else if (isToday && !isMarketOpen) {
-                                    label = 'Schlusskurs'; // Today but closed (e.g. early close)
-                                }
-
-                                return (
-                                    <div className={cn(
-                                        "inline-flex items-center gap-1.5 px-2 py-1 rounded-md font-medium",
-                                        (isToday && isMarketOpen)
-                                            ? (isDelayed ? "bg-yellow-100 dark:bg-yellow-500/20 text-yellow-950 dark:text-yellow-200" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400")
-                                            : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
-                                    )}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            {(isToday && isMarketOpen && !isDelayed)
-                                                ? <polyline points="20 6 9 17 4 12"></polyline> // Checkmark for Realtime Open
-                                                : (isDelayed
-                                                    ? <circle cx="12" cy="12" r="10"></circle>  // Circle for Delayed
-                                                    : <circle cx="12" cy="12" r="10"></circle>  // Circle for Closed
-                                                )
-                                            }
-                                            {isDelayed && <path d="M12 6v6l4 2"></path>} {/* Clock icon for delay */}
-                                        </svg>
-                                        <span>
-                                            {label} {displayDate.toLocaleDateString('de-DE', {
-                                                day: '2-digit',
-                                                month: '2-digit',
-                                                year: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })} Uhr
-                                        </span>
-                                    </div>
-                                );
-                            })()}
-                        </div>
-                    )}
                 </div>
+                {selectedRange === '1D' && historyData && historyData.length > 0 && (
+                    <div className="mt-2 text-xs">
+                        {(() => {
+                            const displayDate = quoteDate || (data.length > 0 ? new Date(data[data.length - 1].date) : null);
+                            if (!displayDate) return null;
+                            const today = new Date();
+                            const isToday = displayDate.toDateString() === today.toDateString();
+                            const isDelayed = isToday && isMarketOpen && (today.getTime() - displayDate.getTime() > 15 * 60 * 1000);
 
-                <div className="flex bg-muted/50 p-0.5 rounded-lg">
-                    {(['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
-                        <button
-                            key={range}
-                            onClick={() => handleRangeChange(range)}
-                            className={cn(
-                                "px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-all",
-                                selectedRange === range
-                                    ? "bg-background shadow-sm text-foreground"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                            )}
-                        >
-                            {range === 'BUY' ? <><span className="sm:hidden">SK</span><span className="hidden sm:inline">Seit Kauf</span></> : range}
-                        </button>
-                    ))}
-                </div>
+                            let label = 'Schlusskurs';
+                            if (isToday && isMarketOpen) {
+                                label = isDelayed ? 'Verzögerte Daten' : 'Aktuelle Daten';
+                            } else if (isToday && !isMarketOpen) {
+                                label = 'Schlusskurs';
+                            }
+
+                            return (
+                                <div className={cn(
+                                    "inline-flex items-center gap-1.5 px-2 py-1 rounded-md font-medium",
+                                    (isToday && isMarketOpen)
+                                        ? (isDelayed ? "bg-yellow-100 dark:bg-yellow-500/20 text-yellow-950 dark:text-yellow-200" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400")
+                                        : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+                                )}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        {(isToday && isMarketOpen && !isDelayed)
+                                            ? <polyline points="20 6 9 17 4 12"></polyline>
+                                            : (isDelayed
+                                                ? <circle cx="12" cy="12" r="10"></circle>
+                                                : <circle cx="12" cy="12" r="10"></circle>
+                                            )
+                                        }
+                                        {isDelayed && <path d="M12 6v6l4 2"></path>}
+                                    </svg>
+                                    <span>
+                                        {label} {displayDate.toLocaleDateString('de-DE', {
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })} Uhr
+                                    </span>
+                                </div>
+                            );
+                        })()}
+                    </div>
+                )}
+            </div>
+
+            <div className="flex bg-muted/50 p-0.5 rounded-lg mb-4">
+                {(['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
+                    <button
+                        key={range}
+                        onClick={() => handleRangeChange(range)}
+                        className={cn(
+                            "px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-all",
+                            selectedRange === range
+                                ? "bg-background shadow-sm text-foreground"
+                                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                        )}
+                    >
+                        {range === 'BUY' ? <><span className="sm:hidden">SK</span><span className="hidden sm:inline">Seit Kauf</span></> : range}
+                    </button>
+                ))}
             </div>
 
             <div className="h-[300px] w-full min-h-[300px] min-w-0">
@@ -264,7 +252,6 @@ export function PriceHistoryChart({
                                 orientation="right"
                                 tick={{ fontSize: 10, fill: '#e2e8f0' }}
                                 tickFormatter={(val) => {
-                                    // Format number only, no currency code
                                     return new Intl.NumberFormat('de-CH', {
                                         minimumFractionDigits: 2,
                                         maximumFractionDigits: 2,
@@ -275,6 +262,20 @@ export function PriceHistoryChart({
                                 width={40}
                                 mirror={false}
                             />
+                            {purchasePrice && (
+                                <ReferenceLine
+                                    y={purchasePrice}
+                                    stroke="#3b82f6"
+                                    strokeDasharray="3 3"
+                                    label={{
+                                        position: 'right',
+                                        value: 'Kauf',
+                                        fill: '#3b82f6',
+                                        fontSize: 10
+                                    }}
+                                    ifOverflow="extendDomain"
+                                />
+                            )}
                             <Tooltip
                                 content={({ active, payload }) => {
                                     if (active && payload && payload.length) {
@@ -331,8 +332,6 @@ export function PriceHistoryChart({
             <p className="text-[10px] text-muted-foreground text-center mt-2 italic">
                 {historyData && historyData.length > 0 ? '* Reale Marktdaten von Yahoo Finance' : '* Simulierter Chartverlauf (Demo-Modus)'}
             </p>
-
         </div >
     );
 }
-

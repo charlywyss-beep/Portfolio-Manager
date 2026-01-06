@@ -84,7 +84,16 @@ export function StockDetail() {
         // Handle 'BUY' range
         if (timeRange === 'BUY') {
             if (buyDateRef) {
-                rangeToUse = '5Y';
+                // If buy date is less than 1 year ago, use 1Y (Daily) instead of 5Y (Weekly)
+                const buyDate = new Date(buyDateRef);
+                const oneYearAgo = new Date();
+                oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+                if (buyDate > oneYearAgo) {
+                    rangeToUse = '1Y'; // Daily data
+                } else {
+                    rangeToUse = '5Y'; // Weekly data
+                }
             } else {
                 rangeToUse = '5Y'; // Default fallback
             }
@@ -461,6 +470,7 @@ export function StockDetail() {
                                 quoteDate={quoteDate}
                                 previousClose={stock.previousClose}
                                 isMarketOpen={estimateMarketState(stock.symbol, stock.currency) === 'REGULAR'}
+                                purchasePrice={position?.buyPriceAvg}
                             />
                         </div>
                     </div>
