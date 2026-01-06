@@ -272,7 +272,7 @@ export function PriceHistoryChart({
                                 }}
                                 axisLine={false}
                                 tickLine={false}
-                                width={50}
+                                width={40}
                                 mirror={false}
                             />
                             <Tooltip

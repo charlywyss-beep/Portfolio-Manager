@@ -376,7 +376,7 @@ export function StockDetail() {
                 {/* Left Column: Stats & Chart */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Price Chart */}
-                    <div className="bg-card border border-border rounded-xl pl-2 pr-2 py-6 shadow-sm min-h-[450px] flex flex-col">
+                    <div className="bg-card border border-border rounded-xl pl-1 pr-1 py-6 shadow-sm min-h-[450px] flex flex-col">
                         <div className="flex items-center justify-between gap-2 mb-4 shrink-0">
                             {/* Left: Title */}
                             <div className="flex items-center gap-2">
