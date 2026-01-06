@@ -504,6 +504,12 @@ export function StockDetail() {
                                     {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
                                 </span>
                             </div>
+                            <div className="flex justify-between py-1.5 border-b border-border/50">
+                                <span className="text-muted-foreground text-sm">Verkaufslimit</span>
+                                <span className="font-medium text-sm">
+                                    {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency, false) : '-'}
+                                </span>
+                            </div>
                         </div>
                     </div>
 

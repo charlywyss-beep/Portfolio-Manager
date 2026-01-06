@@ -55,7 +55,8 @@ export interface Stock {
     dividendDates?: { exDate: string; payDate: string }[]; // NEW: Multiple dates support
     dividendFrequency?: 'monthly' | 'quarterly' | 'annually' | 'semi-annually';
     logoUrl?: string;
-    targetPrice?: number; // Desired buy price (Fair Value)
+    targetPrice?: number; // Desired buy price (Fair Value) -> Buy Limit
+    sellLimit?: number; // Desired sell price -> Sell Limit
     notes?: string; // Personal notes about the stock
     plannedPurchase?: PlannedPurchase; // Complete planned purchase simulation data
     distributionPolicy?: 'distributing' | 'accumulating'; // Thesaurierend vs Ausschüttend

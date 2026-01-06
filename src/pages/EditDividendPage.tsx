@@ -31,6 +31,7 @@ export function EditDividendPage() {
     const [domain, setDomain] = useState(''); // NEW: For logo generation
     const [price, setPrice] = useState('');
     const [targetPrice, setTargetPrice] = useState('');
+    const [sellLimit, setSellLimit] = useState('');
     const [amount, setAmount] = useState('');
     const [yieldPercent, setYieldPercent] = useState('');
     const [currency, setCurrency] = useState<Currency>('CHF');
@@ -59,6 +60,7 @@ export function EditDividendPage() {
             setSector(stock.sector || ''); // Pre-fill Sector
             setPrice(stock.currentPrice ? stock.currentPrice.toFixed(2) : '');
             setTargetPrice(stock.targetPrice ? stock.targetPrice.toFixed(2) : '');
+            setSellLimit(stock.sellLimit ? stock.sellLimit.toFixed(2) : '');
             setAmount(stock.dividendAmount?.toString() || '');
             setYieldPercent(stock.dividendYield ? stock.dividendYield.toFixed(2) : '');
             setCurrency(stock.dividendCurrency || stock.currency);
@@ -193,6 +195,9 @@ export function EditDividendPage() {
         }
         if (targetPrice !== undefined && (!stock || (targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined) !== stock.targetPrice)) {
             updates.targetPrice = targetPrice ? parseFloat(targetPrice.replace(',', '.')) : undefined;
+        }
+        if (sellLimit !== undefined && (!stock || (sellLimit ? parseFloat(sellLimit.replace(',', '.')) : undefined) !== stock.sellLimit)) {
+            updates.sellLimit = sellLimit ? parseFloat(sellLimit.replace(',', '.')) : undefined;
         }
         if (currency && (!stock || currency !== stock.currency)) {
             updates.currency = currency;
@@ -612,7 +617,6 @@ export function EditDividendPage() {
                                             type="text"
                                             inputMode="decimal"
                                             autoComplete="off"
-                                            step="0.01"
                                             placeholder="Optional"
                                             value={targetPrice}
                                             onChange={(e) => setTargetPrice(e.target.value)}
@@ -620,6 +624,19 @@ export function EditDividendPage() {
                                             className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg mt-auto"
                                         />
                                     </div>
+                                </div>
+                                <div className="space-y-2 pt-2">
+                                    <label className="text-sm font-medium">Verkaufslimit</label>
+                                    <input
+                                        type="text"
+                                        inputMode="decimal"
+                                        autoComplete="off"
+                                        placeholder="Preis festlegen, ab dem verkauft werden soll..."
+                                        value={sellLimit}
+                                        onChange={(e) => setSellLimit(e.target.value)}
+                                        onFocus={(e) => e.target.select()}
+                                        className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg"
+                                    />
                                 </div>
                             </div>
 
