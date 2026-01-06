@@ -624,19 +624,21 @@ export function EditDividendPage() {
                                             className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg mt-auto"
                                         />
                                     </div>
-                                </div>
-                                <div className="space-y-2 pt-2">
-                                    <label className="text-sm font-medium">Verkaufslimit</label>
-                                    <input
-                                        type="text"
-                                        inputMode="decimal"
-                                        autoComplete="off"
-                                        placeholder="Preis festlegen, ab dem verkauft werden soll..."
-                                        value={sellLimit}
-                                        onChange={(e) => setSellLimit(e.target.value)}
-                                        onFocus={(e) => e.target.select()}
-                                        className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg"
-                                    />
+                                    <div className="flex flex-col h-full gap-2">
+                                        <div className="flex justify-between items-center min-h-[28px]">
+                                            <label className="text-sm font-medium">Verkaufslimit</label>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            inputMode="decimal"
+                                            autoComplete="off"
+                                            placeholder="Preis zum Verkauf..."
+                                            value={sellLimit}
+                                            onChange={(e) => setSellLimit(e.target.value)}
+                                            onFocus={(e) => e.target.select()}
+                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg mt-auto"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
