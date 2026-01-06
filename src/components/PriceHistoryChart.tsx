@@ -212,7 +212,7 @@ export function PriceHistoryChart({
                     )}
                 </div>
 
-                <div className="flex flex-wrap bg-muted/50 p-1 rounded-lg gap-0.5">
+                <div className="flex bg-muted/50 p-0.5 rounded-lg">
                     {(['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
                         <button
                             key={range}
