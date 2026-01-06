@@ -98,6 +98,41 @@ export function StockDetail() {
             response = await fetchStockHistory(symbol, '1W');
         }
 
+        // NEW: Filter for 'BUY' range (Seit Kauf)
+        // Ensure we only show data starting from the buy date
+        if (timeRange === 'BUY' && buyDateRef && response.data && response.data.length > 0) {
+            try {
+                let buyDate: Date;
+                // Handle "DD.MM.YYYY" format manually if needed, or standard Date
+                if (typeof buyDateRef === 'string' && buyDateRef.includes('.')) {
+                    const [d, m, y] = buyDateRef.split('.');
+                    buyDate = new Date(`${y}-${m}-${d}`);
+                } else {
+                    buyDate = new Date(buyDateRef);
+                }
+
+                if (!isNaN(buyDate.getTime())) {
+                    // Set time to 00:00:00 to be inclusive of the buy day
+                    buyDate.setHours(0, 0, 0, 0);
+
+                    const filteredData = response.data.filter(point => {
+                        const pointDate = new Date(point.date);
+                        return pointDate >= buyDate;
+                    });
+
+                    // Only apply filter if we have data left
+                    if (filteredData.length > 0) {
+                        console.log(`[StockDetail] Filtering BUY range: ${filteredData.length} points from ${buyDate.toISOString()}`);
+                        response.data = filteredData;
+                    } else {
+                        console.warn('[StockDetail] BUY range filter resulted in empty data, showing full history.');
+                    }
+                }
+            } catch (e) {
+                console.error('[StockDetail] Error filtering BUY range:', e);
+            }
+        }
+
         let localChartData: any[] | null = null;
 
         if (response.error) {
