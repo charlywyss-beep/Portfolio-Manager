@@ -230,10 +230,10 @@ export function PriceHistoryChart({
                 </div>
             </div>
 
-            <div className="h-[300px] w-full -ml-2 min-h-[300px] min-w-0">
+            <div className="h-[300px] w-full min-h-[300px] min-w-0">
                 {hasMounted && (
                     <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
-                        <AreaChart data={data}>
+                        <AreaChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                             <defs>
                                 <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor={isPositive ? "#22c55e" : "#ef4444"} stopOpacity={0.1} />
