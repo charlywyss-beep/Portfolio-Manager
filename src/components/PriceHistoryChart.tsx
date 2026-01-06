@@ -132,11 +132,13 @@ export function PriceHistoryChart({
     const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
     const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
 
-    // Calculate Domain to strictly include purchasePrice if present
+    // Calculate Domain
     let calcMin = minPrice;
     let calcMax = maxPrice;
 
-    if (purchasePrice && purchasePrice > 0) {
+    // Only force purchasePrice into view if the user selected "Seit Kauf" (BUY)
+    // Otherwise, for 1D/1W etc., we prioritize the chart movement visibility.
+    if (selectedRange === 'BUY' && purchasePrice && purchasePrice > 0) {
         calcMin = Math.min(calcMin, purchasePrice);
         calcMax = Math.max(calcMax, purchasePrice);
     }
