@@ -409,7 +409,7 @@ export function StockDetail() {
                                     title="Daten aktualisieren"
                                 >
                                     <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
-                                    <span>
+                                    <span className="whitespace-nowrap">
                                         {isRefreshing ? 'Laden...' : lastUpdate ? `vor ${minutesAgo} Min` : 'Laden'}
                                     </span>
                                 </button>
