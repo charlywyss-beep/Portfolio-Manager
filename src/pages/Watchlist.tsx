@@ -198,8 +198,8 @@ export function Watchlist() {
                                 <tr className="border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground">
                                     <th className="text-left py-3 px-3 font-semibold sticky left-0 z-50 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[160px] md:w-[100px] md:max-w-[100px]">Aktie</th>
                                     <th className="text-right py-3 px-1.5 sm:px-2 font-semibold whitespace-nowrap bg-card">Kurs</th>
-                                    <th className="text-right py-3 px-2 font-semibold whitespace-nowrap bg-card">Kauflimit</th>
-                                    <th className="text-right py-3 px-2 font-semibold whitespace-nowrap bg-card">Verkaufslimit</th>
+                                    <th className="text-right py-3 px-2 font-semibold whitespace-nowrap bg-card">Kaufen</th>
+                                    <th className="text-right py-3 px-2 font-semibold whitespace-nowrap bg-card">Verkaufen</th>
                                     <th className="text-right py-3 px-2 font-semibold whitespace-nowrap bg-card">Rendite %</th>
                                     <th className="text-right py-3 px-2 font-semibold bg-card">Dividende</th>
                                     <th className="text-right py-3 px-2 font-semibold bg-card">Frequenz</th>
