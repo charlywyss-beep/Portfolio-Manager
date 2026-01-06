@@ -212,19 +212,19 @@ export function PriceHistoryChart({
                     )}
                 </div>
 
-                <div className="flex bg-muted/50 p-1 rounded-lg">
+                <div className="flex flex-wrap bg-muted/50 p-1 rounded-lg gap-0.5">
                     {(['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
                         <button
                             key={range}
                             onClick={() => handleRangeChange(range)}
                             className={cn(
-                                "px-3 py-1 text-xs font-medium rounded-md transition-all",
+                                "px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-all",
                                 selectedRange === range
                                     ? "bg-background shadow-sm text-foreground"
                                     : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                             )}
                         >
-                            {range === 'BUY' ? 'Seit Kauf' : range}
+                            {range === 'BUY' ? <><span className="sm:hidden">SK</span><span className="hidden sm:inline">Seit Kauf</span></> : range}
                         </button>
                     ))}
                 </div>
