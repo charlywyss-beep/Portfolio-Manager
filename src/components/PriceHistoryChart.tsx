@@ -266,7 +266,7 @@ export function PriceHistoryChart({
                                 tickFormatter={(val) => formatCurrency(val, currency, false)}
                                 axisLine={false}
                                 tickLine={false}
-                                width={90}
+                                width={75}
                                 mirror={false}
                             />
                             <Tooltip
