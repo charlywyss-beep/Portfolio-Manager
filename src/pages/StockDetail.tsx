@@ -377,31 +377,29 @@ export function StockDetail() {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Price Chart */}
                     <div className="bg-card border border-border rounded-xl p-6 shadow-sm min-h-[450px] flex flex-col">
-                        <div className="grid grid-cols-3 items-center mb-4 shrink-0">
+                        <div className="flex items-center justify-between gap-2 mb-4 shrink-0">
                             {/* Left: Title */}
-                            <div className="justify-self-start flex items-center gap-2">
+                            <div className="flex items-center gap-2">
                                 <TrendingUp className="size-5 text-blue-500" />
                                 <h3 className="font-bold text-lg"><span className="md:hidden">Kurs</span><span className="hidden md:inline">Kursverlauf</span></h3>
                             </div>
 
-                            {/* Center: Back Button (Absolute Center) */}
-                            <div className="justify-self-center w-full flex justify-center">
+                            {/* Center+Right: Buttons */}
+                            <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => navigate('/?openPerformance=true')}
-                                    className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-3 py-1.5 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
+                                    className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-2 py-1 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
                                 >
-                                    <ArrowLeft className="size-3 md:size-4 mr-1.5" />
+                                    <ArrowLeft className="size-3 md:size-4 mr-1" />
                                     <span className="md:hidden">Zurück</span><span className="hidden md:inline">zur Performance</span>
                                 </button>
-                            </div>
 
-                            {/* Right: Refresh Button */}
-                            <div className="justify-self-end">
+                                {/* Refresh Button */}
                                 <button
                                     onClick={loadData}
                                     disabled={isRefreshing}
                                     className={cn(
-                                        "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
+                                        "inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-medium transition-all shadow-sm",
                                         "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
                                         "active:scale-95",
                                         isRefreshing && "opacity-50 cursor-not-allowed"
