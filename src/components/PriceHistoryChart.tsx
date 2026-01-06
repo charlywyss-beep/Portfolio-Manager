@@ -263,10 +263,16 @@ export function PriceHistoryChart({
                                 hide={false}
                                 orientation="right"
                                 tick={{ fontSize: 10, fill: '#888' }}
-                                tickFormatter={(val) => formatCurrency(val, currency, false)}
+                                tickFormatter={(val) => {
+                                    // Format number only, no currency code
+                                    return new Intl.NumberFormat('de-CH', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    }).format(val);
+                                }}
                                 axisLine={false}
                                 tickLine={false}
-                                width={75}
+                                width={50}
                                 mirror={false}
                             />
                             <Tooltip
