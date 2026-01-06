@@ -262,11 +262,12 @@ export function PriceHistoryChart({
                                 domain={['auto', 'auto']}
                                 hide={false}
                                 orientation="right"
-                                tick={{ fontSize: 10, fill: '#888', textAnchor: 'start' }}
+                                tick={{ fontSize: 10, fill: '#888', dx: 5 }}
                                 tickFormatter={(val) => formatCurrency(val, currency, false)}
                                 axisLine={false}
                                 tickLine={false}
-                                width={80}
+                                width={85}
+                                tickMargin={5}
                             />
                             <Tooltip
                                 content={({ active, payload }) => {
