@@ -20,7 +20,7 @@ export function Watchlist() {
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
 
     // Sorting
-    const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'yield' | 'gap', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
+    const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'yield' | 'gap' | 'sellGap', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
 
     // Filter stocks that are in the watchlist
     const watchlistStocks = stocks
@@ -50,6 +50,17 @@ export function Watchlist() {
                 const gapB = (b.currentPrice - targetB) / targetB;
 
                 return gapA - gapB; // Ascending (Most undervalued first)
+            }
+            if (sortConfig.key === 'sellGap') {
+                const sellA = a.sellLimit || 0;
+                const sellB = b.sellLimit || 0;
+                if (!sellA) return 1;
+                if (!sellB) return -1;
+
+                // Gap: (SellLimit - Current) / SellLimit. Positive means not reached yet.
+                const gapA = (sellA - a.currentPrice) / sellA;
+                const gapB = (sellB - b.currentPrice) / sellB;
+                return gapA - gapB; // Smallest gap first (closest to sell)
             }
             return 0;
         });
@@ -121,8 +132,8 @@ export function Watchlist() {
                 <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
                     <div className="flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-muted/30 gap-2">
                         <h2 className="text-lg font-semibold">Beobachtete Aktien</h2>
-                        <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground bg-background/50 px-3 py-1.5 rounded-lg border border-border/50">
-                            <span>Aktueller Kurs:</span>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-xs font-medium text-muted-foreground bg-background/50 px-3 py-1.5 rounded-lg border border-border/50">
+                            <span className="hidden sm:inline">Legende:</span>
                             <div className="flex items-center gap-1.5">
                                 <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
                                     <div className="size-2 rounded-full bg-green-500 animate-pulse" />
@@ -130,12 +141,19 @@ export function Watchlist() {
                                 </div>
                                 <span>(Kurs &lt; Limit)</span>
                             </div>
-                            <div className="w-px h-3 bg-border" />
+                            <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                                    <div className="size-2 rounded-full bg-green-500 animate-pulse" />
+                                    <span className="font-bold">VERKAUFEN</span>
+                                </div>
+                                <span>(Kurs &gt; Limit)</span>
+                            </div>
+                            <div className="w-px h-3 bg-border hidden sm:block" />
                             <div className="flex items-center gap-1.5">
                                 <div className="flex items-center gap-1 text-red-500">
                                     <div className="size-2 rounded-full bg-red-500" />
                                 </div>
-                                <span>(Kurs &gt; Limit)</span>
+                                <span>(Limit noch nicht erreicht)</span>
                             </div>
                         </div>
 
@@ -148,6 +166,7 @@ export function Watchlist() {
                                 <option value="name">Name (A-Z)</option>
                                 <option value="yield">Rendite %</option>
                                 <option value="gap">Kauflimit (Gap)</option>
+                                <option value="sellGap">Verkaufslimit (Gap)</option>
                             </select>
 
                             <button
@@ -176,15 +195,16 @@ export function Watchlist() {
                     <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-280px)]">
                         <table className="w-full">
                             <thead className="sticky top-0 z-50 bg-card">
-                                <tr className="border-b border-border">
-                                    <th className="text-left py-3 px-4 font-semibold sticky left-0 z-50 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[160px] md:w-[100px] md:max-w-[100px]">Aktie</th>
-                                    <th className="text-right py-3 px-2 sm:px-4 font-semibold whitespace-nowrap bg-card">Aktueller Kurs</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap bg-card">Kauflimit</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap bg-card">Rendite %</th>
-                                    <th className="text-right py-3 px-4 font-semibold bg-card">Dividende</th>
-                                    <th className="text-right py-3 px-4 font-semibold bg-card">Frequenz</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap bg-card">EX-Tag</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap bg-card">Zahl-Tag</th>
+                                <tr className="border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground">
+                                    <th className="text-left py-3 px-3 font-semibold sticky left-0 z-50 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[160px] md:w-[100px] md:max-w-[100px]">Aktie</th>
+                                    <th className="text-right py-3 px-1.5 sm:px-2 font-semibold whitespace-nowrap bg-card">Kurs</th>
+                                    <th className="text-right py-3 px-2 font-semibold whitespace-nowrap bg-card">Kauflimit</th>
+                                    <th className="text-right py-3 px-2 font-semibold whitespace-nowrap bg-card">Verkaufslimit</th>
+                                    <th className="text-right py-3 px-2 font-semibold whitespace-nowrap bg-card">Rendite %</th>
+                                    <th className="text-right py-3 px-2 font-semibold bg-card">Dividende</th>
+                                    <th className="text-right py-3 px-2 font-semibold bg-card">Frequenz</th>
+                                    <th className="text-right py-3 px-2 font-semibold whitespace-nowrap bg-card">EX-Tag</th>
+                                    <th className="text-right py-3 px-2 font-semibold whitespace-nowrap bg-card">Zahl-Tag</th>
                                     <th className="text-right py-3 px-2 w-[80px] sticky right-0 bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                                 </tr>
                             </thead>
@@ -213,12 +233,16 @@ export function Watchlist() {
                                         const isUndervalued = hasTarget && stock.currentPrice <= (stock.targetPrice || 0);
                                         const overvaluationPercent = hasTarget ? ((stock.currentPrice - (stock.targetPrice || 0)) / (stock.targetPrice || 1)) * 100 : 0;
 
+                                        const hasSellLimit = !!stock.sellLimit;
+                                        const isSellReady = hasSellLimit && stock.currentPrice >= (stock.sellLimit || 0);
+                                        const sellGapPercent = hasSellLimit ? (((stock.sellLimit || 0) - stock.currentPrice) / (stock.sellLimit || 1)) * 100 : 0;
+
                                         // Check if position exists using the positions array from context
                                         const hasPosition = positions.some(p => p.stockId === stock.id);
 
                                         return (
                                             <tr key={stock.id} className="hover:bg-muted/50 transition-colors group">
-                                                <td className="py-3 px-4 sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[160px] md:w-[100px] md:max-w-[100px] align-top">
+                                                <td className="py-3 px-3 sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[160px] md:w-[100px] md:max-w-[100px] align-top">
                                                     <div className="absolute inset-0 bg-card -z-10" />
                                                     <div className="relative flex items-start gap-3">
                                                         <div
@@ -263,7 +287,7 @@ export function Watchlist() {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="text-right py-3 px-2 sm:px-4 align-top">
+                                                <td className="text-right py-3 px-1.5 sm:px-2 align-top">
                                                     <div className="flex flex-col items-end gap-1">
                                                         <span className="font-medium whitespace-nowrap">{formatCurrency(stock.currentPrice, stock.currency, false)}</span>
                                                         {stock.currency !== 'CHF' && (
@@ -271,8 +295,18 @@ export function Watchlist() {
                                                                 {formatCurrency(convertToCHF(stock.currentPrice, stock.currency), 'CHF', false)}
                                                             </span>
                                                         )}
-                                                        {hasTarget && (
-                                                            <div className="flex items-center justify-end gap-1.5 text-xs">
+                                                    </div>
+                                                </td>
+                                                <td className="text-right py-3 px-2 font-medium align-top">
+                                                    {hasTarget ? (
+                                                        <div className="flex flex-col items-end gap-1">
+                                                            <span className="font-medium whitespace-nowrap">{formatCurrency(stock.targetPrice || 0, stock.currency, false)}</span>
+                                                            {stock.currency !== 'CHF' && (
+                                                                <span className="font-medium whitespace-nowrap">
+                                                                    {formatCurrency(convertToCHF(stock.targetPrice || 0, stock.currency), 'CHF', false)}
+                                                                </span>
+                                                            )}
+                                                            <div className="flex items-center justify-end gap-1.5 text-xs mt-1">
                                                                 {isUndervalued ? (
                                                                     <>
                                                                         <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
@@ -290,22 +324,40 @@ export function Watchlist() {
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="text-right py-3 px-4 font-medium align-top">
-                                                    {hasTarget ? (
-                                                        <div className="flex flex-col items-end gap-1">
-                                                            <span className="font-medium whitespace-nowrap">{formatCurrency(stock.targetPrice || 0, stock.currency, false)}</span>
-                                                            {stock.currency !== 'CHF' && (
-                                                                <span className="font-medium whitespace-nowrap">
-                                                                    {formatCurrency(convertToCHF(stock.targetPrice || 0, stock.currency), 'CHF', false)}
-                                                                </span>
-                                                            )}
                                                         </div>
                                                     ) : '-'}
                                                 </td>
-                                                <td className="text-right py-3 px-4 align-top">
+                                                <td className="text-right py-3 px-2 font-medium align-top">
+                                                    {hasSellLimit ? (
+                                                        <div className="flex flex-col items-end gap-1">
+                                                            <span className="font-medium whitespace-nowrap">{formatCurrency(stock.sellLimit || 0, stock.currency, false)}</span>
+                                                            {stock.currency !== 'CHF' && (
+                                                                <span className="font-medium whitespace-nowrap">
+                                                                    {formatCurrency(convertToCHF(stock.sellLimit || 0, stock.currency), 'CHF', false)}
+                                                                </span>
+                                                            )}
+                                                            <div className="flex items-center justify-end gap-1.5 text-xs mt-1">
+                                                                {isSellReady ? (
+                                                                    <>
+                                                                        <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
+                                                                            <div className="size-2 rounded-full bg-green-500 animate-pulse" />
+                                                                            <span>+{Math.abs(sellGapPercent).toFixed(1)}%</span>
+                                                                        </div>
+                                                                        <span className="text-[10px] font-bold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded">
+                                                                            VERKAUFEN
+                                                                        </span>
+                                                                    </>
+                                                                ) : (
+                                                                    <div className="flex items-center gap-1 text-red-500 font-medium">
+                                                                        <div className="size-2 rounded-full bg-red-500" />
+                                                                        <span>{sellGapPercent.toFixed(1)}%</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ) : '-'}
+                                                </td>
+                                                <td className="text-right py-3 px-2 align-top">
                                                     <div className="flex flex-col items-end">
                                                         <span className="text-green-600 dark:text-green-400 font-medium">
                                                             {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
@@ -317,7 +369,7 @@ export function Watchlist() {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="text-right py-3 px-4 align-top">
+                                                <td className="text-right py-3 px-2 align-top">
                                                     {stock.dividendAmount ? (
                                                         <div className="flex flex-col items-end gap-1">
                                                             <span className="font-medium whitespace-nowrap">{formatCurrency(stock.dividendAmount, stock.dividendCurrency || stock.currency, false)}</span>
@@ -329,7 +381,7 @@ export function Watchlist() {
                                                         </div>
                                                     ) : '-'}
                                                 </td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground align-top">
+                                                <td className="text-right py-3 px-2 text-muted-foreground align-top">
                                                     {(() => {
                                                         const freqLabel = translateFrequency(stock.dividendFrequency);
                                                         const currentDiv = getCurrentDividendPeriod(stock);
@@ -346,7 +398,7 @@ export function Watchlist() {
                                                         return freqLabel;
                                                     })()}
                                                 </td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground align-top">
+                                                <td className="text-right py-3 px-2 text-muted-foreground align-top">
                                                     {stock.dividendDates && stock.dividendDates.length > 0 ? (
                                                         <div className="grid grid-cols-[30px_70px] gap-x-1 justify-end items-center text-right text-sm">
                                                             {stock.dividendDates
@@ -385,7 +437,7 @@ export function Watchlist() {
                                                     )
                                                     }
                                                 </td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground align-top">
+                                                <td className="text-right py-3 px-2 text-muted-foreground align-top">
                                                     {stock.dividendDates && stock.dividendDates.length > 0 ? (
                                                         <div className="grid grid-cols-[30px_70px] gap-x-1 justify-end items-center text-right text-sm">
                                                             {stock.dividendDates
