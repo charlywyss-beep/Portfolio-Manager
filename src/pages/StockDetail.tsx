@@ -408,7 +408,7 @@ export function StockDetail() {
                                 >
                                     <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
                                     <span className="whitespace-nowrap">
-                                        {isRefreshing ? 'Laden...' : lastUpdate ? `vor ${minutesAgo} Min` : 'Laden'}
+                                        {isRefreshing ? 'Laden...' : lastUpdate ? `${minutesAgo} Min` : 'Laden'}
                                     </span>
                                 </button>
                             </div>
