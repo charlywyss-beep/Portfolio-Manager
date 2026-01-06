@@ -11,7 +11,7 @@ import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { cn } from '../utils';
 import { Logo } from '../components/Logo';
 
-import { fetchStockHistory, fetchStockQuote, type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
+import { fetchStockHistory, fetchStockQuote, normalizeYahooPrice, type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
 
 export function StockDetail() {
     const { id } = useParams();
@@ -152,25 +152,15 @@ export function StockDetail() {
 
             // Sync current price with latest chart data
             if (response.data && response.data.length > 0) {
-                localChartData = response.data;
+                // Normalize the entire chart data using the currency from response
+                const resultCurrency = response.currency || currency; // Use API currency if available
 
-                // Auto-detect GBp (Pence) to GBP (Pound) conversion
-                const latestPriceRaw = localChartData[localChartData.length - 1].value;
-                const isGBP = currency === 'GBP';
+                localChartData = response.data.map(d => ({
+                    ...d,
+                    value: normalizeYahooPrice(d.value, resultCurrency, symbol)
+                }));
 
-                if (isGBP) {
-                    const isLSE = symbol.toUpperCase().endsWith('.L') || isin?.startsWith('GB');
-                    if (isLSE && latestPriceRaw > 50) {
-                        localChartData = localChartData.map(d => ({
-                            ...d,
-                            value: d.value / 100
-                        }));
-                        // Also update state with corrected data
-                        setChartData(localChartData);
-                    }
-                }
-
-                // const latestPrice = chartData[chartData.length - 1].value;
+                setChartData(localChartData);
             }
         }
 

@@ -21,6 +21,28 @@ const getYahooParams = (range: TimeRange): { period: string; interval: string } 
     }
 };
 
+/**
+ * Normalizes prices from Yahoo Finance.
+ * Handles Pence (GBp) vs Pounds (GBP) conversion.
+ */
+export function normalizeYahooPrice(price: number, currency: string | null, symbol: string): number {
+    if (!price) return price;
+
+    const cur = currency?.toUpperCase();
+    const isPence = cur === 'GBP' || cur === 'GBX'; // GBp/GBX are common Pence codes
+    const isLSE = symbol.toUpperCase().endsWith('.L');
+
+    // Heuristic: If it's LSE and price > 50 and NOT clearly USD/EUR/CHF, it's likely Pence.
+    // LSE stocks over 1000 pence are common, but they are rarely quoted in Pounds > 1000.
+    const isLikelyPence = isLSE && price > 50 && cur !== 'USD' && cur !== 'EUR' && cur !== 'CHF';
+
+    if (isPence || isLikelyPence) {
+        return price / 100;
+    }
+
+    return price;
+}
+
 export async function fetchStockHistory(
     symbol: string,
     range: TimeRange,
@@ -147,21 +169,10 @@ export async function fetchStockQuote(symbol: string): Promise<{
             country = MANUAL_COUNTRY_OVERRIDES[symbol];
         }
 
-        // Standardize GBp logic (SAME AS BATCH)
-        let price = result.regularMarketPrice;
-        let open = result.regularMarketOpen;
-        let previousClose = result.regularMarketPreviousClose;
-
-        const isPence = result.currency === 'GBp';
-        const isLSE = symbol.endsWith('.L');
-        // Heuristic like in batch
-        const isLikelyPence = isLSE && price > 50 && result.currency !== 'USD' && result.currency !== 'EUR' && result.currency !== 'CHF';
-
-        if (isPence || isLikelyPence) {
-            price = price / 100;
-            if (open) open = open / 100;
-            if (previousClose) previousClose = previousClose / 100;
-        }
+        // Standardize price normalization using centralized helper
+        const price = normalizeYahooPrice(result.regularMarketPrice, result.currency, symbol);
+        const open = result.regularMarketOpen ? normalizeYahooPrice(result.regularMarketOpen, result.currency, symbol) : null;
+        const previousClose = result.regularMarketPreviousClose ? normalizeYahooPrice(result.regularMarketPreviousClose, result.currency, symbol) : null;
 
         return {
             price,
@@ -205,20 +216,12 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
 
         results.forEach((res: any) => {
             if (res.symbol && res.regularMarketPrice) {
-                // Heuristic: Detect Pence (GBp) vs Pounds (GBP)
-                // VWRA.L trades in USD, so we must NOT divide by 100 if currency is USD/EUR.
-                let price = res.regularMarketPrice;
-                const isPence = res.currency === 'GBp';
-                const isLSE = res.symbol.endsWith('.L');
-                const isLikelyPence = isLSE && price > 50 && res.currency !== 'USD' && res.currency !== 'EUR' && res.currency !== 'CHF';
-
-                if (isPence || isLikelyPence) {
-                    price = price / 100;
-                }
+                const price = normalizeYahooPrice(res.regularMarketPrice, res.currency, res.symbol);
+                const previousClose = res.regularMarketPreviousClose ? normalizeYahooPrice(res.regularMarketPreviousClose, res.currency, res.symbol) : undefined;
 
                 updateMap[res.symbol] = {
                     price,
-                    previousClose: (res.regularMarketPreviousClose && (isPence || isLikelyPence)) ? res.regularMarketPreviousClose / 100 : (res.regularMarketPreviousClose || undefined),
+                    previousClose,
                     marketTime: res.regularMarketTime ? new Date(res.regularMarketTime * 1000) : undefined,
                     marketState: res.marketState || null
                 };
