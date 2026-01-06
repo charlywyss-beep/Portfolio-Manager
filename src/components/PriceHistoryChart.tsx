@@ -136,11 +136,23 @@ export function PriceHistoryChart({
     let calcMin = minPrice;
     let calcMax = maxPrice;
 
-    // Only force purchasePrice into view if the user selected "Seit Kauf" (BUY)
-    // Otherwise, for 1D/1W etc., we prioritize the chart movement visibility.
+    // Smart Scaling for 'Seit Kauf':
+    // Only expand to show purchasePrice if it doesn't compress the data too much.
+    // If the data range becomes < 15% of the total range (due to a far-away purchase price),
+    // we prioritize showing the curve details over the purchase line.
     if (selectedRange === 'BUY' && purchasePrice && purchasePrice > 0) {
-        calcMin = Math.min(calcMin, purchasePrice);
-        calcMax = Math.max(calcMax, purchasePrice);
+        const potentialMin = Math.min(calcMin, purchasePrice);
+        const potentialMax = Math.max(calcMax, purchasePrice);
+
+        const dataRange = calcMax - calcMin;
+        const potentialRange = potentialMax - potentialMin;
+
+        // If dataRange is 0 (flat line), we expand anyway to show something.
+        // Otherwise, checking compression ratio.
+        if (dataRange === 0 || (dataRange / potentialRange) > 0.15) {
+            calcMin = potentialMin;
+            calcMax = potentialMax;
+        }
     }
 
     const range = calcMax - calcMin;
@@ -294,7 +306,6 @@ export function PriceHistoryChart({
                                         fill: '#3b82f6',
                                         fontSize: 10
                                     }}
-                                    ifOverflow="extendDomain"
                                 />
                             )}
                             <Tooltip
