@@ -244,7 +244,7 @@ export function PriceHistoryChart({
                             <XAxis
                                 dataKey="date"
                                 hide={false}
-                                tick={{ fontSize: 10, fill: '#888' }}
+                                tick={{ fontSize: 10, fill: '#e2e8f0' }}
                                 tickLine={false}
                                 axisLine={false}
                                 minTickGap={30}
@@ -262,7 +262,7 @@ export function PriceHistoryChart({
                                 domain={['auto', 'auto']}
                                 hide={false}
                                 orientation="right"
-                                tick={{ fontSize: 10, fill: '#888' }}
+                                tick={{ fontSize: 10, fill: '#e2e8f0' }}
                                 tickFormatter={(val) => {
                                     // Format number only, no currency code
                                     return new Intl.NumberFormat('de-CH', {
