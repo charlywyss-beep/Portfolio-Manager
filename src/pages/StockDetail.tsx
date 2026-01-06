@@ -323,7 +323,7 @@ export function StockDetail() {
                         </div>
                         <div>
                             <div className="flex items-center gap-2 md:gap-3">
-                                <h1 className="text-lg md:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">{stock.name}</h1>
+                                <h1 className="text-lg md:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 whitespace-pre-line">{stock.name}</h1>
                                 {(() => {
                                     // User Rule (v3.11.481):
                                     // STRICT Time-Based Logic for the Status Dot.

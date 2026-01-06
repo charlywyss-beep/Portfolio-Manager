@@ -64,7 +64,6 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
             if (position.purchases && position.purchases.length > 0) {
                 // Sanitize loaded purchases
-                // Sanitize loaded purchases
                 const sanitizedPurchases = position.purchases.map(p => ({
                     ...p,
                     shares: fixShares(p.shares),
@@ -91,6 +90,14 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
             setManualDate(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
         }
     }, [isOpen, position]);
+
+    // Auto-resize stock name textarea
+    useEffect(() => {
+        if (inputRef.current) {
+            inputRef.current.style.height = 'auto';
+            inputRef.current.style.height = inputRef.current.scrollHeight + 'px';
+        }
+    }, [stockName, isOpen]);
 
     // Derived Totals from Purchases
     // NOTE: `p.price` here is the UI VALUE (Pounds). 
@@ -230,21 +237,11 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                     <div className="flex items-start gap-2 group/edit w-full">
                                         <textarea
                                             ref={inputRef}
-                                            className="w-full text-base font-semibold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground resize-y min-h-[28px] overflow-hidden leading-snug"
+                                            className="w-full text-base font-semibold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground resize-none min-h-[28px] leading-relaxed whitespace-pre-wrap"
                                             value={stockName}
-                                            onChange={(e) => {
-                                                setStockName(e.target.value);
-                                                // Auto-resize
-                                                e.target.style.height = 'auto';
-                                                e.target.style.height = e.target.scrollHeight + 'px';
-                                            }}
-                                            onFocus={(e) => {
-                                                e.target.style.height = 'auto';
-                                                e.target.style.height = e.target.scrollHeight + 'px';
-                                            }}
+                                            onChange={(e) => setStockName(e.target.value)}
                                             rows={1}
                                             placeholder="Name der Position"
-                                            style={{ height: 'auto' }}
                                         />
                                         <Pencil
                                             className="size-3.5 text-muted-foreground opacity-50 group-hover/edit:opacity-100 transition-opacity shrink-0 cursor-pointer hover:text-primary mt-1.5"
