@@ -284,7 +284,7 @@ export function StockDetail() {
     return (
         <div className="p-2 md:p-8 space-y-4 md:space-y-8 animate-in fade-in duration-500 pb-16">
             {/* Sticky Header / Navigation */}
-            <div className="sticky top-0 -mx-2 md:-mx-8 px-2 md:px-8 py-4 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-4 md:mb-6">
+            <div className="sticky top-16 -mx-2 md:-mx-8 px-2 md:px-8 py-4 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-4 md:mb-6">
                 <div className="flex items-center gap-3 mb-4">
                     <button
                         onClick={() => navigate(-1)}
