@@ -107,6 +107,11 @@ export function PriceHistoryChart({
         startPrice = previousClose;
     }
 
+    // For BUY, use the actual purchase price for accurate performance (vs Portfolio)
+    if (selectedRange === 'BUY' && purchasePrice && purchasePrice > 0) {
+        startPrice = purchasePrice;
+    }
+
     let endPrice = data[data.length - 1]?.value || 0;
     // For 1D, force endPrice to be currentPrice to match the List/Quote (avoid chart data lag)
     if (selectedRange === '1D' && currentPrice > 0) {
