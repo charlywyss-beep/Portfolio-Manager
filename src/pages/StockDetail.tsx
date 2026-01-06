@@ -381,7 +381,7 @@ export function StockDetail() {
                             {/* Left: Title */}
                             <div className="justify-self-start flex items-center gap-2">
                                 <TrendingUp className="size-5 text-blue-500" />
-                                <h3 className="font-bold text-lg">Kursverlauf</h3>
+                                <h3 className="font-bold text-lg"><span className="md:hidden">Kurs</span><span className="hidden md:inline">Kursverlauf</span></h3>
                             </div>
 
                             {/* Center: Back Button (Absolute Center) */}
@@ -391,7 +391,7 @@ export function StockDetail() {
                                     className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-3 py-1.5 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
                                 >
                                     <ArrowLeft className="size-3 md:size-4 mr-1.5" />
-                                    Zurück zur Performance
+                                    <span className="md:hidden">Zurück</span><span className="hidden md:inline">zur Performance</span>
                                 </button>
                             </div>
 
@@ -410,7 +410,7 @@ export function StockDetail() {
                                 >
                                     <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
                                     <span>
-                                        {isRefreshing ? 'Lade Daten...' : lastUpdate ? `Abfrage vor ${minutesAgo} Min` : 'Daten laden'}
+                                        {isRefreshing ? 'Laden...' : lastUpdate ? `vor ${minutesAgo} Min` : 'Laden'}
                                     </span>
                                 </button>
                             </div>
