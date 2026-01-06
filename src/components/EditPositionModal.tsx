@@ -94,8 +94,12 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     // Auto-resize stock name textarea
     useEffect(() => {
         if (inputRef.current) {
-            inputRef.current.style.height = 'auto';
-            inputRef.current.style.height = inputRef.current.scrollHeight + 'px';
+            // First reset height to 0 to get the correct scrollHeight (for shrinking)
+            inputRef.current.style.height = '0px';
+            const scrollHeight = inputRef.current.scrollHeight;
+            inputRef.current.style.height = `${scrollHeight}px`;
+            // Prevent scrollbar flicker
+            inputRef.current.style.overflow = 'hidden';
         }
     }, [stockName, isOpen]);
 
@@ -189,10 +193,10 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
-            <div className="relative pointer-events-auto px-4 py-24 md:px-24 md:py-32 lg:px-36 lg:py-32">
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none overflow-hidden">
+            <div className="relative pointer-events-auto w-full max-w-4xl px-2 py-4 md:px-4">
                 <div className="absolute inset-0 bg-black/50 backdrop-blur-sm rounded-xl"></div>
-                <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-full md:max-w-4xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative z-10 max-h-[calc(100vh-240px)]">
+                <div className="bg-card border border-border rounded-xl shadow-xl w-full flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative z-10 max-h-[calc(100vh-48px)]">
                     {/* Header */}
                     <div className="flex items-center justify-between p-6 border-b border-border">
                         <div>

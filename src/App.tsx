@@ -17,15 +17,70 @@ import { StockDetail } from './pages/StockDetail';
 import { ExchangeRates } from './pages/ExchangeRates';
 import { MortgageCalculator } from './pages/MortgageCalculator';
 
+interface NavItemProps {
+  to: string;
+  icon: any;
+  label: string;
+  onClick?: () => void;
+}
+
+const NavItem = ({ to, icon: Icon, label, onClick }: NavItemProps) => {
+  const location = useLocation();
+
+  // Custom active logic: Check if we're on /dividends/edit with from=watchlist
+  const isCustomActive = () => {
+    const isOnDividendEdit = location.pathname.startsWith('/dividends/edit');
+    if (!isOnDividendEdit) return false;
+
+    const searchParams = new URLSearchParams(location.search);
+    const fromWatchlist = searchParams.get('from') === 'watchlist';
+    const fromPortfolio = searchParams.get('from') === 'portfolio';
+
+    if (to === '/watchlist' && fromWatchlist) return true;
+    if (to === '/portfolio' && fromPortfolio) return true;
+    if (to === '/dividends' && (fromWatchlist || fromPortfolio)) return false;
+
+    return false;
+  };
+
+  return (
+    <NavLink
+      to={to}
+      onClick={onClick}
+      className={({ isActive }) => {
+        const isOnDividendEdit = location.pathname.startsWith('/dividends/edit');
+        const searchParams = new URLSearchParams(location.search);
+        const fromWatchlist = searchParams.get('from') === 'watchlist';
+        const fromPortfolio = searchParams.get('from') === 'portfolio';
+
+        if (to === '/dividends' && isOnDividendEdit && (fromWatchlist || fromPortfolio)) {
+          return cn(
+            "flex items-center gap-6 px-4 py-2.5 rounded-md transition-all whitespace-nowrap mx-2 mb-1",
+            "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
+          );
+        }
+
+        return cn(
+          "flex items-center gap-6 px-4 py-2.5 rounded-md transition-all whitespace-nowrap mx-2 mb-1",
+          (isActive || isCustomActive())
+            ? "bg-primary text-primary-foreground shadow-sm"
+            : "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
+        );
+      }}
+    >
+      <Icon className="size-5 shrink-0" />
+      <span className="font-medium">{label}</span>
+    </NavLink>
+  );
+};
+
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 1024);
-
   const location = useLocation();
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
-    // document.documentElement.classList.toggle('dark'); // Handled by effect
   };
 
   // Dark Mode Effect
@@ -50,68 +105,8 @@ function App() {
     return 'Portfolio Manager';
   };
 
-  const NavItem = ({ to, icon: Icon, label }: { to: string, icon: any, label: string }) => {
-    const location = useLocation();
-
-    // Custom active logic: Check if we're on /dividends/edit with from=watchlist
-    const isCustomActive = () => {
-      const isOnDividendEdit = location.pathname.startsWith('/dividends/edit');
-      if (!isOnDividendEdit) return false;
-
-      const searchParams = new URLSearchParams(location.search);
-      const fromWatchlist = searchParams.get('from') === 'watchlist';
-      const fromPortfolio = searchParams.get('from') === 'portfolio';
-
-      // If editing from watchlist, highlight Watchlist
-      if (to === '/watchlist' && fromWatchlist) {
-        return true;
-      }
-      // If editing from portfolio, highlight Portfolio
-      if (to === '/portfolio' && fromPortfolio) {
-        return true;
-      }
-
-      // Don't highlight Dividenden if we're editing from watchlist OR portfolio
-      if (to === '/dividends' && (fromWatchlist || fromPortfolio)) {
-        return false;
-      }
-
-      return false;
-    };
-
-    return (
-      <NavLink
-        to={to}
-        onClick={() => {
-          if (window.innerWidth < 1024) setIsSidebarOpen(false);
-        }}
-        className={({ isActive }) => {
-          // Override isActive for /dividends/edit when from=watchlist
-          const isOnDividendEdit = location.pathname.startsWith('/dividends/edit');
-          const searchParams = new URLSearchParams(location.search);
-          const fromWatchlist = searchParams.get('from') === 'watchlist';
-          const fromPortfolio = searchParams.get('from') === 'portfolio';
-
-          // If we're on dividend edit from watchlist/portfolio and this is the Dividenden nav item, don't highlight
-          if (to === '/dividends' && isOnDividendEdit && (fromWatchlist || fromPortfolio)) {
-            return cn(
-              "flex items-center gap-6 px-4 py-2.5 rounded-md transition-all whitespace-nowrap mx-2 mb-1",
-              "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
-            );
-          }
-
-          return cn(
-            "flex items-center gap-6 px-4 py-2.5 rounded-md transition-all whitespace-nowrap mx-2 mb-1",
-            (isActive || isCustomActive())
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
-          );
-        }}
-      >
-        <Icon className="size-5 shrink-0" />
-        <span className="font-medium">{label}</span>
-      </NavLink>
-    );
+  const closeSidebarOnMobile = () => {
+    if (window.innerWidth < 1024) setIsSidebarOpen(false);
   };
 
   return (
@@ -137,7 +132,7 @@ function App() {
             <Link
               to="/portfolio"
               className="flex flex-col cursor-pointer group p-6 border-b border-border hover:bg-muted/50 transition-colors"
-              title="Gehe zu Positionen"
+              onClick={closeSidebarOnMobile}
             >
               <div className="flex items-center gap-2 mb-1">
                 <div className="size-8 rounded-lg bg-primary flex items-center justify-center group-hover:scale-105 transition-transform shadow-sm">
@@ -151,7 +146,6 @@ function App() {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                // Force Hard Reload by appending unique timestamp
                 const url = new URL(window.location.href);
                 url.searchParams.set('v', Date.now().toString());
                 window.location.href = url.toString();
@@ -165,25 +159,23 @@ function App() {
             </div>
 
             <nav className="flex-1 p-4 space-y-2 w-fit">
-              <NavItem to="/" icon={LayoutDashboard} label="Übersicht" />
-              <NavItem to="/portfolio" icon={Wallet} label="Positionen" />
-              <NavItem to="/dividends" icon={TrendingUp} label="Dividenden" />
-              <NavItem to="/watchlist" icon={Eye} label="Watchlist" />
-              <NavItem to="/calculator" icon={Calculator} label="Kauf / Verkauf" />
-              <NavItem to="/mortgage" icon={Landmark} label="Budget" />
-
-
+              <NavItem to="/" icon={LayoutDashboard} label="Übersicht" onClick={closeSidebarOnMobile} />
+              <NavItem to="/portfolio" icon={Wallet} label="Positionen" onClick={closeSidebarOnMobile} />
+              <NavItem to="/dividends" icon={TrendingUp} label="Dividenden" onClick={closeSidebarOnMobile} />
+              <NavItem to="/watchlist" icon={Eye} label="Watchlist" onClick={closeSidebarOnMobile} />
+              <NavItem to="/calculator" icon={Calculator} label="Kauf / Verkauf" onClick={closeSidebarOnMobile} />
+              <NavItem to="/mortgage" icon={Landmark} label="Budget" onClick={closeSidebarOnMobile} />
 
               <div className="pt-4 mt-4 border-t border-border">
-                <NavItem to="/exchange-rates" icon={ArrowLeftRight} label="Wechselkurse" />
-                <NavItem to="/settings" icon={SettingsIcon} label="Einstellungen" />
+                <NavItem to="/exchange-rates" icon={ArrowLeftRight} label="Wechselkurse" onClick={closeSidebarOnMobile} />
+                <NavItem to="/settings" icon={SettingsIcon} label="Einstellungen" onClick={closeSidebarOnMobile} />
               </div>
             </nav>
 
             <div className="p-4 border-t border-border">
               <button
                 onClick={toggleDarkMode}
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full px-4"
               >
                 {isDarkMode ? <Sun className="size-4" /> : <Moon className="size-4" />}
                 <span>{isDarkMode ? "Light Mode" : "Dark Mode"}</span>
@@ -197,7 +189,7 @@ function App() {
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  className="p-2 hover:bg-accent rounded-md transition-colors relative z-50"
+                  className="p-2 hover:bg-accent rounded-md transition-colors relative z-50 lg:hidden"
                   aria-label="Toggle menu"
                 >
                   {isSidebarOpen ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -213,7 +205,7 @@ function App() {
                 >
                   v{packageJson.version}
                 </button>
-                <h2 className="text-lg font-semibold capitalize">
+                <h2 className="text-lg font-semibold capitalize whitespace-nowrap">
                   {getPageTitle(location.pathname)}
                 </h2>
               </div>
@@ -236,10 +228,9 @@ function App() {
             </div>
           </main>
         </div>
-      </PortfolioProvider >
-    </ExchangeRateProvider >
+      </PortfolioProvider>
+    </ExchangeRateProvider>
   );
 }
 
 export default App;
-

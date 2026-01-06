@@ -15,7 +15,7 @@ const getFrequencyFactor = (freq?: string) => {
 };
 
 export function usePortfolioData() {
-    const { positions: rawPositions, stocks, watchlist } = usePortfolio();
+    const { positions: rawPositions, stocks, watchlist, fixedDeposits } = usePortfolio();
     const { rates } = useExchangeRates();
 
     const positions = useMemo(() => {
@@ -98,7 +98,7 @@ export function usePortfolioData() {
         const totalGainLossStock = totalValueStock - totalCostStock;
 
         // Fixed Deposits Totals
-        const { fixedDeposits } = usePortfolio();
+
 
         const totalValueVorsorge = fixedDeposits?.reduce((sum, fd) => {
             if (fd.accountType === 'vorsorge') {
@@ -179,7 +179,7 @@ export function usePortfolioData() {
             dailyGain: totalDailyGainForStocks, // NEW
             dailyGainPercent: totalDailyGainPercent // NEW
         };
-    }, [positions, rates, usePortfolio().fixedDeposits]);
+    }, [positions, rates, fixedDeposits]);
 
     // Calculate upcoming dividends from stock dividend data
     const upcomingDividends = useMemo(() => {
@@ -231,7 +231,6 @@ export function usePortfolioData() {
 
     // NEW: Calculate Bank Risk (Deposit Protection > 100k)
     const bankRisks = useMemo(() => {
-        const { fixedDeposits } = usePortfolio();
         if (!fixedDeposits) return [];
 
         const bankTotals: Record<string, number> = {};
