@@ -74,7 +74,7 @@ export function StockDetail() {
             return;
         }
 
-        const { symbol, id, currency, isin, trailingPE, forwardPE, eps, dividendYield } = currentStock;
+        const { symbol, id, currency, trailingPE, forwardPE, eps, dividendYield } = currentStock;
 
         setIsRefreshing(true);
         // console.log('[StockDetail] Fetching Yahoo Finance data for:', symbol, 'Range:', timeRange);
