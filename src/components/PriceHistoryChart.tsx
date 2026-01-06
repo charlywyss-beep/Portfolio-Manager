@@ -132,6 +132,20 @@ export function PriceHistoryChart({
     const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
     const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
 
+    // Calculate Domain to strictly include purchasePrice if present
+    let calcMin = minPrice;
+    let calcMax = maxPrice;
+
+    if (purchasePrice && purchasePrice > 0) {
+        calcMin = Math.min(calcMin, purchasePrice);
+        calcMax = Math.max(calcMax, purchasePrice);
+    }
+
+    const range = calcMax - calcMin;
+    const padding = range === 0 ? calcMax * 0.05 : range * 0.05;
+    const domainMin = Math.max(0, calcMin - padding);
+    const domainMax = calcMax + padding;
+
     return (
         <div className="w-full h-full flex flex-col relative">
             <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
@@ -252,7 +266,7 @@ export function PriceHistoryChart({
                                 }}
                             />
                             <YAxis
-                                domain={['auto', 'auto']}
+                                domain={[domainMin, domainMax]}
                                 hide={false}
                                 orientation="right"
                                 tick={{ fontSize: 10, fill: '#e2e8f0' }}
