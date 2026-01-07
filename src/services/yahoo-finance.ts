@@ -51,8 +51,8 @@ export async function fetchStockHistory(
     try {
         const { period, interval } = getYahooParams(range);
 
-        // Use Vercel API proxy to bypass CORS
-        const url = `/api/yahoo-finance?symbol=${symbol}&period=${period}&interval=${interval}`;
+        // Use Vercel API proxy to bypass CORS with cache busting
+        const url = `/api/yahoo-finance?symbol=${symbol}&period=${period}&interval=${interval}&_=${Date.now()}`;
 
         console.log('[Yahoo Finance Proxy] Fetching:', symbol, 'Period:', period, 'Interval:', interval);
 
@@ -148,8 +148,8 @@ export async function fetchStockQuote(symbol: string): Promise<{
     error?: string
 }> {
     try {
-        // Remove timestamp to align caching behavior with batch request
-        const url = `/api/yahoo-quote?symbol=${symbol}`;
+        // Remove timestamp to align caching behavior with batch request - RE-ADDED cache busting for price updates
+        const url = `/api/yahoo-quote?symbol=${symbol}&_=${Date.now()}`;
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -201,7 +201,7 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
 
     try {
         const symbolStr = symbols.join(',');
-        const url = `/api/yahoo-quote?symbol=${symbolStr}`;
+        const url = `/api/yahoo-quote?symbol=${symbolStr}&_=${Date.now()}`;
         const response = await fetch(url);
 
         if (!response.ok) {

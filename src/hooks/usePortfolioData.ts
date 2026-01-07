@@ -89,10 +89,8 @@ export function usePortfolioData() {
         const totalCostStock = positions.reduce((sum, p) => {
             const entryFxRate = p.averageEntryFxRate ?? 1; // Fallback to 1.0 if missing
 
-            // Normalize GBp Pence to Pounds for CHF Calculation
-            const normalizedCostBasis = p.stock.currency === 'GBp' ? p.costBasis / 100 : p.costBasis;
-
-            return sum + (normalizedCostBasis * entryFxRate);
+            // Normalization is now handled centrally at the API edge or during data entry.
+            return sum + (p.costBasis * entryFxRate);
         }, 0);
 
         const totalGainLossStock = totalValueStock - totalCostStock;

@@ -19,11 +19,9 @@ export function convertToCHF(amount: number, fromCurrency: string, liveRates?: R
     let rate = rates[fromCurrency];
     let workingAmount = amount;
 
-    // Handle GBp (Pence) -> GBP (Pound) conversion
-    // Rate is usually for GBP. So convert Pence to Pounds first ( / 100)
-    // Then use GBP rate.
+    // GBp (Pence) handling: Redundant logic removed. 
+    // Prices are now centrally normalized at the API edge (yahoo-finance.ts).
     if (fromCurrency === 'GBp') {
-        workingAmount = amount / 100;
         rate = rates['GBP'];
     }
 
@@ -43,7 +41,6 @@ export function formatCurrency(amount: number, currency: string, showCHF: boolea
 
     if (currency === 'GBp') {
         displayCurrency = 'GBP';
-        displayAmount = amount / 100;
     }
 
     // Custom Suffix Formatting for all currencies (e.g. 420.50 EUR)
