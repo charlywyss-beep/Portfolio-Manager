@@ -116,7 +116,7 @@ function App() {
           {/* Mobile Sidebar Overlay */}
           {isSidebarOpen && (
             <div
-              className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-[2px]"
+              className="fixed inset-0 bg-black/50 z-[1000] lg:hidden backdrop-blur-[2px]"
               onClick={() => setIsSidebarOpen(false)}
             />
           )}
@@ -124,7 +124,7 @@ function App() {
           {/* Sidebar */}
           <aside className={cn(
             "border-r border-border bg-card shadow-lg flex flex-col transition-all duration-300 ease-in-out overflow-hidden",
-            "fixed lg:relative z-50 h-full",
+            "fixed lg:relative z-[1001] h-full",
             isSidebarOpen
               ? "translate-x-0 w-fit"
               : "-translate-x-full w-fit lg:translate-x-0 lg:w-0 lg:border-r-0"
