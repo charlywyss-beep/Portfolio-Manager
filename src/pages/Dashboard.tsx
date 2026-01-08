@@ -90,7 +90,9 @@ export function Dashboard() {
                     console.log("Missing metadata detected (Market State/Country). Forcing Global Refresh to fix visuals...");
 
                     // Force a global refresh (true = ignore throttle) to get market states immediately
-                    await refreshAllPrices(true);
+                    // Force a global refresh (true = ignore throttle) to get market states immediately
+                    // NEW (v3.12.68): Use skipThrottleUpdate (2nd arg) so this background fix doesn't block manual "Refresh All" button.
+                    await refreshAllPrices(true, true);
                 }
             }
         };

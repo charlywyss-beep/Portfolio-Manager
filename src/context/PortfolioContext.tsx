@@ -67,7 +67,7 @@ interface PortfolioContextType {
     // Global Refresh
     lastGlobalRefresh: Date | null;
     isGlobalRefreshing: boolean;
-    refreshAllPrices: (force?: boolean) => Promise<void>;
+    refreshAllPrices: (force?: boolean, skipThrottleUpdate?: boolean) => Promise<void>;
 }
 
 const defaultSimulatorState = {
@@ -424,9 +424,9 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 if (s.lastQuoteDate && update.marketTime) {
                     const existingDate = new Date(s.lastQuoteDate);
                     const newDate = new Date(update.marketTime);
-                    // If new data is older than existing data (by > 1 minute tolerance), skip update for this stock.
-                    if (newDate.getTime() < existingDate.getTime() - 60000) {
-                        // console.log(`[PortfolioContext] Skipping stale update for ${s.symbol}. Existing: ${s.lastQuoteDate}, New: ${update.marketTime.toISOString()}`);
+                    // RELAXED PROTECTION (v3.12.68): Only skip if data is strictly older. 
+                    // Same-minute updates (identical timestamp) are now ALLOWED to ensure batch refresh works reliably.
+                    if (newDate.getTime() < existingDate.getTime()) {
                         return s;
                     }
                 }
@@ -450,7 +450,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         }));
     };
 
-    const refreshAllPrices = useCallback(async (force: boolean = false) => {
+    const refreshAllPrices = useCallback(async (force: boolean = false, skipThrottleUpdate: boolean = false) => {
         if (isGlobalRefreshing) return;
 
         // Throttle: If last refresh was less than 2 minutes ago, and this is NOT a forced refresh, skip.
@@ -463,7 +463,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         }
 
         setIsGlobalRefreshing(true);
-        console.log("Global Refresh: Starting...", { force });
+        console.log("Global Refresh: Starting...", { force, skipThrottleUpdate });
 
         try {
             // 1. Collect all symbols
@@ -485,8 +485,10 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         } catch (e) {
             console.error("Global Refresh Failed", e);
         } finally {
-            // Always set timestamp to show we checked (even if no updates or error)
-            setLastGlobalRefresh(new Date());
+            // Always set timestamp to show we checked (unless it's a background metadata fix)
+            if (!skipThrottleUpdate) {
+                setLastGlobalRefresh(new Date());
+            }
             setIsGlobalRefreshing(false);
         }
     }, [stocks, isGlobalRefreshing, lastGlobalRefresh]); // Added dependencies
