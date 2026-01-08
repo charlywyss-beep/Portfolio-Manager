@@ -134,14 +134,14 @@ export function Watchlist() {
                                     <div className="size-2 rounded-full bg-green-500 animate-pulse" />
                                     <span className="font-bold">KAUFEN</span>
                                 </div>
-                                <span>(Kurs < Limit)</span>
+                                <span>(Kurs &lt; Limit)</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                                 <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
                                     <div className="size-2 rounded-full bg-green-500 animate-pulse" />
                                     <span className="font-bold">VERKAUFEN</span>
                                 </div>
-                                <span>(Kurs > Limit)</span>
+                                <span>(Kurs &gt; Limit)</span>
                             </div>
                             <div className="w-px h-3 bg-border hidden sm:block" />
                             <div className="flex items-center gap-1.5">
