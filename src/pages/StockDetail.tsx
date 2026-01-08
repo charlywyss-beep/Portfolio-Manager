@@ -11,7 +11,7 @@ import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { cn } from '../utils';
 import { Logo } from '../components/Logo';
 
-import { fetchStockHistory, fetchStockQuote, normalizeYahooPrice, type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
+import { fetchStockHistory, fetchStockQuote, type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
 
 export function StockDetail() {
     const { id } = useParams();
@@ -74,7 +74,7 @@ export function StockDetail() {
             return;
         }
 
-        const { symbol, id, currency, trailingPE, forwardPE, eps, dividendYield } = currentStock;
+        const { symbol, id, trailingPE, forwardPE, eps, dividendYield } = currentStock;
 
         setIsRefreshing(true);
         // console.log('[StockDetail] Fetching Yahoo Finance data for:', symbol, 'Range:', timeRange);
@@ -142,26 +142,14 @@ export function StockDetail() {
             }
         }
 
-        let localChartData: any[] | null = null;
+
 
         if (response.error) {
             console.warn('[StockDetail] Error from Yahoo:', response.error);
             setChartData(null);
         } else {
+            // Price is already normalized by fetchStockHistory (v3.12.72)
             setChartData(response.data);
-
-            // Sync current price with latest chart data
-            if (response.data && response.data.length > 0) {
-                // Normalize the entire chart data using the currency from response
-                const resultCurrency = response.currency || currency; // Use API currency if available
-
-                localChartData = response.data.map(d => ({
-                    ...d,
-                    value: normalizeYahooPrice(d.value, resultCurrency, symbol)
-                }));
-
-                setChartData(localChartData);
-            }
         }
 
         // Parallel: Fetch latest Quote (METADATA ONLY)

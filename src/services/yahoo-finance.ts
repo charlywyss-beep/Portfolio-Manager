@@ -77,6 +77,7 @@ export async function fetchStockHistory(
 
         const timestamps = result.timestamp;
         const closes = result.indicators.quote[0].close;
+        const resultCurrency = result.meta?.currency || null;
 
         const points: ChartDataPoint[] = timestamps
             .map((timestamp: number, index: number) => {
@@ -84,16 +85,20 @@ export async function fetchStockHistory(
                 if (close === null || close === undefined) return null;
                 return {
                     date: new Date(timestamp * 1000).toISOString(),
-                    value: close
+                    value: normalizeYahooPrice(close, resultCurrency, symbol)
                 };
             })
             .filter((p: ChartDataPoint | null): p is ChartDataPoint => p !== null);
 
-        console.log('[Yahoo Finance Proxy] Returning', points.length, 'data points');
+        console.log('[Yahoo Finance Proxy] Returning', points.length, 'data points (normalized)');
+
+        const rawPrevClose = result.meta?.chartPreviousClose || result.meta?.previousClose;
+        const normalizedPrevClose = rawPrevClose ? normalizeYahooPrice(rawPrevClose, resultCurrency, symbol) : undefined;
+
         return {
             data: points.length > 0 ? points : null,
-            currency: result.meta?.currency,
-            previousClose: result.meta?.chartPreviousClose || result.meta?.previousClose
+            currency: resultCurrency,
+            previousClose: normalizedPrevClose
         };
 
     } catch (error) {
