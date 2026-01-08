@@ -1,4 +1,4 @@
-import { useState, Fragment, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,7 +15,7 @@ import type { Stock } from '../types';
 
 export function Watchlist() {
     const navigate = useNavigate();
-    const { stocks, watchlist, positions, removeFromWatchlist, addPosition, lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices } = usePortfolio(); // Get positions + refresh
+    const { stocks, watchlist, positions, removeFromWatchlist, addPosition, lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices, refreshTick } = usePortfolio(); // Get positions + refresh + tick
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
 
@@ -65,37 +65,31 @@ export function Watchlist() {
             return 0;
         });
 
-    // Force re-render every minute to update the "Updated X min ago" text
-    // Also trigger auto-refresh after 5 minutes
-    const [, setTick] = useState(0);
+    // Unified Timer Tracking (v3.12.70): Replaced local interval with dependency on global refreshTick
     useEffect(() => {
-        const timer = setInterval(() => {
-            setTick(t => t + 1);
-
-            // Auto-refresh if last refresh was more than 5 minutes ago
-            if (lastGlobalRefresh) {
-                const minutesSinceRefresh = Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000);
-                if (minutesSinceRefresh >= 5 && !isGlobalRefreshing) {
-                    refreshAllPrices();
-                }
+        // Auto-refresh if last refresh was more than 5 minutes ago
+        if (lastGlobalRefresh) {
+            const minutesSinceRefresh = Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000);
+            if (minutesSinceRefresh >= 5 && !isGlobalRefreshing) {
+                console.log('[Watchlist] Triggering auto-refresh based on global tick...');
+                refreshAllPrices();
             }
-        }, 60000); // 60000ms = 1 minute
+        }
+    }, [refreshTick, lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices]);
 
-        // iOS Safari: Check on visibility change (when tab becomes visible again)
+    // iOS Safari: Check on visibility change (when tab becomes visible again)
+    useEffect(() => {
         const handleVisibilityChange = () => {
             if (!document.hidden && lastGlobalRefresh) {
                 const minutesSinceRefresh = Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000);
                 if (minutesSinceRefresh >= 5 && !isGlobalRefreshing) {
                     refreshAllPrices();
                 }
-                setTick(t => t + 1); // Force re-render to update displayed time
             }
         };
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
-
         return () => {
-            clearInterval(timer);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
     }, [lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices]);
@@ -128,6 +122,7 @@ export function Watchlist() {
                     </div>
                 </div>
             </div>
+
             <div className="w-full px-2 py-4 md:px-4">
                 <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
                     <div className="flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-muted/30 gap-2">
@@ -139,383 +134,239 @@ export function Watchlist() {
                                     <div className="size-2 rounded-full bg-green-500 animate-pulse" />
                                     <span className="font-bold">KAUFEN</span>
                                 </div>
-                                <span>(Kurs &lt; Limit)</span>
+                                <span>(Kurs < Limit)</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                                 <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
                                     <div className="size-2 rounded-full bg-green-500 animate-pulse" />
                                     <span className="font-bold">VERKAUFEN</span>
                                 </div>
-                                <span>(Kurs &gt; Limit)</span>
+                                <span>(Kurs > Limit)</span>
                             </div>
                             <div className="w-px h-3 bg-border hidden sm:block" />
                             <div className="flex items-center gap-1.5">
                                 <div className="flex items-center gap-1 text-red-500">
                                     <div className="size-2 rounded-full bg-red-500" />
+                                    <span className="font-bold">KEINE INFO</span>
                                 </div>
-                                <span>(Limit noch nicht erreicht)</span>
+                                <span>(Limit fehlt)</span>
                             </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 ml-auto">
-                            <select
-                                className="pl-3 pr-8 py-1.5 rounded-lg border border-border bg-card text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer"
-                                value={sortConfig.key}
-                                onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
-                            >
-                                <option value="name">Name (A-Z)</option>
-                                <option value="yield">Rendite %</option>
-                                <option value="gap">Kauflimit (Gap)</option>
-                                <option value="sellGap">Verkaufslimit (Gap)</option>
-                            </select>
-
-                            <button
-                                onClick={() => refreshAllPrices(true)}
-                                disabled={isGlobalRefreshing}
-                                className={cn(
-                                    "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
-                                    "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                                    "active:scale-95",
-                                    isGlobalRefreshing && "opacity-50 cursor-not-allowed"
-                                )}
-                                title="Alle Aktienpreise aktualisieren"
-                            >
-                                <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
-                                <span>
-                                    {isGlobalRefreshing
-                                        ? 'Aktualis...'
-                                        : lastGlobalRefresh
-                                            ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
-                                            : 'Jetzt'}
-                                </span>
-                            </button>
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-280px)]">
-                        <table className="w-full">
-                            <thead className="sticky top-0 z-50 bg-card">
-                                <tr className="border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground">
-                                    <th className="text-left py-3 px-3 font-semibold sticky left-0 z-50 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[160px] md:w-[100px] md:max-w-[100px]">Aktie</th>
-                                    <th className="text-right py-3 px-1.5 sm:px-2 font-semibold whitespace-nowrap bg-card">Kurs</th>
-                                    <th className="text-right py-3 px-2 font-semibold whitespace-nowrap bg-card">Kaufen</th>
-                                    <th className="text-right py-3 px-2 font-semibold whitespace-nowrap bg-card">Verkaufen</th>
-                                    <th className="text-right py-3 px-2 font-semibold whitespace-nowrap bg-card">Rendite %</th>
-                                    <th className="text-right py-3 px-2 font-semibold bg-card">Dividende</th>
-                                    <th className="text-right py-3 px-2 font-semibold bg-card">Frequenz</th>
-                                    <th className="text-right py-3 px-2 font-semibold whitespace-nowrap bg-card">EX-Tag</th>
-                                    <th className="text-right py-3 px-2 font-semibold whitespace-nowrap bg-card">Zahl-Tag</th>
-                                    <th className="text-right py-3 px-2 w-[80px] sticky right-0 bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                    <div className="overflow-x-auto w-full">
+                        <table className="w-full text-left border-collapse min-w-[1000px] md:min-w-0">
+                            <thead>
+                                <tr className="border-b bg-muted/20">
+                                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider w-[300px]">Unternehmen</th>
+                                    <th
+                                        className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors"
+                                        onClick={() => {
+                                            setSortConfig({
+                                                key: 'yield',
+                                                direction: sortConfig.key === 'yield' && sortConfig.direction === 'desc' ? 'asc' : 'desc'
+                                            });
+                                        }}
+                                    >
+                                        Div. Rendite {sortConfig.key === 'yield' && (sortConfig.direction === 'desc' ? '↓' : '↑')}
+                                    </th>
+                                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right">Aktueller Kurs</th>
+                                    <th
+                                        className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors"
+                                        onClick={() => {
+                                            setSortConfig({
+                                                key: 'gap',
+                                                direction: sortConfig.key === 'gap' && sortConfig.direction === 'asc' ? 'desc' : 'asc'
+                                            });
+                                        }}
+                                    >
+                                        Kauflimit {sortConfig.key === 'gap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
+                                    </th>
+                                    <th
+                                        className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors"
+                                        onClick={() => {
+                                            setSortConfig({
+                                                key: 'sellGap',
+                                                direction: sortConfig.key === 'sellGap' && sortConfig.direction === 'asc' ? 'desc' : 'asc'
+                                            });
+                                        }}
+                                    >
+                                        Verkaufslimit {sortConfig.key === 'sellGap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
+                                    </th>
+                                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right">Nächste Div.</th>
+                                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-center w-[100px]">Aktionen</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-border">
+                            <tbody className="divide-y">
                                 {watchlistStocks.length === 0 ? (
                                     <tr>
-                                        <td colSpan={9} className="text-center py-12 text-muted-foreground">
+                                        <td colSpan={7} className="p-12 text-center text-muted-foreground">
                                             <div className="flex flex-col items-center gap-2">
-                                                <div className="p-3 bg-muted rounded-full">
-                                                    <Eye className="size-6 opacity-50" />
-                                                </div>
-                                                <p className="font-medium">Noch keine Aktien auf der Watchlist.</p>
+                                                <ShoppingBag className="size-12 opacity-20" />
+                                                <p>Deine Watchlist ist noch leer.</p>
                                                 <button
                                                     onClick={() => navigate('/calculator?mode=new&from=watchlist')}
-                                                    className="text-primary hover:underline text-sm"
+                                                    className="text-primary hover:underline font-medium mt-2"
                                                 >
-                                                    Jetzt hinzufügen
+                                                    Füge deine erste Aktie hinzu
                                                 </button>
                                             </div>
                                         </td>
                                     </tr>
                                 ) : (
                                     watchlistStocks.map((stock) => {
-                                        // Valuation Logic
-                                        const hasTarget = !!stock.targetPrice;
-                                        const isUndervalued = hasTarget && stock.currentPrice <= (stock.targetPrice || 0);
-                                        const overvaluationPercent = hasTarget ? ((stock.currentPrice - (stock.targetPrice || 0)) / (stock.targetPrice || 1)) * 100 : 0;
+                                        const period = getCurrentDividendPeriod(stock);
+                                        const nextDiv = period ? {
+                                            date: period.date,
+                                            amount: period.amount
+                                        } : null;
 
-                                        const hasSellLimit = !!stock.sellLimit;
-                                        const isSellReady = hasSellLimit && stock.currentPrice >= (stock.sellLimit || 0);
-                                        const sellGapPercent = hasSellLimit ? (((stock.sellLimit || 0) - stock.currentPrice) / (stock.sellLimit || 1)) * 100 : 0;
+                                        const isUnderTarget = stock.targetPrice && stock.currentPrice <= stock.targetPrice;
+                                        const isOverSell = stock.sellLimit && stock.currentPrice >= stock.sellLimit;
+                                        const hasNoLimits = !stock.targetPrice && !stock.sellLimit;
 
-                                        // Check if position exists using the positions array from context
-                                        const hasPosition = positions.some(p => p.stockId === stock.id);
+                                        // Market State Logic
+                                        const calcState = estimateMarketState(stock.symbol, stock.currency);
+                                        const isMarketOpen = calcState === 'REGULAR';
 
                                         return (
-                                            <tr key={stock.id} className="hover:bg-muted/50 transition-colors group">
-                                                <td className="py-3 px-3 sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[160px] md:w-[100px] md:max-w-[100px] align-top">
-                                                    <div className="absolute inset-0 bg-card -z-10" />
-                                                    <div className="relative flex items-start gap-3">
-                                                        <div
-                                                            className={hasPosition ? "cursor-pointer hover:scale-110 transition-transform -m-0.5" : "-m-0.5"}
-                                                            onClick={(e) => {
-                                                                if (hasPosition) {
-                                                                    e.stopPropagation();
-                                                                    navigate('/portfolio');
-                                                                }
-                                                            }}
-                                                            title={hasPosition ? "Zu den Positionen" : undefined}
-                                                        >
-                                                            <Logo
-                                                                url={stock.logoUrl}
-                                                                alt={stock.symbol}
-                                                                size="size-8"
-                                                                fallback={
-                                                                    <span className="font-bold text-xs">{stock.symbol.slice(0, 2)}</span>
-                                                                }
-                                                            />
-                                                        </div>
-                                                        <div>
+                                            <tr key={stock.id} className="hover:bg-muted/30 transition-colors group">
+                                                <td className="p-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <Logo
+                                                            url={stock.logoUrl}
+                                                            alt={stock.name}
+                                                            fallback={stock.symbol.slice(0, 2)}
+                                                            size="size-10"
+                                                        />
+                                                        <div className="flex flex-col min-w-0">
                                                             <div className="flex items-center gap-2">
-                                                                <div
-                                                                    className="font-semibold cursor-pointer hover:text-primary transition-colors whitespace-pre-line"
-                                                                    title={stock.name}
+                                                                <span
+                                                                    className="font-bold text-sm truncate group-hover:text-primary transition-colors cursor-pointer"
                                                                     onClick={() => navigate(`/stock/${stock.id}`)}
                                                                 >
                                                                     {stock.name}
-                                                                </div>
-                                                                {(() => {
-                                                                    const calcState = estimateMarketState(stock.symbol, stock.currency);
-                                                                    const isMarketOpen = calcState === 'REGULAR';
-                                                                    return isMarketOpen ? (
-                                                                        <div className="size-2.5 flex-shrink-0 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
-                                                                    ) : (
-                                                                        <div className="size-2.5 flex-shrink-0 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${calcState})`} />
-                                                                    );
-                                                                })()}
+                                                                </span>
+                                                                {isMarketOpen ? (
+                                                                    <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0" title="Börse geöffnet" />
+                                                                ) : (
+                                                                    <div className="size-2 rounded-full bg-muted shrink-0" title="Börse geschlossen" />
+                                                                )}
                                                             </div>
-                                                            <div className="text-xs text-muted-foreground">{stock.symbol}</div>
+                                                            <span className="text-xs text-muted-foreground uppercase">{stock.symbol}</span>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="text-right py-3 px-1.5 sm:px-2 align-top">
-                                                    <div className="flex flex-col items-end gap-1">
-                                                        <span className="font-medium whitespace-nowrap">{formatCurrency(stock.currentPrice, stock.currency, false)}</span>
-                                                        {stock.currency !== 'CHF' && (
-                                                            <span className="font-medium whitespace-nowrap">
-                                                                {formatCurrency(convertToCHF(stock.currentPrice, stock.currency), 'CHF', false)}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="text-right py-3 px-2 font-medium align-top">
-                                                    {hasTarget ? (
-                                                        <div className="flex flex-col items-end gap-1">
-                                                            <span className="font-medium whitespace-nowrap">{formatCurrency(stock.targetPrice || 0, stock.currency, false)}</span>
-                                                            {stock.currency !== 'CHF' && (
-                                                                <span className="font-medium whitespace-nowrap">
-                                                                    {formatCurrency(convertToCHF(stock.targetPrice || 0, stock.currency), 'CHF', false)}
-                                                                </span>
-                                                            )}
-                                                            <div className="flex items-center justify-end gap-1.5 text-xs mt-1">
-                                                                {isUndervalued ? (
-                                                                    <>
-                                                                        <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
-                                                                            <div className="size-2 rounded-full bg-green-500 animate-pulse" />
-                                                                            <span>{overvaluationPercent.toFixed(1)}%</span>
-                                                                        </div>
-                                                                        <span className="text-[10px] font-bold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded">
-                                                                            KAUFEN
-                                                                        </span>
-                                                                    </>
-                                                                ) : (
-                                                                    <div className="flex items-center gap-1 text-red-500 font-medium">
-                                                                        <div className="size-2 rounded-full bg-red-500" />
-                                                                        <span>+{overvaluationPercent.toFixed(1)}%</span>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ) : '-'}
-                                                </td>
-                                                <td className="text-right py-3 px-2 font-medium align-top">
-                                                    {hasSellLimit ? (
-                                                        <div className="flex flex-col items-end gap-1">
-                                                            <span className="font-medium whitespace-nowrap">{formatCurrency(stock.sellLimit || 0, stock.currency, false)}</span>
-                                                            {stock.currency !== 'CHF' && (
-                                                                <span className="font-medium whitespace-nowrap">
-                                                                    {formatCurrency(convertToCHF(stock.sellLimit || 0, stock.currency), 'CHF', false)}
-                                                                </span>
-                                                            )}
-                                                            <div className="flex items-center justify-end gap-1.5 text-xs mt-1">
-                                                                {isSellReady ? (
-                                                                    <>
-                                                                        <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
-                                                                            <div className="size-2 rounded-full bg-green-500 animate-pulse" />
-                                                                            <span>+{Math.abs(sellGapPercent).toFixed(1)}%</span>
-                                                                        </div>
-                                                                        <span className="text-[10px] font-bold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded">
-                                                                            VERKAUFEN
-                                                                        </span>
-                                                                    </>
-                                                                ) : (
-                                                                    <div className="flex items-center gap-1 text-red-500 font-medium">
-                                                                        <div className="size-2 rounded-full bg-red-500" />
-                                                                        <span>{sellGapPercent.toFixed(1)}%</span>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ) : '-'}
-                                                </td>
-                                                <td className="text-right py-3 px-2 align-top">
+                                                <td className="p-4 text-right">
                                                     <div className="flex flex-col items-end">
-                                                        <span className="text-green-600 dark:text-green-400 font-medium">
+                                                        <span className="font-bold text-sm text-green-600 dark:text-green-400">
                                                             {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
                                                         </span>
-                                                        {hasTarget && stock.dividendYield && stock.targetPrice && (
-                                                            <span className="text-[10px] text-muted-foreground" title="Rendite bei Kauflimit">
-                                                                Ziel: {((stock.dividendYield * stock.currentPrice) / stock.targetPrice).toFixed(2)}%
+                                                        <span className="text-[10px] text-muted-foreground uppercase tracking-tight">
+                                                            {translateFrequency(stock.dividendFrequency)}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 text-right">
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="font-bold text-sm">
+                                                            {formatCurrency(stock.currentPrice, stock.currency)}
+                                                        </span>
+                                                        {stock.change !== undefined && (
+                                                            <span className={cn(
+                                                                "text-[10px] font-bold px-1.5 py-0.5 rounded",
+                                                                stock.change >= 0
+                                                                    ? "bg-green-500/10 text-green-600"
+                                                                    : "bg-red-500/10 text-red-600"
+                                                            )}>
+                                                                {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)}%
                                                             </span>
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="text-right py-3 px-2 align-top">
-                                                    {stock.dividendAmount ? (
-                                                        <div className="flex flex-col items-end gap-1">
-                                                            <span className="font-medium whitespace-nowrap">{formatCurrency(stock.dividendAmount, stock.dividendCurrency || stock.currency, false)}</span>
-                                                            {stock.currency !== 'CHF' && (
-                                                                <span className="font-medium whitespace-nowrap">
-                                                                    {formatCurrency(convertToCHF(stock.dividendAmount, stock.dividendCurrency || stock.currency), 'CHF', false)}
-                                                                </span>
+                                                <td className="p-4 text-right">
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        <div className="flex items-center gap-2">
+                                                            {isUnderTarget && (
+                                                                <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0" title="Limit erreicht!" />
                                                             )}
+                                                            <span className={cn(
+                                                                "font-bold text-sm",
+                                                                isUnderTarget ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+                                                            )}>
+                                                                {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency) : '-'}
+                                                            </span>
                                                         </div>
-                                                    ) : '-'}
+                                                        {stock.targetPrice && (
+                                                            <span className="text-[10px] font-medium text-muted-foreground">
+                                                                Gap: {((stock.currentPrice - stock.targetPrice) / stock.targetPrice * 100).toFixed(1)}%
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </td>
-                                                <td className="text-right py-3 px-2 text-muted-foreground align-top">
-                                                    {(() => {
-                                                        const freqLabel = translateFrequency(stock.dividendFrequency);
-                                                        const currentDiv = getCurrentDividendPeriod(stock);
-                                                        if (currentDiv.periodLabel) {
-                                                            return (
-                                                                <div className="grid grid-cols-[auto_24px] gap-x-0.5 justify-end items-center">
-                                                                    <span>{freqLabel}</span>
-                                                                    <span className="px-1.5 py-0.5 text-xs uppercase font-medium bg-muted text-muted-foreground border border-border rounded justify-self-end">
-                                                                        {currentDiv.periodLabel}
-                                                                    </span>
-                                                                </div>
-                                                            );
-                                                        }
-                                                        return freqLabel;
-                                                    })()}
+                                                <td className="p-4 text-right">
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        <div className="flex items-center gap-2">
+                                                            {isOverSell && (
+                                                                <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0" title="Verkaufslimit erreicht!" />
+                                                            )}
+                                                            <span className={cn(
+                                                                "font-bold text-sm",
+                                                                isOverSell ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+                                                            )}>
+                                                                {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency) : '-'}
+                                                            </span>
+                                                        </div>
+                                                        {stock.sellLimit && (
+                                                            <span className="text-[10px] font-medium text-muted-foreground">
+                                                                Gap: {((stock.sellLimit - stock.currentPrice) / stock.sellLimit * 100).toFixed(1)}%
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </td>
-                                                <td className="text-right py-3 px-2 text-muted-foreground align-top">
-                                                    {stock.dividendDates && stock.dividendDates.length > 0 ? (
-                                                        <div className="grid grid-cols-[30px_70px] gap-x-1 justify-end items-center text-right text-sm">
-                                                            {stock.dividendDates
-                                                                .map((d, i) => ({ ...d, label: stock.dividendFrequency === 'semi-annually' ? `${i + 1}.` : `Q${i + 1}` }))
-                                                                .filter(d => d.exDate)
-                                                                .sort((a, b) => new Date(a.exDate).getTime() - new Date(b.exDate).getTime())
-                                                                .map((d, idx) => {
-                                                                    const dateObj = new Date(d.exDate);
-                                                                    const dDays = Math.ceil((dateObj.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                                                                    const isPast = dDays < 0;
-                                                                    const isSoon = dDays >= 0 && dDays <= 14;
-                                                                    const formattedDate = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
-                                                                    const colorClass = isPast ? "text-green-600 font-medium" : isSoon ? "text-orange-500 font-medium" : "";
-
-                                                                    return (
-                                                                        <Fragment key={idx}>
-                                                                            <span className="px-1.5 py-0.5 text-xs uppercase font-medium bg-muted text-muted-foreground border border-border rounded justify-self-end">
-                                                                                {d.label}
-                                                                            </span>
-                                                                            <span className={colorClass + " whitespace-nowrap tabular-nums"}>
-                                                                                {formattedDate}
-                                                                            </span>
-                                                                        </Fragment>
-                                                                    );
-                                                                })}
+                                                <td className="p-4 text-right">
+                                                    {nextDiv ? (
+                                                        <div className="flex flex-col items-end">
+                                                            <span className="font-bold text-sm">
+                                                                {new Date(nextDiv.date).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                                                            </span>
+                                                            <span className="text-[10px] text-muted-foreground">
+                                                                {formatCurrency(nextDiv.amount, stock.currency)}
+                                                            </span>
                                                         </div>
                                                     ) : (
-                                                        <div className={(() => {
-                                                            const dDays = stock.dividendExDate ? Math.ceil((new Date(stock.dividendExDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                                            if (dDays !== null && dDays < 0) return "text-sm whitespace-nowrap text-green-600 font-medium"; // Past -> Green
-                                                            if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-sm whitespace-nowrap text-orange-500 font-medium"; // Soon -> Orange
-                                                            return "text-sm whitespace-nowrap";
-                                                        })()}>
-                                                            {stock.dividendExDate ? new Date(stock.dividendExDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
-                                                        </div>
-                                                    )
-                                                    }
-                                                </td>
-                                                <td className="text-right py-3 px-2 text-muted-foreground align-top">
-                                                    {stock.dividendDates && stock.dividendDates.length > 0 ? (
-                                                        <div className="grid grid-cols-[30px_70px] gap-x-1 justify-end items-center text-right text-sm">
-                                                            {stock.dividendDates
-                                                                .map((d, i) => ({ ...d, label: stock.dividendFrequency === 'semi-annually' ? `${i + 1}.` : `Q${i + 1}` }))
-                                                                .filter(d => d.payDate)
-                                                                .sort((a, b) => new Date(a.payDate).getTime() - new Date(b.payDate).getTime())
-                                                                .map((d, idx) => {
-                                                                    const dateObj = new Date(d.payDate);
-                                                                    const payDays = Math.ceil((dateObj.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-
-                                                                    let exDays = null;
-                                                                    if (d.exDate) {
-                                                                        exDays = Math.ceil((new Date(d.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                                                                    }
-
-                                                                    const isPast = payDays < 0;
-                                                                    // Orange if Ex-Date passed AND Pay-Date future, OR if Pay-Date almost here
-                                                                    const isPending = (exDays !== null && exDays < 0 && payDays >= 0) || (payDays >= 0 && payDays <= 14);
-
-                                                                    const formattedDate = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
-                                                                    const colorClass = isPast ? "text-green-600 font-medium" : isPending ? "text-orange-500 font-medium" : "";
-
-                                                                    return (
-                                                                        <Fragment key={idx}>
-                                                                            <span className="px-1.5 py-0.5 text-xs uppercase font-medium bg-muted text-muted-foreground border border-border rounded justify-self-end">
-                                                                                {d.label}
-                                                                            </span>
-                                                                            <span className={colorClass + " whitespace-nowrap tabular-nums"}>
-                                                                                {formattedDate}
-                                                                            </span>
-                                                                        </Fragment>
-                                                                    );
-                                                                })}
-                                                        </div>
-                                                    ) : (
-                                                        <div className={(() => {
-                                                            const payDays = stock.dividendPayDate ? Math.ceil((new Date(stock.dividendPayDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                                            const exDays = stock.dividendExDate ? Math.ceil((new Date(stock.dividendExDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-
-                                                            // Past -> Green
-                                                            if (payDays !== null && payDays < 0) return "text-sm whitespace-nowrap text-green-600 font-medium";
-
-                                                            // Ex-Date passed + Pay-Date future -> Orange
-                                                            if (exDays !== null && exDays < 0 && payDays !== null && payDays >= 0) return "text-sm whitespace-nowrap text-orange-500 font-medium";
-
-                                                            // Soon -> Orange
-                                                            if (payDays !== null && payDays >= 0 && payDays <= 14) return "text-sm whitespace-nowrap text-orange-500 font-medium";
-
-                                                            return "text-sm whitespace-nowrap";
-                                                        })()}>
-                                                            {stock.dividendPayDate ? new Date(stock.dividendPayDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-'}
-                                                        </div>
+                                                        <span className="text-muted-foreground text-sm">-</span>
                                                     )}
                                                 </td>
-                                                <td className="text-right py-3 px-2 sticky right-0 z-20 bg-card group-hover:bg-muted transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
-                                                    <div className="flex items-center justify-end gap-0 sm:gap-1 opacity-100 transition-opacity">
+                                                <td className="p-4">
+                                                    <div className="flex items-center justify-center gap-2">
                                                         <button
-                                                            onClick={() => navigate(`/calculator?stock=${stock.id}&from=watchlist`)}
-                                                            className="p-1.5 sm:p-2 hover:bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg transition-colors"
-                                                            title="Kaufen (Simulation im Calculator)"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setBuyStock(stock);
+                                                            }}
+                                                            className="p-2 hover:bg-green-500/10 hover:text-green-600 rounded-lg transition-colors"
+                                                            title="Kaufen"
                                                         >
                                                             <ShoppingBag className="size-4" />
                                                         </button>
                                                         <button
-                                                            onClick={() => navigate(`/dividends/edit/${stock.id}?from=watchlist`)}
-                                                            className="p-1.5 sm:p-2 hover:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg transition-colors"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigate(`/calculator?mode=edit&id=${stock.id}&from=watchlist`);
+                                                            }}
+                                                            className="p-2 hover:bg-blue-500/10 hover:text-blue-600 rounded-lg transition-colors"
                                                             title="Bearbeiten"
                                                         >
                                                             <Edit className="size-4" />
                                                         </button>
                                                         <button
-                                                            onClick={() => {
-                                                                if (confirm(`${stock.name} von der Watchlist entfernen?`)) {
-                                                                    removeFromWatchlist(stock.id);
-                                                                }
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                removeFromWatchlist(stock.id);
                                                             }}
-                                                            className="p-1.5 sm:p-2 hover:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg transition-colors"
-                                                            title="Aus Watchlist entfernen"
+                                                            className="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors text-muted-foreground"
+                                                            title="Entfernen"
                                                         >
                                                             <Trash2 className="size-4" />
                                                         </button>
@@ -528,28 +379,57 @@ export function Watchlist() {
                             </tbody>
                         </table>
                     </div>
+
+                    <div className="p-4 border-t bg-muted/10 flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <RefreshCw className={cn("size-3", isGlobalRefreshing && "animate-spin")} />
+                            <span>
+                                {isGlobalRefreshing
+                                    ? 'Aktualisiere Preise...'
+                                    : lastGlobalRefresh
+                                        ? `Zuletzt aktualisiert: Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                        : 'Preise noch nicht aktualisiert'}
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => refreshAllPrices(true)}
+                            disabled={isGlobalRefreshing}
+                            className="text-xs font-semibold text-primary hover:underline flex items-center gap-1.5"
+                        >
+                            <span>Jetzt aktualisieren</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            {/* Removed AddWatchlistStockModal as it's superseded by the calculator */}
+            {/* Floating Buy Button for Mobile
+            <button 
+                onClick={() => navigate('/calculator?mode=new&from=watchlist')}
+                className="fixed bottom-6 right-6 p-4 rounded-full bg-primary text-primary-foreground shadow-lg hover:scale-110 active:scale-95 transition-all z-50 md:hidden"
+            >
+                <Plus className="size-6" />
+            </button> */}
 
-            {/* Buy Modal */}
-            <AddPositionModal
-                isOpen={!!buyStock}
-                onClose={() => setBuyStock(null)}
-                stocks={stocks}
-                preSelectedStock={buyStock}
-                onAdd={(pos) => {
-                    addPosition(pos);
-                    // Remove from watchlist after buying
-                    if (buyStock) {
-                        removeFromWatchlist(buyStock.id);
-                    }
-                    setBuyStock(null);
-                    // Optional: Navigate to portfolio or show success
-                    // navigate('/portfolio');
-                }}
-            />
+            {/* AddPositionModal for buying from watchlist */}
+            {buyStock && (
+                <AddPositionModal
+                    isOpen={!!buyStock}
+                    onClose={() => setBuyStock(null)}
+                    onAdd={(pos) => {
+                        addPosition(pos);
+                        setBuyStock(null);
+                        // Optionally remove from watchlist after buying
+                        // removeFromWatchlist(buyStock.id);
+                    }}
+                    initialData={{
+                        stockId: buyStock.id,
+                        symbol: buyStock.symbol,
+                        name: buyStock.name,
+                        currency: buyStock.currency,
+                        currentPrice: buyStock.currentPrice
+                    }}
+                />
+            )}
         </div>
     );
 }

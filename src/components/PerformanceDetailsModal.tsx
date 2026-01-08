@@ -1,11 +1,10 @@
-import { X, TrendingUp } from 'lucide-react';
+import { X, TrendingUp, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { Logo } from './Logo';
 import { estimateMarketState } from '../utils/market';
-import { RefreshCw } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 
 interface PerformanceDetailsModalProps {
@@ -16,7 +15,7 @@ interface PerformanceDetailsModalProps {
 
 export function PerformanceDetailsModal({ isOpen, onClose, positions }: PerformanceDetailsModalProps) {
     const { convertToCHF, formatCurrency } = useCurrencyFormatter();
-    const { refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh } = usePortfolio();
+    const { refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh, refreshTick } = usePortfolio();
     const navigate = useNavigate();
 
     // Prevent body scroll when modal is open
@@ -31,15 +30,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
         };
     }, [isOpen]);
 
-    // Force re-render every minute to update the "Updated X min ago" text
-    const [, setTick] = useState(0);
+    // Unified Timer Tracking (v3.12.70): Replaced local interval with dependency on global refreshTick
     useEffect(() => {
-        if (!isOpen) return;
-        const timer = setInterval(() => {
-            setTick(t => t + 1);
-        }, 60000);
-        return () => clearInterval(timer);
-    }, [isOpen]);
+        // Modal re-renders automatically when refreshTick changes
+    }, [refreshTick]);
 
     if (!isOpen) return null;
 

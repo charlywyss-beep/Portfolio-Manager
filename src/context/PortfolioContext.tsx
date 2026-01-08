@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { Position, Stock } from '../types';
 import { MOCK_POSITIONS, MOCK_STOCKS } from '../data/mockData';
-import { fetchStockQuotes } from '../services/yahoo-finance';
+import { fetchStockQuotes, fetchStockPricePrecise } from '../services/yahoo-finance';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { estimateMarketState } from '../utils/market';
 import { processMonthlyContributions } from '../utils/vorsorge';
@@ -66,6 +66,7 @@ interface PortfolioContextType {
     updateMortgageData: (data: Partial<import('../types').MortgageData>) => void;
     // Global Refresh
     lastGlobalRefresh: Date | null;
+    refreshTick: number; // Synchronized timer tick
     isGlobalRefreshing: boolean;
     refreshAllPrices: (force?: boolean, skipThrottleUpdate?: boolean) => Promise<void>;
 }
@@ -158,14 +159,24 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
     // Global Refresh State
     const [lastGlobalRefresh, setLastGlobalRefresh] = useState<Date | null>(() => {
-        const stored = localStorage.getItem('portfolio_last_global_refresh');
-        return stored ? new Date(stored) : null;
+        const saved = localStorage.getItem('portfolio_last_refresh');
+        return saved ? new Date(saved) : null;
     });
+
     const [isGlobalRefreshing, setIsGlobalRefreshing] = useState(false);
+
+    // Synchronized Timer Tick (v3.12.70)
+    const [refreshTick, setRefreshTick] = useState(0);
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setRefreshTick(prev => prev + 1);
+        }, 60000); // 1 minute
+        return () => clearInterval(timer);
+    }, []);
 
     useEffect(() => {
         if (lastGlobalRefresh) {
-            localStorage.setItem('portfolio_last_global_refresh', lastGlobalRefresh.toISOString());
+            localStorage.setItem('portfolio_last_refresh', lastGlobalRefresh.toISOString());
         }
     }, [lastGlobalRefresh]);
 
@@ -479,20 +490,46 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         console.log("Global Refresh: Starting...", { force, skipThrottleUpdate });
 
         try {
-            // 1. Collect all symbols
             const symbols = stocks.map(s => s.symbol).filter(Boolean);
             if (symbols.length === 0) {
                 setIsGlobalRefreshing(false);
                 return;
             }
 
-            // 2. Fetch all quotes in batch
-            const updates = await fetchStockQuotes(symbols);
+            // STRATEGY (v3.12.70):
+            // If it's a manual/forced refresh, use "Deep Sync" (individual Chart API calls) for 100% precision.
+            // For background metadata fixes, use the Batch Quote API (faster, less precise).
+            if (force) {
+                console.log(`[Global Refresh] Multi-Price Deep Sync starting for ${symbols.length} assets...`);
+                // Process in parallel chunks to avoid hitting rate limits too aggressively
+                const chunkSize = 5;
+                const results: Record<string, any> = {};
 
-            // 3. Update State
-            if (Object.keys(updates).length > 0) {
-                updateStockPricesBatch(updates);
-                console.log("Global Refresh: Updated", Object.keys(updates).length, "stocks");
+                for (let i = 0; i < symbols.length; i += chunkSize) {
+                    const chunk = symbols.slice(i, i + chunkSize);
+                    const chunkResults = await Promise.all(chunk.map(async (sym) => {
+                        const priceData = await fetchStockPricePrecise(sym);
+                        return { sym, data: priceData };
+                    }));
+
+                    chunkResults.forEach(res => {
+                        if (res.data.price !== null) {
+                            results[res.sym] = {
+                                price: res.data.price,
+                                previousClose: res.data.previousClose,
+                                marketTime: res.data.marketTime,
+                                // marketState remains as is or estimated in batch update
+                            };
+                        }
+                    });
+                }
+                updateStockPricesBatch(results);
+            } else {
+                // Background/Auto Refresh: Use Batch API for efficiency
+                const updates = await fetchStockQuotes(symbols);
+                if (Object.keys(updates).length > 0) {
+                    updateStockPricesBatch(updates);
+                }
             }
 
         } catch (e) {
@@ -501,10 +538,12 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
             // Always set timestamp to show we checked (unless it's a background metadata fix)
             if (!skipThrottleUpdate) {
                 setLastGlobalRefresh(new Date());
+                // Force an immediate refresh tick to update all labels simultaneously
+                setRefreshTick(prev => prev + 1);
             }
             setIsGlobalRefreshing(false);
         }
-    }, [stocks, isGlobalRefreshing, lastGlobalRefresh]); // Added dependencies
+    }, [stocks, isGlobalRefreshing, lastGlobalRefresh]);
 
     // Auto-refresh every 5 minutes (Global)
     useAutoRefresh({
@@ -634,6 +673,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 mortgageData,
                 updateMortgageData,
                 lastGlobalRefresh,
+                refreshTick,
                 isGlobalRefreshing,
                 refreshAllPrices
             }}

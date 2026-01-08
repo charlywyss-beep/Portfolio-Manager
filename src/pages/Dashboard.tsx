@@ -34,7 +34,7 @@ export function Dashboard() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { totals, upcomingDividends, positions, upcomingWatchlistDividends, bankRisks } = usePortfolioData();
-    const { history, deleteHistoryEntry, updateStockPrice, stocks, updateStock, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh } = usePortfolio(); // Added isGlobalRefreshing, lastGlobalRefresh
+    const { history, deleteHistoryEntry, updateStockPrice, stocks, updateStock, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh, refreshTick } = usePortfolio(); // Added refreshTick
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [editingHistoryEntry, setEditingHistoryEntry] = useState<any>(null);
@@ -43,14 +43,10 @@ export function Dashboard() {
     const hasRefreshedPrices = useRef(false);
     const hasRefreshedMetadata = useRef(false); // Prevent loop
 
-    // Force re-render every minute to update the "Updated X min ago" text
-    const [, setTick] = useState(0);
+    // Unified Timer Tracking (v3.12.70): Replaced local interval with global refreshTick
     useEffect(() => {
-        const timer = setInterval(() => {
-            setTick(t => t + 1);
-        }, 60000);
-        return () => clearInterval(timer);
-    }, []);
+        // console.log('[Dashboard] Refreshing labels based on tick:', refreshTick);
+    }, [refreshTick]);
 
     useEffect(() => {
         setHasMounted(true);

@@ -131,6 +131,33 @@ const MANUAL_COUNTRY_OVERRIDES: Record<string, string> = {
     'VUSA.L': 'USA',
     'CHSPI.SW': 'Schweiz', // iShares Core SPI
 };
+// NEW (v3.12.70): Extract exact price from Chart metadata
+// This is the source of truth used by the Detail pages.
+export async function fetchStockPricePrecise(symbol: string): Promise<{
+    price: number | null,
+    previousClose: number | null,
+    marketTime: Date | null,
+    currency: string | null,
+    error?: string
+}> {
+    try {
+        const history = await fetchStockHistory(symbol, '1D');
+        if (history.error) return { price: null, previousClose: null, marketTime: null, currency: null, error: history.error };
+
+        if (history.data && history.data.length > 0) {
+            const lastPoint = history.data[history.data.length - 1];
+            return {
+                price: lastPoint.value,
+                previousClose: history.previousClose || null,
+                marketTime: new Date(lastPoint.date),
+                currency: history.currency || null
+            };
+        }
+        return { price: null, previousClose: null, marketTime: null, currency: null, error: 'No chart data' };
+    } catch (e) {
+        return { price: null, previousClose: null, marketTime: null, currency: null, error: 'Network error' };
+    }
+}
 
 // Fetch latest quote (realtime-ish)
 export async function fetchStockQuote(symbol: string): Promise<{
