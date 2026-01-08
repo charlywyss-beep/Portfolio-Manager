@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,8 +15,8 @@ import type { Stock } from '../types';
 
 export function Watchlist() {
     const navigate = useNavigate();
-    const { stocks, watchlist, positions, removeFromWatchlist, addPosition, lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices, refreshTick } = usePortfolio(); // Get positions + refresh + tick
-    const { formatCurrency, convertToCHF } = useCurrencyFormatter();
+    const { stocks, watchlist, removeFromWatchlist, addPosition, lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices, refreshTick } = usePortfolio(); // Get refresh + tick
+    const { formatCurrency } = useCurrencyFormatter();
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
 
     // Sorting
@@ -216,14 +216,15 @@ export function Watchlist() {
                                 ) : (
                                     watchlistStocks.map((stock) => {
                                         const period = getCurrentDividendPeriod(stock);
-                                        const nextDiv = period ? {
-                                            date: period.date,
-                                            amount: period.amount
+                                        const nextDiv = (period && (period.payDate || period.exDate)) ? {
+                                            date: (period.payDate || period.exDate)!,
+                                            amount: stock.dividendAmount || 0
                                         } : null;
 
                                         const isUnderTarget = stock.targetPrice && stock.currentPrice <= stock.targetPrice;
                                         const isOverSell = stock.sellLimit && stock.currentPrice >= stock.sellLimit;
-                                        const hasNoLimits = !stock.targetPrice && !stock.sellLimit;
+
+                                        const stockChange = ((stock.currentPrice - stock.previousClose) / stock.previousClose) * 100;
 
                                         // Market State Logic
                                         const calcState = estimateMarketState(stock.symbol, stock.currency);
@@ -272,14 +273,14 @@ export function Watchlist() {
                                                         <span className="font-bold text-sm">
                                                             {formatCurrency(stock.currentPrice, stock.currency)}
                                                         </span>
-                                                        {stock.change !== undefined && (
+                                                        {stock.previousClose !== undefined && (
                                                             <span className={cn(
                                                                 "text-[10px] font-bold px-1.5 py-0.5 rounded",
-                                                                stock.change >= 0
+                                                                stockChange >= 0
                                                                     ? "bg-green-500/10 text-green-600"
                                                                     : "bg-red-500/10 text-red-600"
                                                             )}>
-                                                                {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)}%
+                                                                {stockChange >= 0 ? '+' : ''}{stockChange.toFixed(2)}%
                                                             </span>
                                                         )}
                                                     </div>
@@ -415,19 +416,12 @@ export function Watchlist() {
                 <AddPositionModal
                     isOpen={!!buyStock}
                     onClose={() => setBuyStock(null)}
+                    stocks={stocks}
                     onAdd={(pos) => {
                         addPosition(pos);
                         setBuyStock(null);
-                        // Optionally remove from watchlist after buying
-                        // removeFromWatchlist(buyStock.id);
                     }}
-                    initialData={{
-                        stockId: buyStock.id,
-                        symbol: buyStock.symbol,
-                        name: buyStock.name,
-                        currency: buyStock.currency,
-                        currentPrice: buyStock.currentPrice
-                    }}
+                    preSelectedStock={buyStock}
                 />
             )}
         </div>
