@@ -417,15 +417,26 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
     // Helper to update multiple stocks at once (batch update)
     const updateStockPricesBatch = (updates: Record<string, { price: number, previousClose?: number, marketTime?: Date, marketState?: string | null }>) => {
+        // Create an uppercase mapping for case-insensitive lookup
+        const upperUpdates: Record<string, any> = {};
+        Object.entries(updates).forEach(([sym, val]) => {
+            upperUpdates[sym.toUpperCase()] = val;
+        });
+
+        console.log(`[Batch Update] Processing updates for ${Object.keys(upperUpdates).length} symbols...`);
+
         setStocks(prev => prev.map(s => {
-            const update = updates[s.symbol];
+            if (!s.symbol) return s;
+
+            // Normalize lookup to uppercase
+            const update = upperUpdates[s.symbol.toUpperCase()];
+
             if (update) {
                 // PROTECTION: If we already have a newer quote (e.g. from Realtime Chart), DO NOT overwrite with older batch data.
                 if (s.lastQuoteDate && update.marketTime) {
                     const existingDate = new Date(s.lastQuoteDate);
                     const newDate = new Date(update.marketTime);
                     // RELAXED PROTECTION (v3.12.68): Only skip if data is strictly older. 
-                    // Same-minute updates (identical timestamp) are now ALLOWED to ensure batch refresh works reliably.
                     if (newDate.getTime() < existingDate.getTime()) {
                         return s;
                     }
@@ -435,7 +446,6 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 let finalMarketState = update.marketState;
                 if (!finalMarketState) {
                     finalMarketState = estimateMarketState(s.symbol, s.currency);
-                    // console.log(`Fallback Market State for ${ s.symbol }: ${ finalMarketState } `);
                 }
 
                 return {
@@ -443,8 +453,11 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                     currentPrice: update.price,
                     previousClose: update.previousClose !== undefined ? update.previousClose : s.previousClose,
                     lastQuoteDate: update.marketTime ? update.marketTime.toISOString() : s.lastQuoteDate,
-                    marketState: finalMarketState as any // Cast to specific union type
+                    marketState: finalMarketState as any
                 };
+            } else {
+                // Helpful log for debugging why a stock won't update
+                // console.warn(`[Batch Update] No data found for ${s.symbol} in batch results.`);
             }
             return s;
         }));
