@@ -449,7 +449,7 @@ export const MortgageCalculator = () => {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Budget Planer</h1>
                     <p className="text-muted-foreground mt-1">
-                        Optimieren Sie Ihren Finanzierungsmix und berechnen Sie die monatliche Tragbarkeit.
+                        Optimieren Sie Ihre Hypotheken und berechnen Sie die monatliche Tragbarkeit.
                     </p>
                 </div>
             </div>
@@ -619,7 +619,7 @@ export const MortgageCalculator = () => {
                         <div className="p-6 border-b border-border flex justify-between items-center cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setIsFinanceOpen(!isFinanceOpen)}>
                             <h2 className="text-lg font-semibold flex items-center gap-2">
                                 <Landmark className="size-5 text-primary" />
-                                Finanzierungsmix
+                                Hypotheken
                                 {isFinanceOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
                             </h2>
                             <button
@@ -1706,6 +1706,34 @@ export const MortgageCalculator = () => {
                                     </div>
                                     <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(monthlyData.maintenance)}</span>
                                 </div>
+                                {/* Utility Costs */}
+                                {oilStats && (
+                                    <div className="flex items-center justify-between text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                                            <span>Heizöl Kosten</span>
+                                        </div>
+                                        <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(oilStats.avgCostPerYear / 12)}</span>
+                                    </div>
+                                )}
+                                {electricityStats && (
+                                    <div className="flex items-center justify-between text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                            <span>Strom Kosten</span>
+                                        </div>
+                                        <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(electricityStats.annualCost / 12)}</span>
+                                    </div>
+                                )}
+                                {waterStats && (
+                                    <div className="flex items-center justify-between text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                                            <span>Wasser Kosten</span>
+                                        </div>
+                                        <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(waterStats.avgCostPerYear / 12)}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                         {/* Simple Visual Bar */}
@@ -1713,6 +1741,9 @@ export const MortgageCalculator = () => {
                             <div className="h-full bg-blue-500 w-[var(--width)]" style={{ '--width': `${(monthlyData.interest / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>
                             <div className="h-full bg-emerald-500 w-[var(--width)]" style={{ '--width': `${(monthlyData.amortization / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>
                             <div className="h-full bg-amber-500 w-[var(--width)]" style={{ '--width': `${(monthlyData.maintenance / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>
+                            {oilStats && <div className="h-full bg-orange-500 w-[var(--width)]" style={{ '--width': `${(oilStats.avgCostPerYear / 12 / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>}
+                            {electricityStats && <div className="h-full bg-yellow-500 w-[var(--width)]" style={{ '--width': `${(electricityStats.annualCost / 12 / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>}
+                            {waterStats && <div className="h-full bg-blue-500 w-[var(--width)]" style={{ '--width': `${(waterStats.avgCostPerYear / 12 / totalMonthlyCost) * 100}%` } as React.CSSProperties}></div>}
                         </div>
                     </div>
 
