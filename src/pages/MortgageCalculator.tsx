@@ -10,6 +10,14 @@ import { DecimalInput } from '../components/DecimalInput';
 import { usePortfolio } from '../context/PortfolioContext';
 import type { MortgageTranche, BudgetEntry, OilPurchase, ElectricityReading } from '../types';
 
+const formatCHF = (amount: number, fractionDigits = 0) => {
+    return new Intl.NumberFormat('de-CH', {
+        style: 'decimal',
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits
+    }).format(amount) + ' CHF';
+};
+
 export const MortgageCalculator = () => {
     const { mortgageData, updateMortgageData } = usePortfolio();
 
@@ -239,11 +247,7 @@ export const MortgageCalculator = () => {
 
         // Helper to format currency for PDF (Number + CHF suffix)
         const formatCurrencyPDF = (amount: number) => {
-            return new Intl.NumberFormat('de-CH', {
-                style: 'decimal',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }).format(amount) + ' CHF';
+            return formatCHF(amount, 2);
         };
 
         // Shared table options for consistent styling
@@ -541,7 +545,7 @@ export const MortgageCalculator = () => {
                                     )}
                                 </div>
                                 <div className="pt-2 flex justify-end text-sm font-medium">
-                                    Total: {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                    Total: {formatCHF(
                                         (incomeItems || []).reduce((sum: number, i: BudgetEntry) => {
                                             const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
                                             return sum + monthlyAmount;
@@ -589,7 +593,7 @@ export const MortgageCalculator = () => {
                                             />
                                         </div>
                                         <p className="text-xs text-muted-foreground">
-                                            ≈ {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(yearlyMaintenance / 12)} / Monat
+                                            ≈ {formatCHF(yearlyMaintenance / 12)} / Monat
                                         </p>
                                     </div>
                                     <div className="space-y-2 sm:col-span-2">
@@ -701,7 +705,7 @@ export const MortgageCalculator = () => {
                                 <div className="flex justify-between items-center text-sm px-2 pt-2 border-t border-border">
                                     <span className="text-muted-foreground">Total Hypothekardschuld</span>
                                     <span className="font-mono font-bold">
-                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(totalDebt)}
+                                        {formatCHF(totalDebt)}
                                     </span>
                                 </div>
                             </div>
@@ -998,7 +1002,7 @@ export const MortgageCalculator = () => {
                                     )}
                                 </div>
                                 <div className="pt-2 flex justify-end text-sm font-medium">
-                                    Total: {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(
+                                    Total: {formatCHF(
                                         (autoCosts || []).reduce((sum: number, i: BudgetEntry) => {
                                             const monthlyAmount = i.frequency === 'yearly' ? i.amount / 12 : i.amount;
                                             return sum + monthlyAmount;
@@ -1057,7 +1061,7 @@ export const MortgageCalculator = () => {
                                             <div className="flex justify-between items-center pt-2 border-t border-border">
                                                 <span className="text-sm text-muted-foreground">Berechnete Fahrkosten:</span>
                                                 <span className="font-mono font-bold text-blue-500">
-                                                    {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(calculatedMonthlyFuelCost)} / Mt
+                                                    {formatCHF(calculatedMonthlyFuelCost)} / Mt
                                                 </span>
                                             </div>
                                             <p className="text-xs text-muted-foreground italic">
@@ -1195,11 +1199,11 @@ export const MortgageCalculator = () => {
                                         <div className="flex justify-between items-center bg-amber-500/10 p-2 rounded">
                                             <span className="text-sm">Ø Kosten:</span>
                                             <span className="font-mono font-bold text-amber-600 dark:text-amber-400">
-                                                {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(oilStats.avgCostPerYear)} / Jahr
+                                                {formatCHF(oilStats.avgCostPerYear)} / Jahr
                                             </span>
                                         </div>
                                         <div className="text-right text-xs text-muted-foreground mt-1">
-                                            (ca. {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(oilStats.avgCostPerYear / 12)} / Monat)
+                                            (ca. {formatCHF(oilStats.avgCostPerYear / 12)} / Monat)
                                         </div>
                                         <p className="text-[10px] text-muted-foreground italic mt-2">
                                             Basierend auf {oilPurchases?.length} Füllungen. Berechnung nimmt an, dass Tank immer voll gefüllt wird.
@@ -1448,7 +1452,7 @@ export const MortgageCalculator = () => {
                                             <div className="bg-yellow-500/10 p-3 rounded">
                                                 <div className="text-sm text-muted-foreground">Kosten</div>
                                                 <div className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
-                                                    {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(electricityStats.annualCost)}
+                                                    {formatCHF(electricityStats.annualCost)}
                                                 </div>
                                                 <div className="text-xs text-muted-foreground">
                                                     HT: {electricityStats.avgCostHT.toFixed(0)} / NT: {electricityStats.avgCostNT.toFixed(0)}
@@ -1456,7 +1460,7 @@ export const MortgageCalculator = () => {
                                             </div>
                                         </div>
                                         <div className="text-center text-sm text-muted-foreground mt-1">
-                                            monatlich ca. {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(electricityStats.annualCost / 12)}
+                                            monatlich ca. {formatCHF(electricityStats.annualCost / 12)}
                                         </div>
                                     </div>
                                 ) : (
@@ -1622,12 +1626,12 @@ export const MortgageCalculator = () => {
                                                 <div className="bg-blue-500/10 p-3 rounded">
                                                     <div className="text-sm text-muted-foreground">Kosten</div>
                                                     <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(latest.costTotal)}
+                                                        {formatCHF(latest.costTotal)}
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="text-center text-sm text-muted-foreground mt-1">
-                                                monatlich ca. {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(latest.costTotal / 12)}
+                                                monatlich ca. {formatCHF(latest.costTotal / 12)}
                                             </div>
                                         </div>
                                     );
@@ -1668,7 +1672,7 @@ export const MortgageCalculator = () => {
                         <div className="p-6 border-b border-border">
                             <h2 className="text-lg font-semibold flex items-center gap-2">
                                 <Calculator className="size-5 text-primary" />
-                                Monatliche Kosten
+                                Wohnkosten Liegenschaft
                             </h2>
                         </div>
                         <div className="p-6 space-y-6">
@@ -1676,7 +1680,7 @@ export const MortgageCalculator = () => {
                                 <div className="text-center">
                                     <div className="text-sm text-muted-foreground mb-1">Total pro Monat</div>
                                     <div className="text-4xl font-bold tracking-tight text-foreground font-mono">
-                                        {new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(totalMonthlyCost)}
+                                        {formatCHF(totalMonthlyCost)}
                                     </div>
                                 </div>
                             </div>
@@ -1688,7 +1692,7 @@ export const MortgageCalculator = () => {
                                         <div className="w-3 h-3 rounded-full bg-blue-500"></div>
                                         <span>Hypothekarzinsen</span>
                                     </div>
-                                    <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(monthlyData.interest)}</span>
+                                    <span className="font-mono">{formatCHF(monthlyData.interest)}</span>
                                 </div>
                                 {/* Amortization Row */}
                                 <div className="flex items-center justify-between text-sm">
@@ -1696,7 +1700,7 @@ export const MortgageCalculator = () => {
                                         <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
                                         <span>Amortisation</span>
                                     </div>
-                                    <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(monthlyData.amortization)}</span>
+                                    <span className="font-mono">{formatCHF(monthlyData.amortization)}</span>
                                 </div>
                                 {/* Maintenance Row */}
                                 <div className="flex items-center justify-between text-sm">
@@ -1704,7 +1708,7 @@ export const MortgageCalculator = () => {
                                         <div className="w-3 h-3 rounded-full bg-amber-500"></div>
                                         <span>Unterhalt & Nebenkosten</span>
                                     </div>
-                                    <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(monthlyData.maintenance)}</span>
+                                    <span className="font-mono">{formatCHF(monthlyData.maintenance)}</span>
                                 </div>
                                 {/* Utility Costs */}
                                 {oilStats && (
@@ -1713,7 +1717,7 @@ export const MortgageCalculator = () => {
                                             <div className="w-3 h-3 rounded-full bg-orange-500"></div>
                                             <span>Heizöl Kosten</span>
                                         </div>
-                                        <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(oilStats.avgCostPerYear / 12)}</span>
+                                        <span className="font-mono">{formatCHF(oilStats.avgCostPerYear / 12)}</span>
                                     </div>
                                 )}
                                 {electricityStats && (
@@ -1722,7 +1726,7 @@ export const MortgageCalculator = () => {
                                             <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                                             <span>Strom Kosten</span>
                                         </div>
-                                        <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(electricityStats.annualCost / 12)}</span>
+                                        <span className="font-mono">{formatCHF(electricityStats.annualCost / 12)}</span>
                                     </div>
                                 )}
                                 {waterStats && (
@@ -1731,7 +1735,7 @@ export const MortgageCalculator = () => {
                                             <div className="w-3 h-3 rounded-full bg-blue-500"></div>
                                             <span>Wasser Kosten</span>
                                         </div>
-                                        <span className="font-mono">{new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(waterStats.avgCostPerYear / 12)}</span>
+                                        <span className="font-mono">{formatCHF(waterStats.avgCostPerYear / 12)}</span>
                                     </div>
                                 )}
                             </div>
@@ -1771,7 +1775,7 @@ export const MortgageCalculator = () => {
                                             ))}
                                         </Pie>
                                         <RechartsTooltip
-                                            formatter={(value: number) => new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(value)}
+                                            formatter={(value: number) => formatCHF(value)}
                                             contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                                             itemStyle={{ color: 'hsl(var(--foreground))' }}
                                         />
