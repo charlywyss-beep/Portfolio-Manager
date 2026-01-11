@@ -334,21 +334,36 @@ export function EditDividendPage() {
                             onError={(e) => (e.currentTarget.style.display = 'none')}
                         />
                     )}
-                    <div>
+                    <div className="flex-1">
                         {stock ? (
                             <div className="flex items-start gap-2 group/edit w-full min-w-[200px]">
                                 <textarea
                                     ref={inputRef}
-                                    className="w-full text-xl md:text-2xl font-bold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground resize-none leading-tight min-h-[40px]"
+                                    className="w-full text-xl md:text-2xl font-bold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 py-2 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground resize-none leading-normal min-h-[60px]"
                                     value={stockNameOverride !== undefined ? stockNameOverride : stock.name}
                                     onChange={(e) => setStockNameOverride(e.target.value)}
                                     rows={1}
                                     placeholder="Name der Position"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                                            handleSubmit(e);
+                                        }
+                                    }}
                                 />
-                                <Pencil
-                                    className="size-4 text-muted-foreground opacity-50 group-hover/edit:opacity-100 transition-opacity shrink-0 cursor-pointer hover:text-primary mt-1.5"
-                                    onClick={() => inputRef.current?.focus()}
-                                />
+                                <div className="flex flex-col gap-1 mt-1.5">
+                                    <Pencil
+                                        className="size-4 text-muted-foreground opacity-50 group-hover/edit:opacity-100 transition-opacity shrink-0 cursor-pointer hover:text-primary"
+                                        onClick={() => inputRef.current?.focus()}
+                                        title="Klicken zum Bearbeiten"
+                                    />
+                                    <button
+                                        onClick={handleSubmit}
+                                        className="text-muted-foreground hover:text-green-600 transition-colors opacity-50 group-hover/edit:opacity-100"
+                                        title="Speichern (Strg + Enter)"
+                                    >
+                                        <Check className="size-4" />
+                                    </button>
+                                </div>
                             </div>
                         ) : (
                             <h1 className="text-xl font-bold">Dividende hinzufügen</h1>
