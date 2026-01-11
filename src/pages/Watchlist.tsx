@@ -154,11 +154,11 @@ export function Watchlist() {
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto w-full">
+                    <div className="overflow-x-auto w-full overscroll-x-none rounded-xl overflow-hidden overflow-clip bg-card border border-border">
                         <table className="w-full text-left border-collapse min-w-[1000px] md:min-w-0">
                             <thead>
                                 <tr className="border-b bg-muted/20">
-                                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider w-[300px]">Unternehmen</th>
+                                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider w-[300px] sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktie</th>
                                     <th
                                         className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors"
                                         onClick={() => {
@@ -194,7 +194,7 @@ export function Watchlist() {
                                         Verkaufslimit {sortConfig.key === 'sellGap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
                                     </th>
                                     <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right">Nächste Div.</th>
-                                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-center w-[100px]">Aktionen</th>
+                                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-center w-[100px] sticky -right-px z-20 bg-card shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
@@ -232,8 +232,9 @@ export function Watchlist() {
 
                                         return (
                                             <tr key={stock.id} className="hover:bg-muted/30 transition-colors group">
-                                                <td className="p-4">
-                                                    <div className="flex items-center gap-3">
+                                                <td className="p-4 sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                    <div className="absolute inset-0 bg-card -z-10" />
+                                                    <div className="flex items-center gap-3 relative">
                                                         <Logo
                                                             url={stock.logoUrl}
                                                             alt={stock.name}
@@ -339,8 +340,9 @@ export function Watchlist() {
                                                         <span className="text-muted-foreground text-sm">-</span>
                                                     )}
                                                 </td>
-                                                <td className="p-4">
-                                                    <div className="flex items-center justify-center gap-2">
+                                                <td className="p-4 sticky -right-px z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                    <div className="absolute inset-0 bg-card -z-10" />
+                                                    <div className="flex items-center justify-center gap-2 relative">
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
