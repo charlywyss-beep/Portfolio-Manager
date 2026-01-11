@@ -158,7 +158,7 @@ export function Watchlist() {
                         <table className="w-full text-left border-collapse min-w-[1000px] md:min-w-0">
                             <thead>
                                 <tr className="border-b bg-muted/20">
-                                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider w-[300px] sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktie</th>
+                                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider w-auto whitespace-nowrap sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktie</th>
                                     <th
                                         className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors"
                                         onClick={() => {
