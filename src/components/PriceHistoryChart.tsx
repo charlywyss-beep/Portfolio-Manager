@@ -287,15 +287,17 @@ export function PriceHistoryChart({
                                     // Iterate normally (forward)
                                     for (const point of data) {
                                         const date = new Date(point.date);
-                                        const dayStr = date.toLocaleDateString();
-                                        if (!seenDays.has(dayStr)) {
-                                            seenDays.add(dayStr);
+                                        // Use ISO string (YYYY-MM-DD) for strict day uniqueness, independent of locale/time
+                                        const dayKey = date.toISOString().slice(0, 10);
+                                        if (!seenDays.has(dayKey)) {
+                                            seenDays.add(dayKey);
                                             ticks.push(point.date);
                                         }
                                     }
                                     return ticks;
                                 })() : undefined}
                                 minTickGap={selectedRange === '1W' ? 0 : 30} // 0 because we handle ticks manually
+                                interval={selectedRange === '1W' ? 0 : 'preserveStartEnd'} // Force ALL ticks for 1W to ensure Friday shows up
                             />
                             <YAxis
                                 domain={[domainMin, domainMax]}
