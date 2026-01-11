@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Trash2, Search, Pencil } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
@@ -51,6 +51,20 @@ export function EditDividendPage() {
     // Derived state
     const currentStockId = stockId || selectedStockId;
     const stock = stocks.find(s => s.id === currentStockId);
+
+    const inputRef = useRef<HTMLTextAreaElement>(null);
+
+    // Auto-resize stock name textarea
+    useEffect(() => {
+        if (inputRef.current) {
+            // First reset height to 0 to get the correct scrollHeight (for shrinking)
+            inputRef.current.style.height = '0px';
+            const scrollHeight = inputRef.current.scrollHeight;
+            inputRef.current.style.height = `${scrollHeight}px`;
+            // Prevent scrollbar flicker
+            inputRef.current.style.overflow = 'hidden';
+        }
+    }, [stockNameOverride, stock?.name]);
 
 
     // Pre-fill fields
@@ -324,24 +338,16 @@ export function EditDividendPage() {
                         {stock ? (
                             <div className="flex items-start gap-2 group/edit w-full min-w-[200px]">
                                 <textarea
-                                    className="w-full text-xl font-bold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground resize-none leading-relaxed whitespace-pre-wrap"
+                                    ref={inputRef}
+                                    className="w-full text-xl font-bold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground resize-none leading-relaxed whitespace-pre-wrap min-h-[28px]"
                                     value={stockNameOverride !== undefined ? stockNameOverride : stock.name}
-                                    onChange={(e) => {
-                                        setStockNameOverride(e.target.value);
-                                        // Auto-expand
-                                        e.target.style.height = 'auto';
-                                        e.target.style.height = e.target.scrollHeight + 'px';
-                                    }}
+                                    onChange={(e) => setStockNameOverride(e.target.value)}
                                     rows={1}
-                                    style={{ height: 'auto' }}
                                     placeholder="Name der Position"
                                 />
                                 <Pencil
                                     className="size-4 text-muted-foreground opacity-50 group-hover/edit:opacity-100 transition-opacity shrink-0 cursor-pointer hover:text-primary mt-1.5"
-                                    onClick={(e) => {
-                                        const textarea = e.currentTarget.previousElementSibling as HTMLTextAreaElement;
-                                        textarea?.focus();
-                                    }}
+                                    onClick={() => inputRef.current?.focus()}
                                 />
                             </div>
                         ) : (
