@@ -268,12 +268,16 @@ export function PriceHistoryChart({
                                 tick={{ fontSize: 10, fill: '#e2e8f0' }}
                                 tickLine={false}
                                 axisLine={false}
-                                minTickGap={30}
+                                padding={{ left: 16, right: 16 }} // Fix label clipping (e.g. 05.01 -> .01)
                                 // X-Axis Tick Formatter
                                 tickFormatter={(str) => {
                                     const date = new Date(str);
                                     if (selectedRange === '1D') {
                                         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                    } else if (selectedRange === '1W') {
+                                        // 1W View: Format as "dd.MM" (No trailing dot, user request)
+                                        // e.g. "05.01"
+                                        return `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
                                     } else if (selectedRange === '1Y' || selectedRange === '5Y') {
                                         return date.toLocaleDateString([], { month: '2-digit', year: '2-digit' });
                                     }

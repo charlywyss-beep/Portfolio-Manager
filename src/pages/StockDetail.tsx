@@ -460,7 +460,7 @@ export function StockDetail() {
                                 onRangeChange={(range) => setTimeRange(range)}
                                 isRealtime={true}
                                 quoteDate={quoteDate}
-                                previousClose={safePreviousClose}
+                                previousClose={safePreviousClose || 0}
                                 isMarketOpen={estimateMarketState(stock.symbol, stock.currency) === 'REGULAR'}
                                 purchasePrice={position?.buyPriceAvg}
                             />
@@ -496,21 +496,7 @@ export function StockDetail() {
                             <div className="flex justify-between py-1.5 border-b border-border/50">
                                 <span className="text-muted-foreground text-sm">Eröffnung / Vortag</span>
                                 <span className="font-medium text-sm text-right">
-                                    {(() => {
-                                        // Sanity Check for Previous Close (v3.12.109)
-                                        // Fixes WINC.L reporting 0.04 instead of 4.2x
-                                        let prev = stock.previousClose;
-                                        if (prev && stock.currentPrice) {
-                                            const ratio = stock.currentPrice / prev;
-                                            if (ratio > 90 && ratio < 110) prev = prev * 100;
-                                            if (ratio > 0.009 && ratio < 0.011) prev = prev / 100;
-                                        }
-                                        return (
-                                            <>
-                                                {stock.open ? formatCurrency(stock.open, stock.currency, false) : '-'} / {formatCurrency(safePreviousClose, stock.currency, false)}
-                                            </>
-                                        );
-                                    })()}
+                                    {stock.open ? formatCurrency(stock.open, stock.currency, false) : '-'} / {formatCurrency(safePreviousClose || 0, stock.currency, false)}
                                 </span>
                             </div>
 
