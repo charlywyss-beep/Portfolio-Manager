@@ -350,18 +350,20 @@ export function EditDividendPage() {
                                         }
                                     }}
                                 />
-                                <div className="flex flex-col gap-1 mt-1.5">
-                                    <Pencil
-                                        className="size-4 text-muted-foreground opacity-50 group-hover/edit:opacity-100 transition-opacity shrink-0 cursor-pointer hover:text-primary"
+                                <div className="flex flex-col gap-2 mt-1.5 pl-2 border-l border-border/50">
+                                    <button
                                         onClick={() => inputRef.current?.focus()}
+                                        className="p-2 text-muted-foreground hover:text-primary hover:bg-muted/50 rounded-lg transition-all"
                                         title="Klicken zum Bearbeiten"
-                                    />
+                                    >
+                                        <Pencil className="size-5" />
+                                    </button>
                                     <button
                                         onClick={handleSubmit}
-                                        className="text-muted-foreground hover:text-green-600 transition-colors opacity-50 group-hover/edit:opacity-100"
-                                        title="Speichern (Strg + Enter)"
+                                        className="p-2 bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg rounded-lg transition-all transform active:scale-95 flex items-center justify-center"
+                                        title="SPEICHERN (Strg + Enter)"
                                     >
-                                        <Check className="size-4" />
+                                        <Check className="size-6 stroke-[3]" />
                                     </button>
                                 </div>
                             </div>
