@@ -244,7 +244,7 @@ export function Watchlist() {
                                                             <div className="flex items-center gap-2">
                                                                 <span
                                                                     className="font-bold text-sm truncate group-hover:text-primary transition-colors cursor-pointer"
-                                                                    onClick={() => navigate(`/stock/${stock.id}`)}
+                                                                    onClick={() => navigate(`/stock/${stock.id}?from=watchlist`)}
                                                                 >
                                                                     {stock.name}
                                                                 </span>

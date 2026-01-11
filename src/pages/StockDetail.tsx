@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
@@ -16,7 +16,7 @@ import { fetchStockHistory, fetchStockQuote, type TimeRange, type ChartDataPoint
 export function StockDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
-    // const [searchParams] = useSearchParams();
+    const [searchParams] = useSearchParams();
     const { stocks, positions, updateStock, updateStockPrice, addQuickLink, removeQuickLink } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
 
@@ -324,7 +324,11 @@ export function StockDetail() {
                                     );
                                 })()}
                                 <button
-                                    onClick={() => navigate(`/dividends/edit/${stock.id}`)}
+                                    onClick={() => {
+                                        const from = searchParams.get('from');
+                                        const query = from ? `?from=${from}` : '';
+                                        navigate(`/dividends/edit/${stock.id}${query}`);
+                                    }}
                                     className="p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                                     title="Daten bearbeiten"
                                 >
