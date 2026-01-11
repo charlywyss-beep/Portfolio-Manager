@@ -339,7 +339,7 @@ export function EditDividendPage() {
                             <div className="flex items-start gap-2 group/edit w-full min-w-[200px]">
                                 <textarea
                                     ref={inputRef}
-                                    className="w-full text-xl font-bold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground resize-none leading-relaxed whitespace-pre-wrap min-h-[28px]"
+                                    className="w-full text-xl md:text-2xl font-bold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground resize-none leading-tight min-h-[40px]"
                                     value={stockNameOverride !== undefined ? stockNameOverride : stock.name}
                                     onChange={(e) => setStockNameOverride(e.target.value)}
                                     rows={1}
