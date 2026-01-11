@@ -269,15 +269,33 @@ export function PriceHistoryChart({
                                 tickLine={false}
                                 axisLine={false}
                                 minTickGap={30}
-                                tickFormatter={(value) => {
-                                    const date = new Date(value);
+                                // X-Axis Tick Formatter
+                                tickFormatter={(str) => {
+                                    const date = new Date(str);
                                     if (selectedRange === '1D') {
-                                        return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                                    } else if (selectedRange === '5Y') {
-                                        return date.getFullYear().toString();
+                                        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                    } else if (selectedRange === '1Y' || selectedRange === '5Y') {
+                                        return date.toLocaleDateString([], { month: '2-digit', year: '2-digit' });
                                     }
-                                    return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+                                    return date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
                                 }}
+                                // STRICT DAILY TICKS (v3.12.111)
+                                // Filter ticks to ensure EXACTLY one label per day for 1W view.
+                                ticks={selectedRange === '1W' && data.length > 0 ? (() => {
+                                    const ticks: string[] = [];
+                                    const seenDays = new Set<string>();
+                                    // Iterate normally (forward)
+                                    for (const point of data) {
+                                        const date = new Date(point.date);
+                                        const dayStr = date.toLocaleDateString();
+                                        if (!seenDays.has(dayStr)) {
+                                            seenDays.add(dayStr);
+                                            ticks.push(point.date);
+                                        }
+                                    }
+                                    return ticks;
+                                })() : undefined}
+                                minTickGap={selectedRange === '1W' ? 0 : 30} // 0 because we handle ticks manually
                             />
                             <YAxis
                                 domain={[domainMin, domainMax]}

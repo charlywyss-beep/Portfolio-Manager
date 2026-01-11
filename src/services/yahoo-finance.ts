@@ -36,7 +36,24 @@ export function normalizeYahooPrice(price: number, currency: string | null, symb
     // LSE stocks over 1000 pence are common, but they are rarely quoted in Pounds > 1000.
     const isLikelyPence = isLSE && price > 50 && cur !== 'USD' && cur !== 'EUR' && cur !== 'CHF';
 
-    if (isPence || isLikelyPence) {
+    // REFINED LOGIC (v3.12.107):
+    // Yahoo is inconsistent with LSE.
+    // - Most stocks: 400 = 4.00 GBP (Pence) -> Divide by 100.
+    // - Some ETFs (WINC.L): 4.23 = 4.23 GBP/USD (Major) -> Do NOT divide.
+    // Thread: If price is small (< 15) and currency is GBP, it's likely already in Pounds, NOT Pence.
+    // Real Penny stocks (e.g. 4 pence) would come as '4.0', so they might be ambiguous, but ETFs > 1.0 are usually Pounds.
+    const isSmallNumber = price < 25;
+
+    // BRUTE FORCE FIX (v3.12.110):
+    // Some LSE ETFs (WINC.L) seem to report 0.04 (Maybe 4.xx divided by 100 at source?).
+    // A price < 0.20 on LSE is extremely rare (20 pence would be '20.0').
+    // If we see < 1.0 for an LSE stock, it's almost certainly a Pound/Pence mismatch where it's ALREADY too small.
+    // We multiply by 100 to fix it.
+    if (isLSE && price < 0.5) {
+        return price * 100;
+    }
+
+    if ((isPence && !isSmallNumber) || isLikelyPence) {
         return price / 100;
     }
 
@@ -94,6 +111,34 @@ export async function fetchStockHistory(
 
         const rawPrevClose = result.meta?.chartPreviousClose || result.meta?.previousClose;
         const normalizedPrevClose = rawPrevClose ? normalizeYahooPrice(rawPrevClose, resultCurrency, symbol) : undefined;
+
+        // Sanity Check for Unit Mismatch (Pence vs Pounds)
+        // If Previous Close and Last Price differ by factor 100, normalize Previous Close.
+        if (normalizedPrevClose && points.length > 0) {
+            const lastPrice = points[points.length - 1].value;
+            const ratio = lastPrice / normalizedPrevClose;
+
+            if (ratio > 90 && ratio < 120) {
+                // Previous Close is likely 100x too small (e.g. 0.04 vs 4.00)
+                console.log('[Yahoo Finance] Detected Unit Mismatch in Previous Close. Auto-correcting *100.');
+                // We can't re-assign const, so we return a modified object or cast.
+                // Actually, let's just modify the variable before return if we change it to let... 
+                // easier to just return corrected value here.
+                return {
+                    data: points,
+                    currency: resultCurrency,
+                    previousClose: normalizedPrevClose * 100
+                };
+            } else if (ratio > 0.008 && ratio < 0.012) {
+                // Previous Close is likely 100x too big (e.g. 400 vs 4.00)
+                console.log('[Yahoo Finance] Detected Unit Mismatch in Previous Close. Auto-correcting /100.');
+                return {
+                    data: points,
+                    currency: resultCurrency,
+                    previousClose: normalizedPrevClose / 100
+                };
+            }
+        }
 
         return {
             data: points.length > 0 ? points : null,
