@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Trash2, Search } from 'lucide-react';
+import { ArrowLeft, Trash2, Search, Pencil } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
@@ -25,6 +25,7 @@ export function EditDividendPage() {
     const { stocks, positions, updateStockDividend, updateStockPrice, updateStock } = usePortfolio();
 
     const [selectedStockId, setSelectedStockId] = useState(''); // Local state for selection
+    const [stockNameOverride, setStockNameOverride] = useState<string | undefined>(undefined);
     const [symbol, setSymbol] = useState(''); // NEW: Allow editing symbol
     const [isin, setIsin] = useState(''); // NEW: Allow editing ISIN
     const [sector, setSector] = useState(''); // NEW: Allow editing Sector
@@ -179,6 +180,16 @@ export function EditDividendPage() {
         // Update Stock Details (Symbol, Logo, Target Price)
         const updates: Partial<Stock> = {};
 
+        // Name Update
+        if (stockNameOverride !== undefined && stockNameOverride.trim() !== stock?.name) {
+            updates.name = stockNameOverride;
+        }
+
+        // Name Update
+        if (stockNameOverride !== undefined && stockNameOverride.trim() !== stock?.name) {
+            updates.name = stockNameOverride;
+        }
+
         // Symbol update
         if (symbol && (!stock || symbol !== stock.symbol)) {
             updates.symbol = symbol.toUpperCase(); // Ensure uppercase
@@ -310,7 +321,32 @@ export function EditDividendPage() {
                         />
                     )}
                     <div>
-                        <h1 className="text-xl font-bold">{stock ? stock.name : 'Dividende hinzufügen'}</h1>
+                        {stock ? (
+                            <div className="flex items-start gap-2 group/edit w-full min-w-[200px]">
+                                <textarea
+                                    className="w-full text-xl font-bold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground resize-none leading-relaxed whitespace-pre-wrap"
+                                    value={stockNameOverride !== undefined ? stockNameOverride : stock.name}
+                                    onChange={(e) => {
+                                        setStockNameOverride(e.target.value);
+                                        // Auto-expand
+                                        e.target.style.height = 'auto';
+                                        e.target.style.height = e.target.scrollHeight + 'px';
+                                    }}
+                                    rows={1}
+                                    style={{ height: 'auto' }}
+                                    placeholder="Name der Position"
+                                />
+                                <Pencil
+                                    className="size-4 text-muted-foreground opacity-50 group-hover/edit:opacity-100 transition-opacity shrink-0 cursor-pointer hover:text-primary mt-1.5"
+                                    onClick={(e) => {
+                                        const textarea = e.currentTarget.previousElementSibling as HTMLTextAreaElement;
+                                        textarea?.focus();
+                                    }}
+                                />
+                            </div>
+                        ) : (
+                            <h1 className="text-xl font-bold">Dividende hinzufügen</h1>
+                        )}
                         <p className="text-sm text-muted-foreground">{stock ? stock.symbol : 'Neue Erfassung'}</p>
                     </div>
                 </div>

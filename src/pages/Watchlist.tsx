@@ -346,7 +346,7 @@ export function Watchlist() {
                                                                 e.stopPropagation();
                                                                 setBuyStock(stock);
                                                             }}
-                                                            className="p-2 hover:bg-green-500/10 hover:text-green-600 rounded-lg transition-colors"
+                                                            className="p-2 text-green-600 bg-green-500/10 hover:bg-green-500/20 rounded-lg transition-colors"
                                                             title="Kaufen"
                                                         >
                                                             <ShoppingBag className="size-4" />
@@ -356,7 +356,7 @@ export function Watchlist() {
                                                                 e.stopPropagation();
                                                                 navigate(`/calculator?mode=edit&id=${stock.id}&from=watchlist`);
                                                             }}
-                                                            className="p-2 hover:bg-blue-500/10 hover:text-blue-600 rounded-lg transition-colors"
+                                                            className="p-2 text-blue-600 bg-blue-500/10 hover:bg-blue-500/20 rounded-lg transition-colors"
                                                             title="Bearbeiten"
                                                         >
                                                             <Edit className="size-4" />
@@ -366,7 +366,7 @@ export function Watchlist() {
                                                                 e.stopPropagation();
                                                                 removeFromWatchlist(stock.id);
                                                             }}
-                                                            className="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors text-muted-foreground"
+                                                            className="p-2 text-red-500 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
                                                             title="Entfernen"
                                                         >
                                                             <Trash2 className="size-4" />
