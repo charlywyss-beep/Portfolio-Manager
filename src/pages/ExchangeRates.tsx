@@ -1,6 +1,7 @@
 import { CurrencyChart } from '../components/CurrencyChart';
 import { CurrencyGainCalculator } from '../components/CurrencyGainCalculator';
 import { ShareCalculator } from '../components/ShareCalculator';
+import { InterestRateCalculator } from '../components/InterestRateCalculator';
 import { ArrowLeftRight } from 'lucide-react';
 
 export function ExchangeRates() {
@@ -22,6 +23,7 @@ export function ExchangeRates() {
 
                 <CurrencyGainCalculator />
                 <ShareCalculator />
+                <InterestRateCalculator />
             </div>
         </div>
     );
