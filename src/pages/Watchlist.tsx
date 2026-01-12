@@ -250,9 +250,9 @@ export function Watchlist() {
                                                                     {stock.name}
                                                                 </span>
                                                                 {isMarketOpen ? (
-                                                                    <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0" title="Börse geöffnet" />
+                                                                    <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0 shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
                                                                 ) : (
-                                                                    <div className="size-2 rounded-full bg-muted shrink-0" title="Börse geschlossen" />
+                                                                    <div className="size-2 rounded-full bg-red-500 shrink-0 border border-background" title={`Markt geschlossen (${calcState})`} />
                                                                 )}
                                                             </div>
                                                             <span className="text-xs text-muted-foreground uppercase">{stock.symbol}</span>
