@@ -62,7 +62,7 @@ const LocalNumberInput = ({ value, onChange, className, step = "any", title, pla
     );
 };
 
-// Helper component for stock selection list items (v3.12.121)
+// Helper Component for Stock Management List Items (v3.12.123)
 const StockListItem = ({ stock, onClick, subtitle }: { stock: any; onClick: () => void; subtitle?: string }) => (
     <button
         type="button"
@@ -487,7 +487,7 @@ export function DividendCalculator() {
     const searchRef = useRef<HTMLDivElement>(null);
     const [hasMounted, setHasMounted] = useState(false);
 
-    // Click-Outside Handler (v3.12.121)
+    // Click-Outside Handler (v3.12.123)
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -498,7 +498,7 @@ export function DividendCalculator() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Categorized Suggestions (v3.12.121)
+    // Categorized Stocks (v3.12.123)
     const categorizedSuggestions = useMemo(() => {
         if (searchTerm) return null; // Use normal search if typing
 
@@ -1027,71 +1027,71 @@ export function DividendCalculator() {
                                                             onFocus={() => setShowStockList(true)}
                                                             className="w-full pl-9 pr-4 py-2 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary/20"
                                                         />
-                                                    </div>
 
-                                                    {showStockList && (
-                                                        <div className="max-h-80 overflow-y-auto border border-border rounded-lg divide-y divide-border bg-card shadow-2xl z-50 mt-1 animate-in fade-in slide-in-from-top-2 duration-200">
-                                                            {searchTerm ? (
-                                                                // SEARCH RESULTS
-                                                                stocks
-                                                                    .filter(s =>
-                                                                        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                                        s.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                                        (s.isin && s.isin.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                        {showStockList && (
+                                                            <div className="absolute left-0 right-0 top-full max-h-80 overflow-y-auto border border-border rounded-lg divide-y divide-border bg-card shadow-2xl z-50 mt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                                                                {searchTerm ? (
+                                                                    // SEARCH RESULTS
+                                                                    stocks
+                                                                        .filter(s =>
+                                                                            s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                                            s.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                                            (s.isin && s.isin.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                                        )
+                                                                        .map(stock => (
+                                                                            <StockListItem key={stock.id} stock={stock} onClick={() => handleStockSelect(stock.id)} />
+                                                                        ))
+                                                                ) : (
+                                                                    // CATEGORIZED SUGGESTIONS (v3.12.121)
+                                                                    categorizedSuggestions && (
+                                                                        <>
+                                                                            {categorizedSuggestions.owned.length > 0 && (
+                                                                                <div className="bg-muted/50">
+                                                                                    <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between">
+                                                                                        <span>Deine Bestände</span>
+                                                                                        <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{categorizedSuggestions.owned.length}</span>
+                                                                                    </div>
+                                                                                    {categorizedSuggestions.owned.map(stock => (
+                                                                                        <StockListItem key={stock.id} stock={stock} onClick={() => handleStockSelect(stock.id)} subtitle="Im Portfolio" />
+                                                                                    ))}
+                                                                                </div>
+                                                                            )}
+                                                                            {categorizedSuggestions.watch.length > 0 && (
+                                                                                <div className="bg-muted/30">
+                                                                                    <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between border-t border-border/50">
+                                                                                        <span>Watchlist</span>
+                                                                                        <span className="bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded-full">{categorizedSuggestions.watch.length}</span>
+                                                                                    </div>
+                                                                                    {categorizedSuggestions.watch.map(stock => (
+                                                                                        <StockListItem key={stock.id} stock={stock} onClick={() => handleStockSelect(stock.id)} subtitle="Beobachtet" />
+                                                                                    ))}
+                                                                                </div>
+                                                                            )}
+                                                                            {categorizedSuggestions.other.length > 0 && (
+                                                                                <div className="opacity-75">
+                                                                                    <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between border-t border-border/50">
+                                                                                        <span>Andere / Frühere</span>
+                                                                                    </div>
+                                                                                    {categorizedSuggestions.other.map(stock => (
+                                                                                        <StockListItem key={stock.id} stock={stock} onClick={() => handleStockSelect(stock.id)} />
+                                                                                    ))}
+                                                                                </div>
+                                                                            )}
+                                                                        </>
                                                                     )
-                                                                    .map(stock => (
-                                                                        <StockListItem key={stock.id} stock={stock} onClick={() => handleStockSelect(stock.id)} />
-                                                                    ))
-                                                            ) : (
-                                                                // CATEGORIZED SUGGESTIONS (v3.12.121)
-                                                                categorizedSuggestions && (
-                                                                    <>
-                                                                        {categorizedSuggestions.owned.length > 0 && (
-                                                                            <div className="bg-muted/50">
-                                                                                <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between">
-                                                                                    <span>Deine Bestände</span>
-                                                                                    <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{categorizedSuggestions.owned.length}</span>
-                                                                                </div>
-                                                                                {categorizedSuggestions.owned.map(stock => (
-                                                                                    <StockListItem key={stock.id} stock={stock} onClick={() => handleStockSelect(stock.id)} subtitle="Im Portfolio" />
-                                                                                ))}
-                                                                            </div>
-                                                                        )}
-                                                                        {categorizedSuggestions.watch.length > 0 && (
-                                                                            <div className="bg-muted/30">
-                                                                                <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between border-t border-border/50">
-                                                                                    <span>Watchlist</span>
-                                                                                    <span className="bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded-full">{categorizedSuggestions.watch.length}</span>
-                                                                                </div>
-                                                                                {categorizedSuggestions.watch.map(stock => (
-                                                                                    <StockListItem key={stock.id} stock={stock} onClick={() => handleStockSelect(stock.id)} subtitle="Beobachtet" />
-                                                                                ))}
-                                                                            </div>
-                                                                        )}
-                                                                        {categorizedSuggestions.other.length > 0 && (
-                                                                            <div className="opacity-75">
-                                                                                <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between border-t border-border/50">
-                                                                                    <span>Andere / Frühere</span>
-                                                                                </div>
-                                                                                {categorizedSuggestions.other.map(stock => (
-                                                                                    <StockListItem key={stock.id} stock={stock} onClick={() => handleStockSelect(stock.id)} />
-                                                                                ))}
-                                                                            </div>
-                                                                        )}
-                                                                    </>
-                                                                )
-                                                            )}
-
-                                                            {searchTerm && stocks.filter(s =>
-                                                                s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                                s.symbol.toLowerCase().includes(searchTerm.toLowerCase())
-                                                            ).length === 0 && (
-                                                                    <div className="p-8 text-center text-muted-foreground">
-                                                                        Keine lokalen Treffer. Nutze die Suche in der Sidebar für neue Titel.
-                                                                    </div>
                                                                 )}
-                                                        </div>
-                                                    )}
+
+                                                                {searchTerm && stocks.filter(s =>
+                                                                    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                                    s.symbol.toLowerCase().includes(searchTerm.toLowerCase())
+                                                                ).length === 0 && (
+                                                                        <div className="p-8 text-center text-muted-foreground">
+                                                                            Keine lokalen Treffer. Nutze die Suche in der Sidebar für neue Titel.
+                                                                        </div>
+                                                                    )}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </>
                                             ) : (
                                                 <div className="p-4 border border-border rounded-lg bg-muted/30 flex items-center gap-3 animate-in fade-in zoom-in-95">

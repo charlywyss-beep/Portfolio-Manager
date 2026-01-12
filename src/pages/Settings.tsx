@@ -3,7 +3,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 
 import { Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 
-// Helper Component for Stock Management List Items (v3.12.122)
+// Helper Component for Stock Management List Items (v3.12.123)
 const StockManagementItem = ({ stock, positions, watchlist, stocks, fixedDeposits, history, importData }: any) => {
     const isInPortfolio = positions.some((p: any) => p.stockId === stock.id);
     const isInWatchlist = watchlist.includes(stock.id);
@@ -62,7 +62,7 @@ export function Settings() {
     const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [importMessage, setImportMessage] = useState('');
 
-    // Categorized Stocks (v3.12.122)
+    // Categorized Stocks (v3.12.123)
     const categorizedStocks = useMemo(() => {
         const ownedIds = new Set(positions.map(p => p.stockId));
         return {
