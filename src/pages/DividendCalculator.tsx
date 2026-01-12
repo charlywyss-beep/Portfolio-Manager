@@ -4,6 +4,12 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Calculator, Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw } from 'lucide-react';
 import { fetchStockHistory, searchStocks } from '../services/yahoo-finance';
 
+import { jsPDF } from 'jspdf';
+import { usePortfolio } from '../context/PortfolioContext';
+import { useExchangeRates } from '../context/ExchangeRateContext';
+import { convertToCHF } from '../utils/currency';
+import { cn } from '../utils';
+
 // Helper component for comma-friendly number input
 const LocalNumberInput = ({ value, onChange, className, step = "any", title, placeholder }: {
     value: number | undefined;
@@ -56,16 +62,53 @@ const LocalNumberInput = ({ value, onChange, className, step = "any", title, pla
     );
 };
 
-import { jsPDF } from 'jspdf';
-import { usePortfolio } from '../context/PortfolioContext';
-import { useExchangeRates } from '../context/ExchangeRateContext';
-import { convertToCHF } from '../utils/currency';
-import { cn } from '../utils';
+// Helper component for stock selection list items (v3.12.121)
+const StockListItem = ({ stock, onClick, subtitle }: { stock: any; onClick: () => void; subtitle?: string }) => (
+    <button
+        type="button"
+        onClick={onClick}
+        className="w-full p-3 hover:bg-muted transition-colors text-left flex items-center gap-3"
+    >
+        {stock.logoUrl ? (
+            <div className="size-10 rounded-lg p-1 bg-white border border-border flex items-center justify-center overflow-hidden">
+                <img
+                    src={stock.logoUrl}
+                    alt={stock.name}
+                    className="w-full h-full object-contain"
+                />
+            </div>
+        ) : (
+            <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
+                {stock.symbol.slice(0, 2)}
+            </div>
+        )}
+        <div className="flex-1 min-w-0">
+            <div className="font-semibold flex items-center gap-2 truncate">
+                <span className="truncate">{stock.name}</span>
+                {stock.type === 'etf' && <span className="shrink-0 text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-1.5 py-0.5 rounded">ETF</span>}
+            </div>
+            <div className="text-xs text-muted-foreground flex items-center gap-2">
+                <span className="font-mono">{stock.symbol}</span>
+                {subtitle && (
+                    <>
+                        <span className="text-muted-foreground/30">•</span>
+                        <span className="font-medium text-primary/70">{subtitle}</span>
+                    </>
+                )}
+            </div>
+        </div>
+        <div className="text-right shrink-0">
+            <div className="font-medium text-sm">
+                {stock.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: stock.currency === 'GBp' ? 'GBP' : stock.currency })}
+            </div>
+        </div>
+    </button>
+);
 
 export function DividendCalculator() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { stocks, addStock, addToWatchlist, updateStock, simulatorState, updateSimulatorState, positions, addPosition, updatePosition, deletePosition } = usePortfolio();
+    const { stocks, watchlist, addStock, addToWatchlist, updateStock, simulatorState, updateSimulatorState, positions, addPosition, updatePosition, deletePosition } = usePortfolio();
     const { rates } = useExchangeRates();
 
     // Catch-all: Ensure GBp is always converted to GBP on mount/update
@@ -441,7 +484,33 @@ export function DividendCalculator() {
     const [activeTab, setActiveTab] = useState<'search' | 'manual'>(selectedStockId === 'new' ? 'manual' : 'search');
     const [searchTerm, setSearchTerm] = useState('');
     const [showStockList, setShowStockList] = useState(false);
+    const searchRef = useRef<HTMLDivElement>(null);
     const [hasMounted, setHasMounted] = useState(false);
+
+    // Click-Outside Handler (v3.12.121)
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setShowStockList(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Categorized Suggestions (v3.12.121)
+    const categorizedSuggestions = useMemo(() => {
+        if (searchTerm) return null; // Use normal search if typing
+
+        const ownedIds = new Set(positions.map(p => p.stockId));
+        const watchlistIds = new Set(watchlist);
+
+        const owned = stocks.filter(s => ownedIds.has(s.id));
+        const watch = stocks.filter(s => watchlistIds.has(s.id) && !ownedIds.has(s.id));
+        const other = stocks.filter(s => !watchlistIds.has(s.id) && !ownedIds.has(s.id));
+
+        return { owned, watch, other };
+    }, [stocks, positions, watchlist, searchTerm]);
 
     // Autofill Prevention State
     const [isNameReadOnly, setIsNameReadOnly] = useState(true);
@@ -945,7 +1014,7 @@ export function DividendCalculator() {
                                             <label className="text-sm font-medium">Aktie / ETF auswählen</label>
                                             {!selectedStockId || selectedStockId === 'new' ? (
                                                 <>
-                                                    <div className="relative">
+                                                    <div className="relative" ref={searchRef}>
                                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                                         <input
                                                             type="text"
@@ -959,55 +1028,68 @@ export function DividendCalculator() {
                                                             className="w-full pl-9 pr-4 py-2 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary/20"
                                                         />
                                                     </div>
-                                                    {showStockList && searchTerm && (
-                                                        <div className="max-h-60 overflow-y-auto border border-border rounded-lg divide-y divide-border bg-card shadow-lg z-50 mt-1">
-                                                            {stocks
-                                                                .filter(s =>
-                                                                    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                                    s.symbol.toLowerCase().includes(searchTerm.toLowerCase())
-                                                                )
-                                                                .map(stock => (
-                                                                    <button
-                                                                        key={stock.id}
-                                                                        type="button"
-                                                                        onClick={() => handleStockSelect(stock.id)}
-                                                                        className="w-full p-3 hover:bg-muted transition-colors text-left flex items-center gap-3"
-                                                                    >
-                                                                        {stock.logoUrl ? (
-                                                                            <div className="size-10 rounded-lg p-1 bg-white border border-border flex items-center justify-center overflow-hidden">
-                                                                                <img
-                                                                                    src={stock.logoUrl}
-                                                                                    alt={stock.name}
-                                                                                    className="w-full h-full object-contain"
-                                                                                />
-                                                                            </div>
-                                                                        ) : (
-                                                                            <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
-                                                                                {stock.symbol.slice(0, 2)}
+
+                                                    {showStockList && (
+                                                        <div className="max-h-80 overflow-y-auto border border-border rounded-lg divide-y divide-border bg-card shadow-2xl z-50 mt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                                                            {searchTerm ? (
+                                                                // SEARCH RESULTS
+                                                                stocks
+                                                                    .filter(s =>
+                                                                        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                                        s.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                                        (s.isin && s.isin.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                                    )
+                                                                    .map(stock => (
+                                                                        <StockListItem key={stock.id} stock={stock} onClick={() => handleStockSelect(stock.id)} />
+                                                                    ))
+                                                            ) : (
+                                                                // CATEGORIZED SUGGESTIONS (v3.12.121)
+                                                                categorizedSuggestions && (
+                                                                    <>
+                                                                        {categorizedSuggestions.owned.length > 0 && (
+                                                                            <div className="bg-muted/50">
+                                                                                <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between">
+                                                                                    <span>Deine Bestände</span>
+                                                                                    <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{categorizedSuggestions.owned.length}</span>
+                                                                                </div>
+                                                                                {categorizedSuggestions.owned.map(stock => (
+                                                                                    <StockListItem key={stock.id} stock={stock} onClick={() => handleStockSelect(stock.id)} subtitle="Im Portfolio" />
+                                                                                ))}
                                                                             </div>
                                                                         )}
-                                                                        <div className="flex-1">
-                                                                            <div className="font-semibold flex items-center gap-2">
-                                                                                {stock.name}
-                                                                                {stock.type === 'etf' && <span className="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-1.5 py-0.5 rounded">ETF</span>}
+                                                                        {categorizedSuggestions.watch.length > 0 && (
+                                                                            <div className="bg-muted/30">
+                                                                                <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between border-t border-border/50">
+                                                                                    <span>Watchlist</span>
+                                                                                    <span className="bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded-full">{categorizedSuggestions.watch.length}</span>
+                                                                                </div>
+                                                                                {categorizedSuggestions.watch.map(stock => (
+                                                                                    <StockListItem key={stock.id} stock={stock} onClick={() => handleStockSelect(stock.id)} subtitle="Beobachtet" />
+                                                                                ))}
                                                                             </div>
-                                                                            <div className="text-sm text-muted-foreground flex items-center gap-2">
-                                                                                <span className="font-mono">{stock.symbol}</span>
-                                                                                {stock.isin && (
-                                                                                    <>
-                                                                                        <span>•</span>
-                                                                                        <span className="font-mono text-xs">{stock.isin}</span>
-                                                                                    </>
-                                                                                )}
+                                                                        )}
+                                                                        {categorizedSuggestions.other.length > 0 && (
+                                                                            <div className="opacity-75">
+                                                                                <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between border-t border-border/50">
+                                                                                    <span>Andere / Frühere</span>
+                                                                                </div>
+                                                                                {categorizedSuggestions.other.map(stock => (
+                                                                                    <StockListItem key={stock.id} stock={stock} onClick={() => handleStockSelect(stock.id)} />
+                                                                                ))}
                                                                             </div>
-                                                                        </div>
-                                                                        <div className="text-right">
-                                                                            <div className="font-medium">
-                                                                                {stock.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: stock.currency === 'GBp' ? 'GBP' : stock.currency })}
-                                                                            </div>
-                                                                        </div>
-                                                                    </button>
-                                                                ))}
+                                                                        )}
+                                                                    </>
+                                                                )
+                                                            )}
+
+                                                            {searchTerm && stocks.filter(s =>
+                                                                s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                                s.symbol.toLowerCase().includes(searchTerm.toLowerCase())
+                                                            ).length === 0 && (
+                                                                    <div className="p-8 text-center text-muted-foreground">
+                                                                        Keine lokalen Treffer. Nutze die Suche in der Sidebar für neue Titel.
+                                                                    </div>
+                                                                )}
                                                         </div>
                                                     )}
                                                 </>
