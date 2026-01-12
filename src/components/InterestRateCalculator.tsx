@@ -11,8 +11,7 @@ export function InterestRateCalculator({ className }: InterestRateCalculatorProp
     const [interestIncome, setInterestIncome] = useState<string>('');
     const [capital, setCapital] = useState<string>('');
 
-    // Calculation: p = (Z * 100) / K
-    // Z: interestIncome, K: capital, p: result (%)
+    // Calculation: Zinssatz = (Zins-Ertrag * 100) / Kapital
     const zNum = parseFloat(interestIncome);
     const kNum = parseFloat(capital);
 
@@ -25,7 +24,7 @@ export function InterestRateCalculator({ className }: InterestRateCalculatorProp
                 <span className="text-4xl font-bold tracking-tight font-mono block mb-1 text-primary">
                     {p.toFixed(2)}%
                 </span>
-                <span className="text-sm font-medium text-muted-foreground mt-1 block">Zinssatz (p)</span>
+                <span className="text-sm font-medium text-muted-foreground mt-1 block">Zinssatz</span>
             </div>
         );
     }
@@ -46,24 +45,24 @@ export function InterestRateCalculator({ className }: InterestRateCalculatorProp
                 {/* Inputs */}
                 <div className="space-y-4">
                     <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
-                        <label className="text-sm font-medium text-muted-foreground mb-2 block tracking-tight">Zinhertrag (Z)</label>
+                        <label className="text-sm font-medium text-muted-foreground mb-2 block tracking-tight">Kapital</label>
                         <input
                             type="number"
-                            value={interestIncome}
-                            onChange={(e) => setInterestIncome(e.target.value)}
-                            placeholder="z.B. 10.00"
+                            value={capital}
+                            onChange={(e) => setCapital(e.target.value)}
+                            placeholder="z.B. 1000.00"
                             className="w-full px-4 py-3 text-2xl font-bold rounded-lg bg-background text-foreground border border-input focus:outline-none focus:ring-2 focus:ring-primary/20"
                             step="0.01"
                         />
                     </div>
 
                     <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
-                        <label className="text-sm font-medium text-muted-foreground mb-2 block tracking-tight">Kapital (K)</label>
+                        <label className="text-sm font-medium text-muted-foreground mb-2 block tracking-tight">Zins-Ertrag</label>
                         <input
                             type="number"
-                            value={capital}
-                            onChange={(e) => setCapital(e.target.value)}
-                            placeholder="z.B. 1000.00"
+                            value={interestIncome}
+                            onChange={(e) => setInterestIncome(e.target.value)}
+                            placeholder="z.B. 10.00"
                             className="w-full px-4 py-3 text-2xl font-bold rounded-lg bg-background text-foreground border border-input focus:outline-none focus:ring-2 focus:ring-primary/20"
                             step="0.01"
                         />
@@ -82,7 +81,7 @@ export function InterestRateCalculator({ className }: InterestRateCalculatorProp
             {/* Hint */}
             <div className="mt-6 flex items-start gap-2 p-3 bg-muted/20 rounded-lg text-[10px] text-muted-foreground leading-relaxed">
                 <span className="font-bold text-primary">INFO:</span>
-                <p>Formel: p = (Z * 100) / K. Dies berechnet, wie hoch der Zinssatz in Prozent ist, basierend auf dem Ertrag und dem eingesetzten Kapital.</p>
+                <p>Formel: (Zins-Ertrag * 100) / Kapital. Dies berechnet, wie hoch der Zinssatz in Prozent ist, basierend auf dem Ertrag und dem eingesetzten Kapital.</p>
             </div>
         </div>
     );
