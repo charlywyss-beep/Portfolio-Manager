@@ -23,7 +23,11 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
     // Initialize with preSelectedStock if available
     const [selectedStock, setSelectedStock] = useState<Stock | null>(preSelectedStock || null);
     const [shares, setShares] = useState('');
-    const [buyPrice, setBuyPrice] = useState(preSelectedStock ? preSelectedStock.currentPrice.toString() : '');
+    const [buyPrice, setBuyPrice] = useState(() => {
+        if (!preSelectedStock) return '';
+        const decimals = preSelectedStock.currency === 'GBP' || preSelectedStock.currency === 'GBp' ? 4 : 2;
+        return preSelectedStock.currentPrice.toFixed(decimals);
+    });
     const [fxRate, setFxRate] = useState(''); // New State for FX Rate
 
     // Manual entry state
@@ -56,7 +60,8 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
     useEffect(() => {
         if (isOpen && preSelectedStock) {
             setSelectedStock(preSelectedStock);
-            setBuyPrice(preSelectedStock.currentPrice.toString());
+            const decimals = preSelectedStock.currency === 'GBP' || preSelectedStock.currency === 'GBp' ? 4 : 2;
+            setBuyPrice(preSelectedStock.currentPrice.toFixed(decimals));
             setActiveTab('search');
         } else if (isOpen && !preSelectedStock) {
             // Reset if opening without pre-selection
@@ -237,7 +242,8 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                                     type="button"
                                                     onClick={() => {
                                                         setSelectedStock(stock);
-                                                        setBuyPrice(stock.currentPrice.toString());
+                                                        const decimals = stock.currency === 'GBP' || stock.currency === 'GBp' ? 4 : 2;
+                                                        setBuyPrice(stock.currentPrice.toFixed(decimals));
                                                     }}
                                                     className="w-full p-3 hover:bg-muted transition-colors text-left flex items-center gap-3"
                                                 >
