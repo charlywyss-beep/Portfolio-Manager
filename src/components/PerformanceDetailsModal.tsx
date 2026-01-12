@@ -114,14 +114,14 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         <thead className="bg-muted/30 sticky top-0 z-10">
                             <tr className="border-b border-border">
                                 <th className="text-left py-2 px-4 font-medium text-muted-foreground">Aktie / ETF</th>
-                                <th style={{ width: '20px' }}></th>
-                                <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '95px', whiteSpace: 'nowrap' }}>
-                                    Kurs am: {new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })}
+                                <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '80px', whiteSpace: 'nowrap' }}>Kurs</th>
+                                <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '70px', whiteSpace: 'nowrap' }}>
+                                    % am {new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })}
                                 </th>
-                                <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '100px', whiteSpace: 'nowrap' }}>
-                                    CHF +/- am: {new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })}
+                                <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '90px', whiteSpace: 'nowrap' }}>
+                                    CHF am {new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })}
                                 </th>
-                                <th style={{ width: '110px' }}></th>
+                                <th style={{ width: '90px' }}></th>
                                 <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px', whiteSpace: 'nowrap' }}>Performance %</th>
                                 <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '150px', whiteSpace: 'nowrap' }}>Performance CHF</th>
                             </tr>
@@ -172,15 +172,18 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                                 </div>
                                             </div>
                                         </td>
-                                        <td style={{ width: '20px' }}></td>
+                                        {/* Current Price */}
+                                        <td className="py-3 px-1 text-right font-medium text-xs whitespace-nowrap" style={{ width: '80px' }}>
+                                            {formatCurrency(p.stock.currentPrice, p.stock.currency)}
+                                        </td>
                                         {/* Daily Performance */}
-                                        <td className={cn("py-3 px-1 text-right font-medium text-xs", isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '60px' }}>
+                                        <td className={cn("py-3 px-1 text-right font-medium text-xs", isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '70px' }}>
                                             {isDailyPositive ? '+' : ''}{p.dailyGainPercent.toFixed(2)}%
                                         </td>
-                                        <td className={cn("py-3 pr-4 pl-1 text-right font-medium", isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '100px' }}>
+                                        <td className={cn("py-3 pr-4 pl-1 text-right font-medium", isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '90px' }}>
                                             {isDailyPositive ? '+' : ''}{formatCurrency(dailyGainCHF, 'CHF').replace('CHF', '').trim()}
                                         </td>
-                                        <td style={{ width: '150px' }}></td>
+                                        <td style={{ width: '90px' }}></td>
                                         {/* Total Performance */}
                                         <td className={cn("py-3 px-1 text-right font-medium text-xs", isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '60px' }}>
                                             {isTotalPositive ? '+' : ''}{totalGainPercent.toFixed(2)}%
@@ -195,12 +198,12 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         <tfoot className="bg-muted/20 border-t border-border">
                             <tr>
                                 <td className="py-3 px-4 font-semibold text-muted-foreground" style={{ whiteSpace: 'nowrap' }}>Total:</td>
-                                <td style={{ width: '20px' }}></td>
-                                <td className="py-3 px-1" style={{ width: '60px', whiteSpace: 'nowrap' }}></td>
-                                <td className={cn("py-3 pr-4 pl-1 text-right font-bold", totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '100px', whiteSpace: 'nowrap' }}>
+                                <td className="py-3 px-1" style={{ width: '80px' }}></td>
+                                <td className="py-3 px-1" style={{ width: '70px' }}></td>
+                                <td className={cn("py-3 pr-4 pl-1 text-right font-bold", totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '90px', whiteSpace: 'nowrap' }}>
                                     {totalDailyGain >= 0 ? '+' : ''}{formatCurrency(totalDailyGain, 'CHF')}
                                 </td>
-                                <td style={{ width: '150px' }}></td>
+                                <td style={{ width: '90px' }}></td>
                                 <td className="py-3 px-1" style={{ width: '60px', whiteSpace: 'nowrap' }}></td>
                                 <td className={cn("py-3 pr-4 pl-1 text-right font-bold", totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '150px', whiteSpace: 'nowrap' }}>
                                     {totalPerformanceGain >= 0 ? '+' : ''}{formatCurrency(totalPerformanceGain, 'CHF')}
