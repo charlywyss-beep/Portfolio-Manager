@@ -178,6 +178,8 @@ const MANUAL_COUNTRY_OVERRIDES: Record<string, string> = {
     'CSPX.L': 'USA',
     'VUAA.L': 'USA',
     'VUSA.L': 'USA',
+    'WINC.L': 'Welt', // iShares World Equity High Income
+    'WINC.AS': 'Welt',
     'CHSPI.SW': 'Schweiz', // iShares Core SPI
 };
 // NEW (v3.12.70): Extract exact price from Chart metadata
