@@ -109,8 +109,20 @@ export async function fetchStockHistory(
 
         console.log('[Yahoo Finance Proxy] Returning', points.length, 'data points (normalized)');
 
-        const rawPrevClose = result.meta?.chartPreviousClose || result.meta?.previousClose;
-        const normalizedPrevClose = rawPrevClose ? normalizeYahooPrice(rawPrevClose, resultCurrency, symbol) : undefined;
+        const rawPrevClose = result.meta?.regularMarketPreviousClose || result.meta?.chartPreviousClose || result.meta?.previousClose;
+        let normalizedPrevClose = rawPrevClose ? normalizeYahooPrice(rawPrevClose, resultCurrency, symbol) : undefined;
+
+        // SMART BASELINE VALIDATION (v3.12.119)
+        // If Previous Close is "implausible" (> 3% away from first chart point for 1D), something is wrong (stale data).
+        if (range === '1D' && points.length > 0 && normalizedPrevClose) {
+            const firstPoint = points[0].value;
+            const deviation = Math.abs((normalizedPrevClose - firstPoint) / firstPoint);
+
+            if (deviation > 0.03) {
+                console.log(`[Yahoo Finance] Plausibility Check FAILED for ${symbol}: PrevClose ${normalizedPrevClose} deviates > 3% from first point ${firstPoint}. Using first point as baseline.`);
+                normalizedPrevClose = firstPoint;
+            }
+        }
 
         // Sanity Check for Unit Mismatch (Pence vs Pounds)
         // If Previous Close and Last Price differ by factor 100, normalize Previous Close.
@@ -119,24 +131,11 @@ export async function fetchStockHistory(
             const ratio = lastPrice / normalizedPrevClose;
 
             if (ratio > 90 && ratio < 120) {
-                // Previous Close is likely 100x too small (e.g. 0.04 vs 4.00)
                 console.log('[Yahoo Finance] Detected Unit Mismatch in Previous Close. Auto-correcting *100.');
-                // We can't re-assign const, so we return a modified object or cast.
-                // Actually, let's just modify the variable before return if we change it to let... 
-                // easier to just return corrected value here.
-                return {
-                    data: points,
-                    currency: resultCurrency,
-                    previousClose: normalizedPrevClose * 100
-                };
+                normalizedPrevClose = normalizedPrevClose * 100;
             } else if (ratio > 0.008 && ratio < 0.012) {
-                // Previous Close is likely 100x too big (e.g. 400 vs 4.00)
                 console.log('[Yahoo Finance] Detected Unit Mismatch in Previous Close. Auto-correcting /100.');
-                return {
-                    data: points,
-                    currency: resultCurrency,
-                    previousClose: normalizedPrevClose / 100
-                };
+                normalizedPrevClose = normalizedPrevClose / 100;
             }
         }
 
@@ -248,8 +247,13 @@ export async function fetchStockQuote(symbol: string): Promise<{
 
         // Standardize price normalization using centralized helper
         const price = normalizeYahooPrice(result.regularMarketPrice, result.currency, symbol);
-        const open = result.regularMarketOpen ? normalizeYahooPrice(result.regularMarketOpen, result.currency, symbol) : null;
-        const previousClose = result.regularMarketPreviousClose ? normalizeYahooPrice(result.regularMarketPreviousClose, result.currency, symbol) : null;
+        let open = result.regularMarketOpen ? normalizeYahooPrice(result.regularMarketOpen, result.currency, symbol) : null;
+        let previousClose = result.regularMarketPreviousClose ? normalizeYahooPrice(result.regularMarketPreviousClose, result.currency, symbol) : null;
+
+        // If open is significantly different from price (e.g. > 10% on a normal day), it might be stale
+        if (open && price && Math.abs((open - price) / price) > 0.05) {
+            // For Shell 31.21 vs 30.67 is ~2% - let's be strict if it feels wrong
+        }
 
         return {
             price,

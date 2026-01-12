@@ -208,9 +208,12 @@ export function StockDetail() {
                 const weHaveValidPrevClose = currentPreviousClose && currentPreviousClose > 0;
                 
                 if (quoteResponse.previousClose !== undefined && quoteResponse.previousClose !== null) {
-                     if (!weHaveValidPrevClose) {
-                        updates.previousClose = quoteResponse.previousClose;
-                        hasUpdates = true;
+                     if (history.previousClose !== undefined) {
+                    setQuote((prev: any) => ({
+                        ...prev,
+                        previousClose: history.previousClose
+                    }));
+                }        hasUpdates = true;
                         console.log(`[StockDetail] Accepting previousClose from Single Quote (was missing): ${quoteResponse.previousClose}`);
                      }
                 }
