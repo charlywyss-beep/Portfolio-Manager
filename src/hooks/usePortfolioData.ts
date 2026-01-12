@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
+import { estimateMarketState } from '../utils/market';
 
 // Helper to get frequency multiplication factor
 const getFrequencyFactor = (freq?: string) => {
@@ -58,9 +59,18 @@ export function usePortfolioData() {
                 }
             }
 
-            const dailyChangePerShare = stock.currentPrice - prevClose;
-            const dailyGain = dailyChangePerShare * pos.shares;
-            const dailyGainPercent = prevClose > 0 ? (dailyChangePerShare / prevClose) * 100 : 0;
+            let dailyGain = 0;
+            let dailyGainPercent = 0;
+
+            const marketState = estimateMarketState(stock.symbol, stock.currency);
+
+            // Only calculate daily gain if market has opened today (REGULAR or POST/CLOSED after session)
+            // If it's PRE (Before Open), the price is still Friday's close, so daily change is 0.
+            if (marketState !== 'PRE') {
+                const dailyChangePerShare = stock.currentPrice - prevClose;
+                dailyGain = dailyChangePerShare * pos.shares;
+                dailyGainPercent = prevClose > 0 ? (dailyChangePerShare / prevClose) * 100 : 0;
+            }
 
             return {
                 ...pos,

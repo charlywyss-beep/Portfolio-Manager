@@ -1,5 +1,7 @@
 
-export function estimateMarketState(symbol: string, currency: string): 'REGULAR' | 'CLOSED' {
+export type MarketState = 'REGULAR' | 'PRE' | 'POST' | 'CLOSED';
+
+export function estimateMarketState(symbol: string, currency: string): MarketState {
     const now = new Date();
     const utcHours = now.getUTCHours();
     const utcMinutes = now.getUTCMinutes();
@@ -13,77 +15,54 @@ export function estimateMarketState(symbol: string, currency: string): 'REGULAR'
     }
 
     // 2. Holiday Check (Fixed dates)
-    // New Year's Day (Jan 1)
-    if (month === 0 && date === 1) {
-        return 'CLOSED';
-    }
-    // Christmas Day (Dec 25)
-    if (month === 11 && date === 25) {
-        return 'CLOSED';
-    }
+    const isHoliday = (month === 0 && date === 1) || (month === 11 && date === 25);
+    if (isHoliday) return 'CLOSED';
 
     const timeInMinutes = utcHours * 60 + utcMinutes;
 
     // Helper for time ranges
-    const isOpen = (openHour: number, openMin: number, closeHour: number, closeMin: number) => {
-        const start = openHour * 60 + openMin;
-        const end = closeHour * 60 + closeMin;
-        return timeInMinutes >= start && timeInMinutes < end;
+    const getDetailedState = (openH: number, openM: number, closeH: number, closeM: number): MarketState => {
+        const start = openH * 60 + openM;
+        const end = closeH * 60 + closeM;
+
+        if (timeInMinutes < start) return 'PRE';
+        if (timeInMinutes >= start && timeInMinutes < end) return 'REGULAR';
+        return 'POST';
     };
 
-    // 3. Check by Symbol Suffix (More accurate than currency)
+    // 3. Check by Symbol Suffix
     const suffix = symbol?.split('.').pop()?.toUpperCase();
 
-    // Specific Market Holidays (Fixed Dates)
-    // Switzerland (SIX): Jan 2 (Berchtoldstag), May 1 (Labor), Aug 1 (National), Dec 26 (St. Stephens)
+    // Switzerland (SIX)
     const isSwiss = suffix === 'SW' || currency === 'CHF';
     if (isSwiss) {
         if (month === 0 && date === 2) return 'CLOSED';
         if (month === 4 && date === 1) return 'CLOSED';
         if (month === 7 && date === 1) return 'CLOSED';
         if (month === 11 && date === 26) return 'CLOSED';
+        return getDetailedState(8, 0, 16, 20); // 09:00 - 17:20 CET
     }
 
-    // European Markets (.L = LSE, .SW = SIX, .DE/.F = Germany, .AS = Amsterdam, .PA = Paris, .MI = Milan)
-    if (['L', 'SW', 'DE', 'F', 'AS', 'PA', 'MI', 'MC'].includes(suffix || '')) {
-        // Exchange Hours in UTC:
-        // LSE: 08:00 - 16:30 UTC
-        // XETRA (DE): 08:00 - 16:35 UTC (09:00 - 17:35 CET)
-        // SIX (SW): 08:00 - 16:20 UTC (09:00 - 17:20 CET)
-        // Euronext: 08:00 - 16:30 UTC
-        // We use a broad window: 07:55 UTC to 16:40 UTC
-        return isOpen(7, 55, 16, 40) ? 'REGULAR' : 'CLOSED';
+    // European Markets
+    if (['L', 'DE', 'F', 'AS', 'PA', 'MI', 'MC'].includes(suffix || '')) {
+        return getDetailedState(8, 0, 16, 30); // 09:00 - 17:30 CET (Main window)
     }
 
     // 4. Currency Fallback for EU
-    if (['CHF', 'EUR', 'GBP', 'GBp'].includes(currency)) {
-        return isOpen(7, 55, 16, 40) ? 'REGULAR' : 'CLOSED';
+    if (['EUR', 'GBP', 'GBp'].includes(currency)) {
+        return getDetailedState(8, 0, 16, 30);
     }
 
     // 5. US Markets (NYSE, NASDAQ)
-    // Hours: 09:30 - 16:00 EST
-    // UTC (Standard Time - Winter): 14:30 - 21:00 UTC
-    // UTC (Daylight Time - Summer): 13:30 - 20:00 UTC
-    // Note: This simple logic assumes Winter time (UTC offsets change).
-    // Ideally, we'd use a library, but for now we stick to Standard Time (Winter) as primary or cover both.
-    // Let's use 13:30 to 21:00 to cover both DST shifts broadly, OR just assume Winter for now (Jan).
-    // Jan = Winter. US Open = 14:30 UTC.
     if (currency === 'USD') {
-        // US Holidays
         if (month === 6 && date === 4) return 'CLOSED'; // July 4th
-        if (month === 11 && date === 25) return 'CLOSED'; // Xmas
-        if (month === 0 && date === 1) return 'CLOSED'; // New Year
-
-        // Broad Window for US (14:30 - 21:00 UTC)
-        return isOpen(14, 25, 21, 5) ? 'REGULAR' : 'CLOSED';
+        return getDetailedState(14, 30, 21, 0); // 15:30 - 22:00 CET (Winter)
     }
 
     // Asian Markets (HKD)
-    // HK: 09:30 - 16:00 HKT = 01:30 - 08:00 UTC
     if (currency === 'HKD') {
-        return isOpen(1, 30, 8, 5) ? 'REGULAR' : 'CLOSED';
+        return getDetailedState(1, 30, 8, 0);
     }
 
-    // Default
     return 'CLOSED';
 }
