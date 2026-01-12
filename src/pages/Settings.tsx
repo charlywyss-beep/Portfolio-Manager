@@ -1,14 +1,76 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 
+// Helper Component for Stock Management List Items (v3.12.122)
+const StockManagementItem = ({ stock, positions, watchlist, stocks, fixedDeposits, history, importData }: any) => {
+    const isInPortfolio = positions.some((p: any) => p.stockId === stock.id);
+    const isInWatchlist = watchlist.includes(stock.id);
+    const isActive = isInPortfolio || isInWatchlist;
+
+    return (
+        <div key={stock.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/50">
+            <div className="flex-1">
+                <div className="flex items-center gap-2">
+                    <span className="font-semibold">{stock.name}</span>
+                    <span className="text-sm text-muted-foreground">({stock.symbol})</span>
+                    {stock.type === 'etf' && (
+                        <span className="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-1.5 py-0.5 rounded">ETF</span>
+                    )}
+                </div>
+                {stock.isin && (
+                    <div className="text-xs text-muted-foreground font-mono">{stock.isin}</div>
+                )}
+                {isActive && (
+                    <div className="text-xs text-green-600 dark:text-green-400 mt-1">
+                        {isInPortfolio && '✓ In Portfolio'}
+                        {isInPortfolio && isInWatchlist && ' • '}
+                        {isInWatchlist && '✓ In Watchlist'}
+                    </div>
+                )}
+            </div>
+            <button
+                onClick={() => {
+                    if (window.confirm(`"${stock.name}" wirklich löschen?`)) {
+                        const updatedStocks = stocks.filter((s: any) => s.id !== stock.id);
+                        importData({
+                            positions,
+                            stocks: updatedStocks,
+                            fixedDeposits,
+                            history,
+                            watchlist
+                        });
+                    }
+                }}
+                disabled={isActive}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${isActive
+                    ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
+                    : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-900/30'
+                    }`}
+                title={isActive ? 'Aktiv in Portfolio oder Watchlist - nicht löschbar' : 'Löschen'}
+            >
+                {isActive ? 'Aktiv' : 'Löschen'}
+            </button>
+        </div>
+    );
+};
 
 export function Settings() {
     const { positions, stocks, fixedDeposits, history, watchlist, importData, mortgageData } = usePortfolio();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [importMessage, setImportMessage] = useState('');
+
+    // Categorized Stocks (v3.12.122)
+    const categorizedStocks = useMemo(() => {
+        const ownedIds = new Set(positions.map(p => p.stockId));
+        return {
+            portfolio: stocks.filter(s => ownedIds.has(s.id)),
+            watchlist: stocks.filter(s => watchlist.includes(s.id) && !ownedIds.has(s.id)),
+            other: stocks.filter(s => !watchlist.includes(s.id) && !ownedIds.has(s.id))
+        };
+    }, [stocks, positions, watchlist]);
 
     const handleExport = () => {
         const data = {
@@ -186,61 +248,83 @@ export function Settings() {
                     </div>
                 </div>
 
-                <div className="space-y-2 max-h-96 overflow-y-auto">
+                <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                     {stocks.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-4">Keine Stocks vorhanden</p>
                     ) : (
-                        stocks.map(stock => {
-                            const isInPortfolio = positions.some(p => p.stockId === stock.id);
-                            const isInWatchlist = watchlist.includes(stock.id);
-                            const isActive = isInPortfolio || isInWatchlist;
-
-                            return (
-                                <div key={stock.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/50">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-semibold">{stock.name}</span>
-                                            <span className="text-sm text-muted-foreground">({stock.symbol})</span>
-                                            {stock.type === 'etf' && (
-                                                <span className="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-1.5 py-0.5 rounded">ETF</span>
-                                            )}
-                                        </div>
-                                        {stock.isin && (
-                                            <div className="text-xs text-muted-foreground font-mono">{stock.isin}</div>
-                                        )}
-                                        {isActive && (
-                                            <div className="text-xs text-green-600 dark:text-green-400 mt-1">
-                                                {isInPortfolio && '✓ In Portfolio'}
-                                                {isInPortfolio && isInWatchlist && ' • '}
-                                                {isInWatchlist && '✓ In Watchlist'}
-                                            </div>
-                                        )}
+                        <>
+                            {/* Portfolio Category */}
+                            {categorizedStocks.portfolio.length > 0 && (
+                                <div className="space-y-2">
+                                    <div className="sticky top-0 bg-card z-10 py-2 border-b border-border/50 flex items-center justify-between">
+                                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">In Portfolio</span>
+                                        <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">{categorizedStocks.portfolio.length}</span>
                                     </div>
-                                    <button
-                                        onClick={() => {
-                                            if (window.confirm(`"${stock.name}" wirklich löschen?`)) {
-                                                const updatedStocks = stocks.filter(s => s.id !== stock.id);
-                                                importData({
-                                                    positions,
-                                                    stocks: updatedStocks,
-                                                    fixedDeposits,
-                                                    history,
-                                                    watchlist
-                                                });
-                                            }
-                                        }}
-                                        disabled={isActive}
-                                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${isActive
-                                            ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
-                                            : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-900/30'
-                                            }`}
-                                        title={isActive ? 'Aktiv in Portfolio oder Watchlist - nicht löschbar' : 'Löschen'}
-                                    >
-                                        {isActive ? 'Aktiv' : 'Löschen'}
-                                    </button>
+                                    <div className="space-y-2">
+                                        {categorizedStocks.portfolio.map(stock => (
+                                            <StockManagementItem
+                                                key={stock.id}
+                                                stock={stock}
+                                                positions={positions}
+                                                watchlist={watchlist}
+                                                stocks={stocks}
+                                                fixedDeposits={fixedDeposits}
+                                                history={history}
+                                                importData={importData}
+                                            />
+                                        ))}
+                                    </div>
                                 </div>
-                            );
-                        })
+                            )}
+
+                            {/* Watchlist Category */}
+                            {categorizedStocks.watchlist.length > 0 && (
+                                <div className="space-y-2">
+                                    <div className="sticky top-0 bg-card z-10 py-2 border-b border-border/50 flex items-center justify-between mt-4">
+                                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">In Watchlist</span>
+                                        <span className="bg-blue-500/10 text-blue-600 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">{categorizedStocks.watchlist.length}</span>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {categorizedStocks.watchlist.map(stock => (
+                                            <StockManagementItem
+                                                key={stock.id}
+                                                stock={stock}
+                                                positions={positions}
+                                                watchlist={watchlist}
+                                                stocks={stocks}
+                                                fixedDeposits={fixedDeposits}
+                                                history={history}
+                                                importData={importData}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Other Category */}
+                            {categorizedStocks.other.length > 0 && (
+                                <div className="space-y-2">
+                                    <div className="sticky top-0 bg-card z-10 py-2 border-b border-border/50 flex items-center justify-between mt-4">
+                                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Andere / Nicht verwendet</span>
+                                        <span className="bg-muted text-muted-foreground text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">{categorizedStocks.other.length}</span>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {categorizedStocks.other.map(stock => (
+                                            <StockManagementItem
+                                                key={stock.id}
+                                                stock={stock}
+                                                positions={positions}
+                                                watchlist={watchlist}
+                                                stocks={stocks}
+                                                fixedDeposits={fixedDeposits}
+                                                history={history}
+                                                importData={importData}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>
