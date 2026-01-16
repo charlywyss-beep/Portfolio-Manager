@@ -1401,14 +1401,6 @@ export function DividendCalculator() {
                                                         const res = await fetchStockHistory(stock.symbol, '1D');
                                                         if (res.data && res.data.length > 0) {
                                                             let val = res.data[res.data.length - 1].value;
-                                                            // Use simulator currency for check (should be synced with stock typically, but simulator allows override?)
-                                                            // Actually simCurrency is used for display.
-                                                            const targetCurr = simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF');
-
-                                                            if (targetCurr === 'GBP') {
-                                                                const isLSE = stock.symbol.toUpperCase().endsWith('.L') || (stock.isin && stock.isin.startsWith('GB'));
-                                                                if (isLSE && val > 50) val /= 100;
-                                                            }
                                                             updateSimulatorState({ price: val });
                                                         }
                                                     }}
