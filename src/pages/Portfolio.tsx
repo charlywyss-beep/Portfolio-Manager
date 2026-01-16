@@ -56,12 +56,14 @@ export function Portfolio() {
     }, [lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices]);
 
     // Enrich positions with stock data and calculations
-    const positions = rawPositions.map((pos) => {
-        const stock = stocks.find((s) => s.id === pos.stockId)!;
-        if (!stock) return null; // Should not happen
+    const positions = (rawPositions || []).map((pos) => {
+        const stock = stocks.find((s) => s.id === pos.stockId);
+        if (!stock) return null;
 
         // Current values
-        const currentValue = pos.shares * stock.currentPrice;
+        const currentPrice = stock.currentPrice ?? 0;
+        const previousClose = stock.previousClose ?? currentPrice;
+        const currentValue = pos.shares * currentPrice;
         const buyValue = pos.shares * pos.buyPriceAvg;
 
         // Total gain/loss (since purchase)

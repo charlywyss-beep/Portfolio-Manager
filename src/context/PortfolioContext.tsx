@@ -97,47 +97,49 @@ const defaultSimulatorState = {
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
 
+// Helper to safely parse JSON from localStorage
+const safeJSONParse = <T,>(key: string, defaultValue: T): T => {
+    try {
+        const stored = localStorage.getItem(key);
+        if (!stored || stored === 'undefined' || stored === 'null') return defaultValue;
+        const parsed = JSON.parse(stored);
+        return parsed ?? defaultValue;
+    } catch (e) {
+        console.error(`Failed to parse ${key}`, e);
+        return defaultValue;
+    }
+};
+
 // Helper to load simulator default
 const getInitialSimulatorState = () => {
-    try {
-        const stored = localStorage.getItem('portfolio_simulator_state');
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            // Merge with default to ensure new fields (like fees) exist
-            return {
-                ...defaultSimulatorState,
-                ...parsed,
-                fees: { ...defaultSimulatorState.fees, ...parsed.fees }
-            };
-        }
-    } catch (e) {
-        console.error("Failed to load simulator state", e);
+    const parsed = safeJSONParse('portfolio_simulator_state', null as any);
+    if (parsed) {
+        // Merge with default to ensure new fields (like fees) exist
+        return {
+            ...defaultSimulatorState,
+            ...parsed,
+            fees: { ...defaultSimulatorState.fees, ...parsed.fees }
+        };
     }
     return defaultSimulatorState;
 };
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
-    const [positions, setPositions] = useState<Position[]>(() => {
-        const stored = localStorage.getItem('portfolio_positions');
-        return stored ? JSON.parse(stored) : MOCK_POSITIONS;
-    });
+    const [positions, setPositions] = useState<Position[]>(() =>
+        safeJSONParse('portfolio_positions', MOCK_POSITIONS)
+    );
 
-    const [stocks, setStocks] = useState<Stock[]>(() => {
-        const stored = localStorage.getItem('portfolio_stocks');
-        return stored ? JSON.parse(stored) : MOCK_STOCKS;
-    });
+    const [stocks, setStocks] = useState<Stock[]>(() =>
+        safeJSONParse('portfolio_stocks', MOCK_STOCKS)
+    );
 
+    const [fixedDeposits, setFixedDeposits] = useState<import('../types').FixedDeposit[]>(() =>
+        safeJSONParse('portfolio_fixed_deposits', [])
+    );
 
-
-    const [fixedDeposits, setFixedDeposits] = useState<any[]>(() => {
-        const stored = localStorage.getItem('portfolio_fixed_deposits');
-        return stored ? JSON.parse(stored) : [];
-    });
-
-    const [watchlist, setWatchlist] = useState<string[]>(() => {
-        const stored = localStorage.getItem('portfolio_watchlist');
-        return stored ? JSON.parse(stored) : [];
-    });
+    const [watchlist, setWatchlist] = useState<string[]>(() =>
+        safeJSONParse('portfolio_watchlist', [])
+    );
 
     const [finnhubApiKey, setFinnhubApiKey] = useState<string>(() => {
         const stored = localStorage.getItem('portfolio_finnhub_api_key');

@@ -26,7 +26,8 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
     const [buyPrice, setBuyPrice] = useState(() => {
         if (!preSelectedStock) return '';
         const decimals = preSelectedStock.currency === 'GBP' || preSelectedStock.currency === 'GBp' ? 4 : 2;
-        return preSelectedStock.currentPrice.toFixed(decimals);
+        const price = preSelectedStock.currentPrice ?? 0;
+        return price.toFixed(decimals);
     });
     const [fxRate, setFxRate] = useState(''); // New State for FX Rate
 
@@ -61,7 +62,8 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
         if (isOpen && preSelectedStock) {
             setSelectedStock(preSelectedStock);
             const decimals = preSelectedStock.currency === 'GBP' || preSelectedStock.currency === 'GBp' ? 4 : 2;
-            setBuyPrice(preSelectedStock.currentPrice.toFixed(decimals));
+            const price = preSelectedStock.currentPrice ?? 0;
+            setBuyPrice(price.toFixed(decimals));
             setActiveTab('search');
         } else if (isOpen && !preSelectedStock) {
             // Reset if opening without pre-selection
@@ -243,7 +245,8 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                                     onClick={() => {
                                                         setSelectedStock(stock);
                                                         const decimals = stock.currency === 'GBP' || stock.currency === 'GBp' ? 4 : 2;
-                                                        setBuyPrice(stock.currentPrice.toFixed(decimals));
+                                                        const price = stock.currentPrice ?? 0;
+                                                        setBuyPrice(price.toFixed(decimals));
                                                     }}
                                                     className="w-full p-3 hover:bg-muted transition-colors text-left flex items-center gap-3"
                                                 >
