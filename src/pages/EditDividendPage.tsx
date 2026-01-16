@@ -696,17 +696,35 @@ export function EditDividendPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">Rendite %</label>
-                                        <input
-                                            type="text"
-                                            inputMode="decimal"
-                                            autoComplete="off"
-                                            step="0.01"
-                                            placeholder="z.B. 3.90"
-                                            value={yieldPercent}
-                                            onChange={(e) => handleYieldChange(e.target.value)}
-                                            onFocus={(e) => e.target.select()}
-                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg"
-                                        />
+                                        <div className="space-y-2">
+                                            <input
+                                                type="text"
+                                                inputMode="decimal"
+                                                autoComplete="off"
+                                                step="0.01"
+                                                placeholder="z.B. 3.90"
+                                                value={yieldPercent}
+                                                onChange={(e) => handleYieldChange(e.target.value)}
+                                                onFocus={(e) => e.target.select()}
+                                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg"
+                                            />
+                                            {(() => {
+                                                const currentPos = positions.find(p => p.stockId === currentStockId);
+                                                const buyPriceAvg = currentPos?.buyPriceAvg;
+                                                const am = parseFloat(amount.replace(',', '.'));
+                                                if (buyPriceAvg && buyPriceAvg > 0 && !isNaN(am)) {
+                                                    const factor = getFrequencyFactor(frequency);
+                                                    const yoc = (am * factor / buyPriceAvg) * 100;
+                                                    return (
+                                                        <div className="flex justify-between items-center px-2 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded text-[10px] md:text-xs">
+                                                            <span className="text-blue-600 dark:text-blue-400 font-medium uppercase tracking-wider">Rendite (Einstand)</span>
+                                                            <span className="text-blue-700 dark:text-blue-300 font-bold font-mono">{yoc.toFixed(2)}%</span>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
+                                        </div>
                                     </div>
 
                                     <div className="space-y-2">
