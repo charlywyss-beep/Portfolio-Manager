@@ -1,0 +1,45 @@
+
+                                                      <div className="space-y-1">
+                                                          <div className="flex justify-between items-center px-2 py-0.5 text-[9px] text-muted-foreground uppercase tracking-tighter">
+>                                                             <span>Vergleich (Basis {am.toFixed(2)} {currency === 'GBp' ? 'GBP' : currency})</span>
+                                                          </div>
+                                                          <div className="grid grid-cols-2 gap-1">
+                                                              <div className="flex flex-col px-2 py-1 bg-muted/20 border border-border/30 rounded">
+                                                                  <span className="text-[8px] uppercase text-muted-foreground">Aktuell ({currentP.toFixed(2)})</span>
+                                                                  <span className="text-xs font-bold font-mono">{currentMathYield.toFixed(2)}%</span>
+                                                              </div>
+                                                              <div className={cn(
+                                                                  "flex flex-col px-2 py-1 border rounded",
+                                                                  isEinstand ? "bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-900/30" : "bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900/30"
+                                                              )}>
+                                                                  <span className={cn("text-[8px] uppercase", isEinstand ? "text-blue-600 dark:text-blue-400" : "text-amber-600 dark:text-amber-400")}>
+                                                                      {isEinstand ? 'Einstand' : 'Kauflimit'} ({targetVal.toFixed(2)})
+                                                                  </span>
+                                                                  <span className={cn("text-xs font-bold font-mono", isEinstand ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300")}>
+                                                                      {targetYield.toFixed(2)}%
+                                                                  </span>
+                                                              </div>
+                                                          </div>
+                                                      </div>
+                                                  );
+                                              })()}
+                                          </div>
+                                      </div>
+  
+                                      <div className="space-y-2">
+                                          <label className="text-sm font-medium">Betrag <span className="text-xs text-muted-foreground">({currency === 'GBp' ? 'GBP' : currency})</span></label>
+                                          <input
+                                              type="text"
+                                              inputMode="decimal"
+                                              autoComplete="off"
+                                              step="0.01"
+                                              placeholder="z.B. 0.60"
+                                              value={amount}
+                                              onChange={(e) => handleAmountChange(e.target.value)}
+                                              onFocus={(e) => e.target.select()}
+                                              className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg"
+                                          />
+                                      </div>
+                                  </div>
+  
+
