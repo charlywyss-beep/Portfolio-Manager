@@ -77,12 +77,24 @@ export function EditDividendPage() {
             setTargetPrice(stock.targetPrice ? stock.targetPrice.toFixed(2) : '');
             setSellLimit(stock.sellLimit ? stock.sellLimit.toFixed(2) : '');
             setAmount(stock.dividendAmount?.toString() || '');
-            setYieldPercent(stock.dividendYield ? stock.dividendYield.toFixed(2) : '');
+
+            // Recalculate yield on mount to ensure it matches current price/amount
+            const currentP = stock.currentPrice;
+            const am = stock.dividendAmount;
+            const freq = stock.dividendFrequency || 'quarterly';
+            if (currentP && am) {
+                const factor = getFrequencyFactor(freq);
+                const calcYield = ((am * factor) / currentP) * 100;
+                setYieldPercent(calcYield.toFixed(2));
+            } else {
+                setYieldPercent(stock.dividendYield ? stock.dividendYield.toFixed(2) : '');
+            }
+
             setCurrency(stock.dividendCurrency || stock.currency);
             setLogoUrl(stock.logoUrl || '');
             setExDate(stock.dividendExDate || '');
             setPayDate(stock.dividendPayDate || '');
-            setFrequency(stock.dividendFrequency || 'quarterly');
+            setFrequency(freq);
 
             if (stock.dividendDates && stock.dividendDates.length > 0) {
                 const dates = [...stock.dividendDates];
