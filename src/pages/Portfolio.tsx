@@ -71,8 +71,8 @@ export function Portfolio() {
         const gainLossTotalPercent = buyValue !== 0 ? (gainLossTotal / buyValue) * 100 : 0;
 
         // Daily performance
-        const dailyChange = stock.currentPrice - stock.previousClose;
-        const dailyChangePercent = stock.previousClose !== 0 ? (dailyChange / stock.previousClose) * 100 : 0;
+        const dailyChange = currentPrice - previousClose;
+        const dailyChangePercent = previousClose !== 0 ? (dailyChange / previousClose) * 100 : 0;
         const dailyValueChange = pos.shares * dailyChange;
 
         // Forex Calculations
