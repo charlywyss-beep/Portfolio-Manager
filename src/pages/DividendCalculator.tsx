@@ -1422,12 +1422,20 @@ export function DividendCalculator() {
                                         <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap">
                                             Dividende ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
                                         </label>
-                                        <LocalNumberInput
-                                            step="0.01"
-                                            value={dividend}
-                                            onChange={(val) => updateSimulatorState({ dividend: val })}
-                                            className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
-                                        />
+                                        <div className="space-y-2">
+                                            <LocalNumberInput
+                                                step="0.01"
+                                                value={dividend}
+                                                onChange={(val) => updateSimulatorState({ dividend: val })}
+                                                className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
+                                            />
+                                            {price > 0 && dividend > 0 && (
+                                                <div className="flex justify-between items-center px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded text-[9px]">
+                                                    <span className="text-blue-600 dark:text-blue-400 font-medium uppercase tracking-wider">Erwartete Rendite</span>
+                                                    <span className="text-blue-700 dark:text-blue-300 font-bold font-mono">{((dividend / price) * 100).toFixed(2)}%</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 

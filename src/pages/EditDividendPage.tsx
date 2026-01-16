@@ -609,13 +609,13 @@ export function EditDividendPage() {
                                 <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Kursdaten</h3>
 
                                 {/* Kaufpreis Average Display */}
-                                {stocks.find(s => s.id === currentStockId) && positions.find(p => p.stockId === currentStockId) && (
+                                {stocks.find(s => String(s.id) === String(currentStockId)) && positions.find(p => String(p.stockId) === String(currentStockId)) && (
                                     <div className="flex justify-between items-center py-2 px-3 bg-muted/30 rounded-lg border border-border/50 mb-2">
                                         <label className="text-sm font-medium text-muted-foreground">Kaufpreis Ø</label>
                                         <span className="font-mono font-medium">
                                             {formatCurrency(
-                                                positions.find(p => p.stockId === currentStockId)?.buyPriceAvg || 0,
-                                                stocks.find(s => s.id === currentStockId)?.currency || 'CHF'
+                                                positions.find(p => String(p.stockId) === String(currentStockId))?.buyPriceAvg || 0,
+                                                stocks.find(s => String(s.id) === String(currentStockId))?.currency || 'CHF'
                                             )}
                                         </span>
                                     </div>
@@ -709,16 +709,29 @@ export function EditDividendPage() {
                                                 className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg"
                                             />
                                             {(() => {
-                                                const currentPos = positions.find(p => p.stockId === currentStockId);
+                                                const currentPos = positions.find(p => String(p.stockId) === String(currentStockId));
                                                 const buyPriceAvg = currentPos?.buyPriceAvg;
                                                 const am = parseFloat(amount.replace(',', '.'));
+                                                const factor = getFrequencyFactor(frequency);
+
                                                 if (buyPriceAvg && buyPriceAvg > 0 && !isNaN(am)) {
-                                                    const factor = getFrequencyFactor(frequency);
                                                     const yoc = (am * factor / buyPriceAvg) * 100;
                                                     return (
                                                         <div className="flex justify-between items-center px-2 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded text-[10px] md:text-xs">
                                                             <span className="text-blue-600 dark:text-blue-400 font-medium uppercase tracking-wider">Rendite (Einstand)</span>
                                                             <span className="text-blue-700 dark:text-blue-300 font-bold font-mono">{yoc.toFixed(2)}%</span>
+                                                        </div>
+                                                    );
+                                                }
+
+                                                // Fallback to Target Price (Kauflimit) yield if no position exists
+                                                const targetVal = targetPrice ? parseFloat(targetPrice.replace(',', '.')) : (stock?.targetPrice);
+                                                if (targetVal && targetVal > 0 && !isNaN(am)) {
+                                                    const targetYield = (am * factor / targetVal) * 100;
+                                                    return (
+                                                        <div className="flex justify-between items-center px-2 py-1 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 rounded text-[10px] md:text-xs">
+                                                            <span className="text-amber-600 dark:text-amber-400 font-medium uppercase tracking-wider">Rendite (Kauflimit)</span>
+                                                            <span className="text-amber-700 dark:text-amber-300 font-bold font-mono">{targetYield.toFixed(2)}%</span>
                                                         </div>
                                                     );
                                                 }
