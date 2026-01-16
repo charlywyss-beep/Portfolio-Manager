@@ -1430,9 +1430,21 @@ export function DividendCalculator() {
                                                 className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                             />
                                             {price > 0 && dividend > 0 && (
-                                                <div className="flex justify-between items-center px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded text-[9px]">
-                                                    <span className="text-blue-600 dark:text-blue-400 font-medium uppercase tracking-wider">Erwartete Rendite</span>
-                                                    <span className="text-blue-700 dark:text-blue-300 font-bold font-mono">{((dividend / price) * 100).toFixed(2)}%</span>
+                                                <div className="flex flex-col gap-1 px-1.5 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded">
+                                                    <div className="flex justify-between items-center text-[8px] uppercase text-blue-600 dark:text-blue-400">
+                                                        <span>Rendite (Simuliert)</span>
+                                                        {(() => {
+                                                            const stock = stocks.find(s => String(s.id) === String(selectedStockId));
+                                                            if (stock?.currentPrice && Math.abs(stock.currentPrice - price) > 0.01) {
+                                                                const currentYield = (dividend / stock.currentPrice) * 100;
+                                                                return <span className="text-muted-foreground font-normal lowercase">vs {currentYield.toFixed(2)}% aktuell</span>;
+                                                            }
+                                                            return null;
+                                                        })()}
+                                                    </div>
+                                                    <div className="text-blue-700 dark:text-blue-300 font-bold font-mono text-center">
+                                                        {((dividend / price) * 100).toFixed(2)}%
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>

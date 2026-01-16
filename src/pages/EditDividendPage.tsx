@@ -713,29 +713,50 @@ export function EditDividendPage() {
                                                 const buyPriceAvg = currentPos?.buyPriceAvg;
                                                 const am = parseFloat(amount.replace(',', '.'));
                                                 const factor = getFrequencyFactor(frequency);
+                                                const currentP = getEffectivePrice();
 
-                                                if (buyPriceAvg && buyPriceAvg > 0 && !isNaN(am)) {
-                                                    const yoc = (am * factor / buyPriceAvg) * 100;
+                                                if (isNaN(am) || am <= 0 || !currentP || currentP <= 0) return null;
+
+                                                const currentMathYield = (am * factor / currentP) * 100;
+                                                const targetVal = buyPriceAvg && buyPriceAvg > 0 ? buyPriceAvg : (targetPrice ? parseFloat(targetPrice.replace(',', '.')) : stock?.targetPrice);
+
+                                                if (!targetVal || targetVal <= 0 || Math.abs(currentP - targetVal) < 0.01) {
+                                                    // Only show mathematical current yield if no distinct target/buy price exists
                                                     return (
-                                                        <div className="flex justify-between items-center px-2 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded text-[10px] md:text-xs">
-                                                            <span className="text-blue-600 dark:text-blue-400 font-medium uppercase tracking-wider">Rendite (Einstand)</span>
-                                                            <span className="text-blue-700 dark:text-blue-300 font-bold font-mono">{yoc.toFixed(2)}%</span>
+                                                        <div className="flex justify-between items-center px-2 py-1 bg-muted/30 border border-border/50 rounded text-[10px] md:text-xs">
+                                                            <span className="text-muted-foreground font-medium uppercase tracking-wider">Aktuell (Math.)</span>
+                                                            <span className="text-foreground font-bold font-mono">{currentMathYield.toFixed(2)}%</span>
                                                         </div>
                                                     );
                                                 }
 
-                                                // Fallback to Target Price (Kauflimit) yield if no position exists
-                                                const targetVal = targetPrice ? parseFloat(targetPrice.replace(',', '.')) : (stock?.targetPrice);
-                                                if (targetVal && targetVal > 0 && !isNaN(am)) {
-                                                    const targetYield = (am * factor / targetVal) * 100;
-                                                    return (
-                                                        <div className="flex justify-between items-center px-2 py-1 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 rounded text-[10px] md:text-xs">
-                                                            <span className="text-amber-600 dark:text-amber-400 font-medium uppercase tracking-wider">Rendite (Kauflimit)</span>
-                                                            <span className="text-amber-700 dark:text-amber-300 font-bold font-mono">{targetYield.toFixed(2)}%</span>
+                                                const targetYield = (am * factor / targetVal) * 100;
+                                                const isEinstand = buyPriceAvg && buyPriceAvg > 0;
+
+                                                return (
+                                                    <div className="space-y-1">
+                                                        <div className="flex justify-between items-center px-2 py-0.5 text-[9px] text-muted-foreground uppercase tracking-tighter">
+                                                            <span>Vergleich (Basis {am.toFixed(2)} {currency === 'GBp' ? 'GBP' : currency})</span>
                                                         </div>
-                                                    );
-                                                }
-                                                return null;
+                                                        <div className="grid grid-cols-2 gap-1">
+                                                            <div className="flex flex-col px-2 py-1 bg-muted/20 border border-border/30 rounded">
+                                                                <span className="text-[8px] uppercase text-muted-foreground">Aktuell ({currentP.toFixed(2)})</span>
+                                                                <span className="text-xs font-bold font-mono">{currentMathYield.toFixed(2)}%</span>
+                                                            </div>
+                                                            <div className={cn(
+                                                                "flex flex-col px-2 py-1 border rounded",
+                                                                isEinstand ? "bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-900/30" : "bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900/30"
+                                                            )}>
+                                                                <span className={cn("text-[8px] uppercase", isEinstand ? "text-blue-600 dark:text-blue-400" : "text-amber-600 dark:text-amber-400")}>
+                                                                    {isEinstand ? 'Einstand' : 'Kauflimit'} ({targetVal.toFixed(2)})
+                                                                </span>
+                                                                <span className={cn("text-xs font-bold font-mono", isEinstand ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300")}>
+                                                                    {targetYield.toFixed(2)}%
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
                                             })()}
                                         </div>
                                     </div>
