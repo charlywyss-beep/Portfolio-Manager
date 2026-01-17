@@ -702,11 +702,33 @@ export const MortgageCalculator = () => {
                                     )}
                                 </div>
 
-                                <div className="flex justify-between items-center text-sm px-2 pt-2 border-t border-border">
-                                    <span className="text-muted-foreground">Total Hypothekardschuld</span>
-                                    <span className="font-mono font-bold">
-                                        {formatCHF(totalDebt)}
-                                    </span>
+                                <div className="space-y-2 mt-4 pt-4 border-t border-border">
+                                    <div className="flex justify-between items-center text-sm px-2">
+                                        <span className="text-muted-foreground font-semibold">Total Hypothekardschuld</span>
+                                        <span className="font-mono font-bold text-base">
+                                            {formatCHF(totalDebt)}
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4 mt-2 px-2">
+                                        <div className="bg-accent/20 rounded-lg p-3 border border-border/50">
+                                            <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Belehnung (LTV)</div>
+                                            <div className={cn("text-lg font-bold font-mono", ltv > 80 ? "text-destructive" : ltv > 66 ? "text-amber-500" : "text-emerald-500")}>
+                                                {ltv.toFixed(1)}%
+                                            </div>
+                                            <div className="text-[10px] text-muted-foreground leading-tight mt-0.5">
+                                                {ltv > 80 ? "Kritisch (>80%)" : ltv > 66 ? "2. Hypothek (>66%)" : "1. Hypothek (≤66%)"}
+                                            </div>
+                                        </div>
+                                        <div className="bg-accent/20 rounded-lg p-3 border border-border/50">
+                                            <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Mischzinssatz</div>
+                                            <div className="text-lg font-bold text-foreground font-mono">
+                                                {weightedRate.toFixed(2)}%
+                                            </div>
+                                            <div className="text-[10px] text-muted-foreground leading-tight mt-0.5">
+                                                Gewichtet nach Betrag
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -1644,28 +1666,6 @@ export const MortgageCalculator = () => {
 
                 {/* RIGHT COLUMN: RESULTS */}
                 <div className="space-y-6">
-
-                    {/* Key Metrics Cards */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
-                            <div className="text-sm text-muted-foreground mb-1">Belehnung (LTV)</div>
-                            <div className={cn("text-2xl font-bold font-mono", ltv > 80 ? "text-destructive" : ltv > 66 ? "text-amber-500" : "text-emerald-500")}>
-                                {ltv.toFixed(1)}%
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                                {ltv > 80 ? "Kritisch (>80%)" : ltv > 66 ? "2. Hypothek (>66%)" : "1. Hypothek (≤66%)"}
-                            </div>
-                        </div>
-                        <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
-                            <div className="text-sm text-muted-foreground mb-1">Mischzinssatz</div>
-                            <div className="text-2xl font-bold text-foreground font-mono">
-                                {weightedRate.toFixed(2)}%
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                                Gewichtet nach Betrag
-                            </div>
-                        </div>
-                    </div>
 
                     {/* Monthly Cost Breakdown */}
                     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
