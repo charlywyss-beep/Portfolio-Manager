@@ -65,6 +65,8 @@ export interface Stock {
     eps?: number; // Earnings Per Share (Trailing 12M)
     quickLinks?: QuickLink[]; // NEW: Custom URLs for charts, financial sites, etc.
     marketState?: 'REGULAR' | 'CLOSED' | 'PRE' | 'POST' | 'PREPRE' | 'POSTPOST'; // Yahoo Finance Market State
+    sectorWeights?: { [key: string]: number }; // NEW: For ETFs (Sector Allocation)
+    countryWeights?: { [key: string]: number }; // NEW: For ETFs (Country Allocation)
 }
 
 export interface Position {

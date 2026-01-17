@@ -27,7 +27,7 @@ export default async function handler(req, res) {
         const [quoteBasic, quoteSummary] = await Promise.all([
             yahooFinance.quote(symbol).catch(() => null),
             yahooFinance.quoteSummary(symbol, {
-                modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile']
+                modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'topHoldings']
             }).catch(() => null)
         ]);
 
@@ -63,7 +63,20 @@ export default async function handler(req, res) {
             forwardPE: quoteBasic?.forwardPE || quoteSummary?.summaryDetail?.forwardPE || quoteSummary?.defaultKeyStatistics?.forwardPE,
             epsTrailingTwelveMonths: quoteBasic?.epsTrailingTwelveMonths || quoteSummary?.defaultKeyStatistics?.trailingEps,
             dividendYield: (quoteSummary?.summaryDetail?.dividendYield) ? quoteSummary.summaryDetail.dividendYield * 100 : (quoteBasic?.dividendYield || null),
-            country: quoteSummary?.summaryProfile?.country || null
+            country: quoteSummary?.summaryProfile?.country || null,
+            // ETF Allocation Data (NEW)
+            sectorWeights: quoteSummary?.topHoldings?.sectorWeightings?.reduce((acc, sw) => {
+                const name = Object.keys(sw)[0];
+                const value = Object.values(sw)[0];
+                if (name && typeof value === 'number') acc[name] = value * 100;
+                return acc;
+            }, {}) || null,
+            countryWeights: quoteSummary?.topHoldings?.regionalExposure?.reduce((acc, re) => {
+                const name = Object.keys(re)[0];
+                const value = Object.values(re)[0];
+                if (name && typeof value === 'number') acc[name] = value * 100;
+                return acc;
+            }, {}) || null
         };
 
         const responseData = {

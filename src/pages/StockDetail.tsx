@@ -193,6 +193,14 @@ export function StockDetail() {
                     updates.dividendYield = quoteResponse.dividendYield;
                     hasUpdates = true;
                 }
+                if (quoteResponse.sectorWeights !== undefined && quoteResponse.sectorWeights !== null) {
+                    updates.sectorWeights = quoteResponse.sectorWeights;
+                    hasUpdates = true;
+                }
+                if (quoteResponse.countryWeights !== undefined && quoteResponse.countryWeights !== null) {
+                    updates.countryWeights = quoteResponse.countryWeights;
+                    hasUpdates = true;
+                }
 
                 // FIX: Update open and previousClose if changed
                 // STRICT MODE: Do NOT update 'open' or 'previousClose' from StockDetail refresh.
@@ -469,6 +477,69 @@ export function StockDetail() {
                             />
                         </div>
                     </div>
+
+                    {/* NEW: ETF Allocation Breakdown */}
+                    {stock.type === 'etf' && (stock.sectorWeights || stock.countryWeights) && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Sector Allocation */}
+                            {stock.sectorWeights && Object.keys(stock.sectorWeights).length > 0 && (
+                                <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                                        <TrendingUp className="size-5 text-purple-500" />
+                                        Branchen Allokation
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {Object.entries(stock.sectorWeights)
+                                            .sort(([, a], [, b]) => b - a)
+                                            .slice(0, 10)
+                                            .map(([name, weight], idx) => (
+                                                <div key={idx} className="space-y-1">
+                                                    <div className="flex justify-between text-xs font-medium">
+                                                        <span className="truncate pr-2">{name}</span>
+                                                        <span>{weight.toFixed(2)}%</span>
+                                                    </div>
+                                                    <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                                                        <div
+                                                            className="bg-purple-500 h-full rounded-full transition-all duration-1000"
+                                                            style={{ width: `${Math.min(100, weight)}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Country Allocation */}
+                            {stock.countryWeights && Object.keys(stock.countryWeights).length > 0 && (
+                                <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                                        <TrendingUp className="size-5 text-blue-500" />
+                                        Länder Allokation
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {Object.entries(stock.countryWeights)
+                                            .sort(([, a], [, b]) => b - a)
+                                            .slice(0, 10)
+                                            .map(([name, weight], idx) => (
+                                                <div key={idx} className="space-y-1">
+                                                    <div className="flex justify-between text-xs font-medium">
+                                                        <span className="truncate pr-2">{name}</span>
+                                                        <span>{weight.toFixed(2)}%</span>
+                                                    </div>
+                                                    <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                                                        <div
+                                                            className="bg-blue-500 h-full rounded-full transition-all duration-1000"
+                                                            style={{ width: `${Math.min(100, weight)}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Right Column: Stammdaten & Notes */}

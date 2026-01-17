@@ -49,8 +49,12 @@ export default defineConfig({
           } else {
             // SINGLE REQUEST: Use quoteSummary() for rich details
             const result: any = await yahooFinance.quoteSummary(symbolParam, {
-              modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile']
+              modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'topHoldings']
             });
+
+            if (result.topHoldings) {
+              console.log(`[Yahoo Middleware] ETF Top Holdings found for ${symbolParam}`);
+            }
 
             // Map structured result to our schema
             results = [{
@@ -68,7 +72,20 @@ export default defineConfig({
               // quoteSummary dividendYield is decimal, need * 100
               dividendYield: result.summaryDetail?.dividendYield ? result.summaryDetail.dividendYield * 100 : null,
               // Country Data
-              country: result.summaryProfile?.country
+              country: result.summaryProfile?.country,
+              // ETF Allocation Data (NEW)
+              sectorWeights: result.topHoldings?.sectorWeightings?.reduce((acc: any, sw: any) => {
+                const name = Object.keys(sw)[0];
+                const value = Object.values(sw)[0];
+                if (name && typeof value === 'number') acc[name] = value * 100; // Convert to %
+                return acc;
+              }, {}) || null,
+              countryWeights: result.topHoldings?.regionalExposure?.reduce((acc: any, re: any) => {
+                const name = Object.keys(re)[0];
+                const value = Object.values(re)[0];
+                if (name && typeof value === 'number') acc[name] = value * 100; // Convert to %
+                return acc;
+              }, {}) || null
             }];
           }
 

@@ -223,6 +223,8 @@ export async function fetchStockQuote(symbol: string): Promise<{
     marketState?: string | null,
     open?: number | null,
     previousClose?: number | null,
+    sectorWeights?: { [key: string]: number } | null,
+    countryWeights?: { [key: string]: number } | null,
     error?: string
 }> {
     try {
@@ -268,7 +270,9 @@ export async function fetchStockQuote(symbol: string): Promise<{
             country: country,
             marketState: result.marketState || null,
             open: open || null,
-            previousClose: previousClose || null
+            previousClose: previousClose || null,
+            sectorWeights: result.sectorWeights || null,
+            countryWeights: result.countryWeights || null
         };
     } catch (error) {
         console.error("Yahoo Quote Error:", error);
