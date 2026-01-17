@@ -425,8 +425,7 @@ export const MortgageCalculator = () => {
             ['Heizöl Kosten', formatCurrencyPDF((oilStats?.avgCostPerYear || 0) / 12)],
             ['Strom Kosten', formatCurrencyPDF((electricityStats?.annualCost || 0) / 12)],
             ['Wasser Kosten', formatCurrencyPDF((waterStats?.avgCostPerYear || 0) / 12)],
-            ['Budget Ausgaben', formatCurrencyPDF(totalExpensesMonthly)],
-            ['Auto Kosten', formatCurrencyPDF(totalAutoCostsMonthly)],
+            ['Budget Ausgaben (inkl. Auto)', formatCurrencyPDF(totalExpensesMonthly + totalAutoCostsMonthly)],
             [
                 { content: 'Verfügbar Sparquote', styles: monthlySummaryStyle },
                 { content: formatCurrencyPDF(totalAvailable), styles: { ...monthlySummaryStyle, halign: 'right' as const } }
@@ -465,8 +464,7 @@ export const MortgageCalculator = () => {
             ['Heizöl Kosten', formatCurrencyPDF(oilStats?.avgCostPerYear || 0)],
             ['Strom Kosten', formatCurrencyPDF(electricityStats?.annualCost || 0)],
             ['Wasser Kosten', formatCurrencyPDF(waterStats?.avgCostPerYear || 0)],
-            ['Budget Ausgaben', formatCurrencyPDF(totalExpensesMonthly * 12)],
-            ['Auto Kosten', formatCurrencyPDF(totalAutoCostsMonthly * 12)],
+            ['Budget Ausgaben (inkl. Auto)', formatCurrencyPDF((totalExpensesMonthly + totalAutoCostsMonthly) * 12)],
             [
                 { content: 'Verfügbar Sparquote', styles: yearlySummaryStyle },
                 { content: formatCurrencyPDF(totalAvailable * 12), styles: { ...yearlySummaryStyle, halign: 'right' as const } }
