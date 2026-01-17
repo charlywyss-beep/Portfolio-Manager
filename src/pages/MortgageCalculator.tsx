@@ -361,7 +361,8 @@ export const MortgageCalculator = () => {
         autoTable(doc, getTableOptions(finalY + 3, headers, autoCostsData, [33, 150, 243], autoCostsFooter));
 
         // Summary Table
-        finalY = (doc as any).lastAutoTable.finalY + 8;
+        doc.addPage();
+        finalY = 20;
         doc.setFontSize(12);
         doc.text('Zusammenfassung Monatlich', 14, finalY);
 
