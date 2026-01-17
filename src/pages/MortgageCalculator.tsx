@@ -264,6 +264,7 @@ export const MortgageCalculator = () => {
                 footStyles: {
                     fillColor: headColor
                 },
+                showFoot: 'lastPage' as const,
                 columnStyles: {
                     0: { halign: 'left' as const },   // Name -> Left
                     1: { halign: 'right' as const },  // Frequency -> Right
@@ -302,7 +303,7 @@ export const MortgageCalculator = () => {
 
         const incomeFooter = [
             [
-                { content: 'Total ø Monatlich', styles: { halign: 'left' as const } },
+                { content: 'Total Einnahmen ø Mtl.', styles: { halign: 'left' as const } },
                 { content: '', styles: { halign: 'right' as const } },
                 { content: formatCurrencyPDF(totalIncomeMonthly), styles: { halign: 'right' as const } }
             ]
@@ -389,7 +390,7 @@ export const MortgageCalculator = () => {
 
         const expenseFooter = [
             [
-                { content: 'Total ø Monatlich', styles: { halign: 'left' as const } },
+                { content: 'Total Ausgaben ø Mtl.', styles: { halign: 'left' as const } },
                 { content: '', styles: { halign: 'right' as const } },
                 { content: formatCurrencyPDF(totalExpensesMonthly + totalAutoCostsMonthly), styles: { halign: 'right' as const } }
             ]
