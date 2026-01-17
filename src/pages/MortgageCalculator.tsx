@@ -310,8 +310,59 @@ export const MortgageCalculator = () => {
 
         autoTable(doc, getTableOptions(38, headers, incomeData, [16, 185, 129], incomeFooter));
 
+        // Property & Finance Section
+        finalY = (doc as any).lastAutoTable.finalY + 8;
+        doc.setFontSize(12);
+        doc.text('Immobilie & Finanzierung', 14, finalY);
+
+        const propertyData = [
+            ['Immobilienwert', '', formatCurrencyPDF(propertyValue)],
+            ['Unterhalt & Nebenkosten', `${maintenanceRate}%`, formatCurrencyPDF(yearlyMaintenance)],
+            ['Amortisation (Jährlich)', '', formatCurrencyPDF(yearlyAmortization)]
+        ];
+
+        const propertyHeaders = [
+            [
+                { content: 'Eigenschaft', styles: { halign: 'left' as const } },
+                { content: 'Details', styles: { halign: 'right' as const } },
+                { content: 'Betrag (Jahr)', styles: { halign: 'right' as const } }
+            ]
+        ];
+
+        autoTable(doc, getTableOptions(finalY + 3, propertyHeaders, propertyData, [75, 85, 99]));
+
+        // Mortgage Tranches
+        finalY = (doc as any).lastAutoTable.finalY + 5;
+        const mortgageData = tranches.map((t, idx) => [
+            `${idx + 1}. Hypothek`,
+            `${t.rate.toFixed(2)}%`,
+            formatCurrencyPDF(t.amount)
+        ]);
+
+        const mortgageHeaders = [
+            [
+                { content: 'Tranche', styles: { halign: 'left' as const } },
+                { content: 'Zins', styles: { halign: 'right' as const } },
+                { content: 'Betrag', styles: { halign: 'right' as const } }
+            ]
+        ];
+
+        const mortgageFooter = [
+            [
+                { content: 'Total Schulden / Mischzins', styles: { halign: 'left' as const } },
+                { content: `${weightedRate.toFixed(2)}%`, styles: { halign: 'right' as const } },
+                { content: formatCurrencyPDF(totalDebt), styles: { halign: 'right' as const } }
+            ]
+        ];
+
+        autoTable(doc, getTableOptions(finalY + 3, mortgageHeaders, mortgageData, [75, 85, 99], mortgageFooter));
+
         // Expenses Table
-        let finalY = (doc as any).lastAutoTable.finalY + 8;
+        finalY = (doc as any).lastAutoTable.finalY + 8;
+        if (finalY > 250) {
+            doc.addPage();
+            finalY = 20;
+        }
         doc.setFontSize(12);
         doc.text('Ausgaben Budget', 14, finalY);
 
@@ -341,6 +392,10 @@ export const MortgageCalculator = () => {
 
         // Auto Costs Table
         finalY = (doc as any).lastAutoTable.finalY + 8;
+        if (finalY > 250) {
+            doc.addPage();
+            finalY = 20;
+        }
         doc.setFontSize(12);
         doc.text('Auto Kosten', 14, finalY);
 
@@ -382,7 +437,12 @@ export const MortgageCalculator = () => {
 
         const summaryData = [
             ['Total Einnahmen', formatCurrencyPDF(totalIncomeMonthly)],
-            ['Wohnkosten Hypothek + NK', formatCurrencyPDF(totalMonthlyCost)],
+            ['Hypothekarzinsen', formatCurrencyPDF(yearlyInterest / 12)],
+            ['Amortisation', formatCurrencyPDF(yearlyAmortization / 12)],
+            ['Unterhalt & Nebenkosten %', formatCurrencyPDF(yearlyMaintenance / 12)],
+            ['Heizöl Kosten', formatCurrencyPDF((oilStats?.avgCostPerYear || 0) / 12)],
+            ['Strom Kosten', formatCurrencyPDF((electricityStats?.annualCost || 0) / 12)],
+            ['Wasser Kosten', formatCurrencyPDF((waterStats?.avgCostPerYear || 0) / 12)],
             ['Budget Ausgaben', formatCurrencyPDF(totalExpensesMonthly)],
             ['Auto Kosten', formatCurrencyPDF(totalAutoCostsMonthly)],
             [
@@ -417,7 +477,12 @@ export const MortgageCalculator = () => {
 
         const summaryDataYearly = [
             ['Total Einnahmen', formatCurrencyPDF(totalIncomeMonthly * 12)],
-            ['Wohnkosten Hypothek + NK', formatCurrencyPDF(totalMonthlyCost * 12)],
+            ['Hypothekarzinsen', formatCurrencyPDF(yearlyInterest)],
+            ['Amortisation', formatCurrencyPDF(yearlyAmortization)],
+            ['Unterhalt & Nebenkosten %', formatCurrencyPDF(yearlyMaintenance)],
+            ['Heizöl Kosten', formatCurrencyPDF(oilStats?.avgCostPerYear || 0)],
+            ['Strom Kosten', formatCurrencyPDF(electricityStats?.annualCost || 0)],
+            ['Wasser Kosten', formatCurrencyPDF(waterStats?.avgCostPerYear || 0)],
             ['Budget Ausgaben', formatCurrencyPDF(totalExpensesMonthly * 12)],
             ['Auto Kosten', formatCurrencyPDF(totalAutoCostsMonthly * 12)],
             [
