@@ -608,9 +608,16 @@ export const MortgageCalculator = () => {
                                                 className={cn(inputClass, "pl-14")}
                                             />
                                         </div>
-                                        <p className="text-xs text-muted-foreground">
-                                            Pflicht bei Belehnung &gt; 66% (2. Hypothek). Üblich: ~1% vom Immobilienwert.
-                                        </p>
+                                        <div className="grid gap-6 sm:grid-cols-2 pt-2 border-t border-border/50">
+                                            <div className="flex justify-between items-center text-xs">
+                                                <span className="text-muted-foreground">Monatlicher Unterhalt</span>
+                                                <span className="font-mono font-bold text-amber-500">{formatCHF(yearlyMaintenance / 12)}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-xs">
+                                                <span className="text-muted-foreground">Monatliche Amortisation</span>
+                                                <span className="font-mono font-bold text-emerald-500">{formatCHF(yearlyAmortization / 12)}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -707,6 +714,15 @@ export const MortgageCalculator = () => {
                                         <span className="text-muted-foreground font-semibold">Total Hypothekardschuld</span>
                                         <span className="font-mono font-bold text-base">
                                             {formatCHF(totalDebt)}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm px-2 bg-blue-500/5 py-1.5 rounded-lg border border-blue-500/10 mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <Percent className="size-3.5 text-blue-500" />
+                                            <span className="text-blue-700 dark:text-blue-400 font-semibold">Hypothekarzinsen</span>
+                                        </div>
+                                        <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
+                                            {formatCHF(yearlyInterest / 12)} / Mt
                                         </span>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4 mt-2 px-2">
