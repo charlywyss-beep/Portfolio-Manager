@@ -311,7 +311,7 @@ export const MortgageCalculator = () => {
         autoTable(doc, getTableOptions(38, headers, incomeData, [16, 185, 129], incomeFooter));
 
         // Property & Finance Section
-        finalY = (doc as any).lastAutoTable.finalY + 8;
+        let finalY = (doc as any).lastAutoTable.finalY + 8;
         doc.setFontSize(12);
         doc.text('Immobilie & Finanzierung', 14, finalY);
 
