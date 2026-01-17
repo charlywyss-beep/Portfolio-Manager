@@ -152,10 +152,7 @@ function App() {
               }}
               title="App neu laden (Cache leeren)"
             >
-              <div className="text-[10px] text-foreground font-bold font-mono flex items-center gap-1 group/version">
-                <span>v{packageJson.version}</span>
-                <span className="opacity-0 group-hover/version:opacity-100 transition-opacity text-[8px] text-muted-foreground ml-1">RELOAD</span>
-              </div>
+              <div className="text-[10px] text-muted-foreground mb-4 px-2">v3.12.146</div>
             </div>
 
             <nav className="flex-1 p-4 space-y-2 w-fit">
@@ -229,7 +226,7 @@ function App() {
           </main>
         </div>
       </PortfolioProvider>
-    </ExchangeRateProvider>
+    </ExchangeRateProvider >
   );
 }
 

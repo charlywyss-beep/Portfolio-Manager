@@ -5,6 +5,7 @@ import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useCurrencyFormatter } from '../utils/currency';
 import { DecimalInput } from './DecimalInput';
+import { Logo } from './Logo';
 
 interface AddPositionModalProps {
     isOpen: boolean;
@@ -250,9 +251,12 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                                     }}
                                                     className="w-full p-3 hover:bg-muted transition-colors text-left flex items-center gap-3"
                                                 >
-                                                    <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
-                                                        {stock.symbol.slice(0, 2)}
-                                                    </div>
+                                                    <Logo
+                                                        url={stock.logoUrl}
+                                                        alt={stock.name}
+                                                        fallback={stock.symbol.slice(0, 2)}
+                                                        size="size-10"
+                                                    />
                                                     <div className="flex-1">
                                                         <div className="font-semibold flex items-center gap-2">
                                                             {stock.name}
@@ -273,9 +277,12 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                     </>
                                 ) : (
                                     <div className="p-4 border border-border rounded-lg bg-muted/30 flex items-center gap-3">
-                                        <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
-                                            {selectedStock.symbol.slice(0, 2)}
-                                        </div>
+                                        <Logo
+                                            url={selectedStock.logoUrl}
+                                            alt={selectedStock.name}
+                                            fallback={selectedStock.symbol.slice(0, 2)}
+                                            size="size-12"
+                                        />
                                         <div className="flex-1">
                                             <div className="font-semibold">{selectedStock.name}</div>
                                             <div className="text-sm text-muted-foreground">

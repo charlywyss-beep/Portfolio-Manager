@@ -92,6 +92,20 @@ export const MOCK_STOCKS: Stock[] = [
         currency: 'USD',
         type: 'etf',
         dividendYield: 1.92,
+    },
+    {
+        id: '8',
+        symbol: 'CS.PA',
+        name: 'AXA S.A.',
+        sector: 'Financial Services',
+        valor: '120628',
+        isin: 'FR0000120628',
+        currentPrice: 31.27,
+        previousClose: 31.10,
+        currency: 'EUR',
+        type: 'stock',
+        dividendYield: 5.40,
+        logoUrl: 'https://logo.clearbit.com/axa.com'
     }
 ];
 

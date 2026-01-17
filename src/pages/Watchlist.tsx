@@ -204,23 +204,25 @@ export function Watchlist() {
                         />
                     </div>
 
-                    <div className="p-4 bg-muted/10 flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <RefreshCw className={cn("size-3", isGlobalRefreshing && "animate-spin")} />
-                            <span>
-                                {isGlobalRefreshing
-                                    ? 'Aktualisiere Preise...'
-                                    : lastGlobalRefresh
-                                        ? `Zuletzt aktualisiert: Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
-                                        : 'Preise noch nicht aktualisiert'}
-                            </span>
-                        </div>
+                    <div className="p-4 bg-muted/5 flex items-center justify-center border-t border-border/50">
                         <button
                             onClick={() => refreshAllPrices(true)}
                             disabled={isGlobalRefreshing}
-                            className="text-xs font-semibold text-primary hover:underline flex items-center gap-1.5"
+                            className={cn(
+                                "flex items-center gap-2 px-4 py-2 rounded-lg border text-xs font-semibold transition-all shadow-sm",
+                                "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                "active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            )}
+                            title="Preise jetzt aktualisieren"
                         >
-                            <span>Jetzt aktualisieren</span>
+                            <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
+                            <span>
+                                {isGlobalRefreshing
+                                    ? 'Aktualisiere...'
+                                    : lastGlobalRefresh
+                                        ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                        : 'Aktualisieren'}
+                            </span>
                         </button>
                     </div>
                 </div>
