@@ -284,7 +284,7 @@ export const MortgageCalculator = () => {
 
         const headers = [
             [
-                { content: 'Quelle', styles: { halign: 'left' as const } },
+                { content: 'Posten', styles: { halign: 'left' as const } },
                 { content: 'Frequenz', styles: { halign: 'right' as const } },
                 { content: 'Betrag', styles: { halign: 'right' as const } }
             ]
@@ -357,20 +357,27 @@ export const MortgageCalculator = () => {
 
         autoTable(doc, getTableOptions(finalY + 3, mortgageHeaders, mortgageData, [75, 85, 99], mortgageFooter));
 
-        // Expenses Table
+        // Expenses Table (Combined Auto + Budget)
         finalY = (doc as any).lastAutoTable.finalY + 8;
-        if (finalY > 250) {
+        if (finalY > 230) {
             doc.addPage();
             finalY = 20;
         }
         doc.setFontSize(12);
-        doc.text('Ausgaben Budget', 14, finalY);
+        doc.text('Ausgaben Budget (inkl. Auto)', 14, finalY);
 
-        const expenseData = sortedBudgetItems.map(item => [
-            item.name || 'Unbenannt',
-            (item.frequency || 'monthly') === 'monthly' ? 'Monatlich' : 'Jährlich',
-            formatCurrencyPDF(item.amount)
-        ]);
+        const combinedExpenseData = [
+            ...sortedAutoCosts.map(item => [
+                item.name || 'Auto: Unbenannt',
+                (item.frequency || 'monthly') === 'monthly' ? 'Monatlich' : 'Jährlich',
+                formatCurrencyPDF(item.amount)
+            ]),
+            ...sortedBudgetItems.map(item => [
+                item.name || 'Unbenannt',
+                (item.frequency || 'monthly') === 'monthly' ? 'Monatlich' : 'Jährlich',
+                formatCurrencyPDF(item.amount)
+            ])
+        ];
 
         const expenseHeaders = [
             [
@@ -384,36 +391,11 @@ export const MortgageCalculator = () => {
             [
                 { content: 'Total ø Monatlich', styles: { halign: 'left' as const } },
                 { content: '', styles: { halign: 'right' as const } },
-                { content: formatCurrencyPDF(totalExpensesMonthly), styles: { halign: 'right' as const } }
+                { content: formatCurrencyPDF(totalExpensesMonthly + totalAutoCostsMonthly), styles: { halign: 'right' as const } }
             ]
         ];
 
-        autoTable(doc, getTableOptions(finalY + 3, expenseHeaders, expenseData, [59, 130, 246], expenseFooter));
-
-        // Auto Costs Table
-        finalY = (doc as any).lastAutoTable.finalY + 8;
-        if (finalY > 250) {
-            doc.addPage();
-            finalY = 20;
-        }
-        doc.setFontSize(12);
-        doc.text('Auto Kosten', 14, finalY);
-
-        const autoCostsData = sortedAutoCosts.map(item => [
-            item.name || 'Unbenannt',
-            (item.frequency || 'monthly') === 'monthly' ? 'Monatlich' : 'Jährlich',
-            formatCurrencyPDF(item.amount)
-        ]);
-
-        const autoCostsFooter = [
-            [
-                { content: 'Total ø Monatlich', styles: { halign: 'left' as const } },
-                { content: '', styles: { halign: 'right' as const } },
-                { content: formatCurrencyPDF(totalAutoCostsMonthly), styles: { halign: 'right' as const } }
-            ]
-        ];
-
-        autoTable(doc, getTableOptions(finalY + 3, headers, autoCostsData, [33, 150, 243], autoCostsFooter));
+        autoTable(doc, getTableOptions(finalY + 3, expenseHeaders, combinedExpenseData, [59, 130, 246], expenseFooter));
 
         // Summary Table
         doc.addPage();
