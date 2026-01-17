@@ -136,6 +136,7 @@ export function AssetAllocationChart() {
     };
 
     const [isMobile, setIsMobile] = useState(false);
+    const totalValue = useMemo(() => data.reduce((sum, item) => sum + item.value, 0), [data]);
 
     useEffect(() => {
         const checkMobile = () => {
@@ -182,6 +183,8 @@ export function AssetAllocationChart() {
                             outerRadius="90%"
                             paddingAngle={2}
                             dataKey="value"
+                            label={({ percent }) => (percent && percent * 100 > 4) ? `${(percent * 100).toFixed(0)}%` : ''}
+                            labelLine={false}
                         >
                             {data.map((_, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
@@ -194,6 +197,16 @@ export function AssetAllocationChart() {
                             align={isMobile ? "center" : "right"}
                             wrapperStyle={isMobile ? { fontSize: '11px', paddingTop: '20px', width: '100%' } : { fontSize: '12px', opacity: 0.9, paddingLeft: '20px', maxWidth: '40%' }}
                             iconSize={isMobile ? 10 : 12}
+                            formatter={(value: string) => {
+                                const item = data.find(d => d.name === value);
+                                if (!item || totalValue === 0) return value;
+                                const percentage = (item.value / totalValue) * 100;
+                                return (
+                                    <span className="text-foreground/90 ml-1">
+                                        {value} <span className="font-bold text-primary/80 ml-1 text-[10px]">{percentage.toFixed(1)}%</span>
+                                    </span>
+                                );
+                            }}
                         />
                     </PieChart>
                 </ResponsiveContainer>
