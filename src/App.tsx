@@ -152,7 +152,7 @@ function App() {
               }}
               title="App neu laden (Cache leeren)"
             >
-              <div className="text-[10px] text-muted-foreground mb-4 px-2">v3.12.157</div>
+              <div className="text-[10px] text-muted-foreground mb-4 px-2">v3.12.158</div>
             </div>
 
             <nav className="flex-1 p-4 space-y-2 w-fit">

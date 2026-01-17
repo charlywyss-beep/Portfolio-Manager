@@ -65,18 +65,38 @@ export default async function handler(req, res) {
             dividendYield: (quoteSummary?.summaryDetail?.dividendYield) ? quoteSummary.summaryDetail.dividendYield * 100 : (quoteBasic?.dividendYield || null),
             country: quoteSummary?.summaryProfile?.country || null,
             // ETF Allocation Data (NEW)
-            sectorWeights: quoteSummary?.topHoldings?.sectorWeightings?.reduce((acc, sw) => {
-                const name = Object.keys(sw)[0];
-                const value = Object.values(sw)[0];
-                if (name && typeof value === 'number') acc[name] = value * 100;
-                return acc;
-            }, {}) || null,
-            countryWeights: quoteSummary?.topHoldings?.regionalExposure?.reduce((acc, re) => {
-                const name = Object.keys(re)[0];
-                const value = Object.values(re)[0];
-                if (name && typeof value === 'number') acc[name] = value * 100;
-                return acc;
-            }, {}) || null
+            sectorWeights: (() => {
+                const sw = quoteSummary?.topHoldings?.sectorWeightings || quoteSummary?.topHoldings?.equityHoldings?.sectorWeightings;
+                if (!sw) return null;
+                const acc = {};
+                if (Array.isArray(sw)) {
+                    sw.forEach(item => {
+                        const keys = Object.keys(item);
+                        if (keys.length > 0) acc[keys[0]] = item[keys[0]] * 100;
+                    });
+                } else if (typeof sw === 'object') {
+                    Object.entries(sw).forEach(([k, v]) => {
+                        if (typeof v === 'number') acc[k] = v * 100;
+                    });
+                }
+                return Object.keys(acc).length > 0 ? acc : null;
+            })(),
+            countryWeights: (() => {
+                const re = quoteSummary?.topHoldings?.regionalExposure || quoteSummary?.topHoldings?.equityHoldings?.regionalExposure;
+                if (!re) return null;
+                const acc = {};
+                if (Array.isArray(re)) {
+                    re.forEach(item => {
+                        const keys = Object.keys(item);
+                        if (keys.length > 0) acc[keys[0]] = item[keys[0]] * 100;
+                    });
+                } else if (typeof re === 'object') {
+                    Object.entries(re).forEach(([k, v]) => {
+                        if (typeof v === 'number') acc[k] = v * 100;
+                    });
+                }
+                return Object.keys(acc).length > 0 ? acc : null;
+            })()
         };
 
         const responseData = {

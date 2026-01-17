@@ -49,11 +49,15 @@ export default defineConfig({
           } else {
             // SINGLE REQUEST: Use quoteSummary() for rich details
             const result: any = await yahooFinance.quoteSummary(symbolParam, {
-              modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'topHoldings']
+              modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'topHoldings', 'fundProfile', 'assetProfile']
             });
 
             if (result.topHoldings) {
-              console.log(`[Yahoo Middleware] ETF Top Holdings found for ${symbolParam}`);
+              console.log(`[Yahoo Middleware] ETF Top Holdings for ${symbolParam}:`, Object.keys(result.topHoldings));
+              if (result.topHoldings.sectorWeightings) console.log(`[Yahoo Middleware] Sectors: ${result.topHoldings.sectorWeightings.length}`);
+              if (result.topHoldings.regionalExposure) console.log(`[Yahoo Middleware] Regions: ${result.topHoldings.regionalExposure.length}`);
+            } else {
+              console.log(`[Yahoo Middleware] NO topHoldings for ${symbolParam}`);
             }
 
             // Map structured result to our schema
@@ -74,19 +78,44 @@ export default defineConfig({
               // Country Data
               country: result.summaryProfile?.country,
               // ETF Allocation Data (NEW)
-              sectorWeights: result.topHoldings?.sectorWeightings?.reduce((acc: any, sw: any) => {
-                const name = Object.keys(sw)[0];
-                const value = Object.values(sw)[0];
-                if (name && typeof value === 'number') acc[name] = value * 100; // Convert to %
-                return acc;
-              }, {}) || null,
-              countryWeights: result.topHoldings?.regionalExposure?.reduce((acc: any, re: any) => {
-                const name = Object.keys(re)[0];
-                const value = Object.values(re)[0];
-                if (name && typeof value === 'number') acc[name] = value * 100; // Convert to %
-                return acc;
-              }, {}) || null
+              sectorWeights: (() => {
+                const sw = result.topHoldings?.sectorWeightings || result.topHoldings?.equityHoldings?.sectorWeightings || result.equityHoldings?.sectorWeightings;
+                if (!sw) return null;
+                const acc: any = {};
+                if (Array.isArray(sw)) {
+                  sw.forEach((item: any) => {
+                    const keys = Object.keys(item);
+                    if (keys.length > 0) acc[keys[0]] = item[keys[0]] * 100;
+                  });
+                } else if (typeof sw === 'object') {
+                  Object.entries(sw).forEach(([k, v]) => {
+                    if (typeof v === 'number') acc[k] = v * 100;
+                  });
+                }
+                return Object.keys(acc).length > 0 ? acc : null;
+              })(),
+              countryWeights: (() => {
+                // Try topHoldings.regionalExposure first, then equityHoldings.regionalExposure
+                const re = result.topHoldings?.regionalExposure || result.topHoldings?.equityHoldings?.regionalExposure;
+                if (!re) return null;
+                const acc: any = {};
+                if (Array.isArray(re)) {
+                  re.forEach((item: any) => {
+                    const keys = Object.keys(item);
+                    if (keys.length > 0) acc[keys[0]] = item[keys[0]] * 100;
+                  });
+                } else if (typeof re === 'object') {
+                  Object.entries(re).forEach(([k, v]) => {
+                    if (typeof v === 'number') acc[k] = v * 100;
+                  });
+                }
+                return Object.keys(acc).length > 0 ? acc : null;
+              })()
             }];
+
+            if (results[0].sectorWeights) console.log(`[Yahoo Middleware] Mapped ${Object.keys(results[0].sectorWeights).length} sectors`);
+            if (results[0].countryWeights) console.log(`[Yahoo Middleware] Mapped ${Object.keys(results[0].countryWeights).length} countries`);
+
           }
 
           const responseData = {

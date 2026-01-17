@@ -479,63 +479,114 @@ export function StockDetail() {
                     </div>
 
                     {/* NEW: ETF Allocation Breakdown */}
-                    {stock.type === 'etf' && (stock.sectorWeights || stock.countryWeights) && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Sector Allocation */}
-                            {stock.sectorWeights && Object.keys(stock.sectorWeights).length > 0 && (
-                                <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                        <TrendingUp className="size-5 text-purple-500" />
-                                        Branchen Allokation
-                                    </h3>
-                                    <div className="space-y-3">
-                                        {Object.entries(stock.sectorWeights)
-                                            .sort(([, a], [, b]) => b - a)
-                                            .slice(0, 10)
-                                            .map(([name, weight], idx) => (
-                                                <div key={idx} className="space-y-1">
-                                                    <div className="flex justify-between text-xs font-medium">
-                                                        <span className="truncate pr-2">{name}</span>
-                                                        <span>{weight.toFixed(2)}%</span>
-                                                    </div>
-                                                    <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                                                        <div
-                                                            className="bg-purple-500 h-full rounded-full transition-all duration-1000"
-                                                            style={{ width: `${Math.min(100, weight)}%` }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                    </div>
+                    {stock.type === 'etf' && (
+                        <div className="space-y-6">
+                            {(!stock.sectorWeights && !stock.countryWeights) && (
+                                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 text-xs text-yellow-500 flex items-center gap-2">
+                                    <span className="animate-pulse">●</span>
+                                    <span>Lade Allokationsdaten von Yahoo... (Versuche ggf. Refresh oder einen US-Ticker wie VOO)</span>
                                 </div>
                             )}
 
-                            {/* Country Allocation */}
-                            {stock.countryWeights && Object.keys(stock.countryWeights).length > 0 && (
-                                <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                        <TrendingUp className="size-5 text-blue-500" />
-                                        Länder Allokation
-                                    </h3>
-                                    <div className="space-y-3">
-                                        {Object.entries(stock.countryWeights)
-                                            .sort(([, a], [, b]) => b - a)
-                                            .slice(0, 10)
-                                            .map(([name, weight], idx) => (
-                                                <div key={idx} className="space-y-1">
-                                                    <div className="flex justify-between text-xs font-medium">
-                                                        <span className="truncate pr-2">{name}</span>
-                                                        <span>{weight.toFixed(2)}%</span>
-                                                    </div>
-                                                    <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                                                        <div
-                                                            className="bg-blue-500 h-full rounded-full transition-all duration-1000"
-                                                            style={{ width: `${Math.min(100, weight)}%` }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                    </div>
+                            {(stock.sectorWeights || stock.countryWeights) && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Sector Allocation */}
+                                    {stock.sectorWeights && Object.keys(stock.sectorWeights).length > 0 && (
+                                        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                                            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                                                <TrendingUp className="size-5 text-purple-500" />
+                                                Branchen Allokation
+                                            </h3>
+                                            <div className="space-y-3">
+                                                {Object.entries(stock.sectorWeights)
+                                                    .sort(([, a], [, b]) => b - a)
+                                                    .slice(0, 10)
+                                                    .map(([name, weight], idx) => {
+                                                        const displayNames: Record<string, string> = {
+                                                            'realestate': 'Immobilien',
+                                                            'healthcare': 'Gesundheitswesen',
+                                                            'basic_materials': 'Rohstoffe',
+                                                            'consumer_cyclical': 'Zykl. Konsumgüter',
+                                                            'financial_services': 'Finanzdienstleistungen',
+                                                            'consumer_defensive': 'Nicht-zykl. Konsum',
+                                                            'technology': 'Technologie',
+                                                            'utilities': 'Versorger',
+                                                            'financial': 'Finanzen',
+                                                            'communication_services': 'Kommunikation',
+                                                            'energy': 'Energie',
+                                                            'industrials': 'Industrie'
+                                                        };
+                                                        const displayName = displayNames[name] || name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+                                                        return (
+                                                            <div key={idx} className="space-y-1">
+                                                                <div className="flex justify-between text-xs font-medium">
+                                                                    <span className="truncate pr-2">{displayName}</span>
+                                                                    <span>{weight.toFixed(2)}%</span>
+                                                                </div>
+                                                                <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                                                                    <div
+                                                                        className="bg-purple-500 h-full rounded-full transition-all duration-1000"
+                                                                        style={{ width: `${Math.min(100, weight)}%` }}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Country Allocation */}
+                                    {stock.countryWeights && Object.keys(stock.countryWeights).length > 0 && (
+                                        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                                            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                                                <TrendingUp className="size-5 text-blue-500" />
+                                                Länder Allokation
+                                            </h3>
+                                            <div className="space-y-3">
+                                                {Object.entries(stock.countryWeights)
+                                                    .sort(([, a], [, b]) => b - a)
+                                                    .slice(0, 10)
+                                                    .map(([name, weight], idx) => {
+                                                        const displayNames: Record<string, string> = {
+                                                            'us': 'USA',
+                                                            'uk': 'Grossbritannien',
+                                                            'japan': 'Japan',
+                                                            'china': 'China',
+                                                            'canada': 'Kanada',
+                                                            'france': 'Frankreich',
+                                                            'germany': 'Deutschland',
+                                                            'switzerland': 'Schweiz',
+                                                            'eurozone': 'Eurozone',
+                                                            'asia_developed': 'Asien (Entwickelt)',
+                                                            'asia_emerging': 'Asien (Schwellen)',
+                                                            'australasia': 'Australien / Ozeanien',
+                                                            'europe_developed': 'Europa (Entwickelt)',
+                                                            'europe_emerging': 'Europa (Schwellen)',
+                                                            'latin_america': 'Lateinamerika',
+                                                            'north_america': 'Nordamerika'
+                                                        };
+                                                        const displayName = displayNames[name.toLowerCase()] || name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+                                                        return (
+                                                            <div key={idx} className="space-y-1">
+                                                                <div className="flex justify-between text-xs font-medium">
+                                                                    <span className="truncate pr-2">{displayName}</span>
+                                                                    <span>{weight.toFixed(2)}%</span>
+                                                                </div>
+                                                                <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                                                                    <div
+                                                                        className="bg-blue-500 h-full rounded-full transition-all duration-1000"
+                                                                        style={{ width: `${Math.min(100, weight)}%` }}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
