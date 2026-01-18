@@ -306,15 +306,8 @@ export function Watchlist() {
                                     setSortConfig={setSortConfig}
                                     onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                     onBuy={(stock) => setBuyStock(stock)}
-                                    onEdit={(id) => {
-                                        const pos = positions.find(p => String(p.stockId) === String(id));
-                                        if (pos) {
-                                            const stock = stocks.find(s => String(s.id) === String(id));
-                                            if (stock) {
-                                                setEditPosition({ ...pos, stock });
-                                            }
-                                        }
-                                    }}
+                                    // Blue "Edit" button now opens details page
+                                    onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                     onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
                                     formatCurrency={formatCurrency}
                                     emptyMessage="Keine Aktien im Bestand."
@@ -364,15 +357,8 @@ export function Watchlist() {
                                     setSortConfig={setSortConfig}
                                     onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                     onBuy={(stock) => setBuyStock(stock)}
-                                    onEdit={(id) => {
-                                        const pos = positions.find(p => String(p.stockId) === String(id));
-                                        if (pos) {
-                                            const stock = stocks.find(s => String(s.id) === String(id));
-                                            if (stock) {
-                                                setEditPosition({ ...pos, stock });
-                                            }
-                                        }
-                                    }}
+                                    // Blue "Edit" button now opens details page
+                                    onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                     onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
                                     formatCurrency={formatCurrency}
                                     emptyMessage="Keine ETFs im Bestand."
@@ -422,7 +408,8 @@ export function Watchlist() {
                                     setSortConfig={setSortConfig}
                                     onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                     onBuy={(stock) => setBuyStock(stock)}
-                                    onEdit={(id) => navigate(`/calculator?mode=edit&id=${id}&from=watchlist`)}
+                                    // Blue "Edit" button now opens details page
+                                    onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                     onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
                                     formatCurrency={formatCurrency}
                                     emptyMessage="Keine potenziellen Aktien auf der Watchlist."
@@ -472,7 +459,8 @@ export function Watchlist() {
                                     setSortConfig={setSortConfig}
                                     onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                     onBuy={(stock) => setBuyStock(stock)}
-                                    onEdit={(id) => navigate(`/calculator?mode=edit&id=${id}&from=watchlist`)}
+                                    // Blue "Edit" button now opens details page
+                                    onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                     onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
                                     formatCurrency={formatCurrency}
                                     emptyMessage="Keine potenziellen ETFs auf der Watchlist."
