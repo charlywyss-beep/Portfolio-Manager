@@ -628,7 +628,7 @@ function WatchlistTable({
                     </th>
                     <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right w-[10%]">EX-Tag</th>
                     <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right w-[10%]">Zahl-Tag</th>
-                    <th className="p-4 md:pl-8 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-center w-[110px] sticky -right-px z-20 bg-card shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
+                    <th className="p-4 md:pl-12 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-center w-[110px] sticky -right-px z-20 bg-card shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
                 </tr>
             </thead>
             <tbody className="divide-y">
@@ -788,7 +788,7 @@ function WatchlistTable({
                                     )}
                                 </div>
                             </td>
-                            <td className="p-4 md:pl-8 sticky -right-px z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                            <td className="p-4 md:pl-12 sticky -right-px z-10 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                 <div className="absolute inset-0 bg-card -z-10" />
                                 <div className="flex items-center justify-center gap-2 relative">
                                     <button
