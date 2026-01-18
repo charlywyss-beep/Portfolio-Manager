@@ -5,7 +5,7 @@ import { Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, Rotate
 import { ConfirmModal } from '../components/ConfirmModal';
 
 // Helper Component for Stock Management List Items (v3.12.123)
-const StockManagementItem = ({ stock, positions, watchlists, stocks, fixedDeposits, history, importData }: any) => {
+const StockManagementItem = ({ stock, positions, watchlists, stocks, fixedDeposits, _history, importData }: any) => {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const isInPortfolio = positions.some((p: any) => p.stockId === stock.id);
     const isInWatchlist = watchlists.some((wl: any) => wl.stockIds?.includes(stock.id));
