@@ -591,7 +591,7 @@ function WatchlistTable({
         <table className="w-full text-left border-collapse min-w-[1200px] xl:min-w-0 table-fixed">
             <thead>
                 <tr className="border-b bg-muted/20">
-                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider whitespace-nowrap sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[280px] md:w-[25%]">Aktie</th>
+                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider whitespace-nowrap sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[200px] md:w-[300px]">Aktie</th>
                     <th
                         className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors w-[10%]"
                         onClick={() => {
