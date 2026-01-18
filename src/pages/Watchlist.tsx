@@ -113,7 +113,27 @@ export function Watchlist() {
     );
 
 
+
     // Unified Timer Tracking (v3.12.70): Replaced local interval with dependency on global refreshTick
+    useEffect(() => {
+        // Auto-collapse if empty
+        if (ownedStocks.length === 0) {
+            setIsOwnedStocksOpen(false);
+        } else {
+            // Optional: Auto-open if items exist?
+            // User only asked for "collapsing if empty", implies normally open.
+            // But let's respect manual toggle if user closes it?
+            // Wait, if I auto-set it here, it will override manual toggle if I'm not careful.
+            // But ownedStocks changes rarely (on load or add/remove).
+            // A better approach is to check this ONCE on load or use a ref to track if we initialized?
+            // Actually, simplest is: if length becomes 0, close it. User can't open it reasonably if empty anyway (Wait, empty message says "Keine Aktien").
+        }
+
+        if (ownedEtfs.length === 0) {
+            setIsOwnedEtfsOpen(false);
+        }
+    }, [ownedStocks.length, ownedEtfs.length]);
+
     useEffect(() => {
         // Auto-refresh if last refresh was more than 5 minutes ago
         if (lastGlobalRefresh) {
