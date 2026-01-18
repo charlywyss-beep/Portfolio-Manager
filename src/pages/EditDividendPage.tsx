@@ -22,31 +22,21 @@ const getFrequencyFactor = (freq: string) => {
 const sanitizeDateYear = (dateStr: string, referenceDate?: string): string => {
     if (!dateStr || dateStr.length < 4) return dateStr;
 
-    console.log('[sanitizeDateYear] Input:', dateStr, 'Ref:', referenceDate);
-
     // Parse year from YYYY-MM-DD format (first 4 chars)
     const year = parseInt(dateStr.substring(0, 4), 10);
 
     // Check if year is clearly wrong (< 1900 or > 2100)
     if (isNaN(year) || year < 1900 || year > 2100) {
-        console.log('[sanitizeDateYear] Bad year detected:', year);
-
         // Try to use reference date's year
         if (referenceDate && referenceDate.length >= 4) {
             const refYear = parseInt(referenceDate.substring(0, 4), 10);
-            // Validate refYear too
             if (!isNaN(refYear) && refYear >= 1900 && refYear <= 2100) {
-                const result = refYear.toString() + dateStr.substring(4);
-                console.log('[sanitizeDateYear] Fixed to:', result);
-                return result;
+                return refYear.toString() + dateStr.substring(4);
             }
         }
-
         // Fallback: Use current year
         const thisYear = new Date().getFullYear();
-        const result = thisYear.toString() + dateStr.substring(4);
-        console.log('[sanitizeDateYear] Fallback to:', result);
-        return result;
+        return thisYear.toString() + dateStr.substring(4);
     }
 
     return dateStr;
@@ -131,19 +121,12 @@ export function EditDividendPage() {
             setFrequency(freq);
 
             if (stock.dividendDates && stock.dividendDates.length > 0) {
-                // DEBUG: Log raw dates from stock object
-                console.log('[EditDividendPage] Raw dividendDates from stock:', JSON.stringify(stock.dividendDates));
-
                 // Sanitize dates when loading to fix corrupted years
-                const dates = stock.dividendDates.map((d, i) => {
-                    console.log(`[EditDividendPage] Processing Q${i + 1}: exDate=${d.exDate}, payDate=${d.payDate}`);
-                    return {
-                        exDate: sanitizeDateYear(d.exDate || ''),
-                        payDate: sanitizeDateYear(d.payDate || '', d.exDate) // Use exDate as reference for payDate
-                    };
-                });
+                const dates = stock.dividendDates.map(d => ({
+                    exDate: sanitizeDateYear(d.exDate || ''),
+                    payDate: sanitizeDateYear(d.payDate || '', d.exDate)
+                }));
                 while (dates.length < 4) dates.push({ exDate: '', payDate: '' });
-                console.log('[EditDividendPage] Sanitized dates:', JSON.stringify(dates));
                 setQuarterlyDates(dates);
             } else if (stock.dividendExDate || stock.dividendPayDate) {
                 setQuarterlyDates([
