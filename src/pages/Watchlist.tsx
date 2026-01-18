@@ -165,14 +165,9 @@ export function Watchlist() {
         };
     }, [lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices]);
 
-    // Unified Buy Handler: Opens EditModal for existing positions, AddModal for new ones
+    // Unified Buy Handler: Always opens Calculator (Buy/Sell Page)
     const handleBuy = (stock: Stock) => {
-        const existingPos = positions.find(p => String(p.stockId) === String(stock.id));
-        if (existingPos) {
-            setEditPosition({ ...existingPos, stock });
-        } else {
-            setBuyStock(stock);
-        }
+        navigate(`/calculator?stock=${stock.id}&mode=buy&from=watchlist`);
     };
 
     return (
