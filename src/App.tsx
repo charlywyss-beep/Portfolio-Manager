@@ -77,7 +77,6 @@ const NavItem = ({ to, icon: Icon, label, onClick }: NavItemProps) => {
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 1024);
-  const location = useLocation();
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);

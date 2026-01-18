@@ -56,7 +56,7 @@ export default defineConfig({
             }));
           } else {
             // HELPER: Scraper Fallback for UCITS ETFs (VWRA.L etc.)
-            const fetchEtfHoldingsScraper = async (symbol: string) => {
+            const fetchEtfHoldingsScraper = async (_symbol: string) => {
               try {
                 // ... (Existing implementation kept same, handled by browser/fetch in middleware context?)
                 // Note: fetch inside Node might need node-fetch or global fetch in Node 18+
