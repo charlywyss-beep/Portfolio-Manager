@@ -18,6 +18,28 @@ const getFrequencyFactor = (freq: string) => {
     }
 };
 
+// Helper to fix corrupted date years (e.g., 0002 instead of 2026)
+const sanitizeDateYear = (dateStr: string, referenceDate?: string): string => {
+    if (!dateStr || dateStr.length < 10) return dateStr;
+
+    // Parse year from YYYY-MM-DD format
+    const year = parseInt(dateStr.substring(0, 4), 10);
+
+    // Check if year is clearly wrong (< 1900 or > 2100)
+    if (year < 1900 || year > 2100) {
+        // Try to use reference date's year
+        if (referenceDate && referenceDate.length >= 4) {
+            const refYear = referenceDate.substring(0, 4);
+            return refYear + dateStr.substring(4);
+        }
+        // Fallback: Assume current decade (2020s)
+        const thisYear = new Date().getFullYear();
+        return thisYear.toString() + dateStr.substring(4);
+    }
+
+    return dateStr;
+};
+
 export function EditDividendPage() {
     const { stockId } = useParams();
     const navigate = useNavigate();
@@ -97,12 +119,19 @@ export function EditDividendPage() {
             setFrequency(freq);
 
             if (stock.dividendDates && stock.dividendDates.length > 0) {
-                const dates = [...stock.dividendDates];
+                // Sanitize dates when loading to fix corrupted years
+                const dates = stock.dividendDates.map(d => ({
+                    exDate: sanitizeDateYear(d.exDate || ''),
+                    payDate: sanitizeDateYear(d.payDate || '', d.exDate) // Use exDate as reference for payDate
+                }));
                 while (dates.length < 4) dates.push({ exDate: '', payDate: '' });
                 setQuarterlyDates(dates);
             } else if (stock.dividendExDate || stock.dividendPayDate) {
                 setQuarterlyDates([
-                    { exDate: stock.dividendExDate || '', payDate: stock.dividendPayDate || '' },
+                    {
+                        exDate: sanitizeDateYear(stock.dividendExDate || ''),
+                        payDate: sanitizeDateYear(stock.dividendPayDate || '', stock.dividendExDate)
+                    },
                     { exDate: '', payDate: '' },
                     { exDate: '', payDate: '' },
                     { exDate: '', payDate: '' }
