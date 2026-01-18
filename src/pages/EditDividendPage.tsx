@@ -20,21 +20,33 @@ const getFrequencyFactor = (freq: string) => {
 
 // Helper to fix corrupted date years (e.g., 0002 instead of 2026)
 const sanitizeDateYear = (dateStr: string, referenceDate?: string): string => {
-    if (!dateStr || dateStr.length < 10) return dateStr;
+    if (!dateStr || dateStr.length < 4) return dateStr;
 
-    // Parse year from YYYY-MM-DD format
+    console.log('[sanitizeDateYear] Input:', dateStr, 'Ref:', referenceDate);
+
+    // Parse year from YYYY-MM-DD format (first 4 chars)
     const year = parseInt(dateStr.substring(0, 4), 10);
 
     // Check if year is clearly wrong (< 1900 or > 2100)
-    if (year < 1900 || year > 2100) {
+    if (isNaN(year) || year < 1900 || year > 2100) {
+        console.log('[sanitizeDateYear] Bad year detected:', year);
+
         // Try to use reference date's year
         if (referenceDate && referenceDate.length >= 4) {
-            const refYear = referenceDate.substring(0, 4);
-            return refYear + dateStr.substring(4);
+            const refYear = parseInt(referenceDate.substring(0, 4), 10);
+            // Validate refYear too
+            if (!isNaN(refYear) && refYear >= 1900 && refYear <= 2100) {
+                const result = refYear.toString() + dateStr.substring(4);
+                console.log('[sanitizeDateYear] Fixed to:', result);
+                return result;
+            }
         }
-        // Fallback: Assume current decade (2020s)
+
+        // Fallback: Use current year
         const thisYear = new Date().getFullYear();
-        return thisYear.toString() + dateStr.substring(4);
+        const result = thisYear.toString() + dateStr.substring(4);
+        console.log('[sanitizeDateYear] Fallback to:', result);
+        return result;
     }
 
     return dateStr;
