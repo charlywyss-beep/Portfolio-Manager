@@ -937,7 +937,7 @@ export function EditDividendPage() {
                                                     <div className="space-y-1">
                                                         <div className="flex justify-between items-center">
                                                             <label className="text-xs text-muted-foreground font-medium uppercase">
-                                                                {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Zahldatum
+                                                                {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Zahl-Datum
                                                             </label>
                                                             {date.payDate && (
                                                                 <button
@@ -953,6 +953,7 @@ export function EditDividendPage() {
                                                         <input
                                                             type="date"
                                                             value={date.payDate}
+                                                            min={date.exDate || undefined}
                                                             onChange={(e) => handleQuarterlyDateChange(idx, 'payDate', e.target.value)}
                                                             className="w-full px-2 py-2 text-sm border rounded bg-background"
                                                         />
@@ -992,7 +993,7 @@ export function EditDividendPage() {
                                             </div>
                                             <div className="space-y-2">
                                                 <div className="flex justify-between items-center">
-                                                    <label className="text-sm font-medium">Zahldatum</label>
+                                                    <label className="text-sm font-medium">Zahl-Datum</label>
                                                     {payDate && (
                                                         <button
                                                             type="button"
@@ -1007,6 +1008,7 @@ export function EditDividendPage() {
                                                 <input
                                                     type="date"
                                                     value={payDate}
+                                                    min={exDate || undefined}
                                                     onChange={(e) => setPayDate(e.target.value)}
                                                     className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                                 />
