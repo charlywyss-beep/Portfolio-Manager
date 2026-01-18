@@ -14,7 +14,7 @@ interface WatchlistPerformanceModalProps {
 
 export function WatchlistPerformanceModal({ isOpen, onClose }: WatchlistPerformanceModalProps) {
     const { convertToCHF, formatCurrency } = useCurrencyFormatter();
-    const { stocks, watchlist, positions, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh } = usePortfolio();
+    const { stocks, watchlists, positions, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh } = usePortfolio();
     const navigate = useNavigate();
 
     // Prevent body scroll when modal is open
@@ -31,9 +31,13 @@ export function WatchlistPerformanceModal({ isOpen, onClose }: WatchlistPerforma
 
     if (!isOpen) return null;
 
+    // Get default watchlist stock IDs
+    const defaultWatchlist = watchlists.find(w => w.isDefault) || watchlists[0];
+    const watchlistStockIds = defaultWatchlist?.stockIds || [];
+
     // Get watchlist stocks and enrich them
     const watchlistData = stocks
-        .filter(s => watchlist.includes(s.id))
+        .filter(s => watchlistStockIds.includes(s.id))
         .map(stock => {
             const pos = positions.find(p => String(p.stockId) === String(stock.id));
             const dailyChange = stock.currentPrice - (stock.previousClose || stock.currentPrice);

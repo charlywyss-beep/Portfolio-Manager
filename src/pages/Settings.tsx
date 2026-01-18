@@ -5,10 +5,10 @@ import { Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, Rotate
 import { ConfirmModal } from '../components/ConfirmModal';
 
 // Helper Component for Stock Management List Items (v3.12.123)
-const StockManagementItem = ({ stock, positions, watchlist, stocks, fixedDeposits, history, importData }: any) => {
+const StockManagementItem = ({ stock, positions, watchlists, stocks, fixedDeposits, history, importData }: any) => {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const isInPortfolio = positions.some((p: any) => p.stockId === stock.id);
-    const isInWatchlist = watchlist.includes(stock.id);
+    const isInWatchlist = watchlists.some((wl: any) => wl.stockIds?.includes(stock.id));
     const isActive = isInPortfolio || isInWatchlist;
 
     return (
@@ -53,8 +53,7 @@ const StockManagementItem = ({ stock, positions, watchlist, stocks, fixedDeposit
                         positions,
                         stocks: updatedStocks,
                         fixedDeposits,
-                        history,
-                        watchlist
+                        watchlists
                     });
                 }}
                 title="Aktie löschen"
@@ -65,7 +64,7 @@ const StockManagementItem = ({ stock, positions, watchlist, stocks, fixedDeposit
 };
 
 export function Settings() {
-    const { positions, stocks, fixedDeposits, history, watchlist, importData, mortgageData } = usePortfolio();
+    const { positions, stocks, fixedDeposits, history, watchlists, importData, mortgageData } = usePortfolio();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [importMessage, setImportMessage] = useState('');
@@ -77,8 +76,8 @@ export function Settings() {
         const ownedIds = new Set(positions.map(p => p.stockId));
         return {
             portfolio: stocks.filter(s => ownedIds.has(s.id)),
-            watchlist: stocks.filter(s => watchlist.includes(s.id) && !ownedIds.has(s.id)),
-            other: stocks.filter(s => !watchlist.includes(s.id) && !ownedIds.has(s.id))
+            watchlistOnly: stocks.filter(s => watchlists.some(wl => wl.stockIds.includes(s.id)) && !ownedIds.has(s.id)),
+            other: stocks.filter(s => !watchlists.some(wl => wl.stockIds.includes(s.id)) && !ownedIds.has(s.id))
         };
     }, [stocks, positions, watchlist]);
 
@@ -269,14 +268,14 @@ export function Settings() {
                             )}
 
                             {/* Watchlist Category */}
-                            {categorizedStocks.watchlist.length > 0 && (
+                            {categorizedStocks.watchlistOnly.length > 0 && (
                                 <div className="space-y-2">
                                     <div className="sticky top-0 bg-card z-10 py-2 border-b border-border/50 flex items-center justify-between mt-4">
                                         <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">In Watchlist</span>
-                                        <span className="bg-blue-500/10 text-blue-600 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">{categorizedStocks.watchlist.length}</span>
+                                        <span className="bg-blue-500/10 text-blue-600 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">{categorizedStocks.watchlistOnly.length}</span>
                                     </div>
                                     <div className="space-y-2">
-                                        {categorizedStocks.watchlist.map(stock => (
+                                        {categorizedStocks.watchlistOnly.map(stock => (
                                             <StockManagementItem
                                                 key={stock.id}
                                                 stock={stock}
@@ -305,7 +304,7 @@ export function Settings() {
                                                 key={stock.id}
                                                 stock={stock}
                                                 positions={positions}
-                                                watchlist={watchlist}
+                                                watchlists={watchlists}
                                                 stocks={stocks}
                                                 fixedDeposits={fixedDeposits}
                                                 history={history}
@@ -353,7 +352,7 @@ export function Settings() {
                         stocks: json.stocks,
                         fixedDeposits: json.fixedDeposits || [],
                         history: json.history || [],
-                        watchlist: (json.watchlist || []) as string[]
+                        watchlists: json.watchlists || (json.watchlist ? [{ id: 'default', name: 'Merkliste', stockIds: json.watchlist, isDefault: true }] : [])
                     });
                     if (success) {
                         setImportStatus('success');
@@ -370,7 +369,7 @@ export function Settings() {
                 isOpen={isResetConfirmOpen}
                 onClose={() => setIsResetConfirmOpen(false)}
                 onConfirm={() => {
-                    importData({ positions: [], stocks: [], fixedDeposits: [], history: [], watchlist: [] });
+                    importData({ positions: [], stocks: [], fixedDeposits: [], history: [], watchlists: [] });
                     setImportStatus('success');
                     setImportMessage("Alle Daten wurden gelöscht.");
                 }}
