@@ -558,12 +558,12 @@ function WatchlistTable({
     }
 
     return (
-        <table className="w-full text-left border-collapse min-w-[1000px] md:min-w-0">
+        <table className="w-full text-left border-collapse min-w-[1000px] md:min-w-0 table-fixed">
             <thead>
                 <tr className="border-b bg-muted/20">
-                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider w-auto whitespace-nowrap sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktie</th>
+                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider whitespace-nowrap sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[280px] md:w-[25%]">Aktie</th>
                     <th
-                        className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors"
+                        className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors w-[10%]"
                         onClick={() => {
                             setSortConfig({
                                 key: 'yield',
@@ -573,9 +573,9 @@ function WatchlistTable({
                     >
                         Div. Rendite {sortConfig.key === 'yield' && (sortConfig.direction === 'desc' ? '↓' : '↑')}
                     </th>
-                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right">Aktueller Kurs</th>
+                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right w-[15%]">Aktueller Kurs</th>
                     <th
-                        className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors"
+                        className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors w-[15%]"
                         onClick={() => {
                             setSortConfig({
                                 key: 'gap',
@@ -586,7 +586,7 @@ function WatchlistTable({
                         Kauflimit {sortConfig.key === 'gap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
                     </th>
                     <th
-                        className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors"
+                        className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors w-[10%]"
                         onClick={() => {
                             setSortConfig({
                                 key: 'sellGap',
@@ -596,9 +596,9 @@ function WatchlistTable({
                     >
                         Verkaufslimit {sortConfig.key === 'sellGap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
                     </th>
-                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right">EX-Tag</th>
-                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right">Zahl-Tag</th>
-                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-center w-[100px] sticky -right-px z-20 bg-card shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
+                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right w-[10%]">EX-Tag</th>
+                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right w-[10%]">Zahl-Tag</th>
+                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-center w-[110px] sticky -right-px z-20 bg-card shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktionen</th>
                 </tr>
             </thead>
             <tbody className="divide-y">
@@ -625,8 +625,9 @@ function WatchlistTable({
                                     <div className="flex flex-col min-w-0">
                                         <div className="flex items-center gap-1.5">
                                             <span
-                                                className="font-bold text-sm whitespace-pre leading-snug group-hover:text-primary transition-colors cursor-pointer"
+                                                className="font-bold text-sm truncate leading-snug group-hover:text-primary transition-colors cursor-pointer"
                                                 onClick={() => onNavigate(stock.id)}
+                                                title={stock.name}
                                             >
                                                 {stock.name}
                                             </span>
