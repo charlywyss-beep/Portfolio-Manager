@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, NavLink, Link } from 'react-router-dom';
-import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, Menu, X, ArrowLeftRight, Landmark } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, ArrowLeftRight, Landmark } from 'lucide-react';
 import { cn } from './utils';
 import { PortfolioProvider } from './context/PortfolioContext';
 import { ExchangeRateProvider } from './context/ExchangeRateContext';
-import packageJson from '../package.json';
+import { Header } from './components/Header';
 
 import { Dashboard } from './pages/Dashboard';
 import { Portfolio } from './pages/Portfolio';
@@ -92,18 +92,7 @@ function App() {
     }
   }, [isDarkMode]);
 
-  const getPageTitle = (pathname: string) => {
-    if (pathname === '/') return 'Portfolio Übersicht';
-    if (pathname === '/portfolio') return 'Positionen';
-    if (pathname === '/watchlist') return 'Watchlist';
-    if (pathname === '/calculator') return 'Kauf / Verkauf';
-    if (pathname === '/dividends') return 'Dividenden';
-    if (pathname === '/mortgage') return 'Budget';
-    if (pathname === '/exchange-rates') return 'Wechselkurse';
-    if (pathname === '/settings') return 'Einstellungen';
-    if (pathname.startsWith('/stock/')) return 'Aktien Details';
-    return 'Portfolio Manager';
-  };
+
 
   const closeSidebarOnMobile = () => {
     if (window.innerWidth < 1024) setIsSidebarOpen(false);
@@ -152,7 +141,7 @@ function App() {
               }}
               title="App neu laden (Cache leeren)"
             >
-              <div className="text-[10px] text-muted-foreground mb-4 px-2">v3.12.158</div>
+              <span className="text-[10px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">v3.12.159</span>
             </div>
 
             <nav className="flex-1 p-4 space-y-2 w-fit">
@@ -182,31 +171,7 @@ function App() {
 
           {/* Main Content */}
           <main className="flex-1 overflow-auto bg-background transition-all duration-300">
-            <header className="h-16 border-b border-border flex items-center justify-between px-4 md:px-8 bg-card sticky top-0 z-[200]">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  className="p-2 hover:bg-accent rounded-md transition-colors relative z-50 lg:hidden"
-                  aria-label="Toggle menu"
-                >
-                  {isSidebarOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-                </button>
-                <button
-                  onClick={() => {
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('v', Date.now().toString());
-                    window.location.href = url.toString();
-                  }}
-                  className="text-xs font-semibold text-foreground/90 hover:text-primary transition-colors bg-secondary/20 hover:bg-secondary/40 px-2 py-0.5 rounded"
-                  title="Klicken zum Neuladen (Cache leeren)"
-                >
-                  v{packageJson.version}
-                </button>
-                <h2 className="text-lg font-semibold capitalize whitespace-nowrap">
-                  {getPageTitle(location.pathname)}
-                </h2>
-              </div>
-            </header>
+            <Header isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
             <div>
               <Routes>

@@ -1,6 +1,8 @@
 import { ShieldCheck, Edit, Trash2 } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { Logo } from './Logo';
+import { ConfirmModal } from './ConfirmModal';
+import { useState } from 'react';
 
 interface VorsorgeSectionProps {
     searchTerm: string;
@@ -10,6 +12,7 @@ interface VorsorgeSectionProps {
 
 export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, setEditingFixedDeposit }: VorsorgeSectionProps) {
     const { fixedDeposits, deleteFixedDeposit } = usePortfolio();
+    const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean, fdId: string | null, name: string }>({ isOpen: false, fdId: null, name: '' });
 
     const vorsorgeDeposits = fixedDeposits?.filter(fd => fd.accountType === 'vorsorge') || [];
 
@@ -133,7 +136,7 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                                 </button>
                                                 <button
                                                     onClick={() => {
-                                                        if (confirm(`Konto bei "${fd.bankName}" wirklich löschen?`)) deleteFixedDeposit(fd.id);
+                                                        setConfirmDelete({ isOpen: true, fdId: fd.id, name: fd.bankName });
                                                     }}
                                                     className="text-muted-foreground hover:text-red-600 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
                                                     title="Löschen"
@@ -149,6 +152,17 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                     </table>
                 </div>
             </div>
+            <ConfirmModal
+                isOpen={confirmDelete.isOpen}
+                onClose={() => setConfirmDelete({ isOpen: false, fdId: null, name: '' })}
+                onConfirm={() => {
+                    if (confirmDelete.fdId) {
+                        deleteFixedDeposit(confirmDelete.fdId);
+                    }
+                }}
+                title="Vorsorge-Konto löschen"
+                message={`Möchten Sie das Vorsorge-Konto bei "${confirmDelete.name}" wirklich löschen?`}
+            />
         </div>
     );
 }

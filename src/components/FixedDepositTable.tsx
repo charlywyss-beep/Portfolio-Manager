@@ -3,6 +3,8 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { Logo } from './Logo';
+import { ConfirmModal } from './ConfirmModal';
+import { useState } from 'react';
 
 interface FixedDepositTableProps {
     searchTerm: string;
@@ -13,6 +15,7 @@ interface FixedDepositTableProps {
 export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, setEditingFixedDeposit }: FixedDepositTableProps) {
     const { fixedDeposits, deleteFixedDeposit } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
+    const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean, fdId: string | null, name: string }>({ isOpen: false, fdId: null, name: '' });
 
     const filteredFixedDeposits = fixedDeposits?.filter(fd =>
         fd.accountType !== 'vorsorge' && (
@@ -122,9 +125,7 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                                                 </button>
                                                 <button
                                                     onClick={() => {
-                                                        if (confirm(`Konto bei "${fd.bankName}" wirklich löschen?`)) {
-                                                            deleteFixedDeposit(fd.id);
-                                                        }
+                                                        setConfirmDelete({ isOpen: true, fdId: fd.id, name: fd.bankName });
                                                     }}
                                                     className="text-muted-foreground hover:text-red-600 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
                                                     title="Löschen"
@@ -147,6 +148,17 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                     </table>
                 </div>
             </div>
+            <ConfirmModal
+                isOpen={confirmDelete.isOpen}
+                onClose={() => setConfirmDelete({ isOpen: false, fdId: null, name: '' })}
+                onConfirm={() => {
+                    if (confirmDelete.fdId) {
+                        deleteFixedDeposit(confirmDelete.fdId);
+                    }
+                }}
+                title="Konto löschen"
+                message={`Möchten Sie das Konto bei "${confirmDelete.name}" wirklich löschen?`}
+            />
         </div>
     );
 }

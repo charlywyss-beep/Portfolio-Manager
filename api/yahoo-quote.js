@@ -24,12 +24,49 @@ export default async function handler(req, res) {
 
         // Fetch robust data using yahoo-finance2
         // We fetch BOTH quote() (simple, robust) and quoteSummary() (rich details) to ensure we get data
-        const [quoteBasic, quoteSummary] = await Promise.all([
-            yahooFinance.quote(symbol).catch(() => null),
+        // SINGLE REQUEST: Use quoteSummary() for rich details
+        // ALSO fetch quote() for basic data fallback (e.g. price, name)
+        const [quoteSummary, quoteBasic] = await Promise.all([
             yahooFinance.quoteSummary(symbol, {
-                modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'topHoldings']
-            }).catch(() => null)
+                modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'topHoldings', 'fundProfile', 'assetProfile']
+            }).catch(() => null),
+            yahooFinance.quote(symbol).catch(() => null)
         ]);
+
+        // HELPER: Scraper Fallback for UCITS ETFs (VWRA.L etc.)
+        const fetchEtfHoldingsScraper = async (symbol) => {
+            try {
+                console.log(`[Vercel Scraper] Attempting HTML fallback for ${symbol}...`);
+                const url = `https://finance.yahoo.com/quote/${symbol}/holdings`;
+                const response = await fetch(url, {
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+                });
+                if (!response.ok) return null;
+                const html = await response.text();
+
+                // Find the JSON data blob in the HTML
+                const jsonMatch = html.match(/root\.App\.main\s*=\s*({.*?});/s) || html.match(/context\s*=\s*({.*?});/s);
+                if (!jsonMatch) return null;
+
+                const data = JSON.parse(jsonMatch[1]);
+                const store = data.context?.dispatcher?.stores?.QuoteSummaryStore;
+                if (!store || !store.topHoldings) return null;
+
+                console.log(`[Vercel Scraper] Success! Extracted topHoldings from HTML for ${symbol}`);
+                return store.topHoldings;
+            } catch (e) {
+                console.warn(`[Vercel Scraper] Failed for ${symbol}:`, e.message);
+                return null;
+            }
+        };
+
+        // FALLBACK: If API returns no holdings, try scraper
+        if (quoteSummary && (!quoteSummary.topHoldings || (!quoteSummary.topHoldings.sectorWeightings && !quoteSummary.topHoldings.regionalExposure))) {
+            const scrapedHoldings = await fetchEtfHoldingsScraper(symbol);
+            if (scrapedHoldings) {
+                quoteSummary.topHoldings = scrapedHoldings;
+            }
+        }
 
         if (!quoteSummary && !quoteBasic) {
             throw new Error('No data found');
@@ -49,6 +86,9 @@ export default async function handler(req, res) {
         // Prioritize quoteBasic for price data as it's often more reliable for international stocks
         const quote = {
             symbol: symbol,
+            longName: quoteBasic?.longName || quoteSummary?.price?.longName,
+            shortName: quoteBasic?.shortName || quoteSummary?.price?.shortName,
+            displayName: quoteBasic?.displayName || quoteBasic?.longName,
             regularMarketPrice: quoteBasic?.regularMarketPrice || quoteSummary?.price?.regularMarketPrice,
             // Try ALL sources for Open
             regularMarketOpen: quoteBasic?.regularMarketOpen || quoteSummary?.price?.regularMarketOpen || quoteSummary?.summaryDetail?.open,

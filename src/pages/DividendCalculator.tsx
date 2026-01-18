@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Calculator, Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw } from 'lucide-react';
-import { fetchStockHistory, searchStocks } from '../services/yahoo-finance';
+import { fetchStockHistory, searchStocks, fetchStockQuote } from '../services/yahoo-finance';
 
 import { jsPDF } from 'jspdf';
 import { usePortfolio } from '../context/PortfolioContext';
@@ -108,7 +108,7 @@ const StockListItem = ({ stock, onClick, subtitle }: { stock: any; onClick: () =
 export function DividendCalculator() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { stocks, watchlist, addStock, addToWatchlist, updateStock, simulatorState, updateSimulatorState, positions, addPosition, updatePosition, deletePosition } = usePortfolio();
+    const { stocks, watchlists, addStock, addToWatchlist, updateStock, simulatorState, updateSimulatorState, positions, addPosition, updatePosition, deletePosition } = usePortfolio();
     const { rates } = useExchangeRates();
 
     // Catch-all: Ensure GBp is always converted to GBP on mount/update
@@ -503,14 +503,14 @@ export function DividendCalculator() {
         if (searchTerm) return null; // Use normal search if typing
 
         const ownedIds = new Set(positions.map(p => p.stockId));
-        const watchlistIds = new Set(watchlist);
+        const watchlistIds = new Set(watchlists.flatMap(w => w.stockIds));
 
         const owned = stocks.filter(s => ownedIds.has(s.id));
         const watch = stocks.filter(s => watchlistIds.has(s.id) && !ownedIds.has(s.id));
         const other = stocks.filter(s => !watchlistIds.has(s.id) && !ownedIds.has(s.id));
 
         return { owned, watch, other };
-    }, [stocks, positions, watchlist, searchTerm]);
+    }, [stocks, positions, watchlists, searchTerm]);
 
     // Autofill Prevention State
     const [isNameReadOnly, setIsNameReadOnly] = useState(true);
@@ -744,7 +744,7 @@ export function DividendCalculator() {
                     currency: (simCurrency as any) || 'CHF',
                     currentPrice: price,
                     previousClose: price,
-                    sector: simulatorState.simSector || 'Simuliert',
+                    sector: simulatorState.simSector || '',
                     dividendAmount: dividend,
                     dividendYield: price > 0 ? (dividend / price) * 100 : 0,
                     dividendFrequency: 'annually'
@@ -865,7 +865,7 @@ export function DividendCalculator() {
                 currency: simCurrency as any || 'CHF',
                 currentPrice: price,
                 previousClose: price,
-                sector: simulatorState.simSector || 'Simuliert',
+                sector: simulatorState.simSector || '',
                 dividendAmount: dividend,
                 dividendYield: price > 0 ? (dividend / price) * 100 : 0,
                 dividendFrequency: 'annually',
@@ -1253,14 +1253,81 @@ export function DividendCalculator() {
                                                             onClick={async () => {
                                                                 const s = simSymbol || simName;
                                                                 if (!s) return;
-                                                                const res = await fetchStockHistory(s, '1D');
+
+                                                                // Run Price Fetch, Direct Quote & Search in Parallel
+                                                                const [res, quoteDetails, searchRes] = await Promise.all([
+                                                                    fetchStockHistory(s, '1D'),
+                                                                    fetchStockQuote(s),
+                                                                    searchStocks(s)
+                                                                ]);
+
+
+
+                                                                // 1. Update Price & Currency (Primary Source: History Chart)
                                                                 if (res.data && res.data.length > 0) {
                                                                     let val = res.data[res.data.length - 1].value;
-                                                                    if (simCurrency === 'GBP') {
+                                                                    const fetchedCurrency = res.currency;
+
+                                                                    // Update Currency if available
+                                                                    const nextCurrency = fetchedCurrency || simCurrency;
+
+                                                                    // Legacy Safety: Ensure GBP/GBp logic is consistent
+                                                                    if (nextCurrency === 'GBP' || nextCurrency === 'GBp') {
                                                                         const isLSE = s.toUpperCase().endsWith('.L') || (simIsin && simIsin.startsWith('GB'));
-                                                                        if (isLSE && val > 50) val /= 100;
+                                                                        if (isLSE && val > 500) val /= 100;
                                                                     }
-                                                                    updateSimulatorState({ price: val });
+
+                                                                    updateSimulatorState({
+                                                                        price: val,
+                                                                        simCurrency: nextCurrency === 'GBp' ? 'GBP' : (nextCurrency || 'CHF')
+                                                                    });
+                                                                }
+
+                                                                // 2. Update Metadata (Name, ISIN)
+                                                                // PRIORITY 1: Direct Quote Details (Best for valid symbols like 'ASML.AS')
+                                                                if (quoteDetails && !quoteDetails.error && (quoteDetails.name || quoteDetails.price)) {
+                                                                    // If we have a direct quote, it's usually the best source.
+                                                                    // Even if name is null, the fact that we got a result means the symbol is valid.
+                                                                    const newName = quoteDetails.name || (quoteDetails.country ? (simName || s) : s);
+
+                                                                    // Note: fetchStockQuote doesn't return ISIN usually (Yahoo Quote API limit), but Search DOES.
+                                                                    // So we might still want to grab ISIN from Search if available.
+                                                                    let newIsin = simIsin;
+                                                                    if (searchRes && searchRes.length > 0) {
+                                                                        const match = searchRes.find((q: any) => q.symbol.toUpperCase() === s.toUpperCase()) || searchRes[0];
+                                                                        if (match && match.isin) newIsin = match.isin;
+                                                                    }
+
+                                                                    updateSimulatorState({
+                                                                        simName: newName,
+                                                                        simSymbol: s, // We confirmed this symbol works
+                                                                        simIsin: newIsin
+                                                                    });
+                                                                }
+                                                                // PRIORITY 2: Search API Result (Best for queries like 'ASML')
+                                                                else if (searchRes && searchRes.length > 0) {
+                                                                    // ... (Existing Search Logic)
+                                                                    const searchUpper = s.toUpperCase();
+                                                                    let match = searchRes.find((q: any) => q.symbol.toUpperCase() === searchUpper);
+
+                                                                    if (!match) {
+                                                                        match = searchRes.find((q: any) => q.symbol.toUpperCase().startsWith(searchUpper));
+                                                                    }
+
+                                                                    if (!match) {
+                                                                        match = searchRes[0];
+                                                                    }
+
+                                                                    if (match) {
+                                                                        const newName = match.shortname || match.longname || match.symbol;
+                                                                        const newIsin = match.isin || simIsin;
+
+                                                                        updateSimulatorState({
+                                                                            simName: newName,
+                                                                            simSymbol: match.symbol,
+                                                                            simIsin: newIsin
+                                                                        });
+                                                                    }
                                                                 }
                                                             }}
                                                             className="text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-0.5 rounded transition-colors"

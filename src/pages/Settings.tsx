@@ -2,9 +2,11 @@ import { useState, useRef, useMemo } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 // Helper Component for Stock Management List Items (v3.12.123)
 const StockManagementItem = ({ stock, positions, watchlist, stocks, fixedDeposits, history, importData }: any) => {
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const isInPortfolio = positions.some((p: any) => p.stockId === stock.id);
     const isInWatchlist = watchlist.includes(stock.id);
     const isActive = isInPortfolio || isInWatchlist;
@@ -31,18 +33,7 @@ const StockManagementItem = ({ stock, positions, watchlist, stocks, fixedDeposit
                 )}
             </div>
             <button
-                onClick={() => {
-                    if (window.confirm(`"${stock.name}" wirklich löschen?`)) {
-                        const updatedStocks = stocks.filter((s: any) => s.id !== stock.id);
-                        importData({
-                            positions,
-                            stocks: updatedStocks,
-                            fixedDeposits,
-                            history,
-                            watchlist
-                        });
-                    }
-                }}
+                onClick={() => setIsConfirmOpen(true)}
                 disabled={isActive}
                 className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${isActive
                     ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
@@ -52,6 +43,23 @@ const StockManagementItem = ({ stock, positions, watchlist, stocks, fixedDeposit
             >
                 {isActive ? 'Aktiv' : 'Löschen'}
             </button>
+
+            <ConfirmModal
+                isOpen={isConfirmOpen}
+                onClose={() => setIsConfirmOpen(false)}
+                onConfirm={() => {
+                    const updatedStocks = stocks.filter((s: any) => s.id !== stock.id);
+                    importData({
+                        positions,
+                        stocks: updatedStocks,
+                        fixedDeposits,
+                        history,
+                        watchlist
+                    });
+                }}
+                title="Aktie löschen"
+                message={`Möchten Sie "${stock.name}" wirklich aus der Datenbank löschen?`}
+            />
         </div>
     );
 };
@@ -61,6 +69,8 @@ export function Settings() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [importMessage, setImportMessage] = useState('');
+    const [confirmImport, setConfirmImport] = useState<{ isOpen: boolean, data: any }>({ isOpen: false, data: null });
+    const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
     // Categorized Stocks (v3.12.123)
     const categorizedStocks = useMemo(() => {
@@ -113,23 +123,8 @@ export function Settings() {
                     throw new Error("Ungültiges Backup-Format");
                 }
 
-                if (window.confirm(`Möchten Sie wirklich ein Backup laden?\n\nDatum: ${json.exportedAt || 'Unbekannt'}\nPositionen: ${json.positions.length}\n\nACHTUNG: Alle aktuellen Daten werden überschrieben!`)) {
-                    const success = importData({
-                        positions: json.positions,
-                        stocks: json.stocks,
-                        fixedDeposits: json.fixedDeposits || [],
-                        history: json.history || [],
-                        watchlist: (json.watchlist || []) as string[]
-                    });
-                    if (success) {
-                        setImportStatus('success');
-                        setImportMessage(`Erfolgreich geladen: ${json.positions.length} Positionen, ${json.fixedDeposits?.length || 0} Bankkonten.`);
-                    } else {
-                        throw new Error("Fehler beim Verarbeiten der Daten.");
-                    }
-                } else {
-                    // Cancelled
-                    if (fileInputRef.current) fileInputRef.current.value = '';
+                if (json.positions && json.stocks) {
+                    setConfirmImport({ isOpen: true, data: json });
                 }
             } catch (err: any) {
                 console.error(err);
@@ -141,11 +136,7 @@ export function Settings() {
     };
 
     const handleReset = () => {
-        if (window.confirm("ACHTUNG: Wirklich ALLE Daten unwiderruflich löschen?\n\nDas Portfolio wird komplett zurückgesetzt.")) {
-            importData({ positions: [], stocks: [], fixedDeposits: [], history: [], watchlist: [] });
-            setImportStatus('success');
-            setImportMessage("Alle Daten wurden gelöscht.");
-        }
+        setIsResetConfirmOpen(true);
     };
 
     return (
@@ -348,6 +339,46 @@ export function Settings() {
                     <span>Alles löschen</span>
                 </button>
             </div>
+
+            <ConfirmModal
+                isOpen={confirmImport.isOpen}
+                onClose={() => {
+                    setConfirmImport({ isOpen: false, data: null });
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                }}
+                onConfirm={() => {
+                    const json = confirmImport.data;
+                    const success = importData({
+                        positions: json.positions,
+                        stocks: json.stocks,
+                        fixedDeposits: json.fixedDeposits || [],
+                        history: json.history || [],
+                        watchlist: (json.watchlist || []) as string[]
+                    });
+                    if (success) {
+                        setImportStatus('success');
+                        setImportMessage(`Erfolgreich geladen: ${json.positions.length} Positionen, ${json.fixedDeposits?.length || 0} Bankkonten.`);
+                    }
+                }}
+                title="Backup wiederherstellen"
+                message={`Möchten Sie wirklich dieses Backup laden? Alle aktuellen Daten werden überschrieben!\n\nDatum: ${confirmImport.data?.exportedAt || 'Unbekannt'}\nPositionen: ${confirmImport.data?.positions?.length || 0}`}
+                confirmText="Backup laden"
+                variant="warning"
+            />
+
+            <ConfirmModal
+                isOpen={isResetConfirmOpen}
+                onClose={() => setIsResetConfirmOpen(false)}
+                onConfirm={() => {
+                    importData({ positions: [], stocks: [], fixedDeposits: [], history: [], watchlist: [] });
+                    setImportStatus('success');
+                    setImportMessage("Alle Daten wurden gelöscht.");
+                }}
+                title="Daten zurücksetzen"
+                message="ACHTUNG: Wirklich ALLE Daten unwiderruflich löschen? Das Portfolio wird komplett zurückgesetzt."
+                confirmText="Alles löschen"
+                variant="danger"
+            />
         </div >
     );
 }

@@ -5,7 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { useCurrencyFormatter } from '../utils/currency';
 
 import { getCurrentDividendPeriod, translateFrequency } from '../utils/dividend';
-import { Eye, Plus, Trash2, Edit, ShoppingBag, RefreshCw, TrendingUp } from 'lucide-react';
+import { Eye, Plus, Trash2, Edit, ShoppingBag, RefreshCw, TrendingUp, ChevronDown, ChevronRight, PieChart } from 'lucide-react';
+
 import { Logo } from '../components/Logo';
 import { cn } from '../utils';
 import { estimateMarketState } from '../utils/market';
@@ -17,18 +18,55 @@ import type { Stock } from '../types';
 
 export function Watchlist() {
     const navigate = useNavigate();
-    const { stocks, watchlist, positions, removeFromWatchlist, addPosition, updatePosition, deletePosition, lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices, refreshTick } = usePortfolio(); // Get refresh + tick
+    const { stocks, watchlists, positions, removeFromWatchlist, addPosition, updatePosition, deletePosition, lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices, refreshTick, createWatchlist, deleteWatchlist, renameWatchlist } = usePortfolio(); // Get refresh + tick
     const { formatCurrency } = useCurrencyFormatter();
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
     const [editPosition, setEditPosition] = useState<any>(null); // State for editing position
     const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
+
+    // Collapsible states
+    const [isOwnedStocksOpen, setIsOwnedStocksOpen] = useState(true);
+    const [isOwnedEtfsOpen, setIsOwnedEtfsOpen] = useState(true);
+    const [isPotentialStocksOpen, setIsPotentialStocksOpen] = useState(false);
+    const [isPotentialEtfsOpen, setIsPotentialEtfsOpen] = useState(false);
+
+
+    // Multi-Watchlist State
+    const [activeWatchlistId, setActiveWatchlistId] = useState<string>('');
+
+    // Initialize active watchlist
+    useEffect(() => {
+        if (watchlists.length > 0 && !activeWatchlistId) {
+            // Prefer "Merkliste" (default) if available, otherwise first
+            const defaultList = watchlists.find(w => w.isDefault) || watchlists[0];
+            setActiveWatchlistId(defaultList.id);
+        } else if (watchlists.length > 0 && !watchlists.find(w => w.id === activeWatchlistId)) {
+            // Active list was deleted? Fallback
+            setActiveWatchlistId(watchlists[0].id);
+        }
+    }, [watchlists, activeWatchlistId]);
+
+    const activeWatchlist = watchlists.find(w => w.id === activeWatchlistId) || watchlists[0];
 
     // Sorting
     const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'yield' | 'gap' | 'sellGap', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
 
     // Filter stocks that are in the watchlist
     const watchlistStocks = stocks
-        .filter(s => watchlist.includes(s.id))
+        .filter(s => {
+            if (!activeWatchlist) return false;
+
+            // Check explicit membership
+            const explicitlyInList = activeWatchlist.stockIds.includes(s.id);
+
+            // For Default List ("Merkliste"), AUTO-INCLUDE all owned positions
+            if (activeWatchlist.isDefault) {
+                const isOwned = positions.some(p => String(p.stockId) === String(s.id));
+                return explicitlyInList || isOwned;
+            }
+
+            return explicitlyInList;
+        })
         .sort((a, b) => {
             if (sortConfig.key === 'name') {
                 return a.name.localeCompare(b.name);
@@ -59,9 +97,21 @@ export function Watchlist() {
             return 0;
         });
 
-    // Split into sections
-    const ownedWatchlistStocks = watchlistStocks.filter(s => positions.some(p => String(p.stockId) === String(s.id)));
-    const potentialWatchlistStocks = watchlistStocks.filter(s => !positions.some(p => String(p.stockId) === String(s.id)));
+    // Split into sections (Stocks vs ETFs)
+    const ownedStocks = watchlistStocks.filter(s =>
+        positions.some(p => String(p.stockId) === String(s.id)) && (!s.type || s.type === 'stock')
+    );
+    const ownedEtfs = watchlistStocks.filter(s =>
+        positions.some(p => String(p.stockId) === String(s.id)) && s.type === 'etf'
+    );
+
+    const potentialStocks = watchlistStocks.filter(s =>
+        !positions.some(p => String(p.stockId) === String(s.id)) && (!s.type || s.type === 'stock')
+    );
+    const potentialEtfs = watchlistStocks.filter(s =>
+        !positions.some(p => String(p.stockId) === String(s.id)) && s.type === 'etf'
+    );
+
 
     // Unified Timer Tracking (v3.12.70): Replaced local interval with dependency on global refreshTick
     useEffect(() => {
@@ -123,52 +173,164 @@ export function Watchlist() {
                                 className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm"
                             >
                                 <Plus className="size-4" />
-                                <span>Aktie hinzufügen</span>
+                                <span>Hinzufügen</span>
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
 
+            {/* Watchlist Tabs */}
+            <div className="px-4 pb-2 mt-4 overflow-x-auto">
+                <div className="flex items-center gap-2 min-w-max">
+                    {watchlists.map(wl => (
+                        <div key={wl.id} className="relative group">
+                            <button
+                                onClick={() => setActiveWatchlistId(wl.id)}
+                                className={cn(
+                                    "px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                                    activeWatchlistId === wl.id
+                                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                        : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+                                )}
+                            >
+                                {wl.name}
+                            </button>
+                            {/* Delete Button (only for non-default lists) */}
+                            {!wl.isDefault && activeWatchlistId === wl.id && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (confirm(`Liste "${wl.name}" wirklich löschen?`)) {
+                                            deleteWatchlist(wl.id);
+                                            setActiveWatchlistId(''); // Reset to trigger effect
+                                        }
+                                    }}
+                                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                                    title="Liste löschen"
+                                >
+                                    <Trash2 className="size-3" />
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                    {/* Add List Button */}
+                    <button
+                        onClick={() => {
+                            const name = window.prompt("Name der neuen Liste:");
+                            if (name) createWatchlist(name);
+                        }}
+                        className="p-2 rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors border border-border"
+                        title="Neue Liste erstellen"
+                    >
+                        <Plus className="size-4" />
+                    </button>
+                    {/* Rename Button (for active list) */}
+                    {activeWatchlist && (
+                        <button
+                            onClick={() => {
+                                const newName = window.prompt("Neuer Name:", activeWatchlist.name);
+                                if (newName) renameWatchlist(activeWatchlist.id, newName);
+                            }}
+                            className="p-2 ml-2 rounded-full text-muted-foreground hover:bg-accent transition-colors"
+                            title="Liste umbenennen"
+                        >
+                            <Edit className="size-4" />
+                        </button>
+                    )}
+                </div>
+            </div>
+
             <div className="w-full px-2 py-4 md:px-4 space-y-8">
-                {/* OWNED WATCHLIST */}
+                {/* 1. OWNED STOCKS (Always Visible) */}
                 <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-green-500/5 gap-2">
+
+                    <button
+                        onClick={() => setIsOwnedStocksOpen(!isOwnedStocksOpen)}
+                        className="w-full flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-green-500/5 gap-2 hover:bg-green-500/10 transition-colors text-left"
+                    >
                         <div className="flex items-center gap-2">
                             <ShoppingBag className="size-5 text-green-600" />
                             <h2 className="text-lg font-bold">Aktien im Bestand</h2>
+                            {isOwnedStocksOpen ? <ChevronDown className="size-4 ml-2 opacity-50" /> : <ChevronRight className="size-4 ml-2 opacity-50" />}
                         </div>
-                    </div>
+                    </button>
 
-                    <div className="overflow-x-auto w-full overscroll-x-none border-b border-border">
-                        <WatchlistTable
-                            stocks={ownedWatchlistStocks}
-                            sortConfig={sortConfig}
-                            setSortConfig={setSortConfig}
-                            onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                            onBuy={(stock) => setBuyStock(stock)}
-                            onEdit={(id) => {
-                                const pos = positions.find(p => String(p.stockId) === String(id));
-                                if (pos) {
-                                    const stock = stocks.find(s => String(s.id) === String(id));
-                                    if (stock) {
-                                        setEditPosition({ ...pos, stock });
+                    {isOwnedStocksOpen && (
+                        <div className="overflow-x-auto w-full overscroll-x-none border-b border-border animate-in slide-in-from-top-2 duration-200">
+                            <WatchlistTable
+                                stocks={ownedStocks}
+                                sortConfig={sortConfig}
+                                setSortConfig={setSortConfig}
+                                onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
+                                onBuy={(stock) => setBuyStock(stock)}
+                                onEdit={(id) => {
+                                    const pos = positions.find(p => String(p.stockId) === String(id));
+                                    if (pos) {
+                                        const stock = stocks.find(s => String(s.id) === String(id));
+                                        if (stock) {
+                                            setEditPosition({ ...pos, stock });
+                                        }
                                     }
-                                }
-                            }}
-                            onRemove={(id) => removeFromWatchlist(id)}
-                            formatCurrency={formatCurrency}
-                            emptyMessage="Keine beobachteten Aktien mit Bestand."
-                        />
-                    </div>
+                                }}
+                                onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
+                                formatCurrency={formatCurrency}
+                                emptyMessage="Keine Aktien im Bestand."
+                            />
+                        </div>
+                    )}
                 </div>
 
-                {/* POTENTIAL WATCHLIST */}
+                {/* 2. OWNED ETFS (Always Visible if present) */}
+                {ownedEtfs.length > 0 && (
+                    <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
+                        <button
+                            onClick={() => setIsOwnedEtfsOpen(!isOwnedEtfsOpen)}
+                            className="w-full flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-green-500/5 gap-2 hover:bg-green-500/10 transition-colors text-left"
+                        >
+                            <div className="flex items-center gap-2">
+                                <PieChart className="size-5 text-green-600" />
+                                <h2 className="text-lg font-bold">ETFs im Bestand</h2>
+                                {isOwnedEtfsOpen ? <ChevronDown className="size-4 ml-2 opacity-50" /> : <ChevronRight className="size-4 ml-2 opacity-50" />}
+                            </div>
+                        </button>
+
+                        {isOwnedEtfsOpen && (
+                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border animate-in slide-in-from-top-2 duration-200">
+                                <WatchlistTable
+                                    stocks={ownedEtfs}
+                                    sortConfig={sortConfig}
+                                    setSortConfig={setSortConfig}
+                                    onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
+                                    onBuy={(stock) => setBuyStock(stock)}
+                                    onEdit={(id) => {
+                                        const pos = positions.find(p => String(p.stockId) === String(id));
+                                        if (pos) {
+                                            const stock = stocks.find(s => String(s.id) === String(id));
+                                            if (stock) {
+                                                setEditPosition({ ...pos, stock });
+                                            }
+                                        }
+                                    }}
+                                    onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
+                                    formatCurrency={formatCurrency}
+                                    emptyMessage="Keine ETFs im Bestand."
+                                />
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* 3. POTENTIAL STOCKS (Collapsible, Default Closed) */}
                 <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-blue-500/5 gap-2">
+                    <button
+                        onClick={() => setIsPotentialStocksOpen(!isPotentialStocksOpen)}
+                        className="w-full flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-blue-500/5 gap-2 hover:bg-blue-500/10 transition-colors text-left"
+                    >
                         <div className="flex items-center gap-2">
                             <TrendingUp className="size-5 text-blue-600" />
-                            <h2 className="text-lg font-bold">Potenzielle Investments (Aktien & ETFs)</h2>
+                            <h2 className="text-lg font-bold">Potenzielle Aktien ({potentialStocks.length})</h2>
+                            {isPotentialStocksOpen ? <ChevronDown className="size-4 ml-2 opacity-50" /> : <ChevronRight className="size-4 ml-2 opacity-50" />}
                         </div>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-xs font-medium text-muted-foreground bg-background/50 px-3 py-1.5 rounded-lg border border-border/50">
                             <span className="hidden sm:inline">Legende:</span>
@@ -188,22 +350,55 @@ export function Watchlist() {
                                 <span>(Limit fehlt)</span>
                             </div>
                         </div>
-                    </div>
+                    </button>
 
-                    <div className="overflow-x-auto w-full overscroll-x-none border-b border-border">
-                        <WatchlistTable
-                            stocks={potentialWatchlistStocks}
-                            sortConfig={sortConfig}
-                            setSortConfig={setSortConfig}
-                            onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                            onBuy={(stock) => setBuyStock(stock)}
-                            onEdit={(id) => navigate(`/calculator?mode=edit&id=${id}&from=watchlist`)}
-                            onRemove={(id) => removeFromWatchlist(id)}
-                            formatCurrency={formatCurrency}
-                            emptyMessage="Keine Investment-Chancen auf der Watchlist."
-                        />
-                    </div>
+                    {isPotentialStocksOpen && (
+                        <div className="overflow-x-auto w-full overscroll-x-none border-b border-border animate-in slide-in-from-top-2 duration-200">
+                            <WatchlistTable
+                                stocks={potentialStocks}
+                                sortConfig={sortConfig}
+                                setSortConfig={setSortConfig}
+                                onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
+                                onBuy={(stock) => setBuyStock(stock)}
+                                onEdit={(id) => navigate(`/calculator?mode=edit&id=${id}&from=watchlist`)}
+                                onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
+                                formatCurrency={formatCurrency}
+                                emptyMessage="Keine potenziellen Aktien auf der Watchlist."
+                            />
+                        </div>
+                    )}
+                </div>
 
+                {/* 4. POTENTIAL ETFS (Collapsible, Default Closed) */}
+                <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
+                    <button
+                        onClick={() => setIsPotentialEtfsOpen(!isPotentialEtfsOpen)}
+                        className="w-full flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-blue-500/5 gap-2 hover:bg-blue-500/10 transition-colors text-left"
+                    >
+                        <div className="flex items-center gap-2">
+                            <PieChart className="size-5 text-blue-600" />
+                            <h2 className="text-lg font-bold">Potenzielle ETFs ({potentialEtfs.length})</h2>
+                            {isPotentialEtfsOpen ? <ChevronDown className="size-4 ml-2 opacity-50" /> : <ChevronRight className="size-4 ml-2 opacity-50" />}
+                        </div>
+                    </button>
+
+                    {isPotentialEtfsOpen && (
+                        <div className="overflow-x-auto w-full overscroll-x-none border-b border-border animate-in slide-in-from-top-2 duration-200">
+                            <WatchlistTable
+                                stocks={potentialEtfs}
+                                sortConfig={sortConfig}
+                                setSortConfig={setSortConfig}
+                                onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
+                                onBuy={(stock) => setBuyStock(stock)}
+                                onEdit={(id) => navigate(`/calculator?mode=edit&id=${id}&from=watchlist`)}
+                                onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
+                                formatCurrency={formatCurrency}
+                                emptyMessage="Keine potenziellen ETFs auf der Watchlist."
+                            />
+                        </div>
+                    )}
+
+                    {/* Shared Refresh Button at bottom of Potential section */}
                     <div className="p-4 bg-muted/5 flex items-center justify-center border-t border-border/50">
                         <button
                             onClick={() => refreshAllPrices(true)}
@@ -226,6 +421,7 @@ export function Watchlist() {
                         </button>
                     </div>
                 </div>
+
 
                 {/* AddPositionModal for buying from watchlist */}
                 {buyStock && (

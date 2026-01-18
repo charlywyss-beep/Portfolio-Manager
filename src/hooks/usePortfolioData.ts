@@ -16,7 +16,7 @@ const getFrequencyFactor = (freq?: string) => {
 };
 
 export function usePortfolioData() {
-    const { positions: rawPositions, stocks, watchlist, fixedDeposits } = usePortfolio();
+    const { positions: rawPositions, stocks, watchlists, fixedDeposits } = usePortfolio();
     const { rates } = useExchangeRates();
 
     const positions = useMemo(() => {
@@ -267,7 +267,13 @@ export function usePortfolioData() {
 
     // NEW: Calculate upcoming watchlist opportunities (Ex-Date relative)
     const upcomingWatchlistDividends = useMemo(() => {
-        const watchlistStocks = stocks.filter(s => watchlist.includes(s.id));
+        // Fix: watchlist is now an array of Watchlist objects.
+        // We aggregate ALL stock IDs from ALL watchlists to show opportunities across the board,
+        // OR we could just show the active one.
+        // For "Dashboard" purposes (where this hook is used), showing opportunities from ALL lists is better.
+        const allWatchlistStockIds = new Set(watchlists.flatMap(w => w.stockIds));
+
+        const watchlistStocks = stocks.filter(s => allWatchlistStockIds.has(s.id));
         const today = new Date();
         const futureLimit = new Date();
         futureLimit.setDate(today.getDate() + 365); // Look ahead 1 year (filtering happens in UI)
@@ -301,7 +307,7 @@ export function usePortfolioData() {
             })
             .filter((item): item is NonNullable<typeof item> => item !== null)
             .sort((a, b) => new Date(a.exDates[0]).getTime() - new Date(b.exDates[0]).getTime()); // Sort by earliest date
-    }, [stocks, watchlist]);
+    }, [stocks, watchlists]);
 
     return {
         positions,

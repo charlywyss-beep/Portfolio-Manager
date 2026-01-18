@@ -1,4 +1,6 @@
 
+import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
+
 // Basic type for a chart data point
 export interface ChartDataPoint {
     date: string;
@@ -12,12 +14,17 @@ const getYahooParams = (range: TimeRange): { period: string; interval: string } 
     switch (range) {
         case '1D': return { period: '1d', interval: '5m' };
         case '1W': return { period: '5d', interval: '15m' };
-        case '1M': return { period: '1mo', interval: '1d' };
-        case '3M': return { period: '3mo', interval: '1d' };
-        case '6M': return { period: '6mo', interval: '1d' };
-        case '1Y': return { period: '1y', interval: '1d' };
-        case '5Y': return { period: '5y', interval: '1wk' };
-        case 'BUY': return { period: '5y', interval: '1wk' }; // Fallback for API call if leaked
+        // SMA200 Support: Fetch extended history (Buffer for calculation)
+        // Client-side Chart filters the display range.
+        case '1M': return { period: '1y', interval: '1d' }; // Need ~220 days for SMA200
+        case '3M': return { period: '1y', interval: '1d' };
+        case '6M': return { period: '2y', interval: '1d' }; // Need 130 + 200 = 330 days. 1y is tight? 2y safe.
+        case '1Y': return { period: '2y', interval: '1d' }; // Need 250 + 200 = 450 days. 2y is ~500.
+        // Enhance 5Y to Daily for better resolution? 
+        // 5Y Daily = 1250 points. A bit heavy but fine for modern browsers.
+        // It allows accurate SMA200 (Daily).
+        case '5Y': return { period: '5y', interval: '1d' };
+        case 'BUY': return { period: '5y', interval: '1wk' };
     }
 };
 
@@ -225,6 +232,7 @@ export async function fetchStockQuote(symbol: string): Promise<{
     previousClose?: number | null,
     sectorWeights?: { [key: string]: number } | null,
     countryWeights?: { [key: string]: number } | null,
+    name?: string | null,
     error?: string
 }> {
     try {
@@ -259,6 +267,17 @@ export async function fetchStockQuote(symbol: string): Promise<{
             // For Shell 31.21 vs 30.67 is ~2% - let's be strict if it feels wrong
         }
 
+        // Fallback for Allocations (v3.12.160)
+        // If API returns no weights (e.g. rate limit or missing data), try manual fallback.
+        let sectorWeights = result.sectorWeights || null;
+        let countryWeights = result.countryWeights || null;
+
+        if ((!sectorWeights && !countryWeights) && FALLBACK_ALLOCATIONS[symbol]) {
+            console.log(`[YahooService] Using Fallback Allocation for ${symbol}`);
+            sectorWeights = FALLBACK_ALLOCATIONS[symbol].sectorWeights;
+            countryWeights = FALLBACK_ALLOCATIONS[symbol].countryWeights;
+        }
+
         return {
             price,
             currency: result.currency,
@@ -271,8 +290,9 @@ export async function fetchStockQuote(symbol: string): Promise<{
             marketState: result.marketState || null,
             open: open || null,
             previousClose: previousClose || null,
-            sectorWeights: result.sectorWeights || null,
-            countryWeights: result.countryWeights || null
+            sectorWeights: sectorWeights,
+            countryWeights: countryWeights,
+            name: result.longName || result.shortName || result.displayName || null
         };
     } catch (error) {
         console.error("Yahoo Quote Error:", error);
@@ -321,21 +341,32 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
         return {};
     }
 }
-// Search for stocks/ISIN
-export async function searchStocks(query: string): Promise<any[]> {
+// Search for stocks (Using Library Proxy with Crumbs)
+export const searchStocks = async (query: string): Promise<any[]> => {
     try {
-        const url = `/api/yahoo-search?query=${encodeURIComponent(query)}`;
-        const response = await fetch(url);
+        if (!query || query.length < 1) return [];
 
-        if (!response.ok) {
-            console.error(`Search API Error: ${response.status}`);
-            return [];
-        }
-
+        // Revert to Standard Proxy (uses library with crumbs)
+        const response = await fetch(`/api/yahoo-search?query=${encodeURIComponent(query)}`);
         const data = await response.json();
-        return data.quotes || [];
+
+        // Library returns { quotes: [...] } or just array if raw? 
+        // Our proxy returns { quotes: [...] }
+        const quotes = data.quotes || [];
+
+        if (!Array.isArray(quotes)) return [];
+
+        return quotes.map((quote: any) => ({
+            symbol: quote.symbol,
+            name: quote.shortname || quote.longname || quote.displayName || quote.symbol, // Normalize Key
+            shortname: quote.shortname,
+            longname: quote.longname,
+            type: quote.quoteType,
+            exch: quote.exchange,
+            isin: quote.isin || (quote.symbol.length === 12 && !quote.symbol.includes('.') ? quote.symbol : null) // Keep Heuristic
+        }));
     } catch (error) {
-        console.error("Search API Error:", error);
+        console.error("Search Error:", error);
         return [];
     }
-}
+};

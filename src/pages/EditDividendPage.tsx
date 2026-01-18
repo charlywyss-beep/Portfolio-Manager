@@ -39,7 +39,7 @@ export function EditDividendPage() {
     const [logoUrl, setLogoUrl] = useState('');
     const [exDate, setExDate] = useState('');
     const [payDate, setPayDate] = useState('');
-    const [frequency, setFrequency] = useState<'quarterly' | 'semi-annually' | 'annually' | 'monthly'>('quarterly');
+    const [frequency, setFrequency] = useState<'none' | 'quarterly' | 'semi-annually' | 'annually' | 'monthly'>('quarterly');
 
     const [quarterlyDates, setQuarterlyDates] = useState<{ exDate: string; payDate: string; }[]>([
         { exDate: '', payDate: '' },
@@ -163,8 +163,11 @@ export function EditDividendPage() {
         }
     };
 
-    const handleFrequencyChange = (newFrequency: 'quarterly' | 'semi-annually' | 'annually' | 'monthly') => {
+    const handleFrequencyChange = (newFrequency: 'none' | 'quarterly' | 'semi-annually' | 'annually' | 'monthly') => {
         setFrequency(newFrequency);
+        // Skip yield recalculation if 'none' is selected
+        if (newFrequency === 'none') return;
+
         const currentP = getEffectivePrice();
         if (amount && currentP && !isNaN(parseFloat(amount))) {
             const dividendAmount = parseFloat(amount);
@@ -242,33 +245,45 @@ export function EditDividendPage() {
             updateStock(targetId, updates);
         }
 
-        // Dividends Logic
-        let submissionDates = undefined;
-        let submissionExDate = exDate || undefined;
-        let submissionPayDate = payDate || undefined;
+        // Dividends Logic - If 'none' frequency, clear all dividend data
+        if (frequency === 'none') {
+            updateStockDividend(targetId, {
+                dividendYield: undefined,
+                dividendAmount: undefined,
+                dividendCurrency: undefined,
+                dividendExDate: undefined,
+                dividendPayDate: undefined,
+                dividendDates: undefined,
+                dividendFrequency: 'none'
+            });
+        } else {
+            let submissionDates = undefined;
+            let submissionExDate = exDate || undefined;
+            let submissionPayDate = payDate || undefined;
 
-        if (frequency === 'quarterly' || frequency === 'semi-annually') {
-            const datesToConsider = frequency === 'quarterly' ? quarterlyDates : quarterlyDates.slice(0, 2);
-            // Fix: Do not filter empty dates to preserve Q1/Q2/Q3/Q4 slots!
-            submissionDates = datesToConsider;
+            if (frequency === 'quarterly' || frequency === 'semi-annually') {
+                const datesToConsider = frequency === 'quarterly' ? quarterlyDates : quarterlyDates.slice(0, 2);
+                // Fix: Do not filter empty dates to preserve Q1/Q2/Q3/Q4 slots!
+                submissionDates = datesToConsider;
 
-            // Set exDate/payDate from the first available one for display/sorting (optional)
-            const firstValid = datesToConsider.find(d => d.exDate || d.payDate);
-            if (firstValid) {
-                submissionExDate = firstValid.exDate;
-                submissionPayDate = firstValid.payDate;
+                // Set exDate/payDate from the first available one for display/sorting (optional)
+                const firstValid = datesToConsider.find(d => d.exDate || d.payDate);
+                if (firstValid) {
+                    submissionExDate = firstValid.exDate;
+                    submissionPayDate = firstValid.payDate;
+                }
             }
-        }
 
-        updateStockDividend(targetId, {
-            dividendYield: yieldPercent ? parseFloat(yieldPercent.replace(',', '.')) : undefined,
-            dividendAmount: amount ? parseFloat(amount.replace(',', '.')) : undefined,
-            dividendCurrency: currency,
-            dividendExDate: submissionExDate,
-            dividendPayDate: submissionPayDate,
-            dividendDates: submissionDates,
-            dividendFrequency: frequency
-        });
+            updateStockDividend(targetId, {
+                dividendYield: yieldPercent ? parseFloat(yieldPercent.replace(',', '.')) : undefined,
+                dividendAmount: amount ? parseFloat(amount.replace(',', '.')) : undefined,
+                dividendCurrency: currency,
+                dividendExDate: submissionExDate,
+                dividendPayDate: submissionPayDate,
+                dividendDates: submissionDates,
+                dividendFrequency: frequency
+            });
+        }
 
         // Navigate back to watchlist if came from there, otherwise go back
         const fromWatchlist = searchParams.get('from') === 'watchlist';
@@ -327,7 +342,7 @@ export function EditDividendPage() {
     return (
         <div className="min-h-screen bg-background pb-20">
             {/* Header */}
-            <div className="flex items-center gap-4 p-4 border-b border-border bg-card/50 sticky top-16 z-30 w-full transition-all">
+            <div className="flex items-center gap-4 p-4 border-b border-border bg-background sticky top-16 z-40 w-full transition-all shadow-sm">
                 <button
                     onClick={() => navigate(-1)}
                     className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-3 py-1.5 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
@@ -709,283 +724,297 @@ export function EditDividendPage() {
                                 </div>
                             </div>
 
-                            {/* Dividend Section */}
+
+                            {/* Dividend Section - Always visible */}
                             <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4">
                                 <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Dividende</h3>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Rendite %</label>
-                                        <div className="space-y-2">
-                                            <input
-                                                type="text"
-                                                inputMode="decimal"
-                                                autoComplete="off"
-                                                step="0.01"
-                                                placeholder="z.B. 3.90"
-                                                value={yieldPercent}
-                                                onChange={(e) => handleYieldChange(e.target.value)}
-                                                onFocus={(e) => e.target.select()}
-                                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg"
-                                            />
-                                            {(() => {
-                                                const currentPos = positions.find(p => String(p.stockId) === String(currentStockId));
-                                                const buyPriceAvg = currentPos?.buyPriceAvg;
-                                                const am = parseFloat(amount.replace(',', '.'));
-                                                const factor = getFrequencyFactor(frequency);
-                                                const currentP = getEffectivePrice();
-
-                                                if (isNaN(am) || am <= 0 || !currentP || currentP <= 0) return null;
-
-                                                const currentMathYield = (am * factor / currentP) * 100;
-                                                const targetVal = buyPriceAvg && buyPriceAvg > 0 ? buyPriceAvg : (targetPrice ? parseFloat(targetPrice.replace(',', '.')) : stock?.targetPrice);
-
-                                                if (!targetVal || targetVal <= 0 || Math.abs(currentP - targetVal) < 0.01) {
-                                                    // Only show mathematical current yield if no distinct target/buy price exists
-                                                    return (
-                                                        <div className="flex justify-between items-center px-2 py-1 bg-muted/30 border border-border/50 rounded text-[10px] md:text-xs">
-                                                            <span className="text-muted-foreground font-medium uppercase tracking-wider">Aktuell (Math.)</span>
-                                                            <span className="text-foreground font-bold font-mono">{currentMathYield.toFixed(2)}%</span>
-                                                        </div>
-                                                    );
-                                                }
-
-                                                const targetYield = (am * factor / targetVal) * 100;
-                                                const isEinstand = buyPriceAvg && buyPriceAvg > 0;
-
-                                                return (
-                                                    <div className={cn(
-                                                        "mt-2 px-2 py-1 inline-flex items-center gap-2 rounded border text-[10px] md:text-xs font-mono font-bold",
-                                                        isEinstand ? "bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-900/30 text-blue-700 dark:text-blue-300" : "bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-300"
-                                                    )}>
-                                                        <span className="uppercase tracking-wider opacity-70">{isEinstand ? 'Rendite (Einstand)' : 'Rendite (Kauflimit)'}</span>
-                                                        <span>{targetYield.toFixed(2)}%</span>
-                                                    </div>
-                                                );
-                                            })()}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Betrag <span className="text-xs text-muted-foreground">({currency === 'GBp' ? 'GBP' : currency})</span></label>
-                                        <input
-                                            type="text"
-                                            inputMode="decimal"
-                                            autoComplete="off"
-                                            step="0.01"
-                                            placeholder="z.B. 0.60"
-                                            value={amount}
-                                            onChange={(e) => handleAmountChange(e.target.value)}
-                                            onFocus={(e) => e.target.select()}
-                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg"
-                                        />
-                                    </div>
-                                </div>
-
+                                {/* Frequency selector at top */}
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Währung</label>
-                                    <select
-                                        value={currency}
-                                        onChange={handleCurrencyChange}
-                                        className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
-                                    >
-                                        <option value="CHF">CHF (Schweizer Franken)</option>
-                                        <option value="USD">USD (US Dollar)</option>
-                                        <option value="EUR">EUR (Euro)</option>
-                                        <option value="GBp">GBp (Britische Pence)</option>
-                                        <option value="GBP">GBP (Britische Pfund)</option>
-                                    </select>
-                                </div>
-
-                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Ausschüttungsrhythmus</label>
                                     <select
                                         value={frequency}
                                         onChange={(e) => handleFrequencyChange(e.target.value as any)}
                                         className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                     >
+                                        <option value="none">Keine Dividende</option>
                                         <option value="quarterly">Quartalsweise (4x/Jahr)</option>
                                         <option value="semi-annually">Halbjährlich (2x/Jahr)</option>
                                         <option value="annually">Jährlich (1x/Jahr)</option>
                                         <option value="monthly">Monatlich (12x/Jahr)</option>
                                     </select>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Ausschüttung</label>
-                                    <div className="flex bg-muted rounded-lg p-1 border border-border">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                // If switching to distributing, maybe keep as is
-                                                updateStock(currentStockId!, { distributionPolicy: 'distributing' });
-                                            }}
-                                            className={cn(
-                                                "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
-                                                stock?.distributionPolicy !== 'accumulating'
-                                                    ? "bg-background text-foreground shadow-sm"
-                                                    : "text-muted-foreground hover:text-foreground"
-                                            )}
-                                        >
-                                            Ausschüttend
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                updateStock(currentStockId!, { distributionPolicy: 'accumulating' });
-                                            }}
-                                            className={cn(
-                                                "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
-                                                stock?.distributionPolicy === 'accumulating'
-                                                    ? "bg-background text-foreground shadow-sm"
-                                                    : "text-muted-foreground hover:text-foreground"
-                                            )}
-                                        >
-                                            Thesaurierend
-                                        </button>
-                                    </div>
-                                </div>
 
-                                {amount && !isNaN(parseFloat(amount)) && (
-                                    <div className="p-4 bg-muted/50 rounded-lg text-center border border-border">
-                                        <p className="text-sm font-medium text-muted-foreground">Erwartete Jahresausschüttung</p>
-                                        <p className="text-2xl font-bold text-foreground mt-1">
-                                            {(parseFloat(amount.replace(',', '.')) * getFrequencyFactor(frequency)).toFixed(2)} {currency === 'GBp' ? 'GBP' : currency}
-                                        </p>
-                                        {currency === 'GBp' && (
-                                            <p className="text-sm text-muted-foreground mt-1">
-                                                ≈ {((parseFloat(amount.replace(',', '.')) * getFrequencyFactor(frequency)) / 100).toFixed(2)} GBP (Pfund)
-                                            </p>
+                                {/* Only show dividend details if frequency is not 'none' */}
+                                {frequency !== 'none' && (
+                                    <>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium">Rendite %</label>
+                                                <div className="space-y-2">
+                                                    <input
+                                                        type="text"
+                                                        inputMode="decimal"
+                                                        autoComplete="off"
+                                                        step="0.01"
+                                                        placeholder="z.B. 3.90"
+                                                        value={yieldPercent}
+                                                        onChange={(e) => handleYieldChange(e.target.value)}
+                                                        onFocus={(e) => e.target.select()}
+                                                        className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg"
+                                                    />
+                                                    {(() => {
+                                                        const currentPos = positions.find(p => String(p.stockId) === String(currentStockId));
+                                                        const buyPriceAvg = currentPos?.buyPriceAvg;
+                                                        const am = parseFloat(amount.replace(',', '.'));
+                                                        const factor = getFrequencyFactor(frequency);
+                                                        const currentP = getEffectivePrice();
+
+                                                        if (isNaN(am) || am <= 0 || !currentP || currentP <= 0) return null;
+
+                                                        const currentMathYield = (am * factor / currentP) * 100;
+                                                        const targetVal = buyPriceAvg && buyPriceAvg > 0 ? buyPriceAvg : (targetPrice ? parseFloat(targetPrice.replace(',', '.')) : stock?.targetPrice);
+
+                                                        if (!targetVal || targetVal <= 0 || Math.abs(currentP - targetVal) < 0.01) {
+                                                            // Only show mathematical current yield if no distinct target/buy price exists
+                                                            return (
+                                                                <div className="flex justify-between items-center px-2 py-1 bg-muted/30 border border-border/50 rounded text-[10px] md:text-xs">
+                                                                    <span className="text-muted-foreground font-medium uppercase tracking-wider">Aktuell (Math.)</span>
+                                                                    <span className="text-foreground font-bold font-mono">{currentMathYield.toFixed(2)}%</span>
+                                                                </div>
+                                                            );
+                                                        }
+
+                                                        const targetYield = (am * factor / targetVal) * 100;
+                                                        const isEinstand = buyPriceAvg && buyPriceAvg > 0;
+
+                                                        return (
+                                                            <div className={cn(
+                                                                "mt-2 px-2 py-1 inline-flex items-center gap-2 rounded border text-[10px] md:text-xs font-mono font-bold",
+                                                                isEinstand ? "bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-900/30 text-blue-700 dark:text-blue-300" : "bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-300"
+                                                            )}>
+                                                                <span className="uppercase tracking-wider opacity-70">{isEinstand ? 'Rendite (Einstand)' : 'Rendite (Kauflimit)'}</span>
+                                                                <span>{targetYield.toFixed(2)}%</span>
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium">Betrag <span className="text-xs text-muted-foreground">({currency === 'GBp' ? 'GBP' : currency})</span></label>
+                                                <input
+                                                    type="text"
+                                                    inputMode="decimal"
+                                                    autoComplete="off"
+                                                    step="0.01"
+                                                    placeholder="z.B. 0.60"
+                                                    value={amount}
+                                                    onChange={(e) => handleAmountChange(e.target.value)}
+                                                    onFocus={(e) => e.target.select()}
+                                                    className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">Währung</label>
+                                            <select
+                                                value={currency}
+                                                onChange={handleCurrencyChange}
+                                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                            >
+                                                <option value="CHF">CHF (Schweizer Franken)</option>
+                                                <option value="USD">USD (US Dollar)</option>
+                                                <option value="EUR">EUR (Euro)</option>
+                                                <option value="GBp">GBp (Britische Pence)</option>
+                                                <option value="GBP">GBP (Britische Pfund)</option>
+                                            </select>
+                                        </div>
+
+
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">Ausschüttung</label>
+                                            <div className="flex bg-muted rounded-lg p-1 border border-border">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        // If switching to distributing, maybe keep as is
+                                                        updateStock(currentStockId!, { distributionPolicy: 'distributing' });
+                                                    }}
+                                                    className={cn(
+                                                        "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
+                                                        stock?.distributionPolicy !== 'accumulating'
+                                                            ? "bg-background text-foreground shadow-sm"
+                                                            : "text-muted-foreground hover:text-foreground"
+                                                    )}
+                                                >
+                                                    Ausschüttend
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        updateStock(currentStockId!, { distributionPolicy: 'accumulating' });
+                                                    }}
+                                                    className={cn(
+                                                        "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
+                                                        stock?.distributionPolicy === 'accumulating'
+                                                            ? "bg-background text-foreground shadow-sm"
+                                                            : "text-muted-foreground hover:text-foreground"
+                                                    )}
+                                                >
+                                                    Thesaurierend
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {amount && !isNaN(parseFloat(amount)) && (
+                                            <div className="p-4 bg-muted/50 rounded-lg text-center border border-border">
+                                                <p className="text-sm font-medium text-muted-foreground">Erwartete Jahresausschüttung</p>
+                                                <p className="text-2xl font-bold text-foreground mt-1">
+                                                    {(parseFloat(amount.replace(',', '.')) * getFrequencyFactor(frequency)).toFixed(2)} {currency === 'GBp' ? 'GBP' : currency}
+                                                </p>
+                                                {currency === 'GBp' && (
+                                                    <p className="text-sm text-muted-foreground mt-1">
+                                                        ≈ {((parseFloat(amount.replace(',', '.')) * getFrequencyFactor(frequency)) / 100).toFixed(2)} GBP (Pfund)
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Dates Section - Only show if frequency is not 'none' */}
+                            {frequency !== 'none' && (
+                                <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Termine</h3>
+                                        {symbol && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const year = new Date().getFullYear();
+                                                    window.open(`https://www.google.com/search?q=${symbol}+dividend+dates+${year}+${year + 1}`, '_blank');
+                                                }}
+                                                className="text-xs text-primary hover:text-primary/80 flex items-center gap-1.5 px-2 py-1 bg-primary/10 rounded-md transition-colors"
+                                                title="Auf Google nach Dividenden-Terminen suchen"
+                                            >
+                                                <Search className="size-3.5" />
+                                                <span className="font-medium">Termine suchen</span>
+                                            </button>
                                         )}
                                     </div>
-                                )}
-                            </div>
 
-                            {/* Dates Section */}
-                            <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Termine</h3>
-                                    {symbol && (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const year = new Date().getFullYear();
-                                                window.open(`https://www.google.com/search?q=${symbol}+dividend+dates+${year}+${year + 1}`, '_blank');
-                                            }}
-                                            className="text-xs text-primary hover:text-primary/80 flex items-center gap-1.5 px-2 py-1 bg-primary/10 rounded-md transition-colors"
-                                            title="Auf Google nach Dividenden-Terminen suchen"
-                                        >
-                                            <Search className="size-3.5" />
-                                            <span className="font-medium">Termine suchen</span>
-                                        </button>
+                                    {(frequency === 'quarterly' || frequency === 'semi-annually') ? (
+                                        <div className="space-y-4">
+                                            {quarterlyDates.slice(0, frequency === 'semi-annually' ? 2 : 4).map((date, idx) => (
+                                                <div key={idx} className="grid grid-cols-2 gap-4 pb-4 border-b border-border/50 last:border-0 last:pb-0">
+                                                    <div className="space-y-1">
+                                                        <div className="flex justify-between items-center">
+                                                            <label className="text-xs text-muted-foreground font-medium uppercase">
+                                                                {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Ex-Datum
+                                                            </label>
+                                                            {date.exDate && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleQuarterlyDateChange(idx, 'exDate', '')}
+                                                                    className="text-muted-foreground hover:text-red-500 transition-colors p-0.5"
+                                                                    title="Datum löschen"
+                                                                >
+                                                                    <Trash2 className="size-3" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                        <input
+                                                            type="date"
+                                                            value={date.exDate}
+                                                            onChange={(e) => handleQuarterlyDateChange(idx, 'exDate', e.target.value)}
+                                                            className="w-full px-2 py-2 text-sm border rounded bg-background"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <div className="flex justify-between items-center">
+                                                            <label className="text-xs text-muted-foreground font-medium uppercase">
+                                                                {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Zahldatum
+                                                            </label>
+                                                            {date.payDate && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleQuarterlyDateChange(idx, 'payDate', '')}
+                                                                    className="text-muted-foreground hover:text-red-500 transition-colors p-0.5"
+                                                                    title="Datum löschen"
+                                                                >
+                                                                    <Trash2 className="size-3" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                        <input
+                                                            type="date"
+                                                            value={date.payDate}
+                                                            onChange={(e) => handleQuarterlyDateChange(idx, 'payDate', e.target.value)}
+                                                            className="w-full px-2 py-2 text-sm border rounded bg-background"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-center">
+                                                    <label className="text-sm font-medium">Ex-Datum</label>
+                                                    {exDate && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setExDate('')}
+                                                            className="text-muted-foreground hover:text-red-500 transition-colors p-0.5"
+                                                            title="Datum löschen"
+                                                        >
+                                                            <Trash2 className="size-3" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <input
+                                                    type="date"
+                                                    value={exDate}
+                                                    onChange={(e) => {
+                                                        const newVal = e.target.value;
+                                                        setExDate(newVal);
+                                                        // Only auto-fill if date is complete (YYYY-MM-DD)
+                                                        if (newVal && newVal.length === 10 && !payDate) {
+                                                            setPayDate(newVal);
+                                                        }
+                                                    }}
+                                                    className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-center">
+                                                    <label className="text-sm font-medium">Zahldatum</label>
+                                                    {payDate && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setPayDate('')}
+                                                            className="text-muted-foreground hover:text-red-500 transition-colors p-0.5"
+                                                            title="Datum löschen"
+                                                        >
+                                                            <Trash2 className="size-3" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <input
+                                                    type="date"
+                                                    value={payDate}
+                                                    onChange={(e) => setPayDate(e.target.value)}
+                                                    className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
+                                                />
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
-
-                                {(frequency === 'quarterly' || frequency === 'semi-annually') ? (
-                                    <div className="space-y-4">
-                                        {quarterlyDates.slice(0, frequency === 'semi-annually' ? 2 : 4).map((date, idx) => (
-                                            <div key={idx} className="grid grid-cols-2 gap-4 pb-4 border-b border-border/50 last:border-0 last:pb-0">
-                                                <div className="space-y-1">
-                                                    <div className="flex justify-between items-center">
-                                                        <label className="text-xs text-muted-foreground font-medium uppercase">
-                                                            {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Ex-Datum
-                                                        </label>
-                                                        {date.exDate && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleQuarterlyDateChange(idx, 'exDate', '')}
-                                                                className="text-muted-foreground hover:text-red-500 transition-colors p-0.5"
-                                                                title="Datum löschen"
-                                                            >
-                                                                <Trash2 className="size-3" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                    <input
-                                                        type="date"
-                                                        value={date.exDate}
-                                                        onChange={(e) => handleQuarterlyDateChange(idx, 'exDate', e.target.value)}
-                                                        className="w-full px-2 py-2 text-sm border rounded bg-background"
-                                                    />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <div className="flex justify-between items-center">
-                                                        <label className="text-xs text-muted-foreground font-medium uppercase">
-                                                            {frequency === 'quarterly' ? `Q${idx + 1}` : `${idx + 1}.`} Zahldatum
-                                                        </label>
-                                                        {date.payDate && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleQuarterlyDateChange(idx, 'payDate', '')}
-                                                                className="text-muted-foreground hover:text-red-500 transition-colors p-0.5"
-                                                                title="Datum löschen"
-                                                            >
-                                                                <Trash2 className="size-3" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                    <input
-                                                        type="date"
-                                                        value={date.payDate}
-                                                        onChange={(e) => handleQuarterlyDateChange(idx, 'payDate', e.target.value)}
-                                                        className="w-full px-2 py-2 text-sm border rounded bg-background"
-                                                    />
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between items-center">
-                                                <label className="text-sm font-medium">Ex-Datum</label>
-                                                {exDate && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setExDate('')}
-                                                        className="text-muted-foreground hover:text-red-500 transition-colors p-0.5"
-                                                        title="Datum löschen"
-                                                    >
-                                                        <Trash2 className="size-3" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                            <input
-                                                type="date"
-                                                value={exDate}
-                                                onChange={(e) => {
-                                                    const newVal = e.target.value;
-                                                    setExDate(newVal);
-                                                    // Only auto-fill if date is complete (YYYY-MM-DD)
-                                                    if (newVal && newVal.length === 10 && !payDate) {
-                                                        setPayDate(newVal);
-                                                    }
-                                                }}
-                                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between items-center">
-                                                <label className="text-sm font-medium">Zahldatum</label>
-                                                {payDate && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setPayDate('')}
-                                                        className="text-muted-foreground hover:text-red-500 transition-colors p-0.5"
-                                                        title="Datum löschen"
-                                                    >
-                                                        <Trash2 className="size-3" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                            <input
-                                                type="date"
-                                                value={payDate}
-                                                onChange={(e) => setPayDate(e.target.value)}
-                                                className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                            )}
 
                             <div className="pt-4 pb-8">
                                 <button

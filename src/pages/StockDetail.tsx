@@ -4,12 +4,14 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, Save, TrendingUp, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowLeft, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2 } from 'lucide-react';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
+import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
 import { estimateMarketState } from '../utils/market';
 import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { cn } from '../utils';
 import { Logo } from '../components/Logo';
+import { AddToWatchlistModal } from '../components/AddToWatchlistModal'; // New Import
 
 import { fetchStockHistory, fetchStockQuote, type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
 
@@ -17,8 +19,9 @@ export function StockDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { stocks, positions, updateStock, updateStockPrice, addQuickLink, removeQuickLink } = usePortfolio();
+    const { stocks, positions, updateStock, updateStockPrice, addQuickLink, removeQuickLink, watchlists } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
+    const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false); // Modal State
 
     // Find stock by ID or Symbol (case-insensitive)
     const stock = stocks.find(s =>
@@ -355,11 +358,35 @@ export function StockDetail() {
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
                                 </button>
+
+                                {/* Watchlist Button */}
+                                <button
+                                    onClick={() => setIsWatchlistModalOpen(true)}
+                                    className={cn(
+                                        "p-1 rounded-lg transition-colors",
+                                        watchlists.some(wl => wl.stockIds.includes(stock.id))
+                                            ? "text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
+                                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                                    )}
+                                    title="Zu Watchlist hinzufügen"
+                                >
+                                    {watchlists.some(wl => wl.stockIds.includes(stock.id)) ? (
+                                        <div className="relative">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                                        </div>
+                                    ) : (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                                    )}
+                                </button>
                             </div>
                             <div className="flex items-center gap-2 text-muted-foreground mt-0.5 text-xs md:text-sm">
                                 <span className="font-bold text-foreground">{stock.symbol}</span>
-                                <span>•</span>
-                                <span>{stock.sector || 'Sektor unbekannt'}</span>
+                                {stock.sector && stock.sector !== 'Simuliert' && (
+                                    <>
+                                        <span>•</span>
+                                        <span>{stock.sector}</span>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -479,118 +506,130 @@ export function StockDetail() {
                     </div>
 
                     {/* NEW: ETF Allocation Breakdown */}
-                    {stock.type === 'etf' && (
-                        <div className="space-y-6">
-                            {(!stock.sectorWeights && !stock.countryWeights) && (
-                                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 text-xs text-yellow-500 flex items-center gap-2">
-                                    <span className="animate-pulse">●</span>
-                                    <span>Lade Allokationsdaten von Yahoo... (Versuche ggf. Refresh oder einen US-Ticker wie VOO)</span>
-                                </div>
-                            )}
+                    {stock.type === 'etf' && (() => {
+                        // FALLBACK LOGIC (View-Time)
+                        const fallback = FALLBACK_ALLOCATIONS[stock.symbol];
+                        const effectiveSectorWeights = stock.sectorWeights || fallback?.sectorWeights;
+                        const effectiveCountryWeights = stock.countryWeights || fallback?.countryWeights;
 
-                            {(stock.sectorWeights || stock.countryWeights) && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Sector Allocation */}
-                                    {stock.sectorWeights && Object.keys(stock.sectorWeights).length > 0 && (
-                                        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                                            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                                <TrendingUp className="size-5 text-purple-500" />
-                                                Branchen Allokation
-                                            </h3>
-                                            <div className="space-y-3">
-                                                {Object.entries(stock.sectorWeights)
-                                                    .sort(([, a], [, b]) => b - a)
-                                                    .slice(0, 10)
-                                                    .map(([name, weight], idx) => {
-                                                        const displayNames: Record<string, string> = {
-                                                            'realestate': 'Immobilien',
-                                                            'healthcare': 'Gesundheitswesen',
-                                                            'basic_materials': 'Rohstoffe',
-                                                            'consumer_cyclical': 'Zykl. Konsumgüter',
-                                                            'financial_services': 'Finanzdienstleistungen',
-                                                            'consumer_defensive': 'Nicht-zykl. Konsum',
-                                                            'technology': 'Technologie',
-                                                            'utilities': 'Versorger',
-                                                            'financial': 'Finanzen',
-                                                            'communication_services': 'Kommunikation',
-                                                            'energy': 'Energie',
-                                                            'industrials': 'Industrie'
-                                                        };
-                                                        const displayName = displayNames[name] || name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        // Normalize Helper
+                        const normalizeCountry = (country: string) => {
+                            if (!country) return 'Unbekannt';
+                            const c = country.toLowerCase().trim();
+                            if (c === 'united states' || c === 'usa' || c === 'us') return 'USA';
+                            if (c === 'united kingdom' || c === 'uk') return 'Grossbritannien';
+                            if (c === 'switzerland' || c === 'ch') return 'Schweiz';
+                            if (c === 'germany' || c === 'de') return 'Deutschland';
+                            // Add simple capitalization fallback
+                            return country.charAt(0).toUpperCase() + country.slice(1).toLowerCase();
+                        };
 
-                                                        return (
-                                                            <div key={idx} className="space-y-1">
-                                                                <div className="flex justify-between text-xs font-medium">
-                                                                    <span className="truncate pr-2">{displayName}</span>
-                                                                    <span>{weight.toFixed(2)}%</span>
+                        return (
+                            <div className="space-y-6">
+                                {(!effectiveSectorWeights && !effectiveCountryWeights) && (
+                                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 text-xs text-yellow-500 flex items-center gap-2">
+                                        <span className="animate-pulse">●</span>
+                                        <span>Lade Allokationsdaten von Yahoo... (Versuche ggf. Refresh oder einen US-Ticker wie VOO)</span>
+                                    </div>
+                                )}
+
+                                {(effectiveSectorWeights || effectiveCountryWeights) && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* Sector Allocation */}
+                                        {effectiveSectorWeights && Object.keys(effectiveSectorWeights).length > 0 && (
+                                            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                                                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                                                    <TrendingUp className="size-5 text-purple-500" />
+                                                    Branchen Allokation
+                                                </h3>
+                                                <div className="space-y-3">
+                                                    {Object.entries(effectiveSectorWeights)
+                                                        .sort(([, a], [, b]) => b - a)
+                                                        .slice(0, 8)
+                                                        .map(([sector, weight]) => {
+                                                            const displayNames: Record<string, string> = {
+                                                                'realestate': 'Immobilien',
+                                                                'healthcare': 'Gesundheitswesen',
+                                                                'basic_materials': 'Rohstoffe',
+                                                                'consumer_cyclical': 'Zykl. Konsumgüter',
+                                                                'financial_services': 'Finanzdienstl.',
+                                                                'consumer_defensive': 'Nicht-zykl. Konsum',
+                                                                'technology': 'Technologie',
+                                                                'utilities': 'Versorger',
+                                                                'financial': 'Finanzen',
+                                                                'communication_services': 'Kommunikation',
+                                                                'energy': 'Energie',
+                                                                'industrials': 'Industrie'
+                                                            };
+                                                            const name = sector.toLowerCase().replace(/\s/g, '_');
+                                                            const displayName = displayNames[name] || sector.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+                                                            return (
+                                                                <div key={sector} className="flex items-center justify-between text-sm">
+                                                                    <span className="text-muted-foreground">{displayName}</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                                                                            <div className="h-full bg-purple-500 rounded-full" style={{ width: `${weight}%` }} />
+                                                                        </div>
+                                                                        <span className="font-mono font-medium">{weight.toFixed(1)}%</span>
+                                                                    </div>
                                                                 </div>
-                                                                <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                                                                    <div
-                                                                        className="bg-purple-500 h-full rounded-full transition-all duration-1000"
-                                                                        style={{ width: `${Math.min(100, weight)}%` }}
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
+                                                            );
+                                                        })}
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
 
-                                    {/* Country Allocation */}
-                                    {stock.countryWeights && Object.keys(stock.countryWeights).length > 0 && (
-                                        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                                            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                                <TrendingUp className="size-5 text-blue-500" />
-                                                Länder Allokation
-                                            </h3>
-                                            <div className="space-y-3">
-                                                {Object.entries(stock.countryWeights)
-                                                    .sort(([, a], [, b]) => b - a)
-                                                    .slice(0, 10)
-                                                    .map(([name, weight], idx) => {
-                                                        const displayNames: Record<string, string> = {
-                                                            'us': 'USA',
-                                                            'uk': 'Grossbritannien',
-                                                            'japan': 'Japan',
-                                                            'china': 'China',
-                                                            'canada': 'Kanada',
-                                                            'france': 'Frankreich',
-                                                            'germany': 'Deutschland',
-                                                            'switzerland': 'Schweiz',
-                                                            'eurozone': 'Eurozone',
-                                                            'asia_developed': 'Asien (Entwickelt)',
-                                                            'asia_emerging': 'Asien (Schwellen)',
-                                                            'australasia': 'Australien / Ozeanien',
-                                                            'europe_developed': 'Europa (Entwickelt)',
-                                                            'europe_emerging': 'Europa (Schwellen)',
-                                                            'latin_america': 'Lateinamerika',
-                                                            'north_america': 'Nordamerika'
-                                                        };
-                                                        const displayName = displayNames[name.toLowerCase()] || name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                        {/* Country Allocation */}
+                                        {effectiveCountryWeights && Object.keys(effectiveCountryWeights).length > 0 && (
+                                            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                                                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                                                    <MapIcon className="size-5 text-blue-500" />
+                                                    Länder Allokation
+                                                </h3>
+                                                <div className="space-y-3">
+                                                    {Object.entries(effectiveCountryWeights)
+                                                        .sort(([, a], [, b]) => b - a)
+                                                        .slice(0, 8)
+                                                        .map(([country, weight]) => {
+                                                            const displayNames: Record<string, string> = {
+                                                                'us': 'USA',
+                                                                'uk': 'Grossbritannien',
+                                                                'united_kingdom': 'Grossbritannien',
+                                                                'japan': 'Japan',
+                                                                'china': 'China',
+                                                                'canada': 'Kanada',
+                                                                'france': 'Frankreich',
+                                                                'germany': 'Deutschland',
+                                                                'switzerland': 'Schweiz',
+                                                                'australia': 'Australien'
+                                                            };
+                                                            const name = country.toLowerCase().replace(/\s/g, '_');
+                                                            const displayName = normalizeCountry(displayNames[name] || country);
 
-                                                        return (
-                                                            <div key={idx} className="space-y-1">
-                                                                <div className="flex justify-between text-xs font-medium">
-                                                                    <span className="truncate pr-2">{displayName}</span>
-                                                                    <span>{weight.toFixed(2)}%</span>
+                                                            return (
+                                                                <div key={country} className="flex items-center justify-between text-sm">
+                                                                    <span className="text-muted-foreground">{displayName}</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                                                                            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${weight}%` }} />
+                                                                        </div>
+                                                                        <span className="font-mono font-medium">{weight.toFixed(1)}%</span>
+                                                                    </div>
                                                                 </div>
-                                                                <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                                                                    <div
-                                                                        className="bg-blue-500 h-full rounded-full transition-all duration-1000"
-                                                                        style={{ width: `${Math.min(100, weight)}%` }}
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
+                                                            );
+                                                        })}
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    )}
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })()}
+
+
+
                 </div>
 
                 {/* Right Column: Stammdaten & Notes */}
@@ -638,7 +677,7 @@ export function StockDetail() {
                                 </span>
                             </div>
                         </div>
-                    </div>
+                    </div >
 
                     {/* Stammdaten - Moved below Kursdaten */}
                     <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
@@ -692,13 +731,13 @@ export function StockDetail() {
                                 </span>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </div >
+                </div >
 
                 {/* Right Column: Quick Links & Notes (Vertical Stack) */}
-                <div className="lg:col-span-3 flex flex-col gap-6">
+                < div className="lg:col-span-3 flex flex-col gap-6" >
                     {/* Quick Links Card */}
-                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
+                    < div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col" >
                         <h3 className="font-bold text-lg mb-4">Quick Links</h3>
                         <div className="space-y-3 flex-1">
                             {/* Input for adding new links */}
@@ -800,6 +839,13 @@ export function StockDetail() {
                     </div>
                 </div>
             </div>
+            {stock && (
+                <AddToWatchlistModal
+                    isOpen={isWatchlistModalOpen}
+                    onClose={() => setIsWatchlistModalOpen(false)}
+                    stockId={stock.id}
+                />
+            )}
         </div>
     );
 }

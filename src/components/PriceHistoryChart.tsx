@@ -160,6 +160,57 @@ export function PriceHistoryChart({
     const domainMin = Math.max(0, calcMin - padding);
     const domainMax = calcMax + padding;
 
+    // SMA calculation logic
+    const sma200Data = useMemo(() => {
+        // Use historyData if available (source of truth), else generated 'data'
+        const sourceData = historyData && historyData.length > 0 ? historyData : data;
+
+        // Need at least 200 points + 1 to show a line
+        if (sourceData.length < 200) return null;
+
+        const smaPoints: { date: string; value: number | null }[] = [];
+
+        // Calculate SMA for every point possible
+        for (let i = 0; i < sourceData.length; i++) {
+            if (i < 199) {
+                // Not enough history for this point
+                smaPoints.push({ date: sourceData[i].date, value: null });
+                continue;
+            }
+            // Average of last 200 points (including current)
+            const slice = sourceData.slice(i - 199, i + 1);
+            const sum = slice.reduce((acc, curr) => acc + curr.value, 0);
+            smaPoints.push({ date: sourceData[i].date, value: sum / 200 });
+        }
+        return smaPoints;
+    }, [historyData, data]);
+
+    // Filter display data based on selectedRange (Client-Side Slicing)
+    const displayData = useMemo(() => {
+        let displayPoints = [...data];
+
+        // If '1Y' is selected but we fed 2Y data, slice it to last ~1Y
+        // Assuming ~252 trading days per year
+        if (selectedRange === '1Y' && displayPoints.length > 300) {
+            displayPoints = displayPoints.slice(displayPoints.length - 255);
+        }
+        else if (selectedRange === '6M' && displayPoints.length > 180) {
+            displayPoints = displayPoints.slice(displayPoints.length - 130);
+        }
+        else if (selectedRange === '3M' && displayPoints.length > 90) {
+            displayPoints = displayPoints.slice(displayPoints.length - 65);
+        }
+
+        // Merge SMA
+        if (sma200Data) {
+            return displayPoints.map(p => {
+                const sma = sma200Data.find(s => s.date === p.date);
+                return { ...p, sma200: sma ? sma.value : null };
+            });
+        }
+        return displayPoints;
+    }, [data, selectedRange, sma200Data]);
+
     return (
         <div className="w-full h-full flex flex-col relative">
             <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
@@ -254,7 +305,7 @@ export function PriceHistoryChart({
             <div className="h-[300px] w-full min-h-[300px] min-w-0">
                 {hasMounted && (
                     <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
-                        <AreaChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+                        <AreaChart data={displayData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                             <defs>
                                 <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor={isPositive ? "#22c55e" : "#ef4444"} stopOpacity={0.1} />
@@ -380,6 +431,18 @@ export function PriceHistoryChart({
                                 strokeWidth={2}
                                 fillOpacity={1}
                                 fill="url(#colorValue)"
+                            />
+                            {/* SMA 200 Line */}
+                            <Area
+                                type="monotone"
+                                dataKey="sma200"
+                                stroke="#fbbf24" // Amber-400
+                                strokeWidth={2}
+                                strokeDasharray="5 5"
+                                fill="none"
+                                connectNulls
+                                isAnimationActive={false}
+                                activeDot={{ r: 4, fill: '#fbbf24' }}
                             />
                         </AreaChart>
                     </ResponsiveContainer>

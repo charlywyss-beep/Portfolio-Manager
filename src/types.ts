@@ -1,7 +1,12 @@
 export type Currency = 'EUR' | 'USD' | 'CHF' | 'GBp' | 'GBP';
 
 
-
+export interface Watchlist {
+    id: string;
+    name: string;
+    stockIds: string[];
+    isDefault?: boolean;
+}
 export interface QuickLink {
     id: string;
     url: string;

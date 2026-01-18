@@ -5,6 +5,8 @@ import { useCurrencyFormatter } from '../utils/currency';
 import { Logo } from './Logo';
 import { estimateMarketState } from '../utils/market';
 import { Edit, Trash2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ConfirmModal } from './ConfirmModal';
+import { useState } from 'react';
 
 interface PositionTableProps {
     title: string;
@@ -20,6 +22,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
     const { deletePosition } = usePortfolio();
     const navigate = useNavigate();
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
+    const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean, posId: string | null, name: string }>({ isOpen: false, posId: null, name: '' });
 
     return (
         <div className="space-y-3">
@@ -240,9 +243,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                                 </button>
                                                 <button
                                                     onClick={() => {
-                                                        if (confirm(`Position "${pos.stock.name}" wirklich löschen?`)) {
-                                                            deletePosition(pos.id);
-                                                        }
+                                                        setConfirmDelete({ isOpen: true, posId: pos.id, name: pos.stock.name });
                                                     }}
                                                     className="p-1.5 sm:p-2 hover:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg transition-colors"
                                                     title="Position löschen"
@@ -265,6 +266,17 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                     </table>
                 </div>
             </div>
+            <ConfirmModal
+                isOpen={confirmDelete.isOpen}
+                onClose={() => setConfirmDelete({ isOpen: false, posId: null, name: '' })}
+                onConfirm={() => {
+                    if (confirmDelete.posId) {
+                        deletePosition(confirmDelete.posId);
+                    }
+                }}
+                title="Position löschen"
+                message={`Möchten Sie die Position "${confirmDelete.name}" wirklich aus Ihrem Portfolio löschen?`}
+            />
         </div>
     );
 }

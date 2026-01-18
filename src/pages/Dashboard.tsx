@@ -17,6 +17,7 @@ import { AssetAllocationChart } from '../components/AssetAllocationChart';
 import { RiskAnalysisCard } from '../components/RiskAnalysisCard';
 import { TopPerformersCard } from '../components/TopPerformersCard';
 import { PerformanceDetailsModal } from '../components/PerformanceDetailsModal';
+import { ConfirmModal } from '../components/ConfirmModal';
 import { PieChart as PieChartIcon } from 'lucide-react';
 
 // Helper to translate frequency to German
@@ -40,6 +41,7 @@ export function Dashboard() {
     const [editingHistoryEntry, setEditingHistoryEntry] = useState<any>(null);
     const [hasMounted, setHasMounted] = useState(false);
     const [showPerformanceDetails, setShowPerformanceDetails] = useState(false); // NEW
+    const [confirmDeleteHistory, setConfirmDeleteHistory] = useState<{ isOpen: boolean, entryId: string | null }>({ isOpen: false, entryId: null });
     const hasRefreshedPrices = useRef(false);
     const hasRefreshedMetadata = useRef(false); // Prevent loop
 
@@ -671,7 +673,7 @@ export function Dashboard() {
                                                             </button>
                                                             <button
                                                                 onClick={() => {
-                                                                    if (confirm('Historischen Eintrag löschen?')) deleteHistoryEntry(entry.id);
+                                                                    setConfirmDeleteHistory({ isOpen: true, entryId: entry.id });
                                                                 }}
                                                                 className="p-1 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
                                                                 title="Eintrag löschen"
@@ -803,6 +805,18 @@ export function Dashboard() {
                         />
                     )
                 }
+
+                <ConfirmModal
+                    isOpen={confirmDeleteHistory.isOpen}
+                    onClose={() => setConfirmDeleteHistory({ isOpen: false, entryId: null })}
+                    onConfirm={() => {
+                        if (confirmDeleteHistory.entryId) {
+                            deleteHistoryEntry(confirmDeleteHistory.entryId);
+                        }
+                    }}
+                    title="Eintrag löschen"
+                    message="Möchten Sie diesen historischen Eintrag wirklich unwiderruflich löschen?"
+                />
                 <AddHistoryEntryModal
                     isOpen={isHistoryModalOpen}
                     onClose={() => {

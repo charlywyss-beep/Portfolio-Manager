@@ -25,10 +25,13 @@ interface PortfolioContextType {
     addHistoryEntry: (entry: Omit<import('../types').PortfolioHistoryEntry, 'id'>) => void;
     deleteHistoryEntry: (id: string) => void;
     updateHistoryEntry: (id: string, updates: Partial<import('../types').PortfolioHistoryEntry>) => void;
-    importData: (data: { positions: Position[], stocks: Stock[], fixedDeposits: import('../types').FixedDeposit[], history: import('../types').PortfolioHistoryEntry[], watchlist: string[] }) => boolean;
-    watchlist: string[];
-    addToWatchlist: (stockId: string) => void;
-    removeFromWatchlist: (stockId: string) => void;
+    importData: (data: { positions: Position[], stocks: Stock[], fixedDeposits: import('../types').FixedDeposit[], history: import('../types').PortfolioHistoryEntry[], watchlists: import('../types').Watchlist[] }) => boolean;
+    watchlists: import('../types').Watchlist[];
+    addToWatchlist: (stockId: string, watchlistId?: string) => void;
+    removeFromWatchlist: (stockId: string, watchlistId: string) => void;
+    createWatchlist: (name: string) => void;
+    deleteWatchlist: (id: string) => void;
+    renameWatchlist: (id: string, name: string) => void;
     addQuickLink: (stockId: string, url: string, label?: string) => void;
     removeQuickLink: (stockId: string, linkId: string) => void;
 
@@ -129,17 +132,49 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         safeJSONParse('portfolio_positions', MOCK_POSITIONS)
     );
 
-    const [stocks, setStocks] = useState<Stock[]>(() =>
-        safeJSONParse('portfolio_stocks', MOCK_STOCKS)
-    );
+    const [stocks, setStocks] = useState<Stock[]>(() => {
+        const loaded = safeJSONParse('portfolio_stocks', MOCK_STOCKS);
+        // Data Sanitation: Remove 'Simuliert' from sector (User Request)
+        if (loaded && Array.isArray(loaded)) {
+            return loaded.map((s: Stock) => ({
+                ...s,
+                sector: s.sector === 'Simuliert' ? '' : s.sector
+            }));
+        }
+        return loaded;
+    });
 
     const [fixedDeposits, setFixedDeposits] = useState<import('../types').FixedDeposit[]>(() =>
         safeJSONParse('portfolio_fixed_deposits', [])
     );
 
-    const [watchlist, setWatchlist] = useState<string[]>(() =>
-        safeJSONParse('portfolio_watchlist', [])
-    );
+    // Watchlist State (Multi-List Support v3.13.0)
+    const [watchlists, setWatchlists] = useState<import('../types').Watchlist[]>([]);
+
+    // Initialize Watchlists (Migration from old string[] or creation of defaults)
+    useEffect(() => {
+        const savedWatchlists = localStorage.getItem('portfolio_watchlists');
+        if (savedWatchlists) {
+            try {
+                setWatchlists(JSON.parse(savedWatchlists));
+            } catch (e) {
+                console.error("Failed to parse watchlists", e);
+                setWatchlists([]);
+            }
+        } else {
+            // Migration: Check for old single watchlist
+            const oldWatchlist = localStorage.getItem('portfolio_watchlist');
+            const migratedIds = oldWatchlist ? JSON.parse(oldWatchlist) : [];
+
+            const initialLists: import('../types').Watchlist[] = [
+                { id: 'wl_default', name: 'Merkliste', stockIds: migratedIds, isDefault: true },
+                { id: 'wl_ch', name: 'Schweiz', stockIds: [], isDefault: false },
+                { id: 'wl_div', name: 'Dividenden', stockIds: [], isDefault: false },
+                { id: 'wl_growth', name: 'Wachstums Aktien', stockIds: [], isDefault: false },
+            ];
+            setWatchlists(initialLists);
+        }
+    }, []);
 
     const [finnhubApiKey, setFinnhubApiKey] = useState<string>(() => {
         const stored = localStorage.getItem('portfolio_finnhub_api_key');
@@ -202,8 +237,10 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     }, [fixedDeposits]);
 
     useEffect(() => {
-        localStorage.setItem('portfolio_watchlist', JSON.stringify(watchlist));
-    }, [watchlist]);
+        if (watchlists.length > 0) {
+            localStorage.setItem('portfolio_watchlists', JSON.stringify(watchlists));
+        }
+    }, [watchlists]);
 
 
 
@@ -358,15 +395,48 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     };
 
 
-    const addToWatchlist = (stockId: string) => {
-        setWatchlist((prev) => {
-            if (prev.includes(stockId)) return prev;
-            return [...prev, stockId];
+    const addToWatchlist = (stockId: string, watchlistId?: string) => {
+        setWatchlists(prev => {
+            // Default to first list (Merkliste) if no ID provided
+            const targetId = watchlistId || prev[0]?.id;
+            if (!targetId) return prev;
+
+            return prev.map(wl => {
+                if (wl.id === targetId) {
+                    if (wl.stockIds.includes(stockId)) return wl;
+                    return { ...wl, stockIds: [...wl.stockIds, stockId] };
+                }
+                return wl;
+            });
         });
     };
 
-    const removeFromWatchlist = (stockId: string) => {
-        setWatchlist((prev) => prev.filter((id) => id !== stockId));
+    const removeFromWatchlist = (stockId: string, watchlistId: string) => {
+        setWatchlists(prev => {
+            return prev.map(wl => {
+                if (wl.id === watchlistId) {
+                    return { ...wl, stockIds: wl.stockIds.filter(id => id !== stockId) };
+                }
+                return wl;
+            });
+        });
+    };
+
+    const createWatchlist = (name: string) => {
+        const newWl: import('../types').Watchlist = {
+            id: `wl_${Date.now()}`,
+            name,
+            stockIds: []
+        };
+        setWatchlists(prev => [...prev, newWl]);
+    };
+
+    const deleteWatchlist = (id: string) => {
+        setWatchlists(prev => prev.filter(wl => wl.id !== id));
+    };
+
+    const renameWatchlist = (id: string, name: string) => {
+        setWatchlists(prev => prev.map(wl => wl.id === id ? { ...wl, name } : wl));
     };
 
     const addQuickLink = (stockId: string, url: string, label?: string) => {
@@ -609,13 +679,23 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         setMortgageData(prev => ({ ...prev, ...newData }));
     };
 
-    const importData = (data: { positions: Position[], stocks: Stock[], fixedDeposits: any[], history: any[], watchlist?: string[], mortgageData?: import('../types').MortgageData }) => {
+    const importData = (data: { positions: Position[], stocks: Stock[], fixedDeposits: any[], history: any[], watchlist?: string[], watchlists?: import('../types').Watchlist[], mortgageData?: import('../types').MortgageData }) => {
         try {
             if (data.positions) setPositions(data.positions);
             if (data.stocks) setStocks(data.stocks);
             if (data.fixedDeposits) setFixedDeposits(data.fixedDeposits);
             if (data.history) setHistory(data.history);
-            if (data.watchlist) setWatchlist(data.watchlist);
+            if (data.watchlists) setWatchlists(data.watchlists);
+            // Legacy Support import
+            if (data.watchlist && !data.watchlists) {
+                const initialLists: import('../types').Watchlist[] = [
+                    { id: 'wl_default', name: 'Merkliste', stockIds: data.watchlist, isDefault: true },
+                    { id: 'wl_ch', name: 'Schweiz', stockIds: [], isDefault: false },
+                    { id: 'wl_div', name: 'Dividenden', stockIds: [], isDefault: false },
+                    { id: 'wl_growth', name: 'Wachstums Aktien', stockIds: [], isDefault: false },
+                ];
+                setWatchlists(initialLists);
+            }
             if (data.mortgageData) setMortgageData(data.mortgageData);
             return true;
         } catch (e) {
@@ -663,9 +743,12 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 deleteHistoryEntry,
                 updateHistoryEntry,
                 importData,
-                watchlist,
+                watchlists,
                 addToWatchlist,
                 removeFromWatchlist,
+                createWatchlist,
+                deleteWatchlist,
+                renameWatchlist,
                 addQuickLink,
                 removeQuickLink,
                 finnhubApiKey,
