@@ -591,7 +591,7 @@ function WatchlistTable({
         <table className="w-full text-left border-collapse min-w-[1200px] xl:min-w-0 table-fixed">
             <thead>
                 <tr className="border-b bg-muted/20">
-                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider whitespace-nowrap sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[200px] md:w-[300px]">Aktie</th>
+                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider whitespace-nowrap sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[200px] md:w-[300px] min-w-[200px] md:min-w-[300px] max-w-[200px] md:max-w-[300px]">Aktie</th>
                     <th
                         className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors w-[10%]"
                         onClick={() => {
@@ -643,7 +643,7 @@ function WatchlistTable({
 
                     return (
                         <tr key={stock.id} className="hover:bg-muted/30 transition-colors group">
-                            <td className="p-4 sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                            <td className="p-4 sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[200px] md:w-[300px] min-w-[200px] md:min-w-[300px] max-w-[200px] md:max-w-[300px]">
                                 <div className="absolute inset-0 bg-card -z-10" />
                                 <div className="flex items-center gap-3 relative">
                                     <Logo
