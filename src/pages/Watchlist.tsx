@@ -31,10 +31,20 @@ export function Watchlist() {
     const [isPotentialEtfsOpen, setIsPotentialEtfsOpen] = useState(false);
 
 
-    // Multi-Watchlist State - Default to 'owned' (Bestand view)
-    const [activeWatchlistId, setActiveWatchlistId] = useState<string>('owned');
+    // Multi-Watchlist State - Persist in localStorage to survive navigation
+    const STORAGE_KEY = 'watchlist_active_tab';
+    const [activeWatchlistId, setActiveWatchlistId] = useState<string>(() => {
+        // Read from localStorage on mount, default to 'owned' if not found
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved || 'owned';
+    });
 
-    // Handle deleted watchlist (but don't override 'owned' on mount)
+    // Persist activeWatchlistId to localStorage on change
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY, activeWatchlistId);
+    }, [activeWatchlistId]);
+
+    // Handle deleted watchlist (but don't override valid selection on mount)
     useEffect(() => {
         // Skip if in 'owned' mode (virtual tab)
         if (activeWatchlistId === 'owned') return;
