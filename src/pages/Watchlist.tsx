@@ -123,16 +123,14 @@ export function Watchlist() {
 
 
     // Visibility Logic: Context-sensitive
-    // If watchlist has ONLY ETFs (and no Stocks), hide Stock sections.
-    // If watchlist has ONLY Stocks (and no ETFs), hide ETF sections.
-    // If mixed or empty, show both (or default).
-    const hasPotentialStocks = potentialStocks.length > 0;
-    const hasPotentialEtfs = potentialEtfs.length > 0;
+    // Show sections if we have owned OR potential items of that type
+    const hasStocks = ownedStocks.length > 0 || potentialStocks.length > 0;
+    const hasEtfs = ownedEtfs.length > 0 || potentialEtfs.length > 0;
 
-    // Show Stock Sections if: We have potential stocks OR we have NO potential ETFs (default view for empty/mixed)
-    const showStockSections = hasPotentialStocks || !hasPotentialEtfs;
-    // Show ETF Sections if: We have potential ETFs OR we have NO potential Stocks
-    const showEtfSections = hasPotentialEtfs || !hasPotentialStocks;
+    // Show Stock Sections if: We have any stocks (owned or potential) OR we have NO ETFs (default view)
+    const showStockSections = hasStocks || !hasEtfs;
+    // Show ETF Sections if: We have any ETFs (owned or potential) OR we have NO Stocks
+    const showEtfSections = hasEtfs || !hasStocks;
 
     // Unified Timer Tracking (v3.12.70): Replaced local interval with dependency on global refreshTick
     useEffect(() => {
