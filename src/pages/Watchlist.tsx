@@ -403,8 +403,8 @@ export function Watchlist() {
                     </div>
                 )}
 
-                {/* 3. POTENTIAL STOCKS (Collapsible, Default Closed) */}
-                {showStockSections && (
+                {/* 3. POTENTIAL STOCKS (Collapsible, Default Closed) - Hide if in 'Bestand' mode */}
+                {activeWatchlistId !== 'owned' && showStockSections && (
                     <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
                         <button
                             onClick={() => setIsPotentialStocksOpen(!isPotentialStocksOpen)}
@@ -454,8 +454,8 @@ export function Watchlist() {
                     </div>
                 )}
 
-                {/* 4. POTENTIAL ETFS (Collapsible, Default Closed) */}
-                {showEtfSections && (
+                {/* 4. POTENTIAL ETFS (Collapsible, Default Closed) - Hide if in 'Bestand' mode */}
+                {activeWatchlistId !== 'owned' && showEtfSections && (
                     <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
                         <button
                             onClick={() => setIsPotentialEtfsOpen(!isPotentialEtfsOpen)}
