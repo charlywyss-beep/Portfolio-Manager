@@ -977,7 +977,7 @@ export function EditDividendPage() {
                                                         </div>
                                                         <input
                                                             type="date"
-                                                            value={date.exDate}
+                                                            value={sanitizeDateYear(date.exDate)}
                                                             onChange={(e) => handleQuarterlyDateChange(idx, 'exDate', e.target.value)}
                                                             className="w-full px-2 py-2 text-sm border rounded bg-background"
                                                         />
@@ -1000,8 +1000,8 @@ export function EditDividendPage() {
                                                         </div>
                                                         <input
                                                             type="date"
-                                                            value={date.payDate}
-                                                            min={date.exDate || undefined}
+                                                            value={sanitizeDateYear(date.payDate, date.exDate)}
+                                                            min={sanitizeDateYear(date.exDate) || undefined}
                                                             onChange={(e) => handleQuarterlyDateChange(idx, 'payDate', e.target.value)}
                                                             className="w-full px-2 py-2 text-sm border rounded bg-background"
                                                         />
