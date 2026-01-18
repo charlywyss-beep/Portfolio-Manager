@@ -13,6 +13,7 @@ export interface CurrentDividendInfo {
 // Helper to translate frequency to German
 export const translateFrequency = (freq?: string) => {
     switch (freq) {
+        case 'none': return ''; // No dividend
         case 'quarterly': return 'p.Q.';
         case 'semi-annually': return 'Halbjähr.';
         case 'annually': return 'Jährlich';
