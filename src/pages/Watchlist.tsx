@@ -208,6 +208,11 @@ export function Watchlist() {
                 </div>
             </div>
 
+            {/* Debug Banner */}
+            <div className="bg-red-500 text-white p-2 text-center text-xs font-mono">
+                DEBUG: ActiveListID = '{activeWatchlistId}' | Type: {typeof activeWatchlistId}
+            </div>
+
             {/* Watchlist Tabs */}
             <div className="px-4 pb-2 mt-4 overflow-x-auto">
                 <div className="flex items-center gap-2 min-w-max">
