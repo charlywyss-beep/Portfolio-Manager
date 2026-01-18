@@ -131,12 +131,19 @@ export function EditDividendPage() {
             setFrequency(freq);
 
             if (stock.dividendDates && stock.dividendDates.length > 0) {
+                // DEBUG: Log raw dates from stock object
+                console.log('[EditDividendPage] Raw dividendDates from stock:', JSON.stringify(stock.dividendDates));
+
                 // Sanitize dates when loading to fix corrupted years
-                const dates = stock.dividendDates.map(d => ({
-                    exDate: sanitizeDateYear(d.exDate || ''),
-                    payDate: sanitizeDateYear(d.payDate || '', d.exDate) // Use exDate as reference for payDate
-                }));
+                const dates = stock.dividendDates.map((d, i) => {
+                    console.log(`[EditDividendPage] Processing Q${i + 1}: exDate=${d.exDate}, payDate=${d.payDate}`);
+                    return {
+                        exDate: sanitizeDateYear(d.exDate || ''),
+                        payDate: sanitizeDateYear(d.payDate || '', d.exDate) // Use exDate as reference for payDate
+                    };
+                });
                 while (dates.length < 4) dates.push({ exDate: '', payDate: '' });
+                console.log('[EditDividendPage] Sanitized dates:', JSON.stringify(dates));
                 setQuarterlyDates(dates);
             } else if (stock.dividendExDate || stock.dividendPayDate) {
                 setQuarterlyDates([
