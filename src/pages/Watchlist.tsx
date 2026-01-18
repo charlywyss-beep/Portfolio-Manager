@@ -211,7 +211,21 @@ export function Watchlist() {
             {/* Watchlist Tabs */}
             <div className="px-4 pb-2 mt-4 overflow-x-auto">
                 <div className="flex items-center gap-2 min-w-max">
-                    {watchlists.map(wl => (
+                    {/* 1. Bestand (Always first) */}
+                    <button
+                        onClick={() => setActiveWatchlistId('owned')}
+                        className={cn(
+                            "px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                            activeWatchlistId === 'owned'
+                                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+                        )}
+                    >
+                        Bestand
+                    </button>
+
+                    {/* 2. Other User Lists (excluding Merkliste) */}
+                    {watchlists.filter(wl => !wl.isDefault).map(wl => (
                         <div key={wl.id} className="relative group">
                             <button
                                 onClick={() => setActiveWatchlistId(wl.id)}
@@ -224,14 +238,13 @@ export function Watchlist() {
                             >
                                 {wl.name}
                             </button>
-                            {/* Delete Button (only for non-default lists) */}
-                            {!wl.isDefault && activeWatchlistId === wl.id && (
+                            {activeWatchlistId === wl.id && (
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         if (confirm(`Liste "${wl.name}" wirklich löschen?`)) {
                                             deleteWatchlist(wl.id);
-                                            setActiveWatchlistId(''); // Reset to trigger effect
+                                            setActiveWatchlistId('owned');
                                         }
                                     }}
                                     className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
@@ -240,6 +253,23 @@ export function Watchlist() {
                                     <Trash2 className="size-3" />
                                 </button>
                             )}
+                        </div>
+                    ))}
+
+                    {/* 3. Merkliste (Default Watchlist) - Always Last */}
+                    {watchlists.filter(wl => wl.isDefault).map(wl => (
+                        <div key={wl.id} className="relative group">
+                            <button
+                                onClick={() => setActiveWatchlistId(wl.id)}
+                                className={cn(
+                                    "px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                                    activeWatchlistId === wl.id
+                                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                        : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+                                )}
+                            >
+                                {wl.name}
+                            </button>
                         </div>
                     ))}
                     {/* Add List Button */}
