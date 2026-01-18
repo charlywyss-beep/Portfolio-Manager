@@ -165,6 +165,16 @@ export function Watchlist() {
         };
     }, [lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices]);
 
+    // Unified Buy Handler: Opens EditModal for existing positions, AddModal for new ones
+    const handleBuy = (stock: Stock) => {
+        const existingPos = positions.find(p => String(p.stockId) === String(stock.id));
+        if (existingPos) {
+            setEditPosition({ ...existingPos, stock });
+        } else {
+            setBuyStock(stock);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
             {/* Header */}
@@ -305,7 +315,7 @@ export function Watchlist() {
                                     sortConfig={sortConfig}
                                     setSortConfig={setSortConfig}
                                     onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                    onBuy={(stock) => setBuyStock(stock)}
+                                    onBuy={(stock) => handleBuy(stock)}
                                     // Blue "Edit" button now opens details page
                                     onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                     onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
@@ -356,7 +366,7 @@ export function Watchlist() {
                                     sortConfig={sortConfig}
                                     setSortConfig={setSortConfig}
                                     onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                    onBuy={(stock) => setBuyStock(stock)}
+                                    onBuy={(stock) => handleBuy(stock)}
                                     // Blue "Edit" button now opens details page
                                     onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                     onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
@@ -407,7 +417,7 @@ export function Watchlist() {
                                     sortConfig={sortConfig}
                                     setSortConfig={setSortConfig}
                                     onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                    onBuy={(stock) => setBuyStock(stock)}
+                                    onBuy={(stock) => handleBuy(stock)}
                                     // Blue "Edit" button now opens details page
                                     onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                     onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
@@ -458,7 +468,7 @@ export function Watchlist() {
                                     sortConfig={sortConfig}
                                     setSortConfig={setSortConfig}
                                     onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                    onBuy={(stock) => setBuyStock(stock)}
+                                    onBuy={(stock) => handleBuy(stock)}
                                     // Blue "Edit" button now opens details page
                                     onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                     onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
