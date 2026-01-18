@@ -113,20 +113,23 @@ export function Watchlist() {
     );
 
 
+    // Visibility Logic: Context-sensitive
+    // If watchlist has ONLY ETFs (and no Stocks), hide Stock sections.
+    // If watchlist has ONLY Stocks (and no ETFs), hide ETF sections.
+    // If mixed or empty, show both (or default).
+    const hasPotentialStocks = potentialStocks.length > 0;
+    const hasPotentialEtfs = potentialEtfs.length > 0;
+
+    // Show Stock Sections if: We have potential stocks OR we have NO potential ETFs (default view for empty/mixed)
+    const showStockSections = hasPotentialStocks || !hasPotentialEtfs;
+    // Show ETF Sections if: We have potential ETFs OR we have NO potential Stocks
+    const showEtfSections = hasPotentialEtfs || !hasPotentialStocks;
 
     // Unified Timer Tracking (v3.12.70): Replaced local interval with dependency on global refreshTick
     useEffect(() => {
         // Auto-collapse if empty
         if (ownedStocks.length === 0) {
             setIsOwnedStocksOpen(false);
-        } else {
-            // Optional: Auto-open if items exist?
-            // User only asked for "collapsing if empty", implies normally open.
-            // But let's respect manual toggle if user closes it?
-            // Wait, if I auto-set it here, it will override manual toggle if I'm not careful.
-            // But ownedStocks changes rarely (on load or add/remove).
-            // A better approach is to check this ONCE on load or use a ref to track if we initialized?
-            // Actually, simplest is: if length becomes 0, close it. User can't open it reasonably if empty anyway (Wait, empty message says "Keine Aktien").
         }
 
         if (ownedEtfs.length === 0) {
@@ -263,64 +266,66 @@ export function Watchlist() {
 
             <div className="w-full px-2 py-4 md:px-4 space-y-8">
                 {/* 1. OWNED STOCKS (Always Visible) */}
-                <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
+                {showStockSections && (
+                    <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
 
-                    <button
-                        onClick={() => setIsOwnedStocksOpen(!isOwnedStocksOpen)}
-                        className="w-full flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-green-500/5 gap-2 hover:bg-green-500/10 transition-colors text-left"
-                    >
-                        <div className="flex items-center gap-2">
-                            <ShoppingBag className="size-5 text-green-600" />
-                            <h2 className="text-lg font-bold">Aktien im Bestand</h2>
-                            {isOwnedStocksOpen ? <ChevronDown className="size-4 ml-2 opacity-50" /> : <ChevronRight className="size-4 ml-2 opacity-50" />}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-xs font-medium text-muted-foreground bg-background/50 px-3 py-1.5 rounded-lg border border-border/50">
-                            <span className="hidden sm:inline">Legende:</span>
-                            <div className="flex items-center gap-1.5">
-                                <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                                    <div className="size-2 rounded-full bg-green-500 animate-pulse" />
-                                    <span className="font-bold">KAUFEN</span>
-                                </div>
-                                <span>(Kurs &lt; Limit)</span>
+                        <button
+                            onClick={() => setIsOwnedStocksOpen(!isOwnedStocksOpen)}
+                            className="w-full flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-green-500/5 gap-2 hover:bg-green-500/10 transition-colors text-left"
+                        >
+                            <div className="flex items-center gap-2">
+                                <ShoppingBag className="size-5 text-green-600" />
+                                <h2 className="text-lg font-bold">Aktien im Bestand</h2>
+                                {isOwnedStocksOpen ? <ChevronDown className="size-4 ml-2 opacity-50" /> : <ChevronRight className="size-4 ml-2 opacity-50" />}
                             </div>
-                            <div className="w-px h-3 bg-border hidden sm:block" />
-                            <div className="flex items-center gap-1.5">
-                                <div className="flex items-center gap-1 text-red-500">
-                                    <div className="size-2 rounded-full bg-red-500" />
-                                    <span className="font-bold">KEINE INFO</span>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-xs font-medium text-muted-foreground bg-background/50 px-3 py-1.5 rounded-lg border border-border/50">
+                                <span className="hidden sm:inline">Legende:</span>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                                        <div className="size-2 rounded-full bg-green-500 animate-pulse" />
+                                        <span className="font-bold">KAUFEN</span>
+                                    </div>
+                                    <span>(Kurs &lt; Limit)</span>
                                 </div>
-                                <span>(Limit fehlt)</span>
+                                <div className="w-px h-3 bg-border hidden sm:block" />
+                                <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center gap-1 text-red-500">
+                                        <div className="size-2 rounded-full bg-red-500" />
+                                        <span className="font-bold">KEINE INFO</span>
+                                    </div>
+                                    <span>(Limit fehlt)</span>
+                                </div>
                             </div>
-                        </div>
-                    </button>
+                        </button>
 
-                    {isOwnedStocksOpen && (
-                        <div className="overflow-x-auto w-full overscroll-x-none border-b border-border animate-in slide-in-from-top-2 duration-200">
-                            <WatchlistTable
-                                stocks={ownedStocks}
-                                sortConfig={sortConfig}
-                                setSortConfig={setSortConfig}
-                                onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                onBuy={(stock) => setBuyStock(stock)}
-                                onEdit={(id) => {
-                                    const pos = positions.find(p => String(p.stockId) === String(id));
-                                    if (pos) {
-                                        const stock = stocks.find(s => String(s.id) === String(id));
-                                        if (stock) {
-                                            setEditPosition({ ...pos, stock });
+                        {isOwnedStocksOpen && (
+                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border animate-in slide-in-from-top-2 duration-200">
+                                <WatchlistTable
+                                    stocks={ownedStocks}
+                                    sortConfig={sortConfig}
+                                    setSortConfig={setSortConfig}
+                                    onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
+                                    onBuy={(stock) => setBuyStock(stock)}
+                                    onEdit={(id) => {
+                                        const pos = positions.find(p => String(p.stockId) === String(id));
+                                        if (pos) {
+                                            const stock = stocks.find(s => String(s.id) === String(id));
+                                            if (stock) {
+                                                setEditPosition({ ...pos, stock });
+                                            }
                                         }
-                                    }
-                                }}
-                                onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
-                                formatCurrency={formatCurrency}
-                                emptyMessage="Keine Aktien im Bestand."
-                            />
-                        </div>
-                    )}
-                </div>
+                                    }}
+                                    onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
+                                    formatCurrency={formatCurrency}
+                                    emptyMessage="Keine Aktien im Bestand."
+                                />
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* 2. OWNED ETFS (Always Visible if present) */}
-                {ownedEtfs.length > 0 && (
+                {showEtfSections && ownedEtfs.length > 0 && (
                     <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
                         <button
                             onClick={() => setIsOwnedEtfsOpen(!isOwnedEtfsOpen)}
@@ -378,123 +383,128 @@ export function Watchlist() {
                 )}
 
                 {/* 3. POTENTIAL STOCKS (Collapsible, Default Closed) */}
-                <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
-                    <button
-                        onClick={() => setIsPotentialStocksOpen(!isPotentialStocksOpen)}
-                        className="w-full flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-blue-500/5 gap-2 hover:bg-blue-500/10 transition-colors text-left"
-                    >
-                        <div className="flex items-center gap-2">
-                            <TrendingUp className="size-5 text-blue-600" />
-                            <h2 className="text-lg font-bold">Potenzielle Aktien ({potentialStocks.length})</h2>
-                            {isPotentialStocksOpen ? <ChevronDown className="size-4 ml-2 opacity-50" /> : <ChevronRight className="size-4 ml-2 opacity-50" />}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-xs font-medium text-muted-foreground bg-background/50 px-3 py-1.5 rounded-lg border border-border/50">
-                            <span className="hidden sm:inline">Legende:</span>
-                            <div className="flex items-center gap-1.5">
-                                <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                                    <div className="size-2 rounded-full bg-green-500 animate-pulse" />
-                                    <span className="font-bold">KAUFEN</span>
-                                </div>
-                                <span>(Kurs &lt; Limit)</span>
+                {showStockSections && (
+                    <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
+                        <button
+                            onClick={() => setIsPotentialStocksOpen(!isPotentialStocksOpen)}
+                            className="w-full flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-blue-500/5 gap-2 hover:bg-blue-500/10 transition-colors text-left"
+                        >
+                            <div className="flex items-center gap-2">
+                                <TrendingUp className="size-5 text-blue-600" />
+                                <h2 className="text-lg font-bold">Potenzielle Aktien ({potentialStocks.length})</h2>
+                                {isPotentialStocksOpen ? <ChevronDown className="size-4 ml-2 opacity-50" /> : <ChevronRight className="size-4 ml-2 opacity-50" />}
                             </div>
-                            <div className="w-px h-3 bg-border hidden sm:block" />
-                            <div className="flex items-center gap-1.5">
-                                <div className="flex items-center gap-1 text-red-500">
-                                    <div className="size-2 rounded-full bg-red-500" />
-                                    <span className="font-bold">KEINE INFO</span>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-xs font-medium text-muted-foreground bg-background/50 px-3 py-1.5 rounded-lg border border-border/50">
+                                <span className="hidden sm:inline">Legende:</span>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                                        <div className="size-2 rounded-full bg-green-500 animate-pulse" />
+                                        <span className="font-bold">KAUFEN</span>
+                                    </div>
+                                    <span>(Kurs &lt; Limit)</span>
                                 </div>
-                                <span>(Limit fehlt)</span>
+                                <div className="w-px h-3 bg-border hidden sm:block" />
+                                <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center gap-1 text-red-500">
+                                        <div className="size-2 rounded-full bg-red-500" />
+                                        <span className="font-bold">KEINE INFO</span>
+                                    </div>
+                                    <span>(Limit fehlt)</span>
+                                </div>
                             </div>
-                        </div>
-                    </button>
+                        </button>
 
-                    {isPotentialStocksOpen && (
-                        <div className="overflow-x-auto w-full overscroll-x-none border-b border-border animate-in slide-in-from-top-2 duration-200">
-                            <WatchlistTable
-                                stocks={potentialStocks}
-                                sortConfig={sortConfig}
-                                setSortConfig={setSortConfig}
-                                onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                onBuy={(stock) => setBuyStock(stock)}
-                                onEdit={(id) => navigate(`/calculator?mode=edit&id=${id}&from=watchlist`)}
-                                onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
-                                formatCurrency={formatCurrency}
-                                emptyMessage="Keine potenziellen Aktien auf der Watchlist."
-                            />
-                        </div>
-                    )}
-                </div>
+                        {isPotentialStocksOpen && (
+                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border animate-in slide-in-from-top-2 duration-200">
+                                <WatchlistTable
+                                    stocks={potentialStocks}
+                                    sortConfig={sortConfig}
+                                    setSortConfig={setSortConfig}
+                                    onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
+                                    onBuy={(stock) => setBuyStock(stock)}
+                                    onEdit={(id) => navigate(`/calculator?mode=edit&id=${id}&from=watchlist`)}
+                                    onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
+                                    formatCurrency={formatCurrency}
+                                    emptyMessage="Keine potenziellen Aktien auf der Watchlist."
+                                />
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* 4. POTENTIAL ETFS (Collapsible, Default Closed) */}
-                <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
-                    <button
-                        onClick={() => setIsPotentialEtfsOpen(!isPotentialEtfsOpen)}
-                        className="w-full flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-blue-500/5 gap-2 hover:bg-blue-500/10 transition-colors text-left"
-                    >
-                        <div className="flex items-center gap-2">
-                            <PieChart className="size-5 text-blue-600" />
-                            <h2 className="text-lg font-bold">Potenzielle ETFs ({potentialEtfs.length})</h2>
-                            {isPotentialEtfsOpen ? <ChevronDown className="size-4 ml-2 opacity-50" /> : <ChevronRight className="size-4 ml-2 opacity-50" />}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-xs font-medium text-muted-foreground bg-background/50 px-3 py-1.5 rounded-lg border border-border/50">
-                            <span className="hidden sm:inline">Legende:</span>
-                            <div className="flex items-center gap-1.5">
-                                <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                                    <div className="size-2 rounded-full bg-green-500 animate-pulse" />
-                                    <span className="font-bold">KAUFEN</span>
-                                </div>
-                                <span>(Kurs &lt; Limit)</span>
-                            </div>
-                            <div className="w-px h-3 bg-border hidden sm:block" />
-                            <div className="flex items-center gap-1.5">
-                                <div className="flex items-center gap-1 text-red-500">
-                                    <div className="size-2 rounded-full bg-red-500" />
-                                    <span className="font-bold">KEINE INFO</span>
-                                </div>
-                                <span>(Limit fehlt)</span>
-                            </div>
-                        </div>
-                    </button>
-
-                    {isPotentialEtfsOpen && (
-                        <div className="overflow-x-auto w-full overscroll-x-none border-b border-border animate-in slide-in-from-top-2 duration-200">
-                            <WatchlistTable
-                                stocks={potentialEtfs}
-                                sortConfig={sortConfig}
-                                setSortConfig={setSortConfig}
-                                onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                onBuy={(stock) => setBuyStock(stock)}
-                                onEdit={(id) => navigate(`/calculator?mode=edit&id=${id}&from=watchlist`)}
-                                onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
-                                formatCurrency={formatCurrency}
-                                emptyMessage="Keine potenziellen ETFs auf der Watchlist."
-                            />
-                        </div>
-                    )}
-
-                    {/* Shared Refresh Button at bottom of Potential section */}
-                    <div className="p-4 bg-muted/5 flex items-center justify-center border-t border-border/50">
+                {showEtfSections && (
+                    <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">
                         <button
-                            onClick={() => refreshAllPrices(true)}
-                            disabled={isGlobalRefreshing}
-                            className={cn(
-                                "flex items-center gap-2 px-4 py-2 rounded-lg border text-xs font-semibold transition-all shadow-sm",
-                                "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                                "active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                            )}
-                            title="Preise jetzt aktualisieren"
+                            onClick={() => setIsPotentialEtfsOpen(!isPotentialEtfsOpen)}
+                            className="w-full flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-blue-500/5 gap-2 hover:bg-blue-500/10 transition-colors text-left"
                         >
-                            <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
-                            <span>
-                                {isGlobalRefreshing
-                                    ? 'Aktualisiere...'
-                                    : lastGlobalRefresh
-                                        ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
-                                        : 'Aktualisieren'}
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <PieChart className="size-5 text-blue-600" />
+                                <h2 className="text-lg font-bold">Potenzielle ETFs ({potentialEtfs.length})</h2>
+                                {isPotentialEtfsOpen ? <ChevronDown className="size-4 ml-2 opacity-50" /> : <ChevronRight className="size-4 ml-2 opacity-50" />}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-xs font-medium text-muted-foreground bg-background/50 px-3 py-1.5 rounded-lg border border-border/50">
+                                <span className="hidden sm:inline">Legende:</span>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                                        <div className="size-2 rounded-full bg-green-500 animate-pulse" />
+                                        <span className="font-bold">KAUFEN</span>
+                                    </div>
+                                    <span>(Kurs &lt; Limit)</span>
+                                </div>
+                                <div className="w-px h-3 bg-border hidden sm:block" />
+                                <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center gap-1 text-red-500">
+                                        <div className="size-2 rounded-full bg-red-500" />
+                                        <span className="font-bold">KEINE INFO</span>
+                                    </div>
+                                    <span>(Limit fehlt)</span>
+                                </div>
+                            </div>
                         </button>
+
+                        {isPotentialEtfsOpen && (
+                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border animate-in slide-in-from-top-2 duration-200">
+                                <WatchlistTable
+                                    stocks={potentialEtfs}
+                                    sortConfig={sortConfig}
+                                    setSortConfig={setSortConfig}
+                                    onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
+                                    onBuy={(stock) => setBuyStock(stock)}
+                                    onEdit={(id) => navigate(`/calculator?mode=edit&id=${id}&from=watchlist`)}
+                                    onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
+                                    formatCurrency={formatCurrency}
+                                    emptyMessage="Keine potenziellen ETFs auf der Watchlist."
+                                />
+                            </div>
+                        )}
+
+                        {/* Shared Refresh Button at bottom of Potential section */}
+                        <div className="p-4 bg-muted/5 flex items-center justify-center border-t border-border/50">
+                            <button
+                                onClick={() => refreshAllPrices(true)}
+                                disabled={isGlobalRefreshing}
+                                className={cn(
+                                    "flex items-center gap-2 px-4 py-2 rounded-lg border text-xs font-semibold transition-all shadow-sm",
+                                    "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                    "active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                )}
+                                title="Preise jetzt aktualisieren"
+                            >
+                                <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
+                                <span>
+                                    {isGlobalRefreshing
+                                        ? 'Aktualisiere...'
+                                        : lastGlobalRefresh
+                                            ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                            : 'Aktualisieren'}
+                                </span>
+                            </button>
+                        </div>
+
                     </div>
-                </div>
+                )}
 
 
                 {/* AddPositionModal for buying from watchlist */}
