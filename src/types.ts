@@ -58,7 +58,7 @@ export interface Stock {
     dividendExDate?: string; // Ex-dividend date (ISO format)
     dividendPayDate?: string; // Payment date (ISO format)
     dividendDates?: { exDate: string; payDate: string }[]; // NEW: Multiple dates support
-    dividendFrequency?: 'monthly' | 'quarterly' | 'annually' | 'semi-annually';
+    dividendFrequency?: 'none' | 'monthly' | 'quarterly' | 'annually' | 'semi-annually';
     logoUrl?: string;
     targetPrice?: number; // Desired buy price (Fair Value) -> Buy Limit
     sellLimit?: number; // Desired sell price -> Sell Limit

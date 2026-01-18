@@ -79,7 +79,7 @@ export function Settings() {
             watchlistOnly: stocks.filter(s => watchlists.some(wl => wl.stockIds.includes(s.id)) && !ownedIds.has(s.id)),
             other: stocks.filter(s => !watchlists.some(wl => wl.stockIds.includes(s.id)) && !ownedIds.has(s.id))
         };
-    }, [stocks, positions, watchlist]);
+    }, [stocks, positions, watchlists]);
 
     const handleExport = () => {
         const data = {
@@ -89,7 +89,7 @@ export function Settings() {
             stocks,
             fixedDeposits,
             history,
-            watchlist,
+            watchlists,
             mortgageData
         };
 
@@ -256,7 +256,7 @@ export function Settings() {
                                                 key={stock.id}
                                                 stock={stock}
                                                 positions={positions}
-                                                watchlist={watchlist}
+                                                watchlists={watchlists}
                                                 stocks={stocks}
                                                 fixedDeposits={fixedDeposits}
                                                 history={history}
@@ -280,7 +280,7 @@ export function Settings() {
                                                 key={stock.id}
                                                 stock={stock}
                                                 positions={positions}
-                                                watchlist={watchlist}
+                                                watchlists={watchlists}
                                                 stocks={stocks}
                                                 fixedDeposits={fixedDeposits}
                                                 history={history}
