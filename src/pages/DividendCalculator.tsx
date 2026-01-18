@@ -796,7 +796,10 @@ export function DividendCalculator() {
     };
 
 
-    const handleAddToWatchlist = () => {
+    // Watchlist Picker State
+    const [showWatchlistPicker, setShowWatchlistPicker] = useState(false);
+
+    const handleAddToWatchlist = (watchlistId?: string) => {
         const fromWatchlist = searchParams.get('from') === 'watchlist';
 
         if (selectedStockId && selectedStockId !== 'new') {
@@ -824,7 +827,8 @@ export function DividendCalculator() {
             };
 
             updateStock(selectedStockId, { plannedPurchase });
-            addToWatchlist(selectedStockId);
+            addToWatchlist(selectedStockId, watchlistId);
+            setShowWatchlistPicker(false);
             setShowSuccess(true);
             setTimeout(() => {
                 setShowSuccess(false);
@@ -871,7 +875,8 @@ export function DividendCalculator() {
                 dividendFrequency: 'annually',
                 plannedPurchase
             });
-            addToWatchlist(newId);
+            addToWatchlist(newId, watchlistId);
+            setShowWatchlistPicker(false);
             updateSimulatorState({ selectedStockId: newId });
             setShowSuccess(true);
             setTimeout(() => {
@@ -1561,13 +1566,35 @@ export function DividendCalculator() {
 
                                 {/* Watchlist Action */}
                                 {mode === 'buy' && (
-                                    <button
-                                        onClick={handleAddToWatchlist}
-                                        className="w-full py-2 rounded-md font-medium text-sm bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 transition-colors shadow-sm"
-                                    >
-                                        <Eye size={16} />
-                                        In Watchlist speichern
-                                    </button>
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setShowWatchlistPicker(!showWatchlistPicker)}
+                                            className="w-full py-2 rounded-md font-medium text-sm bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 transition-colors shadow-sm"
+                                        >
+                                            <Eye size={16} />
+                                            In Watchlist speichern
+                                        </button>
+                                        {showWatchlistPicker && (
+                                            <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                                                <div className="p-2 border-b border-border bg-muted/30">
+                                                    <span className="text-xs font-medium text-muted-foreground">Watchlist auswählen:</span>
+                                                </div>
+                                                <div className="max-h-48 overflow-y-auto">
+                                                    {watchlists.map(wl => (
+                                                        <button
+                                                            key={wl.id}
+                                                            onClick={() => handleAddToWatchlist(wl.id)}
+                                                            className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
+                                                        >
+                                                            <Eye className="size-3.5 text-muted-foreground" />
+                                                            <span>{wl.name}</span>
+                                                            {wl.isDefault && <span className="text-[10px] text-muted-foreground">(Standard)</span>}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 )}
                             </div>
 
