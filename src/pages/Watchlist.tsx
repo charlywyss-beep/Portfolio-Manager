@@ -31,18 +31,17 @@ export function Watchlist() {
     const [isPotentialEtfsOpen, setIsPotentialEtfsOpen] = useState(false);
 
 
-    // Multi-Watchlist State
-    const [activeWatchlistId, setActiveWatchlistId] = useState<string>('');
+    // Multi-Watchlist State - Default to 'owned' (Bestand view)
+    const [activeWatchlistId, setActiveWatchlistId] = useState<string>('owned');
 
-    // Initialize active watchlist
+    // Handle deleted watchlist (but don't override 'owned' on mount)
     useEffect(() => {
-        if (watchlists.length > 0 && !activeWatchlistId) {
-            // Prefer "Merkliste" (default) if available, otherwise first
-            const defaultList = watchlists.find(w => w.isDefault) || watchlists[0];
-            setActiveWatchlistId(defaultList.id);
-        } else if (watchlists.length > 0 && !watchlists.find(w => w.id === activeWatchlistId)) {
-            // Active list was deleted? Fallback
-            setActiveWatchlistId(watchlists[0].id);
+        // Skip if in 'owned' mode (virtual tab)
+        if (activeWatchlistId === 'owned') return;
+
+        // If current list was deleted, fallback to 'owned'
+        if (activeWatchlistId && !watchlists.find(w => w.id === activeWatchlistId)) {
+            setActiveWatchlistId('owned');
         }
     }, [watchlists, activeWatchlistId]);
 
@@ -206,11 +205,6 @@ export function Watchlist() {
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Debug Banner */}
-            <div className="bg-red-500 text-white p-2 text-center text-xs font-mono">
-                DEBUG: ActiveListID = '{activeWatchlistId}' | Type: {typeof activeWatchlistId}
             </div>
 
             {/* Watchlist Tabs */}
