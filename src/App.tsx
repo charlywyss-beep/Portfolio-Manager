@@ -169,7 +169,7 @@ function App() {
           </aside>
 
           {/* Main Content */}
-          <main className="flex-1 overflow-auto bg-background transition-all duration-300">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background transition-all duration-300">
             <Header isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
             <div>
