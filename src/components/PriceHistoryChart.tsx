@@ -200,6 +200,9 @@ export function PriceHistoryChart({
         else if (selectedRange === '3M' && displayPoints.length > 90) {
             displayPoints = displayPoints.slice(displayPoints.length - 65);
         }
+        else if (selectedRange === '1M' && displayPoints.length > 30) {
+            displayPoints = displayPoints.slice(displayPoints.length - 23);
+        }
 
         // Merge SMA
         if (sma200Data) {
