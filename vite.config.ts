@@ -65,8 +65,8 @@ export default defineConfig({
               fetchWithRotation(summaryPath)
             ]);
 
-            const chartResult = chartData?.chart?.result?.[0];
-            const quoteSummaryResult = summaryData?.quoteSummary?.result?.[0];
+            const chartResult = (chartData as any)?.chart?.result?.[0];
+            const quoteSummaryResult = (summaryData as any)?.quoteSummary?.result?.[0];
 
             if (!chartResult && !quoteSummaryResult) {
               // If both fail, return error object for this symbol
