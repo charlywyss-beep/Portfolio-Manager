@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, NavLink, Link } from 'react-router-dom';
-import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, ArrowLeftRight, Landmark } from 'lucide-react';
+import { FairValueCalculator } from './pages/FairValueCalculator';
+import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, ArrowLeftRight, Landmark, Telescope } from 'lucide-react';
+
+
 import { cn } from './utils';
 import { PortfolioProvider } from './context/PortfolioContext';
 import { ExchangeRateProvider } from './context/ExchangeRateContext';
 import { Header } from './components/Header';
+import packageJson from '../package.json';
 
 import { Dashboard } from './pages/Dashboard';
 import { Portfolio } from './pages/Portfolio';
@@ -140,7 +144,7 @@ function App() {
               }}
               title="App neu laden (Cache leeren)"
             >
-              <span className="text-[10px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">v3.12.159</span>
+              <span className="text-[10px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">v{packageJson.version}</span>
             </div>
 
             <nav className="flex-1 p-4 space-y-2 w-fit">
@@ -149,6 +153,7 @@ function App() {
               <NavItem to="/dividends" icon={TrendingUp} label="Dividenden" onClick={closeSidebarOnMobile} />
               <NavItem to="/watchlist" icon={Eye} label="Watchlist" onClick={closeSidebarOnMobile} />
               <NavItem to="/calculator" icon={Calculator} label="Kauf / Verkauf" onClick={closeSidebarOnMobile} />
+              <NavItem to="/fair-value" icon={Telescope} label="Fairer Wert" onClick={closeSidebarOnMobile} />
               <NavItem to="/mortgage" icon={Landmark} label="Budget" onClick={closeSidebarOnMobile} />
 
               <div className="pt-4 mt-4 border-t border-border">
@@ -178,6 +183,7 @@ function App() {
                 <Route path="/portfolio" element={<Portfolio />} />
                 <Route path="/watchlist" element={<Watchlist />} />
                 <Route path="/calculator" element={<DividendCalculator />} />
+                <Route path="/fair-value" element={<FairValueCalculator />} />
                 <Route path="/dividends" element={<DividendPlanner />} />
                 <Route path="/dividends/add" element={<EditDividendPage />} />
                 <Route path="/dividends/edit/:stockId" element={<EditDividendPage />} />

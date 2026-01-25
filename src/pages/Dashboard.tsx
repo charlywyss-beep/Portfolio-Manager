@@ -35,7 +35,7 @@ export function Dashboard() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { totals, upcomingDividends, positions, upcomingWatchlistDividends, bankRisks } = usePortfolioData();
-    const { history, deleteHistoryEntry, updateStockPrice, stocks, updateStock, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh, refreshTick } = usePortfolio(); // Added refreshTick
+    const { history, deleteHistoryEntry, stocks, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh, refreshTick } = usePortfolio(); // Added refreshTick
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [editingHistoryEntry, setEditingHistoryEntry] = useState<any>(null);
@@ -68,26 +68,22 @@ export function Dashboard() {
             if (positions.length === 0) return;
 
             // 1. Refresh Prices (Standard)
-            // 1. Refresh Prices (Standard)
             // FIX: Use centralized refreshAllPrices instead of fetching individual histories.
-            // Fetching history here was causing data inconsistency (Chart Price vs Quote Price).
             if (!hasRefreshedPrices.current) {
                 hasRefreshedPrices.current = true;
                 console.log("Starting Dashboard Auto-Refresh (Centralized)...");
                 refreshAllPrices();
             }
 
-            // 2. Refresh Metadata (Self-Healing for missing Country)
             // 2. Refresh Metadata (Self-Healing for missing MarketState or Country)
             if (!hasRefreshedMetadata.current) {
-                // Check if any stock with a symbol is missing 'marketState' (causes Gray Dots) or 'country'
+                // Check if any stock with a symbol is missing 'marketState' or 'country'
                 const missingMetadata = stocks.some(s => !!s.symbol && (!s.marketState || !s.country));
 
                 if (missingMetadata) {
                     hasRefreshedMetadata.current = true;
-                    console.log("Missing metadata detected (Market State/Country). Forcing Global Refresh to fix visuals...");
+                    console.log("Missing metadata detected (Market State/Country). Forcing Global Refresh...");
 
-                    // Force a global refresh (true = ignore throttle) to get market states immediately
                     // Force a global refresh (true = ignore throttle) to get market states immediately
                     // NEW (v3.12.68): Use skipThrottleUpdate (2nd arg) so this background fix doesn't block manual "Refresh All" button.
                     await refreshAllPrices(true, true);
@@ -96,7 +92,7 @@ export function Dashboard() {
         };
 
         refreshData();
-    }, [positions, stocks, updateStockPrice, updateStock]);
+    }, [positions.length]); // Only respond to number of positions, not price updates
     const [watchlistTimeframe, setWatchlistTimeframe] = useState<number>(90); // Default 90 days
     const [upcomingTimeframe, setUpcomingTimeframe] = useState<number>(90); // Default 90 days
     const [performancePeriod, setPerformancePeriod] = useState<string>('1D'); // Performance Period selection

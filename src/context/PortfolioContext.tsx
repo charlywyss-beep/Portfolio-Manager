@@ -470,32 +470,57 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     };
 
     const updateStock = (id: string, updates: Partial<Stock>) => {
-        setStocks(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+        setStocks(prev => {
+            const index = prev.findIndex(s => s.id === id);
+            if (index === -1) return prev;
+
+            const stock = prev[index];
+            const hasChanges = Object.entries(updates).some(([key, value]) => {
+                return (stock as any)[key] !== value;
+            });
+
+            if (!hasChanges) return prev;
+
+            const newStocks = [...prev];
+            newStocks[index] = { ...stock, ...updates };
+            return newStocks;
+        });
     };
 
     const updateStockPrice = (id: string, newPrice: number, newPreviousClose?: number, lastQuoteDate?: string) => {
-        setStocks(prev => prev.map(s => {
-            if (s.id === id) {
-                // PROTECTION: If new data is older than existing data, skip update.
-                if (s.lastQuoteDate && lastQuoteDate) {
-                    const existingDate = new Date(s.lastQuoteDate);
-                    const newDate = new Date(lastQuoteDate);
-                    // Tolerance: 1 minute (to avoid skipping close-calls or same-time updates)
-                    if (newDate.getTime() < existingDate.getTime() - 60000) {
-                        return s;
-                    }
-                }
+        setStocks(prev => {
+            const index = prev.findIndex(s => s.id === id);
+            if (index === -1) return prev;
 
-                return {
-                    ...s,
-                    currentPrice: newPrice,
-                    // Fix: Only update previousClose if explicitly provided. Do NOT fallback to currentPrice.
-                    previousClose: (newPreviousClose !== undefined && newPreviousClose !== null) ? newPreviousClose : s.previousClose,
-                    lastQuoteDate: lastQuoteDate || s.lastQuoteDate // Update date if provided
-                };
+            const s = prev[index];
+
+            // PROTECTION: If new data is older than existing data, skip update.
+            if (s.lastQuoteDate && lastQuoteDate) {
+                const existingDate = new Date(s.lastQuoteDate);
+                const newDate = new Date(lastQuoteDate);
+                if (newDate.getTime() < existingDate.getTime() - 60000) {
+                    return prev;
+                }
             }
-            return s;
-        }));
+
+            // Check for actual changes
+            const hasPriceChange = Math.abs(s.currentPrice - newPrice) > 0.0001;
+            const hasPrevCloseChange = newPreviousClose !== undefined && newPreviousClose !== null && Math.abs((s.previousClose || 0) - newPreviousClose) > 0.0001;
+            const hasDateChange = lastQuoteDate && s.lastQuoteDate !== lastQuoteDate;
+
+            if (!hasPriceChange && !hasPrevCloseChange && !hasDateChange) {
+                return prev;
+            }
+
+            const newStocks = [...prev];
+            newStocks[index] = {
+                ...s,
+                currentPrice: newPrice,
+                previousClose: (newPreviousClose !== undefined && newPreviousClose !== null) ? newPreviousClose : s.previousClose,
+                lastQuoteDate: lastQuoteDate || s.lastQuoteDate
+            };
+            return newStocks;
+        });
     };
 
     // Helper to update multiple stocks at once (batch update)
@@ -536,7 +561,11 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                     currentPrice: update.price,
                     previousClose: update.previousClose !== undefined ? update.previousClose : s.previousClose,
                     lastQuoteDate: update.marketTime ? update.marketTime.toISOString() : s.lastQuoteDate,
-                    marketState: finalMarketState as any
+                    marketState: finalMarketState as any,
+                    trailingPE: update.trailingPE !== undefined ? update.trailingPE : s.trailingPE,
+                    forwardPE: update.forwardPE !== undefined ? update.forwardPE : s.forwardPE,
+                    eps: update.eps !== undefined ? update.eps : s.eps,
+                    dividendYield: update.dividendYield !== undefined ? (update.dividendYield !== null ? parseFloat(update.dividendYield.toFixed(2)) : undefined) : s.dividendYield
                 };
             } else {
                 // Helpful log for debugging why a stock won't update

@@ -23,11 +23,29 @@ export function StockDetail() {
     const { formatCurrency } = useCurrencyFormatter();
     const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false); // Modal State
 
+    const [virtualStock, setVirtualStock] = useState<any>(null);
+
     // Find stock by ID or Symbol (case-insensitive)
-    const stock = stocks.find(s =>
+    const stockFromContext = stocks.find(s =>
         s.id.trim() === id?.trim() ||
         s.symbol.toLowerCase() === id?.toLowerCase()
     );
+
+    const stock = stockFromContext || virtualStock;
+
+    // Initialize virtual stock if not found in context (v3.13.44)
+    useEffect(() => {
+        if (!stockFromContext && id && !virtualStock) {
+            setVirtualStock({
+                id: id,
+                symbol: id.toUpperCase(),
+                name: id.toUpperCase(),
+                currentPrice: 0,
+                currency: 'USD',
+                type: 'stock'
+            });
+        }
+    }, [stockFromContext, id, !!virtualStock]);
 
     const [notes, setNotes] = useState('');
     const [isSaving, setIsSaving] = useState(false);
@@ -87,7 +105,7 @@ export function StockDetail() {
             return;
         }
 
-        const { symbol, id, trailingPE, forwardPE, eps, dividendYield } = currentStock;
+        const { symbol, trailingPE, forwardPE, eps, dividendYield } = currentStock;
 
         setIsRefreshing(true);
         // console.log('[StockDetail] Fetching Yahoo Finance data for:', symbol, 'Range:', timeRange);
@@ -205,43 +223,23 @@ export function StockDetail() {
                     hasUpdates = true;
                 }
 
-                // FIX: Update open and previousClose if changed
-                // STRICT MODE: Do NOT update 'open' or 'previousClose' from StockDetail refresh.
-                // These are daily anchors that should be controlled by the main Batch Refresh (List) to ensure consistency.
-                // Allowing Single-Quote updates here causes "jumping" values if Yahoo's single-quote API differs from the batch API.
-                /*
-                if (quoteResponse.open !== undefined && quoteResponse.open !== null && Math.abs((currentStock.open || 0) - quoteResponse.open) > 0.0001) {
-                    updates.open = quoteResponse.open;
+                if (quoteResponse.countryWeights !== undefined && quoteResponse.countryWeights !== null) {
+                    updates.countryWeights = quoteResponse.countryWeights;
                     hasUpdates = true;
                 }
-                
-                // CRITICAL FIX: Only update previousClose if we DON'T have one yet.
-                const weHaveValidPrevClose = currentPreviousClose && currentPreviousClose > 0;
-                
-                if (quoteResponse.previousClose !== undefined && quoteResponse.previousClose !== null) {
-                     if (history.previousClose !== undefined) {
-                    setQuote((prev: any) => ({
-                        ...prev,
-                        previousClose: history.previousClose
-                    }));
-                }        hasUpdates = true;
-                        console.log(`[StockDetail] Accepting previousClose from Single Quote (was missing): ${quoteResponse.previousClose}`);
-                     }
-                }
-                */
-
-                // Special Case: If previousClose is TOTALLY missing (e.g. data loss), allow one-time repair?
-                // For now, strict disable to cure the "jumping".
-                // If the user needs to fix missing data, the main "Refresh All" in Portfolio page will handle it.
 
                 if (hasUpdates) {
-                    updateStock(id, updates);
+                    if (stockFromContext) {
+                        updateStock(stock.id, updates);
+                    } else {
+                        setVirtualStock((prev: any) => ({ ...prev, ...updates }));
+                    }
                 }
             }
         }
         setIsRefreshing(false);
         setLastUpdate(new Date());
-    }, [timeRange, position?.buyDate]); // removed stock dependencies to avoid recreation loop, relies on Ref
+    }, [timeRange, id, position?.buyDate]); // STABLE: only depend on id string, not stock object
 
     // Initial load
     useEffect(() => {
@@ -261,17 +259,20 @@ export function StockDetail() {
         }
     }, [stock]);
 
-    // NEW: Sync Chart Data to Header Price (Reactive)
+    // Update Price for Virtual Stock
     useEffect(() => {
         if (timeRange === '1D' && chartData && chartData.length > 0 && stock) {
             const lastPoint = chartData[chartData.length - 1];
             if (lastPoint && lastPoint.value) {
-                // Only update if price is different or newer
-                // The PortfolioContext protection will handle staler dates
-                updateStockPrice(stock.id, lastPoint.value, undefined, lastPoint.date);
+                if (stockFromContext) {
+                    // Stable update check happens inside updateStockPrice (v3.12.111)
+                    updateStockPrice(stock.id, lastPoint.value, undefined, lastPoint.date);
+                } else if (!virtualStock?.currentPrice || Math.abs(virtualStock.currentPrice - lastPoint.value) > 0.001) {
+                    setVirtualStock((prev: any) => ({ ...prev, currentPrice: lastPoint.value }));
+                }
             }
         }
-    }, [chartData, timeRange, stock?.id]); // update when chart data changes
+    }, [chartData, timeRange, id, !!stockFromContext]); // STABLE: only depend on id and flag
 
     if (!stock) return <div className="p-8">Aktie nicht gefunden.</div>;
 
@@ -543,10 +544,10 @@ export function StockDetail() {
                                                     Branchen Allokation
                                                 </h3>
                                                 <div className="space-y-3">
-                                                    {Object.entries(effectiveSectorWeights)
-                                                        .sort(([, a], [, b]) => b - a)
+                                                    {(Object.entries(effectiveSectorWeights || {}) as [string, number][])
+                                                        .sort(([, a]: [string, number], [, b]: [string, number]) => b - a)
                                                         .slice(0, 8)
-                                                        .map(([sector, weight]) => {
+                                                        .map(([sector, weight]: [string, number]) => {
                                                             const displayNames: Record<string, string> = {
                                                                 'realestate': 'Immobilien',
                                                                 'healthcare': 'Gesundheitswesen',
@@ -588,10 +589,10 @@ export function StockDetail() {
                                                     Länder Allokation
                                                 </h3>
                                                 <div className="space-y-3">
-                                                    {Object.entries(effectiveCountryWeights)
-                                                        .sort(([, a], [, b]) => b - a)
+                                                    {(Object.entries(effectiveCountryWeights || {}) as [string, number][])
+                                                        .sort(([, a]: [string, number], [, b]: [string, number]) => b - a)
                                                         .slice(0, 8)
-                                                        .map(([country, weight]) => {
+                                                        .map(([country, weight]: [string, number]) => {
                                                             const displayNames: Record<string, string> = {
                                                                 'us': 'USA',
                                                                 'uk': 'Grossbritannien',
@@ -771,7 +772,7 @@ export function StockDetail() {
                             {/* List of saved links */}
                             {stock?.quickLinks && stock.quickLinks.length > 0 && (
                                 <div className="space-y-2">
-                                    {stock.quickLinks.map((link) => (
+                                    {stock.quickLinks.map((link: any) => (
                                         <div
                                             key={link.id}
                                             className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group"
