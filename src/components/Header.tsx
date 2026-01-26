@@ -62,7 +62,7 @@ export function Header({ isSidebarOpen, setIsSidebarOpen }: HeaderProps) {
                         url.searchParams.set('v', Date.now().toString());
                         window.location.href = url.toString();
                     }}
-                    className="text-xs font-semibold text-foreground/90 hover:text-primary transition-colors bg-secondary/20 hover:bg-secondary/40 px-2 py-0.5 rounded"
+                    className="text-xs font-semibold text-foreground/90 hover:text-primary transition-colors bg-secondary/20 hover:bg-secondary/40 px-2 py-0.5 rounded hidden md:block"
                     title="Klicken zum Neuladen (Cache leeren)"
                 >
                     v{packageJson.version}

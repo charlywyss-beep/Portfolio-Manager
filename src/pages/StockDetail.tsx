@@ -287,20 +287,20 @@ export function StockDetail() {
     return (
         <div className="p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16">
             {/* Sticky Header / Navigation */}
-            <div className="sticky top-16 -mx-2 md:-mx-8 px-2 md:px-8 py-4 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-4 md:mb-6">
-                <div className="flex items-center gap-3 mb-4">
+            <div className="sticky top-16 -mx-2 md:-mx-8 px-2 md:px-8 py-2 md:py-4 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-4 md:mb-6">
+                <div className="flex items-center gap-3 mb-2 md:mb-4">
                     <button
                         onClick={() => navigate(-1)}
-                        className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-3 py-1.5 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
+                        className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-2 py-1 md:px-3 md:py-1.5 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
                     >
-                        <ArrowLeft className="size-3 md:size-4 mr-1.5" />
-                        Zurück
+                        <ArrowLeft className="size-4 md:mr-1.5" />
+                        <span className="hidden md:inline">Zurück</span>
                     </button>
 
                     {/* Button moved to Chart Header */}
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex flex-row flex-wrap items-start justify-between gap-2 md:gap-4">
                     <div className="flex items-center gap-4">
                         <div
                             className={cn(
@@ -317,7 +317,7 @@ export function StockDetail() {
                             <Logo
                                 url={stock.logoUrl}
                                 alt={stock.name}
-                                size="size-12 md:size-16"
+                                size="size-10 md:size-16"
                                 fallback={
                                     <span className="text-xl md:text-2xl">{stock.symbol.slice(0, 2)}</span>
                                 }
@@ -840,13 +840,15 @@ export function StockDetail() {
                     </div>
                 </div>
             </div>
-            {stock && (
-                <AddToWatchlistModal
-                    isOpen={isWatchlistModalOpen}
-                    onClose={() => setIsWatchlistModalOpen(false)}
-                    stockId={stock.id}
-                />
-            )}
-        </div>
+            {
+                stock && (
+                    <AddToWatchlistModal
+                        isOpen={isWatchlistModalOpen}
+                        onClose={() => setIsWatchlistModalOpen(false)}
+                        stockId={stock.id}
+                    />
+                )
+            }
+        </div >
     );
 }
