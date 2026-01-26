@@ -1462,7 +1462,7 @@ export function DividendCalculator() {
                                     <div className="space-y-1">
                                         <div className="flex justify-between items-center">
                                             <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap">
-                                                Kaufpreis ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
+                                                {mode === 'buy' ? 'Kaufpreis' : 'Verkaufspreis'} ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
                                             </label>
                                             {(stocks.find(s => s.id === selectedStockId)?.symbol) && (
                                                 <button
