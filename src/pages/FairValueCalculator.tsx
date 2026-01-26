@@ -239,6 +239,25 @@ export function FairValueCalculator() {
         return () => clearTimeout(timeout);
     }, [searchTerm]);
 
+    // 4. AUTO-SYNC: Save Fair Value to Stock (v3.13.53)
+    // When calculation changes, update the stock's fairValue field (but NOT targetPrice!)
+    useEffect(() => {
+        if (!selectedSymbol || !calculation || !quote) return;
+
+        // Find stock in portfolio/watchlist
+        const existingStock = stocks.find(s => s.symbol === selectedSymbol);
+        if (existingStock) {
+            // Only update if value changed significantly to avoid loops
+            if (!existingStock.fairValue || Math.abs(existingStock.fairValue - calculation.fairValue) > 0.01) {
+                // Debounce slightly to avoid rapid updates during typing
+                const timer = setTimeout(() => {
+                    updateStock(existingStock.id, { fairValue: calculation.fairValue });
+                }, 1000);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [selectedSymbol, calculation, stocks, updateStock]);
+
     // Load Data Logic
     const loadStockData = async (symbol: string, initialName?: string, preventReset: boolean = false, initialIsin?: string) => {
         let isinToUse = initialIsin;

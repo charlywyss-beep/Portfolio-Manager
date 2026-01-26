@@ -61,6 +61,7 @@ export interface Stock {
     dividendFrequency?: 'none' | 'monthly' | 'quarterly' | 'annually' | 'semi-annually';
     logoUrl?: string;
     targetPrice?: number; // Desired buy price (Fair Value) -> Buy Limit
+    fairValue?: number; // Calculated Intrinsic Value (without Margin of Safety)
     sellLimit?: number; // Desired sell price -> Sell Limit
     notes?: string; // Personal notes about the stock
     plannedPurchase?: PlannedPurchase; // Complete planned purchase simulation data
