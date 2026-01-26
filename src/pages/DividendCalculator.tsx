@@ -1100,23 +1100,29 @@ export function DividendCalculator() {
                                                 </>
                                             ) : (
                                                 <div className="p-4 border border-border rounded-lg bg-muted/30 flex items-center gap-3 animate-in fade-in zoom-in-95">
-                                                    {stocks.find(s => s.id === selectedStockId)?.logoUrl ? (
-                                                        <div className="size-12 rounded-lg p-1 bg-white border border-border flex items-center justify-center overflow-hidden">
-                                                            <img
-                                                                src={stocks.find(s => s.id === selectedStockId)?.logoUrl}
-                                                                alt="Logo"
-                                                                className="w-full h-full object-contain"
-                                                            />
-                                                        </div>
-                                                    ) : (
-                                                        <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
-                                                            {stocks.find(s => s.id === selectedStockId)?.symbol.slice(0, 2)}
-                                                        </div>
-                                                    )}
-                                                    <div className="flex-1">
-                                                        <div className="font-semibold">{stocks.find(s => s.id === selectedStockId)?.name}</div>
-                                                        <div className="text-sm text-muted-foreground">
-                                                            {stocks.find(s => s.id === selectedStockId)?.symbol} • {stocks.find(s => s.id === selectedStockId)?.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: stocks.find(s => s.id === selectedStockId)?.currency === 'GBp' ? 'GBP' : stocks.find(s => s.id === selectedStockId)?.currency })}
+                                                    <div
+                                                        className="flex items-center gap-3 flex-1 cursor-pointer hover:opacity-80 transition-opacity"
+                                                        onClick={() => navigate(`/stock/${selectedStockId}`)}
+                                                        title="Zu Aktien-Details"
+                                                    >
+                                                        {stocks.find(s => s.id === selectedStockId)?.logoUrl ? (
+                                                            <div className="size-12 rounded-lg p-1 bg-white border border-border flex items-center justify-center overflow-hidden">
+                                                                <img
+                                                                    src={stocks.find(s => s.id === selectedStockId)?.logoUrl}
+                                                                    alt="Logo"
+                                                                    className="w-full h-full object-contain"
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
+                                                                {stocks.find(s => s.id === selectedStockId)?.symbol.slice(0, 2)}
+                                                            </div>
+                                                        )}
+                                                        <div className="flex-1">
+                                                            <div className="font-semibold">{stocks.find(s => s.id === selectedStockId)?.name}</div>
+                                                            <div className="text-sm text-muted-foreground">
+                                                                {stocks.find(s => s.id === selectedStockId)?.symbol} • {stocks.find(s => s.id === selectedStockId)?.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: stocks.find(s => s.id === selectedStockId)?.currency === 'GBp' ? 'GBP' : stocks.find(s => s.id === selectedStockId)?.currency })}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     <button
