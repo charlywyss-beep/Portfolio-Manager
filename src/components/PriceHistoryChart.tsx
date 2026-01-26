@@ -18,6 +18,7 @@ interface PriceHistoryChartProps {
     previousClose?: number;
     isMarketOpen?: boolean;
     purchasePrice?: number;
+    sellLimit?: number;
 }
 
 export function PriceHistoryChart({
@@ -31,7 +32,8 @@ export function PriceHistoryChart({
     quoteDate,
     previousClose,
     isMarketOpen = true,
-    purchasePrice
+    purchasePrice,
+    sellLimit
 }: PriceHistoryChartProps) {
     const [hasMounted, setHasMounted] = useState(false);
 
@@ -382,6 +384,19 @@ export function PriceHistoryChart({
                                         position: 'right',
                                         value: 'Kauf',
                                         fill: '#3b82f6',
+                                        fontSize: 10
+                                    }}
+                                />
+                            )}
+                            {sellLimit && (
+                                <ReferenceLine
+                                    y={sellLimit}
+                                    stroke="#dc2626"
+                                    strokeDasharray="3 3"
+                                    label={{
+                                        position: 'right',
+                                        value: 'Stop',
+                                        fill: '#dc2626',
                                         fontSize: 10
                                     }}
                                 />
