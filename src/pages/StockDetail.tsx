@@ -680,7 +680,7 @@ export function StockDetail() {
                             </div>
                             <div className="flex justify-between py-1.5 border-b border-border/50">
                                 <span className="text-muted-foreground text-sm">Fairer Wert</span>
-                                <span className="font-medium text-sm text-blue-600 dark:text-blue-400">
+                                <span className="font-medium text-sm">
                                     {stock.fairValue ? formatCurrency(stock.fairValue, stock.currency, false) : '-'}
                                 </span>
                             </div>
