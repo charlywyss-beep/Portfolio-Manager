@@ -106,12 +106,12 @@ export function FairValueCalculator() {
     const [analysis, setAnalysis] = useState<any>(null);
 
     // Calculator Inputs
-    const [eps, setEps] = useState<number>(0);
-    const [growthRate, setGrowthRate] = useState<number>(10); // %
-    const [pe, setPe] = useState<number>(15);
-    const [dividendYield, setDividendYield] = useState<number>(0);
-    const [discountRate, setDiscountRate] = useState<number>(11); // % (MARR)
-    const [mos, setMos] = useState<number>(20); // % Margin of Safety
+    const [eps, setEps] = useState<number | string>(0);
+    const [growthRate, setGrowthRate] = useState<number | string>(10); // %
+    const [pe, setPe] = useState<number | string>(15);
+    const [dividendYield, setDividendYield] = useState<number | string>(0);
+    const [discountRate, setDiscountRate] = useState<number | string>(11); // % (MARR)
+    const [mos, setMos] = useState<number | string>(20); // % Margin of Safety
 
     // Persistence Ref to avoid cycles
     const isRestoring = useRef(false);
@@ -119,18 +119,22 @@ export function FairValueCalculator() {
 
     // Wachstums-Helfer State
     const [showGrowthHelper, setShowGrowthHelper] = useState(false);
-    const [startEps, setStartEps] = useState<number>(0);
-    const [endEps, setEndEps] = useState<number>(0);
-    const [periodYears, setPeriodYears] = useState<number>(3);
+    const [startEps, setStartEps] = useState<number | string>(0);
+    const [endEps, setEndEps] = useState<number | string>(0);
+    const [periodYears, setPeriodYears] = useState<number | string>(3);
 
     // Helper for currency
     const { formatCurrency } = useCurrencyFormatter();
 
     // CAGR Calculation Helper
     const calculatedCagr = useMemo(() => {
-        if (startEps <= 0 || endEps <= 0 || periodYears <= 0) return 0;
+        const sEps = typeof startEps === 'string' ? parseFloat(startEps) : startEps;
+        const eEps = typeof endEps === 'string' ? parseFloat(endEps) : endEps;
+        const pYears = typeof periodYears === 'string' ? parseFloat(periodYears) : periodYears;
+
+        if (!sEps || !eEps || !pYears || sEps <= 0 || eEps <= 0 || pYears <= 0) return 0;
         try {
-            const cagr = (Math.pow(endEps / startEps, 1 / periodYears) - 1) * 100;
+            const cagr = (Math.pow(eEps / sEps, 1 / pYears) - 1) * 100;
             return isFinite(cagr) ? parseFloat(cagr.toFixed(2)) : 0;
         } catch (e) {
             return 0;
@@ -390,9 +394,16 @@ export function FairValueCalculator() {
 
     // Calculation Logic
     const calculation = useMemo(() => {
-        const futureEps = eps * Math.pow(1 + growthRate / 100, 5);
-        const ruleOneLimit = Math.max(20, growthRate * 2); // Floor of 20 - better for quality stocks like Nestle
-        const exitPe = pe; // Remove hard cap, use user input directly
+        const valEps = typeof eps === 'string' ? parseFloat(eps) || 0 : eps;
+        const valGrowth = typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : growthRate;
+        const valPe = typeof pe === 'string' ? parseFloat(pe) || 0 : pe;
+        const valDiv = typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : dividendYield;
+        const valDisc = typeof discountRate === 'string' ? parseFloat(discountRate) || 0 : discountRate;
+        const valMos = typeof mos === 'string' ? parseFloat(mos) || 0 : mos;
+
+        const futureEps = valEps * Math.pow(1 + valGrowth / 100, 5);
+        const ruleOneLimit = Math.max(20, valGrowth * 2); // Floor of 20 - better for quality stocks like Nestle
+        const exitPe = valPe; // Remove hard cap, use user input directly
         const futurePrice = futureEps * exitPe;
 
         // NEW: DCF including Dividends (v3.13.43)
@@ -400,18 +411,18 @@ export function FairValueCalculator() {
         let totalDiscountedDividends = 0;
         const currentPrice = quote?.price || 0;
 
-        if (dividendYield > 0 && currentPrice > 0) {
-            const initialAnnualDiv = (dividendYield / 100) * currentPrice;
+        if (valDiv > 0 && currentPrice > 0) {
+            const initialAnnualDiv = (valDiv / 100) * currentPrice;
             for (let i = 1; i <= 5; i++) {
                 // Assume dividends grow with the estimated EPS growth rate
-                const divInYear = initialAnnualDiv * Math.pow(1 + growthRate / 100, i);
-                totalDiscountedDividends += divInYear / Math.pow(1 + discountRate / 100, i);
+                const divInYear = initialAnnualDiv * Math.pow(1 + valGrowth / 100, i);
+                totalDiscountedDividends += divInYear / Math.pow(1 + valDisc / 100, i);
             }
         }
 
-        const discountedFuturePrice = futurePrice / Math.pow(1 + discountRate / 100, 5);
+        const discountedFuturePrice = futurePrice / Math.pow(1 + valDisc / 100, 5);
         const fairValue = discountedFuturePrice + totalDiscountedDividends;
-        const buyPrice = fairValue * (1 - mos / 100);
+        const buyPrice = fairValue * (1 - valMos / 100);
 
         return {
             futureEps,
@@ -421,7 +432,7 @@ export function FairValueCalculator() {
             fairValue,
             buyPrice,
             totalDiscountedDividends,
-            isCorrectionNeeded: pe > ruleOneLimit
+            isCorrectionNeeded: valPe > ruleOneLimit
         };
     }, [eps, growthRate, pe, discountRate, mos, dividendYield, quote?.price]);
 
@@ -449,7 +460,7 @@ export function FairValueCalculator() {
     const currentPrice = quote?.price || 0;
     const isUndervalued = currentPrice < calculation.buyPrice;
     const isFair = !isUndervalued && currentPrice <= calculation.fairValue;
-    const isYieldGap = (growthRate + dividendYield) < discountRate;
+    const isYieldGap = ((typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : growthRate) + (typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : dividendYield)) < (typeof discountRate === 'string' ? parseFloat(discountRate) || 0 : discountRate);
 
     return (
         <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8 pb-32">
@@ -807,7 +818,7 @@ export function FairValueCalculator() {
                                             type="number"
                                             step="0.01"
                                             value={eps}
-                                            onChange={(e) => setEps(parseFloat(e.target.value) || 0)}
+                                            onChange={(e) => setEps(e.target.value)}
                                             className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{quote.currency || 'USD'}</span>
@@ -849,7 +860,7 @@ export function FairValueCalculator() {
                                                 type="number"
                                                 step="0.5"
                                                 value={growthRate}
-                                                onChange={(e) => setGrowthRate(parseFloat(e.target.value) || 0)}
+                                                onChange={(e) => setGrowthRate(e.target.value)}
                                                 className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
                                             />
                                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
@@ -879,7 +890,7 @@ export function FairValueCalculator() {
                                                             type="number"
                                                             step="0.01"
                                                             value={startEps || ''}
-                                                            onChange={(e) => setStartEps(parseFloat(e.target.value) || 0)}
+                                                            onChange={(e) => setStartEps(e.target.value)}
                                                             placeholder="6.67"
                                                             className="w-full p-2 text-sm rounded border border-border bg-background font-mono focus:ring-1 focus:ring-primary h-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                         />
@@ -890,7 +901,7 @@ export function FairValueCalculator() {
                                                             type="number"
                                                             step="0.01"
                                                             value={endEps || ''}
-                                                            onChange={(e) => setEndEps(parseFloat(e.target.value) || 0)}
+                                                            onChange={(e) => setEndEps(e.target.value)}
                                                             placeholder="12.19"
                                                             className="w-full p-2 text-sm rounded border border-border bg-background font-mono focus:ring-1 focus:ring-primary h-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                         />
@@ -901,7 +912,7 @@ export function FairValueCalculator() {
                                                             type="number"
                                                             step="1"
                                                             value={periodYears || ''}
-                                                            onChange={(e) => setPeriodYears(parseFloat(e.target.value) || 0)}
+                                                            onChange={(e) => setPeriodYears(e.target.value)}
                                                             className="w-full p-2 text-sm rounded border border-border bg-background font-mono focus:ring-1 focus:ring-primary h-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                         />
                                                     </div>
@@ -980,7 +991,7 @@ export function FairValueCalculator() {
                                             type="number"
                                             step="0.1"
                                             value={dividendYield}
-                                            onChange={(e) => setDividendYield(parseFloat(e.target.value) || 0)}
+                                            onChange={(e) => setDividendYield(e.target.value)}
                                             className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
@@ -998,7 +1009,7 @@ export function FairValueCalculator() {
                                             <span>Aktuelles KGV:</span>
                                             <span className="font-mono">
                                                 {quote.trailingPE ? quote.trailingPE.toFixed(2) :
-                                                    (quote.price && eps ? (quote.price / eps).toFixed(2) : '-')}
+                                                    (quote.price && eps ? (quote.price / (typeof eps === 'string' ? parseFloat(eps) || 1 : eps)).toFixed(2) : '-')}
                                             </span>
                                         </div>
                                         <div className="flex justify-between font-medium text-foreground">
@@ -1034,7 +1045,7 @@ export function FairValueCalculator() {
                                             type="number"
                                             step="0.5"
                                             value={discountRate}
-                                            onChange={(e) => setDiscountRate(parseFloat(e.target.value) || 0)}
+                                            onChange={(e) => setDiscountRate(e.target.value)}
                                             className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
@@ -1051,7 +1062,7 @@ export function FairValueCalculator() {
                                             type="number"
                                             step="5"
                                             value={mos}
-                                            onChange={(e) => setMos(parseFloat(e.target.value) || 0)}
+                                            onChange={(e) => setMos(e.target.value)}
                                             className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
