@@ -420,6 +420,14 @@ export function PriceHistoryChart({
                                                             {formatCurrency(payload[0].value as number, currency)}
                                                         </span>
                                                     </div>
+                                                    {payload[0].payload.sma200 && (
+                                                        <div className="flex items-center gap-2 justify-between">
+                                                            <span className="text-amber-400 text-xs font-medium">SMA 200:</span>
+                                                            <span className="font-bold text-foreground">
+                                                                {formatCurrency(payload[0].payload.sma200, currency)}
+                                                            </span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
