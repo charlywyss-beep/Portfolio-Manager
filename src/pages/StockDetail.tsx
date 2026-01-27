@@ -459,34 +459,32 @@ export function StockDetail() {
                                 <h3 className="font-bold text-lg"><span className="md:hidden">Kurs</span><span className="hidden md:inline">Kursverlauf</span></h3>
                             </div>
 
-                            {/* Center+Right: Buttons */}
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => navigate('/?openPerformance=true')}
-                                    className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-2 py-1 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
-                                >
-                                    <ArrowLeft className="size-3 md:size-4 mr-1" />
-                                    <span className="md:hidden">Zurück</span><span className="hidden md:inline">zur Performance</span>
-                                </button>
+                            {/* Center: Performance Button */}
+                            <button
+                                onClick={() => navigate('/?openPerformance=true')}
+                                className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-2 py-1 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
+                            >
+                                <ArrowLeft className="size-3 md:size-4 mr-1" />
+                                <span className="md:hidden">Zurück</span><span className="hidden md:inline">zur Performance</span>
+                            </button>
 
-                                {/* Refresh Button */}
-                                <button
-                                    onClick={loadData}
-                                    disabled={isRefreshing}
-                                    className={cn(
-                                        "inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-medium transition-all shadow-sm",
-                                        "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                                        "active:scale-95",
-                                        isRefreshing && "opacity-50 cursor-not-allowed"
-                                    )}
-                                    title="Daten aktualisieren"
-                                >
-                                    <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
-                                    <span className="whitespace-nowrap">
-                                        {isRefreshing ? 'Laden...' : lastUpdate ? `${minutesAgo} Min` : 'Laden'}
-                                    </span>
-                                </button>
-                            </div>
+                            {/* Right: Refresh Button */}
+                            <button
+                                onClick={loadData}
+                                disabled={isRefreshing}
+                                className={cn(
+                                    "inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-medium transition-all shadow-sm",
+                                    "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                    "active:scale-95",
+                                    isRefreshing && "opacity-50 cursor-not-allowed"
+                                )}
+                                title="Daten aktualisieren"
+                            >
+                                <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
+                                <span className="whitespace-nowrap">
+                                    {isRefreshing ? 'Laden...' : lastUpdate ? `${minutesAgo} Min` : 'Laden'}
+                                </span>
+                            </button>
                         </div>
                         {/* Price History Chart */}
                         <div className="flex-1 w-full min-h-0">
