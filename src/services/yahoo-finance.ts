@@ -14,11 +14,11 @@ const getYahooParams = (range: TimeRange): { period: string; interval: string } 
     switch (range) {
         case '1D': return { period: '1d', interval: '5m' };
         case '1W': return { period: '5d', interval: '15m' };
-        case '1M': return { period: '1y', interval: '1d' };
-        case '3M': return { period: '1y', interval: '1d' };
-        case '6M': return { period: '2y', interval: '1d' };
-        case '1Y': return { period: '2y', interval: '1d' };
-        case '5Y': return { period: '5y', interval: '1d' };
+        case '1M': return { period: '1mo', interval: '15m' };
+        case '3M': return { period: '3mo', interval: '60m' };
+        case '6M': return { period: '6mo', interval: '60m' };
+        case '1Y': return { period: '1y', interval: '1d' };
+        case '5Y': return { period: '5y', interval: '1wk' };
         case 'BUY': return { period: '5y', interval: '1wk' };
     }
 };
