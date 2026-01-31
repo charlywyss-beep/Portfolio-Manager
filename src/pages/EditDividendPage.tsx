@@ -289,16 +289,21 @@ export function EditDividendPage() {
             });
         } else {
             let submissionDates = undefined;
-            let submissionExDate = exDate || undefined;
-            let submissionPayDate = payDate || undefined;
+            // Sanitize Single/Annual dates
+            let submissionExDate = exDate ? sanitizeDateYear(exDate) : undefined;
+            let submissionPayDate = payDate ? sanitizeDateYear(payDate, exDate) : undefined;
 
             if (frequency === 'quarterly' || frequency === 'semi-annually') {
                 const datesToConsider = frequency === 'quarterly' ? quarterlyDates : quarterlyDates.slice(0, 2);
-                // Fix: Do not filter empty dates to preserve Q1/Q2/Q3/Q4 slots!
-                submissionDates = datesToConsider;
+
+                // Sanitize Quarterly dates
+                submissionDates = datesToConsider.map(d => ({
+                    exDate: sanitizeDateYear(d.exDate || ''),
+                    payDate: sanitizeDateYear(d.payDate || '', d.exDate)
+                }));
 
                 // Set exDate/payDate from the first available one for display/sorting (optional)
-                const firstValid = datesToConsider.find(d => d.exDate || d.payDate);
+                const firstValid = submissionDates.find(d => d.exDate || d.payDate);
                 if (firstValid) {
                     submissionExDate = firstValid.exDate;
                     submissionPayDate = firstValid.payDate;
@@ -309,8 +314,8 @@ export function EditDividendPage() {
                 dividendYield: yieldPercent ? parseFloat(yieldPercent.replace(',', '.')) : undefined,
                 dividendAmount: amount ? parseFloat(amount.replace(',', '.')) : undefined,
                 dividendCurrency: currency,
-                dividendExDate: submissionExDate,
-                dividendPayDate: submissionPayDate,
+                dividendExDate: submissionExDate || undefined,
+                dividendPayDate: submissionPayDate || undefined,
                 dividendDates: submissionDates,
                 dividendFrequency: frequency
             });
@@ -1010,7 +1015,7 @@ export function EditDividendPage() {
                                                 </div>
                                                 <input
                                                     type="date"
-                                                    value={exDate}
+                                                    value={sanitizeDateYear(exDate)}
                                                     onChange={(e) => {
                                                         const newVal = e.target.value;
                                                         setExDate(newVal);
@@ -1038,8 +1043,8 @@ export function EditDividendPage() {
                                                 </div>
                                                 <input
                                                     type="date"
-                                                    value={payDate}
-                                                    min={exDate || undefined}
+                                                    value={sanitizeDateYear(payDate, exDate)}
+                                                    min={sanitizeDateYear(exDate) || undefined}
                                                     onChange={(e) => setPayDate(e.target.value)}
                                                     className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                                 />
