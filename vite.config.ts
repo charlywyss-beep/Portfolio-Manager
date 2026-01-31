@@ -18,7 +18,7 @@ export default defineConfig({
             return;
           }
 
-          // HELPER: Normalize Price
+          // HELPER: Normalize Price (Keep existing logic)
           const normalizeYahooPrice = (price: any, currency: string | null, symbol: string) => {
             if (price === undefined || price === null) return null;
             if (currency === 'GBp' || (symbol.endsWith('.L') && price > 500)) {
@@ -27,97 +27,68 @@ export default defineConfig({
             return price;
           };
 
-          // HELPER: Fetch with Host Rotation
-          // Try query1, then query2 if failed
-          const fetchWithRotation = async (path: string) => {
-            const hosts = ['query1.finance.yahoo.com', 'query2.finance.yahoo.com'];
-            for (const host of hosts) {
-              const fullUrl = `https://${host}${path}`;
-              try {
-                const r = await fetch(fullUrl, {
-                  headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'Accept': 'application/json',
-                    'Origin': 'https://finance.yahoo.com',
-                    'Referer': 'https://finance.yahoo.com/'
-                  }
-                });
-                if (r.ok) return await r.json();
-                console.log(`[Yahoo Proxy] Failed ${r.status} on ${host}`);
-              } catch (e: any) {
-                console.log(`[Yahoo Proxy] Error on ${host}: ${e.message}`);
-              }
-            }
-            return null; // All failed
-          };
+          // DYNAMIC IMPORT for yahoo-finance2 to avoid build-time issues if possible, 
+          // but top-level import is better if it works. 
+          // Based on test script, we need explicit instantiation.
+          const { default: YahooFinance } = await import('yahoo-finance2');
+          const yahooFinance = new YahooFinance();
+          // yahooFinance.suppressLogger(); // helper removed or different in this version
 
           // HELPER: Process Single Symbol
           const processSymbol = async (sym: string) => {
-            // 1. Chart API (v8) - Primary for Price
-            const chartPath = `/v8/finance/chart/${sym}?range=1d&interval=1d`;
+            try {
+              // Fetch modules needed for full details
+              const result = await yahooFinance.quoteSummary(sym, {
+                modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile']
+              });
 
-            // 2. Summary API (v10) - Secondary for Details
-            const modules = 'price,summaryDetail,defaultKeyStatistics,summaryProfile,topHoldings,fundProfile,assetProfile';
-            const summaryPath = `/v10/finance/quoteSummary/${sym}?modules=${modules}`;
+              if (!result) return { symbol: sym, error: 'No data' };
 
-            const [chartData, summaryData] = await Promise.all([
-              fetchWithRotation(chartPath),
-              fetchWithRotation(summaryPath)
-            ]);
+              // Map to existing structure
+              // Cast to any to avoid TS strictness on partial returns
+              const price: any = result.price || {};
+              const summaryDetail: any = result.summaryDetail || {};
+              const defaultKeyStatistics: any = result.defaultKeyStatistics || {};
+              const summaryProfile: any = result.summaryProfile || {};
 
-            const chartResult = (chartData as any)?.chart?.result?.[0];
-            const quoteSummaryResult = (summaryData as any)?.quoteSummary?.result?.[0];
+              const currency = price.currency;
+              const rawPrice = price.regularMarketPrice;
 
-            if (!chartResult && !quoteSummaryResult) {
-              // If both fail, return error object for this symbol
-              // We don't throw here to avoid killing the whole batch
-              return { symbol: sym, error: 'No data' };
+              return {
+                symbol: sym,
+                longName: price.longName,
+                shortName: price.shortName,
+                displayName: price.longName,
+
+                price: normalizeYahooPrice(rawPrice, currency, sym),
+                currency: currency,
+
+                marketTime: price.regularMarketTime || new Date(),
+                marketState: price.marketState || null,
+
+                trailingPE: summaryDetail.trailingPE || defaultKeyStatistics.trailingPE || null,
+                forwardPE: summaryDetail.forwardPE || defaultKeyStatistics.forwardPE || null,
+                eps: defaultKeyStatistics.trailingEps || null,
+                dividendYield: (summaryDetail.dividendYield) ? summaryDetail.dividendYield * 100 : null,
+
+                open: summaryDetail.open || null,
+                previousClose: summaryDetail.previousClose || price.regularMarketPreviousClose || null,
+
+                country: summaryProfile.country || null,
+                sectorWeights: null,
+                countryWeights: null
+              };
+
+            } catch (e: any) {
+              console.log(`[Yahoo Middleware] Failed to fetch ${sym}: ${e.message}`);
+              return { symbol: sym, error: e.message };
             }
-
-            const meta = chartResult?.meta || {};
-            const result: any = quoteSummaryResult || {};
-
-            // Construct Quote Object
-            return {
-              symbol: sym,
-              longName: result.price?.longName,
-              shortName: result.price?.shortName,
-              displayName: result.price?.longName,
-
-              price: normalizeYahooPrice(result.price?.regularMarketPrice || meta.regularMarketPrice, result.price?.currency || meta.currency, sym),
-              currency: result.price?.currency || meta.currency,
-
-              marketTime: (result.price?.regularMarketTime || meta.regularMarketTime) ?
-                new Date((result.price?.regularMarketTime || meta.regularMarketTime) * 1000) : new Date(),
-
-              marketState: result.price?.marketState || null,
-
-              trailingPE: result.summaryDetail?.trailingPE || result.defaultKeyStatistics?.trailingPE || null,
-              forwardPE: result.summaryDetail?.forwardPE || result.defaultKeyStatistics?.forwardPE || null,
-              eps: result.defaultKeyStatistics?.trailingEps || null,
-              dividendYield: (result.summaryDetail?.dividendYield) ? result.summaryDetail.dividendYield * 100 : null,
-
-              open: result.summaryDetail?.open || null,
-              previousClose: result.summaryDetail?.previousClose || meta.chartPreviousClose || null,
-
-              country: result.summaryProfile?.country || null,
-              // Sector/Country Weights (Optional - Keep logic if possible or stub if complex)
-              // Simplified mapping for brevity/reliability in this fix
-              sectorWeights: null,
-              countryWeights: null
-            };
           };
 
-          let results: any[] = [];
           const symbols = symbolParam.split(',');
+          // console.log(`[Yahoo Middleware] Processing ${symbols.length} symbols: ${symbols.join(', ')}`);
 
-          console.log(`[Yahoo Middleware] Processing ${symbols.length} symbols: ${symbols.join(', ')}`);
-
-          results = await Promise.all(symbols.map(s => processSymbol(s.trim())));
-
-          // Filter out failed? Or keep error structure?
-          // Existing frontend expects array of objects. failed ones might miss fields.
-          // We return whatever we got.
+          const results = await Promise.all(symbols.map(s => processSymbol(s.trim())));
 
           const responseData = {
             quoteResponse: {
@@ -135,20 +106,19 @@ export default defineConfig({
         }
       });
 
-      // Search Middleware (Keep as is)
+      // Search Middleware using yahoo-finance2
       server.middlewares.use('/api/yahoo-search', async (req, res, _next) => {
-        // ... Same as before ...
         try {
           const url = new URL(req.url!, `http://${req.headers.host}`);
           const query = url.searchParams.get('query');
           if (!query) { res.statusCode = 400; res.end(JSON.stringify({ error: 'Query required' })); return; }
 
-          // Use Rotation for Search too? NO, search v1 usually robust. Keep simple.
-          const searchUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=6&newsCount=0&enableFuzzyQuery=false&quotesQueryId=tss_match_phrase_query`;
-          const response = await fetch(searchUrl, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36', 'Accept': 'application/json' }
-          });
-          const result = await response.json();
+          const { default: YahooFinance } = await import('yahoo-finance2');
+          const yahooFinance = new YahooFinance();
+          // yahooFinance.suppressLogger();
+
+          const result = await yahooFinance.search(query);
+
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify(result));
         } catch (error: any) {
