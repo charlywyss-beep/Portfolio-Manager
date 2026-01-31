@@ -18,9 +18,9 @@ const API_URL = 'https://api.frankfurter.app/latest?from=CHF';
 export function ExchangeRateProvider({ children }: { children: ReactNode }) {
     const [rates, setRates] = useState<ExchangeRates>({
         CHF: 1.0,
-        USD: 0.88,  // Fallback values
-        EUR: 0.94,
-        GBP: 1.10,
+        USD: 1.12,  // 1 CHF = ~1.12 USD (Frankfurter "from=CHF" format)
+        EUR: 1.06,  // 1 CHF = ~1.06 EUR
+        GBP: 0.90,  // 1 CHF = ~0.90 GBP
     });
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [isLoading, setIsLoading] = useState(true);
