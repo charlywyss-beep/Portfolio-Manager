@@ -47,7 +47,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Wert</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">+/-</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">%</th>
-                                <th className="text-right py-3 px-2 w-[80px] sticky -right-px bg-card z-30 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                <th className="text-right py-3 px-2 w-[80px] md:sticky md:-right-px bg-card z-30 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -228,7 +228,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                             </div>
                                         </td>
 
-                                        <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px z-40 group-hover:bg-muted transition-colors">
+                                        <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] md:sticky md:-right-px z-40 group-hover:bg-muted transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center justify-center gap-1">
                                                 <button
