@@ -39,7 +39,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                         <thead>
                             <tr className="border-b border-border">
                                 <th className="text-left py-3 px-4 font-semibold min-w-[160px] md:w-[100px] md:max-w-[100px] sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktie</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">ISIN</th>
+
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Anzahl</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Ø Kauf</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Invest</th>
@@ -91,22 +91,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                             </div>
                                         </td>
 
-                                        {/* Valor / ISIN */}
-                                        <td className="px-4 py-3 text-right">
-                                            <div className="text-xs space-y-0.5 flex flex-col items-end">
-                                                {pos.stock.valor && (
-                                                    <div className="font-mono">
-                                                        <span className="text-muted-foreground">Valor: </span>
-                                                        <span className="font-medium">{pos.stock.valor}</span>
-                                                    </div>
-                                                )}
-                                                {pos.stock.isin && (
-                                                    <div className="font-mono text-muted-foreground truncate" title={pos.stock.isin}>
-                                                        {pos.stock.isin}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </td>
+
 
                                         {/* Anzahl */}
                                         <td className="px-4 py-3 text-right font-medium">{pos.shares}</td>
@@ -257,7 +242,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                             })}
                             {data.length === 0 && (
                                 <tr>
-                                    <td colSpan={10} className="px-4 py-12 text-center text-muted-foreground">
+                                    <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
                                         {emptyMessage}
                                     </td>
                                 </tr>
