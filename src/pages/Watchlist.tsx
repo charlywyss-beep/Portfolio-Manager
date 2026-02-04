@@ -747,8 +747,13 @@ function WatchlistTable({
                                             "font-bold text-sm",
                                             isUnderTarget ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
                                         )}>
-                                            {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency) : '-'}
+                                            {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
                                         </span>
+                                        {stock.targetPrice && stock.currency !== 'CHF' && (
+                                            <span className="text-xs text-muted-foreground font-medium">
+                                                {formatCurrency(convertToCHF(stock.targetPrice, stock.currency), 'CHF', false)}
+                                            </span>
+                                        )}
                                     </div>
                                     {stock.targetPrice && (
                                         <span className="text-[10px] font-medium text-muted-foreground">
@@ -767,8 +772,13 @@ function WatchlistTable({
                                             "font-bold text-sm",
                                             isOverSell ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
                                         )}>
-                                            {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency) : '-'}
+                                            {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency, false) : '-'}
                                         </span>
+                                        {stock.sellLimit && stock.currency !== 'CHF' && (
+                                            <span className="text-xs text-muted-foreground font-medium">
+                                                {formatCurrency(convertToCHF(stock.sellLimit, stock.currency), 'CHF', false)}
+                                            </span>
+                                        )}
                                     </div>
                                     {stock.sellLimit && (
                                         <span className="text-[10px] font-medium text-muted-foreground">
@@ -817,9 +827,16 @@ function WatchlistTable({
                                             : '-'}
                                     </span>
                                     {stock.dividendAmount ? (
-                                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                                            {formatCurrency(stock.dividendAmount, stock.currency)}
-                                        </span>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[10px] text-muted-foreground whitespace-nowrap font-medium">
+                                                {formatCurrency(stock.dividendAmount, stock.currency, false)}
+                                            </span>
+                                            {stock.currency !== 'CHF' && (
+                                                <span className="text-[10px] text-muted-foreground whitespace-nowrap font-medium">
+                                                    {formatCurrency(convertToCHF(stock.dividendAmount, stock.currency), 'CHF', false)}
+                                                </span>
+                                            )}
+                                        </div>
                                     ) : currentDiv.status === 'paid' && (
                                         <span className="text-[9px] font-bold text-green-600 bg-green-100 dark:bg-green-950/50 px-1 py-0.5 rounded leading-none uppercase">
                                             Bezahlt
