@@ -174,7 +174,14 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         </td>
                                         {/* Current Price */}
                                         <td className="py-3 px-1 text-right font-medium text-xs whitespace-nowrap" style={{ width: '80px' }}>
-                                            {formatCurrency(p.stock.currentPrice, p.stock.currency)}
+                                            <div className="flex flex-col items-end">
+                                                <span>{formatCurrency(p.stock.currentPrice, p.stock.currency, false)}</span>
+                                                {p.stock.currency !== 'CHF' && (
+                                                    <span className="text-[10px] text-muted-foreground">
+                                                        {formatCurrency(convertToCHF(p.stock.currentPrice, p.stock.currency), 'CHF', false)}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                         {/* Daily Performance */}
                                         <td className={cn("py-3 px-1 text-right font-medium text-xs", isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '70px' }}>
