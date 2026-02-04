@@ -19,7 +19,7 @@ import type { Stock } from '../types';
 export function Watchlist() {
     const navigate = useNavigate();
     const { stocks, watchlists, positions, removeFromWatchlist, addPosition, updatePosition, deletePosition, lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices, refreshTick, createWatchlist, deleteWatchlist, renameWatchlist } = usePortfolio(); // Get refresh + tick
-    const { formatCurrency } = useCurrencyFormatter();
+    const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
     const [editPosition, setEditPosition] = useState<any>(null); // State for editing position
     const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
@@ -372,6 +372,7 @@ export function Watchlist() {
                                     onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                     onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
                                     formatCurrency={formatCurrency}
+                                    convertToCHF={convertToCHF}
                                     emptyMessage="Keine Aktien im Bestand."
                                 />
                             </div>
@@ -423,6 +424,7 @@ export function Watchlist() {
                                     onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                     onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
                                     formatCurrency={formatCurrency}
+                                    convertToCHF={convertToCHF}
                                     emptyMessage="Keine ETFs im Bestand."
                                 />
                             </div>
@@ -474,6 +476,7 @@ export function Watchlist() {
                                     onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                     onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
                                     formatCurrency={formatCurrency}
+                                    convertToCHF={convertToCHF}
                                     emptyMessage="Keine potenziellen Aktien auf der Watchlist."
                                 />
                             </div>
@@ -525,6 +528,7 @@ export function Watchlist() {
                                     onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                     onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
                                     formatCurrency={formatCurrency}
+                                    convertToCHF={convertToCHF}
                                     emptyMessage="Keine potenziellen ETFs auf der Watchlist."
                                 />
                             </div>
@@ -590,6 +594,7 @@ interface WatchlistTableProps {
     onEdit: (id: string) => void;
     onRemove: (id: string) => void;
     formatCurrency: any;
+    convertToCHF: (amount: number, from: string) => number;
     emptyMessage: string;
 }
 
@@ -602,6 +607,7 @@ function WatchlistTable({
     onEdit,
     onRemove,
     formatCurrency,
+    convertToCHF,
     emptyMessage
 }: WatchlistTableProps) {
     if (stocks.length === 0) {
@@ -711,9 +717,14 @@ function WatchlistTable({
                             </td>
                             <td className="p-4 text-right">
                                 <div className="flex flex-col items-end">
-                                    <span className="font-bold text-sm">
-                                        {formatCurrency(stock.currentPrice, stock.currency)}
+                                    <span className="font-bold text-sm text-foreground">
+                                        {formatCurrency(stock.currentPrice, stock.currency, false)}
                                     </span>
+                                    {stock.currency !== 'CHF' && (
+                                        <span className="text-xs text-muted-foreground font-medium">
+                                            {formatCurrency(convertToCHF(stock.currentPrice, stock.currency), 'CHF', false)}
+                                        </span>
+                                    )}
                                     {stock.previousClose !== undefined && (
                                         <span className={cn(
                                             "text-[10px] font-bold px-1.5 py-0.5 rounded",
