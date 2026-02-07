@@ -25,10 +25,17 @@ export function Watchlist() {
     const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
 
     // Collapsible states
-    const [isOwnedStocksOpen, setIsOwnedStocksOpen] = useState(true);
-    const [isOwnedEtfsOpen, setIsOwnedEtfsOpen] = useState(true);
-    const [isPotentialStocksOpen, setIsPotentialStocksOpen] = useState(false);
-    const [isPotentialEtfsOpen, setIsPotentialEtfsOpen] = useState(false);
+    // Collapsible states - Persisted
+    const [isOwnedStocksOpen, setIsOwnedStocksOpen] = useState(() => localStorage.getItem('wl_sec_owned_stocks') !== 'false'); // Default true
+    const [isOwnedEtfsOpen, setIsOwnedEtfsOpen] = useState(() => localStorage.getItem('wl_sec_owned_etfs') !== 'false'); // Default true
+    const [isPotentialStocksOpen, setIsPotentialStocksOpen] = useState(() => localStorage.getItem('wl_sec_pot_stocks') === 'true'); // Default false
+    const [isPotentialEtfsOpen, setIsPotentialEtfsOpen] = useState(() => localStorage.getItem('wl_sec_pot_etfs') === 'true'); // Default false
+
+    // Persist collapsible states
+    useEffect(() => { localStorage.setItem('wl_sec_owned_stocks', String(isOwnedStocksOpen)); }, [isOwnedStocksOpen]);
+    useEffect(() => { localStorage.setItem('wl_sec_owned_etfs', String(isOwnedEtfsOpen)); }, [isOwnedEtfsOpen]);
+    useEffect(() => { localStorage.setItem('wl_sec_pot_stocks', String(isPotentialStocksOpen)); }, [isPotentialStocksOpen]);
+    useEffect(() => { localStorage.setItem('wl_sec_pot_etfs', String(isPotentialEtfsOpen)); }, [isPotentialEtfsOpen]);
 
 
     // Multi-Watchlist State - Persist in localStorage to survive navigation
