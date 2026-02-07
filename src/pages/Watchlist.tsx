@@ -189,7 +189,7 @@ export function Watchlist() {
                             </div>
                             <div>
                                 <h1 className="text-3xl font-bold tracking-tight">Watchlist</h1>
-                                <p className="text-muted-foreground">Aktien beobachten und Dividenden prüfen</p>
+                                <p className="text-muted-foreground hidden md:block">Aktien beobachten und Dividenden prüfen</p>
                             </div>
                         </div>
 
