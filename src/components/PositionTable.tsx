@@ -192,9 +192,11 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                                             {!isNativeCHF && (
                                                                 <div className={cn(
                                                                     "text-xs whitespace-nowrap mt-0.5 text-right",
-                                                                    pos.forexImpactCHF >= 0 ? "text-emerald-600/80 dark:text-emerald-400/80" : "text-rose-600/80 dark:text-rose-400/80"
+                                                                    pos.forexImpactCHF >= 0
+                                                                        ? "text-emerald-600 dark:text-emerald-400"
+                                                                        : "text-red-500 dark:text-red-400"
                                                                 )} title="Anteil Währungsgewinn/-verlust">
-                                                                    (Währung: {pos.forexImpactCHF >= 0 ? '+' : ''}{pos.forexImpactCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF)
+                                                                    (Währ. {pos.forexImpactCHF >= 0 ? '+' : ''}{pos.forexImpactCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF)
                                                                 </div>
                                                             )}
                                                         </>
