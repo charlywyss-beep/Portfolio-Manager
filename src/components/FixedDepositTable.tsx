@@ -47,7 +47,7 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                                 <th className="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">Betrag</th>
                                 <th className="px-4 py-3 text-right min-w-[100px]">Zins p.a.</th>
                                 <th className="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">Jährlicher Ertrag</th>
-                                <th className="px-1 py-3 text-center sticky -right-px bg-card z-50 w-[60px] min-w-[60px] max-w-[60px] shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                <th className="px-1 py-3 text-center md:sticky md:-right-px bg-card z-50 w-[60px] min-w-[60px] max-w-[60px] md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -110,7 +110,7 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                                             isNegative ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"
                                         )}>    {isNegative ? '-' : '+'}CHF {Math.abs(netAnnualReturn).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </td>
-                                        <td className="px-1 py-3 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px z-40 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <td className="px-1 py-3 w-[60px] min-w-[60px] max-w-[60px] md:sticky md:-right-px z-40 group-hover:bg-muted/30 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center justify-center gap-1">
                                                 <button
