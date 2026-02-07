@@ -734,7 +734,7 @@ function WatchlistTable({
                                     )}
                                     {stock.previousClose !== undefined && (
                                         <span className={cn(
-                                            "text-[10px] font-bold px-1.5 py-0.5 rounded",
+                                            "text-xs md:text-[10px] font-bold px-1.5 py-0.5 rounded",
                                             stockChange >= 0
                                                 ? "bg-green-500/10 text-green-600"
                                                 : "bg-red-500/10 text-red-600"
