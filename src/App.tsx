@@ -80,7 +80,18 @@ const NavItem = ({ to, icon: Icon, label, onClick }: NavItemProps) => {
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 1024);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem('sidebar_open');
+    if (saved !== null) {
+      return saved === 'true';
+    }
+    return window.innerWidth >= 1024;
+  });
+
+  // Persist sidebar state
+  useEffect(() => {
+    localStorage.setItem('sidebar_open', String(isSidebarOpen));
+  }, [isSidebarOpen]);
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
