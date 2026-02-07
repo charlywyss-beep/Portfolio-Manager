@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, NavLink, Link } from 'react-router-dom';
 import { FairValueCalculator } from './pages/FairValueCalculator';
-import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, ArrowLeftRight, Landmark, Telescope, RefreshCw } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, ArrowLeftRight, Landmark, Telescope } from 'lucide-react';
 
 
 import { cn } from './utils';
@@ -133,25 +133,19 @@ function App() {
                 <h1 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">Portfolio</h1>
               </div>
             </Link>
-            <button
-              className="mx-6 mb-6 flex items-center gap-2 px-4 py-3 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl transition-all w-[calc(100%-3rem)] md:w-auto justify-center md:justify-start border border-blue-500/20 shadow-sm"
+            <div
+              className="px-6 pb-4 cursor-pointer w-fit"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (window.confirm('App neu laden und Cache leeren?')) {
-                  const url = new URL(window.location.href);
-                  url.searchParams.set('v', Date.now().toString());
-                  window.location.href = url.toString();
-                }
+                const url = new URL(window.location.href);
+                url.searchParams.set('v', Date.now().toString());
+                window.location.href = url.toString();
               }}
-              title="App neu laden & Cache leeren"
+              title="App neu laden (Cache leeren)"
             >
-              <RefreshCw className="size-4 md:size-3.5" />
-              <div className="flex flex-col items-start leading-none">
-                <span className="text-xs md:text-[10px] font-bold">App neu laden</span>
-                <span className="text-[10px] opacity-70">v{packageJson.version} • Cache leeren</span>
-              </div>
-            </button>
+              <span className="text-sm md:text-xs font-bold bg-primary/10 text-primary px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors">v{packageJson.version}</span>
+            </div>
 
             <nav className="flex-1 p-4 space-y-2 w-fit">
               <NavItem to="/" icon={LayoutDashboard} label="Übersicht" onClick={closeSidebarOnMobile} />
