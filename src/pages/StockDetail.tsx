@@ -290,10 +290,20 @@ export function StockDetail() {
             <div className="sticky top-16 -mx-2 md:-mx-8 px-2 md:px-8 py-2 md:py-4 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-4 md:mb-6">
                 <div className="flex items-center gap-3 mb-2 md:mb-4">
                     <button
-                        onClick={() => navigate(-1)}
-                        className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-2 py-1 md:px-3 md:py-1.5 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
+                        onClick={() => {
+                            const from = searchParams.get('from');
+                            if (from === 'watchlist') {
+                                navigate('/watchlist');
+                            } else if (from === 'portfolio') {
+                                navigate('/portfolio');
+                            } else {
+                                navigate(-1);
+                            }
+                        }}
+                        className="flex items-center justify-center bg-white dark:bg-card text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all font-medium rounded-xl shadow-sm border border-border/50 p-2.5 md:px-3 md:py-1.5 group"
+                        title="Zurück"
                     >
-                        <ArrowLeft className="size-4 md:mr-1.5" />
+                        <ArrowLeft className="size-5 md:size-4 md:mr-1.5 transition-transform group-hover:-translate-x-1" />
                         <span className="hidden md:inline">Zurück</span>
                     </button>
 

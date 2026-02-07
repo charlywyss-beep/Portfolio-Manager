@@ -65,7 +65,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                                 <div className="min-w-0 flex-1 flex flex-col items-start gap-0.5">
                                                     <div
                                                         className="font-semibold text-foreground cursor-pointer hover:text-primary transition-colors text-sm whitespace-pre-line"
-                                                        onClick={() => navigate(`/stock/${pos.stock.id}`)}
+                                                        onClick={() => navigate(`/stock/${pos.stock.id}?from=portfolio`)}
                                                     >
                                                         {pos.stock.name}
                                                     </div>
