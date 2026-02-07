@@ -300,7 +300,7 @@ export function StockDetail() {
                                 navigate(-1);
                             }
                         }}
-                        className="flex items-center justify-center bg-white dark:bg-card text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all font-medium rounded-xl shadow border-2 border-blue-100 dark:border-blue-900 p-2.5 md:px-3 md:py-1.5 group"
+                        className="flex items-center justify-center bg-white text-blue-600 hover:bg-blue-50 transition-all font-medium rounded-xl shadow border-2 border-blue-100 p-2.5 md:px-3 md:py-1.5 group"
                         title="Zurück"
                     >
                         <ArrowLeft className="size-5 md:size-4 md:mr-1.5 transition-transform group-hover:-translate-x-1" />
