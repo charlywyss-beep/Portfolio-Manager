@@ -169,7 +169,7 @@ export function DividendPlanner() {
     return (
         <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-3">
                     <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600 dark:text-green-400">
                         <Calendar className="size-6" />
@@ -179,6 +179,27 @@ export function DividendPlanner() {
                         <p className="text-muted-foreground">Erwartete Dividendenausschüttungen</p>
                     </div>
                 </div>
+
+                <button
+                    onClick={() => refreshAllPrices(true)}
+                    disabled={isGlobalRefreshing}
+                    className={cn(
+                        "flex items-center gap-2 px-4 py-2.5 rounded-xl border font-medium transition-all shadow-sm w-full sm:w-auto justify-center",
+                        "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                        "active:scale-95",
+                        isGlobalRefreshing && "opacity-50 cursor-not-allowed"
+                    )}
+                    title="Alle Aktienpreise aktualisieren"
+                >
+                    <RefreshCw className={cn("size-4 md:size-5", isGlobalRefreshing && "animate-spin")} />
+                    <span className="text-sm">
+                        {isGlobalRefreshing
+                            ? 'Aktualisiere...'
+                            : lastGlobalRefresh
+                                ? `Aktualisiert: Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                : 'Jetzt aktualisieren'}
+                    </span>
+                </button>
             </div>
 
             {/* Summary Cards */}
@@ -250,27 +271,6 @@ export function DividendPlanner() {
                             <option value="amount">Betrag (Hoch)</option>
                             <option value="date">Datum (Nächstes)</option>
                         </select>
-
-                        <button
-                            onClick={() => refreshAllPrices(true)}
-                            disabled={isGlobalRefreshing}
-                            className={cn(
-                                "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
-                                "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                                "active:scale-95",
-                                isGlobalRefreshing && "opacity-50 cursor-not-allowed"
-                            )}
-                            title="Alle Aktienpreise aktualisieren"
-                        >
-                            <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
-                            <span>
-                                {isGlobalRefreshing
-                                    ? 'Aktualisiere...'
-                                    : lastGlobalRefresh
-                                        ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
-                                        : 'Jetzt aktualisieren'}
-                            </span>
-                        </button>
                     </div>
                 </div>
 
@@ -288,7 +288,7 @@ export function DividendPlanner() {
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">EX-Tag</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zahl-Tag</th>
-                                <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] md:sticky md:-right-px bg-card z-50 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -487,7 +487,7 @@ export function DividendPlanner() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px bg-card z-40 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                            <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] md:sticky md:-right-px bg-card z-40 group-hover:bg-muted/30 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                 <div className="absolute inset-0 bg-card -z-10" />
                                                 <div className="relative flex items-center justify-end gap-1">
                                                     <button
@@ -527,7 +527,7 @@ export function DividendPlanner() {
                                         <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Frequenz</th>
                                         <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Quartalsweise</th>
                                         <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
-                                        <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                        <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] md:sticky md:-right-px bg-card z-50 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -568,7 +568,7 @@ export function DividendPlanner() {
                                                 <td className={`text-right py-3 px-4 font-semibold whitespace-nowrap ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                                                     {isNegative ? '-' : '+'} CHF {Math.abs(data.annual).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
-                                                <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px bg-card z-40 group-hover:bg-muted/50 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] md:sticky md:-right-px bg-card z-40 group-hover:bg-muted/50 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                     <div className="flex items-center justify-end gap-1">
                                                         <button
                                                             onClick={() => navigate('/portfolio')}
