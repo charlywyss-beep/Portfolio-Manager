@@ -230,30 +230,6 @@ export function PriceHistoryChart({
         return displayPoints;
     }, [data, selectedRange, sma200Data]);
 
-    const handleChartClick = (nextData: any) => {
-        if (!isMeasureMode) return;
-
-        // Try to get data from activePayload first (most precise)
-        // Then fallback to activeTooltipIndex or activeLabel
-        let pointData = nextData?.activePayload?.[0]?.payload;
-
-        if (!pointData && nextData?.activeLabel) {
-            pointData = data.find(p => p.date === nextData.activeLabel);
-        }
-
-        if (!pointData) return;
-
-        const point = {
-            date: pointData.date,
-            value: pointData.value
-        };
-
-        setMeasurePoints(prev => {
-            if (prev.length >= 2) return [point];
-            return [...prev, point];
-        });
-    };
-
     const measurement = useMemo(() => {
         if (measurePoints.length !== 2) return null;
         const [p1, p2] = [...measurePoints].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -339,42 +315,45 @@ export function PriceHistoryChart({
                 )}
             </div>
 
-            <div className="flex bg-muted/50 p-0.5 rounded-lg mb-4 items-center overflow-x-auto scroller-none">
-                <div className="flex flex-1">
-                    {(['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                <div className="flex bg-muted/50 p-0.5 rounded-lg items-center overflow-x-auto scroller-none max-w-full sm:max-w-fit">
+                    <div className="flex flex-1">
+                        {(['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
+                            <button
+                                key={range}
+                                onClick={() => handleRangeChange(range)}
+                                className={cn(
+                                    "px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-all whitespace-nowrap",
+                                    selectedRange === range
+                                        ? "bg-background shadow-sm text-foreground"
+                                        : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                                )}
+                            >
+                                {range === 'BUY' ? <><span className="sm:hidden">SK</span><span className="hidden sm:inline">Seit Kauf</span></> : range}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
                         <button
-                            key={range}
-                            onClick={() => handleRangeChange(range)}
+                            onClick={() => setIsMeasureMode(!isMeasureMode)}
                             className={cn(
-                                "px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-all whitespace-nowrap",
-                                selectedRange === range
-                                    ? "bg-background shadow-sm text-foreground"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                                "p-1.5 rounded-md transition-all flex items-center gap-1.5",
+                                isMeasureMode
+                                    ? "bg-primary text-primary-foreground shadow-sm"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                             )}
+                            title="Messmodus: Zwei Punkte im Chart klicken für %-Vergleich"
                         >
-                            {range === 'BUY' ? <><span className="sm:hidden">SK</span><span className="hidden sm:inline">Seit Kauf</span></> : range}
+                            <Ruler className="size-3.5" />
+                            <span className="text-[10px] font-bold hidden sm:inline">Messen</span>
                         </button>
-                    ))}
-                </div>
-                <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
-                    <button
-                        onClick={() => setIsMeasureMode(!isMeasureMode)}
-                        className={cn(
-                            "p-1.5 rounded-md transition-all flex items-center gap-1.5",
-                            isMeasureMode
-                                ? "bg-primary text-primary-foreground shadow-sm"
-                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                        )}
-                        title="Messmodus: Zwei Punkte im Chart klicken für %-Vergleich"
-                    >
-                        <Ruler className="size-3.5" />
-                        <span className="text-[10px] font-bold hidden sm:inline">Messen</span>
-                    </button>
+                    </div>
+
                 </div>
 
-                {/* Dynamic Header Info (Replaces Tooltip) */}
+                {/* Dynamic Header Info (Replaces Tooltip) - MOVED OUTSIDE SCROLL CONTAINER */}
                 {hoveredData && (
-                    <div className="flex-1 flex justify-end items-center gap-4 ml-4 text-[10px] sm:text-xs animate-in fade-in duration-200">
+                    <div className="flex justify-end items-center gap-4 text-[10px] sm:text-xs animate-in fade-in duration-200 z-[60] bg-background/80 backdrop-blur-sm p-1 rounded-lg border border-border/50 shadow-sm absolute right-0 top-[52px] sm:static sm:bg-transparent sm:border-0 sm:shadow-none sm:p-0">
                         <div className="flex flex-col items-end leading-tight">
                             <span className="font-medium text-foreground">
                                 {new Date(hoveredData.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })}
@@ -482,10 +461,14 @@ export function PriceHistoryChart({
                         <AreaChart
                             data={displayData}
                             margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
-                            onClick={handleChartClick}
                             onMouseMove={(data: any) => {
                                 if (data?.activePayload?.[0]?.payload) {
                                     setHoveredData(data.activePayload[0].payload);
+                                } else if (data?.activeLabel) {
+                                    // Fallback if activePayload is missing but we have a label (date)
+                                    // This can happen when moving fast
+                                    const point = displayData.find(d => d.date === data.activeLabel);
+                                    if (point) setHoveredData(point);
                                 }
                             }}
                             onMouseLeave={() => setHoveredData(null)}
@@ -504,40 +487,101 @@ export function PriceHistoryChart({
                                 tick={{ fontSize: 10, fill: '#e2e8f0' }}
                                 tickLine={false}
                                 axisLine={false}
-                                padding={{ left: 16, right: 16 }} // Fix label clipping (e.g. 05.01 -> .01)
-                                // X-Axis Tick Formatter
+                                padding={{ left: 16, right: 16 }}
                                 tickFormatter={(str) => {
                                     const date = new Date(str);
                                     if (selectedRange === '1D') {
                                         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                    } else if (selectedRange === '1W') {
-                                        // 1W View: Format as "dd.MM" (No trailing dot, user request)
-                                        // e.g. "05.01"
+                                    } else if (selectedRange === '1W' || selectedRange === '1M') {
                                         return `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
-                                    } else if (selectedRange === '1Y' || selectedRange === '5Y') {
+                                    } else if (selectedRange === '3M' || selectedRange === '6M') {
+                                        // For 3M and 6M: show "dd.MM" format
+                                        return `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+                                    } else if (selectedRange === '1Y' || selectedRange === '5Y' || selectedRange === 'BUY') {
                                         return date.toLocaleDateString([], { month: '2-digit', year: '2-digit' });
                                     }
                                     return date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
                                 }}
-                                // STRICT DAILY TICKS (v3.12.111)
-                                // Filter ticks to ensure EXACTLY one label per day for 1W view.
-                                ticks={selectedRange === '1W' && data.length > 0 ? (() => {
-                                    const ticks: string[] = [];
-                                    const seenDays = new Set<string>();
-                                    // Iterate normally (forward)
-                                    for (const point of data) {
-                                        const date = new Date(point.date);
-                                        // Use ISO string (YYYY-MM-DD) for strict day uniqueness, independent of locale/time
-                                        const dayKey = date.toISOString().slice(0, 10);
-                                        if (!seenDays.has(dayKey)) {
-                                            seenDays.add(dayKey);
-                                            ticks.push(point.date);
+                                ticks={(() => {
+                                    if (data.length === 0) return undefined;
+
+                                    // 1W: One tick per day (existing logic)
+                                    if (selectedRange === '1W') {
+                                        const ticks: string[] = [];
+                                        const seenDays = new Set<string>();
+                                        for (const point of data) {
+                                            const date = new Date(point.date);
+                                            const dayKey = date.toISOString().slice(0, 10);
+                                            if (!seenDays.has(dayKey)) {
+                                                seenDays.add(dayKey);
+                                                ticks.push(point.date);
+                                            }
                                         }
+                                        return ticks;
                                     }
-                                    return ticks;
-                                })() : undefined}
-                                minTickGap={selectedRange === '1W' ? 0 : 30} // 0 because we handle ticks manually
-                                interval={selectedRange === '1W' ? 0 : 'preserveStartEnd'} // Force ALL ticks for 1W to ensure Friday shows up
+
+                                    // 1M: One tick per week (every ~7 days)
+                                    if (selectedRange === '1M') {
+                                        const ticks: string[] = [];
+                                        let lastTickDate: Date | null = null;
+                                        for (const point of data) {
+                                            const date = new Date(point.date);
+                                            if (!lastTickDate || (date.getTime() - lastTickDate.getTime()) >= 6 * 24 * 60 * 60 * 1000) {
+                                                ticks.push(point.date);
+                                                lastTickDate = date;
+                                            }
+                                        }
+                                        return ticks;
+                                    }
+
+                                    // 3M: One tick every 2 weeks (~14 days)
+                                    if (selectedRange === '3M') {
+                                        const ticks: string[] = [];
+                                        let lastTickDate: Date | null = null;
+                                        for (const point of data) {
+                                            const date = new Date(point.date);
+                                            if (!lastTickDate || (date.getTime() - lastTickDate.getTime()) >= 13 * 24 * 60 * 60 * 1000) {
+                                                ticks.push(point.date);
+                                                lastTickDate = date;
+                                            }
+                                        }
+                                        return ticks;
+                                    }
+
+                                    // 6M: One tick per month (first trading day of each month)
+                                    if (selectedRange === '6M') {
+                                        const ticks: string[] = [];
+                                        const seenMonths = new Set<string>();
+                                        for (const point of data) {
+                                            const date = new Date(point.date);
+                                            const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+                                            if (!seenMonths.has(monthKey)) {
+                                                seenMonths.add(monthKey);
+                                                ticks.push(point.date);
+                                            }
+                                        }
+                                        return ticks;
+                                    }
+
+                                    // 1Y / 5Y / BUY: One tick every ~2 months
+                                    if (selectedRange === '1Y' || selectedRange === '5Y' || selectedRange === 'BUY') {
+                                        const ticks: string[] = [];
+                                        let lastTickDate: Date | null = null;
+                                        const interval = selectedRange === '5Y' ? 120 : 60; // 5Y: ~4 months, 1Y/BUY: ~2 months
+                                        for (const point of data) {
+                                            const date = new Date(point.date);
+                                            if (!lastTickDate || (date.getTime() - lastTickDate.getTime()) >= interval * 24 * 60 * 60 * 1000) {
+                                                ticks.push(point.date);
+                                                lastTickDate = date;
+                                            }
+                                        }
+                                        return ticks;
+                                    }
+
+                                    return undefined;
+                                })()}
+                                minTickGap={['1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'].includes(selectedRange) ? 0 : 30}
+                                interval={['1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'].includes(selectedRange) ? 0 : 'preserveStartEnd'}
                             />
                             <YAxis
                                 domain={[domainMin, domainMax]}
