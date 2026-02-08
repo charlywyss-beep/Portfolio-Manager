@@ -37,6 +37,7 @@ export function PriceHistoryChart({
 }: PriceHistoryChartProps) {
     const [hasMounted, setHasMounted] = useState(false);
     const [isMeasureMode, setIsMeasureMode] = useState(false);
+    const [isMaximized, setIsMaximized] = useState(false);
     const [measurePoints, setMeasurePoints] = useState<{ date: string; value: number }[]>([]);
 
     useEffect(() => {
@@ -46,6 +47,11 @@ export function PriceHistoryChart({
     // Reset measure points when mode is toggled or range changes
     useEffect(() => {
         setMeasurePoints([]);
+        if (isMeasureMode) {
+            setIsMaximized(true);
+        } else {
+            setIsMaximized(false);
+        }
     }, [isMeasureMode, selectedRange]);
     const { formatCurrency } = useCurrencyFormatter();
 
@@ -255,8 +261,11 @@ export function PriceHistoryChart({
         return { p1, p2, diff, percent };
     }, [measurePoints]);
 
-    return (
-        <div className="w-full h-full flex flex-col relative">
+    const chartContent = (
+        <div className={cn(
+            "w-full flex flex-col relative transition-all duration-300",
+            isMaximized ? "h-full" : "h-[450px]"
+        )}>
             <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
                 <div className="flex flex-col gap-1">
                     <div>
@@ -617,6 +626,24 @@ export function PriceHistoryChart({
             <p className="text-[10px] text-muted-foreground text-center mt-2 italic">
                 {historyData && historyData.length > 0 ? '* Reale Marktdaten von Yahoo Finance' : '* Simulierter Chartverlauf (Demo-Modus)'}
             </p>
-        </div >
+        </div>
     );
+
+    if (isMaximized) {
+        return (
+            <div className="fixed inset-0 z-[2000] bg-background/95 backdrop-blur-sm p-4 md:p-8 animate-in zoom-in-95 duration-200 flex flex-col">
+                <button
+                    onClick={() => setIsMeasureMode(false)}
+                    className="absolute top-6 right-6 z-[2010] p-2 bg-muted/50 hover:bg-red-500 hover:text-white rounded-full transition-all"
+                >
+                    <X className="size-6" />
+                </button>
+                <div className="flex-1 bg-card rounded-xl border border-border shadow-2xl overflow-hidden p-6">
+                    {chartContent}
+                </div>
+            </div>
+        );
+    }
+
+    return chartContent;
 }

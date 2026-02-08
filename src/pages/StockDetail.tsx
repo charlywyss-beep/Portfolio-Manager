@@ -447,7 +447,6 @@ export function StockDetail() {
                                         "text-xs font-bold flex items-center justify-end gap-1 tabular-nums",
                                         isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                     )}>
-                                        {isPositive ? <TrendingUp className="size-3" /> : <TrendingUp className="size-3 rotate-180" />}
                                         {isPositive ? '+' : ''}{percentChange.toFixed(2)}% {formatCurrency(totalDiff, stock.currency)}
                                     </p>
                                 </div>
@@ -474,7 +473,6 @@ export function StockDetail() {
                                 onClick={() => navigate('/?openPerformance=true')}
                                 className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-2 py-1 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
                             >
-                                <ArrowLeft className="size-3 md:size-4 mr-1" />
                                 <span className="md:hidden">Zurück</span><span className="hidden md:inline">zur Performance</span>
                             </button>
 
