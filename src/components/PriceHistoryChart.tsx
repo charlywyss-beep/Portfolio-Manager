@@ -19,6 +19,8 @@ interface PriceHistoryChartProps {
     isMarketOpen?: boolean;
     purchasePrice?: number;
     sellLimit?: number;
+    stockName?: string;
+    stockSymbol?: string;
 }
 
 export function PriceHistoryChart({
@@ -33,7 +35,9 @@ export function PriceHistoryChart({
     previousClose,
     isMarketOpen = true,
     purchasePrice,
-    sellLimit
+    sellLimit,
+    stockName,
+    stockSymbol
 }: PriceHistoryChartProps) {
     const [hasMounted, setHasMounted] = useState(false);
     const [isMeasureMode, setIsMeasureMode] = useState(false);
@@ -234,6 +238,18 @@ export function PriceHistoryChart({
             <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
                 <div className="flex flex-col gap-1">
                     <div>
+                        {stockName && (
+                            <div className="flex items-baseline gap-2 mb-1">
+                                <h4 className="text-xl md:text-2xl font-black tracking-tighter text-foreground drop-shadow-sm">
+                                    {stockName}
+                                </h4>
+                                {stockSymbol && (
+                                    <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-widest">
+                                        {stockSymbol}
+                                    </span>
+                                )}
+                            </div>
+                        )}
                         <p className="text-sm text-muted-foreground">Performance ({selectedRange})</p>
                         <div className={cn("font-bold flex items-center gap-1", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
                             <span className="text-xl">

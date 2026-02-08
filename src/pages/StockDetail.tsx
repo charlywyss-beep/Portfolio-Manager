@@ -509,6 +509,8 @@ export function StockDetail() {
                                 isMarketOpen={estimateMarketState(stock.symbol, stock.currency) === 'REGULAR'}
                                 purchasePrice={position?.buyPriceAvg}
                                 sellLimit={stock.sellLimit}
+                                stockName={stock.name}
+                                stockSymbol={stock.symbol}
                             />
                         </div>
                     </div>
