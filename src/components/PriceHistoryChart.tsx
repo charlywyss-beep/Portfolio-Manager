@@ -365,17 +365,30 @@ export function PriceHistoryChart({
 
             {isMeasureMode && measurePoints.length > 0 && (
                 <div className="absolute top-2 right-2 z-[100] animate-in fade-in slide-in-from-right-2">
-                    <div className="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-xl shadow-2xl border border-blue-400/30 flex items-center gap-3">
+                    <div className="bg-blue-600 dark:bg-blue-500 text-white px-4 py-3 rounded-xl shadow-2xl border border-blue-400/30 flex items-center gap-4">
                         <div className="flex flex-col items-center leading-tight">
                             {measurement ? (
-                                <>
-                                    <span className="text-base font-black whitespace-nowrap">
-                                        {measurement.percent > 0 ? '+' : ''}{measurement.percent.toFixed(2)}%
-                                    </span>
-                                    <span className="text-[11px] font-bold opacity-90 mt-0.5">
-                                        {formatCurrency(measurement.diff, currency, true)}
-                                    </span>
-                                </>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-xl font-black whitespace-nowrap">
+                                            {measurement.percent > 0 ? '+' : ''}{measurement.percent.toFixed(2)}%
+                                        </span>
+                                        <span className="text-xs font-bold opacity-90">
+                                            {formatCurrency(measurement.diff, currency, true)}
+                                        </span>
+                                    </div>
+                                    <div className="h-8 w-px bg-white/20" />
+                                    <div className="flex flex-col text-[10px] opacity-90 font-medium">
+                                        <div className="flex justify-between gap-4">
+                                            <span className="opacity-70">Von:</span>
+                                            <span>{formatCurrency(measurement.p1.value, currency)} ({new Date(measurement.p1.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>
+                                        </div>
+                                        <div className="flex justify-between gap-4">
+                                            <span className="opacity-70">Bis:</span>
+                                            <span>{formatCurrency(measurement.p2.value, currency)} ({new Date(measurement.p2.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>
+                                        </div>
+                                    </div>
+                                </div>
                             ) : (
                                 <div className="flex flex-col items-center">
                                     <span className="text-xs font-bold whitespace-nowrap">
@@ -392,7 +405,7 @@ export function PriceHistoryChart({
                             }}
                             className="bg-white/20 hover:bg-white/40 p-1.5 rounded-full transition-colors"
                         >
-                            <X className="size-3.5" />
+                            <X className="size-4" />
                         </button>
                     </div>
                 </div>
@@ -541,7 +554,9 @@ export function PriceHistoryChart({
                                                                 month: '2-digit',
                                                                 year: 'numeric'
                                                             })}
-                                                            {!isToday && <span className="ml-1 text-orange-500 font-medium">(Letzter Handelstag)</span>}
+                                                            {(!isToday && payload[0].payload.date === data[data.length - 1].date) && (
+                                                                <span className="ml-1 text-orange-500 font-medium">(Schlusskurs Tag)</span>
+                                                            )}
                                                             <br />
                                                             <span className="text-xs">
                                                                 {date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr
