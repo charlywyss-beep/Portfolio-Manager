@@ -381,11 +381,21 @@ export function PriceHistoryChart({
                                     <div className="flex flex-col text-[10px] opacity-90 font-medium">
                                         <div className="flex justify-between gap-4">
                                             <span className="opacity-70">Von:</span>
-                                            <span>{formatCurrency(measurement.p1.value, currency)} ({new Date(measurement.p1.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>
+                                            <span>
+                                                {formatCurrency(measurement.p1.value, currency, false)}
+                                                <span className="opacity-60 ml-1">
+                                                    ({new Date(measurement.p1.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} {new Date(measurement.p1.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+                                                </span>
+                                            </span>
                                         </div>
                                         <div className="flex justify-between gap-4">
                                             <span className="opacity-70">Bis:</span>
-                                            <span>{formatCurrency(measurement.p2.value, currency)} ({new Date(measurement.p2.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>
+                                            <span>
+                                                {formatCurrency(measurement.p2.value, currency, false)}
+                                                <span className="opacity-60 ml-1">
+                                                    ({new Date(measurement.p2.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} {new Date(measurement.p2.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+                                                </span>
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
