@@ -843,18 +843,7 @@ function WatchlistTable({
                                             ? new Date(currentDiv.payDate).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' })
                                             : '-'}
                                     </span>
-                                    {stock.dividendAmount ? (
-                                        <div className="flex flex-col items-end">
-                                            <span className="text-[10px] text-muted-foreground whitespace-nowrap font-medium">
-                                                {formatCurrency(stock.dividendAmount, stock.currency, false)}
-                                            </span>
-                                            {stock.currency !== 'CHF' && (
-                                                <span className="text-[10px] text-muted-foreground whitespace-nowrap font-medium">
-                                                    {formatCurrency(convertToCHF(stock.dividendAmount, stock.currency), 'CHF', false)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    ) : currentDiv.status === 'paid' && (
+                                    {currentDiv.status === 'paid' && (
                                         <span className="text-[9px] font-bold text-green-600 bg-green-100 dark:bg-green-950/50 px-1 py-0.5 rounded leading-none uppercase">
                                             Bezahlt
                                         </span>
