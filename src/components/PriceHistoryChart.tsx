@@ -478,8 +478,8 @@ export function PriceHistoryChart({
                                 dataKey="date"
                                 hide={false}
                                 tick={{ fontSize: 10, fill: '#e2e8f0' }}
-                                tickLine={false}
-                                axisLine={false}
+                                tickLine={{ stroke: '#475569', strokeWidth: 1 }}
+                                axisLine={{ stroke: '#475569', strokeWidth: 1 }}
                                 padding={{ left: 16, right: 16 }}
                                 tickFormatter={(str) => {
                                     const date = new Date(str);
