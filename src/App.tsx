@@ -142,7 +142,7 @@ function App() {
           )}>
             <Link
               to="/portfolio"
-              className="flex flex-col cursor-pointer group p-6 pt-20 lg:p-6 border-b border-border hover:bg-muted/50 transition-colors"
+              className="flex flex-col cursor-pointer group px-6 pb-6 pt-24 lg:pt-6 border-b border-border hover:bg-muted/50 transition-colors"
               onClick={closeSidebarOnMobile}
             >
               <div className="flex items-center gap-2 mb-1">
