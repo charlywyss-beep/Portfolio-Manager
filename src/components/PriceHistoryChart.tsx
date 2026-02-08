@@ -205,23 +205,8 @@ export function PriceHistoryChart({
     const displayData = useMemo(() => {
         let displayPoints = [...data];
 
-        // If '1Y' is selected but we fed 2Y data, slice it to last ~1Y
-        // For hourly data: ~252 trading days * 6.5 trading hours = ~1638 hours
-        if (selectedRange === '1Y' && displayPoints.length > 2000) {
-            displayPoints = displayPoints.slice(displayPoints.length - 1640);
-        }
-        else if (selectedRange === '6M' && displayPoints.length > 1000) {
-            // ~130 trading days * 6.5 hours = ~845 hours
-            displayPoints = displayPoints.slice(displayPoints.length - 850);
-        }
-        else if (selectedRange === '3M' && displayPoints.length > 500) {
-            // ~65 trading days * 6.5 hours = ~423 hours
-            displayPoints = displayPoints.slice(displayPoints.length - 425);
-        }
-        else if (selectedRange === '1M' && displayPoints.length > 200) {
-            // ~23 trading days * 6.5 hours = ~150 hours
-            displayPoints = displayPoints.slice(displayPoints.length - 150);
-        }
+        // The API already provides the correct range based on selectedRange
+        // No need to slice - just merge SMA data
 
         // Merge SMA
         if (sma200Data) {
