@@ -543,10 +543,16 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
-                                    // 6M: Monthly ticks (first of each month)
+                                    // 6M: Monthly ticks (first of each month) + latest point
                                     if (selectedRange === '6M') {
                                         const ticks: string[] = [];
                                         const seenMonths = new Set<string>();
+
+                                        // Always include the latest (today/last close)
+                                        if (displayData.length > 0) {
+                                            ticks.push(displayData[displayData.length - 1].date);
+                                        }
+
                                         for (const point of displayData) {
                                             const date = new Date(point.date);
                                             const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
