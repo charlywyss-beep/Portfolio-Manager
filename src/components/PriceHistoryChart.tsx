@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, Dot } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from 'recharts';
 import { useCurrencyFormatter } from '../utils/currency';
 import { Ruler, X } from 'lucide-react';
 import { cn } from '../utils';
