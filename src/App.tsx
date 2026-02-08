@@ -130,7 +130,7 @@ function App() {
             "fixed lg:relative z-[1001] h-full",
             isSidebarOpen
               ? "translate-x-0 w-fit"
-              : "-translate-x-full w-fit lg:translate-x-0 lg:w-0 lg:border-r-0"
+              : "-translate-x-full w-fit lg:translate-x-0 lg:w-fit lg:border-r"
           )}>
             <Link
               to="/portfolio"
