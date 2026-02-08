@@ -191,12 +191,17 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                                         */}
                                                             {!isNativeCHF && (
                                                                 <div className={cn(
-                                                                    "text-xs whitespace-nowrap mt-0.5 text-right",
+                                                                    "flex items-center justify-end gap-1.5 font-medium tabular-nums text-xs mt-0.5",
                                                                     pos.forexImpactCHF >= 0
                                                                         ? "text-emerald-600 dark:text-emerald-400"
-                                                                        : "text-red-500 dark:text-red-400"
+                                                                        : "text-red-500"
                                                                 )} title="Anteil Währungsgewinn/-verlust">
-                                                                    Währ. {pos.forexImpactCHF >= 0 ? '+' : ''}{pos.forexImpactCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                                                    <span>
+                                                                        Währ. {pos.forexImpactCHF >= 0 ? '+' : ''}{pos.forexImpactCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                                    </span>
+                                                                    <span className="w-8 text-left text-[11px] uppercase text-current/80 sm:text-sm sm:w-8 translate-y-[0.5px]">
+                                                                        CHF
+                                                                    </span>
                                                                 </div>
                                                             )}
                                                         </>

@@ -354,7 +354,7 @@ export function Watchlist() {
                                         <div className="size-2 rounded-full bg-green-500 animate-pulse" />
                                         <span className="font-bold">KAUFEN</span>
                                     </div>
-                                    <span>(Kurs &lt; Limit)</span>
+                                    <span>Kurs &lt; Limit</span>
                                 </div>
                                 <div className="w-px h-3 bg-border hidden sm:block" />
                                 <div className="flex items-center gap-1.5">
@@ -362,7 +362,7 @@ export function Watchlist() {
                                         <div className="size-2 rounded-full bg-red-500" />
                                         <span className="font-bold">KEINE INFO</span>
                                     </div>
-                                    <span>(Limit fehlt)</span>
+                                    <span>Limit fehlt</span>
                                 </div>
                             </div>
                         </button>
@@ -406,7 +406,7 @@ export function Watchlist() {
                                         <div className="size-2 rounded-full bg-green-500 animate-pulse" />
                                         <span className="font-bold">KAUFEN</span>
                                     </div>
-                                    <span>(Kurs &lt; Limit)</span>
+                                    <span>Kurs &lt; Limit</span>
                                 </div>
                                 <div className="w-px h-3 bg-border hidden sm:block" />
                                 <div className="flex items-center gap-1.5">
@@ -414,7 +414,7 @@ export function Watchlist() {
                                         <div className="size-2 rounded-full bg-red-500" />
                                         <span className="font-bold">KEINE INFO</span>
                                     </div>
-                                    <span>(Limit fehlt)</span>
+                                    <span>Limit fehlt</span>
                                 </div>
                             </div>
                         </button>
@@ -448,7 +448,7 @@ export function Watchlist() {
                         >
                             <div className="flex items-center gap-2">
                                 <TrendingUp className="size-5 text-blue-600" />
-                                <h2 className="text-lg font-bold">Potenzielle Aktien ({potentialStocks.length})</h2>
+                                <h2 className="text-lg font-bold">Potenzielle Aktien: {potentialStocks.length}</h2>
                                 {isPotentialStocksOpen ? <ChevronDown className="size-4 ml-2 opacity-50" /> : <ChevronRight className="size-4 ml-2 opacity-50" />}
                             </div>
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-xs font-medium text-muted-foreground bg-background/50 px-3 py-1.5 rounded-lg border border-border/50">
@@ -458,7 +458,7 @@ export function Watchlist() {
                                         <div className="size-2 rounded-full bg-green-500 animate-pulse" />
                                         <span className="font-bold">KAUFEN</span>
                                     </div>
-                                    <span>(Kurs &lt; Limit)</span>
+                                    <span>Kurs &lt; Limit</span>
                                 </div>
                                 <div className="w-px h-3 bg-border hidden sm:block" />
                                 <div className="flex items-center gap-1.5">
@@ -466,7 +466,7 @@ export function Watchlist() {
                                         <div className="size-2 rounded-full bg-red-500" />
                                         <span className="font-bold">KEINE INFO</span>
                                     </div>
-                                    <span>(Limit fehlt)</span>
+                                    <span>Limit fehlt</span>
                                 </div>
                             </div>
                         </button>
@@ -500,7 +500,7 @@ export function Watchlist() {
                         >
                             <div className="flex items-center gap-2">
                                 <PieChart className="size-5 text-blue-600" />
-                                <h2 className="text-lg font-bold">Potenzielle ETFs ({potentialEtfs.length})</h2>
+                                <h2 className="text-lg font-bold">Potenzielle ETFs: {potentialEtfs.length}</h2>
                                 {isPotentialEtfsOpen ? <ChevronDown className="size-4 ml-2 opacity-50" /> : <ChevronRight className="size-4 ml-2 opacity-50" />}
                             </div>
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-xs font-medium text-muted-foreground bg-background/50 px-3 py-1.5 rounded-lg border border-border/50">
@@ -510,7 +510,7 @@ export function Watchlist() {
                                         <div className="size-2 rounded-full bg-green-500 animate-pulse" />
                                         <span className="font-bold">KAUFEN</span>
                                     </div>
-                                    <span>(Kurs &lt; Limit)</span>
+                                    <span>Kurs &lt; Limit</span>
                                 </div>
                                 <div className="w-px h-3 bg-border hidden sm:block" />
                                 <div className="flex items-center gap-1.5">
@@ -518,7 +518,7 @@ export function Watchlist() {
                                         <div className="size-2 rounded-full bg-red-500" />
                                         <span className="font-bold">KEINE INFO</span>
                                     </div>
-                                    <span>(Limit fehlt)</span>
+                                    <span>Limit fehlt</span>
                                 </div>
                             </div>
                         </button>

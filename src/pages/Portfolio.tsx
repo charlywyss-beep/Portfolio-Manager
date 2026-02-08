@@ -248,10 +248,10 @@ export function Portfolio() {
                             value={sortConfig.key}
                             onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
                         >
-                            <option value="name">Name (A-Z)</option>
+                            <option value="name">Name: A-Z</option>
                             <option value="currency">Währung</option>
-                            <option value="value">Wert (Hoch-Tief)</option>
-                            <option value="performance">Performance (Beste)</option>
+                            <option value="value">Wert: Hoch-Tief</option>
+                            <option value="performance">Performance: Beste</option>
                         </select>
                     </div>
                 }
