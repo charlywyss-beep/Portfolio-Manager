@@ -723,18 +723,18 @@ function WatchlistTable({
                                 </div>
                             </td>
                             <td className="p-4 text-right">
-                                <div className="flex flex-col items-end">
+                                <div className="flex flex-col items-end gap-0.5">
                                     <span className="font-bold text-sm text-foreground">
                                         {formatCurrency(stock.currentPrice, stock.currency, false)}
                                     </span>
                                     {stock.currency !== 'CHF' && (
-                                        <span className="text-xs text-muted-foreground font-medium">
+                                        <span className="font-bold text-sm text-foreground">
                                             {formatCurrency(convertToCHF(stock.currentPrice, stock.currency), 'CHF', false)}
                                         </span>
                                     )}
                                     {stock.previousClose !== undefined && (
                                         <span className={cn(
-                                            "text-xs md:text-[10px] font-bold px-1.5 py-0.5 rounded",
+                                            "text-xs md:text-[10px] font-bold px-1.5 py-0.5 rounded mt-1",
                                             stockChange >= 0
                                                 ? "bg-green-500/10 text-green-600"
                                                 : "bg-red-500/10 text-red-600"
@@ -750,17 +750,22 @@ function WatchlistTable({
                                         {isUnderTarget && (
                                             <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0" title="Limit erreicht!" />
                                         )}
-                                        <span className={cn(
-                                            "font-bold text-sm",
-                                            isUnderTarget ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
-                                        )}>
-                                            {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
-                                        </span>
-                                        {stock.targetPrice && stock.currency !== 'CHF' && (
-                                            <span className="text-xs text-muted-foreground font-medium">
-                                                {formatCurrency(convertToCHF(stock.targetPrice, stock.currency), 'CHF', false)}
+                                        <div className="flex flex-col items-end gap-0.5">
+                                            <span className={cn(
+                                                "font-bold text-sm",
+                                                isUnderTarget ? "text-green-600 dark:text-green-400" : "text-foreground"
+                                            )}>
+                                                {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
                                             </span>
-                                        )}
+                                            {stock.targetPrice && stock.currency !== 'CHF' && (
+                                                <span className={cn(
+                                                    "font-bold text-sm",
+                                                    isUnderTarget ? "text-green-600 dark:text-green-400" : "text-foreground"
+                                                )}>
+                                                    {formatCurrency(convertToCHF(stock.targetPrice, stock.currency), 'CHF', false)}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                     {stock.targetPrice && (
                                         <span className="text-[10px] font-medium text-muted-foreground">
@@ -775,17 +780,22 @@ function WatchlistTable({
                                         {isOverSell && (
                                             <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0" title="Verkaufslimit erreicht!" />
                                         )}
-                                        <span className={cn(
-                                            "font-bold text-sm",
-                                            isOverSell ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
-                                        )}>
-                                            {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency, false) : '-'}
-                                        </span>
-                                        {stock.sellLimit && stock.currency !== 'CHF' && (
-                                            <span className="text-xs text-muted-foreground font-medium">
-                                                {formatCurrency(convertToCHF(stock.sellLimit, stock.currency), 'CHF', false)}
+                                        <div className="flex flex-col items-end gap-0.5">
+                                            <span className={cn(
+                                                "font-bold text-sm",
+                                                isOverSell ? "text-green-600 dark:text-green-400" : "text-foreground"
+                                            )}>
+                                                {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency, false) : '-'}
                                             </span>
-                                        )}
+                                            {stock.sellLimit && stock.currency !== 'CHF' && (
+                                                <span className={cn(
+                                                    "font-bold text-sm",
+                                                    isOverSell ? "text-green-600 dark:text-green-400" : "text-foreground"
+                                                )}>
+                                                    {formatCurrency(convertToCHF(stock.sellLimit, stock.currency), 'CHF', false)}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                     {stock.sellLimit && (
                                         <span className="text-[10px] font-medium text-muted-foreground">
