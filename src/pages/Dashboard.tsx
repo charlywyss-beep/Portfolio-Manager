@@ -138,7 +138,7 @@ export function Dashboard() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-            <div className="pl-14 pr-6 py-6 md:p-8 space-y-8 animate-in fade-in duration-500">
+            <div className="pl-14 pr-6 py-6 md:p-8 md:pl-14 lg:p-8 space-y-8 animate-in fade-in duration-500">
                 {/* Risk Warnings */}
                 {bankRisks.length > 0 && (
                     <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-xl p-4 flex items-start gap-3">

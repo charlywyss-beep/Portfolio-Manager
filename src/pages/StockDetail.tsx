@@ -287,7 +287,7 @@ export function StockDetail() {
     return (
         <div className="p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16">
             {/* Sticky Header / Navigation */}
-            <div className="sticky top-0 -mx-2 md:-mx-8 pl-14 pr-2 py-2 md:px-8 md:py-4 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-4 md:mb-6">
+            <div className="sticky top-0 -mx-2 md:-mx-8 pl-14 pr-2 py-2 md:px-8 md:py-4 md:pl-14 lg:pl-8 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-4 md:mb-6">
                 <div className="flex items-center gap-3 mb-2 md:mb-4">
                     <button
                         onClick={() => {

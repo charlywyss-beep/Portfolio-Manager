@@ -463,7 +463,7 @@ export function FairValueCalculator() {
     const isYieldGap = ((typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : growthRate) + (typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : dividendYield)) < (typeof discountRate === 'string' ? parseFloat(discountRate) || 0 : discountRate);
 
     return (
-        <div className="max-w-6xl mx-auto pl-14 pr-4 py-4 md:p-8 space-y-8 pb-32">
+        <div className="max-w-6xl mx-auto pl-14 pr-4 py-4 md:p-8 md:pl-14 lg:p-8 space-y-8 pb-32">
             {/* Guide Modal */}
             {showGuide && (
                 <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
