@@ -5,7 +5,7 @@ import { Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, Rotate
 import { ConfirmModal } from '../components/ConfirmModal';
 import packageJson from '../../package.json';
 
-// Helper Component for Stock Management List Items (v3.14.01)
+// Helper Component for Stock Management List Items (v3.14.02)
 const StockManagementItem = ({ stock, positions, watchlists, stocks, fixedDeposits, importData }: any) => {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const isInPortfolio = positions.some((p: any) => p.stockId === stock.id);
@@ -72,7 +72,7 @@ export function Settings() {
     const [confirmImport, setConfirmImport] = useState<{ isOpen: boolean, data: any }>({ isOpen: false, data: null });
     const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
-    // Categorized Stocks (v3.14.01)
+    // Categorized Stocks (v3.14.02)
     const categorizedStocks = useMemo(() => {
         const ownedIds = new Set(positions.map(p => p.stockId));
         return {

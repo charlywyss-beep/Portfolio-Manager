@@ -51,7 +51,7 @@ export function Watchlist() {
         localStorage.setItem(STORAGE_KEY, activeWatchlistId);
     }, [activeWatchlistId]);
 
-    // Watchlist Component (v3.14.01)
+    // Watchlist Component (v3.14.02)
     useEffect(() => {
         // Skip if in 'owned' mode (virtual tab)
         if (activeWatchlistId === 'owned') return;

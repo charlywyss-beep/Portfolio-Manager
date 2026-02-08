@@ -551,7 +551,6 @@ export function PriceHistoryChart({
                                 content={({ active, payload }) => {
                                     if (active && payload && payload.length) {
                                         const date = new Date(payload[0].payload.date);
-                                        const isToday = new Date().toDateString() === date.toDateString();
 
                                         return (
                                             <div className="bg-popover border border-border p-3 rounded-lg shadow-lg text-sm">
