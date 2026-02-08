@@ -520,36 +520,30 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
-                                    // 1M / 3M: Weekly ticks (every 7 days)
-                                    if (selectedRange === '1M' || selectedRange === '3M') {
+                                    // 1M / 3M / 6M: Always show latest point + every Friday going backwards
+                                    if (['1M', '3M', '6M'].includes(selectedRange)) {
                                         const ticks: string[] = [];
-                                        let lastTickTime: number | null = null;
-                                        const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-                                        for (const point of displayData) {
-                                            const time = new Date(point.date).getTime();
-                                            if (lastTickTime === null || time - lastTickTime >= WEEK_MS) {
-                                                ticks.push(point.date);
-                                                lastTickTime = time;
+                                        // Always include the latest (today/last close)
+                                        if (displayData.length > 0) {
+                                            ticks.push(displayData[displayData.length - 1].date);
+                                        }
+
+                                        // Go backwards and find all Fridays (or last trading day of each week)
+                                        const seenWeeks = new Set<string>();
+                                        for (let i = displayData.length - 1; i >= 0; i--) {
+                                            const date = new Date(displayData[i].date);
+                                            const weekKey = `${date.getFullYear()}-W${Math.floor((date.getTime() + 4 * 24 * 60 * 60 * 1000) / (7 * 24 * 60 * 60 * 1000))}`;
+
+                                            // If Friday (day 5) and not yet added this week
+                                            if (date.getDay() === 5 && !seenWeeks.has(weekKey)) {
+                                                seenWeeks.add(weekKey);
+                                                ticks.push(displayData[i].date);
                                             }
                                         }
-                                        return ticks;
-                                    }
 
-                                    // 6M: Bi-weekly ticks (every 14 days)
-                                    if (selectedRange === '6M') {
-                                        const ticks: string[] = [];
-                                        let lastTickTime: number | null = null;
-                                        const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
-
-                                        for (const point of displayData) {
-                                            const time = new Date(point.date).getTime();
-                                            if (lastTickTime === null || time - lastTickTime >= TWO_WEEKS_MS) {
-                                                ticks.push(point.date);
-                                                lastTickTime = time;
-                                            }
-                                        }
-                                        return ticks;
+                                        // Sort chronologically (we built it backwards)
+                                        return ticks.sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
                                     }
 
                                     // 1Y / 5Y / BUY: Monthly ticks
