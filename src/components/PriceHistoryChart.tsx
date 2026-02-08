@@ -548,16 +548,25 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
-                                    // 6M: Monthly ticks (first of each month)
+                                    // 6M: Bi-weekly Fridays (every 2nd Friday)
                                     if (selectedRange === '6M') {
                                         const ticks: string[] = [];
-                                        const seenMonths = new Set<string>();
-                                        for (const point of displayData) {
+                                        const seenDays = new Set<string>();
+                                        let fridayCount = 0;
+
+                                        // Go through data in REVERSE (newest first)
+                                        for (let i = displayData.length - 1; i >= 0; i--) {
+                                            const point = displayData[i];
                                             const date = new Date(point.date);
-                                            const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-                                            if (!seenMonths.has(monthKey)) {
-                                                seenMonths.add(monthKey);
-                                                ticks.push(point.date);
+                                            const dayKey = date.toISOString().slice(0, 10);
+
+                                            if (date.getDay() === 5 && !seenDays.has(dayKey)) {
+                                                seenDays.add(dayKey);
+                                                // Only take every 2nd Friday
+                                                if (fridayCount % 2 === 0) {
+                                                    ticks.unshift(point.date); // Add to front to keep order
+                                                }
+                                                fridayCount++;
                                             }
                                         }
                                         return ticks;
