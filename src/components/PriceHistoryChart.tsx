@@ -489,7 +489,6 @@ export function PriceHistoryChart({
                                     x={p.date}
                                     stroke="#ffffff"
                                     strokeWidth={2}
-                                    isFront={true}
                                 />
                             ))}
                             {measurement && (
