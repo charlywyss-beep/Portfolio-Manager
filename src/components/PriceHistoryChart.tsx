@@ -505,7 +505,7 @@ export function PriceHistoryChart({
                                 ticks={(() => {
                                     if (data.length === 0) return undefined;
 
-                                    // 1W: One tick per day (manual calculation needed for precision)
+                                    // 1W: One tick per day
                                     if (selectedRange === '1W') {
                                         const ticks: string[] = [];
                                         const seenDays = new Set<string>();
@@ -520,8 +520,51 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
-                                    // 6M: One tick per month (manual calculation for precision)
+                                    // 1M + 3M: Weekly ticks (preferably Fridays)
+                                    if (selectedRange === '1M' || selectedRange === '3M') {
+                                        const ticks: string[] = [];
+                                        const seenWeeks = new Set<string>();
+
+                                        for (const point of displayData) {
+                                            const date = new Date(point.date);
+                                            const weekKey = `${date.getFullYear()}-W${Math.floor(date.getTime() / (7 * 24 * 60 * 60 * 1000))}`;
+
+                                            if (!seenWeeks.has(weekKey)) {
+                                                seenWeeks.add(weekKey);
+                                                // Prefer Friday (day 5) but accept any day of the week for this week
+                                                ticks.push(point.date);
+                                            } else if (date.getDay() === 5 && ticks.length > 0) {
+                                                // Replace last tick with Friday if we find one in the same week
+                                                const lastTickDate = new Date(ticks[ticks.length - 1]);
+                                                const lastWeekKey = `${lastTickDate.getFullYear()}-W${Math.floor(lastTickDate.getTime() / (7 * 24 * 60 * 60 * 1000))}`;
+                                                if (lastWeekKey === weekKey) {
+                                                    ticks[ticks.length - 1] = point.date;
+                                                }
+                                            }
+                                        }
+                                        return ticks;
+                                    }
+
+                                    // 6M: Bi-weekly ticks (every 2 weeks)
                                     if (selectedRange === '6M') {
+                                        const ticks: string[] = [];
+                                        let lastTickTime: number | null = null;
+                                        const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
+
+                                        for (const point of displayData) {
+                                            const date = new Date(point.date);
+                                            const time = date.getTime();
+
+                                            if (lastTickTime === null || time - lastTickTime >= TWO_WEEKS_MS) {
+                                                ticks.push(point.date);
+                                                lastTickTime = time;
+                                            }
+                                        }
+                                        return ticks;
+                                    }
+
+                                    // 1Y / 5Y / BUY: Monthly ticks (first trading day of each month)
+                                    if (selectedRange === '1Y' || selectedRange === '5Y' || selectedRange === 'BUY') {
                                         const ticks: string[] = [];
                                         const seenMonths = new Set<string>();
                                         for (const point of displayData) {
@@ -535,19 +578,10 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
-                                    // Let Recharts handle automatic tick selection for other ranges
                                     return undefined;
                                 })()}
-                                minTickGap={(() => {
-                                    if (selectedRange === '1W') return 0; // Force all ticks
-                                    if (selectedRange === '6M') return 0; // Force all ticks (monthly)
-                                    if (selectedRange === '1M') return 50;
-                                    if (selectedRange === '3M') return 60;
-                                    if (selectedRange === '1Y') return 80;
-                                    if (selectedRange === '5Y' || selectedRange === 'BUY') return 100;
-                                    return 30; // Default
-                                })()}
-                                interval={['1W', '6M'].includes(selectedRange) ? 0 : 'preserveStartEnd'}
+                                minTickGap={['1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'].includes(selectedRange) ? 0 : 30}
+                                interval={['1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'].includes(selectedRange) ? 0 : 'preserveStartEnd'}
                             />
                             <YAxis
                                 domain={[domainMin, domainMax]}
