@@ -498,13 +498,23 @@ export const MortgageCalculator = () => {
     const inputClass = "w-full bg-background border border-input rounded-md px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
     return (
-        <div className="p-6 space-y-6 max-w-7xl mx-auto pb-24">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Budget Planer</h1>
-                    <p className="text-muted-foreground mt-1">
-                        Optimieren Sie Ihre Hypotheken und berechnen Sie die monatliche Tragbarkeit.
-                    </p>
+        <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20 pb-24">
+            {/* Sticky Header - Matched to Portfolio/Watchlist/Dividenden design */}
+            <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+                <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
+                    <div className="w-full px-4 py-4 md:px-6">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-600 dark:text-amber-400">
+                                    <Wallet className="size-6" />
+                                </div>
+                                <div>
+                                    <h1 className="text-3xl font-bold tracking-tight">Budget Planer</h1>
+                                    <p className="text-muted-foreground hidden md:block">Optimieren Sie Ihre Hypotheken und berechnen Sie die monatliche Tragbarkeit.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

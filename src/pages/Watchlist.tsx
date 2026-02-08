@@ -185,155 +185,158 @@ export function Watchlist() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-            {/* Header */}
-            <div className="border-b bg-card relative z-0">
-                <div className="w-full px-4 py-4 md:px-4">
-                    <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-blue-600 dark:text-blue-400">
-                                <Eye className="size-6" />
+        <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20">
+            {/* Sticky Header + Tabs Container */}
+            <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+                {/* Header */}
+                <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
+                    <div className="w-full px-4 py-4 md:px-6">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-blue-600 dark:text-blue-400">
+                                    <Eye className="size-6" />
+                                </div>
+                                <div>
+                                    <h1 className="text-3xl font-bold tracking-tight">Watchlist</h1>
+                                    <p className="text-muted-foreground hidden md:block">Aktien beobachten und Dividenden prüfen</p>
+                                </div>
                             </div>
-                            <div>
-                                <h1 className="text-3xl font-bold tracking-tight">Watchlist</h1>
-                                <p className="text-muted-foreground hidden md:block">Aktien beobachten und Dividenden prüfen</p>
+
+                            <div className="flex items-center gap-2 ml-auto">
+                                {/* Global Refresh Button */}
+                                <button
+                                    onClick={() => refreshAllPrices(true)}
+                                    disabled={isGlobalRefreshing}
+                                    className={cn(
+                                        "flex items-center gap-2 px-4 py-2 rounded-lg border font-medium transition-all shadow-sm",
+                                        "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                        "active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    )}
+                                    title="Preise jetzt aktualisieren"
+                                >
+                                    <RefreshCw className={cn("size-4", isGlobalRefreshing && "animate-spin")} />
+                                    <span className="hidden sm:inline">
+                                        {isGlobalRefreshing
+                                            ? 'Aktualisiere...'
+                                            : lastGlobalRefresh
+                                                ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                                : 'Aktualisieren'}
+                                    </span>
+                                </button>
+                                <button
+                                    onClick={() => setIsPerformanceModalOpen(true)}
+                                    className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors font-medium border border-border shadow-sm"
+                                >
+                                    <TrendingUp className="size-4 text-blue-500" />
+                                    <span>Details</span>
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        navigate('/calculator?mode=new&from=watchlist');
+                                    }}
+                                    className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm"
+                                >
+                                    <Plus className="size-4" />
+                                    <span>Hinzufügen</span>
+                                </button>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div className="flex items-center gap-2 ml-auto">
-                            {/* Global Refresh Button */}
-                            <button
-                                onClick={() => refreshAllPrices(true)}
-                                disabled={isGlobalRefreshing}
-                                className={cn(
-                                    "flex items-center gap-2 px-4 py-2 rounded-lg border font-medium transition-all shadow-sm",
-                                    "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                                    "active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                {/* Watchlist Tabs */}
+                <div className="-mx-4 md:-mx-6 px-4 md:px-6 pb-2 mt-2 overflow-x-auto bg-background">
+                    <div className="flex items-center gap-2 min-w-max">
+                        {/* 1. Bestand (Always first) */}
+                        <button
+                            onClick={() => setActiveWatchlistId('owned')}
+                            className={cn(
+                                "px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                                activeWatchlistId === 'owned'
+                                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                    : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+                            )}
+                        >
+                            Bestand
+                        </button>
+
+                        {/* 2. Other User Lists (excluding Merkliste) */}
+                        {watchlists.filter(wl => !wl.isDefault).map(wl => (
+                            <div key={wl.id} className="relative group">
+                                <button
+                                    onClick={() => setActiveWatchlistId(wl.id)}
+                                    className={cn(
+                                        "px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                                        activeWatchlistId === wl.id
+                                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                            : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+                                    )}
+                                >
+                                    {wl.name}
+                                </button>
+                                {activeWatchlistId === wl.id && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (confirm(`Liste "${wl.name}" wirklich löschen?`)) {
+                                                deleteWatchlist(wl.id);
+                                                setActiveWatchlistId('owned');
+                                            }
+                                        }}
+                                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                                        title="Liste löschen"
+                                    >
+                                        <Trash2 className="size-3" />
+                                    </button>
                                 )}
-                                title="Preise jetzt aktualisieren"
-                            >
-                                <RefreshCw className={cn("size-4", isGlobalRefreshing && "animate-spin")} />
-                                <span className="hidden sm:inline">
-                                    {isGlobalRefreshing
-                                        ? 'Aktualisiere...'
-                                        : lastGlobalRefresh
-                                            ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
-                                            : 'Aktualisieren'}
-                                </span>
-                            </button>
-                            <button
-                                onClick={() => setIsPerformanceModalOpen(true)}
-                                className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors font-medium border border-border shadow-sm"
-                            >
-                                <TrendingUp className="size-4 text-blue-500" />
-                                <span>Details</span>
-                            </button>
+                            </div>
+                        ))}
+
+                        {/* 3. Merkliste (Default Watchlist) - Always Last */}
+                        {watchlists.filter(wl => wl.isDefault).map(wl => (
+                            <div key={wl.id} className="relative group">
+                                <button
+                                    onClick={() => setActiveWatchlistId(wl.id)}
+                                    className={cn(
+                                        "px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                                        activeWatchlistId === wl.id
+                                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                            : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+                                    )}
+                                >
+                                    {wl.name}
+                                </button>
+                            </div>
+                        ))}
+                        {/* Add List Button */}
+                        <button
+                            onClick={() => {
+                                const name = window.prompt("Name der neuen Liste:");
+                                if (name) createWatchlist(name);
+                            }}
+                            className="p-2 rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors border border-border"
+                            title="Neue Liste erstellen"
+                        >
+                            <Plus className="size-4" />
+                        </button>
+                        {/* Rename Button (for active list) */}
+                        {activeWatchlist && (
                             <button
                                 onClick={() => {
-                                    navigate('/calculator?mode=new&from=watchlist');
+                                    const newName = window.prompt("Neuer Name:", activeWatchlist.name);
+                                    if (newName) renameWatchlist(activeWatchlist.id, newName);
                                 }}
-                                className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm"
+                                className="p-2 ml-2 rounded-full text-muted-foreground hover:bg-accent transition-colors"
+                                title="Liste umbenennen"
                             >
-                                <Plus className="size-4" />
-                                <span>Hinzufügen</span>
+                                <Edit className="size-4" />
                             </button>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* Watchlist Tabs */}
-            <div className="px-4 pb-2 mt-4 overflow-x-auto">
-                <div className="flex items-center gap-2 min-w-max">
-                    {/* 1. Bestand (Always first) */}
-                    <button
-                        onClick={() => setActiveWatchlistId('owned')}
-                        className={cn(
-                            "px-4 py-2 rounded-full text-sm font-medium transition-all border",
-                            activeWatchlistId === 'owned'
-                                ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                                : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
-                        )}
-                    >
-                        Bestand
-                    </button>
-
-                    {/* 2. Other User Lists (excluding Merkliste) */}
-                    {watchlists.filter(wl => !wl.isDefault).map(wl => (
-                        <div key={wl.id} className="relative group">
-                            <button
-                                onClick={() => setActiveWatchlistId(wl.id)}
-                                className={cn(
-                                    "px-4 py-2 rounded-full text-sm font-medium transition-all border",
-                                    activeWatchlistId === wl.id
-                                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                                        : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
-                                )}
-                            >
-                                {wl.name}
-                            </button>
-                            {activeWatchlistId === wl.id && (
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (confirm(`Liste "${wl.name}" wirklich löschen?`)) {
-                                            deleteWatchlist(wl.id);
-                                            setActiveWatchlistId('owned');
-                                        }
-                                    }}
-                                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-                                    title="Liste löschen"
-                                >
-                                    <Trash2 className="size-3" />
-                                </button>
-                            )}
-                        </div>
-                    ))}
-
-                    {/* 3. Merkliste (Default Watchlist) - Always Last */}
-                    {watchlists.filter(wl => wl.isDefault).map(wl => (
-                        <div key={wl.id} className="relative group">
-                            <button
-                                onClick={() => setActiveWatchlistId(wl.id)}
-                                className={cn(
-                                    "px-4 py-2 rounded-full text-sm font-medium transition-all border",
-                                    activeWatchlistId === wl.id
-                                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                                        : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
-                                )}
-                            >
-                                {wl.name}
-                            </button>
-                        </div>
-                    ))}
-                    {/* Add List Button */}
-                    <button
-                        onClick={() => {
-                            const name = window.prompt("Name der neuen Liste:");
-                            if (name) createWatchlist(name);
-                        }}
-                        className="p-2 rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors border border-border"
-                        title="Neue Liste erstellen"
-                    >
-                        <Plus className="size-4" />
-                    </button>
-                    {/* Rename Button (for active list) */}
-                    {activeWatchlist && (
-                        <button
-                            onClick={() => {
-                                const newName = window.prompt("Neuer Name:", activeWatchlist.name);
-                                if (newName) renameWatchlist(activeWatchlist.id, newName);
-                            }}
-                            className="p-2 ml-2 rounded-full text-muted-foreground hover:bg-accent transition-colors"
-                            title="Liste umbenennen"
-                        >
-                            <Edit className="size-4" />
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            <div className="w-full px-2 py-4 md:px-4 space-y-8">
+            <div className="w-full space-y-8">
                 {/* 1. OWNED STOCKS (Always Visible) */}
                 {showStockSections && (
                     <div className="bg-card rounded-xl border shadow-sm overflow-hidden w-full">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Plus, Search, PieChart, BarChart3, Landmark, RefreshCw } from 'lucide-react';
+import { Plus, PieChart, BarChart3, Landmark, RefreshCw } from 'lucide-react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils'; // Import cn
 import { EditPositionModal } from '../components/EditPositionModal';
@@ -17,7 +17,6 @@ export function Portfolio() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedPosition, setSelectedPosition] = useState<any>(null);
     const [editingFixedDeposit, setEditingFixedDeposit] = useState<any>(null);
-    const [searchTerm, setSearchTerm] = useState('');
     const { convertToCHF } = useCurrencyFormatter();
 
     // Force re-render every minute to update the "Updated X min ago" text
@@ -124,13 +123,6 @@ export function Portfolio() {
         };
     }).filter(Boolean) as any[];
 
-    const filteredPositions = positions.filter((pos) =>
-        pos.stock.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pos.stock.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pos.stock.valor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pos.stock.isin?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
 
     // Sorting
     const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'currency' | 'value' | 'performance', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
@@ -156,10 +148,10 @@ export function Portfolio() {
         });
     };
 
-    const sortedFilteredPositions = getSortedPositions(filteredPositions);
+    const sortedPositions = getSortedPositions(positions);
 
-    const stockPositions = sortedFilteredPositions.filter(p => !p.stock.type || p.stock.type === 'stock');
-    const etfPositions = sortedFilteredPositions.filter(p => p.stock.type === 'etf');
+    const stockPositions = sortedPositions.filter(p => !p.stock.type || p.stock.type === 'stock');
+    const etfPositions = sortedPositions.filter(p => p.stock.type === 'etf');
 
     const handleUpdate = (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number, newPurchases?: any[]) => {
         const updates: any = { shares: newShares };
@@ -179,57 +171,69 @@ export function Portfolio() {
     };
 
     return (
-        <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
-            {/* Header / Actions */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="relative w-full sm:w-72">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                    <input
-                        type="text"
-                        placeholder="Aktien, ETFs oder Festgeld suchen..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
-                    />
-                </div>
-                {/* SORT CONTROL */}
-                {/* SORT CONTROL REMOVED */}
-                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    <button
-                        onClick={() => refreshAllPrices(true)}
-                        disabled={isGlobalRefreshing}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-lg border font-medium transition-all shadow-sm justify-center order-first sm:order-none w-full sm:w-auto",
-                            "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                            "active:scale-95",
-                            isGlobalRefreshing && "opacity-50 cursor-not-allowed"
-                        )}
-                        title="Alle Aktienpreise aktualisieren"
-                    >
-                        <RefreshCw className={cn("size-4", isGlobalRefreshing && "animate-spin")} />
-                        <span className="text-sm">
-                            {isGlobalRefreshing
-                                ? 'Aktualisiere...'
-                                : lastGlobalRefresh
-                                    ? `Aktualisiert: Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
-                                    : 'Aktualisieren'}
-                        </span>
-                    </button>
-                    <button
-                        onClick={() => setIsAddFixedDepositModalOpen(true)}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-medium text-sm border border-border"
-                    >
-                        <Landmark className="size-4" />
-                        <span className="hidden sm:inline">Bank / Vorsorge</span>
-                        <span className="sm:hidden">Bank</span>
-                    </button>
-                    <button
-                        onClick={() => navigate('/calculator?mode=buy&from=portfolio')}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium text-sm"
-                    >
-                        <Plus className="size-4" />
-                        <span>Neu</span>
-                    </button>
+        <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20">
+            {/* Sticky Header - Matched to Watchlist design */}
+            <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+                <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
+                    <div className="w-full px-4 py-4 md:px-6">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 text-emerald-600 dark:text-emerald-400">
+                                    <BarChart3 className="size-6" />
+                                </div>
+                                <div>
+                                    <h1 className="text-3xl font-bold tracking-tight">Positionen</h1>
+                                    <p className="text-muted-foreground hidden md:block">Aktien, ETFs und Festgeld verwalten</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 ml-auto">
+                                <button
+                                    onClick={() => refreshAllPrices(true)}
+                                    disabled={isGlobalRefreshing}
+                                    className={cn(
+                                        "flex items-center gap-2 px-4 py-2 rounded-lg border font-medium transition-all shadow-sm",
+                                        "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                        "active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    )}
+                                    title="Alle Aktienpreise aktualisieren"
+                                >
+                                    <RefreshCw className={cn("size-4", isGlobalRefreshing && "animate-spin")} />
+                                    <span className="hidden sm:inline">
+                                        {isGlobalRefreshing
+                                            ? 'Aktualisiere...'
+                                            : lastGlobalRefresh
+                                                ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                                : 'Aktualisieren'}
+                                    </span>
+                                </button>
+                                <button
+                                    onClick={() => setIsAddFixedDepositModalOpen(true)}
+                                    className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors font-medium border border-border shadow-sm"
+                                >
+                                    <Landmark className="size-4" />
+                                    <span className="hidden sm:inline">Bank / Vorsorge</span>
+                                </button>
+                                <button
+                                    onClick={() => navigate('/calculator?mode=buy&from=portfolio')}
+                                    className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm"
+                                >
+                                    <Plus className="size-4" />
+                                    <span>Neu</span>
+                                </button>
+                                <select
+                                    className="pl-3 pr-8 py-2 rounded-lg border border-border bg-card text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer"
+                                    value={sortConfig.key}
+                                    onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
+                                >
+                                    <option value="name">Name: A-Z</option>
+                                    <option value="currency">Währung</option>
+                                    <option value="value">Wert: Hoch-Tief</option>
+                                    <option value="performance">Performance: Beste</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -238,23 +242,10 @@ export function Portfolio() {
                 title="Aktien"
                 icon={BarChart3}
                 data={stockPositions}
-                emptyMessage={searchTerm ? 'Keine Aktien gefunden.' : 'Noch keine Aktien im Depot.'}
+                emptyMessage="Noch keine Aktien im Depot."
                 setSelectedPosition={setSelectedPosition}
                 setIsEditModalOpen={setIsEditModalOpen}
-                headerAction={
-                    <div className="flex items-center gap-2">
-                        <select
-                            className="pl-3 pr-8 py-1.5 rounded-lg border border-border bg-card text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer"
-                            value={sortConfig.key}
-                            onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
-                        >
-                            <option value="name">Name: A-Z</option>
-                            <option value="currency">Währung</option>
-                            <option value="value">Wert: Hoch-Tief</option>
-                            <option value="performance">Performance: Beste</option>
-                        </select>
-                    </div>
-                }
+                hideHeader={true}
             />
 
             {/* ETFs Table */}
@@ -262,21 +253,21 @@ export function Portfolio() {
                 title="ETFs"
                 icon={PieChart}
                 data={etfPositions}
-                emptyMessage={searchTerm ? 'Keine ETFs gefunden.' : 'Noch keine ETFs im Depot.'}
+                emptyMessage="Noch keine ETFs im Depot."
                 setSelectedPosition={setSelectedPosition}
                 setIsEditModalOpen={setIsEditModalOpen}
             />
 
             {/* Vorsorge Section */}
             <VorsorgeSection
-                searchTerm={searchTerm}
+                searchTerm=""
                 setIsAddFixedDepositModalOpen={setIsAddFixedDepositModalOpen}
                 setEditingFixedDeposit={setEditingFixedDeposit}
             />
 
             {/* Bankguthaben Table */}
             <FixedDepositTable
-                searchTerm={searchTerm}
+                searchTerm=""
                 setIsAddFixedDepositModalOpen={setIsAddFixedDepositModalOpen}
                 setEditingFixedDeposit={setEditingFixedDeposit}
             />
@@ -290,18 +281,20 @@ export function Portfolio() {
                 editingDeposit={editingFixedDeposit}
             />
 
-            {selectedPosition && (
-                <EditPositionModal
-                    isOpen={isEditModalOpen}
-                    onClose={() => {
-                        setIsEditModalOpen(false);
-                        setSelectedPosition(null);
-                    }}
-                    position={selectedPosition}
-                    onUpdate={handleUpdate}
-                    onDelete={deletePosition}
-                />
-            )}
-        </div>
+            {
+                selectedPosition && (
+                    <EditPositionModal
+                        isOpen={isEditModalOpen}
+                        onClose={() => {
+                            setIsEditModalOpen(false);
+                            setSelectedPosition(null);
+                        }}
+                        position={selectedPosition}
+                        onUpdate={handleUpdate}
+                        onDelete={deletePosition}
+                    />
+                )
+            }
+        </div >
     );
 }

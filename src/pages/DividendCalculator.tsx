@@ -924,24 +924,28 @@ export function DividendCalculator() {
     const displayDividendYear = years > 0 ? projectionData[years - 1] : projectionData[0];
 
     return (
-        <div className="p-4 md:p-6 space-y-6 animate-in fade-in duration-500">
-            {/* Header */}
-            <div className="flex flex-col gap-6">
-
-                {/* Integrated Investment Simulator (Full Width) */}
-                <div className="w-full space-y-4">
-                    <div className="p-5 rounded-xl bg-card border border-border shadow-sm">
-                        <div className="flex items-center justify-between mb-4 text-primary">
-                            <div className="flex items-center gap-2">
-                                <Coins className="size-5" />
-                                <h3 className="font-semibold text-lg">Kauf / Verkauf</h3>
+        <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20 animate-in fade-in duration-500">
+            {/* Sticky Header - Consistent Design */}
+            <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+                <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
+                    <div className="w-full px-4 py-4 md:px-6">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                                <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400">
+                                    <Coins className="size-6" />
+                                </div>
+                                <div>
+                                    <h1 className="text-3xl font-bold tracking-tight whitespace-nowrap">Kauf / Verkauf</h1>
+                                    <p className="text-muted-foreground hidden md:block">Investment Simulator</p>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2">
+
+                            <div className="flex items-center gap-2 ml-auto w-full sm:w-auto justify-end">
                                 {/* Buy/Sell Switch */}
                                 <div className="flex bg-muted rounded-lg p-1 border border-border/50">
                                     <button
                                         onClick={() => updateSimulatorState({ mode: 'buy' })}
-                                        className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${mode === 'buy'
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${mode === 'buy'
                                             ? 'bg-green-600 text-white shadow-sm'
                                             : 'text-muted-foreground hover:text-foreground'
                                             }`}
@@ -950,7 +954,7 @@ export function DividendCalculator() {
                                     </button>
                                     <button
                                         onClick={() => updateSimulatorState({ mode: 'sell' })}
-                                        className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${mode === 'sell'
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${mode === 'sell'
                                             ? 'bg-red-600 text-white shadow-sm'
                                             : 'text-muted-foreground hover:text-foreground'
                                             }`}
@@ -961,23 +965,33 @@ export function DividendCalculator() {
                                 <button
                                     onClick={handleExportPDF}
                                     title="Als PDF speichern"
-                                    className="text-xs flex items-center gap-1 border border-border px-2 py-1.5 rounded text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                                    className="text-xs flex items-center gap-1 border border-border px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors font-medium bg-background"
                                 >
-                                    <FileText size={12} />
-                                    PDF
+                                    <FileText size={14} />
+                                    <span className="hidden sm:inline">PDF</span>
                                 </button>
                                 <button
                                     onClick={() => updateSimulatorState({ fees: { ...fees, showAdvanced: !fees.showAdvanced } })}
-                                    className={`text-xs flex items-center gap-1 border px-2 py-1.5 rounded transition-colors ${fees.showAdvanced
-                                        ? 'bg-primary/10 border-primary text-primary font-medium'
-                                        : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
+                                    className={`text-xs flex items-center gap-1 border px-3 py-2 rounded-lg transition-colors font-medium ${fees.showAdvanced
+                                        ? 'bg-primary/10 border-primary text-primary'
+                                        : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground bg-background'
                                         }`}
                                 >
-                                    <Settings2 size={12} />
-                                    {fees.showAdvanced ? 'Gebühren' : 'Gebühren'}
+                                    <Settings2 size={14} />
+                                    <span className="hidden sm:inline">Gebühren</span>
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex flex-col gap-6">
+
+                {/* Integrated Investment Simulator (Full Width) */}
+                <div className="w-full space-y-4">
+                    <div className="p-5 rounded-xl bg-card border border-border shadow-sm">
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <div className="space-y-4">

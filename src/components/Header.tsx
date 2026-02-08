@@ -1,6 +1,4 @@
-import { useLocation, matchPath } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-import { usePortfolio } from '../context/PortfolioContext';
 import packageJson from '../../package.json';
 
 interface HeaderProps {
@@ -9,43 +7,6 @@ interface HeaderProps {
 }
 
 export function Header({ isSidebarOpen, setIsSidebarOpen }: HeaderProps) {
-    const location = useLocation();
-    const { stocks } = usePortfolio();
-
-    const getPageTitle = (pathname: string) => {
-        if (pathname === '/') return 'Portfolio Übersicht';
-        if (pathname === '/portfolio') return 'Positionen';
-        if (pathname === '/watchlist') return 'Watchlist';
-        if (pathname === '/calculator') return 'Kauf / Verkauf';
-        if (pathname === '/dividends') return 'Dividenden';
-        if (pathname === '/dividends/add') return 'Dividenden-Planer';
-        if (pathname.startsWith('/dividends/edit')) return 'Dividende bearbeiten';
-        if (pathname === '/mortgage') return 'Budget';
-        if (pathname === '/exchange-rates') return 'Wechselkurse';
-        if (pathname === '/settings') return 'Einstellungen';
-
-        if (pathname.startsWith('/stock/')) {
-            const match = matchPath('/stock/:id', pathname);
-            if (match && match.params.id) {
-                const id = match.params.id;
-                // Try finding by ID first, then symbol (case-insensitive for robust matching)
-                const stock = stocks.find(s =>
-                    s.id === id ||
-                    s.id.toLowerCase() === id.toLowerCase() ||
-                    s.symbol === id ||
-                    s.symbol.toLowerCase() === id.toLowerCase()
-                );
-
-                if (stock) {
-                    return stock.type === 'etf' ? 'ETF Details' : 'Aktien Details';
-                }
-            }
-            return 'Aktien Details';
-        }
-
-        return 'Portfolio Manager';
-    };
-
     return (
         <header className="h-16 border-b border-border flex items-center justify-between px-4 md:px-8 bg-card sticky top-0 z-[200]">
             <div className="flex items-center gap-4">
@@ -67,9 +28,7 @@ export function Header({ isSidebarOpen, setIsSidebarOpen }: HeaderProps) {
                 >
                     v{packageJson.version}
                 </button>
-                <h2 className="text-lg font-semibold capitalize whitespace-nowrap">
-                    {getPageTitle(location.pathname)}
-                </h2>
+
             </div>
         </header>
     );

@@ -167,96 +167,50 @@ export function DividendPlanner() {
     });
 
     return (
-        <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600 dark:text-green-400">
-                        <Calendar className="size-6" />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Dividenden</h1>
-                        <p className="text-muted-foreground">Erwartete Dividendenausschüttungen</p>
-                    </div>
-                </div>
+        <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20">
+            {/* Header - Matched to Portfolio/Watchlist design */}
+            <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+                <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
+                    <div className="w-full px-4 py-4 md:px-6">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600 dark:text-green-400">
+                                    <Calendar className="size-6" />
+                                </div>
+                                <div>
+                                    <h1 className="text-3xl font-bold tracking-tight">Dividenden</h1>
+                                    <p className="text-muted-foreground hidden md:block">Erwartete Dividendenausschüttungen</p>
+                                </div>
+                            </div>
 
-                <button
-                    onClick={() => refreshAllPrices(true)}
-                    disabled={isGlobalRefreshing}
-                    className={cn(
-                        "flex items-center gap-2 px-4 py-2.5 rounded-xl border font-medium transition-all shadow-sm w-full sm:w-auto justify-center",
-                        "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                        "active:scale-95",
-                        isGlobalRefreshing && "opacity-50 cursor-not-allowed"
-                    )}
-                    title="Alle Aktienpreise aktualisieren"
-                >
-                    <RefreshCw className={cn("size-4 md:size-5", isGlobalRefreshing && "animate-spin")} />
-                    <span className="text-sm">
-                        {isGlobalRefreshing
-                            ? 'Aktualisiere...'
-                            : lastGlobalRefresh
-                                ? `Aktualisiert: Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
-                                : 'Jetzt aktualisieren'}
-                    </span>
-                </button>
-            </div>
-
-            {/* Summary Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl p-4 border border-green-200 dark:border-green-800">
-                    <div className="flex flex-col">
-                        <span className="text-xs font-medium text-green-900 dark:text-green-100 flex items-center gap-2 mb-1">
-                            <TrendingUp className="size-3" />
-                            Gesamtdividende (Jahr)
-                        </span>
-                        <div className="text-xl font-bold text-green-600 dark:text-green-400">
-                            CHF {totalAnnualNet.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
-                    <div className="flex flex-col">
-                        <span className="text-xs font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2 mb-1">
-                            <Calendar className="size-3" />
-                            Ø Monatlich
-                        </span>
-                        <div className="text-xl font-bold text-blue-800 dark:text-blue-400">
-                            CHF {totalMonthly.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-card rounded-xl p-4 border border-border shadow-sm">
-                    <div className="flex flex-col">
-                        <span className="text-xs font-medium text-muted-foreground flex items-center gap-2 mb-1">
-                            <TrendingUp className="size-3" />
-                            Ø Dividenden-Rendite
-                        </span>
-                        <div className="text-xl font-bold text-foreground">
-                            {(projectedDividends.reduce((acc, curr) => acc + (curr?.stock.dividendYield || 0), 0) / (projectedDividends.length || 1)).toFixed(2)}%
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-card rounded-xl p-4 border border-border shadow-sm">
-                    <div className="flex flex-col">
-                        <span className="text-xs font-medium text-muted-foreground flex items-center gap-2 mb-1">
-                            <Calendar className="size-3" />
-                            Zahler
-                        </span>
-                        <div className="text-xl font-bold text-foreground">
-                            {projectedDividends.length} <span className="text-xs font-normal text-muted-foreground">Positionen</span>
+                            <div className="flex items-center gap-2 ml-auto">
+                                <button
+                                    onClick={() => refreshAllPrices(true)}
+                                    disabled={isGlobalRefreshing}
+                                    className={cn(
+                                        "flex items-center gap-2 px-4 py-2 rounded-lg border font-medium transition-all shadow-sm",
+                                        "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                        "active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    )}
+                                    title="Alle Aktienpreise aktualisieren"
+                                >
+                                    <RefreshCw className={cn("size-4", isGlobalRefreshing && "animate-spin")} />
+                                    <span className="hidden sm:inline">
+                                        {isGlobalRefreshing
+                                            ? 'Aktualisiere...'
+                                            : lastGlobalRefresh
+                                                ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                                : 'Aktualisieren'}
+                                    </span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-
-
-            {/* Main Dividend Table (Moved Up) */}
-            <div className="bg-card rounded-xl border shadow-sm overflow-hidden mt-8 mb-8">
+            {/* Main Dividend Table */}
+            <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b border-border bg-card">
                     <h2 className="text-lg font-semibold">Erwartete Dividenden</h2>
 
@@ -273,7 +227,6 @@ export function DividendPlanner() {
                         </select>
                     </div>
                 </div>
-
 
                 <div className="overflow-x-auto overscroll-x-none">
                     <table className="w-full min-w-[1000px]">
@@ -506,7 +459,58 @@ export function DividendPlanner() {
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </div >
+
+            {/* Summary Cards - Below Table */}
+            < div className="grid grid-cols-2 md:grid-cols-4 gap-4" >
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl p-4 border border-green-200 dark:border-green-800">
+                    <div className="flex flex-col">
+                        <span className="text-xs font-medium text-green-900 dark:text-green-100 flex items-center gap-2 mb-1">
+                            <TrendingUp className="size-3" />
+                            Gesamtdividende (Jahr)
+                        </span>
+                        <div className="text-xl font-bold text-green-600 dark:text-green-400">
+                            CHF {totalAnnualNet.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+                    <div className="flex flex-col">
+                        <span className="text-xs font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2 mb-1">
+                            <Calendar className="size-3" />
+                            Ø Monatlich
+                        </span>
+                        <div className="text-xl font-bold text-blue-800 dark:text-blue-400">
+                            CHF {totalMonthly.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-card rounded-xl p-4 border border-border shadow-sm">
+                    <div className="flex flex-col">
+                        <span className="text-xs font-medium text-muted-foreground flex items-center gap-2 mb-1">
+                            <TrendingUp className="size-3" />
+                            Ø Dividenden-Rendite
+                        </span>
+                        <div className="text-xl font-bold text-foreground">
+                            {(projectedDividends.reduce((acc, curr) => acc + (curr?.stock.dividendYield || 0), 0) / (projectedDividends.length || 1)).toFixed(2)}%
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-card rounded-xl p-4 border border-border shadow-sm">
+                    <div className="flex flex-col">
+                        <span className="text-xs font-medium text-muted-foreground flex items-center gap-2 mb-1">
+                            <Calendar className="size-3" />
+                            Zahler
+                        </span>
+                        <div className="text-xl font-bold text-foreground">
+                            {projectedDividends.length} <span className="text-xs font-normal text-muted-foreground">Positionen</span>
+                        </div>
+                    </div>
+                </div>
+            </div >
 
             {/* Bank Accounts Section */}
             {
@@ -615,6 +619,6 @@ export function DividendPlanner() {
                     <DividendCalendarChart />
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

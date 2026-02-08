@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, NavLink, Link } from 'react-router-dom';
 import { FairValueCalculator } from './pages/FairValueCalculator';
-import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, ArrowLeftRight, Landmark, Telescope } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, ArrowLeftRight, Landmark, Telescope, Menu, X } from 'lucide-react';
 
 
 import { cn } from './utils';
 import { PortfolioProvider } from './context/PortfolioContext';
 import { ExchangeRateProvider } from './context/ExchangeRateContext';
-import { Header } from './components/Header';
 import packageJson from '../package.json';
 
 import { Dashboard } from './pages/Dashboard';
@@ -115,7 +114,16 @@ function App() {
   return (
     <ExchangeRateProvider>
       <PortfolioProvider>
-        <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans antialiased text-sm">
+        <div className="flex h-screen bg-background text-foreground font-sans antialiased text-sm">
+          {/* Mobile Hamburger Menu Button */}
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="fixed top-4 left-4 z-[1100] p-2 bg-card border border-border rounded-lg shadow-lg lg:hidden hover:bg-accent transition-colors"
+            aria-label="Toggle menu"
+          >
+            {isSidebarOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+          </button>
+
           {/* Mobile Sidebar Overlay */}
           {isSidebarOpen && (
             <div
@@ -168,7 +176,7 @@ function App() {
               <NavItem to="/mortgage" icon={Landmark} label="Budget" onClick={closeSidebarOnMobile} />
 
               <div className="pt-4 mt-4 border-t border-border">
-                <NavItem to="/exchange-rates" icon={ArrowLeftRight} label="Wechselkurse" onClick={closeSidebarOnMobile} />
+                <NavItem to="/exchange-rates" icon={ArrowLeftRight} label="Finanz Rechner" onClick={closeSidebarOnMobile} />
                 <NavItem to="/settings" icon={SettingsIcon} label="Einstellungen" onClick={closeSidebarOnMobile} />
               </div>
             </nav>
@@ -186,24 +194,20 @@ function App() {
 
           {/* Main Content */}
           <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background transition-all duration-300">
-            <Header isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
-
-            <div>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/portfolio" element={<Portfolio />} />
-                <Route path="/watchlist" element={<Watchlist />} />
-                <Route path="/calculator" element={<DividendCalculator />} />
-                <Route path="/fair-value" element={<FairValueCalculator />} />
-                <Route path="/dividends" element={<DividendPlanner />} />
-                <Route path="/dividends/add" element={<EditDividendPage />} />
-                <Route path="/dividends/edit/:stockId" element={<EditDividendPage />} />
-                <Route path="/stock/:id" element={<StockDetail />} />
-                <Route path="/mortgage" element={<MortgageCalculator />} />
-                <Route path="/exchange-rates" element={<ExchangeRates />} />
-                <Route path="/settings" element={<Settings />} />
-              </Routes>
-            </div>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/portfolio" element={<Portfolio />} />
+              <Route path="/watchlist" element={<Watchlist />} />
+              <Route path="/calculator" element={<DividendCalculator />} />
+              <Route path="/fair-value" element={<FairValueCalculator />} />
+              <Route path="/dividends" element={<DividendPlanner />} />
+              <Route path="/dividends/add" element={<EditDividendPage />} />
+              <Route path="/dividends/edit/:stockId" element={<EditDividendPage />} />
+              <Route path="/stock/:id" element={<StockDetail />} />
+              <Route path="/mortgage" element={<MortgageCalculator />} />
+              <Route path="/exchange-rates" element={<ExchangeRates />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
           </main>
         </div>
       </PortfolioProvider>
