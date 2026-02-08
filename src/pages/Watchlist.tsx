@@ -368,7 +368,7 @@ export function Watchlist() {
                         </button>
 
                         {isOwnedStocksOpen && (
-                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border animate-in slide-in-from-top-2 duration-200">
+                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border">
                                 <WatchlistTable
                                     stocks={ownedStocks}
                                     sortConfig={sortConfig}
@@ -420,7 +420,7 @@ export function Watchlist() {
                         </button>
 
                         {isOwnedEtfsOpen && (
-                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border animate-in slide-in-from-top-2 duration-200">
+                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border">
                                 <WatchlistTable
                                     stocks={ownedEtfs}
                                     sortConfig={sortConfig}
@@ -472,7 +472,7 @@ export function Watchlist() {
                         </button>
 
                         {isPotentialStocksOpen && (
-                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border animate-in slide-in-from-top-2 duration-200">
+                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border">
                                 <WatchlistTable
                                     stocks={potentialStocks}
                                     sortConfig={sortConfig}
@@ -524,7 +524,7 @@ export function Watchlist() {
                         </button>
 
                         {isPotentialEtfsOpen && (
-                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border animate-in slide-in-from-top-2 duration-200">
+                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border">
                                 <WatchlistTable
                                     stocks={potentialEtfs}
                                     sortConfig={sortConfig}
