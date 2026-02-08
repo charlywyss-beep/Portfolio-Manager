@@ -520,19 +520,34 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
+                                    // 6M: One tick per month (manual calculation for precision)
+                                    if (selectedRange === '6M') {
+                                        const ticks: string[] = [];
+                                        const seenMonths = new Set<string>();
+                                        for (const point of displayData) {
+                                            const date = new Date(point.date);
+                                            const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+                                            if (!seenMonths.has(monthKey)) {
+                                                seenMonths.add(monthKey);
+                                                ticks.push(point.date);
+                                            }
+                                        }
+                                        return ticks;
+                                    }
+
                                     // Let Recharts handle automatic tick selection for other ranges
                                     return undefined;
                                 })()}
                                 minTickGap={(() => {
                                     if (selectedRange === '1W') return 0; // Force all ticks
+                                    if (selectedRange === '6M') return 0; // Force all ticks (monthly)
                                     if (selectedRange === '1M') return 50;
                                     if (selectedRange === '3M') return 60;
-                                    if (selectedRange === '6M') return 70;
                                     if (selectedRange === '1Y') return 80;
                                     if (selectedRange === '5Y' || selectedRange === 'BUY') return 100;
                                     return 30; // Default
                                 })()}
-                                interval={selectedRange === '1W' ? 0 : 'preserveStartEnd'}
+                                interval={['1W', '6M'].includes(selectedRange) ? 0 : 'preserveStartEnd'}
                             />
                             <YAxis
                                 domain={[domainMin, domainMax]}
