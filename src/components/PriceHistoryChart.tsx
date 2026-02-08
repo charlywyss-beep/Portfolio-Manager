@@ -505,11 +505,11 @@ export function PriceHistoryChart({
                                 ticks={(() => {
                                     if (data.length === 0) return undefined;
 
-                                    // 1W: One tick per day (existing logic)
+                                    // 1W: One tick per day (manual calculation needed for precision)
                                     if (selectedRange === '1W') {
                                         const ticks: string[] = [];
                                         const seenDays = new Set<string>();
-                                        for (const point of data) {
+                                        for (const point of displayData) {
                                             const date = new Date(point.date);
                                             const dayKey = date.toISOString().slice(0, 10);
                                             if (!seenDays.has(dayKey)) {
@@ -520,68 +520,19 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
-                                    // 1M: One tick per week (every ~7 days)
-                                    if (selectedRange === '1M') {
-                                        const ticks: string[] = [];
-                                        let lastTickDate: Date | null = null;
-                                        for (const point of data) {
-                                            const date = new Date(point.date);
-                                            if (!lastTickDate || (date.getTime() - lastTickDate.getTime()) >= 6 * 24 * 60 * 60 * 1000) {
-                                                ticks.push(point.date);
-                                                lastTickDate = date;
-                                            }
-                                        }
-                                        return ticks;
-                                    }
-
-                                    // 3M: One tick every 2 weeks (~14 days)
-                                    if (selectedRange === '3M') {
-                                        const ticks: string[] = [];
-                                        let lastTickDate: Date | null = null;
-                                        for (const point of data) {
-                                            const date = new Date(point.date);
-                                            if (!lastTickDate || (date.getTime() - lastTickDate.getTime()) >= 13 * 24 * 60 * 60 * 1000) {
-                                                ticks.push(point.date);
-                                                lastTickDate = date;
-                                            }
-                                        }
-                                        return ticks;
-                                    }
-
-                                    // 6M: One tick per month (first trading day of each month)
-                                    if (selectedRange === '6M') {
-                                        const ticks: string[] = [];
-                                        const seenMonths = new Set<string>();
-                                        for (const point of data) {
-                                            const date = new Date(point.date);
-                                            const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-                                            if (!seenMonths.has(monthKey)) {
-                                                seenMonths.add(monthKey);
-                                                ticks.push(point.date);
-                                            }
-                                        }
-                                        return ticks;
-                                    }
-
-                                    // 1Y / 5Y / BUY: One tick every ~2 months
-                                    if (selectedRange === '1Y' || selectedRange === '5Y' || selectedRange === 'BUY') {
-                                        const ticks: string[] = [];
-                                        let lastTickDate: Date | null = null;
-                                        const interval = selectedRange === '5Y' ? 120 : 60; // 5Y: ~4 months, 1Y/BUY: ~2 months
-                                        for (const point of data) {
-                                            const date = new Date(point.date);
-                                            if (!lastTickDate || (date.getTime() - lastTickDate.getTime()) >= interval * 24 * 60 * 60 * 1000) {
-                                                ticks.push(point.date);
-                                                lastTickDate = date;
-                                            }
-                                        }
-                                        return ticks;
-                                    }
-
+                                    // Let Recharts handle automatic tick selection for other ranges
                                     return undefined;
                                 })()}
-                                minTickGap={['1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'].includes(selectedRange) ? 0 : 30}
-                                interval={['1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'].includes(selectedRange) ? 0 : 'preserveStartEnd'}
+                                minTickGap={(() => {
+                                    if (selectedRange === '1W') return 0; // Force all ticks
+                                    if (selectedRange === '1M') return 50;
+                                    if (selectedRange === '3M') return 60;
+                                    if (selectedRange === '6M') return 70;
+                                    if (selectedRange === '1Y') return 80;
+                                    if (selectedRange === '5Y' || selectedRange === 'BUY') return 100;
+                                    return 30; // Default
+                                })()}
+                                interval={selectedRange === '1W' ? 0 : 'preserveStartEnd'}
                             />
                             <YAxis
                                 domain={[domainMin, domainMax]}
