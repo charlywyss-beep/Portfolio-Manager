@@ -224,11 +224,21 @@ export function PriceHistoryChart({
     }, [data, selectedRange, sma200Data]);
 
     const handleChartClick = (nextData: any) => {
-        if (!isMeasureMode || !nextData || !nextData.activePayload) return;
+        if (!isMeasureMode) return;
+
+        // Try to get data from activePayload first (most precise)
+        // Then fallback to activeTooltipIndex or activeLabel
+        let pointData = nextData?.activePayload?.[0]?.payload;
+
+        if (!pointData && nextData?.activeLabel) {
+            pointData = data.find(p => p.date === nextData.activeLabel);
+        }
+
+        if (!pointData) return;
 
         const point = {
-            date: nextData.activePayload[0].payload.date,
-            value: nextData.activePayload[0].payload.value
+            date: pointData.date,
+            value: pointData.value
         };
 
         setMeasurePoints(prev => {
@@ -354,29 +364,35 @@ export function PriceHistoryChart({
             </div>
 
             {isMeasureMode && measurePoints.length > 0 && (
-                <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-2">
-                    <div className="bg-primary/90 backdrop-blur-md text-primary-foreground px-4 py-2 rounded-full shadow-xl border border-primary/20 flex items-center gap-3">
-                        <div className="flex flex-col items-center leading-none">
+                <div className="absolute top-2 right-2 z-[100] animate-in fade-in slide-in-from-right-2">
+                    <div className="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-xl shadow-2xl border border-blue-400/30 flex items-center gap-3">
+                        <div className="flex flex-col items-center leading-tight">
                             {measurement ? (
                                 <>
-                                    <span className="text-sm font-black whitespace-nowrap">
+                                    <span className="text-base font-black whitespace-nowrap">
                                         {measurement.percent > 0 ? '+' : ''}{measurement.percent.toFixed(2)}%
                                     </span>
-                                    <span className="text-[10px] opacity-80 mt-0.5">
+                                    <span className="text-[11px] font-bold opacity-90 mt-0.5">
                                         {formatCurrency(measurement.diff, currency, true)}
                                     </span>
                                 </>
                             ) : (
-                                <span className="text-xs font-bold animate-pulse">
-                                    {measurePoints.length === 1 ? 'Endpunkt wählen...' : 'Punkte wählen...'}
-                                </span>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-xs font-bold whitespace-nowrap">
+                                        {measurePoints.length === 1 ? 'Endpunkt wählen...' : 'Punkte wählen...'}
+                                    </span>
+                                    <span className="text-[10px] opacity-70">Chart anklicken</span>
+                                </div>
                             )}
                         </div>
                         <button
-                            onClick={() => setMeasurePoints([])}
-                            className="bg-white/20 hover:bg-white/30 p-1 rounded-full transition-colors"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setMeasurePoints([]);
+                            }}
+                            className="bg-white/20 hover:bg-white/40 p-1.5 rounded-full transition-colors"
                         >
-                            <X className="size-3" />
+                            <X className="size-3.5" />
                         </button>
                     </div>
                 </div>
@@ -487,24 +503,25 @@ export function PriceHistoryChart({
                                 <ReferenceLine
                                     key={`measure-${i}`}
                                     x={p.date}
-                                    stroke="#ffffff"
-                                    strokeWidth={2}
+                                    stroke="#3b82f6"
+                                    strokeWidth={3}
+                                    strokeOpacity={1}
                                 />
                             ))}
                             {measurement && (
                                 <ReferenceLine
                                     y={measurement.p1.value}
-                                    stroke="#ffffff"
-                                    strokeDasharray="3 3"
-                                    opacity={0.3}
+                                    stroke="#3b82f6"
+                                    strokeDasharray="4 4"
+                                    strokeOpacity={0.6}
                                 />
                             )}
                             {measurement && (
                                 <ReferenceLine
                                     y={measurement.p2.value}
-                                    stroke="#ffffff"
-                                    strokeDasharray="3 3"
-                                    opacity={0.3}
+                                    stroke="#3b82f6"
+                                    strokeDasharray="4 4"
+                                    strokeOpacity={0.6}
                                 />
                             )}
                             <Tooltip
