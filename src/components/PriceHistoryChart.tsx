@@ -341,10 +341,10 @@ export function PriceHistoryChart({
                         <button
                             onClick={() => setIsMeasureMode(!isMeasureMode)}
                             className={cn(
-                                "p-1.5 rounded-md transition-all flex items-center gap-1.5",
+                                "px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 border font-medium text-[10px] sm:text-xs shadow-sm",
                                 isMeasureMode
-                                    ? "bg-primary text-primary-foreground shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                                    ? "bg-blue-600 text-white border-blue-700 shadow-md"
+                                    : "bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/20"
                             )}
                             title="Messmodus: Zwei Punkte im Chart klicken für %-Vergleich"
                         >
