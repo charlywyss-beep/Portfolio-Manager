@@ -383,7 +383,7 @@ export function PriceHistoryChart({
                                             <span className="opacity-70">Von:</span>
                                             <span>
                                                 {formatCurrency(measurement.p1.value, currency, false)}
-                                                <span className="opacity-60 ml-1">
+                                                <span className="opacity-60 ml-1 text-[9px]">
                                                     ({new Date(measurement.p1.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} {new Date(measurement.p1.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
                                                 </span>
                                             </span>
@@ -392,7 +392,7 @@ export function PriceHistoryChart({
                                             <span className="opacity-70">Bis:</span>
                                             <span>
                                                 {formatCurrency(measurement.p2.value, currency, false)}
-                                                <span className="opacity-60 ml-1">
+                                                <span className="opacity-60 ml-1 text-[9px]">
                                                     ({new Date(measurement.p2.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} {new Date(measurement.p2.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
                                                 </span>
                                             </span>
