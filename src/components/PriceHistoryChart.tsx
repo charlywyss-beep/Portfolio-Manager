@@ -481,13 +481,20 @@ export function PriceHistoryChart({
                                 }
                             }}
                             onMouseLeave={() => setHoveredData(null)}
-                            onClick={(data: any) => {
-                                if (isMeasureMode && data?.activePayload?.[0]?.payload) {
-                                    const clickedPoint = data.activePayload[0].payload;
-                                    setMeasurePoints(prev => {
-                                        if (prev.length >= 2) return [clickedPoint];
-                                        return [...prev, clickedPoint];
-                                    });
+                            onMouseDown={(data: any) => {
+                                if (isMeasureMode) {
+                                    // Robust point detection: activePayload OR activeLabel fallback
+                                    let point = data?.activePayload?.[0]?.payload;
+                                    if (!point && data?.activeLabel) {
+                                        point = displayData.find(d => d.date === data.activeLabel);
+                                    }
+
+                                    if (point) {
+                                        setMeasurePoints(prev => {
+                                            if (prev.length >= 2) return [point];
+                                            return [...prev, point];
+                                        });
+                                    }
                                 }
                             }}
                             style={{ cursor: isMeasureMode ? 'crosshair' : 'default' }}
