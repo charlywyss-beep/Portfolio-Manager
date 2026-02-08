@@ -339,7 +339,17 @@ export function PriceHistoryChart({
                     </div>
                     <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
                         <button
-                            onClick={() => setIsMeasureMode(!isMeasureMode)}
+                            onClick={() => {
+                                if (isMeasureMode) {
+                                    if (measurePoints.length > 0) {
+                                        setMeasurePoints([]);
+                                    } else {
+                                        setIsMeasureMode(false);
+                                    }
+                                } else {
+                                    setIsMeasureMode(true);
+                                }
+                            }}
                             className={cn(
                                 "px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 border font-medium text-[10px] sm:text-xs shadow-sm",
                                 isMeasureMode
