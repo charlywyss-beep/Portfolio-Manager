@@ -1,7 +1,7 @@
 
-import { useMemo, useState, useEffect } from 'react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, Dot } from 'recharts';
 import { useCurrencyFormatter } from '../utils/currency';
+import { Ruler, X } from 'lucide-react';
 import { cn } from '../utils';
 import { type TimeRange } from '../services/yahoo-finance';
 
@@ -36,10 +36,17 @@ export function PriceHistoryChart({
     sellLimit
 }: PriceHistoryChartProps) {
     const [hasMounted, setHasMounted] = useState(false);
+    const [isMeasureMode, setIsMeasureMode] = useState(false);
+    const [measurePoints, setMeasurePoints] = useState<{ date: string; value: number }[]>([]);
 
     useEffect(() => {
         setHasMounted(true);
     }, []);
+
+    // Reset measure points when mode is toggled or range changes
+    useEffect(() => {
+        setMeasurePoints([]);
+    }, [isMeasureMode, selectedRange]);
     const { formatCurrency } = useCurrencyFormatter();
 
     const handleRangeChange = (range: TimeRange) => {
@@ -216,6 +223,28 @@ export function PriceHistoryChart({
         return displayPoints;
     }, [data, selectedRange, sma200Data]);
 
+    const handleChartClick = (nextData: any) => {
+        if (!isMeasureMode || !nextData || !nextData.activePayload) return;
+
+        const point = {
+            date: nextData.activePayload[0].payload.date,
+            value: nextData.activePayload[0].payload.value
+        };
+
+        setMeasurePoints(prev => {
+            if (prev.length >= 2) return [point];
+            return [...prev, point];
+        });
+    };
+
+    const measurement = useMemo(() => {
+        if (measurePoints.length !== 2) return null;
+        const [p1, p2] = [...measurePoints].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const diff = p2.value - p1.value;
+        const percent = (diff / p1.value) * 100;
+        return { p1, p2, diff, percent };
+    }, [measurePoints]);
+
     return (
         <div className="w-full h-full flex flex-col relative">
             <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
@@ -290,27 +319,78 @@ export function PriceHistoryChart({
                 )}
             </div>
 
-            <div className="flex bg-muted/50 p-0.5 rounded-lg mb-4">
-                {(['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
+            <div className="flex bg-muted/50 p-0.5 rounded-lg mb-4 items-center overflow-x-auto scroller-none">
+                <div className="flex flex-1">
+                    {(['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
+                        <button
+                            key={range}
+                            onClick={() => handleRangeChange(range)}
+                            className={cn(
+                                "px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-all whitespace-nowrap",
+                                selectedRange === range
+                                    ? "bg-background shadow-sm text-foreground"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                            )}
+                        >
+                            {range === 'BUY' ? <><span className="sm:hidden">SK</span><span className="hidden sm:inline">Seit Kauf</span></> : range}
+                        </button>
+                    ))}
+                </div>
+                <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
                     <button
-                        key={range}
-                        onClick={() => handleRangeChange(range)}
+                        onClick={() => setIsMeasureMode(!isMeasureMode)}
                         className={cn(
-                            "px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-all",
-                            selectedRange === range
-                                ? "bg-background shadow-sm text-foreground"
-                                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                            "p-1.5 rounded-md transition-all flex items-center gap-1.5",
+                            isMeasureMode
+                                ? "bg-primary text-primary-foreground shadow-sm"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
                         )}
+                        title="Messmodus: Zwei Punkte im Chart klicken für %-Vergleich"
                     >
-                        {range === 'BUY' ? <><span className="sm:hidden">SK</span><span className="hidden sm:inline">Seit Kauf</span></> : range}
+                        <Ruler className="size-3.5" />
+                        <span className="text-[10px] font-bold hidden sm:inline">Messen</span>
                     </button>
-                ))}
+                </div>
             </div>
+
+            {isMeasureMode && measurePoints.length > 0 && (
+                <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-2">
+                    <div className="bg-primary/90 backdrop-blur-md text-primary-foreground px-4 py-2 rounded-full shadow-xl border border-primary/20 flex items-center gap-3">
+                        <div className="flex flex-col items-center leading-none">
+                            {measurement ? (
+                                <>
+                                    <span className="text-sm font-black whitespace-nowrap">
+                                        {measurement.percent > 0 ? '+' : ''}{measurement.percent.toFixed(2)}%
+                                    </span>
+                                    <span className="text-[10px] opacity-80 mt-0.5">
+                                        {formatCurrency(measurement.diff, currency, true)}
+                                    </span>
+                                </>
+                            ) : (
+                                <span className="text-xs font-bold animate-pulse">
+                                    {measurePoints.length === 1 ? 'Endpunkt wählen...' : 'Punkte wählen...'}
+                                </span>
+                            )}
+                        </div>
+                        <button
+                            onClick={() => setMeasurePoints([])}
+                            className="bg-white/20 hover:bg-white/30 p-1 rounded-full transition-colors"
+                        >
+                            <X className="size-3" />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="h-[300px] w-full min-h-[300px] min-w-0">
                 {hasMounted && (
                     <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
-                        <AreaChart data={displayData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+                        <AreaChart
+                            data={displayData}
+                            margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
+                            onClick={handleChartClick}
+                            style={{ cursor: isMeasureMode ? 'crosshair' : 'default' }}
+                        >
                             <defs>
                                 <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor={isPositive ? "#22c55e" : "#ef4444"} stopOpacity={0.1} />
@@ -399,6 +479,33 @@ export function PriceHistoryChart({
                                         fill: '#dc2626',
                                         fontSize: 10
                                     }}
+                                />
+                            )}
+
+                            {/* Measurement Reference Lines */}
+                            {measurePoints.map((p, i) => (
+                                <ReferenceLine
+                                    key={`measure-${i}`}
+                                    x={p.date}
+                                    stroke="#ffffff"
+                                    strokeWidth={2}
+                                    isFront={true}
+                                />
+                            ))}
+                            {measurement && (
+                                <ReferenceLine
+                                    y={measurement.p1.value}
+                                    stroke="#ffffff"
+                                    strokeDasharray="3 3"
+                                    opacity={0.3}
+                                />
+                            )}
+                            {measurement && (
+                                <ReferenceLine
+                                    y={measurement.p2.value}
+                                    stroke="#ffffff"
+                                    strokeDasharray="3 3"
+                                    opacity={0.3}
                                 />
                             )}
                             <Tooltip
