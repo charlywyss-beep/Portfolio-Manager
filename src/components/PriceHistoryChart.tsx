@@ -39,6 +39,7 @@ export function PriceHistoryChart({
     const [isMeasureMode, setIsMeasureMode] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
     const [measurePoints, setMeasurePoints] = useState<{ date: string; value: number }[]>([]);
+    const [hoveredData, setHoveredData] = useState<{ date: string; value: number; sma200?: number | null } | null>(null);
 
     useEffect(() => {
         setHasMounted(true);
@@ -370,6 +371,51 @@ export function PriceHistoryChart({
                         <span className="text-[10px] font-bold hidden sm:inline">Messen</span>
                     </button>
                 </div>
+
+                {/* Dynamic Header Info (Replaces Tooltip) */}
+                {hoveredData && (
+                    <div className="flex-1 flex justify-end items-center gap-4 ml-4 text-[10px] sm:text-xs animate-in fade-in duration-200">
+                        <div className="flex flex-col items-end leading-tight">
+                            <span className="font-medium text-foreground">
+                                {new Date(hoveredData.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                            </span>
+                            <span className="text-muted-foreground opacity-80">
+                                {new Date(hoveredData.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                        </div>
+                        <div className="h-6 w-px bg-border" />
+                        <div className="flex flex-col items-end leading-tight">
+                            <span className="font-bold tabular-nums">
+                                {formatCurrency(hoveredData.value, currency)}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">Kurs</span>
+                        </div>
+                        {hoveredData.sma200 && (
+                            <>
+                                <div className="h-6 w-px bg-border" />
+                                <div className="flex flex-col items-end leading-tight">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="font-bold tabular-nums text-foreground">
+                                            {formatCurrency(hoveredData.sma200, currency)}
+                                        </span>
+                                        {(() => {
+                                            const diff = ((hoveredData.value - hoveredData.sma200) / hoveredData.sma200) * 100;
+                                            return (
+                                                <span className={cn(
+                                                    "font-bold tabular-nums",
+                                                    diff >= 0 ? "text-green-500" : "text-red-500"
+                                                )}>
+                                                    {diff > 0 ? '+' : ''}{diff.toFixed(2)}%
+                                                </span>
+                                            );
+                                        })()}
+                                    </div>
+                                    <span className="text-[10px] text-amber-500 font-medium">SMA 200</span>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
 
             {isMeasureMode && measurePoints.length > 0 && (
@@ -437,6 +483,12 @@ export function PriceHistoryChart({
                             data={displayData}
                             margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
                             onClick={handleChartClick}
+                            onMouseMove={(data: any) => {
+                                if (data?.activePayload?.[0]?.payload) {
+                                    setHoveredData(data.activePayload[0].payload);
+                                }
+                            }}
+                            onMouseLeave={() => setHoveredData(null)}
                             style={{ cursor: isMeasureMode ? 'crosshair' : 'default' }}
                         >
                             <defs>
@@ -557,47 +609,9 @@ export function PriceHistoryChart({
                                 />
                             )}
                             <Tooltip
-                                content={({ active, payload }) => {
-                                    if (active && payload && payload.length) {
-                                        const date = new Date(payload[0].payload.date);
-
-                                        return (
-                                            <div className="bg-popover border border-border p-3 rounded-lg shadow-lg text-sm">
-                                                <p className="text-muted-foreground mb-1 leading-tight">
-                                                    <span className="font-bold text-foreground">
-                                                        {date.toLocaleDateString('de-DE', {
-                                                            weekday: 'short',
-                                                            day: '2-digit',
-                                                            month: '2-digit',
-                                                            year: 'numeric'
-                                                        })}
-                                                    </span>
-                                                    <br />
-                                                    <span className="text-xs">
-                                                        {date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr
-                                                    </span>
-                                                </p>
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center gap-2 justify-between">
-                                                        <span className="text-muted-foreground text-xs">Kurs:</span>
-                                                        <span className="font-bold text-foreground">
-                                                            {formatCurrency(payload[0].value as number, currency)}
-                                                        </span>
-                                                    </div>
-                                                    {payload[0].payload.sma200 && (
-                                                        <div className="flex items-center gap-2 justify-between">
-                                                            <span className="text-amber-400 text-xs font-medium">SMA 200:</span>
-                                                            <span className="font-bold text-foreground">
-                                                                {formatCurrency(payload[0].payload.sma200, currency)}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    }
-                                    return null;
-                                }}
+                                content={() => null}
+                                cursor={{ stroke: 'var(--primary)', strokeWidth: 1, strokeDasharray: '4 4' }}
+                                isAnimationActive={false}
                             />
                             <Area
                                 type="monotone"
