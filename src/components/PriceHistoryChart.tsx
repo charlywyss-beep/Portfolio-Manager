@@ -468,7 +468,7 @@ export function PriceHistoryChart({
                                     <stop offset="95%" stopColor={isPositive ? "#22c55e" : "#ef4444"} stopOpacity={0} />
                                 </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
+                            <CartesianGrid strokeDasharray="3 3" vertical={true} opacity={0.1} />
                             <XAxis
                                 dataKey="date"
                                 hide={false}
@@ -510,7 +510,7 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
-                                    // 1M: Every Monday (1) and Friday (5) - one tick per day
+                                    // 1M: Every Friday (5) - one tick per day
                                     if (selectedRange === '1M') {
                                         const ticks: string[] = [];
                                         const seenDays = new Set<string>();
@@ -519,7 +519,7 @@ export function PriceHistoryChart({
                                             const dayKey = date.toISOString().slice(0, 10);
                                             const dayOfWeek = date.getDay();
 
-                                            if ((dayOfWeek === 1 || dayOfWeek === 5) && !seenDays.has(dayKey)) {
+                                            if (dayOfWeek === 5 && !seenDays.has(dayKey)) {
                                                 seenDays.add(dayKey);
                                                 ticks.push(point.date);
                                             }
@@ -527,8 +527,8 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
-                                    // 3M / 6M: Every Friday (5) - one tick per day
-                                    if (selectedRange === '3M' || selectedRange === '6M') {
+                                    // 3M: Every Friday (5) - one tick per day
+                                    if (selectedRange === '3M') {
                                         const ticks: string[] = [];
                                         const seenDays = new Set<string>();
                                         for (const point of displayData) {
@@ -537,6 +537,21 @@ export function PriceHistoryChart({
 
                                             if (date.getDay() === 5 && !seenDays.has(dayKey)) {
                                                 seenDays.add(dayKey);
+                                                ticks.push(point.date);
+                                            }
+                                        }
+                                        return ticks;
+                                    }
+
+                                    // 6M: Monthly ticks (first of each month)
+                                    if (selectedRange === '6M') {
+                                        const ticks: string[] = [];
+                                        const seenMonths = new Set<string>();
+                                        for (const point of displayData) {
+                                            const date = new Date(point.date);
+                                            const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+                                            if (!seenMonths.has(monthKey)) {
+                                                seenMonths.add(monthKey);
                                                 ticks.push(point.date);
                                             }
                                         }
