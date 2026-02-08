@@ -187,7 +187,7 @@ export function Watchlist() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
             {/* Header */}
-            <div className="border-b bg-card sticky top-0 z-[100]">
+            <div className="border-b bg-card">
                 <div className="w-full px-4 py-4 md:px-4">
                     <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
