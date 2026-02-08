@@ -495,10 +495,12 @@ export function PriceHistoryChart({
                                     const date = new Date(str);
                                     if (selectedRange === '1D') {
                                         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                    } else if (selectedRange === '1W' || selectedRange === '1M') {
-                                        return `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
-                                    } else if (selectedRange === '3M' || selectedRange === '6M') {
-                                        // For 3M and 6M: show "dd.MM" format
+                                    } else if (selectedRange === '1M' || selectedRange === '3M' || selectedRange === '6M') {
+                                        // Show weekday + date (e.g. "Mo 02.02" or "Fr 06.02")
+                                        const weekdayShort = date.toLocaleDateString('de-DE', { weekday: 'short' });
+                                        const dayMonth = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+                                        return `${weekdayShort} ${dayMonth}`;
+                                    } else if (selectedRange === '1W') {
                                         return `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
                                     } else if (selectedRange === '1Y' || selectedRange === '5Y' || selectedRange === 'BUY') {
                                         return date.toLocaleDateString([], { month: '2-digit', year: '2-digit' });
