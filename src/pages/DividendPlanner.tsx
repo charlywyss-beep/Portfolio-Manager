@@ -3,11 +3,10 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { Calendar, TrendingUp, Edit, Trash2, RefreshCw } from 'lucide-react';
 import { Logo } from '../components/Logo';
 import { cn } from '../utils';
-import { estimateMarketState } from '../utils/market';
 import { useState, useEffect } from 'react';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { getCurrentDividendPeriod, translateFrequency } from '../utils/dividend';
+import { getCurrentDividendPeriod } from '../utils/dividend';
 import { DividendCalendarChart } from '../components/DividendCalendarChart';
 
 export function DividendPlanner() {
@@ -171,15 +170,15 @@ export function DividendPlanner() {
             {/* Header - Matched to Portfolio/Watchlist design */}
             <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
-                    <div className="w-full px-4 py-4 md:px-6">
+                    <div className="w-full pl-14 pr-4 py-4 md:px-6">
                         <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
                                 <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600 dark:text-green-400">
-                                    <Calendar className="size-6" />
+                                    <TrendingUp className="size-6" />
                                 </div>
                                 <div>
                                     <h1 className="text-3xl font-bold tracking-tight">Dividenden</h1>
-                                    <p className="text-muted-foreground hidden md:block">Erwartete Dividendenausschüttungen</p>
+                                    <p className="text-muted-foreground hidden md:block">Übersicht aller erwarteten Zahlungen</p>
                                 </div>
                             </div>
 
@@ -188,14 +187,15 @@ export function DividendPlanner() {
                                     onClick={() => refreshAllPrices(true)}
                                     disabled={isGlobalRefreshing}
                                     className={cn(
-                                        "flex items-center gap-2 px-4 py-2 rounded-lg border font-medium transition-all shadow-sm",
-                                        "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                                        "active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        "p-2.5 md:p-2 md:px-4 rounded-lg flex items-center gap-2 transition-all font-medium whitespace-nowrap",
+                                        isGlobalRefreshing
+                                            ? "bg-muted text-muted-foreground cursor-not-allowed"
+                                            : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm active:scale-95"
                                     )}
-                                    title="Alle Aktienpreise aktualisieren"
+                                    title="Preise aktualisieren"
                                 >
-                                    <RefreshCw className={cn("size-4", isGlobalRefreshing && "animate-spin")} />
-                                    <span className="hidden sm:inline">
+                                    <RefreshCw className={cn("size-5 md:size-4", isGlobalRefreshing && "animate-spin")} />
+                                    <span className="hidden md:inline">
                                         {isGlobalRefreshing
                                             ? 'Aktualisiere...'
                                             : lastGlobalRefresh
@@ -299,98 +299,56 @@ export function DividendPlanner() {
                                                         className="cursor-pointer hover:scale-110 transition-transform p-1 -m-1"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            navigate('/portfolio');
+                                                            navigate(`/stock/${stock.id}`);
                                                         }}
-                                                        title="Zu den Positionen"
                                                     >
-                                                        <Logo
-                                                            url={stock.logoUrl}
-                                                            alt={stock.name}
-                                                            fallback={stock.symbol.slice(0, 2)}
-                                                        />
+                                                        {stock.logoUrl ? (
+                                                            <div className="size-8 rounded-full overflow-hidden bg-background border border-border shadow-sm flex-shrink-0">
+                                                                <img
+                                                                    src={stock.logoUrl}
+                                                                    alt={stock.symbol}
+                                                                    className="w-full h-full object-contain p-0.5"
+                                                                    onError={(e) => {
+                                                                        (e.target as HTMLImageElement).style.display = 'none';
+                                                                        (e.target as HTMLImageElement).parentElement!.innerText = stock.symbol.slice(0, 2);
+                                                                        (e.target as HTMLImageElement).parentElement!.className = "size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary border border-primary/20 flex-shrink-0";
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary border border-primary/20 flex-shrink-0">
+                                                                {stock.symbol.slice(0, 2)}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     <div>
-                                                        <div className="flex items-center gap-2">
-                                                            <div
-                                                                className="font-semibold cursor-pointer hover:text-primary transition-colors whitespace-pre-line"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    navigate(`/stock/${stock.id}`);
-                                                                }}
-                                                            >
-                                                                {stock.name}
-                                                            </div>
-                                                            {(() => {
-                                                                const calcState = estimateMarketState(stock.symbol, stock.currency);
-                                                                const isMarketOpen = calcState === 'REGULAR';
-                                                                return isMarketOpen ? (
-                                                                    <div className="size-2.5 flex-shrink-0 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
-                                                                ) : (
-                                                                    <div className="size-2.5 flex-shrink-0 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${calcState})`} />
-                                                                );
-                                                            })()}
-                                                        </div>
+                                                        <div className="font-medium text-sm text-foreground truncate max-w-[90px] md:max-w-none" title={stock.name}>{stock.name}</div>
                                                         <div className="text-xs text-muted-foreground">{stock.symbol}</div>
                                                     </div>
                                                 </div>
+                                                {/* Ex-Date Warning Indicator */}
+                                                {position.plannedPurchase?.savedAt && (
+                                                    <div className="absolute top-1 right-1">
+                                                        <div className="size-1.5 rounded-full bg-orange-500" title="Geplanter Kauf" />
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="text-right py-3 px-4 font-medium">{position.shares}</td>
                                             <td className="text-right py-3 px-4 text-green-600 dark:text-green-400 font-medium">
                                                 {stock.dividendYield?.toFixed(2)}%
                                             </td>
-                                            <td className="text-right py-3 px-4 font-medium">
-                                                {stock.dividendAmount ? (
-                                                    <div className="flex flex-col items-end gap-0.5">
-                                                        {(() => {
-                                                            // Native Line
-                                                            let displayAmount = stock.dividendAmount || 0;
-                                                            let displayCurrency = divCurrency;
-                                                            if (divCurrency === 'GBp') {
-                                                                displayAmount /= 100;
-                                                                displayCurrency = 'GBP';
-                                                            }
-
-                                                            // CHF Line
-                                                            const chfAmount = convertToCHF(stock.dividendAmount || 0, divCurrency);
-
-                                                            return (
-                                                                <>
-                                                                    <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
-                                                                        <span>{displayAmount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                                                        <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">{displayCurrency}</span>
-                                                                    </div>
-                                                                    {divCurrency !== 'CHF' && (
-                                                                        <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
-                                                                            <span>{chfAmount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                                                            <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">CHF</span>
-                                                                        </div>
-                                                                    )}
-                                                                </>
-                                                            );
-                                                        })()}
-                                                    </div>
-                                                ) : '-'}
+                                            <td className="text-right py-3 px-4 text-muted-foreground">
+                                                {stock.dividendAmount?.toFixed(2)} {divCurrency}
                                             </td>
-                                            <td className="text-right py-3 px-4 text-muted-foreground align-top">
-                                                {(() => {
-                                                    const freqLabel = translateFrequency(stock.dividendFrequency);
-                                                    if (currentDiv.periodLabel) {
-                                                        return (
-                                                            <div className="grid grid-cols-[auto_24px] gap-x-0.5 justify-end items-center">
-                                                                <span>{freqLabel}</span>
-                                                                <span className="px-1.5 py-0.5 text-[10px] uppercase font-medium bg-muted text-muted-foreground border border-border rounded justify-self-end">
-                                                                    {currentDiv.periodLabel}
-                                                                </span>
-                                                            </div>
-                                                        );
-                                                    }
-                                                    return freqLabel;
-                                                })()}
+                                            <td className="text-right py-3 px-4 capitalize text-sm">
+                                                {stock.dividendFrequency === 'annually' && 'Jährlich'}
+                                                {stock.dividendFrequency === 'semi-annually' && 'Halbjährlich'}
+                                                {stock.dividendFrequency === 'quarterly' && 'Quartalsweise'}
+                                                {stock.dividendFrequency === 'monthly' && 'Monatlich'}
+                                                {!stock.dividendFrequency && '-'}
                                             </td>
-                                            <td className="text-right py-3 px-4 font-medium whitespace-nowrap">
-                                                {stock.dividendFrequency !== 'annually' ? `CHF ${quarterlyDividendCHF.toFixed(2)}` : ''}
-                                            </td>
-                                            <td className="text-right py-3 px-4 font-semibold whitespace-nowrap">
+                                            <td className="text-right py-3 px-4">{quarterlyDividendCHF > 0 ? quarterlyDividendCHF.toFixed(2) : '-'}</td>
+                                            <td className="text-right py-3 px-4 font-semibold whitespace-nowrap relative group/annual">
                                                 {annualDisplay}
                                             </td>
                                             <td className="text-right py-3 px-4 text-muted-foreground">
@@ -467,10 +425,11 @@ export function DividendPlanner() {
                     <div className="flex flex-col">
                         <span className="text-xs font-medium text-green-900 dark:text-green-100 flex items-center gap-2 mb-1">
                             <TrendingUp className="size-3" />
-                            Gesamtdividende (Jahr)
+                            Jährlich
                         </span>
-                        <div className="text-xl font-bold text-green-600 dark:text-green-400">
-                            CHF {totalAnnualNet.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <div className="text-xl font-bold text-green-600 dark:text-green-400 flex flex-col items-start leading-none">
+                            <span className="text-xs font-medium opacity-80 mb-0.5">CHF</span>
+                            <span>{totalAnnualNet.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                     </div>
                 </div>
@@ -481,8 +440,9 @@ export function DividendPlanner() {
                             <Calendar className="size-3" />
                             Ø Monatlich
                         </span>
-                        <div className="text-xl font-bold text-blue-800 dark:text-blue-400">
-                            CHF {totalMonthly.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <div className="text-xl font-bold text-blue-800 dark:text-blue-400 flex flex-col items-start leading-none">
+                            <span className="text-xs font-medium opacity-80 mb-0.5">CHF</span>
+                            <span>{totalMonthly.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                     </div>
                 </div>

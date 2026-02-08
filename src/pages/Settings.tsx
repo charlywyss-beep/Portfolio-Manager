@@ -3,8 +3,9 @@ import { usePortfolio } from '../context/PortfolioContext';
 
 import { Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 import { ConfirmModal } from '../components/ConfirmModal';
+import packageJson from '../../package.json';
 
-// Helper Component for Stock Management List Items (v3.12.123)
+// Helper Component for Stock Management List Items (v3.14.01)
 const StockManagementItem = ({ stock, positions, watchlists, stocks, fixedDeposits, importData }: any) => {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const isInPortfolio = positions.some((p: any) => p.stockId === stock.id);
@@ -71,7 +72,7 @@ export function Settings() {
     const [confirmImport, setConfirmImport] = useState<{ isOpen: boolean, data: any }>({ isOpen: false, data: null });
     const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
-    // Categorized Stocks (v3.12.123)
+    // Categorized Stocks (v3.14.01)
     const categorizedStocks = useMemo(() => {
         const ownedIds = new Set(positions.map(p => p.stockId));
         return {
@@ -84,6 +85,7 @@ export function Settings() {
     const handleExport = () => {
         const data = {
             version: '1.0',
+            appVersion: packageJson.version,
             exportedAt: new Date().toISOString(),
             positions,
             stocks,
@@ -139,7 +141,7 @@ export function Settings() {
     };
 
     return (
-        <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
+        <div className="pl-14 pr-6 py-6 md:p-8 space-y-8 animate-in fade-in duration-500">
             <div className="flex items-center gap-3 mb-8">
                 <h1 className="text-2xl font-bold tracking-tight">Einstellungen</h1>
                 <p className="text-muted-foreground">Verwalten Sie Ihre Daten-Backups und Systemeinstellungen.</p>
