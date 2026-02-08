@@ -492,8 +492,8 @@ export function PriceHistoryChart({
                                         const dayMonth = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
                                         return `${weekdayShort} ${dayMonth}`;
                                     } else if (selectedRange === '1Y' || selectedRange === '5Y' || selectedRange === 'BUY') {
-                                        // For yearly views, just show month/year (e.g. "02/26") - no weekday
-                                        return date.toLocaleDateString('de-DE', { month: '2-digit', year: '2-digit' });
+                                        // For yearly views, just show month/year (e.g. "02.25") - no weekday
+                                        return `${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear().toString().slice(-2)}`;
                                     }
                                     return date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
                                 }}
@@ -572,7 +572,7 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
-                                    // 1Y: Monthly ticks
+                                    // 1Y: Monthly ticks (first trading day of each month)
                                     if (selectedRange === '1Y') {
                                         const ticks: string[] = [];
                                         const seenMonths = new Set<string>();
@@ -587,7 +587,7 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
-                                    // 5Y / BUY: Quarterly ticks (every 3 months)
+                                    // 5Y / BUY: Quarterly ticks (first trading day of each quarter)
                                     if (selectedRange === '5Y' || selectedRange === 'BUY') {
                                         const ticks: string[] = [];
                                         const seenQuarters = new Set<string>();
