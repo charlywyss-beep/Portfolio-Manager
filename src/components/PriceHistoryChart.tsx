@@ -481,6 +481,15 @@ export function PriceHistoryChart({
                                 }
                             }}
                             onMouseLeave={() => setHoveredData(null)}
+                            onClick={(data: any) => {
+                                if (isMeasureMode && data?.activePayload?.[0]?.payload) {
+                                    const clickedPoint = data.activePayload[0].payload;
+                                    setMeasurePoints(prev => {
+                                        if (prev.length >= 2) return [clickedPoint];
+                                        return [...prev, clickedPoint];
+                                    });
+                                }
+                            }}
                             style={{ cursor: isMeasureMode ? 'crosshair' : 'default' }}
                         >
                             <defs>
