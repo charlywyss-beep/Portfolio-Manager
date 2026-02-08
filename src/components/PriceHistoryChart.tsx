@@ -572,35 +572,28 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
-                                    // 1Y: Monthly ticks (first trading day of each month)
-                                    if (selectedRange === '1Y') {
-                                        const ticks: string[] = [];
-                                        const seenMonths = new Set<string>();
+                                    // 1Y / 5Y / BUY: Monthly first-trading-day points
+                                    if (['1Y', '5Y', 'BUY'].includes(selectedRange)) {
+                                        const monthlyFirstPoints: string[] = [];
+                                        let currentMonth = -1;
                                         for (const point of displayData) {
-                                            const date = new Date(point.date);
-                                            const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-                                            if (!seenMonths.has(monthKey)) {
-                                                seenMonths.add(monthKey);
-                                                ticks.push(point.date);
+                                            const d = new Date(point.date);
+                                            const m = d.getMonth();
+                                            if (m !== currentMonth) {
+                                                monthlyFirstPoints.push(point.date);
+                                                currentMonth = m;
                                             }
                                         }
-                                        return ticks;
-                                    }
 
-                                    // 5Y / BUY: Quarterly ticks (first trading day of each quarter)
-                                    if (selectedRange === '5Y' || selectedRange === 'BUY') {
-                                        const ticks: string[] = [];
-                                        const seenQuarters = new Set<string>();
-                                        for (const point of displayData) {
-                                            const date = new Date(point.date);
-                                            const quarter = Math.floor(date.getMonth() / 3);
-                                            const quarterKey = `${date.getFullYear()}-Q${quarter}`;
-                                            if (!seenQuarters.has(quarterKey)) {
-                                                seenQuarters.add(quarterKey);
-                                                ticks.push(point.date);
-                                            }
+                                        if (selectedRange === '1Y') return monthlyFirstPoints;
+
+                                        // For 5Y/BUY: Every 3rd month, backtracking from the end
+                                        const result: string[] = [];
+                                        const gap = 3;
+                                        for (let i = monthlyFirstPoints.length - 1; i >= 0; i -= gap) {
+                                            result.unshift(monthlyFirstPoints[i]);
                                         }
-                                        return ticks;
+                                        return result;
                                     }
 
                                     return undefined;
