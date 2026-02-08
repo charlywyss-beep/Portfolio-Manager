@@ -503,7 +503,7 @@ export function PriceHistoryChart({
                                     return date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
                                 }}
                                 ticks={(() => {
-                                    if (data.length === 0) return undefined;
+                                    if (displayData.length === 0) return undefined;
 
                                     // 1W: One tick per day
                                     if (selectedRange === '1W') {
@@ -520,41 +520,30 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
-                                    // 1M + 3M: Weekly ticks (preferably Fridays)
+                                    // 1M / 3M: Weekly ticks (every 7 days)
                                     if (selectedRange === '1M' || selectedRange === '3M') {
                                         const ticks: string[] = [];
-                                        const seenWeeks = new Set<string>();
+                                        let lastTickTime: number | null = null;
+                                        const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
                                         for (const point of displayData) {
-                                            const date = new Date(point.date);
-                                            const weekKey = `${date.getFullYear()}-W${Math.floor(date.getTime() / (7 * 24 * 60 * 60 * 1000))}`;
-
-                                            if (!seenWeeks.has(weekKey)) {
-                                                seenWeeks.add(weekKey);
-                                                // Prefer Friday (day 5) but accept any day of the week for this week
+                                            const time = new Date(point.date).getTime();
+                                            if (lastTickTime === null || time - lastTickTime >= WEEK_MS) {
                                                 ticks.push(point.date);
-                                            } else if (date.getDay() === 5 && ticks.length > 0) {
-                                                // Replace last tick with Friday if we find one in the same week
-                                                const lastTickDate = new Date(ticks[ticks.length - 1]);
-                                                const lastWeekKey = `${lastTickDate.getFullYear()}-W${Math.floor(lastTickDate.getTime() / (7 * 24 * 60 * 60 * 1000))}`;
-                                                if (lastWeekKey === weekKey) {
-                                                    ticks[ticks.length - 1] = point.date;
-                                                }
+                                                lastTickTime = time;
                                             }
                                         }
                                         return ticks;
                                     }
 
-                                    // 6M: Bi-weekly ticks (every 2 weeks)
+                                    // 6M: Bi-weekly ticks (every 14 days)
                                     if (selectedRange === '6M') {
                                         const ticks: string[] = [];
                                         let lastTickTime: number | null = null;
                                         const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
 
                                         for (const point of displayData) {
-                                            const date = new Date(point.date);
-                                            const time = date.getTime();
-
+                                            const time = new Date(point.date).getTime();
                                             if (lastTickTime === null || time - lastTickTime >= TWO_WEEKS_MS) {
                                                 ticks.push(point.date);
                                                 lastTickTime = time;
@@ -563,7 +552,7 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
-                                    // 1Y / 5Y / BUY: Monthly ticks (first trading day of each month)
+                                    // 1Y / 5Y / BUY: Monthly ticks
                                     if (selectedRange === '1Y' || selectedRange === '5Y' || selectedRange === 'BUY') {
                                         const ticks: string[] = [];
                                         const seenMonths = new Set<string>();
