@@ -367,7 +367,7 @@ export function PriceHistoryChart({
                                     return `${weekday} ${dateStr}`;
                                 })()}
                             </span>
-                            <span className="text-muted-foreground opacity-80">
+                            <span className="text-foreground">
                                 {new Date(hoveredData.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         </div>
@@ -376,7 +376,7 @@ export function PriceHistoryChart({
                             <span className="font-bold tabular-nums">
                                 {formatCurrency(hoveredData.value, currency)}
                             </span>
-                            <span className="text-[10px] text-muted-foreground">Kurs</span>
+                            <span className="text-[10px] text-foreground">Kurs</span>
                         </div>
                         {hoveredData.sma200 && (
                             <>
@@ -398,7 +398,7 @@ export function PriceHistoryChart({
                                             );
                                         })()}
                                     </div>
-                                    <span className="text-[10px] text-amber-500 font-medium">SMA 200</span>
+                                    <span className="text-[10px] text-amber-500 font-bold">SMA 200</span>
                                 </div>
                             </>
                         )}
@@ -416,26 +416,26 @@ export function PriceHistoryChart({
                                         <span className="text-xl font-black whitespace-nowrap">
                                             {measurement.percent > 0 ? '+' : ''}{measurement.percent.toFixed(2)}%
                                         </span>
-                                        <span className="text-xs font-bold opacity-90">
+                                        <span className="text-xs font-bold text-white">
                                             {formatCurrency(measurement.diff, currency, true)}
                                         </span>
                                     </div>
                                     <div className="h-8 w-px bg-white/20" />
-                                    <div className="flex flex-col text-[10px] opacity-90 font-medium">
+                                    <div className="flex flex-col text-[10px] text-white font-medium">
                                         <div className="flex justify-between gap-4">
-                                            <span className="opacity-70">Von:</span>
+                                            <span className="font-bold">Von:</span>
                                             <span>
                                                 {formatCurrency(measurement.p1.value, currency, false)}
-                                                <span className="opacity-60 ml-1 text-[11px]">
+                                                <span className="ml-1 text-[11px] text-white font-bold">
                                                     {new Date(measurement.p1.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} {new Date(measurement.p1.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
                                             </span>
                                         </div>
                                         <div className="flex justify-between gap-4">
-                                            <span className="opacity-70">Bis:</span>
+                                            <span className="font-bold">Bis:</span>
                                             <span>
                                                 {formatCurrency(measurement.p2.value, currency, false)}
-                                                <span className="opacity-60 ml-1 text-[11px]">
+                                                <span className="ml-1 text-[11px] text-white font-bold">
                                                     {new Date(measurement.p2.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} {new Date(measurement.p2.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
                                             </span>
@@ -447,7 +447,7 @@ export function PriceHistoryChart({
                                     <span className="text-xs font-bold whitespace-nowrap">
                                         {measurePoints.length === 1 ? 'Endpunkt wählen...' : 'Punkte wählen...'}
                                     </span>
-                                    <span className="text-[10px] opacity-70">Chart anklicken</span>
+                                    <span className="text-[10px] text-white font-bold">Chart anklicken</span>
                                 </div>
                             )}
                         </div>
