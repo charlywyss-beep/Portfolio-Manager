@@ -344,7 +344,12 @@ export function PriceHistoryChart({
                     <div className="flex justify-end items-center gap-4 text-[10px] sm:text-xs animate-in fade-in duration-200 z-[60] bg-background/80 backdrop-blur-sm p-1 rounded-lg border border-border/50 shadow-sm absolute right-0 top-[52px] sm:static sm:bg-transparent sm:border-0 sm:shadow-none sm:p-0">
                         <div className="flex flex-col items-end leading-tight">
                             <span className="font-medium text-foreground">
-                                {new Date(hoveredData.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                                {(() => {
+                                    const d = new Date(hoveredData.date);
+                                    const weekday = d.toLocaleDateString('de-DE', { weekday: 'short' });
+                                    const dateStr = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+                                    return `${weekday} ${dateStr}`;
+                                })()}
                             </span>
                             <span className="text-muted-foreground opacity-80">
                                 {new Date(hoveredData.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
@@ -478,17 +483,17 @@ export function PriceHistoryChart({
                                 padding={{ left: 16, right: 16 }}
                                 tickFormatter={(str) => {
                                     const date = new Date(str);
+                                    const weekdayShort = date.toLocaleDateString('de-DE', { weekday: 'short' });
+
                                     if (selectedRange === '1D') {
                                         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                    } else if (selectedRange === '1M' || selectedRange === '3M' || selectedRange === '6M') {
-                                        // Show weekday + date (e.g. "Mo 02.02" or "Fr 06.02")
-                                        const weekdayShort = date.toLocaleDateString('de-DE', { weekday: 'short' });
+                                    } else if (selectedRange === '1W' || selectedRange === '1M' || selectedRange === '3M' || selectedRange === '6M') {
+                                        // Show weekday + date (e.g. "Fr 06.02")
                                         const dayMonth = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
                                         return `${weekdayShort} ${dayMonth}`;
-                                    } else if (selectedRange === '1W') {
-                                        return `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
                                     } else if (selectedRange === '1Y' || selectedRange === '5Y' || selectedRange === 'BUY') {
-                                        return date.toLocaleDateString([], { month: '2-digit', year: '2-digit' });
+                                        // For yearly views, just show month/year (e.g. "02/26") - no weekday
+                                        return date.toLocaleDateString('de-DE', { month: '2-digit', year: '2-digit' });
                                     }
                                     return date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
                                 }}
@@ -543,16 +548,10 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
-                                    // 6M: Monthly ticks (first of each month) + latest point
+                                    // 6M: Monthly ticks (first of each month)
                                     if (selectedRange === '6M') {
                                         const ticks: string[] = [];
                                         const seenMonths = new Set<string>();
-
-                                        // Always include the latest (today/last close)
-                                        if (displayData.length > 0) {
-                                            ticks.push(displayData[displayData.length - 1].date);
-                                        }
-
                                         for (const point of displayData) {
                                             const date = new Date(point.date);
                                             const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
@@ -564,8 +563,8 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
-                                    // 1Y / 5Y / BUY: Monthly ticks
-                                    if (selectedRange === '1Y' || selectedRange === '5Y' || selectedRange === 'BUY') {
+                                    // 1Y: Monthly ticks
+                                    if (selectedRange === '1Y') {
                                         const ticks: string[] = [];
                                         const seenMonths = new Set<string>();
                                         for (const point of displayData) {
@@ -573,6 +572,22 @@ export function PriceHistoryChart({
                                             const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
                                             if (!seenMonths.has(monthKey)) {
                                                 seenMonths.add(monthKey);
+                                                ticks.push(point.date);
+                                            }
+                                        }
+                                        return ticks;
+                                    }
+
+                                    // 5Y / BUY: Quarterly ticks (every 3 months)
+                                    if (selectedRange === '5Y' || selectedRange === 'BUY') {
+                                        const ticks: string[] = [];
+                                        const seenQuarters = new Set<string>();
+                                        for (const point of displayData) {
+                                            const date = new Date(point.date);
+                                            const quarter = Math.floor(date.getMonth() / 3);
+                                            const quarterKey = `${date.getFullYear()}-Q${quarter}`;
+                                            if (!seenQuarters.has(quarterKey)) {
+                                                seenQuarters.add(quarterKey);
                                                 ticks.push(point.date);
                                             }
                                         }
