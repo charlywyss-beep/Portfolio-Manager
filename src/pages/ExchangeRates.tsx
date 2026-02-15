@@ -2,6 +2,7 @@ import { CurrencyChart } from '../components/CurrencyChart';
 import { CurrencyGainCalculator } from '../components/CurrencyGainCalculator';
 import { ShareCalculator } from '../components/ShareCalculator';
 import { InterestRateCalculator } from '../components/InterestRateCalculator';
+import { CompoundInterestProjection } from '../components/CompoundInterestProjection';
 import { ArrowLeftRight } from 'lucide-react';
 
 export function ExchangeRates() {
@@ -27,6 +28,11 @@ export function ExchangeRates() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Full Width for Interest Projection */}
+                <div className="lg:col-span-2">
+                    <CompoundInterestProjection />
+                </div>
+
                 <CurrencyChart inverse={false} />
                 <CurrencyChart inverse={true} />
 
