@@ -4,7 +4,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator } from 'lucide-react';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
 import { estimateMarketState } from '../utils/market';
@@ -358,6 +358,13 @@ export function StockDetail() {
                                         <div className="size-2.5 rounded-full bg-red-500 cursor-help border border-background" title={`Markt geschlossen (${displayLabel})`} />
                                     );
                                 })()}
+                                <button
+                                    onClick={() => navigate(`/calculator?stock=${stock.id}&mode=buy`)}
+                                    className="p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                    title="Aktie handeln (Kaufen / Verkaufen)"
+                                >
+                                    <Calculator className="size-3.5 md:size-4" />
+                                </button>
                                 <button
                                     onClick={() => {
                                         const from = searchParams.get('from');
