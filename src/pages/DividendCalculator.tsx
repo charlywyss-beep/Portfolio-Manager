@@ -145,6 +145,12 @@ export function DividendCalculator() {
                     });
                 } else {
                     // Load stock selection without planned data
+                    // Calculate Annual Dividend
+                    let annualDiv = stock.dividendAmount || 0;
+                    if (stock.dividendFrequency === 'quarterly') annualDiv *= 4;
+                    else if (stock.dividendFrequency === 'monthly') annualDiv *= 12;
+                    else if (stock.dividendFrequency === 'semi-annually') annualDiv *= 2;
+
                     updateSimulatorState({
                         selectedStockId: stockId,
                         mode: 'buy',
@@ -154,7 +160,7 @@ export function DividendCalculator() {
                         simCurrency: stock.currency,
                         simType: stock.type,
                         price: stock.currentPrice,
-                        dividend: stock.dividendAmount || 0
+                        dividend: annualDiv
                     });
                 }
                 lastLoadedStockIdRef.current = stockId;
@@ -565,7 +571,9 @@ export function DividendCalculator() {
             else if (stock.dividendFrequency === 'semi-annually') annualDiv *= 2;
 
             // Update state ONLY if it's different to prevent loops
-            if (stock.currency !== simCurrency || stock.symbol !== simSymbol) {
+            const isDivDiff = Math.abs(dividend - annualDiv) > 0.001;
+
+            if (stock.currency !== simCurrency || stock.symbol !== simSymbol || isDivDiff) {
                 updateSimulatorState({
                     simName: stock.name,
                     simSymbol: stock.symbol,
@@ -577,7 +585,7 @@ export function DividendCalculator() {
                 });
             }
         }
-    }, [selectedStockId, stocks]);
+    }, [selectedStockId, stocks, simCurrency, simSymbol, dividend]);
 
     // Derived Logic & Currency Conversion for TOTALS only
     // 1. Calculate Volume in Native Currency
