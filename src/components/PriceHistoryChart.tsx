@@ -4,6 +4,7 @@ import { useCurrencyFormatter } from '../utils/currency';
 import { Ruler, X } from 'lucide-react';
 import { cn } from '../utils';
 import { type TimeRange } from '../services/yahoo-finance';
+import { useExchangeRates } from '../context/ExchangeRateContext';
 
 interface PriceHistoryChartProps {
     currentPrice: number;
@@ -45,6 +46,26 @@ export function PriceHistoryChart({
     const [measurePoints, setMeasurePoints] = useState<{ date: string; value: number }[]>([]);
     const [hoveredData, setHoveredData] = useState<{ date: string; value: number; sma200?: number | null } | null>(null);
 
+    // Currency Conversion State
+    const { rates } = useExchangeRates();
+    const [showInCHF, setShowInCHF] = useState(false);
+    const canConvert = currency !== 'CHF';
+
+    // Auto-reset if currency changes to CHF
+    useEffect(() => {
+        if (!canConvert) setShowInCHF(false);
+    }, [canConvert]);
+
+    const conversionRate = useMemo(() => {
+        if (!showInCHF || !canConvert) return 1;
+        // rates are CHF-based (e.g. USD=1.12 means 1 CHF = 1.12 USD)
+        // To convert USD to CHF: Value / 1.12
+        const rate = rates[currency];
+        return rate ? 1 / rate : 1;
+    }, [showInCHF, canConvert, currency, rates]);
+
+    const displayCurrency = showInCHF ? 'CHF' : currency;
+
     useEffect(() => {
         setHasMounted(true);
     }, []);
@@ -65,8 +86,29 @@ export function PriceHistoryChart({
     };
 
     // Use simulated data if no historyData is provided
-    const data = useMemo(() => {
+    const rawData = useMemo(() => {
         if (historyData && historyData.length > 0) {
+            // Check if we should append the currentPrice (Live connection)
+            // Only for 1D range to bridge gap between last history point and Quote
+            if (selectedRange === '1D' && currentPrice > 0) {
+                const lastPoint = historyData[historyData.length - 1];
+                const lastDate = new Date(lastPoint.date).getTime();
+
+                // Use quoteDate if available, otherwise now (if within market hours)
+                // But quoteDate is usually more reliable for "market time"
+                const liveDate = quoteDate ? quoteDate.getTime() : new Date().getTime();
+
+                // If live date is significantly newer (> 5 min) than last history point
+                if (liveDate > lastDate + 5 * 60 * 1000) {
+                    return [
+                        ...historyData,
+                        {
+                            date: new Date(liveDate).toISOString(),
+                            value: currentPrice
+                        }
+                    ];
+                }
+            }
             return historyData;
         }
 
@@ -119,23 +161,35 @@ export function PriceHistoryChart({
         return points.reverse();
     }, [currentPrice, selectedRange, volatility, trend, historyData]);
 
+    const data = useMemo(() => {
+        if (conversionRate === 1) return rawData;
+        return rawData.map(d => ({ ...d, value: d.value * conversionRate }));
+    }, [rawData, conversionRate]);
+
+    // Apply conversion to props
+    const effectiveCurrentPrice = currentPrice * conversionRate;
+    const effectivePreviousClose = previousClose ? previousClose * conversionRate : undefined;
+    const effectivePurchasePrice = purchasePrice ? purchasePrice * conversionRate : undefined;
+    const effectiveSellLimit = sellLimit ? sellLimit * conversionRate : undefined;
+
+
     // Calculate performance for the selected range
     let startPrice = data[0]?.value || 0;
 
     // For 1D, force startPrice to be Previous Close if available, to match "Daily Change" logic
-    if (selectedRange === '1D' && previousClose && previousClose > 0) {
-        startPrice = previousClose;
+    if (selectedRange === '1D' && effectivePreviousClose && effectivePreviousClose > 0) {
+        startPrice = effectivePreviousClose;
     }
 
     // For BUY, use the actual purchase price for accurate performance (vs Portfolio)
-    if (selectedRange === 'BUY' && purchasePrice && purchasePrice > 0) {
-        startPrice = purchasePrice;
+    if (selectedRange === 'BUY' && effectivePurchasePrice && effectivePurchasePrice > 0) {
+        startPrice = effectivePurchasePrice;
     }
 
     let endPrice = data[data.length - 1]?.value || 0;
     // For 1D, force endPrice to be currentPrice to match the List/Quote (avoid chart data lag)
-    if (selectedRange === '1D' && currentPrice > 0) {
-        endPrice = currentPrice;
+    if (selectedRange === '1D' && effectiveCurrentPrice > 0) {
+        endPrice = effectiveCurrentPrice;
     }
 
     const performance = startPrice !== 0 ? ((endPrice - startPrice) / startPrice) * 100 : 0;
@@ -145,7 +199,7 @@ export function PriceHistoryChart({
     const diffNative = endPrice - startPrice;
 
     // Format native difference
-    const diffNativeFormatted = (diffNative > 0 ? '+' : '') + formatCurrency(diffNative, currency, false);
+    const diffNativeFormatted = (diffNative > 0 ? '+' : '') + formatCurrency(diffNative, displayCurrency, false);
 
     // Calculate Min/Max for the current range
     const prices = data.map(d => d.value);
@@ -160,9 +214,9 @@ export function PriceHistoryChart({
     // Only expand to show purchasePrice if it doesn't compress the data too much.
     // If the data range becomes < 15% of the total range (due to a far-away purchase price),
     // we prioritize showing the curve details over the purchase line.
-    if (selectedRange === 'BUY' && purchasePrice && purchasePrice > 0) {
-        const potentialMin = Math.min(calcMin, purchasePrice);
-        const potentialMax = Math.max(calcMax, purchasePrice);
+    if (selectedRange === 'BUY' && effectivePurchasePrice && effectivePurchasePrice > 0) {
+        const potentialMin = Math.min(calcMin, effectivePurchasePrice);
+        const potentialMax = Math.max(calcMax, effectivePurchasePrice);
 
         const dataRange = calcMax - calcMin;
         const potentialRange = potentialMax - potentialMin;
@@ -182,8 +236,8 @@ export function PriceHistoryChart({
 
     // SMA calculation logic
     const sma200Data = useMemo(() => {
-        // Use historyData if available (source of truth), else generated 'data'
-        const sourceData = historyData && historyData.length > 0 ? historyData : data;
+        // Use data (already converted or raw)
+        const sourceData = data;
 
         // Need at least 200 points + 1 to show a line
         if (sourceData.length < 200) return null;
@@ -203,7 +257,7 @@ export function PriceHistoryChart({
             smaPoints.push({ date: sourceData[i].date, value: sum / 200 });
         }
         return smaPoints;
-    }, [historyData, data]);
+    }, [data]);
 
     // Filter display data based on selectedRange (Client-Side Slicing)
     const displayData = useMemo(() => {
@@ -262,11 +316,11 @@ export function PriceHistoryChart({
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                         <div className="flex items-center gap-1">
                             <span className="font-medium text-foreground">H:</span>
-                            <span>{formatCurrency(maxPrice, currency)}</span>
+                            <span>{formatCurrency(maxPrice, displayCurrency)}</span>
                         </div>
                         <div className="flex items-center gap-1">
                             <span className="font-medium text-foreground">T:</span>
-                            <span>{formatCurrency(minPrice, currency)}</span>
+                            <span>{formatCurrency(minPrice, displayCurrency)}</span>
                         </div>
                     </div>
                 </div>
@@ -337,6 +391,24 @@ export function PriceHistoryChart({
                             </button>
                         ))}
                     </div>
+                    {/* Toggle Button for Currency */}
+                    {canConvert && (
+                        <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
+                            <button
+                                onClick={() => setShowInCHF(!showInCHF)}
+                                className={cn(
+                                    "px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 border font-medium text-[10px] sm:text-xs shadow-sm",
+                                    showInCHF
+                                        ? "bg-emerald-600 text-white border-emerald-700 shadow-md"
+                                        : "bg-background hover:bg-muted text-muted-foreground"
+                                )}
+                                title="Währung in CHF umschalten"
+                            >
+                                <span className={cn("text-[10px] font-bold", showInCHF ? "text-white" : "")}>CHF</span>
+                            </button>
+                        </div>
+                    )}
+
                     <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
                         <button
                             onClick={() => {
@@ -384,7 +456,7 @@ export function PriceHistoryChart({
                         <div className="h-6 w-px bg-border" />
                         <div className="flex flex-col items-end leading-tight">
                             <span className="font-bold tabular-nums">
-                                {formatCurrency(hoveredData.value, currency)}
+                                {formatCurrency(hoveredData.value, displayCurrency)}
                             </span>
                             <span className="text-[10px] text-foreground">Kurs</span>
                         </div>
@@ -394,7 +466,7 @@ export function PriceHistoryChart({
                                 <div className="flex flex-col items-end leading-tight">
                                     <div className="flex items-center gap-1.5">
                                         <span className="font-bold tabular-nums text-foreground">
-                                            {formatCurrency(hoveredData.sma200, currency)}
+                                            {formatCurrency(hoveredData.sma200, displayCurrency)}
                                         </span>
                                         {(() => {
                                             const diff = ((hoveredData.value - hoveredData.sma200) / hoveredData.sma200) * 100;
@@ -427,7 +499,7 @@ export function PriceHistoryChart({
                                             {measurement.percent > 0 ? '+' : ''}{measurement.percent.toFixed(2)}%
                                         </span>
                                         <span className="text-xs font-bold text-white">
-                                            {formatCurrency(measurement.diff, currency, true)}
+                                            {formatCurrency(measurement.diff, displayCurrency, true)}
                                         </span>
                                     </div>
                                     <div className="h-8 w-px bg-white/20" />
@@ -435,7 +507,7 @@ export function PriceHistoryChart({
                                         <div className="flex justify-between gap-4">
                                             <span className="font-bold">Von:</span>
                                             <span>
-                                                {formatCurrency(measurement.p1.value, currency, false)}
+                                                {formatCurrency(measurement.p1.value, displayCurrency, false)}
                                                 <span className="ml-1 text-[11px] text-white font-bold">
                                                     {new Date(measurement.p1.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} {new Date(measurement.p1.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
@@ -444,7 +516,7 @@ export function PriceHistoryChart({
                                         <div className="flex justify-between gap-4">
                                             <span className="font-bold">Bis:</span>
                                             <span>
-                                                {formatCurrency(measurement.p2.value, currency, false)}
+                                                {formatCurrency(measurement.p2.value, displayCurrency, false)}
                                                 <span className="ml-1 text-[11px] text-white font-bold">
                                                     {new Date(measurement.p2.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} {new Date(measurement.p2.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
@@ -659,9 +731,9 @@ export function PriceHistoryChart({
                                 width={40}
                                 mirror={false}
                             />
-                            {purchasePrice && (
+                            {effectivePurchasePrice && (
                                 <ReferenceLine
-                                    y={purchasePrice}
+                                    y={effectivePurchasePrice}
                                     stroke="#3b82f6"
                                     strokeDasharray="3 3"
                                     label={{
@@ -672,9 +744,9 @@ export function PriceHistoryChart({
                                     }}
                                 />
                             )}
-                            {sellLimit && (
+                            {effectiveSellLimit && (
                                 <ReferenceLine
-                                    y={sellLimit}
+                                    y={effectiveSellLimit}
                                     stroke="#dc2626"
                                     strokeDasharray="3 3"
                                     label={{

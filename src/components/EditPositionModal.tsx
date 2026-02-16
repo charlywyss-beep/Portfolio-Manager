@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { X, Save, Trash2, Plus, Pencil } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
+import { cn } from '../utils'; // Added import
 import type { Stock, Purchase } from '../types';
 
 import { DecimalInput } from './DecimalInput';
@@ -31,6 +32,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
     // State for individual purchases
     const [purchases, setPurchases] = useState<Purchase[]>([]);
+    const [inputInCHF, setInputInCHF] = useState(false); // NEW State
 
     // Editable Stock Name
     const [stockName, setStockName] = useState(position.stock.name);
@@ -286,11 +288,31 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
                         {/* Purchases List */}
                         <div className="p-6 space-y-4 flex-1">
+                            {/* NEW: Input Mode Toggle (CHF vs Native) */}
+                            <div className="flex items-center justify-between mb-4 px-1">
+                                <h3 className="text-sm font-semibold">Käufe</h3>
+                                {position.stock.currency !== 'CHF' && (
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-xs text-muted-foreground cursor-pointer select-none flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={inputInCHF}
+                                                onChange={(e) => setInputInCHF(e.target.checked)}
+                                                className="rounded border-gray-300 text-primary focus:ring-primary shadow-sm"
+                                            />
+                                            Kaufpreise in CHF eingeben
+                                        </label>
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Header Row */}
                             <div className="grid grid-cols-12 gap-3 px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase bg-muted/50 rounded-lg mb-2">
                                 <div className="col-span-3">Datum</div>
                                 <div className="col-span-2 text-center">Stück</div>
-                                <div className="col-span-3 text-center">Kaufpreis ({isGBX ? 'GBP' : position.stock.currency})</div>
+                                <div className="col-span-3 text-center">
+                                    Kaufpreis ({inputInCHF ? 'CHF' : (isGBX ? 'GBP' : position.stock.currency)})
+                                </div>
                                 <div className="col-span-3 text-center">
                                     <div>Wechselkurs</div>
                                     <div className="font-normal normal-case text-[9px] opacity-70">CHF pro 1 {isGBX ? 'GBP' : position.stock.currency}</div>
@@ -322,11 +344,24 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                         {/* Price */}
                                         <div className="col-span-3">
                                             <DecimalInput
-                                                value={purchase.price}
-                                                onChange={(val) => handleUpdatePurchase(purchase.id, 'price', parseFloat(val) || 0)}
-                                                maxDecimals={isGBX ? 4 : 2}
+                                                value={inputInCHF ? purchase.price * purchase.fxRate : purchase.price}
+                                                onChange={(val) => {
+                                                    const numVal = parseFloat(val) || 0;
+                                                    if (inputInCHF) {
+                                                        // Update Native Price based on CHF Input and current FX Rate
+                                                        // Avoid division by zero
+                                                        const rate = purchase.fxRate || 1;
+                                                        handleUpdatePurchase(purchase.id, 'price', numVal / rate);
+                                                    } else {
+                                                        handleUpdatePurchase(purchase.id, 'price', numVal);
+                                                    }
+                                                }}
+                                                maxDecimals={inputInCHF ? 2 : (isGBX ? 4 : 2)}
                                                 onFocus={(e) => e.target.select()}
-                                                className="w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary text-center"
+                                                className={cn(
+                                                    "w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary text-center",
+                                                    inputInCHF && "bg-blue-50/50 border-blue-200 dark:border-blue-800 focus:bg-background"
+                                                )}
                                             />
                                         </div>
                                         {/* FX Rate */}
@@ -335,7 +370,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                                 value={purchase.fxRate}
                                                 onChange={(val) => handleUpdatePurchase(purchase.id, 'fxRate', parseFloat(val) || 0)}
                                                 disabled={position.stock.currency === 'CHF'}
-                                                maxDecimals={4}
+                                                maxDecimals={6} // Allow higher precision for FX
                                                 onFocus={(e) => e.target.select()}
                                                 className="w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary disabled:opacity-50 text-center"
                                             />
