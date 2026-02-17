@@ -347,7 +347,9 @@ export function DividendPlanner() {
                                                 {stock.dividendFrequency === 'monthly' && 'Monatlich'}
                                                 {!stock.dividendFrequency && '-'}
                                             </td>
-                                            <td className="text-right py-3 px-4">{quarterlyDividendCHF > 0 ? quarterlyDividendCHF.toFixed(2) : '-'}</td>
+                                            <td className="text-right py-3 px-4">
+                                                {(stock.dividendFrequency !== 'annually' && quarterlyDividendCHF > 0) ? quarterlyDividendCHF.toFixed(2) : '-'}
+                                            </td>
                                             <td className="text-right py-3 px-4 font-semibold whitespace-nowrap relative group/annual">
                                                 {annualDisplay}
                                             </td>
