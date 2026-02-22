@@ -283,6 +283,7 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
     countryWeights?: { [key: string]: number } | null,
     name?: string | null,
     isin?: string | null,
+    exDividendDate?: Date | null,
     error?: string
 }> {
     try {
@@ -319,6 +320,7 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
                 countryWeights: countryWeights,
                 name: batchResult.longName || batchResult.shortName || batchResult.displayName || initialName || symbol,
                 isin: batchResult.isin || null,
+                exDividendDate: (batchResult as any).exDividendDate ? new Date((batchResult as any).exDividendDate * 1000) : null,
                 error: undefined
             };
         }
@@ -407,14 +409,25 @@ export async function fetchSeasonalityData(
         }
 
         const url = `/api/yahoo-finance?symbol=${symbol}&period=${period}&interval=1mo&events=div&_=${Date.now()}`;
-        const response = await fetch(url);
+        const divUrl = `/api/yahoo-finance?symbol=${symbol}&period=${period}&interval=1d&events=div&_=${Date.now()}`;
+
+        const [response, divResponse] = await Promise.all([
+            fetch(url),
+            fetch(divUrl).catch(() => null)
+        ]);
 
         if (!response.ok) return { data: null, error: `API Fehler: ${response.status}` };
 
-        const raw = await response.json();
+        const [raw, divRaw] = await Promise.all([
+            response.json(),
+            divResponse ? divResponse.json().catch(() => null) : null
+        ]);
+
         if (raw.chart?.error) return { data: null, error: `Yahoo Finance: ${raw.chart.error.description}` };
 
         const result = raw.chart?.result?.[0];
+        const divResult = divRaw?.chart?.result?.[0];
+
         if (!result?.timestamp || !result?.indicators?.adjclose?.[0]?.adjclose) {
             // Try regular close as fallback
             if (!result?.timestamp || !result?.indicators?.quote?.[0]?.close) {
@@ -460,9 +473,12 @@ export async function fetchSeasonalityData(
             monthlyDividends.set(m, []);
         }
 
-        // Parse Dividends
-        if (result.events?.dividends) {
-            Object.values(result.events.dividends).forEach((div: any) => {
+        const startYearFilter = specificYear || (currentYear - (years - 1));
+
+        // Parse Dividends (from divResult which uses daily interval)
+        const dividendsFromChart = divResult?.events?.dividends || result.events?.dividends;
+        if (dividendsFromChart) {
+            Object.values(dividendsFromChart).forEach((div: any) => {
                 const date = new Date(div.date * 1000);
                 const year = date.getUTCFullYear();
                 const month = date.getUTCMonth();
@@ -479,7 +495,34 @@ export async function fetchSeasonalityData(
             });
         }
 
-        const startYearFilter = specificYear || (currentYear - (years - 1));
+        // 2. Supplement with Upcoming Dividend if current year
+        if (specificYear === currentYear || !specificYear) {
+            try {
+                const quote = await fetchStockQuote(symbol);
+                if (quote.exDividendDate) {
+                    const date = quote.exDividendDate;
+                    const year = date.getUTCFullYear();
+                    const month = date.getUTCMonth();
+
+                    if (year === currentYear) {
+                        // Check if we already have this month's dividend from history
+                        const hasThisMonth = monthlyDividends.get(month)?.some(d => {
+                            const dDate = new Date(d.date);
+                            return dDate.getUTCFullYear() === year;
+                        });
+
+                        if (!hasThisMonth) {
+                            monthlyDividends.get(month)?.push({
+                                date: date.toISOString(),
+                                amount: 0 // Amount might not be in quote easily
+                            });
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("[Seasonality] Quote ex-div fetch failed");
+            }
+        }
 
         let minYearFound = Infinity;
         let maxYearFound = -Infinity;
