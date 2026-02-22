@@ -102,72 +102,71 @@ export function SeasonalityPage() {
             {/* Grid: left panel + right content — items-stretch makes both columns same height */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-stretch">
 
-                {/* LEFT: Stock Picker — lg:h-full lets inner h-full resolve against grid row height */}
-                <div className="lg:col-span-1 lg:h-full">
-                    <div className="h-full overflow-y-auto space-y-3 pr-0.5 bg-card border border-border rounded-xl p-3">
-                        {/* Search */}
-                        <form onSubmit={handleSearch} className="flex gap-2">
-                            <input
-                                type="text"
-                                value={inputSymbol}
-                                onChange={e => setInputSymbol(e.target.value.toUpperCase())}
-                                placeholder="Symbol z.B. AAPL"
-                                className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                            />
-                            <button type="submit" className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
-                                <Search className="size-4" />
-                            </button>
-                        </form>
+                {/* LEFT: Search + separate Bestand and Watchlist cards */}
+                <div className="lg:col-span-1 lg:h-full flex flex-col gap-3">
+                    {/* Search */}
+                    <form onSubmit={handleSearch} className="flex gap-2">
+                        <input
+                            type="text"
+                            value={inputSymbol}
+                            onChange={e => setInputSymbol(e.target.value.toUpperCase())}
+                            placeholder="Symbol z.B. AAPL"
+                            className="flex-1 px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        />
+                        <button type="submit" className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+                            <Search className="size-4" />
+                        </button>
+                    </form>
 
-                        {/* Portfolio Stocks */}
-                        {portfolioStocks.length > 0 && (
-                            <div>
-                                <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Bestand</p>
-                                <div className="space-y-1">
-                                    {portfolioStocks.map(s => (
-                                        <button
-                                            key={s.id}
-                                            onClick={() => selectStock(s.symbol)}
-                                            className={cn(
-                                                "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center justify-between",
-                                                activeSymbol === s.symbol ? "bg-primary text-primary-foreground" : "hover:bg-accent text-foreground"
-                                            )}
-                                        >
-                                            <span className="font-medium truncate">{s.name || s.symbol}</span>
-                                            <span className={cn("text-xs ml-1 shrink-0", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                                                {s.symbol}
-                                            </span>
-                                        </button>
-                                    ))}
-                                </div>
+                    {/* Bestand — natural height */}
+                    {portfolioStocks.length > 0 && (
+                        <div className="bg-card border border-border rounded-xl p-3">
+                            <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Bestand</p>
+                            <div className="space-y-1">
+                                {portfolioStocks.map(s => (
+                                    <button
+                                        key={s.id}
+                                        onClick={() => selectStock(s.symbol)}
+                                        className={cn(
+                                            "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center justify-between",
+                                            activeSymbol === s.symbol ? "bg-primary text-primary-foreground" : "hover:bg-accent text-foreground"
+                                        )}
+                                    >
+                                        <span className="font-medium truncate">{s.name || s.symbol}</span>
+                                        <span className={cn("text-xs ml-1 shrink-0", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                                            {s.symbol}
+                                        </span>
+                                    </button>
+                                ))}
                             </div>
-                        )}
+                        </div>
+                    )}
 
-                        {/* Watchlist Stocks */}
-                        {watchlistStocks.length > 0 && (
-                            <div>
-                                <p className="text-xs font-semibold text-muted-foreground mb-2 mt-3 uppercase tracking-wide">Watchlist</p>
-                                <div className="space-y-1">
-                                    {watchlistStocks.map(s => (
-                                        <button
-                                            key={s.id}
-                                            onClick={() => selectStock(s.symbol)}
-                                            className={cn(
-                                                "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center justify-between",
-                                                activeSymbol === s.symbol ? "bg-primary text-primary-foreground" : "hover:bg-accent text-foreground"
-                                            )}
-                                        >
-                                            <span className="font-medium truncate">{s.name || s.symbol}</span>
-                                            <span className={cn("text-xs ml-1 shrink-0", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                                                {s.symbol}
-                                            </span>
-                                        </button>
-                                    ))}
-                                </div>
+                    {/* Watchlist — flex-1 fills remaining height, scrolls internally */}
+                    {watchlistStocks.length > 0 && (
+                        <div className="bg-card border border-border rounded-xl p-3 flex flex-col flex-1 min-h-0">
+                            <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Watchlist</p>
+                            <div className="space-y-1 overflow-y-auto flex-1 min-h-0">
+                                {watchlistStocks.map(s => (
+                                    <button
+                                        key={s.id}
+                                        onClick={() => selectStock(s.symbol)}
+                                        className={cn(
+                                            "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center justify-between",
+                                            activeSymbol === s.symbol ? "bg-primary text-primary-foreground" : "hover:bg-accent text-foreground"
+                                        )}
+                                    >
+                                        <span className="font-medium truncate">{s.name || s.symbol}</span>
+                                        <span className={cn("text-xs ml-1 shrink-0", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                                            {s.symbol}
+                                        </span>
+                                    </button>
+                                ))}
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
+
 
                 {/* RIGHT: Chart + Table */}
                 <div className="lg:col-span-3 space-y-4">
