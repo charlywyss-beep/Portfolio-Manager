@@ -438,7 +438,8 @@ export async function fetchSeasonalityData(
             const curr = closes[i];
             if (prev == null || curr == null || prev === 0) continue;
 
-            const date = new Date(timestamps[i] * 1000);
+            // Get the month of the STARTING bar (the month the return happened in)
+            const date = new Date(timestamps[i - 1] * 1000);
             const year = date.getUTCFullYear();
             const month = date.getUTCMonth(); // 0 = Jan
 
@@ -450,6 +451,9 @@ export async function fetchSeasonalityData(
             }
 
             // Skip current month if it's the latest data point (as it is not yet "finished")
+            // (Actually, if i is the latest bar, the return happened in month i-1, which IS finished)
+            // But we already have the startYearFilter logic and the trailing fetch usually handles this.
+            // Let's keep a safeguard for very recent data if needed.
             if (year === currentYear && month === currentMonth) {
                 continue;
             }
