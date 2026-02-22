@@ -17,6 +17,8 @@ export function SeasonalityPage() {
     const [inputSymbol, setInputSymbol] = useState(symbolParam || '');
     const [activeSymbol, setActiveSymbol] = useState(symbolParam || '');
     const [years, setYears] = useState<number>(10);
+    const [analysisMode, setAnalysisMode] = useState<'range' | 'single'>('range');
+    const [targetYear, setTargetYear] = useState<number>(new Date().getFullYear());
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [data, setData] = useState<MonthlySeasonality[] | null>(null);
@@ -38,7 +40,11 @@ export function SeasonalityPage() {
         setError(null);
         setData(null);
         setRangeYears(null);
-        const result = await fetchSeasonalityData(sym.trim().toUpperCase(), y);
+        const result = await fetchSeasonalityData(
+            sym.trim().toUpperCase(),
+            analysisMode === 'range' ? y : 10,
+            analysisMode === 'single' ? targetYear : undefined
+        );
         setLoading(false);
         if (result.error) setError(result.error);
         else {
@@ -51,7 +57,7 @@ export function SeasonalityPage() {
 
     useEffect(() => {
         if (activeSymbol) loadData(activeSymbol, years);
-    }, [activeSymbol, years]);
+    }, [activeSymbol, years, analysisMode, targetYear]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -113,20 +119,51 @@ export function SeasonalityPage() {
                                     </p>
                                 </div>
                             </div>
-                            {/* Jahre-Eingabe rechts */}
-                            <div className="flex items-center gap-2 bg-muted rounded-xl px-4 py-2">
-                                <label className="text-sm text-muted-foreground whitespace-nowrap font-medium">Jahre:</label>
-                                <input
-                                    type="number"
-                                    min={1}
-                                    max={10}
-                                    value={years}
-                                    onChange={e => {
-                                        const v = parseInt(e.target.value);
-                                        if (!isNaN(v) && v >= 1 && v <= 10) setYears(v);
-                                    }}
-                                    className="w-14 bg-transparent text-base font-bold text-foreground text-center focus:outline-none"
-                                />
+                            {/* Modus + Eingabe rechts */}
+                            <div className="flex items-center gap-3">
+                                <div className="flex bg-muted p-1 rounded-lg">
+                                    <button
+                                        onClick={() => setAnalysisMode('range')}
+                                        className={cn(
+                                            "px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                                            analysisMode === 'range' ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                                        )}
+                                    >
+                                        Bereich
+                                    </button>
+                                    <button
+                                        onClick={() => setAnalysisMode('single')}
+                                        className={cn(
+                                            "px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                                            analysisMode === 'single' ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                                        )}
+                                    >
+                                        Einzeljahr
+                                    </button>
+                                </div>
+
+                                <div className="flex items-center gap-2 bg-muted rounded-xl px-4 py-2">
+                                    <label className="text-sm text-muted-foreground whitespace-nowrap font-medium">
+                                        {analysisMode === 'range' ? 'Jahre:' : 'Jahr:'}
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min={analysisMode === 'range' ? 1 : 1900}
+                                        max={analysisMode === 'range' ? 50 : 2100}
+                                        value={analysisMode === 'range' ? years : targetYear}
+                                        onChange={e => {
+                                            const v = parseInt(e.target.value);
+                                            if (!isNaN(v)) {
+                                                if (analysisMode === 'range') {
+                                                    if (v >= 1 && v <= 50) setYears(v);
+                                                } else {
+                                                    setTargetYear(v);
+                                                }
+                                            }
+                                        }}
+                                        className="w-14 bg-transparent text-base font-bold text-foreground text-center focus:outline-none"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>

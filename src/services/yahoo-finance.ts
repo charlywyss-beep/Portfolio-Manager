@@ -383,10 +383,23 @@ export interface MonthlySeasonality {
  */
 export async function fetchSeasonalityData(
     symbol: string,
-    years: number = 10
+    years: number = 10,
+    specificYear?: number
 ): Promise<{ data: MonthlySeasonality[] | null; startYear?: number; endYear?: number; error?: string }> {
     try {
-        const period = `${years}y`;
+        const now = new Date();
+        const currentYear = now.getUTCFullYear();
+        const currentMonth = now.getUTCMonth();
+
+        // If specificYear is set, we need to fetch enough data to cover it
+        let period = `${years}y`;
+        if (specificYear) {
+            const yDiff = currentYear - specificYear;
+            // Fetch at least 20 years or enough to cover the specific year + some buffer
+            const neededYears = Math.max(20, yDiff + 2);
+            period = `${neededYears}y`;
+        }
+
         const url = `/api/yahoo-finance?symbol=${symbol}&period=${period}&interval=1mo&_=${Date.now()}`;
         const response = await fetch(url);
 
@@ -414,13 +427,10 @@ export async function fetchSeasonalityData(
         const monthlyReturns: Map<number, number[]> = new Map();
         for (let m = 0; m < 12; m++) monthlyReturns.set(m, []);
 
-        const now = new Date();
-        const currentYear = now.getUTCFullYear();
-        const currentMonth = now.getUTCMonth();
-        const startYearFilter = currentYear - (years - 1);
+        const startYearFilter = specificYear || (currentYear - (years - 1));
 
-        let minYear = Infinity;
-        let maxYear = -Infinity;
+        let minYearFound = Infinity;
+        let maxYearFound = -Infinity;
 
         // Monthly interval: each timestamp is approx. start of a month. Compute month-over-month return.
         for (let i = 1; i < timestamps.length; i++) {
@@ -432,8 +442,12 @@ export async function fetchSeasonalityData(
             const year = date.getUTCFullYear();
             const month = date.getUTCMonth(); // 0 = Jan
 
-            // Calendar Year Logic: Only include if year is >= startYearFilter
-            if (year < startYearFilter) continue;
+            // Filter logic
+            if (specificYear) {
+                if (year !== specificYear) continue;
+            } else {
+                if (year < startYearFilter) continue;
+            }
 
             // Skip current month if it's the latest data point (as it is not yet "finished")
             if (year === currentYear && month === currentMonth) {
@@ -446,8 +460,8 @@ export async function fetchSeasonalityData(
 
             monthlyReturns.get(month)!.push(monthReturn);
 
-            if (year < minYear) minYear = year;
-            if (year > maxYear) maxYear = year;
+            if (year < minYearFound) minYearFound = year;
+            if (year > maxYearFound) maxYearFound = year;
         }
 
         // Compute stats per month
@@ -469,8 +483,8 @@ export async function fetchSeasonalityData(
 
         return {
             data,
-            startYear: minYear === Infinity ? undefined : minYear,
-            endYear: maxYear === -Infinity ? undefined : maxYear
+            startYear: minYearFound === Infinity ? undefined : minYearFound,
+            endYear: maxYearFound === -Infinity ? undefined : maxYearFound
         };
     } catch (e) {
         console.error('[Seasonality] Error:', e);
