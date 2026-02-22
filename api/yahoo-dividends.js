@@ -1,6 +1,3 @@
-import YahooFinance from 'yahoo-finance2';
-
-const yahooFinance = new YahooFinance();
 
 export default async function handler(req, res) {
     // Enable CORS for your frontend
@@ -20,31 +17,35 @@ export default async function handler(req, res) {
     }
 
     try {
-        console.log('[Vercel Dividends] Fetching dividends for:', symbol, 'Period:', period);
+        console.log(`[Vercel Dividends] Fetching for: ${symbol}, Period: ${period}`);
 
-        // Convert period (e.g. 10y) to dates
-        const now = new Date();
-        const yearsMatch = period.match(/^(\d+)y$/);
-        const years = yearsMatch ? parseInt(yearsMatch[1]) : 10;
+        // Direct Yahoo Chart API call (Daily interval for events)
+        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${period}&interval=1d&events=div`;
 
-        const period1 = new Date();
-        period1.setFullYear(now.getFullYear() - years);
-
-        // Fetch dividends using yahoo-finance2 .historical method
-        // (Note: .dividends() is only available in dev/v4, v3 uses .historical with events)
-        const rawDividends = await yahooFinance.historical(symbol, {
-            period1: period1,
-            period2: now,
-            events: 'dividends'
+        const response = await fetch(yahooUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
         });
 
-        // Map to expected format { date, amount }
-        const dividends = rawDividends.map(d => ({
-            date: d.date,
-            amount: d.dividends
+        if (!response.ok) {
+            throw new Error(`Yahoo API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const result = data.chart?.result?.[0];
+
+        if (!result) {
+            throw new Error('No result returned from Yahoo');
+        }
+
+        const rawDividends = result.events?.dividends || {};
+        const dividends = Object.values(rawDividends).map(d => ({
+            date: new Date(d.date * 1000).toISOString(),
+            amount: d.amount
         }));
 
-        console.log(`[Vercel Dividends] Success: ${dividends.length} events found.`);
+        console.log(`[Vercel Dividends] Success: ${dividends.length} events found for ${symbol}.`);
 
         return res.status(200).json({ dividends });
     } catch (error) {

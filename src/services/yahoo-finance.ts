@@ -425,8 +425,12 @@ export async function fetchSeasonalityData(
 
         if (raw.chart?.error) return { data: null, error: `Yahoo Finance: ${raw.chart.error.description}` };
 
-        const result = raw.chart?.result?.[0];
-        const dividendsFromApi = divRaw?.dividends || [];
+        const dividendsFromApi = Array.isArray(divRaw?.dividends) ? divRaw.dividends : [];
+        const fallbackDividends = result.events?.dividends ? Object.values(result.events.dividends) : [];
+
+        console.log(`[Seasonality] API Divs: ${dividendsFromApi.length}, Fallback Divs: ${fallbackDividends.length}`);
+
+        const combinedDividends = dividendsFromApi.length > 0 ? dividendsFromApi : fallbackDividends;
 
         if (!result?.timestamp || !result?.indicators?.adjclose?.[0]?.adjclose) {
             // Try regular close as fallback
@@ -475,21 +479,23 @@ export async function fetchSeasonalityData(
 
         const startYearFilter = specificYear || (currentYear - (years - 1));
 
-        // Parse Dividends (from dedicated dividends endpoint)
-        if (Array.isArray(dividendsFromApi)) {
-            dividendsFromApi.forEach((div: any) => {
-                const date = new Date(div.date);
+        // Parse Dividends (from dedicated dividends endpoint or fallback)
+        if (Array.isArray(combinedDividends)) {
+            combinedDividends.forEach((div: any) => {
+                if (!div.date) return;
+
+                // Handle both timestamp (number) and date string
+                const date = typeof div.date === 'number' ? new Date(div.date * 1000) : new Date(div.date);
                 const year = date.getUTCFullYear();
                 const month = date.getUTCMonth();
 
                 // Filter dividends by year
-                if (specificYear) {
-                    if (year !== specificYear) return;
-                } else if (year < startYearFilter) return;
+                if (specificYear && year !== specificYear) return;
+                if (!specificYear && year < startYearFilter) return;
 
                 monthlyDividends.get(month)?.push({
                     date: date.toISOString(),
-                    amount: div.amount
+                    amount: div.amount || div.dividends || 0
                 });
             });
         }
