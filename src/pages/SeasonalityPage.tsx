@@ -102,21 +102,21 @@ export function SeasonalityPage() {
                                     <p className="text-muted-foreground hidden md:block">Ø monatliche Rendite über {years} Jahre</p>
                                 </div>
                             </div>
-                        </div>
-                        {/* Jahre-Eingabe */}
-                        <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1">
-                            <label className="text-xs text-muted-foreground whitespace-nowrap">Jahre:</label>
-                            <input
-                                type="number"
-                                min={1}
-                                max={10}
-                                value={years}
-                                onChange={e => {
-                                    const v = parseInt(e.target.value);
-                                    if (!isNaN(v) && v >= 1 && v <= 10) setYears(v);
-                                }}
-                                className="w-12 bg-transparent text-sm font-medium text-foreground text-center focus:outline-none"
-                            />
+                            {/* Jahre-Eingabe rechts */}
+                            <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1">
+                                <label className="text-xs text-muted-foreground whitespace-nowrap">Jahre:</label>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={10}
+                                    value={years}
+                                    onChange={e => {
+                                        const v = parseInt(e.target.value);
+                                        if (!isNaN(v) && v >= 1 && v <= 10) setYears(v);
+                                    }}
+                                    className="w-12 bg-transparent text-sm font-medium text-foreground text-center focus:outline-none"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
