@@ -103,7 +103,7 @@ export function SeasonalityPage() {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-stretch">
 
                 {/* LEFT: Search + separate Bestand and Watchlist cards */}
-                <div className="lg:col-span-1 lg:h-full flex flex-col gap-3">
+                <div className="lg:col-span-1 lg:h-full flex flex-col gap-3 lg:overflow-hidden">
                     {/* Search */}
                     <form onSubmit={handleSearch} className="flex gap-2">
                         <input
