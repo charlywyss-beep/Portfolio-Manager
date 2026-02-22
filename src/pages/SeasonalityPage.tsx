@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BarChart2, Search, RefreshCw, TrendingUp, TrendingDown } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { fetchSeasonalityData, MonthlySeasonality } from '../services/yahoo-finance';
+import { fetchSeasonalityData } from '../services/yahoo-finance';
+import type { MonthlySeasonality } from '../services/yahoo-finance';
 import { cn } from '../utils';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
