@@ -16,7 +16,7 @@ export function SeasonalityPage() {
 
     const [inputSymbol, setInputSymbol] = useState(symbolParam || '');
     const [activeSymbol, setActiveSymbol] = useState(symbolParam || '');
-    const [years, setYears] = useState<5 | 10>(10);
+    const [years, setYears] = useState<number>(10);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [data, setData] = useState<MonthlySeasonality[] | null>(null);
@@ -28,7 +28,7 @@ export function SeasonalityPage() {
     const watchlistStockIds = new Set(watchlists.flatMap(w => w.stockIds || []));
     const watchlistStocks = stocks.filter(s => watchlistStockIds.has(s.id) && !portfolioStocks.includes(s));
 
-    const loadData = async (sym: string, y: 5 | 10) => {
+    const loadData = async (sym: string, y: number) => {
         if (!sym.trim()) return;
         setLoading(true);
         setError(null);
@@ -81,20 +81,21 @@ export function SeasonalityPage() {
                                     <p className="text-muted-foreground hidden md:block">Ø monatliche Rendite über {years} Jahre</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-                                {([5, 10] as const).map(y => (
-                                    <button
-                                        key={y}
-                                        onClick={() => setYears(y)}
-                                        className={cn(
-                                            "px-3 py-1.5 rounded-md text-sm font-medium transition-all",
-                                            years === y ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                                        )}
-                                    >
-                                        {y}J
-                                    </button>
-                                ))}
-                            </div>
+                        </div>
+                        {/* Jahre-Eingabe */}
+                        <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1">
+                            <label className="text-xs text-muted-foreground whitespace-nowrap">Jahre:</label>
+                            <input
+                                type="number"
+                                min={1}
+                                max={10}
+                                value={years}
+                                onChange={e => {
+                                    const v = parseInt(e.target.value);
+                                    if (!isNaN(v) && v >= 1 && v <= 10) setYears(v);
+                                }}
+                                className="w-12 bg-transparent text-sm font-medium text-foreground text-center focus:outline-none"
+                            />
                         </div>
                     </div>
                 </div>
@@ -364,6 +365,6 @@ export function SeasonalityPage() {
                 </div>
 
             </div>
-        </div>
+        </div >
     );
 }
