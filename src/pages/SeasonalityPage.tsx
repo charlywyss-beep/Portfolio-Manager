@@ -130,12 +130,26 @@ export function SeasonalityPage() {
                                         key={s.id}
                                         onClick={() => selectStock(s.symbol)}
                                         className={cn(
-                                            "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center justify-between",
+                                            "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2",
                                             activeSymbol === s.symbol ? "bg-primary text-primary-foreground" : "hover:bg-accent text-foreground"
                                         )}
                                     >
-                                        <span className="font-medium truncate">{s.name || s.symbol}</span>
-                                        <span className={cn("text-xs ml-1 shrink-0", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                                        {/* Logo */}
+                                        {s.logoUrl ? (
+                                            <img src={s.logoUrl} alt="" className="size-6 rounded-full object-contain bg-white shrink-0" />
+                                        ) : (
+                                            <div className="size-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
+                                                {(s.name || s.symbol)[0]}
+                                            </div>
+                                        )}
+                                        {/* Name — click navigates to StockDetail */}
+                                        <span
+                                            className="font-medium truncate flex-1 hover:underline"
+                                            onClick={e => { e.stopPropagation(); navigate(`/stock/${s.id}`); }}
+                                        >
+                                            {s.name || s.symbol}
+                                        </span>
+                                        <span className={cn("text-xs shrink-0", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}>
                                             {s.symbol}
                                         </span>
                                     </button>
@@ -161,12 +175,26 @@ export function SeasonalityPage() {
                                             key={s.id}
                                             onClick={() => selectStock(s.symbol)}
                                             className={cn(
-                                                "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center justify-between",
+                                                "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2",
                                                 activeSymbol === s.symbol ? "bg-primary text-primary-foreground" : "hover:bg-accent text-foreground"
                                             )}
                                         >
-                                            <span className="font-medium truncate">{s.name || s.symbol}</span>
-                                            <span className={cn("text-xs ml-1 shrink-0", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                                            {/* Logo */}
+                                            {s.logoUrl ? (
+                                                <img src={s.logoUrl} alt="" className="size-6 rounded-full object-contain bg-white shrink-0" />
+                                            ) : (
+                                                <div className="size-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
+                                                    {(s.name || s.symbol)[0]}
+                                                </div>
+                                            )}
+                                            {/* Name — click navigates to StockDetail */}
+                                            <span
+                                                className="font-medium truncate flex-1 hover:underline"
+                                                onClick={e => { e.stopPropagation(); navigate(`/stock/${s.id}`); }}
+                                            >
+                                                {s.name || s.symbol}
+                                            </span>
+                                            <span className={cn("text-xs shrink-0", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}>
                                                 {s.symbol}
                                             </span>
                                         </button>
@@ -176,6 +204,7 @@ export function SeasonalityPage() {
                         </div>
                     )}
                 </div>
+
 
 
                 {/* RIGHT: Chart + Table */}
