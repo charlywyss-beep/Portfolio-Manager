@@ -115,7 +115,7 @@ export function SeasonalityPage() {
                                     <p className="text-muted-foreground hidden md:block">
                                         {rangeYears
                                             ? (rangeYears.start === rangeYears.end ? `${rangeYears.start}` : `${rangeYears.start} – ${rangeYears.end}`)
-                                            : (loading ? 'Lädt...' : `${new Date().getFullYear() - (years - 1)} – ${new Date().getFullYear()}`)}
+                                            : (loading ? 'Lädt...' : (analysisMode === 'range' ? `${new Date().getFullYear() - (years - 1)} – ${new Date().getFullYear()}` : `${targetYear}`))}
                                     </p>
                                 </div>
                             </div>
@@ -374,7 +374,9 @@ export function SeasonalityPage() {
 
                             {/* Bar Chart */}
                             <div className="bg-card border border-border rounded-xl p-5">
-                                <h2 className="font-semibold mb-1">Ø Monatsrendite — {activeSymbol} ({years} Jahre)</h2>
+                                <h2 className="font-semibold mb-1">
+                                    Ø Monatsrendite — {activeSymbol} {analysisMode === 'single' ? `(${targetYear})` : `(${rangeYears ? (rangeYears.end - rangeYears.start + 1) : years} Jahre)`}
+                                </h2>
                                 <p className="text-xs text-muted-foreground mb-3">Historische Durchschnittsrendite pro Kalendermonat. Grün = positiv, Rot = negativ.</p>
 
                                 {(() => {
