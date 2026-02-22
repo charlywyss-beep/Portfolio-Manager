@@ -4,7 +4,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator } from 'lucide-react';
+import { ArrowLeft, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2 } from 'lucide-react';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
 import { estimateMarketState } from '../utils/market';
@@ -305,6 +305,16 @@ export function StockDetail() {
                     >
                         <ArrowLeft className="size-5 md:size-4 md:mr-1.5 transition-transform group-hover:-translate-x-1" />
                         <span className="hidden md:inline">Zurück</span>
+                    </button>
+
+                    {/* Saisonalität Button */}
+                    <button
+                        onClick={() => navigate(`/seasonality/${stock.symbol}`)}
+                        className="flex items-center gap-1.5 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors font-medium bg-violet-50 dark:bg-violet-900/10 px-2 py-1.5 rounded-md shadow-sm border border-violet-100 dark:border-violet-900/30 whitespace-nowrap"
+                        title="Saisonalitätsanalyse"
+                    >
+                        <BarChart2 className="size-3.5" />
+                        <span className="hidden md:inline">Saisonalität</span>
                     </button>
 
                     {/* Button moved to Chart Header */}

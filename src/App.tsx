@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, NavLink, Link } from 'react-router-dom';
 import { FairValueCalculator } from './pages/FairValueCalculator';
-import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, ArrowLeftRight, Landmark, Telescope, Menu, X } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, ArrowLeftRight, Landmark, Telescope, Menu, X, BarChart2 } from 'lucide-react';
 
 
 import { cn } from './utils';
@@ -19,6 +19,7 @@ import { Watchlist } from './pages/Watchlist';
 import { StockDetail } from './pages/StockDetail';
 import { ExchangeRates } from './pages/ExchangeRates';
 import { MortgageCalculator } from './pages/MortgageCalculator';
+import { SeasonalityPage } from './pages/SeasonalityPage';
 
 interface NavItemProps {
   to: string;
@@ -174,6 +175,7 @@ function App() {
               <NavItem to="/calculator" icon={Calculator} label="Kauf / Verkauf" onClick={closeSidebarOnMobile} />
               <NavItem to="/fair-value" icon={Telescope} label="Fairer Wert" onClick={closeSidebarOnMobile} />
               <NavItem to="/mortgage" icon={Landmark} label="Budget" onClick={closeSidebarOnMobile} />
+              <NavItem to="/seasonality" icon={BarChart2} label="Saisonalität" onClick={closeSidebarOnMobile} />
 
               <div className="pt-4 mt-4 border-t border-border">
                 <NavItem to="/exchange-rates" icon={ArrowLeftRight} label="Finanz Rechner" onClick={closeSidebarOnMobile} />
@@ -205,6 +207,8 @@ function App() {
               <Route path="/dividends/edit/:stockId" element={<EditDividendPage />} />
               <Route path="/stock/:id" element={<StockDetail />} />
               <Route path="/mortgage" element={<MortgageCalculator />} />
+              <Route path="/seasonality" element={<SeasonalityPage />} />
+              <Route path="/seasonality/:symbol" element={<SeasonalityPage />} />
               <Route path="/exchange-rates" element={<ExchangeRates />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>

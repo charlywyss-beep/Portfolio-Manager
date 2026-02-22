@@ -368,6 +368,95 @@ export const searchStocks = async (query: string): Promise<any[]> => {
 };
 
 // Helper to fetch advanced Analysis (Growth estimates, Valuation)
+export interface MonthlySeasonality {
+    month: number;         // 0 = Jan, 11 = Dec
+    avgReturn: number;     // Average monthly return in %
+    medianReturn: number;  // Median monthly return in %
+    positiveRate: number;  // How often was this month positive (0-1)
+    count: number;         // Number of data points
+    returns: number[];     // All individual monthly returns
+}
+
+/**
+ * Fetch and compute seasonality data for a stock symbol.
+ * Uses daily chart data fetched via the existing Yahoo Finance proxy.
+ */
+export async function fetchSeasonalityData(
+    symbol: string,
+    years: number = 10
+): Promise<{ data: MonthlySeasonality[] | null; error?: string }> {
+    try {
+        const period = `${years}y`;
+        const url = `/api/yahoo-finance?symbol=${symbol}&period=${period}&interval=1mo&_=${Date.now()}`;
+        const response = await fetch(url);
+
+        if (!response.ok) return { data: null, error: `API Fehler: ${response.status}` };
+
+        const raw = await response.json();
+        if (raw.chart?.error) return { data: null, error: `Yahoo Finance: ${raw.chart.error.description}` };
+
+        const result = raw.chart?.result?.[0];
+        if (!result?.timestamp || !result?.indicators?.adjclose?.[0]?.adjclose) {
+            // Try regular close as fallback
+            if (!result?.timestamp || !result?.indicators?.quote?.[0]?.close) {
+                return { data: null, error: 'Keine historischen Daten verfügbar' };
+            }
+        }
+
+        const timestamps: number[] = result.timestamp;
+        const closes: (number | null)[] =
+            result.indicators?.adjclose?.[0]?.adjclose ||
+            result.indicators?.quote?.[0]?.close;
+
+        const currency: string | null = result.meta?.currency || null;
+
+        // Build month → returns map
+        const monthlyReturns: Map<number, number[]> = new Map();
+        for (let m = 0; m < 12; m++) monthlyReturns.set(m, []);
+
+        // Monthly interval: each timestamp is approx. start of a month. Compute month-over-month return.
+        for (let i = 1; i < timestamps.length; i++) {
+            const prev = closes[i - 1];
+            const curr = closes[i];
+            if (prev == null || curr == null || prev === 0) continue;
+
+            const normalizedCurr = normalizeYahooPrice(curr, currency, symbol);
+            const normalizedPrev = normalizeYahooPrice(prev, currency, symbol);
+
+            const monthReturn = ((normalizedCurr - normalizedPrev) / normalizedPrev) * 100;
+
+            // Get the month of the CURRENT bar (this is what the return "belongs to")
+            const date = new Date(timestamps[i] * 1000);
+            const month = date.getUTCMonth(); // 0 = Jan
+
+            monthlyReturns.get(month)!.push(monthReturn);
+        }
+
+        // Compute stats per month
+        const data: MonthlySeasonality[] = Array.from({ length: 12 }, (_, m) => {
+            const returns = monthlyReturns.get(m) || [];
+            if (returns.length === 0) {
+                return { month: m, avgReturn: 0, medianReturn: 0, positiveRate: 0, count: 0, returns: [] };
+            }
+
+            const sorted = [...returns].sort((a, b) => a - b);
+            const avg = returns.reduce((s, v) => s + v, 0) / returns.length;
+            const median = sorted.length % 2 === 0
+                ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
+                : sorted[Math.floor(sorted.length / 2)];
+            const positiveRate = returns.filter(r => r > 0).length / returns.length;
+
+            return { month: m, avgReturn: avg, medianReturn: median, positiveRate, count: returns.length, returns };
+        });
+
+        return { data };
+    } catch (e) {
+        console.error('[Seasonality] Error:', e);
+        return { data: null, error: 'Netzwerkfehler beim Laden der Saisonalitätsdaten.' };
+    }
+}
+
+// Helper to fetch advanced Analysis (Growth estimates, Valuation)
 export async function fetchStockAnalysis(symbol: string): Promise<{
     growthRate: number | null,
     peHistory: number | null,
