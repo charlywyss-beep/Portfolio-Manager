@@ -99,7 +99,7 @@ export function SeasonalityPage() {
                                 </div>
                                 <div>
                                     <h1 className="text-3xl font-bold tracking-tight">Saisonalität</h1>
-                                    <p className="text-muted-foreground hidden md:block">Ø monatliche Rendite über {years} Jahre</p>
+                                    <p className="text-muted-foreground hidden md:block">{new Date().getFullYear() - years} – {new Date().getFullYear() - 1}</p>
                                 </div>
                             </div>
                             {/* Jahre-Eingabe rechts */}
@@ -295,7 +295,7 @@ export function SeasonalityPage() {
                                                 >
                                                     {activeStock?.name || activeSymbol}
                                                 </button>
-                                                <p className="text-xs text-muted-foreground">{years} Jahre Analyse</p>
+                                                <p className="text-xs text-muted-foreground">{new Date().getFullYear() - years} – {new Date().getFullYear() - 1}</p>
                                             </>
                                         );
                                     })()}
