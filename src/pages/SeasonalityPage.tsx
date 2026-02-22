@@ -115,7 +115,7 @@ export function SeasonalityPage() {
             {/* Search & Stock Picker */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                 {/* Search */}
-                <div className="lg:col-span-1 space-y-3">
+                <div className="lg:col-span-1 space-y-3 lg:sticky lg:top-0 lg:self-start lg:overflow-y-auto lg:max-h-[calc(100vh-80px)] pr-0.5">
                     <form onSubmit={handleSearch} className="flex gap-2">
                         <input
                             type="text"
@@ -163,7 +163,7 @@ export function SeasonalityPage() {
                     {watchlistStocks.length > 0 && (
                         <div className="bg-card border border-border rounded-xl p-3">
                             <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Watchlist</p>
-                            <div className="space-y-1 max-h-48 overflow-y-auto">
+                            <div className="space-y-1">
                                 {watchlistStocks.map(s => (
                                     <button
                                         key={s.id}
