@@ -107,7 +107,9 @@ export function SeasonalityPage() {
                                 <div>
                                     <h1 className="text-3xl font-bold tracking-tight">Saisonalität</h1>
                                     <p className="text-muted-foreground hidden md:block">
-                                        {rangeYears ? `${rangeYears.start} – ${rangeYears.end}` : (loading ? 'Lädt...' : `${new Date().getFullYear() - years} – ${new Date().getFullYear() - 1}`)}
+                                        {rangeYears
+                                            ? (rangeYears.start === rangeYears.end ? `${rangeYears.start}` : `${rangeYears.start} – ${rangeYears.end}`)
+                                            : (loading ? 'Lädt...' : `${new Date().getFullYear() - (years - 1)} – ${new Date().getFullYear()}`)}
                                     </p>
                                 </div>
                             </div>
@@ -305,7 +307,9 @@ export function SeasonalityPage() {
                                                     {activeStock?.name || activeSymbol}
                                                 </button>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {rangeYears ? `${rangeYears.start} – ${rangeYears.end}` : `${new Date().getFullYear() - years} – ${new Date().getFullYear() - 1}`}
+                                                    {rangeYears
+                                                        ? (rangeYears.start === rangeYears.end ? `${rangeYears.start}` : `${rangeYears.start} – ${rangeYears.end}`)
+                                                        : `${new Date().getFullYear() - (years - 1)} – ${new Date().getFullYear()}`}
                                                 </p>
                                             </>
                                         );

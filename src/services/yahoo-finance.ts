@@ -417,6 +417,7 @@ export async function fetchSeasonalityData(
         const now = new Date();
         const currentYear = now.getUTCFullYear();
         const currentMonth = now.getUTCMonth();
+        const startYearFilter = currentYear - (years - 1);
 
         let minYear = Infinity;
         let maxYear = -Infinity;
@@ -430,6 +431,9 @@ export async function fetchSeasonalityData(
             const date = new Date(timestamps[i] * 1000);
             const year = date.getUTCFullYear();
             const month = date.getUTCMonth(); // 0 = Jan
+
+            // Calendar Year Logic: Only include if year is >= startYearFilter
+            if (year < startYearFilter) continue;
 
             // Skip current month if it's the latest data point (as it is not yet "finished")
             if (year === currentYear && month === currentMonth) {
