@@ -425,6 +425,7 @@ export async function fetchSeasonalityData(
 
         if (raw.chart?.error) return { data: null, error: `Yahoo Finance: ${raw.chart.error.description}` };
 
+        const result = raw.chart?.result?.[0];
         const dividendsFromApi = Array.isArray(divRaw?.dividends) ? divRaw.dividends : [];
         const fallbackDividends = result.events?.dividends ? Object.values(result.events.dividends) : [];
 
