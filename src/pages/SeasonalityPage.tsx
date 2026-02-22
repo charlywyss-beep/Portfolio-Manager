@@ -431,7 +431,7 @@ export function SeasonalityPage() {
                                                     <td className={cn("text-right py-2 px-4 font-semibold tabular-nums", d.avgReturn >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
                                                         {d.avgReturn >= 0 ? '+' : ''}{d.avgReturn.toFixed(2)}%
                                                     </td>
-                                                    <td className={cn("text-right py-2 px-4 tabular-nums", d.medianReturn >= 0 ? "text-green-600/70 dark:text-green-400/70" : "text-red-600/70 dark:text-red-400/70")}>
+                                                    <td className={cn("text-right py-2 px-4 tabular-nums", d.medianReturn >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
                                                         {d.medianReturn >= 0 ? '+' : ''}{d.medianReturn.toFixed(2)}%
                                                     </td>
                                                     <td className="text-right py-2 px-4 tabular-nums">
