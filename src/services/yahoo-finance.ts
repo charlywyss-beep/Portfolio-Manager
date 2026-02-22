@@ -461,8 +461,8 @@ export async function fetchSeasonalityData(
             const curr = closes[i];
             if (prev == null || curr == null || prev === 0) continue;
 
-            // Get the month of the STARTING bar (the month the performance happened in)
-            const date = new Date(timestamps[i - 1] * 1000);
+            // Get the month of the CURRENT bar (the month that just finished/is the current month)
+            const date = new Date(timestamps[i] * 1000);
             const year = date.getUTCFullYear();
             const month = date.getUTCMonth(); // 0 = Jan
 
