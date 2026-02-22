@@ -103,8 +103,8 @@ export function SeasonalityPage() {
                                 </div>
                             </div>
                             {/* Jahre-Eingabe rechts */}
-                            <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1">
-                                <label className="text-xs text-muted-foreground whitespace-nowrap">Jahre:</label>
+                            <div className="flex items-center gap-2 bg-muted rounded-xl px-4 py-2">
+                                <label className="text-sm text-muted-foreground whitespace-nowrap font-medium">Jahre:</label>
                                 <input
                                     type="number"
                                     min={1}
@@ -114,7 +114,7 @@ export function SeasonalityPage() {
                                         const v = parseInt(e.target.value);
                                         if (!isNaN(v) && v >= 1 && v <= 10) setYears(v);
                                     }}
-                                    className="w-12 bg-transparent text-sm font-medium text-foreground text-center focus:outline-none"
+                                    className="w-14 bg-transparent text-base font-bold text-foreground text-center focus:outline-none"
                                 />
                             </div>
                         </div>
