@@ -102,9 +102,9 @@ export function SeasonalityPage() {
             {/* Grid: left panel + right content — items-stretch makes both columns same height */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-stretch">
 
-                {/* LEFT: Stock Picker — fills height of right column, scrolls internally */}
-                <div className="lg:col-span-1 flex flex-col">
-                    <div className="flex-1 overflow-y-auto space-y-3 pr-0.5 bg-card border border-border rounded-xl p-3">
+                {/* LEFT: Stock Picker — h-full fills grid row height set by items-stretch */}
+                <div className="lg:col-span-1">
+                    <div className="h-full overflow-y-auto space-y-3 pr-0.5 bg-card border border-border rounded-xl p-3">
                         {/* Search */}
                         <form onSubmit={handleSearch} className="flex gap-2">
                             <input
