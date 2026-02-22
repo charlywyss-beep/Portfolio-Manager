@@ -126,6 +126,49 @@ export default defineConfig({
           res.end(JSON.stringify({ quotes: [], error: error.message }));
         }
       });
+
+      // Dividends Middleware (Mirroring Vercel Function behavior)
+      server.middlewares.use('/api/yahoo-dividends', async (req, res, _next) => {
+        try {
+          const url = new URL(req.url!, `http://${req.headers.host}`);
+          const symbol = url.searchParams.get('symbol');
+          const period = url.searchParams.get('period') || '10y';
+
+          if (!symbol) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Symbol required' }));
+            return;
+          }
+
+          // Direct Yahoo API fetch via Node's global fetch
+          const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${period}&interval=1d&events=div`;
+          const response = await fetch(yahooUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+          });
+
+          if (!response.ok) {
+            res.statusCode = response.status;
+            res.end(JSON.stringify({ error: `Yahoo API error: ${response.status}` }));
+            return;
+          }
+
+          const data = await response.json();
+          const result = data.chart?.result?.[0];
+          const rawDividends = result?.events?.dividends || {};
+          const dividends = Object.values(rawDividends).map((d: any) => ({
+            date: new Date(d.date * 1000).toISOString(),
+            amount: d.amount
+          }));
+
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ dividends }));
+        } catch (error: any) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: error.message }));
+        }
+      });
     }
   }],
   base: './',

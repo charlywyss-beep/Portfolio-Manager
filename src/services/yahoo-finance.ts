@@ -485,8 +485,17 @@ export async function fetchSeasonalityData(
             combinedDividends.forEach((div: any) => {
                 if (!div.date) return;
 
-                // Handle both timestamp (number) and date string
-                const date = typeof div.date === 'number' ? new Date(div.date * 1000) : new Date(div.date);
+                // Robust date parsing (handle number/seconds, number/ms, or ISO string)
+                let date: Date;
+                if (typeof div.date === 'number') {
+                    // Yahoo timestamps are usually in seconds
+                    date = new Date(div.date * 1000);
+                    // If it's somehow already in ms (year > 2100), re-parse
+                    if (date.getFullYear() > 2100) date = new Date(div.date);
+                } else {
+                    date = new Date(div.date);
+                }
+
                 const year = date.getUTCFullYear();
                 const month = date.getUTCMonth();
 
@@ -494,12 +503,14 @@ export async function fetchSeasonalityData(
                 if (specificYear && year !== specificYear) return;
                 if (!specificYear && year < startYearFilter) return;
 
-                monthlyDividends.get(month)?.push({
+                monthlyDividends.get(month)!.push({
                     date: date.toISOString(),
                     amount: div.amount || div.dividends || 0
                 });
             });
         }
+
+        console.log(`[Seasonality] Parsed Dividends: ${[...monthlyDividends.values()].flat().length} events across 12 months.`);
 
         // 2. Supplement with Upcoming Dividend if current year
         if (specificYear === currentYear || !specificYear) {
