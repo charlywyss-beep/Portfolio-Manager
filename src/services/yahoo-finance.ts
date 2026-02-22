@@ -420,7 +420,7 @@ export async function fetchSeasonalityData(
 
         const [raw, divRaw] = await Promise.all([
             response.json(),
-            divResponse ? divResponse.json().catch(() => null) : null
+            divResponse && divResponse.ok ? divResponse.json().catch(() => null) : null
         ]);
 
         if (raw.chart?.error) return { data: null, error: `Yahoo Finance: ${raw.chart.error.description}` };

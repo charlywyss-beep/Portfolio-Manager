@@ -30,11 +30,19 @@ export default async function handler(req, res) {
         const period1 = new Date();
         period1.setFullYear(now.getFullYear() - years);
 
-        // Fetch dividends using yahoo-finance2
-        const dividends = await yahooFinance.dividends(symbol, {
+        // Fetch dividends using yahoo-finance2 .historical method
+        // (Note: .dividends() is only available in dev/v4, v3 uses .historical with events)
+        const rawDividends = await yahooFinance.historical(symbol, {
             period1: period1,
-            period2: now
+            period2: now,
+            events: 'dividends'
         });
+
+        // Map to expected format { date, amount }
+        const dividends = rawDividends.map(d => ({
+            date: d.date,
+            amount: d.dividends
+        }));
 
         console.log(`[Vercel Dividends] Success: ${dividends.length} events found.`);
 
