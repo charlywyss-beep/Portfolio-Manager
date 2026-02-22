@@ -384,7 +384,7 @@ export interface MonthlySeasonality {
 export async function fetchSeasonalityData(
     symbol: string,
     years: number = 10
-): Promise<{ data: MonthlySeasonality[] | null; error?: string }> {
+): Promise<{ data: MonthlySeasonality[] | null; startYear?: number; endYear?: number; error?: string }> {
     try {
         const period = `${years}y`;
         const url = `/api/yahoo-finance?symbol=${symbol}&period=${period}&interval=1mo&_=${Date.now()}`;
@@ -414,22 +414,36 @@ export async function fetchSeasonalityData(
         const monthlyReturns: Map<number, number[]> = new Map();
         for (let m = 0; m < 12; m++) monthlyReturns.set(m, []);
 
+        const now = new Date();
+        const currentYear = now.getUTCFullYear();
+        const currentMonth = now.getUTCMonth();
+
+        let minYear = Infinity;
+        let maxYear = -Infinity;
+
         // Monthly interval: each timestamp is approx. start of a month. Compute month-over-month return.
         for (let i = 1; i < timestamps.length; i++) {
             const prev = closes[i - 1];
             const curr = closes[i];
             if (prev == null || curr == null || prev === 0) continue;
 
-            const normalizedCurr = normalizeYahooPrice(curr, currency, symbol);
-            const normalizedPrev = normalizeYahooPrice(prev, currency, symbol);
-
-            const monthReturn = ((normalizedCurr - normalizedPrev) / normalizedPrev) * 100;
-
-            // Get the month of the CURRENT bar (this is what the return "belongs to")
             const date = new Date(timestamps[i] * 1000);
+            const year = date.getUTCFullYear();
             const month = date.getUTCMonth(); // 0 = Jan
 
+            // Skip current month if it's the latest data point (as it is not yet "finished")
+            if (year === currentYear && month === currentMonth) {
+                continue;
+            }
+
+            const normalizedCurr = normalizeYahooPrice(curr, currency, symbol);
+            const normalizedPrev = normalizeYahooPrice(prev, currency, symbol);
+            const monthReturn = ((normalizedCurr - normalizedPrev) / normalizedPrev) * 100;
+
             monthlyReturns.get(month)!.push(monthReturn);
+
+            if (year < minYear) minYear = year;
+            if (year > maxYear) maxYear = year;
         }
 
         // Compute stats per month
@@ -449,7 +463,11 @@ export async function fetchSeasonalityData(
             return { month: m, avgReturn: avg, medianReturn: median, positiveRate, count: returns.length, returns };
         });
 
-        return { data };
+        return {
+            data,
+            startYear: minYear === Infinity ? undefined : minYear,
+            endYear: maxYear === -Infinity ? undefined : maxYear
+        };
     } catch (e) {
         console.error('[Seasonality] Error:', e);
         return { data: null, error: 'Netzwerkfehler beim Laden der Saisonalitätsdaten.' };

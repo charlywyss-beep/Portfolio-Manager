@@ -20,6 +20,7 @@ export function SeasonalityPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [data, setData] = useState<MonthlySeasonality[] | null>(null);
+    const [rangeYears, setRangeYears] = useState<{ start: number; end: number } | null>(null);
     const [tooltip, setTooltip] = useState<{ month: number; x: number; y: number } | null>(null);
     const [watchlistOpen, setWatchlistOpen] = useState(false);
     const [suggestions, setSuggestions] = useState<typeof stocks>([]);
@@ -36,10 +37,16 @@ export function SeasonalityPage() {
         setLoading(true);
         setError(null);
         setData(null);
+        setRangeYears(null);
         const result = await fetchSeasonalityData(sym.trim().toUpperCase(), y);
         setLoading(false);
         if (result.error) setError(result.error);
-        else setData(result.data);
+        else {
+            setData(result.data);
+            if (result.startYear && result.endYear) {
+                setRangeYears({ start: result.startYear, end: result.endYear });
+            }
+        }
     };
 
     useEffect(() => {
@@ -99,7 +106,9 @@ export function SeasonalityPage() {
                                 </div>
                                 <div>
                                     <h1 className="text-3xl font-bold tracking-tight">Saisonalität</h1>
-                                    <p className="text-muted-foreground hidden md:block">{new Date().getFullYear() - years} – {new Date().getFullYear() - 1}</p>
+                                    <p className="text-muted-foreground hidden md:block">
+                                        {rangeYears ? `${rangeYears.start} – ${rangeYears.end}` : (loading ? 'Lädt...' : `${new Date().getFullYear() - years} – ${new Date().getFullYear() - 1}`)}
+                                    </p>
                                 </div>
                             </div>
                             {/* Jahre-Eingabe rechts */}
@@ -295,7 +304,9 @@ export function SeasonalityPage() {
                                                 >
                                                     {activeStock?.name || activeSymbol}
                                                 </button>
-                                                <p className="text-xs text-muted-foreground">{new Date().getFullYear() - years} – {new Date().getFullYear() - 1}</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {rangeYears ? `${rangeYears.start} – ${rangeYears.end}` : `${new Date().getFullYear() - years} – ${new Date().getFullYear() - 1}`}
+                                                </p>
                                             </>
                                         );
                                     })()}
