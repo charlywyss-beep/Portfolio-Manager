@@ -23,7 +23,6 @@ export function SeasonalityPage() {
     const [tooltip, setTooltip] = useState<{ month: number; x: number; y: number } | null>(null);
     const chartRef = useRef<HTMLDivElement>(null);
 
-    // Collect all unique stocks from portfolio + watchlists
     const portfolioStocks = stocks.filter(s => positions.some(p => p.stockId === s.id));
     const watchlistStockIds = new Set(watchlists.flatMap(w => w.stockIds || []));
     const watchlistStocks = stocks.filter(s => watchlistStockIds.has(s.id) && !portfolioStocks.includes(s));
@@ -35,17 +34,12 @@ export function SeasonalityPage() {
         setData(null);
         const result = await fetchSeasonalityData(sym.trim().toUpperCase(), y);
         setLoading(false);
-        if (result.error) {
-            setError(result.error);
-        } else {
-            setData(result.data);
-        }
+        if (result.error) setError(result.error);
+        else setData(result.data);
     };
 
     useEffect(() => {
-        if (activeSymbol) {
-            loadData(activeSymbol, years);
-        }
+        if (activeSymbol) loadData(activeSymbol, years);
     }, [activeSymbol, years]);
 
     const handleSearch = (e: React.FormEvent) => {
@@ -62,13 +56,9 @@ export function SeasonalityPage() {
         navigate(`/seasonality/${sym}`, { replace: true });
     };
 
-    // Chart metrics
     const maxAbs = data ? Math.max(...data.map(d => Math.abs(d.avgReturn)), 0.5) : 1;
-
-    // Best and worst months
     const best = data ? [...data].sort((a, b) => b.avgReturn - a.avgReturn)[0] : null;
     const worst = data ? [...data].sort((a, b) => a.avgReturn - b.avgReturn)[0] : null;
-
     const tooltipData = tooltip !== null && data ? data[tooltip.month] : null;
 
     return (
@@ -90,7 +80,6 @@ export function SeasonalityPage() {
                                     <p className="text-muted-foreground hidden md:block">Ø monatliche Rendite über {years} Jahre</p>
                                 </div>
                             </div>
-                            {/* Year toggle */}
                             <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
                                 {([5, 10] as const).map(y => (
                                     <button
@@ -98,9 +87,7 @@ export function SeasonalityPage() {
                                         onClick={() => setYears(y)}
                                         className={cn(
                                             "px-3 py-1.5 rounded-md text-sm font-medium transition-all",
-                                            years === y
-                                                ? "bg-card text-foreground shadow-sm"
-                                                : "text-muted-foreground hover:text-foreground"
+                                            years === y ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                                         )}
                                     >
                                         {y}J
@@ -112,82 +99,77 @@ export function SeasonalityPage() {
                 </div>
             </div>
 
-            {/* Search & Stock Picker */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                {/* Search */}
-                <div className="lg:col-span-1 space-y-3 lg:sticky lg:top-0 lg:self-start lg:overflow-y-auto lg:max-h-[calc(100vh-80px)] pr-0.5">
-                    <form onSubmit={handleSearch} className="flex gap-2">
-                        <input
-                            type="text"
-                            value={inputSymbol}
-                            onChange={e => setInputSymbol(e.target.value.toUpperCase())}
-                            placeholder="Symbol z.B. AAPL"
-                            className="flex-1 px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                        />
-                        <button
-                            type="submit"
-                            className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-                        >
-                            <Search className="size-4" />
-                        </button>
-                    </form>
+            {/* Grid: left panel + right content — items-stretch makes both columns same height */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-stretch">
 
-                    {/* Portfolio Stocks */}
-                    {portfolioStocks.length > 0 && (
-                        <div className="bg-card border border-border rounded-xl p-3">
-                            <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Bestand</p>
-                            <div className="space-y-1">
-                                {portfolioStocks.map(s => (
-                                    <button
-                                        key={s.id}
-                                        onClick={() => selectStock(s.symbol)}
-                                        className={cn(
-                                            "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center justify-between",
-                                            activeSymbol === s.symbol
-                                                ? "bg-primary text-primary-foreground"
-                                                : "hover:bg-accent text-foreground"
-                                        )}
-                                    >
-                                        <span className="font-medium truncate">{s.name || s.symbol}</span>
-                                        <span className={cn(
-                                            "text-xs ml-1 shrink-0",
-                                            activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground"
-                                        )}>{s.symbol}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                {/* LEFT: Stock Picker — fills height of right column, scrolls internally */}
+                <div className="lg:col-span-1 flex flex-col">
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-0.5 bg-card border border-border rounded-xl p-3">
+                        {/* Search */}
+                        <form onSubmit={handleSearch} className="flex gap-2">
+                            <input
+                                type="text"
+                                value={inputSymbol}
+                                onChange={e => setInputSymbol(e.target.value.toUpperCase())}
+                                placeholder="Symbol z.B. AAPL"
+                                className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                            <button type="submit" className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+                                <Search className="size-4" />
+                            </button>
+                        </form>
 
-                    {/* Watchlist Stocks */}
-                    {watchlistStocks.length > 0 && (
-                        <div className="bg-card border border-border rounded-xl p-3">
-                            <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Watchlist</p>
-                            <div className="space-y-1">
-                                {watchlistStocks.map(s => (
-                                    <button
-                                        key={s.id}
-                                        onClick={() => selectStock(s.symbol)}
-                                        className={cn(
-                                            "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center justify-between",
-                                            activeSymbol === s.symbol
-                                                ? "bg-primary text-primary-foreground"
-                                                : "hover:bg-accent text-foreground"
-                                        )}
-                                    >
-                                        <span className="font-medium truncate">{s.name || s.symbol}</span>
-                                        <span className={cn(
-                                            "text-xs ml-1 shrink-0",
-                                            activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground"
-                                        )}>{s.symbol}</span>
-                                    </button>
-                                ))}
+                        {/* Portfolio Stocks */}
+                        {portfolioStocks.length > 0 && (
+                            <div>
+                                <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Bestand</p>
+                                <div className="space-y-1">
+                                    {portfolioStocks.map(s => (
+                                        <button
+                                            key={s.id}
+                                            onClick={() => selectStock(s.symbol)}
+                                            className={cn(
+                                                "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center justify-between",
+                                                activeSymbol === s.symbol ? "bg-primary text-primary-foreground" : "hover:bg-accent text-foreground"
+                                            )}
+                                        >
+                                            <span className="font-medium truncate">{s.name || s.symbol}</span>
+                                            <span className={cn("text-xs ml-1 shrink-0", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                                                {s.symbol}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
+
+                        {/* Watchlist Stocks */}
+                        {watchlistStocks.length > 0 && (
+                            <div>
+                                <p className="text-xs font-semibold text-muted-foreground mb-2 mt-3 uppercase tracking-wide">Watchlist</p>
+                                <div className="space-y-1">
+                                    {watchlistStocks.map(s => (
+                                        <button
+                                            key={s.id}
+                                            onClick={() => selectStock(s.symbol)}
+                                            className={cn(
+                                                "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center justify-between",
+                                                activeSymbol === s.symbol ? "bg-primary text-primary-foreground" : "hover:bg-accent text-foreground"
+                                            )}
+                                        >
+                                            <span className="font-medium truncate">{s.name || s.symbol}</span>
+                                            <span className={cn("text-xs ml-1 shrink-0", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                                                {s.symbol}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {/* Main Chart Area */}
+                {/* RIGHT: Chart + Table */}
                 <div className="lg:col-span-3 space-y-4">
                     {!activeSymbol && (
                         <div className="bg-card border border-border rounded-xl flex flex-col items-center justify-center py-20 text-center">
@@ -219,14 +201,18 @@ export function SeasonalityPage() {
                                     <p className="text-xs text-muted-foreground">{years} Jahre Analyse</p>
                                 </div>
                                 <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 text-center">
-                                    <p className="text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1"><TrendingUp className="size-3 text-green-500" /> Stärkster Monat</p>
+                                    <p className="text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1">
+                                        <TrendingUp className="size-3 text-green-500" /> Stärkster Monat
+                                    </p>
                                     {best && <>
                                         <p className="text-lg font-bold text-green-600 dark:text-green-400">{MONTH_NAMES[best.month]}</p>
                                         <p className="text-xs text-green-600 dark:text-green-400 font-medium">Ø +{best.avgReturn.toFixed(2)}%</p>
                                     </>}
                                 </div>
                                 <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-center">
-                                    <p className="text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1"><TrendingDown className="size-3 text-red-500" /> Schwächster Monat</p>
+                                    <p className="text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1">
+                                        <TrendingDown className="size-3 text-red-500" /> Schwächster Monat
+                                    </p>
                                     {worst && <>
                                         <p className="text-lg font-bold text-red-600 dark:text-red-400">{MONTH_NAMES[worst.month]}</p>
                                         <p className="text-xs text-red-600 dark:text-red-400 font-medium">Ø {worst.avgReturn.toFixed(2)}%</p>
@@ -240,17 +226,11 @@ export function SeasonalityPage() {
                                 <p className="text-xs text-muted-foreground mb-5">Historische Durchschnittsrendite pro Kalendermonat. Grün = positiv, Rot = negativ.</p>
 
                                 <div ref={chartRef} className="relative select-none" style={{ height: 260 }}>
-                                    {/* Zero baseline */}
-                                    <div
-                                        className="absolute left-0 right-0 border-t border-border/80"
-                                        style={{ top: '50%' }}
-                                    />
-
-                                    {/* Bars */}
+                                    <div className="absolute left-0 right-0 border-t border-border/80" style={{ top: '50%' }} />
                                     <div className="absolute inset-0 flex items-stretch gap-1 px-1">
                                         {data.map((d, i) => {
                                             const isPositive = d.avgReturn >= 0;
-                                            const barHeight = Math.abs(d.avgReturn) / maxAbs * 45; // % of half-height
+                                            const barHeight = Math.abs(d.avgReturn) / maxAbs * 45;
                                             return (
                                                 <div
                                                     key={i}
@@ -262,30 +242,18 @@ export function SeasonalityPage() {
                                                     }}
                                                     onMouseLeave={() => setTooltip(null)}
                                                 >
-                                                    {/* Top half: positive bars grow upward */}
                                                     <div className="flex-1 flex items-end justify-center">
                                                         {isPositive && (
                                                             <div
-                                                                className={cn(
-                                                                    "w-full rounded-t-sm transition-all",
-                                                                    tooltip?.month === i
-                                                                        ? "bg-green-500"
-                                                                        : "bg-green-500/70 hover:bg-green-500"
-                                                                )}
+                                                                className={cn("w-full rounded-t-sm transition-all", tooltip?.month === i ? "bg-green-500" : "bg-green-500/70 hover:bg-green-500")}
                                                                 style={{ height: `${barHeight}%` }}
                                                             />
                                                         )}
                                                     </div>
-                                                    {/* Bottom half: negative bars grow downward */}
                                                     <div className="flex-1 flex items-start justify-center">
                                                         {!isPositive && (
                                                             <div
-                                                                className={cn(
-                                                                    "w-full rounded-b-sm transition-all",
-                                                                    tooltip?.month === i
-                                                                        ? "bg-red-500"
-                                                                        : "bg-red-500/70 hover:bg-red-500"
-                                                                )}
+                                                                className={cn("w-full rounded-b-sm transition-all", tooltip?.month === i ? "bg-red-500" : "bg-red-500/70 hover:bg-red-500")}
                                                                 style={{ height: `${barHeight}%` }}
                                                             />
                                                         )}
@@ -295,7 +263,6 @@ export function SeasonalityPage() {
                                         })}
                                     </div>
 
-                                    {/* Tooltip */}
                                     {tooltip !== null && tooltipData && (
                                         <div
                                             className="absolute z-50 bg-popover border border-border rounded-xl shadow-xl p-3 text-xs pointer-events-none min-w-[140px]"
@@ -315,15 +282,11 @@ export function SeasonalityPage() {
                                     )}
                                 </div>
 
-                                {/* Month Labels */}
                                 <div className="flex gap-1 px-1 mt-1">
                                     {MONTH_NAMES.map((m, i) => (
                                         <div
                                             key={i}
-                                            className={cn(
-                                                "flex-1 text-center text-xs transition-colors",
-                                                tooltip?.month === i ? "text-foreground font-semibold" : "text-muted-foreground"
-                                            )}
+                                            className={cn("flex-1 text-center text-xs transition-colors", tooltip?.month === i ? "text-foreground font-semibold" : "text-muted-foreground")}
                                         >
                                             {m}
                                         </div>
@@ -382,6 +345,7 @@ export function SeasonalityPage() {
                         </>
                     )}
                 </div>
+
             </div>
         </div>
     );
