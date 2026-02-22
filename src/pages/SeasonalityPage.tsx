@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BarChart2, Search, RefreshCw, TrendingUp, TrendingDown } from 'lucide-react';
+import { ArrowLeft, BarChart2, Search, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { fetchSeasonalityData } from '../services/yahoo-finance';
 import type { MonthlySeasonality } from '../services/yahoo-finance';
@@ -21,6 +21,7 @@ export function SeasonalityPage() {
     const [error, setError] = useState<string | null>(null);
     const [data, setData] = useState<MonthlySeasonality[] | null>(null);
     const [tooltip, setTooltip] = useState<{ month: number; x: number; y: number } | null>(null);
+    const [watchlistOpen, setWatchlistOpen] = useState(false);
     const chartRef = useRef<HTMLDivElement>(null);
 
     const portfolioStocks = stocks.filter(s => positions.some(p => p.stockId === s.id));
@@ -142,27 +143,35 @@ export function SeasonalityPage() {
                         </div>
                     )}
 
-                    {/* Watchlist — flex-1 fills remaining height, scrolls internally */}
+                    {/* Watchlist — collapsed by default, flex-1 when open */}
                     {watchlistStocks.length > 0 && (
-                        <div className="bg-card border border-border rounded-xl p-3 flex flex-col flex-1 min-h-0">
-                            <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Watchlist</p>
-                            <div className="space-y-1 overflow-y-auto flex-1 min-h-0">
-                                {watchlistStocks.map(s => (
-                                    <button
-                                        key={s.id}
-                                        onClick={() => selectStock(s.symbol)}
-                                        className={cn(
-                                            "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center justify-between",
-                                            activeSymbol === s.symbol ? "bg-primary text-primary-foreground" : "hover:bg-accent text-foreground"
-                                        )}
-                                    >
-                                        <span className="font-medium truncate">{s.name || s.symbol}</span>
-                                        <span className={cn("text-xs ml-1 shrink-0", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                                            {s.symbol}
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
+                        <div className={`bg-card border border-border rounded-xl p-3 flex flex-col ${watchlistOpen ? 'flex-1 min-h-0' : ''}`}>
+                            <button
+                                onClick={() => setWatchlistOpen(o => !o)}
+                                className="flex items-center justify-between w-full text-left"
+                            >
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Watchlist</p>
+                                {watchlistOpen ? <ChevronUp className="size-3.5 text-muted-foreground" /> : <ChevronDown className="size-3.5 text-muted-foreground" />}
+                            </button>
+                            {watchlistOpen && (
+                                <div className="space-y-1 overflow-y-auto flex-1 min-h-0 mt-2">
+                                    {watchlistStocks.map(s => (
+                                        <button
+                                            key={s.id}
+                                            onClick={() => selectStock(s.symbol)}
+                                            className={cn(
+                                                "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center justify-between",
+                                                activeSymbol === s.symbol ? "bg-primary text-primary-foreground" : "hover:bg-accent text-foreground"
+                                            )}
+                                        >
+                                            <span className="font-medium truncate">{s.name || s.symbol}</span>
+                                            <span className={cn("text-xs ml-1 shrink-0", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                                                {s.symbol}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
