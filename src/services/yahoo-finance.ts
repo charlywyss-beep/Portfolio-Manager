@@ -409,7 +409,7 @@ export async function fetchSeasonalityData(
         }
 
         const url = `/api/yahoo-finance?symbol=${symbol}&period=${period}&interval=1mo&events=div&_=${Date.now()}`;
-        const divUrl = `/api/yahoo-finance?symbol=${symbol}&period=${period}&interval=1d&events=div&_=${Date.now()}`;
+        const divUrl = `/api/yahoo-dividends?symbol=${symbol}&period=${period}&_=${Date.now()}`;
 
         const [response, divResponse] = await Promise.all([
             fetch(url),
@@ -426,7 +426,7 @@ export async function fetchSeasonalityData(
         if (raw.chart?.error) return { data: null, error: `Yahoo Finance: ${raw.chart.error.description}` };
 
         const result = raw.chart?.result?.[0];
-        const divResult = divRaw?.chart?.result?.[0];
+        const dividendsFromApi = divRaw?.dividends || [];
 
         if (!result?.timestamp || !result?.indicators?.adjclose?.[0]?.adjclose) {
             // Try regular close as fallback
@@ -475,11 +475,10 @@ export async function fetchSeasonalityData(
 
         const startYearFilter = specificYear || (currentYear - (years - 1));
 
-        // Parse Dividends (from divResult which uses daily interval)
-        const dividendsFromChart = divResult?.events?.dividends || result.events?.dividends;
-        if (dividendsFromChart) {
-            Object.values(dividendsFromChart).forEach((div: any) => {
-                const date = new Date(div.date * 1000);
+        // Parse Dividends (from dedicated dividends endpoint)
+        if (Array.isArray(dividendsFromApi)) {
+            dividendsFromApi.forEach((div: any) => {
+                const date = new Date(div.date);
                 const year = date.getUTCFullYear();
                 const month = date.getUTCMonth();
 
