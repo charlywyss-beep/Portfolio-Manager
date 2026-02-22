@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BarChart2, Search, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, BarChart2, Search, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Coins } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { fetchSeasonalityData } from '../services/yahoo-finance';
 import type { MonthlySeasonality } from '../services/yahoo-finance';
@@ -417,6 +417,21 @@ export function SeasonalityPage() {
                                                                     style={{ top: HALF, height: barPx }}
                                                                 />
                                                             )}
+
+                                                            {/* Dividend Marker */}
+                                                            {d.divEvents.length > 0 && (
+                                                                <div
+                                                                    className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none"
+                                                                    style={{
+                                                                        top: isPositive ? HALF - barPx - 18 : HALF + barPx + 4,
+                                                                        zIndex: 10
+                                                                    }}
+                                                                >
+                                                                    <div className="bg-amber-500/20 text-amber-600 dark:text-amber-400 p-0.5 rounded-full border border-amber-500/20 shadow-sm">
+                                                                        <Coins className="size-2.5" />
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     );
                                                 })}
@@ -436,7 +451,21 @@ export function SeasonalityPage() {
                                                         <p>Ø Rendite: <span className={cn("font-bold", tooltipData.avgReturn >= 0 ? "text-green-500" : "text-red-500")}>{tooltipData.avgReturn >= 0 ? '+' : ''}{tooltipData.avgReturn.toFixed(2)}%</span></p>
                                                         <p>Median: <span className={cn("font-medium", tooltipData.medianReturn >= 0 ? "text-green-500" : "text-red-500")}>{tooltipData.medianReturn >= 0 ? '+' : ''}{tooltipData.medianReturn.toFixed(2)}%</span></p>
                                                         <p>Trefferquote: <span className="font-medium text-foreground">{(tooltipData.positiveRate * 100).toFixed(0)}%</span></p>
-                                                        <p className="text-muted-foreground">{tooltipData.count} Jahre Daten</p>
+
+                                                        {tooltipData.divEvents.length > 0 && (
+                                                            <div className="pt-1 mt-1 border-t border-border/50">
+                                                                <p className="flex items-center gap-1.5 text-amber-500 font-medium">
+                                                                    <Coins className="size-3" />
+                                                                    {analysisMode === 'single' ? (
+                                                                        `Ex-Dividende: ${new Date(tooltipData.divEvents[0].date).toLocaleDateString()}`
+                                                                    ) : (
+                                                                        `Historisch: ${tooltipData.divEvents.length} Dividenden`
+                                                                    )}
+                                                                </p>
+                                                            </div>
+                                                        )}
+
+                                                        <p className="text-muted-foreground pt-1">{tooltipData.count} Jahre Daten</p>
                                                     </div>
                                                 </div>
                                             )}
@@ -470,6 +499,7 @@ export function SeasonalityPage() {
                                                 <th className="text-right py-2 px-4 font-medium">Ø Rendite</th>
                                                 <th className="text-right py-2 px-4 font-medium">Median</th>
                                                 <th className="text-right py-2 px-4 font-medium">Trefferquote</th>
+                                                <th className="text-right py-2 px-4 font-medium">Ex-Div</th>
                                                 <th className="text-right py-2 px-4 font-medium">Datenpunkte</th>
                                             </tr>
                                         </thead>
@@ -497,6 +527,14 @@ export function SeasonalityPage() {
                                                         )}>
                                                             {(d.positiveRate * 100).toFixed(0)}%
                                                         </span>
+                                                    </td>
+                                                    <td className="text-right py-2 px-4 tabular-nums">
+                                                        {d.divEvents.length > 0 && (
+                                                            <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium" title={analysisMode === 'single' ? `Ex-Tag: ${new Date(d.divEvents[0].date).toLocaleDateString()}` : `${d.divEvents.length} Ex-Tage historisch`}>
+                                                                <Coins className="size-3.5" />
+                                                                {analysisMode === 'single' && <span className="text-[10px]">{new Date(d.divEvents[0].date).getDate()}.</span>}
+                                                            </span>
+                                                        )}
                                                     </td>
                                                     <td className="text-right py-2 px-4 text-muted-foreground">{d.count}</td>
                                                 </tr>

@@ -12,14 +12,19 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
-    const { symbol, period, interval } = req.query;
+    const { symbol, ...params } = req.query;
+    if (params.period) {
+        params.range = params.period;
+        delete params.period;
+    }
 
-    if (!symbol || !period || !interval) {
+    if (!symbol || !params.range || !params.interval) {
         return res.status(400).json({ error: 'Missing required parameters' });
     }
 
     try {
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${period}&interval=${interval}`;
+        const queryParams = new URLSearchParams(params).toString();
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?${queryParams}`;
 
         console.log('[Vercel Proxy] Fetching:', url);
 

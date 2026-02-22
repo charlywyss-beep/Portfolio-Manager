@@ -368,6 +368,11 @@ export const searchStocks = async (query: string): Promise<any[]> => {
 };
 
 // Helper to fetch advanced Analysis (Growth estimates, Valuation)
+export interface DivEvent {
+    date: string;
+    amount: number;
+}
+
 export interface MonthlySeasonality {
     month: number;         // 0 = Jan, 11 = Dec
     avgReturn: number;     // Average monthly return in %
@@ -375,6 +380,7 @@ export interface MonthlySeasonality {
     positiveRate: number;  // How often was this month positive (0-1)
     count: number;         // Number of data points
     returns: number[];     // All individual monthly returns
+    divEvents: DivEvent[]; // Historical dividends in this month
 }
 
 /**
@@ -400,7 +406,7 @@ export async function fetchSeasonalityData(
             period = `${neededYears}y`;
         }
 
-        const url = `/api/yahoo-finance?symbol=${symbol}&period=${period}&interval=1mo&_=${Date.now()}`;
+        const url = `/api/yahoo-finance?symbol=${symbol}&period=${period}&interval=1mo&events=div&_=${Date.now()}`;
         const response = await fetch(url);
 
         if (!response.ok) return { data: null, error: `API Fehler: ${response.status}` };
@@ -448,7 +454,30 @@ export async function fetchSeasonalityData(
 
         // Build month → returns map
         const monthlyReturns: Map<number, number[]> = new Map();
-        for (let m = 0; m < 12; m++) monthlyReturns.set(m, []);
+        const monthlyDividends: Map<number, DivEvent[]> = new Map();
+        for (let m = 0; m < 12; m++) {
+            monthlyReturns.set(m, []);
+            monthlyDividends.set(m, []);
+        }
+
+        // Parse Dividends
+        if (result.events?.dividends) {
+            Object.values(result.events.dividends).forEach((div: any) => {
+                const date = new Date(div.date * 1000);
+                const year = date.getUTCFullYear();
+                const month = date.getUTCMonth();
+
+                // Filter dividends by year
+                if (specificYear) {
+                    if (year !== specificYear) return;
+                } else if (year < startYearFilter) return;
+
+                monthlyDividends.get(month)?.push({
+                    date: date.toISOString(),
+                    amount: div.amount
+                });
+            });
+        }
 
         const startYearFilter = specificYear || (currentYear - (years - 1));
 
@@ -486,8 +515,9 @@ export async function fetchSeasonalityData(
         // Compute stats per month
         const data: MonthlySeasonality[] = Array.from({ length: 12 }, (_, m) => {
             const returns = monthlyReturns.get(m) || [];
+            const divEvents = monthlyDividends.get(m) || [];
             if (returns.length === 0) {
-                return { month: m, avgReturn: 0, medianReturn: 0, positiveRate: 0, count: 0, returns: [] };
+                return { month: m, avgReturn: 0, medianReturn: 0, positiveRate: 0, count: 0, returns: [], divEvents };
             }
 
             const sorted = [...returns].sort((a, b) => a - b);
@@ -497,7 +527,7 @@ export async function fetchSeasonalityData(
                 : sorted[Math.floor(sorted.length / 2)];
             const positiveRate = returns.filter(r => r > 0).length / returns.length;
 
-            return { month: m, avgReturn: avg, medianReturn: median, positiveRate, count: returns.length, returns };
+            return { month: m, avgReturn: avg, medianReturn: median, positiveRate, count: returns.length, returns, divEvents };
         });
 
         return {
