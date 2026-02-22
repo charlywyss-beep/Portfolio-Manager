@@ -416,10 +416,33 @@ export async function fetchSeasonalityData(
             }
         }
 
-        const timestamps: number[] = result.timestamp;
-        const closes: (number | null)[] =
-            result.indicators?.adjclose?.[0]?.adjclose ||
-            result.indicators?.quote?.[0]?.close;
+        const timestamps: number[] = [...result.timestamp];
+        const closes: (number | null)[] = [
+            ...(result.indicators?.adjclose?.[0]?.adjclose || result.indicators?.quote?.[0]?.close)
+        ];
+
+        // 1. Fetch and Append Live Price if needed
+        const lastBarDate = new Date(timestamps[timestamps.length - 1] * 1000);
+
+        // If the last monthly bar is older than today, append the current price as a "virtual" bar
+        if (lastBarDate.getUTCMonth() === currentMonth && lastBarDate.getUTCFullYear() === currentYear) {
+            // We already have a bar for the current month.
+            // Actually, Yahoo monthly bars are usually the 1st of the month.
+        }
+
+        try {
+            const live = await fetchStockPricePrecise(symbol);
+            if (live.price && live.marketTime) {
+                const liveTs = Math.floor(live.marketTime.getTime() / 1000);
+                // Only append if the live price is substantially newer than the last monthly bar
+                if (liveTs > timestamps[timestamps.length - 1] + 86400 * 2) {
+                    timestamps.push(liveTs);
+                    closes.push(live.price);
+                }
+            }
+        } catch (e) {
+            console.warn("[Seasonality] Live price fetch failed, proceeding with history only.");
+        }
 
         const currency: string | null = result.meta?.currency || null;
 
@@ -438,7 +461,7 @@ export async function fetchSeasonalityData(
             const curr = closes[i];
             if (prev == null || curr == null || prev === 0) continue;
 
-            // Get the month of the STARTING bar (the month the return happened in)
+            // Get the month of the STARTING bar (the month the performance happened in)
             const date = new Date(timestamps[i - 1] * 1000);
             const year = date.getUTCFullYear();
             const month = date.getUTCMonth(); // 0 = Jan
@@ -448,14 +471,6 @@ export async function fetchSeasonalityData(
                 if (year !== specificYear) continue;
             } else {
                 if (year < startYearFilter) continue;
-            }
-
-            // Skip current month if it's the latest data point (as it is not yet "finished")
-            // (Actually, if i is the latest bar, the return happened in month i-1, which IS finished)
-            // But we already have the startYearFilter logic and the trailing fetch usually handles this.
-            // Let's keep a safeguard for very recent data if needed.
-            if (year === currentYear && month === currentMonth) {
-                continue;
             }
 
             const normalizedCurr = normalizeYahooPrice(curr, currency, symbol);
