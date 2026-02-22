@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BarChart2, Search, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { ArrowLeft, BarChart2, Search, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { fetchSeasonalityData } from '../services/yahoo-finance';
 import type { MonthlySeasonality } from '../services/yahoo-finance';
@@ -196,14 +196,6 @@ export function SeasonalityPage() {
                                         <span className={cn("text-xs shrink-0", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}>
                                             {s.symbol}
                                         </span>
-                                        {/* Link to StockDetail */}
-                                        <span
-                                            onClick={e => { e.stopPropagation(); navigate(`/stock/${s.id}`); }}
-                                            className={cn("ml-1 shrink-0 p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}
-                                            title="Zur Aktiendetailseite"
-                                        >
-                                            <ExternalLink className="size-3" />
-                                        </span>
                                     </button>
                                 ))}
                             </div>
@@ -239,11 +231,8 @@ export function SeasonalityPage() {
                                                     {(s.name || s.symbol)[0]}
                                                 </div>
                                             )}
-                                            {/* Name — click navigates to StockDetail */}
-                                            <span
-                                                className="font-medium truncate flex-1 hover:underline"
-                                                onClick={e => { e.stopPropagation(); navigate(`/stock/${s.id}`); }}
-                                            >
+                                            {/* Name */}
+                                            <span className="font-medium truncate flex-1">
                                                 {s.name || s.symbol}
                                             </span>
                                             <span className={cn("text-xs shrink-0", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}>
@@ -285,10 +274,31 @@ export function SeasonalityPage() {
                         <>
                             {/* Summary Cards */}
                             <div className="grid grid-cols-3 gap-3">
-                                <div className="bg-card border border-border rounded-xl p-3 text-center">
-                                    <p className="text-xs text-muted-foreground mb-1">Symbol</p>
-                                    <p className="text-lg font-bold">{activeSymbol}</p>
-                                    <p className="text-xs text-muted-foreground">{years} Jahre Analyse</p>
+                                <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center gap-1">
+                                    {/* Logo + klickbarer Name */}
+                                    {(() => {
+                                        const activeStock = stocks.find(s => s.symbol === activeSymbol);
+                                        return (
+                                            <>
+                                                {activeStock?.logoUrl ? (
+                                                    <img src={activeStock.logoUrl} alt="" className="size-10 rounded-full object-contain bg-white" />
+                                                ) : (
+                                                    <div className="size-10 rounded-full bg-muted flex items-center justify-center text-sm font-bold">
+                                                        {activeSymbol[0]}
+                                                    </div>
+                                                )}
+                                                <button
+                                                    onClick={() => activeStock && navigate(`/stock/${activeStock.id}`)}
+                                                    className="text-lg font-bold hover:underline leading-tight text-center"
+                                                    disabled={!activeStock}
+                                                    title={activeStock ? 'Zur Aktiendetailseite' : undefined}
+                                                >
+                                                    {activeStock?.name || activeSymbol}
+                                                </button>
+                                                <p className="text-xs text-muted-foreground">{years} Jahre Analyse</p>
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                                 <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 text-center">
                                     <p className="text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1">
