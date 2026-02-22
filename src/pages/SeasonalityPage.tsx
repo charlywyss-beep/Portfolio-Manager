@@ -102,8 +102,8 @@ export function SeasonalityPage() {
             {/* Grid: left panel + right content — items-stretch makes both columns same height */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-stretch">
 
-                {/* LEFT: Stock Picker — h-full fills grid row height set by items-stretch */}
-                <div className="lg:col-span-1">
+                {/* LEFT: Stock Picker — lg:h-full lets inner h-full resolve against grid row height */}
+                <div className="lg:col-span-1 lg:h-full">
                     <div className="h-full overflow-y-auto space-y-3 pr-0.5 bg-card border border-border rounded-xl p-3">
                         {/* Search */}
                         <form onSubmit={handleSearch} className="flex gap-2">
@@ -223,66 +223,75 @@ export function SeasonalityPage() {
                             {/* Bar Chart */}
                             <div className="bg-card border border-border rounded-xl p-5">
                                 <h2 className="font-semibold mb-1">Ø Monatsrendite — {activeSymbol} ({years} Jahre)</h2>
-                                <p className="text-xs text-muted-foreground mb-5">Historische Durchschnittsrendite pro Kalendermonat. Grün = positiv, Rot = negativ.</p>
+                                <p className="text-xs text-muted-foreground mb-3">Historische Durchschnittsrendite pro Kalendermonat. Grün = positiv, Rot = negativ.</p>
 
-                                <div ref={chartRef} className="relative select-none" style={{ height: 260 }}>
-                                    <div className="absolute left-0 right-0 border-t border-border/80" style={{ top: '50%' }} />
-                                    <div className="absolute inset-0 flex items-stretch gap-1 px-1">
-                                        {data.map((d, i) => {
-                                            const isPositive = d.avgReturn >= 0;
-                                            const barHeight = Math.abs(d.avgReturn) / maxAbs * 45;
-                                            return (
+                                {(() => {
+                                    const CHART_H = 200;
+                                    const HALF = CHART_H / 2; // 100px
+                                    const BAR_MAX_PX = HALF * 0.88;
+                                    return (
+                                        <div ref={chartRef} className="relative select-none" style={{ height: CHART_H }}>
+                                            {/* Zero baseline */}
+                                            <div className="absolute left-0 right-0 border-t border-border" style={{ top: HALF }} />
+
+                                            {/* Bars — absolute positioning with px heights */}
+                                            <div className="absolute inset-0 flex gap-1 px-1">
+                                                {data.map((d, i) => {
+                                                    const isPositive = d.avgReturn >= 0;
+                                                    const barPx = Math.max(2, Math.round(Math.abs(d.avgReturn) / maxAbs * BAR_MAX_PX));
+                                                    const isHovered = tooltip?.month === i;
+                                                    return (
+                                                        <div
+                                                            key={i}
+                                                            className="flex-1 relative cursor-pointer"
+                                                            style={{ height: CHART_H }}
+                                                            onMouseEnter={(e) => {
+                                                                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                                                const chartRect = chartRef.current!.getBoundingClientRect();
+                                                                setTooltip({ month: i, x: rect.left - chartRect.left + rect.width / 2, y: 0 });
+                                                            }}
+                                                            onMouseLeave={() => setTooltip(null)}
+                                                        >
+                                                            {isPositive ? (
+                                                                <div
+                                                                    className={cn("absolute left-0 right-0 rounded-t-sm transition-all", isHovered ? "bg-green-500" : "bg-green-500/75")}
+                                                                    style={{ bottom: HALF, height: barPx }}
+                                                                />
+                                                            ) : (
+                                                                <div
+                                                                    className={cn("absolute left-0 right-0 rounded-b-sm transition-all", isHovered ? "bg-red-500" : "bg-red-500/75")}
+                                                                    style={{ top: HALF, height: barPx }}
+                                                                />
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            {/* Tooltip */}
+                                            {tooltip !== null && tooltipData && (
                                                 <div
-                                                    key={i}
-                                                    className="flex-1 flex flex-col items-center cursor-pointer"
-                                                    onMouseEnter={(e) => {
-                                                        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                                                        const chartRect = chartRef.current!.getBoundingClientRect();
-                                                        setTooltip({ month: i, x: rect.left - chartRect.left + rect.width / 2, y: rect.top - chartRect.top });
+                                                    className="absolute z-50 bg-popover border border-border rounded-xl shadow-xl p-3 text-xs pointer-events-none min-w-[140px]"
+                                                    style={{
+                                                        left: Math.min(Math.max(tooltip.x - 70, 0), (chartRef.current?.offsetWidth || 400) - 150),
+                                                        top: 6,
                                                     }}
-                                                    onMouseLeave={() => setTooltip(null)}
                                                 >
-                                                    <div className="flex-1 flex items-end justify-center">
-                                                        {isPositive && (
-                                                            <div
-                                                                className={cn("w-full rounded-t-sm transition-all", tooltip?.month === i ? "bg-green-500" : "bg-green-500/70 hover:bg-green-500")}
-                                                                style={{ height: `${barHeight}%` }}
-                                                            />
-                                                        )}
-                                                    </div>
-                                                    <div className="flex-1 flex items-start justify-center">
-                                                        {!isPositive && (
-                                                            <div
-                                                                className={cn("w-full rounded-b-sm transition-all", tooltip?.month === i ? "bg-red-500" : "bg-red-500/70 hover:bg-red-500")}
-                                                                style={{ height: `${barHeight}%` }}
-                                                            />
-                                                        )}
+                                                    <p className="font-bold text-sm mb-1">{MONTH_NAMES_FULL[tooltipData.month]}</p>
+                                                    <div className="space-y-0.5">
+                                                        <p>Ø Rendite: <span className={cn("font-bold", tooltipData.avgReturn >= 0 ? "text-green-500" : "text-red-500")}>{tooltipData.avgReturn >= 0 ? '+' : ''}{tooltipData.avgReturn.toFixed(2)}%</span></p>
+                                                        <p>Median: <span className={cn("font-medium", tooltipData.medianReturn >= 0 ? "text-green-500" : "text-red-500")}>{tooltipData.medianReturn >= 0 ? '+' : ''}{tooltipData.medianReturn.toFixed(2)}%</span></p>
+                                                        <p>Trefferquote: <span className="font-medium text-foreground">{(tooltipData.positiveRate * 100).toFixed(0)}%</span></p>
+                                                        <p className="text-muted-foreground">{tooltipData.count} Jahre Daten</p>
                                                     </div>
                                                 </div>
-                                            );
-                                        })}
-                                    </div>
-
-                                    {tooltip !== null && tooltipData && (
-                                        <div
-                                            className="absolute z-50 bg-popover border border-border rounded-xl shadow-xl p-3 text-xs pointer-events-none min-w-[140px]"
-                                            style={{
-                                                left: Math.min(Math.max(tooltip.x - 70, 0), (chartRef.current?.offsetWidth || 400) - 150),
-                                                top: tooltip.y - 130 < 0 ? 10 : tooltip.y - 130,
-                                            }}
-                                        >
-                                            <p className="font-bold text-sm mb-1">{MONTH_NAMES_FULL[tooltipData.month]}</p>
-                                            <div className="space-y-0.5">
-                                                <p>Ø Rendite: <span className={cn("font-bold", tooltipData.avgReturn >= 0 ? "text-green-500" : "text-red-500")}>{tooltipData.avgReturn >= 0 ? '+' : ''}{tooltipData.avgReturn.toFixed(2)}%</span></p>
-                                                <p>Median: <span className={cn("font-medium", tooltipData.medianReturn >= 0 ? "text-green-500" : "text-red-500")}>{tooltipData.medianReturn >= 0 ? '+' : ''}{tooltipData.medianReturn.toFixed(2)}%</span></p>
-                                                <p>Trefferquote: <span className="font-medium text-foreground">{(tooltipData.positiveRate * 100).toFixed(0)}%</span></p>
-                                                <p className="text-muted-foreground">{tooltipData.count} Jahre Daten</p>
-                                            </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
+                                    );
+                                })()}
 
-                                <div className="flex gap-1 px-1 mt-1">
+                                {/* Month Labels */}
+                                <div className="flex gap-1 px-1 mt-2">
                                     {MONTH_NAMES.map((m, i) => (
                                         <div
                                             key={i}
