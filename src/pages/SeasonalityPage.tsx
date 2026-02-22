@@ -22,7 +22,10 @@ export function SeasonalityPage() {
     const [data, setData] = useState<MonthlySeasonality[] | null>(null);
     const [tooltip, setTooltip] = useState<{ month: number; x: number; y: number } | null>(null);
     const [watchlistOpen, setWatchlistOpen] = useState(false);
+    const [suggestions, setSuggestions] = useState<typeof stocks>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
     const chartRef = useRef<HTMLDivElement>(null);
+    const searchRef = useRef<HTMLDivElement>(null);
 
     const portfolioStocks = stocks.filter(s => positions.some(p => p.stockId === s.id));
     const watchlistStockIds = new Set(watchlists.flatMap(w => w.stockIds || []));
@@ -54,7 +57,25 @@ export function SeasonalityPage() {
     const selectStock = (sym: string) => {
         setInputSymbol(sym);
         setActiveSymbol(sym);
+        setSuggestions([]);
+        setShowSuggestions(false);
         navigate(`/seasonality/${sym}`, { replace: true });
+    };
+
+    const handleInputChange = (val: string) => {
+        setInputSymbol(val);
+        if (val.trim().length < 1) {
+            setSuggestions([]);
+            setShowSuggestions(false);
+            return;
+        }
+        const q = val.toLowerCase();
+        const matches = stocks.filter(s =>
+            s.symbol.toLowerCase().includes(q) ||
+            (s.name || '').toLowerCase().includes(q)
+        ).slice(0, 8);
+        setSuggestions(matches);
+        setShowSuggestions(matches.length > 0);
     };
 
     const maxAbs = data ? Math.max(...data.map(d => Math.abs(d.avgReturn)), 0.5) : 1;
@@ -106,19 +127,45 @@ export function SeasonalityPage() {
 
                 {/* LEFT: Search + separate Bestand and Watchlist cards */}
                 <div className="lg:col-span-1 lg:h-full flex flex-col gap-3 lg:overflow-hidden">
-                    {/* Search */}
-                    <form onSubmit={handleSearch} className="flex gap-2">
-                        <input
-                            type="text"
-                            value={inputSymbol}
-                            onChange={e => setInputSymbol(e.target.value.toUpperCase())}
-                            placeholder="Symbol z.B. AAPL"
-                            className="flex-1 px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                        />
-                        <button type="submit" className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
-                            <Search className="size-4" />
-                        </button>
-                    </form>
+                    {/* Autocomplete Search */}
+                    <div ref={searchRef} className="relative">
+                        <form onSubmit={handleSearch} className="flex gap-2">
+                            <input
+                                type="text"
+                                value={inputSymbol}
+                                onChange={e => handleInputChange(e.target.value)}
+                                onFocus={() => inputSymbol.length > 0 && setShowSuggestions(suggestions.length > 0)}
+                                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                                placeholder="Name oder Symbol suchen…"
+                                className="flex-1 px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                            <button type="submit" className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+                                <Search className="size-4" />
+                            </button>
+                        </form>
+                        {showSuggestions && (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-xl z-50 overflow-hidden">
+                                {suggestions.map(s => (
+                                    <button
+                                        key={s.id}
+                                        type="button"
+                                        onMouseDown={() => selectStock(s.symbol)}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors text-left"
+                                    >
+                                        {s.logoUrl ? (
+                                            <img src={s.logoUrl} alt="" className="size-6 rounded-full object-contain bg-white shrink-0" />
+                                        ) : (
+                                            <div className="size-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
+                                                {(s.name || s.symbol)[0]}
+                                            </div>
+                                        )}
+                                        <span className="flex-1 font-medium truncate">{s.name || s.symbol}</span>
+                                        <span className="text-xs text-muted-foreground shrink-0">{s.symbol}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
                     {/* Bestand — natural height */}
                     {portfolioStocks.length > 0 && (
