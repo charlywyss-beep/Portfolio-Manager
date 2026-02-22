@@ -154,7 +154,7 @@ export default defineConfig({
             return;
           }
 
-          const data = await response.json();
+          const data: any = await response.json();
           const result = data.chart?.result?.[0];
           const rawDividends = result?.events?.dividends || {};
           const dividends = Object.values(rawDividends).map((d: any) => ({
