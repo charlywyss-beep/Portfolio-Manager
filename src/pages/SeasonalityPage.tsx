@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BarChart2, Search, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, BarChart2, Search, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { fetchSeasonalityData } from '../services/yahoo-finance';
 import type { MonthlySeasonality } from '../services/yahoo-finance';
@@ -142,15 +142,20 @@ export function SeasonalityPage() {
                                                 {(s.name || s.symbol)[0]}
                                             </div>
                                         )}
-                                        {/* Name — click navigates to StockDetail */}
-                                        <span
-                                            className="font-medium truncate flex-1 hover:underline"
-                                            onClick={e => { e.stopPropagation(); navigate(`/stock/${s.id}`); }}
-                                        >
+                                        {/* Name */}
+                                        <span className="font-medium truncate flex-1">
                                             {s.name || s.symbol}
                                         </span>
                                         <span className={cn("text-xs shrink-0", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}>
                                             {s.symbol}
+                                        </span>
+                                        {/* Link to StockDetail */}
+                                        <span
+                                            onClick={e => { e.stopPropagation(); navigate(`/stock/${s.id}`); }}
+                                            className={cn("ml-1 shrink-0 p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}
+                                            title="Zur Aktiendetailseite"
+                                        >
+                                            <ExternalLink className="size-3" />
                                         </span>
                                     </button>
                                 ))}
