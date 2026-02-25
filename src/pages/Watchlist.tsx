@@ -566,6 +566,7 @@ export function Watchlist() {
                 <WatchlistPerformanceModal
                     isOpen={isPerformanceModalOpen}
                     onClose={() => setIsPerformanceModalOpen(false)}
+                    activeWatchlistId={activeWatchlistId}
                 />
 
                 {/* EditPositionModal for editing owned stocks from watchlist */}

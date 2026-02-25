@@ -10,9 +10,10 @@ import { usePortfolio } from '../context/PortfolioContext';
 interface WatchlistPerformanceModalProps {
     isOpen: boolean;
     onClose: () => void;
+    activeWatchlistId?: string;
 }
 
-export function WatchlistPerformanceModal({ isOpen, onClose }: WatchlistPerformanceModalProps) {
+export function WatchlistPerformanceModal({ isOpen, onClose, activeWatchlistId }: WatchlistPerformanceModalProps) {
     const { convertToCHF, formatCurrency } = useCurrencyFormatter();
     const { stocks, watchlists, positions, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh } = usePortfolio();
     const navigate = useNavigate();
@@ -31,9 +32,29 @@ export function WatchlistPerformanceModal({ isOpen, onClose }: WatchlistPerforma
 
     if (!isOpen) return null;
 
-    // Get default watchlist stock IDs
-    const defaultWatchlist = watchlists.find(w => w.isDefault) || watchlists[0];
-    const watchlistStockIds = defaultWatchlist?.stockIds || [];
+    // Get stock IDs based on the active watchlist
+    const activeWatchlist = activeWatchlistId && activeWatchlistId !== 'owned'
+        ? watchlists.find(w => w.id === activeWatchlistId)
+        : null;
+
+    let watchlistStockIds: string[];
+    if (activeWatchlistId === 'owned' || !activeWatchlistId) {
+        // "Bestand" mode or no specific tab: show all stocks that have positions
+        watchlistStockIds = stocks
+            .filter(s => positions.some(p => String(p.stockId) === String(s.id)))
+            .map(s => s.id);
+    } else if (activeWatchlist) {
+        watchlistStockIds = activeWatchlist.stockIds || [];
+    } else {
+        // Fallback to default watchlist
+        const defaultWatchlist = watchlists.find(w => w.isDefault) || watchlists[0];
+        watchlistStockIds = defaultWatchlist?.stockIds || [];
+    }
+
+    // Determine active tab name for the subtitle
+    const activeTabName = activeWatchlistId === 'owned'
+        ? 'Bestand'
+        : activeWatchlist?.name || 'Alle Aktien';
 
     // Get watchlist stocks and enrich them
     const watchlistData = stocks
@@ -164,7 +185,7 @@ export function WatchlistPerformanceModal({ isOpen, onClose }: WatchlistPerforma
                             <TrendingUp className="size-5 text-blue-500" />
                             Watchlist Performance
                         </h2>
-                        <p className="text-xs text-muted-foreground">Detailansicht deiner beobachteten Aktien</p>
+                        <p className="text-xs text-muted-foreground">Detailansicht deiner beobachteten Aktien — <span className="font-semibold text-foreground">{activeTabName}</span></p>
                     </div>
                     <div className="flex items-center gap-2">
                         <button
