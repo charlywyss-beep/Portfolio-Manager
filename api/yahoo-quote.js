@@ -22,12 +22,29 @@ export default async function handler(req, res) {
     try {
         console.log('[Vercel Quote Proxy] Fetching quote for:', symbol);
 
+        // MAP: European tickers often lack deep fundamentals (like Cash Flow) on Yahoo Finance.
+        // We map them to their primary US ADRs/Tickers ONLY for the quoteSummary fetch.
+        const PRIMARY_TICKER_MAP = {
+            'R6C0.DE': 'SHEL',
+            'SHEL.L': 'SHEL',
+            'SHEL.AS': 'SHEL',
+            'NOVOB.CO': 'NVO',
+            'NESN.SW': 'NSRGY',
+            'ROG.SW': 'RHHBY',
+            'NOVN.SW': 'NVS',
+            'ASML.AS': 'ASML',
+            'SAP.DE': 'SAP',
+            'SIE.DE': 'SIEGY',
+            'ALV.DE': 'ALV', // Allianz doesn't have a huge US one but ALV is primary
+            'MUV2.DE': 'MURGY'
+        };
+        const fundamentalSymbol = PRIMARY_TICKER_MAP[symbol] || symbol;
+
         // Fetch robust data using yahoo-finance2
-        // We fetch BOTH quote() (simple, robust) and quoteSummary() (rich details) to ensure we get data
-        // SINGLE REQUEST: Use quoteSummary() for rich details
+        // SINGLE REQUEST: Use quoteSummary() for rich details (using fundamentalSymbol)
         // ALSO fetch quote() for basic data fallback (e.g. price, name)
         const [quoteSummary, quoteBasic] = await Promise.all([
-            yahooFinance.quoteSummary(symbol, {
+            yahooFinance.quoteSummary(fundamentalSymbol, {
                 modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'topHoldings', 'fundProfile', 'assetProfile', 'financialData']
             }).catch(() => null),
             yahooFinance.quote(symbol).catch(() => null)

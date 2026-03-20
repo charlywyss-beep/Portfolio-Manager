@@ -1,24 +1,25 @@
-
 import YahooFinance from 'yahoo-finance2';
+const yahooFinance = new YahooFinance();
 
 async function test() {
-    console.log('Attempting instantiation...');
     try {
-        const yahooFinance = new YahooFinance();
-        console.log('Instance created.');
-
-        const symbol = 'NESN.SW';
-        console.log(`Fetching quote for ${symbol}...`);
-
-        // Suppress console/logger if needed
-        // yahooFinance.suppressLogger();
-
-        const result = await yahooFinance.quote(symbol);
-        console.log('Quote Result:', JSON.stringify(result, null, 2));
-
+        const symbol = 'R6C0.DE'; // Shell Plc
+        console.log('Testing', symbol);
+        
+        const quoteBasic = await yahooFinance.quote(symbol).catch(e => {
+            console.error('quote err', e.message);
+            return null;
+        });
+        if (quoteBasic) {
+             console.log('\n--- quoteBasic fields ---');
+             console.log(Object.keys(quoteBasic));
+             console.log('marketCap:', quoteBasic.marketCap);
+             console.log('operatingCashflow?', quoteBasic.operatingCashflow);
+        }
+        
+        // Done.
     } catch (e) {
-        console.error('Error:', e);
+        console.error('fatal', e);
     }
 }
-
 test();
