@@ -77,6 +77,30 @@ export default async function handler(req, res) {
             }
         };
 
+        // HELPER: Scraper Fallback for KCV (when API is blocked by 429)
+        const fetchKcvScraper = async (sym) => {
+            try {
+                console.log(`[Vercel Scraper] Attempting KCV regex fallback for ${sym}...`);
+                const url = `https://finance.yahoo.com/quote/${sym}`;
+                const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } });
+                if (!response.ok) return null;
+                const html = await response.text();
+                
+                const ocfMatch = html.match(/"operatingCashflow":\{"raw":([\d\.\-]+)/);
+                const mcMatch = html.match(/"marketCap":\{"raw":([\d\.\-]+)/);
+                
+                if (ocfMatch && mcMatch) {
+                    const ocf = parseFloat(ocfMatch[1]);
+                    const mc = parseFloat(mcMatch[1]);
+                    if (ocf > 0) return mc / ocf;
+                }
+                return null;
+            } catch (e) {
+                console.warn(`[Vercel Scraper] KCV failed for ${sym}:`, e.message);
+                return null;
+            }
+        };
+
         // FALLBACK: If API returns no holdings, try scraper
         if (quoteSummary && (!quoteSummary.topHoldings || (!quoteSummary.topHoldings.sectorWeightings && !quoteSummary.topHoldings.regionalExposure))) {
             const scrapedHoldings = await fetchEtfHoldingsScraper(symbol);
@@ -90,6 +114,22 @@ export default async function handler(req, res) {
         }
 
         // Helper to get value from either source
+        const getRawVal = (obj) => typeof obj === 'object' && obj !== null && 'raw' in obj ? obj.raw : obj;
+
+        // Run KCV Scraper if quoteSummary failed or lacks data
+        let kcvValue = null;
+        if (quoteSummary?.financialData?.operatingCashflow) {
+            const operatingCashflow = getRawVal(quoteSummary.financialData.operatingCashflow);
+            const marketCap = getRawVal(quoteSummary?.summaryDetail?.marketCap) || getRawVal(quoteBasic?.marketCap);
+            if (operatingCashflow > 0 && marketCap) {
+                kcvValue = marketCap / operatingCashflow;
+            }
+        }
+        if (!kcvValue) {
+            kcvValue = await fetchKcvScraper(fundamentalSymbol);
+        }
+
+        // Deep Property Retriever
         const getVal = (path, subPath) => {
             if (quoteBasic && quoteBasic[path] !== undefined && quoteBasic[path] !== null) return quoteBasic[path];
             if (quoteSummary) {
@@ -121,14 +161,7 @@ export default async function handler(req, res) {
             epsTrailingTwelveMonths: quoteBasic?.epsTrailingTwelveMonths || quoteSummary?.defaultKeyStatistics?.trailingEps,
             dividendYield: (quoteSummary?.summaryDetail?.dividendYield) ? quoteSummary.summaryDetail.dividendYield * 100 : (quoteBasic?.dividendYield || null),
             country: quoteSummary?.summaryProfile?.country || null,
-            kcv: (() => {
-                const operatingCashflow = quoteSummary?.financialData?.operatingCashflow;
-                const marketCap = quoteSummary?.summaryDetail?.marketCap || quoteBasic?.marketCap;
-                if (operatingCashflow && marketCap && operatingCashflow > 0) {
-                    return marketCap / operatingCashflow;
-                }
-                return null;
-            })(),
+            kcv: kcvValue,
             // ETF Allocation Data (NEW)
             sectorWeights: (() => {
                 const sw = quoteSummary?.topHoldings?.sectorWeightings || quoteSummary?.topHoldings?.equityHoldings?.sectorWeightings;

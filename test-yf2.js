@@ -3,7 +3,7 @@ const yahooFinance = new YahooFinance();
 
 async function test() {
     try {
-        const symbol = 'R6C0.DE'; // Shell Plc
+        const symbol = 'SHEL'; // US primary ticker
         console.log('Testing', symbol);
         
         const quoteBasic = await yahooFinance.quote(symbol).catch(e => {

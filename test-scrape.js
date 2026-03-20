@@ -6,20 +6,12 @@ async function testScrape() {
              headers: { 'User-Agent': 'Mozilla/5.0' }
         });
         const html = await res.text();
-        const match = html.match(/root\.App\.main\s*=\s*({.*?});/s) || html.match(/context\s*=\s*({.*?});/s);
-        if (match) {
-            const data = JSON.parse(match[1]);
-            const store = data.context?.dispatcher?.stores?.QuoteSummaryStore;
-            if (store) {
-                 console.log('Stores available:', Object.keys(store));
-                 if (store.defaultKeyStatistics) {
-                     console.log('KS:', Object.keys(store.defaultKeyStatistics));
-                 }
-                 if (store.financialData) {
-                     console.log('FD:', Object.keys(store.financialData));
-                 }
-            }
-        }
+        const symbol2 = 'VWRA.L';
+        const url2 = `https://finance.yahoo.com/quote/${symbol2}/holdings`;
+        const res2 = await fetch(url2, {
+             headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
+        const html2 = await res2.text();
     } catch (e) {
         console.error(e);
     }
