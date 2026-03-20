@@ -192,7 +192,8 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
     longName?: string | null,
     shortName?: string | null,
     displayName?: string | null,
-    isin?: string | null
+    isin?: string | null,
+    kcv?: number | null
 }>> {
     if (symbols.length === 0) return {};
 
@@ -221,7 +222,8 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
             longName?: string | null,
             shortName?: string | null,
             displayName?: string | null,
-            isin?: string | null
+            isin?: string | null,
+            kcv?: number | null
         }> = {};
 
         results.forEach((res: any) => {
@@ -253,7 +255,8 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
                     longName: res.longName || null,
                     shortName: res.shortName || null,
                     displayName: res.displayName || null,
-                    isin: res.isin || null
+                    isin: res.isin || null,
+                    kcv: res.kcv || null
                 };
             }
         });
@@ -284,6 +287,7 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
     name?: string | null,
     isin?: string | null,
     exDividendDate?: Date | null,
+    kcv?: number | null,
     error?: string
 }> {
     try {
@@ -321,6 +325,7 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
                 name: batchResult.longName || batchResult.shortName || batchResult.displayName || initialName || symbol,
                 isin: batchResult.isin || null,
                 exDividendDate: (batchResult as any).exDividendDate ? new Date((batchResult as any).exDividendDate * 1000) : null,
+                kcv: batchResult.kcv || null,
                 error: undefined
             };
         }
@@ -331,7 +336,7 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
         if (fb) return fb;
 
         return {
-            price: null, currency: null, marketTime: null, trailingPE: null, forwardPE: null, eps: null, dividendYield: null, country: null, error: 'Keine Daten', open: null, previousClose: null
+            price: null, currency: null, marketTime: null, trailingPE: null, forwardPE: null, eps: null, dividendYield: null, country: null, error: 'Keine Daten', open: null, previousClose: null, kcv: null
         };
 
     } catch (error) {
@@ -341,7 +346,7 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
         if (fb) return fb;
 
         return {
-            price: null, currency: null, marketTime: null, trailingPE: null, forwardPE: null, eps: null, dividendYield: null, country: null, error: 'Netzwerkfehler'
+            price: null, currency: null, marketTime: null, trailingPE: null, forwardPE: null, eps: null, dividendYield: null, country: null, error: 'Netzwerkfehler', kcv: null
         };
     }
 }

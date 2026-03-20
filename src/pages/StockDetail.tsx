@@ -13,7 +13,7 @@ import { cn } from '../utils';
 import { Logo } from '../components/Logo';
 import { AddToWatchlistModal } from '../components/AddToWatchlistModal'; // New Import
 
-import { fetchStockHistory, fetchStockQuote, fetchStockAnalysis, type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
+import { fetchStockHistory, fetchStockQuote, type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
 
 export function StockDetail() {
     const { id } = useParams();
@@ -227,6 +227,11 @@ export function StockDetail() {
                     updates.countryWeights = quoteResponse.countryWeights;
                     hasUpdates = true;
                 }
+                
+                if (quoteResponse.kcv !== undefined && quoteResponse.kcv !== null && Math.abs((stockFromContext?.kcv || virtualStock?.kcv || 0) - quoteResponse.kcv) > 0.01) {
+                    updates.kcv = quoteResponse.kcv;
+                    hasUpdates = true;
+                }
 
                 if (hasUpdates) {
                     if (stockFromContext) {
@@ -235,23 +240,6 @@ export function StockDetail() {
                         setVirtualStock((prev: any) => ({ ...prev, ...updates }));
                     }
                 }
-            }
-
-            // Fetch KCV (if missing or occasionally)
-            try {
-                const analysis = await fetchStockAnalysis(symbol);
-                if (analysis.kcv !== undefined && analysis.kcv !== null) {
-                    const currentKcv = stockFromContext ? stockFromContext.kcv : virtualStock?.kcv;
-                    if (Math.abs((currentKcv || 0) - analysis.kcv) > 0.01) {
-                        if (stockFromContext) {
-                            updateStock(stock.id, { kcv: analysis.kcv });
-                        } else {
-                            setVirtualStock((prev: any) => ({ ...prev, kcv: analysis.kcv }));
-                        }
-                    }
-                }
-            } catch (e) {
-                console.warn('[StockDetail] Could not fetch KCV', e);
             }
         }
         setIsRefreshing(false);

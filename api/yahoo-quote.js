@@ -28,7 +28,7 @@ export default async function handler(req, res) {
         // ALSO fetch quote() for basic data fallback (e.g. price, name)
         const [quoteSummary, quoteBasic] = await Promise.all([
             yahooFinance.quoteSummary(symbol, {
-                modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'topHoldings', 'fundProfile', 'assetProfile']
+                modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'topHoldings', 'fundProfile', 'assetProfile', 'financialData']
             }).catch(() => null),
             yahooFinance.quote(symbol).catch(() => null)
         ]);
@@ -104,6 +104,14 @@ export default async function handler(req, res) {
             epsTrailingTwelveMonths: quoteBasic?.epsTrailingTwelveMonths || quoteSummary?.defaultKeyStatistics?.trailingEps,
             dividendYield: (quoteSummary?.summaryDetail?.dividendYield) ? quoteSummary.summaryDetail.dividendYield * 100 : (quoteBasic?.dividendYield || null),
             country: quoteSummary?.summaryProfile?.country || null,
+            kcv: (() => {
+                const operatingCashflow = quoteSummary?.financialData?.operatingCashflow;
+                const marketCap = quoteSummary?.summaryDetail?.marketCap || quoteBasic?.marketCap;
+                if (operatingCashflow && marketCap && operatingCashflow > 0) {
+                    return marketCap / operatingCashflow;
+                }
+                return null;
+            })(),
             // ETF Allocation Data (NEW)
             sectorWeights: (() => {
                 const sw = quoteSummary?.topHoldings?.sectorWeightings || quoteSummary?.topHoldings?.equityHoldings?.sectorWeightings;
