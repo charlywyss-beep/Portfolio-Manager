@@ -45,19 +45,31 @@ export default defineConfig({
           // HELPER: Fetch KCV from Timeseries (No Crumb Needed)
           const fetchCashflowTimeseries = async (sym: string) => {
             try {
-              const tsUrl = `https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${sym}?period1=1492524108&period2=1912524108&type=trailingOperatingCashFlow,annualOperatingCashFlow`;
+              const tsUrl = `https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${sym}?period1=1492524108&period2=1912524108&type=trailingOperatingCashFlow,annualOperatingCashFlow,trailingMarketCap`;
               const response = await fetch(tsUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-              if (!response.ok) return null;
+              if (!response.ok) return { flow: null, cap: null };
               const data: any = await response.json();
-              const result = data?.timeseries?.result?.[0];
-              if (!result) return null;
-              let flowArray = result.trailingOperatingCashFlow || result.annualOperatingCashFlow;
-              if (flowArray && flowArray.length > 0) {
-                return flowArray[flowArray.length - 1]?.reportedValue?.raw || null;
+              const tsResults = data?.timeseries?.result || [];
+              
+              let flow = null;
+              let cap = null;
+
+              const mcItem = tsResults.find((r: any) => r.meta?.type?.[0] === 'trailingMarketCap');
+              if (mcItem && mcItem.trailingMarketCap?.length > 0) {
+                 cap = mcItem.trailingMarketCap[mcItem.trailingMarketCap.length - 1]?.reportedValue?.raw || null;
               }
-              return null;
+
+              const cfItem = tsResults.find((r: any) => r.meta?.type?.[0] === 'trailingOperatingCashFlow' || r.meta?.type?.[0] === 'annualOperatingCashFlow');
+              if (cfItem) {
+                 const flowArr = cfItem.trailingOperatingCashFlow || cfItem.annualOperatingCashFlow;
+                 if (flowArr && flowArr.length > 0) {
+                    flow = flowArr[flowArr.length - 1]?.reportedValue?.raw || null;
+                 }
+              }
+
+              return { flow, cap };
             } catch (e) {
-              return null;
+              return { flow: null, cap: null };
             }
           };
 
@@ -74,8 +86,49 @@ export default defineConfig({
                  yahooFinance.quote(sym).catch(() => null),
                  (fundamentalSymbol !== sym) ? yahooFinance.quote(fundamentalSymbol).catch(() => null) : null
               ]);
+              
+              const tsFallback = await fetchCashflowTimeseries(fundamentalSymbol);
 
-              if (!result && !quoteBasic) return { symbol: sym, error: 'No data' };
+              if (!result && !quoteBasic) {
+                   // BULLETPROOF FALLBACK for totally crumb-blocked IPs
+                   try {
+                       const chartUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1d`;
+                       const chartRes = await fetch(chartUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }});
+                       if (!chartRes.ok) return { symbol: sym, error: 'Completely blocked' };
+                       const chartData: any = await chartRes.json();
+                       const chartMeta = chartData.chart?.result?.[0]?.meta;
+                       
+                       if (!chartMeta) return { symbol: sym, error: 'No chart data' };
+                       
+                       let kcvValue = null;
+                       if (tsFallback.cap && tsFallback.flow && tsFallback.flow > 0) {
+                           kcvValue = tsFallback.cap / tsFallback.flow;
+                       }
+                       
+                       return {
+                           symbol: sym,
+                           longName: chartMeta.longName || sym,
+                           shortName: chartMeta.shortName || sym,
+                           displayName: chartMeta.longName || sym,
+                           regularMarketPrice: chartMeta.regularMarketPrice,
+                           currency: chartMeta.currency,
+                           regularMarketTime: chartMeta.regularMarketTime,
+                           marketState: null,
+                           trailingPE: null,
+                           forwardPE: null,
+                           eps: null,
+                           dividendYield: null,
+                           kcv: kcvValue,
+                           regularMarketOpen: chartMeta.chartPreviousClose,
+                           regularMarketPreviousClose: chartMeta.chartPreviousClose,
+                           country: null,
+                           sectorWeights: null,
+                           countryWeights: null
+                       };
+                   } catch (e) {
+                       return { symbol: sym, error: 'Completely blocked' };
+                   }
+              }
 
               // Map to existing structure
               // Cast to any to avoid TS strictness on partial returns
@@ -91,15 +144,8 @@ export default defineConfig({
               const getRawVal = (obj: any) => typeof obj === 'object' && obj !== null && 'raw' in obj ? obj.raw : obj;
 
               let kcvValue = null;
-              let operatingCashflow = null;
-              
-              if (result?.financialData?.operatingCashflow) {
-                  operatingCashflow = getRawVal(result.financialData.operatingCashflow);
-              } else {
-                  operatingCashflow = await fetchCashflowTimeseries(fundamentalSymbol);
-              }
-              
-              const marketCap = getRawVal(summaryDetail.marketCap) || getRawVal(quoteFundamental?.marketCap) || getRawVal(quoteBasic?.marketCap);
+              let operatingCashflow = getRawVal(result?.financialData?.operatingCashflow) || tsFallback.flow;
+              const marketCap = getRawVal(summaryDetail.marketCap) || getRawVal(quoteFundamental?.marketCap) || tsFallback.cap || getRawVal(quoteBasic?.marketCap);
               
               if (operatingCashflow && marketCap && operatingCashflow > 0) {
                   kcvValue = marketCap / operatingCashflow;
