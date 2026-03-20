@@ -289,6 +289,16 @@ export function StockDetail() {
         setIsSaving(false);
     };
 
+    // Helper for KGV/KCV Coloring
+    let calculatedKgv = stock.trailingPE || stock.forwardPE || null;
+    if (!calculatedKgv && stock.eps && stock.eps > 0 && stock.currentPrice) {
+        calculatedKgv = stock.currentPrice / stock.eps;
+    }
+
+    const kcvColorClass = (stock.kcv && calculatedKgv) 
+        ? (stock.kcv < calculatedKgv ? 'text-green-500' : 'text-red-500') 
+        : '';
+
     return (
         <div className="p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16">
             {/* Sticky Header / Navigation */}
@@ -807,7 +817,7 @@ export function StockDetail() {
                             </div>
                             <div className="flex justify-between py-1.5 border-b border-border/50">
                                 <span className="text-muted-foreground text-sm">KCV (P/CF)</span>
-                                <span className="font-medium text-sm">
+                                <span className={`font-medium text-sm ${kcvColorClass}`}>
                                     {stock.kcv ? stock.kcv.toFixed(2) : '-'}
                                 </span>
                             </div>
