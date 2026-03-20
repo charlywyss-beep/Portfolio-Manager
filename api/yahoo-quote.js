@@ -78,25 +78,29 @@ export default async function handler(req, res) {
         };
 
         // HELPER: Scraper Fallback for KCV (when API is blocked by 429)
-        const fetchKcvScraper = async (sym) => {
+        // UPDATE: Yahoo Finance SSR HTML changed. Replacing with Timeseries API which requires no crumb!
+        const fetchCashflowTimeseries = async (sym) => {
             try {
-                console.log(`[Vercel Scraper] Attempting KCV regex fallback for ${sym}...`);
-                const url = `https://finance.yahoo.com/quote/${sym}`;
-                const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } });
+                console.log(`[Vercel Timeseries] Attempting Cashflow fetch for ${sym}...`);
+                const tsUrl = `https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${sym}?period1=1492524108&period2=1912524108&type=trailingOperatingCashFlow,annualOperatingCashFlow`;
+                const response = await fetch(tsUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
                 if (!response.ok) return null;
-                const html = await response.text();
+                const data = await response.json();
                 
-                const ocfMatch = html.match(/"operatingCashflow":\{"raw":([\d\.\-]+)/);
-                const mcMatch = html.match(/"marketCap":\{"raw":([\d\.\-]+)/);
+                const result = data?.timeseries?.result?.[0];
+                if (!result) return null;
                 
-                if (ocfMatch && mcMatch) {
-                    const ocf = parseFloat(ocfMatch[1]);
-                    const mc = parseFloat(mcMatch[1]);
-                    if (ocf > 0) return mc / ocf;
+                // Try trailing first, fallback to annual
+                let flowArray = result.trailingOperatingCashFlow || result.annualOperatingCashFlow;
+                if (flowArray && flowArray.length > 0) {
+                    // Get the most recent one (last element usually)
+                    const lastData = flowArray[flowArray.length - 1];
+                    const val = lastData?.reportedValue?.raw;
+                    if (val) return val;
                 }
                 return null;
             } catch (e) {
-                console.warn(`[Vercel Scraper] KCV failed for ${sym}:`, e.message);
+                console.warn(`[Vercel Timeseries] KCV failed for ${sym}:`, e.message);
                 return null;
             }
         };
@@ -109,6 +113,10 @@ export default async function handler(req, res) {
             }
         }
 
+        // We fetch `quoteFundamental` (US ticker equivalent) just to GUARANTEE we have a Market Cap!
+        // quoteSummary is often 429'd on Vercel. quote() is much less likely to be 429'd.
+        const quoteFundamental = (fundamentalSymbol !== symbol) ? await yahooFinance.quote(fundamentalSymbol).catch(() => null) : quoteBasic;
+
         if (!quoteSummary && !quoteBasic) {
             throw new Error('No data found');
         }
@@ -116,17 +124,20 @@ export default async function handler(req, res) {
         // Helper to get value from either source
         const getRawVal = (obj) => typeof obj === 'object' && obj !== null && 'raw' in obj ? obj.raw : obj;
 
-        // Run KCV Scraper if quoteSummary failed or lacks data
+        // Run KCV logic
         let kcvValue = null;
+        let operatingCashflow = 0;
+        
         if (quoteSummary?.financialData?.operatingCashflow) {
-            const operatingCashflow = getRawVal(quoteSummary.financialData.operatingCashflow);
-            const marketCap = getRawVal(quoteSummary?.summaryDetail?.marketCap) || getRawVal(quoteBasic?.marketCap);
-            if (operatingCashflow > 0 && marketCap) {
-                kcvValue = marketCap / operatingCashflow;
-            }
+            operatingCashflow = getRawVal(quoteSummary.financialData.operatingCashflow);
+        } else {
+            operatingCashflow = await fetchCashflowTimeseries(fundamentalSymbol);
         }
-        if (!kcvValue) {
-            kcvValue = await fetchKcvScraper(fundamentalSymbol);
+
+        const marketCap = getRawVal(quoteSummary?.summaryDetail?.marketCap) || getRawVal(quoteFundamental?.marketCap) || getRawVal(quoteBasic?.marketCap);
+        
+        if (operatingCashflow && marketCap && operatingCashflow > 0) {
+            kcvValue = marketCap / operatingCashflow;
         }
 
         // Deep Property Retriever
