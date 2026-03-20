@@ -18,14 +18,6 @@ export default defineConfig({
             return;
           }
 
-          // HELPER: Normalize Price (Keep existing logic)
-          const normalizeYahooPrice = (price: any, currency: string | null, symbol: string) => {
-            if (price === undefined || price === null) return null;
-            if (currency === 'GBp' || (symbol.endsWith('.L') && price > 500)) {
-              return price / 100;
-            }
-            return price;
-          };
 
           // DYNAMIC IMPORT for yahoo-finance2 to avoid build-time issues if possible, 
           // but top-level import is better if it works. 
@@ -122,10 +114,10 @@ export default defineConfig({
                 shortName: activePrice.shortName || price.shortName,
                 displayName: activePrice.displayName || activePrice.longName || price.longName,
 
-                price: normalizeYahooPrice(activePrice.regularMarketPrice || rawPrice, currency, sym),
+                regularMarketPrice: activePrice.regularMarketPrice || rawPrice,
                 currency: activePrice.currency || currency,
 
-                marketTime: activePrice.regularMarketTime || price.regularMarketTime || new Date(),
+                regularMarketTime: activePrice.regularMarketTime || price.regularMarketTime || (Math.floor(Date.now() / 1000)),
                 marketState: activePrice.marketState || price.marketState || null,
 
                 trailingPE: getRawVal(quoteBasic?.trailingPE) || getRawVal(summaryDetail.trailingPE) || getRawVal(defaultKeyStatistics.trailingPE) || null,
@@ -134,8 +126,8 @@ export default defineConfig({
                 dividendYield: getRawVal(summaryDetail.dividendYield) ? getRawVal(summaryDetail.dividendYield) * 100 : (getRawVal(quoteBasic?.dividendYield) || null),
                 kcv: kcvValue,
 
-                open: getRawVal(quoteBasic?.regularMarketOpen) || getRawVal(summaryDetail.open) || null,
-                previousClose: getRawVal(quoteBasic?.regularMarketPreviousClose) || getRawVal(summaryDetail.previousClose) || getRawVal(price.regularMarketPreviousClose) || null,
+                regularMarketOpen: getRawVal(quoteBasic?.regularMarketOpen) || getRawVal(summaryDetail.open) || null,
+                regularMarketPreviousClose: getRawVal(quoteBasic?.regularMarketPreviousClose) || getRawVal(summaryDetail.previousClose) || getRawVal(price.regularMarketPreviousClose) || null,
 
                 country: summaryProfile.country || null,
                 sectorWeights: null,
