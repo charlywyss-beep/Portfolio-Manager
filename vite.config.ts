@@ -83,17 +83,17 @@ export default defineConfig({
                  (fundamentalSymbol !== sym) ? yahooFinance.quote(fundamentalSymbol).catch(() => null) : null
               ]);
 
-              if (!result) return { symbol: sym, error: 'No data' };
+              if (!result && !quoteBasic) return { symbol: sym, error: 'No data' };
 
               // Map to existing structure
               // Cast to any to avoid TS strictness on partial returns
-              const price: any = result.price || {};
-              const summaryDetail: any = result.summaryDetail || {};
-              const defaultKeyStatistics: any = result.defaultKeyStatistics || {};
-              const summaryProfile: any = result.summaryProfile || {};
+              const price: any = result?.price || {};
+              const summaryDetail: any = result?.summaryDetail || {};
+              const defaultKeyStatistics: any = result?.defaultKeyStatistics || {};
+              const summaryProfile: any = result?.summaryProfile || {};
 
-              const currency = price.currency;
-              const rawPrice = price.regularMarketPrice;
+              const currency = price.currency || quoteBasic?.currency;
+              const rawPrice = price.regularMarketPrice || quoteBasic?.regularMarketPrice;
 
               // Helper to get raw value safely
               const getRawVal = (obj: any) => typeof obj === 'object' && obj !== null && 'raw' in obj ? obj.raw : obj;
