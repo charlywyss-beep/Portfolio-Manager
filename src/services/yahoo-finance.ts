@@ -609,7 +609,8 @@ export async function fetchStockAnalysis(symbol: string): Promise<{
     pegRatio: number | null,
     eps: number | null,
     price: number | null,
-    currency: string | null
+    currency: string | null,
+    kcv: number | null
 }> {
     // FALLBACK: Fetch Robust Price (Chart API) in parallel!
     // This ensures that even if QuoteSummary is blocked (returning nulls), we have a valid Price.
@@ -622,7 +623,7 @@ export async function fetchStockAnalysis(symbol: string): Promise<{
     }
 
     try {
-        const url = `/api/yahoo-quote-summary?symbol=${symbol}&modules=earningsTrend,defaultKeyStatistics,financialData`;
+        const url = `/api/yahoo-quote-summary?symbol=${symbol}&modules=earningsTrend,defaultKeyStatistics,financialData,summaryDetail`;
         console.log('[Yahoo Finance] Fetching Analysis for:', symbol);
 
         const response = await fetch(url);
@@ -633,7 +634,8 @@ export async function fetchStockAnalysis(symbol: string): Promise<{
                 growthRate: null, peHistory: null, forwardPE: null, pegRatio: null,
                 eps: null,
                 price: robustPriceData?.price || null,
-                currency: robustPriceData?.currency || null
+                currency: robustPriceData?.currency || null,
+                kcv: null
             };
         }
 
@@ -645,7 +647,8 @@ export async function fetchStockAnalysis(symbol: string): Promise<{
                 growthRate: null, peHistory: null, forwardPE: null, pegRatio: null,
                 eps: null,
                 price: robustPriceData?.price || null,
-                currency: robustPriceData?.currency || null
+                currency: robustPriceData?.currency || null,
+                kcv: null
             };
         }
 
@@ -666,6 +669,14 @@ export async function fetchStockAnalysis(symbol: string): Promise<{
         const price = result.financialData?.currentPrice?.raw || robustPriceData?.price || null;
         const currency = result.financialData?.financialCurrency || robustPriceData?.currency || null;
 
+        // Calculate KCV
+        let kcv: number | null = null;
+        const operatingCashflow = result.financialData?.operatingCashflow?.raw;
+        const marketCap = result.summaryDetail?.marketCap?.raw;
+        if (operatingCashflow && marketCap && operatingCashflow > 0) {
+            kcv = marketCap / operatingCashflow;
+        }
+
         return {
             growthRate,
             peHistory,
@@ -673,7 +684,8 @@ export async function fetchStockAnalysis(symbol: string): Promise<{
             pegRatio,
             eps,
             price,
-            currency
+            currency,
+            kcv
         };
     } catch (e) {
         console.warn("[Yahoo Analysis] Failed:", e);
@@ -682,7 +694,8 @@ export async function fetchStockAnalysis(symbol: string): Promise<{
             growthRate: null, peHistory: null, forwardPE: null, pegRatio: null,
             eps: null,
             price: robustPriceData?.price || null,
-            currency: robustPriceData?.currency || null
+            currency: robustPriceData?.currency || null,
+            kcv: null
         };
     }
 }

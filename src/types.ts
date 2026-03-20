@@ -68,6 +68,7 @@ export interface Stock {
     distributionPolicy?: 'distributing' | 'accumulating'; // Thesaurierend vs Ausschüttend
     trailingPE?: number; // KGV (Price-Earnings Ratio)
     forwardPE?: number; // KGV (Forecast)
+    kcv?: number; // Kurs-Cashflow-Verhältnis (Price-to-Cash-Flow)
     eps?: number; // Earnings Per Share (Trailing 12M)
     quickLinks?: QuickLink[]; // NEW: Custom URLs for charts, financial sites, etc.
     marketState?: 'REGULAR' | 'CLOSED' | 'PRE' | 'POST' | 'PREPRE' | 'POSTPOST'; // Yahoo Finance Market State

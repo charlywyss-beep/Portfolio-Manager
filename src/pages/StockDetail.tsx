@@ -13,7 +13,7 @@ import { cn } from '../utils';
 import { Logo } from '../components/Logo';
 import { AddToWatchlistModal } from '../components/AddToWatchlistModal'; // New Import
 
-import { fetchStockHistory, fetchStockQuote, type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
+import { fetchStockHistory, fetchStockQuote, fetchStockAnalysis, type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
 
 export function StockDetail() {
     const { id } = useParams();
@@ -235,6 +235,23 @@ export function StockDetail() {
                         setVirtualStock((prev: any) => ({ ...prev, ...updates }));
                     }
                 }
+            }
+
+            // Fetch KCV (if missing or occasionally)
+            try {
+                const analysis = await fetchStockAnalysis(symbol);
+                if (analysis.kcv !== undefined && analysis.kcv !== null) {
+                    const currentKcv = stockFromContext ? stockFromContext.kcv : virtualStock?.kcv;
+                    if (Math.abs((currentKcv || 0) - analysis.kcv) > 0.01) {
+                        if (stockFromContext) {
+                            updateStock(stock.id, { kcv: analysis.kcv });
+                        } else {
+                            setVirtualStock((prev: any) => ({ ...prev, kcv: analysis.kcv }));
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('[StockDetail] Could not fetch KCV', e);
             }
         }
         setIsRefreshing(false);
@@ -798,6 +815,12 @@ export function StockDetail() {
                                     {stock.trailingPE
                                         ? stock.trailingPE.toFixed(2)
                                         : (stock.forwardPE ? `${stock.forwardPE.toFixed(2)} (Fwd)` : (stock.eps && stock.eps > 0 ? (stock.currentPrice / stock.eps).toFixed(2) : '-'))}
+                                </span>
+                            </div>
+                            <div className="flex justify-between py-1.5 border-b border-border/50">
+                                <span className="text-muted-foreground text-sm">KCV (P/CF)</span>
+                                <span className="font-medium text-sm">
+                                    {stock.kcv ? stock.kcv.toFixed(2) : '-'}
                                 </span>
                             </div>
                             <div className="flex justify-between py-1.5 border-b border-border/50">
