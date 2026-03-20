@@ -34,13 +34,54 @@ export default defineConfig({
           const yahooFinance = new YahooFinance();
           // yahooFinance.suppressLogger(); // helper removed or different in this version
 
+          // MAP: European tickers often lack deep fundamentals on Yahoo Finance.
+          const PRIMARY_TICKER_MAP: Record<string, string> = {
+            'R6C0.DE': 'SHEL',
+            'SHEL.L': 'SHEL',
+            'SHEL.AS': 'SHEL',
+            'NOVOB.CO': 'NVO',
+            'NESN.SW': 'NSRGY',
+            'ROG.SW': 'RHHBY',
+            'NOVN.SW': 'NVS',
+            'ASML.AS': 'ASML',
+            'SAP.DE': 'SAP',
+            'SIE.DE': 'SIEGY',
+            'ALV.DE': 'ALV',
+            'MUV2.DE': 'MURGY'
+          };
+
+          // HELPER: Fetch KCV from Timeseries (No Crumb Needed)
+          const fetchCashflowTimeseries = async (sym: string) => {
+            try {
+              const tsUrl = `https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${sym}?period1=1492524108&period2=1912524108&type=trailingOperatingCashFlow,annualOperatingCashFlow`;
+              const response = await fetch(tsUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+              if (!response.ok) return null;
+              const data: any = await response.json();
+              const result = data?.timeseries?.result?.[0];
+              if (!result) return null;
+              let flowArray = result.trailingOperatingCashFlow || result.annualOperatingCashFlow;
+              if (flowArray && flowArray.length > 0) {
+                return flowArray[flowArray.length - 1]?.reportedValue?.raw || null;
+              }
+              return null;
+            } catch (e) {
+              return null;
+            }
+          };
+
           // HELPER: Process Single Symbol
           const processSymbol = async (sym: string) => {
             try {
-              // Fetch modules needed for full details
-              const result = await yahooFinance.quoteSummary(sym, {
-                modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile']
-              });
+              const fundamentalSymbol = PRIMARY_TICKER_MAP[sym] || sym;
+
+              // We also fetch basic quote to ensure we have marketCap
+              const [result, quoteBasic, quoteFundamental] = await Promise.all([
+                 yahooFinance.quoteSummary(fundamentalSymbol, {
+                    modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'financialData']
+                 }).catch(() => null),
+                 yahooFinance.quote(sym).catch(() => null),
+                 (fundamentalSymbol !== sym) ? yahooFinance.quote(fundamentalSymbol).catch(() => null) : null
+              ]);
 
               if (!result) return { symbol: sym, error: 'No data' };
 
@@ -54,25 +95,47 @@ export default defineConfig({
               const currency = price.currency;
               const rawPrice = price.regularMarketPrice;
 
+              // Helper to get raw value safely
+              const getRawVal = (obj: any) => typeof obj === 'object' && obj !== null && 'raw' in obj ? obj.raw : obj;
+
+              let kcvValue = null;
+              let operatingCashflow = null;
+              
+              if (result?.financialData?.operatingCashflow) {
+                  operatingCashflow = getRawVal(result.financialData.operatingCashflow);
+              } else {
+                  operatingCashflow = await fetchCashflowTimeseries(fundamentalSymbol);
+              }
+              
+              const marketCap = getRawVal(summaryDetail.marketCap) || getRawVal(quoteFundamental?.marketCap) || getRawVal(quoteBasic?.marketCap);
+              
+              if (operatingCashflow && marketCap && operatingCashflow > 0) {
+                  kcvValue = marketCap / operatingCashflow;
+              }
+
+              // Use quoteBasic for price if available (more reliable for intl)
+              const activePrice = quoteBasic || price;
+
               return {
                 symbol: sym,
-                longName: price.longName,
-                shortName: price.shortName,
-                displayName: price.longName,
+                longName: activePrice.longName || price.longName,
+                shortName: activePrice.shortName || price.shortName,
+                displayName: activePrice.displayName || activePrice.longName || price.longName,
 
-                price: normalizeYahooPrice(rawPrice, currency, sym),
-                currency: currency,
+                price: normalizeYahooPrice(activePrice.regularMarketPrice || rawPrice, currency, sym),
+                currency: activePrice.currency || currency,
 
-                marketTime: price.regularMarketTime || new Date(),
-                marketState: price.marketState || null,
+                marketTime: activePrice.regularMarketTime || price.regularMarketTime || new Date(),
+                marketState: activePrice.marketState || price.marketState || null,
 
-                trailingPE: summaryDetail.trailingPE || defaultKeyStatistics.trailingPE || null,
-                forwardPE: summaryDetail.forwardPE || defaultKeyStatistics.forwardPE || null,
-                eps: defaultKeyStatistics.trailingEps || null,
-                dividendYield: (summaryDetail.dividendYield) ? summaryDetail.dividendYield * 100 : null,
+                trailingPE: getRawVal(quoteBasic?.trailingPE) || getRawVal(summaryDetail.trailingPE) || getRawVal(defaultKeyStatistics.trailingPE) || null,
+                forwardPE: getRawVal(quoteBasic?.forwardPE) || getRawVal(summaryDetail.forwardPE) || getRawVal(defaultKeyStatistics.forwardPE) || null,
+                eps: getRawVal(quoteBasic?.epsTrailingTwelveMonths) || getRawVal(defaultKeyStatistics.trailingEps) || null,
+                dividendYield: getRawVal(summaryDetail.dividendYield) ? getRawVal(summaryDetail.dividendYield) * 100 : (getRawVal(quoteBasic?.dividendYield) || null),
+                kcv: kcvValue,
 
-                open: summaryDetail.open || null,
-                previousClose: summaryDetail.previousClose || price.regularMarketPreviousClose || null,
+                open: getRawVal(quoteBasic?.regularMarketOpen) || getRawVal(summaryDetail.open) || null,
+                previousClose: getRawVal(quoteBasic?.regularMarketPreviousClose) || getRawVal(summaryDetail.previousClose) || getRawVal(price.regularMarketPreviousClose) || null,
 
                 country: summaryProfile.country || null,
                 sectorWeights: null,
