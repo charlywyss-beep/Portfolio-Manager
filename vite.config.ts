@@ -303,6 +303,12 @@ export default defineConfig({
           const m = url.searchParams.get('modules');
           return `/v10/finance/quoteSummary/${s}?modules=${m}`;
         }
+      },
+      // Frankfurter Exchange Rate API Proxy (CORS bypass)
+      '/api/frankfurter': {
+        target: 'https://api.frankfurter.app',
+        changeOrigin: true,
+        rewrite: (path) => path.replace('/api/frankfurter', ''),
       }
     },
   },

@@ -55,8 +55,9 @@ export function CurrencyChart({ inverse = false }: Props) {
                 }
 
                 const startStr = formatDate(startDate);
-                // frankfurter.app API
-                const response = await fetch(`https://api.frankfurter.app/${startStr}..?from=${baseCurrency}&to=${targetCurrency}`);
+                // frankfurter.app API (use proxy in dev to avoid CORS)
+                const apiBase = import.meta.env.DEV ? '/api/frankfurter' : 'https://api.frankfurter.app';
+                const response = await fetch(`${apiBase}/${startStr}..?from=${baseCurrency}&to=${targetCurrency}`);
                 const data = await response.json();
 
                 // Transform data
