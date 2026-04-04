@@ -61,8 +61,13 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
         const currentValue = p.shares * p.stock.currentPrice;
         const purchaseValue = (p.purchases || []).reduce((pSum: number, purchase: any) =>
             pSum + (purchase.shares * purchase.price), 0);
-        const gain = currentValue - purchaseValue;
-        return sum + convertToCHF(gain, p.stock.currency);
+        // Use FX-aware CHF calculation
+        const currentValueCHF = convertToCHF(currentValue, p.stock.currency);
+        const entryFxRate = p.averageEntryFxRate || 1;
+        const purchaseValueCHF = p.stock.currency !== 'CHF'
+            ? purchaseValue * entryFxRate
+            : purchaseValue;
+        return sum + (currentValueCHF - purchaseValueCHF);
     }, 0);
 
     const handleRowClick = (stockId: string) => {
@@ -131,13 +136,19 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 const dailyGainCHF = convertToCHF(p.dailyGain, p.stock.currency);
                                 const isDailyPositive = dailyGainCHF >= 0;
 
-                                // Calculate total performance
+                                // Calculate total performance with proper FX handling
                                 const currentValue = p.shares * p.stock.currentPrice;
                                 const purchaseValue = (p.purchases || []).reduce((sum: number, purchase: any) =>
                                     sum + (purchase.shares * purchase.price), 0);
-                                const totalGain = currentValue - purchaseValue;
-                                const totalGainCHF = convertToCHF(totalGain, p.stock.currency);
-                                const totalGainPercent = purchaseValue > 0 ? ((currentValue - purchaseValue) / purchaseValue) * 100 : 0;
+                                
+                                // CHF values: current value at today's FX rate, purchase at historical FX rate
+                                const currentValueCHF = convertToCHF(currentValue, p.stock.currency);
+                                const entryFxRate = p.averageEntryFxRate || 1;
+                                const purchaseValueCHF = p.stock.currency !== 'CHF'
+                                    ? purchaseValue * entryFxRate
+                                    : purchaseValue;
+                                const totalGainCHF = currentValueCHF - purchaseValueCHF;
+                                const totalGainPercent = purchaseValueCHF > 0 ? (totalGainCHF / purchaseValueCHF) * 100 : 0;
                                 const isTotalPositive = totalGainCHF >= 0;
 
                                 // Market State Logic (v3.11.481):
