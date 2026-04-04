@@ -13,12 +13,18 @@ export function TopPerformersCard({ className }: { className?: string }) {
         const getPerformance = (p: any) => {
             const currentValue = p.shares * p.stock.currentPrice;
             const purchaseValue = (p.purchases || []).reduce((sum: number, buy: any) => sum + (buy.shares * buy.price), 0);
-            const totalGain = currentValue - purchaseValue;
-            const gainPercent = purchaseValue > 0 ? (totalGain / purchaseValue) * 100 : 0;
+            // FX-aware CHF calculation
+            const currentValueCHF = convertToCHF(currentValue, p.stock.currency);
+            const entryFxRate = p.averageEntryFxRate || 1;
+            const purchaseValueCHF = p.stock.currency !== 'CHF'
+                ? purchaseValue * entryFxRate
+                : purchaseValue;
+            const totalGainCHF = currentValueCHF - purchaseValueCHF;
+            const gainPercent = purchaseValueCHF > 0 ? (totalGainCHF / purchaseValueCHF) * 100 : 0;
             return {
                 ...p,
-                totalGain,
-                totalGainCHF: convertToCHF(totalGain, p.stock.currency),
+                totalGain: currentValue - purchaseValue,
+                totalGainCHF,
                 totalGainPercent: gainPercent
             };
         };

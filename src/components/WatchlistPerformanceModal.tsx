@@ -67,15 +67,21 @@ export function WatchlistPerformanceModal({ isOpen, onClose, activeWatchlistId }
             // If owned, dailyGain in CHF
             const dailyGainCHF = pos ? dailyChange * pos.shares : 0;
 
-            // Total Performance if owned
+            // Total Performance if owned (FX-aware)
             let totalGainPercent = 0;
             let totalGainCHF = 0;
             if (pos) {
                 const currentValue = pos.shares * stock.currentPrice;
                 const purchaseValue = (pos.purchases || []).reduce((sum: number, purchase: any) =>
                     sum + (purchase.shares * purchase.price), 0);
-                totalGainCHF = currentValue - purchaseValue;
-                totalGainPercent = purchaseValue > 0 ? (totalGainCHF / purchaseValue) * 100 : 0;
+                // CHF values: current value at today's FX rate, purchase at historical FX rate
+                const currentValueCHF = convertToCHF(currentValue, stock.currency);
+                const entryFxRate = pos.averageEntryFxRate || 1;
+                const purchaseValueCHF = stock.currency !== 'CHF'
+                    ? purchaseValue * entryFxRate
+                    : purchaseValue;
+                totalGainCHF = currentValueCHF - purchaseValueCHF;
+                totalGainPercent = purchaseValueCHF > 0 ? (totalGainCHF / purchaseValueCHF) * 100 : 0;
             }
 
             return {
@@ -164,7 +170,7 @@ export function WatchlistPerformanceModal({ isOpen, onClose, activeWatchlistId }
                                 {totalGainPercent >= 0 ? '+' : ''}{totalGainPercent.toFixed(2)}%
                             </div>
                             <div className={cn("text-[10px] font-medium opacity-70", totalGainPercent >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
-                                {totalGainPercent >= 0 ? '+' : ''}{formatCurrency(convertToCHF(totalGainCHF, stock.currency), 'CHF')}
+                                {totalGainPercent >= 0 ? '+' : ''}{formatCurrency(totalGainCHF, 'CHF')}
                             </div>
                         </div>
                     ) : (
