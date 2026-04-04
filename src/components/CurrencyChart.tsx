@@ -10,8 +10,10 @@ interface RateHistory {
 
 type Currency = 'EUR' | 'USD' | 'GBP';
 
+import { fetchStockHistory } from '../services/yahoo-finance';
+
 // Helper to get date string YYYY-MM-DD
-const formatDate = (date: Date) => date.toISOString().split('T')[0];
+
 
 interface Props {
     inverse?: boolean;
@@ -43,46 +45,38 @@ export function CurrencyChart({ inverse = false }: Props) {
         const fetchHistory = async () => {
             setIsLoading(true);
             try {
-                // Determine start date based on range
-                const startDate = new Date();
-                switch (timeRange) {
-                    case '1W': startDate.setDate(startDate.getDate() - 7); break;
-                    case '1M': startDate.setMonth(startDate.getMonth() - 1); break;
-                    case '6M': startDate.setMonth(startDate.getMonth() - 6); break;
-                    case '1Y': startDate.setFullYear(startDate.getFullYear() - 1); break;
-                    case '5Y': startDate.setFullYear(startDate.getFullYear() - 5); break;
-                    default: startDate.setFullYear(startDate.getFullYear() - 1);
-                }
+                // Use our existing Yahoo Finance integration that handles proxying/CORS properly
+                const symbol = `${baseCurrency}${targetCurrency}=X`;
+                const { data } = await fetchStockHistory(symbol, timeRange as '1W' | '1M' | '6M' | '1Y' | '5Y');
+                
+                if (data && data.length > 0) {
+                    const transformed = data.map((p: any) => {
+                        // Extract just the YYYY-MM-DD from ISO string
+                        const dateOnly = p.date.split('T')[0];
+                        return {
+                            date: dateOnly,
+                            rate: p.value
+                        };
+                    });
+                    
+                    // Filter out duplicates (Yahoo sometimes returns multiple points per day on larger intervals)
+                    const uniqueDates = new Set<string>();
+                    const filtered = transformed.filter((t: any) => {
+                        if (uniqueDates.has(t.date)) return false;
+                        uniqueDates.add(t.date);
+                        return true;
+                    });
 
-                const startStr = formatDate(startDate);
-                // frankfurter.app API (use proxy in dev, CORS proxy in production)
-                const rawUrl = `https://api.frankfurter.app/${startStr}..?from=${baseCurrency}&to=${targetCurrency}`;
-                const apiUrl = import.meta.env.DEV 
-                    ? `/api/frankfurter/${startStr}..?from=${baseCurrency}&to=${targetCurrency}`
-                    : 'https://corsproxy.io/?' + encodeURIComponent(rawUrl);
-                const response = await fetch(apiUrl);
-                const data = await response.json();
+                    setHistoryData(filtered);
 
-                // Transform data
-                if (data.rates) {
-                    const transformed = Object.entries(data.rates).map(([date, rates]: [string, any]) => ({
-                        date,
-                        rate: rates[targetCurrency]
-                    }));
-                    setHistoryData(transformed);
-
-                    // We DO NOT update currRate from history here anymore, 
-                    // because history might be 5 years ago ending yesterday.
-                    // Ideally we want the LATEST rate for the conversion input always.
-                    // But Frankfurter '..' range query ends at 'latest' available data usually.
-                    // Let's ensure we have the very latest rate separately or treat the last history point as current if close enough.
-                    // For now, keeping existing logic:
-                    if (transformed.length > 0) {
-                        setCurrRate(transformed[transformed.length - 1].rate);
+                    if (filtered.length > 0) {
+                        setCurrRate(filtered[filtered.length - 1].rate);
                     }
+                } else {
+                    setHistoryData([]);
                 }
             } catch (error) {
-                console.error("Failed to fetch currency history:", error);
+                console.error("Failed to fetch currency history from Yahoo Finance:", error);
             } finally {
                 setIsLoading(false);
             }

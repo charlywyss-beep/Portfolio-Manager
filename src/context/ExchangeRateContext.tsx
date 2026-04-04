@@ -13,10 +13,8 @@ interface ExchangeRateContextType {
 
 const ExchangeRateContext = createContext<ExchangeRateContextType | undefined>(undefined);
 
-// Use proxy in local dev to avoid CORS, CORS proxy in production (GitHub Pages)
-const API_URL = import.meta.env.DEV
-    ? '/api/frankfurter/latest?from=CHF'
-    : 'https://corsproxy.io/?' + encodeURIComponent('https://api.frankfurter.app/latest?from=CHF');
+// Use open.er-api.com for free, CORS-friendly exchange rates in all environments
+const API_URL = 'https://open.er-api.com/v6/latest/CHF';
 
 export function ExchangeRateProvider({ children }: { children: ReactNode }) {
     const [rates, setRates] = useState<ExchangeRates>({
