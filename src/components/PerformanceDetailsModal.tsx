@@ -114,6 +114,28 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                     </div>
                 </div>
 
+                {/* Summary Totals */}
+                <div className="grid grid-cols-2 gap-4 p-4 bg-muted/20 border-b border-border shrink-0">
+                    <div className="bg-card p-3 rounded-lg border border-border shadow-sm flex flex-col">
+                        <span className="text-xs text-muted-foreground font-medium mb-1">Tages-Performance (heute)</span>
+                        <span className={cn(
+                            "text-base sm:text-lg md:text-xl font-bold tracking-tight",
+                            totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                        )}>
+                            {totalDailyGain >= 0 ? '+' : ''}{formatCurrency(totalDailyGain, 'CHF')}
+                        </span>
+                    </div>
+                    <div className="bg-card p-3 rounded-lg border border-border shadow-sm flex flex-col">
+                        <span className="text-xs text-muted-foreground font-medium mb-1">Gesamt-Performance</span>
+                        <span className={cn(
+                            "text-base sm:text-lg md:text-xl font-bold tracking-tight",
+                            totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                        )}>
+                            {totalPerformanceGain >= 0 ? '+' : ''}{formatCurrency(totalPerformanceGain, 'CHF')}
+                        </span>
+                    </div>
+                </div>
+
                 <div className="overflow-y-auto p-0 flex-1">
                     <table className="w-full text-xs md:text-sm">
                         <thead className="bg-muted/30 sticky top-0 z-10">
@@ -213,21 +235,6 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 );
                             })}
                         </tbody>
-                        <tfoot className="bg-muted/20 border-t border-border">
-                            <tr>
-                                <td className="py-3 px-4 font-semibold text-muted-foreground" style={{ whiteSpace: 'nowrap' }}>Total:</td>
-                                <td className="py-3 px-1" style={{ width: '80px' }}></td>
-                                <td className="py-3 px-1" style={{ width: '70px' }}></td>
-                                <td className={cn("py-3 pr-4 pl-1 text-right font-bold", totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '90px', whiteSpace: 'nowrap' }}>
-                                    {totalDailyGain >= 0 ? '+' : ''}{formatCurrency(totalDailyGain, 'CHF')}
-                                </td>
-                                <td style={{ width: '90px' }}></td>
-                                <td className="py-3 px-1" style={{ width: '60px', whiteSpace: 'nowrap' }}></td>
-                                <td className={cn("py-3 pr-4 pl-1 text-right font-bold", totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '150px', whiteSpace: 'nowrap' }}>
-                                    {totalPerformanceGain >= 0 ? '+' : ''}{formatCurrency(totalPerformanceGain, 'CHF')}
-                                </td>
-                            </tr>
-                        </tfoot>
                     </table>
                 </div>
             </div>
