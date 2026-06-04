@@ -381,10 +381,10 @@ export function EditDividendPage() {
             <div className="flex items-center gap-4 pl-14 pr-4 py-4 md:p-4 md:pl-14 lg:pl-8 border-b border-border bg-background sticky top-0 z-40 w-full transition-all shadow-sm">
                 <button
                     onClick={() => navigate(-1)}
-                    className="flex items-center justify-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 p-2.5 md:px-3 md:py-1.5 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
+                    className="flex items-center justify-center p-2 bg-white text-blue-600 border border-blue-100 shadow-md hover:bg-blue-50 transition-all font-medium rounded-lg transform active:scale-95 shrink-0"
                 >
-                    <ArrowLeft className="size-4 md:mr-1.5" />
-                    <span className="hidden md:inline">Zurück</span>
+                    <ArrowLeft className="size-6" />
+                    <span className="hidden md:inline text-sm ml-1.5">Zurück</span>
                 </button>
                 <div className="flex-1 flex items-center gap-3">
                     {logoUrl && (
