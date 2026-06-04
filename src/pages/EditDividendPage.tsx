@@ -381,9 +381,9 @@ export function EditDividendPage() {
             <div className="flex items-center gap-4 pl-14 pr-4 py-4 md:p-4 md:pl-14 lg:pl-8 border-b border-border bg-background sticky top-0 z-40 w-full transition-all shadow-sm">
                 <button
                     onClick={() => navigate(-1)}
-                    className="flex items-center justify-center p-2 bg-white text-blue-600 border border-blue-100 shadow-md hover:bg-blue-50 transition-all font-medium rounded-lg transform active:scale-95 shrink-0"
+                    className="flex items-center justify-center p-1.5 bg-white text-blue-600 border border-blue-100 shadow-md hover:bg-blue-50 transition-all font-medium rounded-lg transform active:scale-95 shrink-0"
                 >
-                    <ArrowLeft className="size-6" />
+                    <ArrowLeft className="size-5" />
                     <span className="hidden md:inline text-sm ml-1.5">Zurück</span>
                 </button>
                 <div className="flex-1 flex items-center gap-3">
@@ -400,7 +400,7 @@ export function EditDividendPage() {
                             <div className="flex items-start gap-2 group/edit w-full min-w-[120px]">
                                 <textarea
                                     ref={inputRef}
-                                    className="w-full text-xl md:text-2xl font-bold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 py-2 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground resize-none leading-normal min-h-[60px]"
+                                    className="w-full text-xl md:text-2xl font-bold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 py-2 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground resize-none leading-normal min-h-[40px]"
                                     value={stockNameOverride !== undefined ? stockNameOverride : stock.name}
                                     onChange={(e) => setStockNameOverride(e.target.value)}
                                     rows={1}
@@ -414,17 +414,17 @@ export function EditDividendPage() {
                                 <div className="flex flex-col gap-2 mt-1.5 pl-2 border-l border-border/50">
                                     <button
                                         onClick={() => inputRef.current?.focus()}
-                                        className="p-2 text-muted-foreground hover:text-primary hover:bg-muted/50 rounded-lg transition-all"
+                                        className="p-1.5 text-muted-foreground hover:text-primary hover:bg-muted/50 rounded-lg transition-all"
                                         title="Klicken zum Bearbeiten"
                                     >
                                         <Pencil className="size-5" />
                                     </button>
                                     <button
                                         onClick={handleSubmit}
-                                        className="p-2 bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg rounded-lg transition-all transform active:scale-95 flex items-center justify-center"
+                                        className="p-1.5 bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg rounded-lg transition-all transform active:scale-95 flex items-center justify-center"
                                         title="SPEICHERN (Strg + Enter)"
                                     >
-                                        <Check className="size-6 stroke-[3]" />
+                                        <Check className="size-5 stroke-[3]" />
                                     </button>
                                 </div>
                             </div>
