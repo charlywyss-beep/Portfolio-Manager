@@ -271,7 +271,7 @@ export function Dashboard() {
                                     {performancePeriod === '1D' && (
                                         <button
                                             onClick={() => setShowPerformanceDetails(true)}
-                                            className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20"
+                                            className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors px-3 py-1.5 rounded-xl bg-white border border-blue-100 shadow-sm hover:scale-105 hover:bg-blue-50"
                                         >
                                             Details
                                         </button>
