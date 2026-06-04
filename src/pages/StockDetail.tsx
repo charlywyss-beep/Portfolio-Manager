@@ -441,11 +441,11 @@ export function StockDetail() {
                             {formatCurrency(stock.currentPrice, stock.currency)}
                         </h2>
                         {stock.distributionPolicy === 'accumulating' ? (
-                            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-0.5 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded inline-block">
+                            <p className="text-sm text-blue-600 dark:text-blue-400 font-medium mt-0.5 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded inline-block">
                                 Thesaurierend
                             </p>
                         ) : stock.dividendYield && (
-                            <p className="text-xs text-green-600 dark:text-green-400 font-medium mt-0.5">
+                            <p className="text-sm text-green-600 dark:text-green-400 font-medium mt-0.5">
                                 {stock.dividendYield.toFixed(2)}% Div.Rendite
                             </p>
                         )}
@@ -476,7 +476,7 @@ export function StockDetail() {
                             return (
                                 <div className="mt-1 text-right">
                                     <p className={cn(
-                                        "text-xs font-bold flex items-center justify-end gap-1 tabular-nums",
+                                        "text-sm font-bold flex items-center justify-end gap-1 tabular-nums",
                                         isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                     )}>
                                         {isPositive ? '+' : ''}{percentChange.toFixed(2)}% {formatCurrency(totalDiff, stock.currency)}
@@ -504,7 +504,7 @@ export function StockDetail() {
                             {positions.find(p => p.stockId === stock.id) && (
                                 <button
                                     onClick={() => navigate('/?openPerformance=true')}
-                                    className="flex items-center text-xs md:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium bg-blue-50 dark:bg-blue-900/10 px-2 py-1 rounded-md shadow-sm border border-blue-100 dark:border-blue-900/30 whitespace-nowrap"
+                                    className="flex items-center text-xs md:text-sm text-blue-600 hover:text-blue-700 transition-colors font-medium bg-white px-3 py-1.5 rounded-xl shadow border border-blue-100 whitespace-nowrap hover:scale-105"
                                 >
                                     <span className="md:hidden">Zurück</span><span className="hidden md:inline">zur Performance</span>
                                 </button>
