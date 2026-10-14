@@ -256,22 +256,22 @@ export function Settings() {
     };
 
     return (
-        <div className="pl-14 pr-6 py-6 md:p-8 md:pl-14 lg:p-8 space-y-8 animate-in fade-in duration-500">
-            <div className="flex items-center gap-3 mb-8">
-                <h1 className="text-2xl font-bold tracking-tight">Einstellungen</h1>
-                <p className="text-muted-foreground">Verwalten Sie Ihre Daten-Backups und Systemeinstellungen.</p>
+        <div className="pl-14 pr-3 sm:pr-6 py-4 sm:py-6 md:p-8 md:pl-14 lg:p-8 space-y-6 sm:space-y-8 animate-in fade-in duration-500 max-w-full overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mb-6 sm:mb-8 pr-12 sm:pr-0">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Einstellungen</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground">Verwalten Sie Ihre Daten-Backups und Systemeinstellungen.</p>
             </div>
 
             {/* GitHub Cloud-Sync Card */}
-            <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/60">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-blue-500/15 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-500/20">
-                            <Cloud className="size-6" />
+            <div className="bg-card border border-border rounded-xl p-3.5 sm:p-6 shadow-sm space-y-5 sm:space-y-6 max-w-full overflow-hidden">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-4 border-b border-border/60">
+                    <div className="flex items-start sm:items-center gap-3 min-w-0">
+                        <div className="p-2 sm:p-2.5 bg-blue-500/15 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-500/20 shrink-0 mt-0.5 sm:mt-0">
+                            <Cloud className="size-5 sm:size-6" />
                         </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h2 className="text-lg font-bold text-foreground">GitHub Cloud-Sync</h2>
+                        <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <h2 className="text-base sm:text-lg font-bold text-foreground">GitHub Cloud-Sync</h2>
                                 {connectedUser && (
                                     <span className="text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
                                         <span className="size-1.5 rounded-full bg-emerald-500"></span>
@@ -279,40 +279,40 @@ export function Settings() {
                                     </span>
                                 )}
                             </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
                                 Daten sicher und privat über GitHub Gist zwischen Geräten austauschen (z. B. Büro, Handy, Heim-PC)
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-xs pt-1 sm:pt-0">
                         <span className="text-muted-foreground">Letzter Sync:</span>
-                        <span className="font-mono font-semibold text-foreground bg-muted px-2.5 py-1 rounded-md">
+                        <span className="font-mono font-semibold text-foreground bg-muted px-2.5 py-1 rounded-md text-[11px] sm:text-xs">
                             {formatTimestamp(lastSync)}
                         </span>
                     </div>
                 </div>
 
                 {/* Token and Gist Settings Form */}
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full min-w-0">
                     {/* Token Field */}
-                    <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
+                    <div className="space-y-1.5 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                             <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                                <Key className="size-3.5 text-primary" />
+                                <Key className="size-3.5 text-primary shrink-0" />
                                 <span>1. GitHub Personal Access Token (PAT)</span>
                             </label>
                             <a
                                 href="https://github.com/settings/tokens/new?scopes=gist&description=Portfolio%20Manager%20Cloud%20Sync"
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                                className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 w-fit"
                             >
                                 <span>Neuen Token erstellen</span>
                                 <ExternalLink className="size-3" />
                             </a>
                         </div>
-                        <div className="relative">
+                        <div className="relative w-full min-w-0">
                             <input
                                 type={isTokenVisible ? 'text' : 'password'}
                                 value={gistToken}
@@ -321,7 +321,7 @@ export function Settings() {
                                     saveGistCredentials(e.target.value, gistId);
                                 }}
                                 placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                                className="w-full pl-3 pr-20 py-2 text-sm bg-background border border-border rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+                                className="w-full pl-3 pr-20 py-2 text-xs sm:text-sm bg-background border border-border rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-primary min-w-0"
                             />
                             <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
                                 <button
@@ -343,16 +343,16 @@ export function Settings() {
                                 </button>
                             </div>
                         </div>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground leading-normal">
                             Tipp: Sie können genau dasselbe GitHub Token verwenden wie im Arbeitszeitrechner!
                         </p>
                     </div>
 
                     {/* Gist ID Field */}
-                    <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
+                    <div className="space-y-1.5 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                             <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                                <FileJson className="size-3.5 text-primary" />
+                                <FileJson className="size-3.5 text-primary shrink-0" />
                                 <span>2. GitHub Gist-ID (Cloud-Speicher)</span>
                             </label>
                             {gistId && (
@@ -360,14 +360,14 @@ export function Settings() {
                                     href={`https://gist.github.com/${gistId}`}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                                    className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 w-fit"
                                 >
                                     <span>Gist auf GitHub ansehen</span>
                                     <ExternalLink className="size-3" />
                                 </a>
                             )}
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2 w-full min-w-0">
                             <input
                                 type="text"
                                 value={gistId}
@@ -376,50 +376,50 @@ export function Settings() {
                                     saveGistCredentials(gistToken, e.target.value);
                                 }}
                                 placeholder="Wird automatisch ermittelt..."
-                                className="flex-1 px-3 py-2 text-sm bg-background border border-border rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+                                className="w-full sm:flex-1 px-3 py-2 text-xs sm:text-sm bg-background border border-border rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-primary min-w-0"
                             />
                             <button
                                 type="button"
                                 onClick={handleConnectGist}
                                 disabled={syncLoading || !gistToken.trim()}
-                                className="px-3 py-2 text-xs font-semibold bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap disabled:opacity-50"
+                                className="w-full sm:w-auto px-3.5 py-2 text-xs font-semibold bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap disabled:opacity-50 shrink-0"
                                 title="Verbindung prüfen und Gist automatisch finden oder anlegen"
                             >
                                 {syncLoading ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
                                 <span>Verbindung testen</span>
                             </button>
                         </div>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground leading-normal">
                             Bleibt leer oder wird automatisch gefüllt, sobald Sie auf "Verbindung testen" oder "Speichern" klicken.
                         </p>
                     </div>
                 </div>
 
                 {/* Sync Action Buttons */}
-                <div className="pt-2 flex flex-col sm:flex-row items-stretch gap-3">
+                <div className="pt-2 flex flex-col sm:flex-row items-stretch gap-2.5 sm:gap-3 w-full">
                     <button
                         onClick={handleCloudPush}
                         disabled={syncLoading || !gistToken.trim()}
-                        className="flex-1 flex items-center justify-center gap-2.5 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl transition-all shadow-sm active:scale-[0.99] disabled:opacity-50"
+                        className="flex-1 flex items-center justify-center gap-2 py-3 px-3 sm:px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm rounded-xl transition-all shadow-sm active:scale-[0.99] disabled:opacity-50 text-center"
                     >
-                        {syncLoading ? <Loader2 className="size-4 animate-spin" /> : <CloudUpload className="size-4" />}
-                        <span>☁️ ⬆️ Auf GitHub speichern (Push)</span>
+                        {syncLoading ? <Loader2 className="size-4 animate-spin" /> : <CloudUpload className="size-4 shrink-0" />}
+                        <span>Auf GitHub speichern (Push)</span>
                     </button>
 
                     <button
                         onClick={handleCloudPull}
                         disabled={syncLoading || !gistToken.trim()}
-                        className="flex-1 flex items-center justify-center gap-2.5 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-xl transition-all shadow-sm active:scale-[0.99] disabled:opacity-50"
+                        className="flex-1 flex items-center justify-center gap-2 py-3 px-3 sm:px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm rounded-xl transition-all shadow-sm active:scale-[0.99] disabled:opacity-50 text-center"
                     >
-                        {syncLoading ? <Loader2 className="size-4 animate-spin" /> : <CloudDownload className="size-4" />}
-                        <span>☁️ ⬇️ Von GitHub laden (Pull)</span>
+                        {syncLoading ? <Loader2 className="size-4 animate-spin" /> : <CloudDownload className="size-4 shrink-0" />}
+                        <span>Von GitHub laden (Pull)</span>
                     </button>
                 </div>
 
                 {/* Status Message */}
                 {syncStatus.message && (
                     <div
-                        className={`p-3.5 rounded-xl border text-xs flex items-start gap-2.5 ${
+                        className={`p-3.5 rounded-xl border text-xs flex items-start gap-2.5 break-all sm:break-words ${
                             syncStatus.type === 'success'
                                 ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
                                 : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
@@ -435,9 +435,9 @@ export function Settings() {
                 )}
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 w-full max-w-full overflow-hidden">
                 {/* Export Card */}
-                <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-4">
+                <div className="bg-card border border-border rounded-xl p-4 sm:p-6 shadow-sm space-y-4">
                     <div className="flex items-center gap-3 text-primary">
                         <div className="p-2 bg-primary/10 rounded-lg">
                             <Download className="size-6" />
@@ -472,7 +472,7 @@ export function Settings() {
                 </div>
 
                 {/* Import Card */}
-                <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-4">
+                <div className="bg-card border border-border rounded-xl p-4 sm:p-6 shadow-sm space-y-4">
                     <div className="flex items-center gap-3 text-amber-600 dark:text-amber-500">
                         <div className="p-2 bg-amber-100 dark:bg-amber-900/20 rounded-lg">
                             <Upload className="size-6" />
@@ -517,7 +517,7 @@ export function Settings() {
             </div>
 
             {/* Stock Management */}
-            <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-4">
+            <div className="bg-card border border-border rounded-xl p-4 sm:p-6 shadow-sm space-y-4 max-w-full overflow-hidden">
                 <div className="flex items-center gap-3 text-primary mb-4">
                     <div className="p-2 bg-primary/10 rounded-lg">
                         <FileJson className="size-5" />
@@ -610,7 +610,7 @@ export function Settings() {
             </div>
 
             {/* Danger Zone */}
-            <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/20 rounded-xl p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/20 rounded-xl p-4 sm:p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6 w-full max-w-full overflow-hidden">
                 <div className="space-y-1">
                     <h3 className="text-lg font-semibold text-red-700 dark:text-red-400 flex items-center gap-2">
                         <AlertTriangle className="size-5" />
