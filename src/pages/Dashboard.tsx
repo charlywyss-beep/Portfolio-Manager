@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, BarChart3, Calendar, Info, Plus, Trash2, Edit, Bell, RefreshCw } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, BarChart3, Calendar, Info, Plus, Trash2, Edit, Bell, RefreshCw, X } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
 import { smartWrap } from '../utils/text';
@@ -44,6 +44,26 @@ export function Dashboard() {
     const [confirmDeleteHistory, setConfirmDeleteHistory] = useState<{ isOpen: boolean, entryId: string | null }>({ isOpen: false, entryId: null });
     const hasRefreshedPrices = useRef(false);
     const hasRefreshedMetadata = useRef(false); // Prevent loop
+
+    // Bank Risk Banner auto-dismiss & responsive handling
+    const [isBankRiskDismissed, setIsBankRiskDismissed] = useState(() => {
+        return sessionStorage.getItem('dismissed_bank_risks') === 'true';
+    });
+
+    useEffect(() => {
+        if (!isBankRiskDismissed && bankRisks.length > 0) {
+            const timer = setTimeout(() => {
+                setIsBankRiskDismissed(true);
+                sessionStorage.setItem('dismissed_bank_risks', 'true');
+            }, 6000); // Automatically disappears after 6 seconds
+            return () => clearTimeout(timer);
+        }
+    }, [isBankRiskDismissed, bankRisks.length]);
+
+    const handleDismissBankRisk = () => {
+        setIsBankRiskDismissed(true);
+        sessionStorage.setItem('dismissed_bank_risks', 'true');
+    };
 
     // Unified Timer Tracking (v3.12.70): Replaced local interval with global refreshTick
     useEffect(() => {
@@ -140,23 +160,36 @@ export function Dashboard() {
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
             <div className="pl-14 pr-6 py-6 md:p-8 md:pl-14 lg:p-8 space-y-8 animate-in fade-in duration-500">
                 {/* Risk Warnings */}
-                {bankRisks.length > 0 && (
-                    <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-xl p-4 flex items-start gap-3">
-                        <Info className="size-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-                        <div className="space-y-1">
-                            <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-                                Einlagensicherung Limit überschritten
-                            </h3>
-                            {bankRisks.map(risk => (
-                                <p key={risk.bankName} className="text-xs text-amber-800 dark:text-amber-300">
-                                    <strong>{risk.bankName}</strong>: {formatCurrency(risk.total, 'CHF')}
-                                    <span className="opacity-75"> (Limit: 100'000 CHF)</span>
+                {bankRisks.length > 0 && !isBankRiskDismissed && (
+                    <div className="bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-xl p-2.5 sm:p-3.5 flex items-center justify-between gap-3 text-amber-900 dark:text-amber-200 shadow-sm transition-all animate-in fade-in duration-300">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <Info className="size-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                            <div className="min-w-0 flex-1 text-xs">
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                                    <span className="font-bold text-amber-900 dark:text-amber-200">
+                                        Einlagensicherung Limit überschritten:
+                                    </span>
+                                    {bankRisks.map(risk => (
+                                        <span key={risk.bankName} className="text-amber-800 dark:text-amber-300">
+                                            <strong>{risk.bankName}</strong>: {formatCurrency(risk.total, 'CHF')}{' '}
+                                            <span className="opacity-75 text-[11px]">(Limit: 100k CHF)</span>
+                                        </span>
+                                    ))}
+                                </div>
+                                <p className="text-[10px] text-amber-700/80 dark:text-amber-400/80 pt-0.5 hidden sm:block">
+                                    Guthaben über 100'000 CHF pro Bank sind möglicherweise nicht durch die Einlagensicherung geschützt.
                                 </p>
-                            ))}
-                            <p className="text-[10px] text-amber-700 dark:text-amber-400 pt-1">
-                                Guthaben über 100'000 CHF pro Bank sind möglicherweise nicht durch die Einlagensicherung geschützt.
-                            </p>
+                            </div>
                         </div>
+
+                        <button
+                            onClick={handleDismissBankRisk}
+                            className="p-1 hover:bg-amber-500/20 rounded-md text-amber-700 dark:text-amber-400 hover:text-amber-950 dark:hover:text-amber-100 transition-colors shrink-0"
+                            title="Hinweis ausblenden"
+                            aria-label="Hinweis ausblenden"
+                        >
+                            <X className="size-4" />
+                        </button>
                     </div>
                 )}
 
