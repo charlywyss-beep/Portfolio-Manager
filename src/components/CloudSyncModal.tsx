@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Cloud, CloudUpload, CloudDownload, CheckCircle2, AlertCircle, Loader2, ExternalLink, X, Key, RefreshCw } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import {
@@ -26,6 +26,7 @@ export function CloudSyncModal({ isOpen, onClose, onOpenSettings }: CloudSyncMod
     const [isLoading, setIsLoading] = useState(false);
     const [statusType, setStatusType] = useState<'idle' | 'success' | 'error'>('idle');
     const [statusMessage, setStatusMessage] = useState('');
+    const autoCloseTimerRef = useRef<any>(null);
 
     const reloadCredentials = () => {
         const creds = getGistCredentials();
@@ -47,6 +48,9 @@ export function CloudSyncModal({ isOpen, onClose, onOpenSettings }: CloudSyncMod
             setStatusType('idle');
             setStatusMessage('');
         }
+        return () => {
+            if (autoCloseTimerRef.current) clearTimeout(autoCloseTimerRef.current);
+        };
     }, [isOpen]);
 
     if (!isOpen) return null;
@@ -90,6 +94,10 @@ export function CloudSyncModal({ isOpen, onClose, onOpenSettings }: CloudSyncMod
             setStatusType('success');
             setStatusMessage(`✅ ${res.message}`);
             reloadCredentials();
+            if (autoCloseTimerRef.current) clearTimeout(autoCloseTimerRef.current);
+            autoCloseTimerRef.current = setTimeout(() => {
+                onClose();
+            }, 1200);
         } else {
             setStatusType('error');
             setStatusMessage(res.message);
@@ -117,6 +125,10 @@ export function CloudSyncModal({ isOpen, onClose, onOpenSettings }: CloudSyncMod
                 const timeStr = res.updatedAt ? new Date(res.updatedAt).toLocaleString('de-CH') : '';
                 setStatusMessage(`✅ Daten erfolgreich geladen! (Stand: ${timeStr})`);
                 reloadCredentials();
+                if (autoCloseTimerRef.current) clearTimeout(autoCloseTimerRef.current);
+                autoCloseTimerRef.current = setTimeout(() => {
+                    onClose();
+                }, 1200);
             } else {
                 setStatusType('error');
                 setStatusMessage('Fehler beim Einlesen der heruntergeladenen Daten.');
@@ -143,7 +155,10 @@ export function CloudSyncModal({ isOpen, onClose, onOpenSettings }: CloudSyncMod
     };
 
     return (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div
+            className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={onClose}
+        >
             <div
                 className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
