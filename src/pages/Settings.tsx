@@ -1,9 +1,20 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 
-import { Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
+import {
+    Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, RotateCcw,
+    Cloud, CloudUpload, CloudDownload, Key, Eye, EyeOff, RefreshCw, ExternalLink, Copy, Check, Loader2
+} from 'lucide-react';
 import { ConfirmModal } from '../components/ConfirmModal';
 import packageJson from '../../package.json';
+import {
+    getGistCredentials,
+    saveGistCredentials,
+    connectOrCreateGist,
+    pushDataToGist,
+    pullDataFromGist,
+    testGitHubToken
+} from '../services/githubGistSync';
 
 // Helper Component for Stock Management List Items (v3.14.02)
 const StockManagementItem = ({ stock, positions, watchlists, stocks, fixedDeposits, importData }: any) => {
@@ -65,12 +76,115 @@ const StockManagementItem = ({ stock, positions, watchlists, stocks, fixedDeposi
 };
 
 export function Settings() {
-    const { positions, stocks, fixedDeposits, history, watchlists, importData, mortgageData } = usePortfolio();
+    const { positions, stocks, fixedDeposits, history, watchlists, importData, mortgageData, simulatorState, exportCurrentData } = usePortfolio();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [importMessage, setImportMessage] = useState('');
     const [confirmImport, setConfirmImport] = useState<{ isOpen: boolean, data: any }>({ isOpen: false, data: null });
     const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+
+    // GitHub Cloud Sync States
+    const [gistToken, setGistToken] = useState(() => getGistCredentials().token);
+    const [gistId, setGistId] = useState(() => getGistCredentials().gistId);
+    const [lastSync, setLastSync] = useState<string | null>(() => getGistCredentials().lastSync);
+    const [isTokenVisible, setIsTokenVisible] = useState(false);
+    const [isTokenCopied, setIsTokenCopied] = useState(false);
+    const [syncLoading, setSyncLoading] = useState(false);
+    const [syncStatus, setSyncStatus] = useState<{ type: 'idle' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' });
+    const [connectedUser, setConnectedUser] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (gistToken) {
+            testGitHubToken(gistToken).then(res => {
+                if (res.success && res.username) {
+                    setConnectedUser(res.username);
+                }
+            });
+        }
+    }, [gistToken]);
+
+    const handleConnectGist = async () => {
+        if (!gistToken.trim()) {
+            setSyncStatus({ type: 'error', message: 'Bitte ein gültiges GitHub Token (PAT) eingeben.' });
+            return;
+        }
+        setSyncLoading(true);
+        setSyncStatus({ type: 'idle', message: '' });
+        const res = await connectOrCreateGist(gistToken, gistId);
+        setSyncLoading(false);
+        if (res.success) {
+            setSyncStatus({ type: 'success', message: res.message });
+            if (res.gistId) setGistId(res.gistId);
+            if (res.username) setConnectedUser(res.username);
+            const creds = getGistCredentials();
+            setLastSync(creds.lastSync);
+        } else {
+            setSyncStatus({ type: 'error', message: res.message });
+        }
+    };
+
+    const handleCloudPush = async () => {
+        setSyncLoading(true);
+        setSyncStatus({ type: 'idle', message: '' });
+        const dataToSave = exportCurrentData();
+        const res = await pushDataToGist(dataToSave);
+        setSyncLoading(false);
+        if (res.success) {
+            setSyncStatus({ type: 'success', message: `✅ ${res.message}` });
+            setLastSync(new Date().toISOString());
+            if (res.gistId) setGistId(res.gistId);
+        } else {
+            setSyncStatus({ type: 'error', message: res.message });
+        }
+    };
+
+    const handleCloudPull = async () => {
+        const confirmed = window.confirm(
+            "☁️ Möchten Sie die Portfolio-Daten von GitHub laden?\n\nLokale Daten werden durch den gesicherten Stand von GitHub ersetzt."
+        );
+        if (!confirmed) return;
+
+        setSyncLoading(true);
+        setSyncStatus({ type: 'idle', message: '' });
+        const currentData = exportCurrentData();
+        const res = await pullDataFromGist(currentData);
+        setSyncLoading(false);
+        if (res.success && res.data) {
+            const imported = importData(res.data);
+            if (imported) {
+                const timeStr = res.updatedAt ? new Date(res.updatedAt).toLocaleString('de-CH') : '';
+                setSyncStatus({ type: 'success', message: `✅ Daten erfolgreich von GitHub geladen! (Stand: ${timeStr})` });
+                setLastSync(res.updatedAt || new Date().toISOString());
+                if (res.gistId) setGistId(res.gistId);
+            } else {
+                setSyncStatus({ type: 'error', message: 'Fehler beim Einlesen der heruntergeladenen Daten.' });
+            }
+        } else {
+            setSyncStatus({ type: 'error', message: res.message });
+        }
+    };
+
+    const handleCopyToken = () => {
+        if (!gistToken) return;
+        navigator.clipboard.writeText(gistToken);
+        setIsTokenCopied(true);
+        setTimeout(() => setIsTokenCopied(false), 2000);
+    };
+
+    const formatTimestamp = (iso?: string | null) => {
+        if (!iso) return 'Noch nie';
+        try {
+            return new Date(iso).toLocaleString('de-CH', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch {
+            return iso;
+        }
+    };
 
     // Categorized Stocks (v3.14.02)
     const categorizedStocks = useMemo(() => {
@@ -92,7 +206,8 @@ export function Settings() {
             fixedDeposits,
             history,
             watchlists,
-            mortgageData
+            mortgageData,
+            simulatorState
         };
 
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -145,6 +260,179 @@ export function Settings() {
             <div className="flex items-center gap-3 mb-8">
                 <h1 className="text-2xl font-bold tracking-tight">Einstellungen</h1>
                 <p className="text-muted-foreground">Verwalten Sie Ihre Daten-Backups und Systemeinstellungen.</p>
+            </div>
+
+            {/* GitHub Cloud-Sync Card */}
+            <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/60">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-blue-500/15 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-500/20">
+                            <Cloud className="size-6" />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-lg font-bold text-foreground">GitHub Cloud-Sync</h2>
+                                {connectedUser && (
+                                    <span className="text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                        <span className="size-1.5 rounded-full bg-emerald-500"></span>
+                                        {connectedUser}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                Daten sicher und privat über GitHub Gist zwischen Geräten austauschen (z. B. Büro, Handy, Heim-PC)
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs">
+                        <span className="text-muted-foreground">Letzter Sync:</span>
+                        <span className="font-mono font-semibold text-foreground bg-muted px-2.5 py-1 rounded-md">
+                            {formatTimestamp(lastSync)}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Token and Gist Settings Form */}
+                <div className="grid md:grid-cols-2 gap-4">
+                    {/* Token Field */}
+                    <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                <Key className="size-3.5 text-primary" />
+                                <span>1. GitHub Personal Access Token (PAT)</span>
+                            </label>
+                            <a
+                                href="https://github.com/settings/tokens/new?scopes=gist&description=Portfolio%20Manager%20Cloud%20Sync"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                            >
+                                <span>Neuen Token erstellen</span>
+                                <ExternalLink className="size-3" />
+                            </a>
+                        </div>
+                        <div className="relative">
+                            <input
+                                type={isTokenVisible ? 'text' : 'password'}
+                                value={gistToken}
+                                onChange={(e) => {
+                                    setGistToken(e.target.value);
+                                    saveGistCredentials(e.target.value, gistId);
+                                }}
+                                placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                                className="w-full pl-3 pr-20 py-2 text-sm bg-background border border-border rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+                            />
+                            <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsTokenVisible(!isTokenVisible)}
+                                    className="p-1.5 text-muted-foreground hover:text-foreground rounded transition-colors"
+                                    title={isTokenVisible ? 'Verbergen' : 'Anzeigen'}
+                                >
+                                    {isTokenVisible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleCopyToken}
+                                    disabled={!gistToken}
+                                    className="p-1.5 text-muted-foreground hover:text-foreground rounded transition-colors disabled:opacity-40"
+                                    title="Token kopieren"
+                                >
+                                    {isTokenCopied ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
+                                </button>
+                            </div>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                            Tipp: Sie können genau dasselbe GitHub Token verwenden wie im Arbeitszeitrechner!
+                        </p>
+                    </div>
+
+                    {/* Gist ID Field */}
+                    <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                <FileJson className="size-3.5 text-primary" />
+                                <span>2. GitHub Gist-ID (Cloud-Speicher)</span>
+                            </label>
+                            {gistId && (
+                                <a
+                                    href={`https://gist.github.com/${gistId}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                                >
+                                    <span>Gist auf GitHub ansehen</span>
+                                    <ExternalLink className="size-3" />
+                                </a>
+                            )}
+                        </div>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={gistId}
+                                onChange={(e) => {
+                                    setGistId(e.target.value);
+                                    saveGistCredentials(gistToken, e.target.value);
+                                }}
+                                placeholder="Wird automatisch ermittelt..."
+                                className="flex-1 px-3 py-2 text-sm bg-background border border-border rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+                            />
+                            <button
+                                type="button"
+                                onClick={handleConnectGist}
+                                disabled={syncLoading || !gistToken.trim()}
+                                className="px-3 py-2 text-xs font-semibold bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap disabled:opacity-50"
+                                title="Verbindung prüfen und Gist automatisch finden oder anlegen"
+                            >
+                                {syncLoading ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
+                                <span>Verbindung testen</span>
+                            </button>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                            Bleibt leer oder wird automatisch gefüllt, sobald Sie auf "Verbindung testen" oder "Speichern" klicken.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Sync Action Buttons */}
+                <div className="pt-2 flex flex-col sm:flex-row items-stretch gap-3">
+                    <button
+                        onClick={handleCloudPush}
+                        disabled={syncLoading || !gistToken.trim()}
+                        className="flex-1 flex items-center justify-center gap-2.5 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl transition-all shadow-sm active:scale-[0.99] disabled:opacity-50"
+                    >
+                        {syncLoading ? <Loader2 className="size-4 animate-spin" /> : <CloudUpload className="size-4" />}
+                        <span>☁️ ⬆️ Auf GitHub speichern (Push)</span>
+                    </button>
+
+                    <button
+                        onClick={handleCloudPull}
+                        disabled={syncLoading || !gistToken.trim()}
+                        className="flex-1 flex items-center justify-center gap-2.5 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-xl transition-all shadow-sm active:scale-[0.99] disabled:opacity-50"
+                    >
+                        {syncLoading ? <Loader2 className="size-4 animate-spin" /> : <CloudDownload className="size-4" />}
+                        <span>☁️ ⬇️ Von GitHub laden (Pull)</span>
+                    </button>
+                </div>
+
+                {/* Status Message */}
+                {syncStatus.message && (
+                    <div
+                        className={`p-3.5 rounded-xl border text-xs flex items-start gap-2.5 ${
+                            syncStatus.type === 'success'
+                                ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
+                                : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
+                        }`}
+                    >
+                        {syncStatus.type === 'success' ? (
+                            <CheckCircle className="size-4 shrink-0 mt-0.5" />
+                        ) : (
+                            <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+                        )}
+                        <div className="flex-1 leading-relaxed whitespace-pre-wrap">{syncStatus.message}</div>
+                    </div>
+                )}
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
@@ -354,7 +642,9 @@ export function Settings() {
                         stocks: json.stocks,
                         fixedDeposits: json.fixedDeposits || [],
                         history: json.history || [],
-                        watchlists: json.watchlists || (json.watchlist ? [{ id: 'default', name: 'Merkliste', stockIds: json.watchlist, isDefault: true }] : [])
+                        watchlists: json.watchlists || (json.watchlist ? [{ id: 'default', name: 'Merkliste', stockIds: json.watchlist, isDefault: true }] : []),
+                        mortgageData: json.mortgageData,
+                        simulatorState: json.simulatorState
                     });
                     if (success) {
                         setImportStatus('success');

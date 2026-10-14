@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, useLocation, NavLink, Link } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate, NavLink, Link } from 'react-router-dom';
 import { FairValueCalculator } from './pages/FairValueCalculator';
-import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, ArrowLeftRight, Landmark, Telescope, Menu, X, BarChart2 } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, ArrowLeftRight, Landmark, Telescope, Menu, X, BarChart2, Cloud } from 'lucide-react';
+import { CloudSyncModal } from './components/CloudSyncModal';
 
 
 import { cn } from './utils';
@@ -79,7 +80,9 @@ const NavItem = ({ to, icon: Icon, label, onClick }: NavItemProps) => {
 };
 
 function App() {
+  const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isCloudSyncOpen, setIsCloudSyncOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     const saved = localStorage.getItem('sidebar_open');
     if (saved !== null) {
@@ -125,6 +128,16 @@ function App() {
             {isSidebarOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
 
+          {/* Mobile Cloud Sync Button */}
+          <button
+            onClick={() => setIsCloudSyncOpen(true)}
+            className="fixed top-4 right-4 z-[1100] p-2 bg-card border border-border rounded-lg shadow-lg lg:hidden hover:bg-accent transition-colors text-blue-600 dark:text-blue-400"
+            aria-label="Cloud Sync"
+            title="☁️ GitHub Cloud-Sync"
+          >
+            <Cloud className="size-5" />
+          </button>
+
           {/* Mobile Sidebar Overlay */}
           {isSidebarOpen && (
             <div
@@ -153,18 +166,30 @@ function App() {
                 <h1 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">Portfolio</h1>
               </div>
             </Link>
-            <div
-              className="px-6 pb-4 cursor-pointer w-fit"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const url = new URL(window.location.href);
-                url.searchParams.set('v', Date.now().toString());
-                window.location.href = url.toString();
-              }}
-              title="App neu laden (Cache leeren)"
-            >
-              <span className="text-sm md:text-xs font-bold bg-primary/10 text-primary px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors">v{packageJson.version}</span>
+            <div className="px-6 pb-4 flex items-center gap-2">
+              <span
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const url = new URL(window.location.href);
+                  url.searchParams.set('v', Date.now().toString());
+                  window.location.href = url.toString();
+                }}
+                className="text-xs font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-full hover:bg-primary/20 transition-colors cursor-pointer"
+                title="App neu laden (Cache leeren)"
+              >
+                v{packageJson.version}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setIsCloudSyncOpen(true)}
+                className="flex items-center gap-1.5 text-xs font-semibold bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full transition-all border border-blue-500/20 shadow-sm"
+                title="☁️ GitHub Cloud-Sync"
+              >
+                <Cloud className="size-3.5" />
+                <span>Cloud-Sync</span>
+              </button>
             </div>
 
             <nav className="flex-1 p-4 space-y-2 w-fit">
@@ -213,6 +238,15 @@ function App() {
               <Route path="/settings" element={<Settings />} />
             </Routes>
           </main>
+
+          <CloudSyncModal
+            isOpen={isCloudSyncOpen}
+            onClose={() => setIsCloudSyncOpen(false)}
+            onOpenSettings={() => {
+              navigate('/settings');
+              closeSidebarOnMobile();
+            }}
+          />
         </div>
       </PortfolioProvider>
     </ExchangeRateProvider >

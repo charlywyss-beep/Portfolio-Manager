@@ -25,7 +25,8 @@ interface PortfolioContextType {
     addHistoryEntry: (entry: Omit<import('../types').PortfolioHistoryEntry, 'id'>) => void;
     deleteHistoryEntry: (id: string) => void;
     updateHistoryEntry: (id: string, updates: Partial<import('../types').PortfolioHistoryEntry>) => void;
-    importData: (data: { positions: Position[], stocks: Stock[], fixedDeposits: import('../types').FixedDeposit[], history: import('../types').PortfolioHistoryEntry[], watchlists: import('../types').Watchlist[] }) => boolean;
+    importData: (data: { positions?: Position[], stocks?: Stock[], fixedDeposits?: any[], history?: any[], watchlists?: import('../types').Watchlist[], watchlist?: string[], mortgageData?: import('../types').MortgageData, simulatorState?: any }) => boolean;
+    exportCurrentData: () => any;
     watchlists: import('../types').Watchlist[];
     addToWatchlist: (stockId: string, watchlistId?: string) => void;
     removeFromWatchlist: (stockId: string, watchlistId: string) => void;
@@ -708,15 +709,37 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         setMortgageData(prev => ({ ...prev, ...newData }));
     };
 
-    const importData = (data: { positions: Position[], stocks: Stock[], fixedDeposits: any[], history: any[], watchlist?: string[], watchlists?: import('../types').Watchlist[], mortgageData?: import('../types').MortgageData }) => {
+    const importData = (data: {
+        positions?: Position[];
+        stocks?: Stock[];
+        fixedDeposits?: any[];
+        history?: any[];
+        watchlist?: string[];
+        watchlists?: import('../types').Watchlist[];
+        mortgageData?: import('../types').MortgageData;
+        simulatorState?: any;
+    }) => {
         try {
-            if (data.positions) setPositions(data.positions);
-            if (data.stocks) setStocks(data.stocks);
-            if (data.fixedDeposits) setFixedDeposits(data.fixedDeposits);
-            if (data.history) setHistory(data.history);
-            if (data.watchlists) setWatchlists(data.watchlists);
-            // Legacy Support import
-            if (data.watchlist && !data.watchlists) {
+            if (data.positions) {
+                setPositions(data.positions);
+                localStorage.setItem('portfolio_positions', JSON.stringify(data.positions));
+            }
+            if (data.stocks) {
+                setStocks(data.stocks);
+                localStorage.setItem('portfolio_stocks', JSON.stringify(data.stocks));
+            }
+            if (data.fixedDeposits) {
+                setFixedDeposits(data.fixedDeposits);
+                localStorage.setItem('portfolio_fixed_deposits', JSON.stringify(data.fixedDeposits));
+            }
+            if (data.history) {
+                setHistory(data.history);
+                localStorage.setItem('portfolio_history', JSON.stringify(data.history));
+            }
+            if (data.watchlists) {
+                setWatchlists(data.watchlists);
+                localStorage.setItem('portfolio_watchlists', JSON.stringify(data.watchlists));
+            } else if (data.watchlist) {
                 const initialLists: import('../types').Watchlist[] = [
                     { id: 'wl_default', name: 'Merkliste', stockIds: data.watchlist, isDefault: true },
                     { id: 'wl_ch', name: 'Schweiz', stockIds: [], isDefault: false },
@@ -724,8 +747,16 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                     { id: 'wl_growth', name: 'Wachstums Aktien', stockIds: [], isDefault: false },
                 ];
                 setWatchlists(initialLists);
+                localStorage.setItem('portfolio_watchlists', JSON.stringify(initialLists));
             }
-            if (data.mortgageData) setMortgageData(data.mortgageData);
+            if (data.mortgageData) {
+                setMortgageData(data.mortgageData);
+                localStorage.setItem('portfolio_mortgage_data_v2', JSON.stringify(data.mortgageData));
+            }
+            if (data.simulatorState) {
+                setSimulatorState(data.simulatorState);
+                localStorage.setItem('portfolio_simulator_state', JSON.stringify(data.simulatorState));
+            }
             return true;
         } catch (e) {
             console.error("Import failed", e);
@@ -750,6 +781,20 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         }));
     };
 
+    const exportCurrentData = useCallback(() => {
+        return {
+            version: '1.0',
+            exportedAt: new Date().toISOString(),
+            positions,
+            stocks,
+            fixedDeposits,
+            history,
+            watchlists,
+            mortgageData,
+            simulatorState
+        };
+    }, [positions, stocks, fixedDeposits, history, watchlists, mortgageData, simulatorState]);
+
     return (
         <PortfolioContext.Provider
             value={{
@@ -772,6 +817,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 deleteHistoryEntry,
                 updateHistoryEntry,
                 importData,
+                exportCurrentData,
                 watchlists,
                 addToWatchlist,
                 removeFromWatchlist,
