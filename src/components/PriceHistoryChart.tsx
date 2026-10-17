@@ -289,8 +289,8 @@ export function PriceHistoryChart({
             "w-full flex flex-col relative transition-all duration-300",
             isMaximized ? "h-full" : "h-[450px]"
         )}>
-            <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
-                <div className="flex flex-col gap-1">
+            <div className="flex flex-wrap items-center justify-between mb-4 gap-2 relative">
+                <div className="flex flex-col gap-1 w-full sm:w-auto">
                     <div>
                         {stockName && (
                             <div className="flex items-baseline gap-2 mb-1">
@@ -312,16 +312,71 @@ export function PriceHistoryChart({
                             </span>
                         </div>
                     </div>
-                    {/* High/Low Indicators */}
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                        <div className="flex items-center gap-1">
-                            <span className="font-medium text-foreground">H:</span>
-                            <span>{formatCurrency(maxPrice, displayCurrency)}</span>
+                    {/* High/Low Indicators + Mobile Hover Overlay */}
+                    <div className="relative mt-1 min-h-[38px] sm:min-h-0 flex items-center">
+                        <div className={cn(
+                            "flex items-center gap-3 text-xs text-muted-foreground transition-opacity duration-150",
+                            hoveredData && "opacity-0 sm:opacity-100"
+                        )}>
+                            <div className="flex items-center gap-1">
+                                <span className="font-medium text-foreground">H:</span>
+                                <span>{formatCurrency(maxPrice, displayCurrency)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <span className="font-medium text-foreground">T:</span>
+                                <span>{formatCurrency(minPrice, displayCurrency)}</span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                            <span className="font-medium text-foreground">T:</span>
-                            <span>{formatCurrency(minPrice, displayCurrency)}</span>
-                        </div>
+
+                        {/* Mobile-Only Hover Info (Directly over H/T, below Performance) */}
+                        {hoveredData && (
+                            <div className="flex sm:hidden justify-between items-center gap-2 text-sm animate-in fade-in duration-150 z-[60] bg-card px-3 py-1.5 rounded-xl border border-border shadow-lg absolute inset-x-0 -top-0.5">
+                                <div className="flex flex-col items-start leading-snug">
+                                    <span className="font-bold text-sm text-foreground whitespace-nowrap">
+                                        {(() => {
+                                            const d = new Date(hoveredData.date);
+                                            const weekday = d.toLocaleDateString('de-DE', { weekday: 'short' });
+                                            const dateStr = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+                                            return `${weekday} ${dateStr}`;
+                                        })()}
+                                    </span>
+                                    <span className="text-xs font-semibold text-foreground">
+                                        {new Date(hoveredData.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                </div>
+                                <div className="h-8 w-px bg-border shrink-0" />
+                                <div className="flex flex-col items-end leading-snug">
+                                    <span className="font-extrabold text-base tabular-nums text-foreground whitespace-nowrap">
+                                        {formatCurrency(hoveredData.value, displayCurrency)}
+                                    </span>
+                                    <span className="text-xs font-semibold text-foreground">Kurs</span>
+                                </div>
+                                {hoveredData.sma200 && (
+                                    <>
+                                        <div className="h-8 w-px bg-border shrink-0" />
+                                        <div className="flex flex-col items-end leading-snug">
+                                            <div className="flex items-center gap-1">
+                                                <span className="font-bold text-xs tabular-nums text-foreground whitespace-nowrap">
+                                                    {formatCurrency(hoveredData.sma200, displayCurrency)}
+                                                </span>
+                                                {(() => {
+                                                    const diff = ((hoveredData.value - hoveredData.sma200) / hoveredData.sma200) * 100;
+                                                    return (
+                                                        <span className={cn(
+                                                            "font-bold text-xs tabular-nums",
+                                                            diff >= 0 ? "text-green-500" : "text-red-500"
+                                                        )}>
+                                                            {diff > 0 ? '+' : ''}{diff.toFixed(2)}%
+                                                        </span>
+                                                    );
+                                                })()}
+                                            </div>
+                                            <span className="text-xs text-amber-500 font-bold">SMA 200</span>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
                 {selectedRange === '1D' && historyData && historyData.length > 0 && (
@@ -437,11 +492,11 @@ export function PriceHistoryChart({
 
                 </div>
 
-                {/* Dynamic Header Info (Replaces Tooltip) - MOVED OUTSIDE SCROLL CONTAINER */}
+                {/* Desktop Dynamic Header Info (Replaces Tooltip) */}
                 {hoveredData && (
-                    <div className="flex justify-end items-center gap-3 sm:gap-4 text-xs sm:text-sm animate-in fade-in duration-200 z-[60] bg-background/95 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-border shadow-md absolute right-0 top-[52px] sm:static sm:bg-transparent sm:border-0 sm:shadow-none sm:p-0">
-                        <div className="flex flex-col items-end leading-tight">
-                            <span className="font-bold text-xs sm:text-sm text-foreground">
+                    <div className="hidden sm:flex justify-end items-center gap-4 text-sm animate-in fade-in duration-150 z-[60]">
+                        <div className="flex flex-col items-end leading-snug">
+                            <span className="font-bold text-sm text-foreground whitespace-nowrap">
                                 {(() => {
                                     const d = new Date(hoveredData.date);
                                     const weekday = d.toLocaleDateString('de-DE', { weekday: 'short' });
@@ -449,30 +504,30 @@ export function PriceHistoryChart({
                                     return `${weekday} ${dateStr}`;
                                 })()}
                             </span>
-                            <span className="text-[11px] sm:text-xs font-medium text-foreground">
+                            <span className="text-xs font-semibold text-foreground">
                                 {new Date(hoveredData.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         </div>
-                        <div className="h-7 w-px bg-border" />
-                        <div className="flex flex-col items-end leading-tight">
-                            <span className="font-bold text-sm sm:text-base tabular-nums text-foreground">
+                        <div className="h-8 w-px bg-border" />
+                        <div className="flex flex-col items-end leading-snug">
+                            <span className="font-extrabold text-base tabular-nums text-foreground whitespace-nowrap">
                                 {formatCurrency(hoveredData.value, displayCurrency)}
                             </span>
-                            <span className="text-[11px] sm:text-xs font-medium text-foreground">Kurs</span>
+                            <span className="text-xs font-semibold text-foreground">Kurs</span>
                         </div>
                         {hoveredData.sma200 && (
                             <>
-                                <div className="h-7 w-px bg-border" />
-                                <div className="flex flex-col items-end leading-tight">
+                                <div className="h-8 w-px bg-border" />
+                                <div className="flex flex-col items-end leading-snug">
                                     <div className="flex items-center gap-1.5">
-                                        <span className="font-bold text-xs sm:text-sm tabular-nums text-foreground">
+                                        <span className="font-bold text-sm tabular-nums text-foreground whitespace-nowrap">
                                             {formatCurrency(hoveredData.sma200, displayCurrency)}
                                         </span>
                                         {(() => {
                                             const diff = ((hoveredData.value - hoveredData.sma200) / hoveredData.sma200) * 100;
                                             return (
                                                 <span className={cn(
-                                                    "font-bold text-xs sm:text-sm tabular-nums",
+                                                    "font-bold text-sm tabular-nums",
                                                     diff >= 0 ? "text-green-500" : "text-red-500"
                                                 )}>
                                                     {diff > 0 ? '+' : ''}{diff.toFixed(2)}%
@@ -480,7 +535,7 @@ export function PriceHistoryChart({
                                             );
                                         })()}
                                     </div>
-                                    <span className="text-[11px] sm:text-xs text-amber-500 font-bold">SMA 200</span>
+                                    <span className="text-xs text-amber-500 font-bold">SMA 200</span>
                                 </div>
                             </>
                         )}
