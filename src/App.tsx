@@ -131,11 +131,11 @@ function App() {
           {/* Mobile Cloud Sync Button */}
           <button
             onClick={() => setIsCloudSyncOpen(true)}
-            className="fixed top-4 right-4 z-[1100] p-2 bg-card border border-border rounded-lg shadow-lg lg:hidden hover:bg-accent transition-colors text-blue-600 dark:text-sky-300"
+            className="fixed top-4 right-4 z-[1100] p-2 bg-card border border-border rounded-lg shadow-lg lg:hidden hover:bg-accent transition-colors text-foreground"
             aria-label="Cloud Sync"
             title="☁️ GitHub Cloud-Sync"
           >
-            <Cloud className="size-5" />
+            <Cloud className="size-5 text-sky-400" />
           </button>
 
           {/* Mobile Sidebar Overlay */}
@@ -175,7 +175,7 @@ function App() {
                   url.searchParams.set('v', Date.now().toString());
                   window.location.href = url.toString();
                 }}
-                className="text-xs font-bold bg-blue-500/15 dark:bg-blue-500/25 text-blue-700 dark:text-white px-2.5 py-1 rounded-full hover:bg-blue-500/30 transition-colors border border-blue-500/30 cursor-pointer"
+                className="text-xs font-bold bg-blue-600/40 text-white px-2.5 py-1 rounded-full hover:bg-blue-600/60 transition-colors border border-blue-400/50 cursor-pointer"
                 title="App neu laden (Cache leeren)"
               >
                 v{packageJson.version}
@@ -184,10 +184,10 @@ function App() {
               <button
                 type="button"
                 onClick={() => setIsCloudSyncOpen(true)}
-                className="flex items-center gap-1.5 text-xs font-bold bg-blue-500/15 dark:bg-blue-500/25 hover:bg-blue-500/35 text-blue-700 dark:text-white px-2.5 py-1 rounded-full transition-all border border-blue-500/30 shadow-sm"
+                className="flex items-center gap-1.5 text-xs font-bold bg-blue-600/40 hover:bg-blue-600/60 text-white px-2.5 py-1 rounded-full transition-all border border-blue-400/50 shadow-sm"
                 title="☁️ GitHub Cloud-Sync"
               >
-                <Cloud className="size-3.5 text-blue-600 dark:text-sky-300" />
+                <Cloud className="size-3.5 text-white" />
                 <span>Cloud-Sync</span>
               </button>
             </div>
