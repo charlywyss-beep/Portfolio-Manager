@@ -708,9 +708,18 @@ export function StockDetail() {
                 <div className="lg:col-span-1 space-y-6">
 
                     {/* Kursdaten - Moved to TOP as requested */}
-                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                            Kursdaten
+                    <div
+                        onClick={() => {
+                            const from = searchParams.get('from');
+                            const query = from ? `?from=${from}` : '';
+                            navigate(`/dividends/edit/${stock.id}${query}`);
+                        }}
+                        className="bg-card border border-border hover:border-primary/50 rounded-xl p-6 shadow-sm cursor-pointer transition-colors group"
+                        title="Daten bearbeiten"
+                    >
+                        <h3 className="font-bold text-lg mb-4 flex items-center justify-between gap-2 group-hover:text-primary transition-colors">
+                            <span>Kursdaten</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil text-muted-foreground group-hover:text-primary transition-colors"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
                         </h3>
                         {positions.find(p => p.stockId === stock.id) && (() => {
                             const pos = positions.find(p => p.stockId === stock.id)!;
