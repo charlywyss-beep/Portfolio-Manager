@@ -1208,8 +1208,8 @@ export function FairValueCalculator() {
                         {/* INPUTS COLUMN */}
                         <div className="space-y-6">
                             <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-6">
-                                <div className="flex items-center justify-between gap-2 pb-4 border-b border-border">
-                                    <div className="flex items-center gap-1.5 flex-nowrap min-w-0">
+                                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pb-4 border-b border-border">
+                                    <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
                                         <h2 className="text-base sm:text-lg font-semibold flex items-center gap-1.5 shrink-0">
                                             <span className="size-2 rounded-full bg-blue-500 shrink-0" />
                                             Parameter
@@ -1226,7 +1226,7 @@ export function FairValueCalculator() {
                                             title="Realistische Fundamentalwerte automatisch neu einsetzen"
                                         >
                                             <RotateCcw className="size-3 shrink-0" />
-                                            <span>Auto-Werte</span>
+                                            <span>Auto</span>
                                         </button>
                                         {isSavedForStock ? (
                                             <span className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 whitespace-nowrap shrink-0">
@@ -1247,7 +1247,7 @@ export function FairValueCalculator() {
                                             )
                                         )}
                                     </div>
-                                    <div className="text-right shrink-0">
+                                    <div className="text-right shrink-0 ml-auto">
                                         <div className="text-xs text-muted-foreground">Aktueller Kurs</div>
                                         <div className="font-mono font-bold text-sm sm:text-base whitespace-nowrap">
                                             {formatCurrency(quote.price || 0, quote.currency || 'USD')}
