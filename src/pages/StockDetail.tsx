@@ -331,8 +331,8 @@ export function StockDetail() {
     return (
         <div className="p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16">
             {/* Sticky Header / Navigation */}
-            <div className="sticky top-0 -mx-2 md:-mx-8 pl-14 pr-2 py-2 md:px-8 md:py-4 md:pl-14 lg:pl-8 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-4 md:mb-6">
-                <div className="flex items-center gap-3 mb-2 md:mb-4">
+            <div className="sticky top-0 -mx-2 md:-mx-8 px-3 py-2.5 md:px-8 md:py-4 z-50 bg-background/95 backdrop-blur border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-4 md:mb-6">
+                <div className="flex items-center gap-2.5 mb-2.5 md:mb-4 pl-12 lg:pl-0">
                     <button
                         onClick={() => {
                             const from = searchParams.get('from');
@@ -344,7 +344,7 @@ export function StockDetail() {
                                 navigate(-1);
                             }
                         }}
-                        className="flex items-center justify-center bg-white text-blue-600 hover:bg-blue-50 transition-all font-medium rounded-xl shadow border-2 border-blue-100 p-2.5 md:px-3 md:py-1.5 group"
+                        className="flex items-center justify-center bg-white text-blue-600 hover:bg-blue-50 transition-all font-medium rounded-xl shadow border-2 border-blue-100 p-2 md:px-3 md:py-1.5 group"
                         title="Zurück"
                     >
                         <ArrowLeft className="size-5 md:size-4 md:mr-1.5 transition-transform group-hover:-translate-x-1" />
@@ -354,21 +354,19 @@ export function StockDetail() {
                     {/* Saisonalität Button */}
                     <button
                         onClick={() => navigate(`/seasonality/${stock.symbol}`)}
-                        className="flex items-center gap-1.5 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors font-medium bg-violet-50 dark:bg-violet-900/10 px-2 py-1.5 rounded-md shadow-sm border border-violet-100 dark:border-violet-900/30 whitespace-nowrap"
+                        className="flex items-center gap-1.5 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors font-medium bg-violet-50 dark:bg-violet-900/10 px-2.5 py-2 md:py-1.5 rounded-xl md:rounded-md shadow-sm border border-violet-100 dark:border-violet-900/30 whitespace-nowrap"
                         title="Saisonalitätsanalyse"
                     >
-                        <BarChart2 className="size-3.5" />
-                        <span className="hidden md:inline">Saisonalität</span>
+                        <BarChart2 className="size-4 md:size-3.5" />
+                        <span>Saisonalität</span>
                     </button>
-
-                    {/* Button moved to Chart Header */}
                 </div>
 
-                <div className="flex flex-row flex-wrap items-start justify-between gap-2 md:gap-4">
-                    <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5 md:gap-4">
+                    <div className="flex items-center gap-3 md:gap-4 min-w-0">
                         <div
                             className={cn(
-                                "bg-card rounded-xl",
+                                "bg-card rounded-xl shrink-0",
                                 positions.find(p => p.stockId === stock.id) && "cursor-pointer hover:scale-105 transition-transform"
                             )}
                             onClick={() => {
@@ -381,75 +379,67 @@ export function StockDetail() {
                             <Logo
                                 url={stock.logoUrl}
                                 alt={stock.name}
-                                size="size-10 md:size-16"
+                                size="size-11 md:size-16"
                                 fallback={
                                     <span className="text-xl md:text-2xl">{stock.symbol.slice(0, 2)}</span>
                                 }
                                 className="text-xl"
                             />
                         </div>
-                        <div>
-                            <div className="flex items-start gap-2 md:gap-3">
-                                <h1 className="text-lg md:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 whitespace-pre-wrap leading-tight">{stock.name}</h1>
+                        <div className="min-w-0 flex-1">
+                            <div className="flex items-center flex-wrap gap-1.5 md:gap-2.5">
+                                <h1 className="text-lg md:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-tight">{stock.name}</h1>
                                 {(() => {
-                                    // User Rule (v3.11.481):
-                                    // STRICT Time-Based Logic for the Status Dot.
-                                    // - API data can be stale ("REGULAR" from yesterday) -> Causes False Green for US in Morning.
-                                    // - API data can be delayed ("CLOSED" while active) -> Causes False Red for EU in Morning.
-                                    // SOLUTION: We trust the Clock (estimateMarketState).
-                                    // If it's trading hours -> Green. Else -> Red.
-
                                     const calculatedState = estimateMarketState(stock.symbol, stock.currency);
                                     const isMarketOpen = calculatedState === 'REGULAR';
-
-                                    // For the tooltip label, we can still show what the API thinks if we want, or just the calc state.
-                                    // Let's show the calc state to be consistent with the color.
                                     const displayLabel = calculatedState;
 
                                     return isMarketOpen ? (
-                                        <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] cursor-help border border-background" title={`Markt geöffnet (${displayLabel})`} />
+                                        <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] cursor-help border border-background shrink-0" title={`Markt geöffnet (${displayLabel})`} />
                                     ) : (
-                                        <div className="size-2.5 rounded-full bg-red-500 cursor-help border border-background" title={`Markt geschlossen (${displayLabel})`} />
+                                        <div className="size-2.5 rounded-full bg-red-500 cursor-help border border-background shrink-0" title={`Markt geschlossen (${displayLabel})`} />
                                     );
                                 })()}
-                                <button
-                                    onClick={() => navigate(`/calculator?stock=${stock.id}&mode=buy`)}
-                                    className="p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                                    title="Aktie handeln (Kaufen / Verkaufen)"
-                                >
-                                    <Calculator className="size-3.5 md:size-4" />
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        const from = searchParams.get('from');
-                                        const query = from ? `?from=${from}` : '';
-                                        navigate(`/dividends/edit/${stock.id}${query}`);
-                                    }}
-                                    className="p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                                    title="Daten bearbeiten"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
-                                </button>
+                                <div className="flex items-center gap-1 ml-auto sm:ml-0">
+                                    <button
+                                        onClick={() => navigate(`/calculator?stock=${stock.id}&mode=buy`)}
+                                        className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                        title="Aktie handeln (Kaufen / Verkaufen)"
+                                    >
+                                        <Calculator className="size-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const from = searchParams.get('from');
+                                            const query = from ? `?from=${from}` : '';
+                                            navigate(`/dividends/edit/${stock.id}${query}`);
+                                        }}
+                                        className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                        title="Daten bearbeiten"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                                    </button>
 
-                                {/* Watchlist Button */}
-                                <button
-                                    onClick={() => setIsWatchlistModalOpen(true)}
-                                    className={cn(
-                                        "p-1 rounded-lg transition-colors",
-                                        watchlists.some(wl => wl.stockIds.includes(stock.id))
-                                            ? "text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
-                                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                                    )}
-                                    title="Zu Watchlist hinzufügen"
-                                >
-                                    {watchlists.some(wl => wl.stockIds.includes(stock.id)) ? (
-                                        <div className="relative">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-                                        </div>
-                                    ) : (
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-                                    )}
-                                </button>
+                                    {/* Watchlist Button */}
+                                    <button
+                                        onClick={() => setIsWatchlistModalOpen(true)}
+                                        className={cn(
+                                            "p-1.5 rounded-lg transition-colors",
+                                            watchlists.some(wl => wl.stockIds.includes(stock.id))
+                                                ? "text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                                        )}
+                                        title="Zu Watchlist hinzufügen"
+                                    >
+                                        {watchlists.some(wl => wl.stockIds.includes(stock.id)) ? (
+                                            <div className="relative">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                                            </div>
+                                        ) : (
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                             <div className="flex items-center gap-2 text-muted-foreground mt-0.5 text-xs md:text-sm">
                                 <span className="font-bold text-foreground">{stock.symbol}</span>
@@ -464,55 +454,63 @@ export function StockDetail() {
                     </div>
 
                     {/* Price Card */}
-                    <div className="text-right">
-                        <p className="text-[10px] md:text-xs text-muted-foreground font-medium uppercase tracking-wider">Aktueller Kurs</p>
-                        <h2 className="text-xl md:text-3xl font-bold tabular-nums tracking-tight">
-                            {formatCurrency(stock.currentPrice, stock.currency)}
-                        </h2>
-                        {stock.distributionPolicy === 'accumulating' ? (
-                            <p className="text-sm text-blue-600 dark:text-blue-400 font-medium mt-0.5 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded inline-block">
-                                Thesaurierend
-                            </p>
-                        ) : stock.dividendYield && (
-                            <p className="text-sm text-green-600 dark:text-green-400 font-medium mt-0.5">
-                                {stock.dividendYield.toFixed(2)}% Div.Rendite
-                            </p>
-                        )}
+                    <div className="w-full sm:w-auto pt-2 sm:pt-0 border-t border-border/50 sm:border-none flex flex-wrap items-end justify-between sm:block sm:text-right gap-x-4 gap-y-1">
+                        <div>
+                            <p className="text-[10px] md:text-xs text-muted-foreground font-medium uppercase tracking-wider">Aktueller Kurs</p>
+                            <h2 className="text-xl md:text-3xl font-bold tabular-nums tracking-tight whitespace-nowrap">
+                                {formatCurrency(stock.currentPrice, stock.currency)}
+                            </h2>
+                        </div>
+                        <div className="text-right ml-auto">
+                            {stock.distributionPolicy === 'accumulating' ? (
+                                <p className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 font-medium sm:mt-0.5 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded inline-block">
+                                    Thesaurierend
+                                </p>
+                            ) : stock.dividendYield && (
+                                <p className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-medium sm:mt-0.5">
+                                    {stock.dividendYield.toFixed(2)}% Div.Rendite
+                                </p>
+                            )}
 
-                        {/* Dynamic Position Performance based on Chart Range */}
-                        {(() => {
-                            const position = positions.find(p => p.stockId === stock.id);
-                            if (!position) return null;
+                            {/* Dynamic Position Performance based on Chart Range */}
+                            {(() => {
+                                const position = positions.find(p => p.stockId === stock.id);
+                                if (!position) return null;
 
-                            // Determine start price for the period
-                            let referencePrice = stock.previousClose;
+                                let referencePrice = stock.previousClose;
 
-                            if (timeRange !== '1D' && chartData && chartData.length > 0) {
-                                referencePrice = chartData[0].value;
-                            } else if (timeRange === '1D') {
-                                referencePrice = stock.previousClose || (chartData && chartData.length > 0 ? chartData[0].value : stock.currentPrice);
-                            } else if (chartData && chartData.length > 0) {
-                                referencePrice = chartData[0].value;
-                            }
+                                if (timeRange !== '1D' && chartData && chartData.length > 0) {
+                                    referencePrice = chartData[0].value;
+                                } else if (timeRange === '1D') {
+                                    referencePrice = stock.previousClose || (chartData && chartData.length > 0 ? chartData[0].value : stock.currentPrice);
+                                } else if (chartData && chartData.length > 0) {
+                                    referencePrice = chartData[0].value;
+                                }
 
-                            if (timeRange !== '1D' && (!chartData || chartData.length === 0)) return null;
+                                if (timeRange !== '1D' && (!chartData || chartData.length === 0)) return null;
 
-                            const diffPerShare = stock.currentPrice - referencePrice;
-                            const totalDiff = diffPerShare * position.shares;
-                            const percentChange = referencePrice > 0 ? (diffPerShare / referencePrice) * 100 : 0;
-                            const isPositive = totalDiff >= 0;
+                                const diffPerShare = stock.currentPrice - referencePrice;
+                                const totalDiff = diffPerShare * position.shares;
+                                const percentChange = referencePrice > 0 ? (diffPerShare / referencePrice) * 100 : 0;
+                                const isPositive = totalDiff >= 0;
 
-                            return (
-                                <div className="mt-1 text-right">
-                                    <p className={cn(
-                                        "text-sm font-bold flex items-center justify-end gap-1 tabular-nums",
-                                        isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                    )}>
-                                        {isPositive ? '+' : ''}{percentChange.toFixed(2)}% {formatCurrency(totalDiff, stock.currency)}
-                                    </p>
-                                </div>
-                            );
-                        })()}
+                                return (
+                                    <div className="mt-0.5 sm:mt-1 text-right">
+                                        <p className={cn(
+                                            "text-xs sm:text-sm font-bold flex items-center justify-end gap-1.5 tabular-nums whitespace-nowrap",
+                                            isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                        )}>
+                                            <span className="text-muted-foreground font-medium">
+                                                {timeRange === '1D' ? 'Tages Performance:' : `Performance (${timeRange}):`}
+                                            </span>
+                                            <span>
+                                                {isPositive ? '+' : ''}{percentChange.toFixed(2)}% {formatCurrency(totalDiff, stock.currency)}
+                                            </span>
+                                        </p>
+                                    </div>
+                                );
+                            })()}
+                        </div>
                     </div>
                 </div>
             </div>
