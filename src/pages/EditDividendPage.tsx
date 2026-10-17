@@ -747,15 +747,40 @@ export function EditDividendPage() {
                                     </div>
                                     {(() => {
                                         const currentStockObj = stocks.find(s => String(s.id) === String(currentStockId));
+                                        let localParams: any = null;
+                                        try {
+                                            const symKey = (currentStockObj?.symbol || symbol || '').toUpperCase();
+                                            const mapRaw = localStorage.getItem('fair_value_params_map');
+                                            if (symKey && mapRaw) {
+                                                const map = JSON.parse(mapRaw);
+                                                if (map[symKey]) localParams = map[symKey];
+                                            }
+                                        } catch {
+                                            // ignore
+                                        }
+                                        const stockParams = currentStockObj?.fairValueParams;
+                                        let activeParams = stockParams || localParams;
+                                        if (localParams && stockParams) {
+                                            const localTime = localParams.updatedAt ? new Date(localParams.updatedAt).getTime() : 0;
+                                            const stockTime = stockParams.updatedAt ? new Date(stockParams.updatedAt).getTime() : 0;
+                                            activeParams = localTime >= stockTime ? localParams : stockParams;
+                                        }
                                         const parsedFv = parseFloat((fairValue || '').toString().replace(',', '.'));
-                                        const mosPct = currentStockObj?.fairValueParams?.mos ?? 20;
+                                        const mosPct = activeParams?.mos ?? 20;
+                                        const isManualFv = Boolean(activeParams?.isCustom);
                                         const calcBuyPrice = !isNaN(parsedFv) && parsedFv > 0 ? parsedFv * (1 - mosPct / 100) : null;
                                         return (
                                             <div className="flex flex-col h-full gap-2">
                                                 <div className="flex justify-between items-center min-h-[28px]">
                                                     <label className="text-sm font-medium">Kauflimit</label>
                                                     {calcBuyPrice !== null && (
-                                                        <span className="text-xs font-medium text-emerald-400">Kaufpreis</span>
+                                                        <span className={`text-xs font-semibold px-1.5 py-0.5 rounded border ${
+                                                            isManualFv
+                                                                ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
+                                                                : 'text-blue-400 bg-blue-500/10 border-blue-500/30'
+                                                        }`}>
+                                                            {isManualFv ? 'Kaufpreis (Manuell)' : 'Kaufpreis (Auto)'}
+                                                        </span>
                                                     )}
                                                 </div>
                                                 <div className="relative mt-auto">
@@ -771,8 +796,10 @@ export function EditDividendPage() {
                                                     />
                                                     {calcBuyPrice !== null && (
                                                         <span
-                                                            className="absolute right-3 top-1/2 -translate-y-1/2 font-mono font-semibold text-base text-emerald-400 pointer-events-none select-none"
-                                                            title={`Errechneter Kaufpreis inkl. ${mosPct}% Sicherheitsmarge`}
+                                                            className={`absolute right-3 top-1/2 -translate-y-1/2 font-mono font-semibold text-base pointer-events-none select-none ${
+                                                                isManualFv ? 'text-emerald-400' : 'text-blue-400'
+                                                            }`}
+                                                            title={`Errechneter Kaufpreis inkl. ${mosPct}% Sicherheitsmarge (${isManualFv ? 'Manuelle Werte' : 'Auto-Werte'})`}
                                                         >
                                                             {calcBuyPrice.toFixed(2)}
                                                         </span>

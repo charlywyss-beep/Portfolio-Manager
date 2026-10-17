@@ -1566,17 +1566,32 @@ export function FairValueCalculator() {
                                 <div className="flex-1 space-y-4">
                                     {/* Buy Price */}
                                     <div className={cn(
-                                        "p-4 rounded-xl border-2 transition-all",
-                                        isUndervalued ? "border-green-500 bg-green-500/5 shadow-sm" : "border-border bg-muted/20 opacity-70"
+                                        "p-4 rounded-xl border-2 transition-all shadow-sm",
+                                        isSavedForStock
+                                            ? "border-emerald-500 bg-emerald-500/5"
+                                            : "border-blue-500 bg-blue-500/5"
                                     )}>
                                         <div className="flex justify-between items-end mb-1">
-                                            <span className="font-bold text-lg">Kaufpreis</span>
-                                            <span className="font-mono text-2xl font-bold text-green-600">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-bold text-lg">Kaufpreis</span>
+                                                <span className={cn(
+                                                    "text-[11px] font-semibold px-2 py-0.5 rounded-full border",
+                                                    isSavedForStock
+                                                        ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                                                        : "bg-blue-500/15 text-blue-400 border-blue-500/30"
+                                                )}>
+                                                    {isSavedForStock ? 'Manuell' : 'Auto-Werte'}
+                                                </span>
+                                            </div>
+                                            <span className={cn(
+                                                "font-mono text-2xl font-bold",
+                                                isSavedForStock ? "text-emerald-400" : "text-blue-400"
+                                            )}>
                                                 {formatCurrency(calculation.buyPrice, quote.currency)}
                                             </span>
                                         </div>
                                         <p className="text-xs text-muted-foreground">
-                                            Maximaler Preis inkl. {mos}% Sicherheitsmarge
+                                            Maximaler Preis inkl. {mos}% Sicherheitsmarge ({isSavedForStock ? 'Manuell' : 'Auto'})
                                         </p>
                                     </div>
 
