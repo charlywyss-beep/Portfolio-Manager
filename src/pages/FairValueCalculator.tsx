@@ -354,9 +354,24 @@ export function FairValueCalculator() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // 1. PERSISTENCE: Load logic on Mount
+    // 1. PERSISTENCE: Load logic on Mount (prioritize ?stock= parameter from URL if present)
     useEffect(() => {
         try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const stockParam = urlParams.get('stock');
+            if (stockParam) {
+                const matchedStock = stocks.find(
+                    s => String(s.id) === String(stockParam) || s.symbol.toLowerCase() === stockParam.toLowerCase()
+                );
+                if (matchedStock) {
+                    loadStockData(matchedStock.symbol, matchedStock.name, false, matchedStock.isin);
+                    return;
+                } else if (!/^\d+$/.test(stockParam)) {
+                    loadStockData(stockParam, stockParam, false);
+                    return;
+                }
+            }
+
             const savedState = localStorage.getItem('fair_value_state');
             if (savedState) {
                 const state = JSON.parse(savedState);

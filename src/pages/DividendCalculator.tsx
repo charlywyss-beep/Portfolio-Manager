@@ -127,13 +127,13 @@ export function DividendCalculator() {
     useEffect(() => {
         const stockId = searchParams.get('stock');
         if (stockId && stockId !== 'new' && stockId !== lastLoadedStockIdRef.current) {
-            const stock = stocks.find(s => s.id === stockId);
+            const stock = stocks.find(s => String(s.id) === String(stockId) || s.symbol.toLowerCase() === stockId.toLowerCase());
             if (stock) {
                 if (stock.plannedPurchase) {
                     // Load with planned purchase data
                     const pp = stock.plannedPurchase;
                     updateSimulatorState({
-                        selectedStockId: stockId,
+                        selectedStockId: stock.id,
                         shares: pp.shares,
                         price: pp.pricePerShare,
                         dividend: pp.dividendPerShare,
@@ -152,7 +152,7 @@ export function DividendCalculator() {
                     else if (stock.dividendFrequency === 'semi-annually') annualDiv *= 2;
 
                     updateSimulatorState({
-                        selectedStockId: stockId,
+                        selectedStockId: stock.id,
                         mode: 'buy',
                         simName: stock.name,
                         simSymbol: stock.symbol,

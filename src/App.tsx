@@ -32,6 +32,20 @@ interface NavItemProps {
 const NavItem = ({ to, icon: Icon, label, onClick }: NavItemProps) => {
   const location = useLocation();
 
+  // Pass current stock context when switching from Stock Edit or Stock Detail to Kauf/Verkauf or Fairer Wert
+  const getTargetUrl = () => {
+    let activeStockParam: string | null = null;
+    if (location.pathname.startsWith('/dividends/edit/')) {
+      activeStockParam = location.pathname.split('/dividends/edit/')[1]?.split('/')[0] || null;
+    } else if (location.pathname.startsWith('/stock/')) {
+      activeStockParam = location.pathname.split('/stock/')[1]?.split('/')[0] || null;
+    }
+    if (activeStockParam && (to === '/calculator' || to === '/fair-value')) {
+      return `${to}?stock=${encodeURIComponent(activeStockParam)}`;
+    }
+    return to;
+  };
+
   // Custom active logic: Check if we're on /dividends/edit with from=watchlist
   const isCustomActive = () => {
     const isOnDividendEdit = location.pathname.startsWith('/dividends/edit');
@@ -50,7 +64,7 @@ const NavItem = ({ to, icon: Icon, label, onClick }: NavItemProps) => {
 
   return (
     <NavLink
-      to={to}
+      to={getTargetUrl()}
       onClick={onClick}
       className={({ isActive }) => {
         const isOnDividendEdit = location.pathname.startsWith('/dividends/edit');

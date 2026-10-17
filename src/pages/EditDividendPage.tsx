@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Trash2, Search, Pencil, Check } from 'lucide-react';
+import { ArrowLeft, Trash2, Search, Pencil, Check, Calculator } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
@@ -672,7 +672,20 @@ export function EditDividendPage() {
 
                             {/* Price Section */}
                             <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4">
-                                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Kursdaten</h3>
+                                <div className="flex items-center justify-between">
+                                    <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Kursdaten</h3>
+                                    {currentStockId && (
+                                        <button
+                                            type="button"
+                                            onClick={() => navigate(`/calculator?stock=${encodeURIComponent(String(currentStockId))}`)}
+                                            className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-colors"
+                                            title="Aktie direkt in Kauf / Verkauf öffnen"
+                                        >
+                                            <Calculator className="size-3.5" />
+                                            <span>Kauf / Verkauf</span>
+                                        </button>
+                                    )}
+                                </div>
 
                                 {/* Kaufpreis Average Display */}
                                 {stocks.find(s => String(s.id) === String(currentStockId)) && positions.find(p => String(p.stockId) === String(currentStockId)) && (
