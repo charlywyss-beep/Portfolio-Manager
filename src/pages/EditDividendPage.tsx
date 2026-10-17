@@ -57,6 +57,7 @@ export function EditDividendPage() {
     const [price, setPrice] = useState('');
     const [targetPrice, setTargetPrice] = useState('');
     const [sellLimit, setSellLimit] = useState('');
+    const [fairValue, setFairValue] = useState('');
     const [amount, setAmount] = useState('');
     const [yieldPercent, setYieldPercent] = useState('');
     const [currency, setCurrency] = useState<Currency>('CHF');
@@ -100,6 +101,7 @@ export function EditDividendPage() {
             setPrice(stock.currentPrice ? stock.currentPrice.toFixed(2) : '');
             setTargetPrice(stock.targetPrice ? stock.targetPrice.toFixed(2) : '');
             setSellLimit(stock.sellLimit ? stock.sellLimit.toFixed(2) : '');
+            setFairValue(stock.fairValue ? stock.fairValue.toFixed(2) : '');
             setAmount(stock.dividendAmount?.toString() || '');
 
             // Recalculate yield on mount to ensure it matches current price/amount
@@ -267,6 +269,9 @@ export function EditDividendPage() {
         }
         if (sellLimit !== undefined && (!stock || (sellLimit ? parseFloat(sellLimit.replace(',', '.')) : undefined) !== stock.sellLimit)) {
             updates.sellLimit = sellLimit ? parseFloat(sellLimit.replace(',', '.')) : undefined;
+        }
+        if (fairValue !== undefined && (!stock || (fairValue ? parseFloat(fairValue.replace(',', '.')) : undefined) !== stock.fairValue)) {
+            updates.fairValue = fairValue ? parseFloat(fairValue.replace(',', '.')) : undefined;
         }
         if (currency && (!stock || currency !== stock.currency)) {
             updates.currency = currency;
@@ -753,6 +758,21 @@ export function EditDividendPage() {
                                             placeholder="Preis zum Verkauf..."
                                             value={sellLimit}
                                             onChange={(e) => setSellLimit(e.target.value)}
+                                            onFocus={(e) => e.target.select()}
+                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg mt-auto"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col h-full gap-2">
+                                        <div className="flex justify-between items-center min-h-[28px]">
+                                            <label className="text-sm font-medium">Fairer Wert</label>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            inputMode="decimal"
+                                            autoComplete="off"
+                                            placeholder="Optional"
+                                            value={fairValue}
+                                            onChange={(e) => setFairValue(e.target.value)}
                                             onFocus={(e) => e.target.select()}
                                             className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg mt-auto"
                                         />
