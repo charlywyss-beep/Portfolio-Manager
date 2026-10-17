@@ -182,6 +182,7 @@ async function executeFallback(symbol: string) {
 // THIS IS THE WORKING FUNCTION (Watchlist uses this)
 export async function fetchStockQuotes(symbols: string[]): Promise<Record<string, {
     price: number,
+    currency?: string | null,
     previousClose?: number,
     marketTime?: Date,
     marketState?: string | null,
@@ -212,6 +213,7 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
 
         const updateMap: Record<string, {
             price: number,
+            currency?: string | null,
             previousClose?: number,
             marketTime?: Date,
             marketState?: string | null,
@@ -245,6 +247,7 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
 
                 updateMap[res.symbol] = {
                     price,
+                    currency: res.currency || null,
                     previousClose,
                     marketTime: res.regularMarketTime ? new Date(res.regularMarketTime * 1000) : undefined,
                     marketState: res.marketState || null,

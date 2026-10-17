@@ -353,6 +353,10 @@ export function FairValueCalculator() {
                 finalQuote.name = initialName || symbol;
             }
 
+            if (!finalQuote.currency) {
+                finalQuote.currency = existingStock?.currency || 'USD';
+            }
+
             setQuote(finalQuote);
             setAnalysis(a || { growthRate: null });
 

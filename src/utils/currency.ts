@@ -13,15 +13,16 @@ export const FALLBACK_EXCHANGE_RATES: Record<string, number> = {
 // Convert any currency to CHF using live rates
 export function convertToCHF(amount: number, fromCurrency: string, liveRates?: Record<string, number>): number {
     const rates = liveRates || FALLBACK_EXCHANGE_RATES;
+    const safeCurrency = fromCurrency || 'USD';
 
-    if (fromCurrency === 'CHF') return amount;
+    if (safeCurrency === 'CHF') return amount;
 
-    let rate = rates[fromCurrency];
+    let rate = rates[safeCurrency];
     let workingAmount = amount;
 
     // GBp (Pence) handling: Redundant logic removed. 
     // Prices are now centrally normalized at the API edge (yahoo-finance.ts).
-    if (fromCurrency === 'GBp') {
+    if (safeCurrency === 'GBp') {
         rate = rates['GBP'];
     }
 
@@ -32,14 +33,15 @@ export function convertToCHF(amount: number, fromCurrency: string, liveRates?: R
 
 // Format currency with optional CHF conversion
 export function formatCurrency(amount: number, currency: string, showCHF: boolean = true, liveRates?: Record<string, number>): string {
+    const safeCurrency = currency || 'USD';
     if (amount === undefined || amount === null || isNaN(amount)) {
-        return '0.00 ' + (currency === 'GBp' ? 'GBP' : currency);
+        return '0.00 ' + (safeCurrency === 'GBp' ? 'GBP' : safeCurrency);
     }
 
     let displayAmount = amount;
-    let displayCurrency = currency;
+    let displayCurrency = safeCurrency;
 
-    if (currency === 'GBp') {
+    if (safeCurrency === 'GBp') {
         displayCurrency = 'GBP';
     }
 
@@ -49,8 +51,8 @@ export function formatCurrency(amount: number, currency: string, showCHF: boolea
         maximumFractionDigits: 2,
     }) + ' ' + displayCurrency;
 
-    if (showCHF && currency !== 'CHF') {
-        const chfAmount = convertToCHF(amount, currency, liveRates);
+    if (showCHF && safeCurrency !== 'CHF') {
+        const chfAmount = convertToCHF(amount, safeCurrency, liveRates);
         const chfFormatted = chfAmount.toLocaleString('de-CH', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
