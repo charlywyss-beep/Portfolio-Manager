@@ -1105,7 +1105,7 @@ export function FairValueCalculator() {
                             <Telescope className="size-5 sm:size-7" />
                         </div>
                         <div className="min-w-0">
-                            <h1 className="text-lg sm:text-2xl font-bold tracking-tight truncate">Finanzteleskop Rechner</h1>
+                            <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">Fairer Wert</h1>
                             <p className="text-xs sm:text-sm text-muted-foreground font-medium hidden sm:block">Ermittlung des fairen Werts nach Rule #1 & DCF Logik</p>
                         </div>
                     </div>

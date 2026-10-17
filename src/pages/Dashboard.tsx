@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, BarChart3, Calendar, Info, Plus, Trash2, Edit, Bell, RefreshCw, X } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, BarChart3, Calendar, Info, Plus, Trash2, Edit, Bell, RefreshCw, X, LayoutDashboard } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
 import { smartWrap } from '../utils/text';
@@ -158,7 +158,25 @@ export function Dashboard() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-            <div className="px-4 pt-16 pb-6 md:p-8 md:pt-16 lg:p-8 space-y-8 animate-in fade-in duration-500">
+            <div className="p-4 md:p-6 space-y-6 animate-in fade-in duration-500">
+                {/* Sticky Header */}
+                <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+                    <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
+                        <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 lg:pl-6">
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400">
+                                        <LayoutDashboard className="size-6" />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-3xl font-bold tracking-tight">Übersicht</h1>
+                                        <p className="text-muted-foreground hidden md:block">Gesamtvermögen, Performance und Kennzahlen im Überblick</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 {/* Risk Warnings */}
                 {bankRisks.length > 0 && !isBankRiskDismissed && (
                     <div className="bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-xl p-2.5 sm:p-3.5 flex items-center justify-between gap-3 text-amber-900 dark:text-amber-200 shadow-sm transition-all animate-in fade-in duration-300">
