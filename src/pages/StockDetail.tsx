@@ -808,12 +808,42 @@ export function StockDetail() {
                                 {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency, false) : '-'}
                             </span>
                         </div>
-                        <div className="flex justify-between py-1.5 border-b border-border/50">
-                            <span className="text-muted-foreground text-sm">Fairer Wert</span>
-                            <span className="font-medium text-sm">
-                                {stock.fairValue ? formatCurrency(stock.fairValue, stock.currency, false) : '-'}
-                            </span>
-                        </div>
+                        {(() => {
+                            let localParams: any = null;
+                            try {
+                                const symKey = (stock.symbol || '').toUpperCase();
+                                const mapRaw = localStorage.getItem('fair_value_params_map');
+                                if (symKey && mapRaw) {
+                                    const map = JSON.parse(mapRaw);
+                                    if (map[symKey]) localParams = map[symKey];
+                                }
+                            } catch {
+                                // ignore
+                            }
+                            const stockParams = stock.fairValueParams;
+                            let activeParams = stockParams || localParams;
+                            if (localParams && stockParams) {
+                                const localTime = localParams.updatedAt ? new Date(localParams.updatedAt).getTime() : 0;
+                                const stockTime = stockParams.updatedAt ? new Date(stockParams.updatedAt).getTime() : 0;
+                                activeParams = localTime >= stockTime ? localParams : stockParams;
+                            }
+                            const isManualFv = Boolean(activeParams?.isCustom);
+                            return (
+                                <div className="flex justify-between py-1.5 border-b border-border/50">
+                                    <span className="text-muted-foreground text-sm">Fairer Wert</span>
+                                    <span className={cn(
+                                        "font-medium text-sm",
+                                        stock.fairValue
+                                            ? isManualFv
+                                                ? "text-emerald-400"
+                                                : "text-blue-400"
+                                            : ""
+                                    )}>
+                                        {stock.fairValue ? formatCurrency(stock.fairValue, stock.currency, false) : '-'}
+                                    </span>
+                                </div>
+                            );
+                        })()}
                     </div>
 
                     {/* Stammdaten - Moved below Kursdaten */}

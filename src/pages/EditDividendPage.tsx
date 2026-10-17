@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Trash2, Search, Pencil, Check, Calculator } from 'lucide-react';
+import { ArrowLeft, Trash2, Search, Pencil, Check, Calculator, RotateCcw } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
 import { useCurrencyFormatter } from '../utils/currency';
 import { fetchStockHistory } from '../services/yahoo-finance';
 import { cn } from '../utils';
+import { computeSmartAutoParams, calculateDcfFairValue } from '../utils/fairValue';
 
 // Helper to get annual factor
 const getFrequencyFactor = (freq: string) => {
@@ -72,6 +73,7 @@ export function EditDividendPage() {
         { exDate: '', payDate: '' },
         { exDate: '', payDate: '' }
     ]);
+    const [fvModeTick, setFvModeTick] = useState(0);
 
     // Derived state
     const currentStockId = stockId || selectedStockId;
@@ -746,10 +748,11 @@ export function EditDividendPage() {
                                         />
                                     </div>
                                     {(() => {
+                                        void fvModeTick;
                                         const currentStockObj = stocks.find(s => String(s.id) === String(currentStockId));
+                                        const symKey = (currentStockObj?.symbol || symbol || '').toUpperCase();
                                         let localParams: any = null;
                                         try {
-                                            const symKey = (currentStockObj?.symbol || symbol || '').toUpperCase();
                                             const mapRaw = localStorage.getItem('fair_value_params_map');
                                             if (symKey && mapRaw) {
                                                 const map = JSON.parse(mapRaw);
@@ -765,79 +768,231 @@ export function EditDividendPage() {
                                             const stockTime = stockParams.updatedAt ? new Date(stockParams.updatedAt).getTime() : 0;
                                             activeParams = localTime >= stockTime ? localParams : stockParams;
                                         }
+
+                                        const effectivePrice = parseFloat((price || '').toString().replace(',', '.')) || currentStockObj?.currentPrice || 0;
+                                        const parsedYield = parseFloat((yieldPercent || '').toString().replace(',', '.'));
+                                        const smartAuto = computeSmartAutoParams(
+                                            {
+                                                price: effectivePrice,
+                                                dividendYield: !isNaN(parsedYield) && parsedYield >= 0 ? parsedYield : currentStockObj?.dividendYield
+                                            },
+                                            null,
+                                            currentStockObj,
+                                            symKey
+                                        );
+
                                         const parsedFv = parseFloat((fairValue || '').toString().replace(',', '.'));
-                                        const mosPct = activeParams?.mos ?? 20;
+                                        const mosPct = activeParams?.mos ?? smartAuto.mos ?? 20;
                                         const isManualFv = Boolean(activeParams?.isCustom);
                                         const calcBuyPrice = !isNaN(parsedFv) && parsedFv > 0 ? parsedFv * (1 - mosPct / 100) : null;
+
+                                        const handleToggleFvMode = () => {
+                                            if (!symKey) return;
+                                            const now = new Date().toISOString();
+                                            let map: Record<string, any> = {};
+                                            try {
+                                                const mapRaw = localStorage.getItem('fair_value_params_map');
+                                                if (mapRaw) map = JSON.parse(mapRaw);
+                                            } catch {
+                                                // ignore
+                                            }
+                                            const existingLocal = map[symKey] || {};
+                                            const existingBackup = existingLocal.customBackup || stockParams?.customBackup || (activeParams?.isCustom ? activeParams : null);
+
+                                            if (isManualFv) {
+                                                // Switch from Manuell -> Auto
+                                                const manualBackupToSave = {
+                                                    ...(existingBackup || activeParams || smartAuto),
+                                                    ...(!isNaN(parsedFv) && parsedFv > 0 ? { manualFairValue: parsedFv } : {}),
+                                                    updatedAt: now
+                                                };
+                                                const autoDcf = calculateDcfFairValue(smartAuto, effectivePrice);
+                                                const newAutoFv = parseFloat(autoDcf.fairValue.toFixed(2));
+
+                                                const nextEntry = {
+                                                    ...smartAuto,
+                                                    isCustom: false,
+                                                    customBackup: manualBackupToSave,
+                                                    updatedAt: now
+                                                };
+                                                map[symKey] = nextEntry;
+                                                try {
+                                                    localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                                                } catch {
+                                                    // ignore
+                                                }
+                                                if (newAutoFv > 0) {
+                                                    setFairValue(newAutoFv.toFixed(2));
+                                                }
+                                                if (currentStockObj) {
+                                                    updateStock(currentStockObj.id, {
+                                                        ...(newAutoFv > 0 ? { fairValue: newAutoFv } : {}),
+                                                        fairValueParams: nextEntry
+                                                    });
+                                                }
+                                            } else {
+                                                // Switch from Auto -> Manuell
+                                                const backupToRestore = existingBackup || {
+                                                    ...(activeParams || smartAuto),
+                                                    ...(!isNaN(parsedFv) && parsedFv > 0 ? { manualFairValue: parsedFv } : {})
+                                                };
+                                                const restoredDcf = calculateDcfFairValue(backupToRestore, effectivePrice);
+                                                const newManualFv = (backupToRestore.manualFairValue && Number(backupToRestore.manualFairValue) > 0)
+                                                    ? parseFloat(Number(backupToRestore.manualFairValue).toFixed(2))
+                                                    : parseFloat(restoredDcf.fairValue.toFixed(2));
+
+                                                const nextEntry = {
+                                                    ...backupToRestore,
+                                                    isCustom: true,
+                                                    customBackup: backupToRestore,
+                                                    updatedAt: now
+                                                };
+                                                map[symKey] = nextEntry;
+                                                try {
+                                                    localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                                                } catch {
+                                                    // ignore
+                                                }
+                                                if (newManualFv > 0) {
+                                                    setFairValue(newManualFv.toFixed(2));
+                                                }
+                                                if (currentStockObj) {
+                                                    updateStock(currentStockObj.id, {
+                                                        ...(newManualFv > 0 ? { fairValue: newManualFv } : {}),
+                                                        fairValueParams: nextEntry
+                                                    });
+                                                }
+                                            }
+                                            setFvModeTick(t => t + 1);
+                                        };
+
+                                        const handleFairValueInput = (val: string) => {
+                                            setFairValue(val);
+                                            const numVal = parseFloat(val.replace(',', '.'));
+                                            if (symKey && !isNaN(numVal) && numVal > 0) {
+                                                const now = new Date().toISOString();
+                                                try {
+                                                    const mapRaw = localStorage.getItem('fair_value_params_map');
+                                                    const map = mapRaw ? JSON.parse(mapRaw) : {};
+                                                    const base = activeParams || smartAuto;
+                                                    const updatedBackup = {
+                                                        ...(map[symKey]?.customBackup || stockParams?.customBackup || base),
+                                                        manualFairValue: numVal,
+                                                        updatedAt: now
+                                                    };
+                                                    map[symKey] = {
+                                                        ...base,
+                                                        isCustom: true,
+                                                        customBackup: updatedBackup,
+                                                        updatedAt: now
+                                                    };
+                                                    localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                                                    setFvModeTick(t => t + 1);
+                                                } catch {
+                                                    // ignore
+                                                }
+                                            }
+                                        };
+
                                         return (
-                                            <div className="flex flex-col h-full gap-2">
-                                                <div className="flex justify-between items-center min-h-[28px]">
-                                                    <label className="text-sm font-medium">Kauflimit</label>
-                                                    {calcBuyPrice !== null && (
-                                                        <span className={`text-xs font-semibold px-1.5 py-0.5 rounded border ${
-                                                            isManualFv
-                                                                ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
-                                                                : 'text-blue-400 bg-blue-500/10 border-blue-500/30'
-                                                        }`}>
-                                                            {isManualFv ? 'Kaufpreis (Manuell)' : 'Kaufpreis (Auto)'}
-                                                        </span>
-                                                    )}
+                                            <>
+                                                <div className="flex flex-col h-full gap-2">
+                                                    <div className="flex justify-between items-center min-h-[28px]">
+                                                        <label className="text-sm font-medium">Kauflimit</label>
+                                                        {calcBuyPrice !== null && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleToggleFvMode}
+                                                                className={`flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+                                                                    isManualFv
+                                                                        ? 'text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40'
+                                                                        : 'text-blue-400 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/40'
+                                                                }`}
+                                                                title="Klicken, um zwischen Kaufpreis (Manuell) und Kaufpreis (Auto) zu wechseln"
+                                                            >
+                                                                <RotateCcw className="size-3 shrink-0" />
+                                                                <span>{isManualFv ? 'Kaufpreis (Manuell)' : 'Kaufpreis (Auto)'}</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <div className="relative mt-auto">
+                                                        <input
+                                                            type="text"
+                                                            inputMode="decimal"
+                                                            autoComplete="off"
+                                                            placeholder="Optional"
+                                                            value={targetPrice}
+                                                            onChange={(e) => setTargetPrice(e.target.value)}
+                                                            onFocus={(e) => e.target.select()}
+                                                            className={`w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg ${calcBuyPrice !== null ? 'pr-20' : ''}`}
+                                                        />
+                                                        {calcBuyPrice !== null && (
+                                                            <span
+                                                                className={`absolute right-3 top-1/2 -translate-y-1/2 font-mono font-semibold text-base pointer-events-none select-none ${
+                                                                    isManualFv ? 'text-emerald-400' : 'text-blue-400'
+                                                                }`}
+                                                                title={`Errechneter Kaufpreis inkl. ${mosPct}% Sicherheitsmarge (${isManualFv ? 'Manuelle Werte' : 'Auto-Werte'})`}
+                                                            >
+                                                                {calcBuyPrice.toFixed(2)}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <div className="relative mt-auto">
+                                                <div className="flex flex-col h-full gap-2">
+                                                    <div className="flex justify-between items-center min-h-[28px]">
+                                                        <label className="text-sm font-medium">Verkaufslimit</label>
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        inputMode="decimal"
+                                                        autoComplete="off"
+                                                        placeholder="Preis zum Verkauf..."
+                                                        value={sellLimit}
+                                                        onChange={(e) => setSellLimit(e.target.value)}
+                                                        onFocus={(e) => e.target.select()}
+                                                        className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg mt-auto"
+                                                    />
+                                                </div>
+                                                <div className="flex flex-col h-full gap-2">
+                                                    <div className="flex justify-between items-center min-h-[28px]">
+                                                        <label className="text-sm font-medium">Fairer Wert</label>
+                                                        {!isNaN(parsedFv) && parsedFv > 0 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleToggleFvMode}
+                                                                className={`flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+                                                                    isManualFv
+                                                                        ? 'text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40'
+                                                                        : 'text-blue-400 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/40'
+                                                                }`}
+                                                                title="Klicken, um zwischen Manuell und Auto zu wechseln"
+                                                            >
+                                                                <RotateCcw className="size-3 shrink-0" />
+                                                                <span>{isManualFv ? 'Manuell' : 'Auto'}</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                     <input
                                                         type="text"
                                                         inputMode="decimal"
                                                         autoComplete="off"
                                                         placeholder="Optional"
-                                                        value={targetPrice}
-                                                        onChange={(e) => setTargetPrice(e.target.value)}
+                                                        value={fairValue}
+                                                        onChange={(e) => handleFairValueInput(e.target.value)}
                                                         onFocus={(e) => e.target.select()}
-                                                        className={`w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg ${calcBuyPrice !== null ? 'pr-20' : ''}`}
+                                                        className={cn(
+                                                            "w-full px-3 py-2 border rounded-md bg-background text-lg mt-auto font-mono font-semibold transition-colors",
+                                                            !isNaN(parsedFv) && parsedFv > 0
+                                                                ? isManualFv
+                                                                    ? "border-emerald-500/60 text-emerald-400 focus:border-emerald-400"
+                                                                    : "border-blue-500/60 text-blue-400 focus:border-blue-400"
+                                                                : "text-foreground"
+                                                        )}
                                                     />
-                                                    {calcBuyPrice !== null && (
-                                                        <span
-                                                            className={`absolute right-3 top-1/2 -translate-y-1/2 font-mono font-semibold text-base pointer-events-none select-none ${
-                                                                isManualFv ? 'text-emerald-400' : 'text-blue-400'
-                                                            }`}
-                                                            title={`Errechneter Kaufpreis inkl. ${mosPct}% Sicherheitsmarge (${isManualFv ? 'Manuelle Werte' : 'Auto-Werte'})`}
-                                                        >
-                                                            {calcBuyPrice.toFixed(2)}
-                                                        </span>
-                                                    )}
                                                 </div>
-                                            </div>
+                                            </>
                                         );
                                     })()}
-                                    <div className="flex flex-col h-full gap-2">
-                                        <div className="flex justify-between items-center min-h-[28px]">
-                                            <label className="text-sm font-medium">Verkaufslimit</label>
-                                        </div>
-                                        <input
-                                            type="text"
-                                            inputMode="decimal"
-                                            autoComplete="off"
-                                            placeholder="Preis zum Verkauf..."
-                                            value={sellLimit}
-                                            onChange={(e) => setSellLimit(e.target.value)}
-                                            onFocus={(e) => e.target.select()}
-                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg mt-auto"
-                                        />
-                                    </div>
-                                    <div className="flex flex-col h-full gap-2">
-                                        <div className="flex justify-between items-center min-h-[28px]">
-                                            <label className="text-sm font-medium">Fairer Wert</label>
-                                        </div>
-                                        <input
-                                            type="text"
-                                            inputMode="decimal"
-                                            autoComplete="off"
-                                            placeholder="Optional"
-                                            value={fairValue}
-                                            onChange={(e) => setFairValue(e.target.value)}
-                                            onFocus={(e) => e.target.select()}
-                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg mt-auto"
-                                        />
-                                    </div>
                                 </div>
                             </div>
 
