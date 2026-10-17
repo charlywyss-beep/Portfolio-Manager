@@ -202,6 +202,8 @@ export function FairValueCalculator() {
     // Known fundamental baselines for special-case stocks (e.g. one-time IFRS/GAAP restructuring/write-offs, REIT AFFO, or conglomerates)
     const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number; pe: number; div?: number; mos?: number; label: string }> = {
         'KHC': { eps: 2.60, growth: 2.0, pe: 11.5, div: 6.8, mos: 20, label: 'Operativ / Bereinigt' },
+        'BATS.L': { eps: 3.62, growth: 3.0, pe: 11.5, mos: 20, label: 'Adjusted EPS (Bereinigt)' },
+        'BTI': { eps: 4.65, growth: 3.0, pe: 11.5, mos: 20, label: 'Adjusted EPS (Bereinigt)' },
         'NESN.SW': { eps: 4.60, growth: 5.0, pe: 20.0, mos: 15, label: 'Bereinigter Gewinn (Underlying)' },
         'NESN': { eps: 4.60, growth: 5.0, pe: 20.0, mos: 15, label: 'Bereinigter Gewinn (Underlying)' },
         'ROG.SW': { eps: 18.80, growth: 5.5, pe: 16.5, mos: 15, label: 'Core EPS (Bereinigt)' },
@@ -220,6 +222,10 @@ export function FairValueCalculator() {
         if (symUpper === 'NESN.SW' || symUpper === 'NESN') {
             if (Math.abs(Number(params.eps) - 3.51) < 0.05 && Number(params.pe) === 15) return true;
             if (Math.abs(Number(params.eps) - 4.6) < 0.05 && Number(params.pe) === 20 && Number(params.mos) === 20) return true;
+        }
+        // Upgrade previously auto-populated BAT (2% growth / 13.5 PE from unadjusted GBp PE)
+        if (symUpper === 'BATS.L' && Number(params.growthRate) === 2 && Number(params.pe) === 13.5) {
+            return true;
         }
         return false;
     };
@@ -242,11 +248,19 @@ export function FairValueCalculator() {
         autoDiv = parseFloat(Math.min(Math.max(autoDiv, 0), 25).toFixed(2));
 
         // 2. Smart EPS (protect against negative/zero or restructuring-depressed GAAP/IFRS TTM EPS)
-        const trailingPE = qData?.trailingPE || stockObj?.trailingPE || null;
-        const forwardPE = qData?.forwardPE || aData?.forwardPE || stockObj?.forwardPE || null;
+        let trailingPE = qData?.trailingPE || stockObj?.trailingPE || null;
+        let forwardPE = qData?.forwardPE || aData?.forwardPE || stockObj?.forwardPE || null;
         const kcv = qData?.kcv || aData?.kcv || stockObj?.kcv || null;
 
         const rawEps = qData?.eps ?? aData?.eps ?? stockObj?.eps ?? null;
+        // Fix London Stock Exchange (GBp / Pence) 100x P/E distortion (e.g. 1276.71 -> 12.77)
+        if (trailingPE && trailingPE > 150 && (symUpper.endsWith('.L') || (price > 0 && rawEps && rawEps > 0 && (price / rawEps) < 60))) {
+            trailingPE = trailingPE / 100;
+        }
+        if (forwardPE && forwardPE > 150 && (symUpper.endsWith('.L') || (price > 0 && rawEps && rawEps > 0 && (price / rawEps) < 60))) {
+            forwardPE = forwardPE / 100;
+        }
+
         const forwardEps = qData?.forwardEps ?? stockObj?.forwardEps ?? (price > 0 && forwardPE && forwardPE > 0 ? price / forwardPE : null);
 
         let autoEps = 0;
@@ -299,10 +313,10 @@ export function FairValueCalculator() {
             // Guardrails based on fundamental profile
             if (autoDiv >= 4.5 && effectivePe < 14) {
                 // High-dividend, low-PE mature value stock (e.g. KHC, BAT, VZ): cap overly optimistic analyst growth
-                apiPct = Math.min(Math.max(apiPct, 1.5), 4.0);
+                apiPct = Math.min(Math.max(apiPct, 2.5), 4.5);
                 growthLabel = 'Prognose (Konservativ begrenzt)';
             } else if (autoDiv >= 3.0 && effectivePe < 18) {
-                apiPct = Math.min(Math.max(apiPct, 2.5), 7.5);
+                apiPct = Math.min(Math.max(apiPct, 3.0), 7.5);
                 growthLabel = 'Analysten-Prognose (5J)';
             } else {
                 apiPct = Math.min(Math.max(apiPct, 2.5), 15.0);
@@ -312,7 +326,7 @@ export function FairValueCalculator() {
         } else {
             // Intelligent Fundamental Profile Heuristic (instead of blind 10% for everything)
             if ((autoDiv >= 4.8 && effectivePe <= 14) || effectivePe <= 11.5) {
-                autoGrowth = 2.0;
+                autoGrowth = autoDiv >= 5.0 && autoDiv < 6.0 ? 3.0 : 2.5;
                 growthLabel = 'Reifer Dividendenwert';
             } else if (autoDiv >= 3.0 && effectivePe <= 17.5) {
                 autoGrowth = 5.0;
@@ -357,7 +371,7 @@ export function FairValueCalculator() {
         const isWideMoat = WIDE_MOAT_QUALITY.has(symUpper);
         const ruleOneMax = Math.max(20, autoGrowth * 2);
         const maxSensibleExitPe = (autoDiv >= 5.0 && effectivePe < 14)
-            ? 13.5
+            ? Math.min(13.0, effectivePe)
             : Math.min(isWideMoat || autoGrowth >= 9 ? 25 : 22, ruleOneMax);
         const autoPe = parseFloat((Math.round(Math.min(Math.max(rawExitPe, 8), maxSensibleExitPe) * 2) / 2).toFixed(1));
 
@@ -733,6 +747,14 @@ export function FairValueCalculator() {
                 finalQuote.currency = existingStock?.currency || 'USD';
             }
 
+            // Normalize London Stock Exchange (GBp / Pence) 100x P/E distortion (e.g. 1276.71 -> 12.77)
+            if (finalQuote.trailingPE && finalQuote.trailingPE > 150 && (symbol.toUpperCase().endsWith('.L') || finalQuote.currency === 'GBp' || (finalQuote.price > 0 && finalQuote.eps && finalQuote.eps > 0 && (finalQuote.price / finalQuote.eps) < 60))) {
+                finalQuote.trailingPE = parseFloat((finalQuote.trailingPE / 100).toFixed(2));
+            }
+            if (finalQuote.forwardPE && finalQuote.forwardPE > 150 && (symbol.toUpperCase().endsWith('.L') || finalQuote.currency === 'GBp' || (finalQuote.price > 0 && finalQuote.eps && finalQuote.eps > 0 && (finalQuote.price / finalQuote.eps) < 60))) {
+                finalQuote.forwardPE = parseFloat((finalQuote.forwardPE / 100).toFixed(2));
+            }
+
             setQuote(finalQuote);
             setAnalysis(a || { growthRate: null });
 
@@ -874,7 +896,9 @@ export function FairValueCalculator() {
     const currentPrice = quote?.price || 0;
     const isUndervalued = currentPrice < calculation.buyPrice;
     const isFair = !isUndervalued && currentPrice <= calculation.fairValue;
-    const isYieldGap = ((typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : growthRate) + (typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : dividendYield)) < (typeof discountRate === 'string' ? parseFloat(discountRate) || 0 : discountRate);
+    const actualCurrentPe = quote?.trailingPE || (currentPrice > 0 && (typeof eps === 'string' ? parseFloat(eps) : eps) > 0 ? currentPrice / (typeof eps === 'string' ? parseFloat(eps) || 1 : eps) : 0);
+    const isYieldGap = (((typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : growthRate) + (typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : dividendYield)) < ((typeof discountRate === 'string' ? parseFloat(discountRate) || 0 : discountRate) - 0.5))
+        && (actualCurrentPe > 0 && (typeof pe === 'string' ? parseFloat(pe) || 0 : pe) > actualCurrentPe + 0.5);
 
     return (
         <div className="max-w-6xl mx-auto pl-14 pr-4 py-4 md:p-8 md:pl-14 lg:p-8 space-y-8 pb-32">
@@ -1601,19 +1625,18 @@ export function FairValueCalculator() {
 
                                     {/* Fair Value */}
                                     <div className="p-4 rounded-xl border border-border bg-card">
-                                        <div className="flex justify-between items-end mb-1">
-                                            <span className={cn("font-medium", isYieldGap && "text-red-600 font-bold")}>Fairer Wert</span>
-                                            <span className={cn("font-mono text-xl", isYieldGap && "text-red-600 font-bold font-mono")}>
+                                        <div className="flex justify-between items-end gap-2 mb-1">
+                                            <span className="font-medium shrink-0">Fairer Wert</span>
+                                            <span className="font-mono text-xl whitespace-nowrap">
                                                 {formatCurrency(calculation.fairValue, quote.currency)}
                                             </span>
                                         </div>
-                                        <p className={cn("text-xs", isYieldGap ? "text-red-500/80 font-medium" : "text-muted-foreground")}>
+                                        <p className="text-xs text-muted-foreground">
                                             Innerer Wert heute ({discountRate}% Zielrendite + Dividenden)
                                         </p>
                                         {isYieldGap && (
-                                            <p className="text-xs text-red-500 mt-2 leading-relaxed italic font-medium">
-                                                Achtung: Renditeerwartung ({discountRate}%) ist höher als Ertrag ({growthRate}% + {dividendYield}%).
-                                                Rechnung basiert auf steigendem KGV!
+                                            <p className="text-xs text-amber-400/90 mt-2 leading-relaxed italic font-medium">
+                                                Hinweis: Renditeerwartung ({discountRate}%) liegt über Ertrag ({growthRate}% + {dividendYield}%) bei steigendem KGV.
                                             </p>
                                         )}
                                     </div>
