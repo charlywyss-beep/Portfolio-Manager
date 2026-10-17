@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Trash2, Search, Pencil, Check, Calculator, RotateCcw } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
 import { useCurrencyFormatter } from '../utils/currency';
 import { fetchStockHistory } from '../services/yahoo-finance';
@@ -46,7 +46,6 @@ const sanitizeDateYear = (dateStr: string, referenceDate?: string): string => {
 export function EditDividendPage() {
     const { stockId } = useParams();
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
     const { stocks, positions, updateStockDividend, updateStockPrice, updateStock } = usePortfolio();
 
     const [selectedStockId, setSelectedStockId] = useState(''); // Local state for selection
