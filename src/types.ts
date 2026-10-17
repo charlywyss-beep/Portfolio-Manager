@@ -69,6 +69,7 @@ export interface Stock {
         dividendYield: number;
         discountRate: number;
         mos: number;
+        isCustom?: boolean;
         updatedAt?: string;
     };
     sellLimit?: number; // Desired sell price -> Sell Limit

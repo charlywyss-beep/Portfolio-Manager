@@ -137,7 +137,7 @@ export function FairValueCalculator() {
         return null;
     };
 
-    const saveSymbolParamsToLocal = (sym: string, params: { eps: number; growthRate: number; pe: number; dividendYield: number; discountRate: number; mos: number }) => {
+    const saveSymbolParamsToLocal = (sym: string, params: { eps: number; growthRate: number; pe: number; dividendYield: number; discountRate: number; mos: number; isCustom?: boolean }) => {
         try {
             const key = sym.toUpperCase();
             const mapRaw = localStorage.getItem('fair_value_params_map');
@@ -150,23 +150,26 @@ export function FairValueCalculator() {
     };
 
     // Known fundamental baselines for special-case stocks (e.g. one-time IFRS/GAAP restructuring/write-offs, REIT AFFO, or conglomerates)
-    const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number; pe: number; div?: number; label: string }> = {
-        'KHC': { eps: 2.60, growth: 2.0, pe: 11.5, div: 6.8, label: 'Operativ / Bereinigt' },
-        'NESN.SW': { eps: 4.60, growth: 5.0, pe: 20.0, label: 'Bereinigter Gewinn (Underlying)' },
-        'NESN': { eps: 4.60, growth: 5.0, pe: 20.0, label: 'Bereinigter Gewinn (Underlying)' },
-        'ROG.SW': { eps: 18.80, growth: 5.5, pe: 16.5, label: 'Core EPS (Bereinigt)' },
-        'NOVN.SW': { eps: 6.80, growth: 5.5, pe: 16.0, label: 'Core EPS (Bereinigt)' },
-        'O': { eps: 4.20, growth: 3.5, pe: 15.0, label: 'AFFO (Cashflow je Aktie)' },
-        'BRK-B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, label: 'Operativer Gewinn' },
-        'BRK.B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, label: 'Operativer Gewinn' },
+    const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number; pe: number; div?: number; mos?: number; label: string }> = {
+        'KHC': { eps: 2.60, growth: 2.0, pe: 11.5, div: 6.8, mos: 20, label: 'Operativ / Bereinigt' },
+        'NESN.SW': { eps: 4.60, growth: 5.0, pe: 20.0, mos: 15, label: 'Bereinigter Gewinn (Underlying)' },
+        'NESN': { eps: 4.60, growth: 5.0, pe: 20.0, mos: 15, label: 'Bereinigter Gewinn (Underlying)' },
+        'ROG.SW': { eps: 18.80, growth: 5.5, pe: 16.5, mos: 15, label: 'Core EPS (Bereinigt)' },
+        'NOVN.SW': { eps: 6.80, growth: 5.5, pe: 16.0, mos: 15, label: 'Core EPS (Bereinigt)' },
+        'O': { eps: 4.20, growth: 3.5, pe: 15.0, mos: 15, label: 'AFFO (Cashflow je Aktie)' },
+        'BRK-B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, mos: 15, label: 'Operativer Gewinn' },
+        'BRK.B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, mos: 15, label: 'Operativer Gewinn' },
     };
 
     const isStaleAutoDefault = (sym: string, params: any) => {
         if (!params || Number(params.eps) <= 0) return true;
+        // Never overwrite parameters that the user manually edited!
+        if (params.isCustom) return false;
         const symUpper = sym.toUpperCase();
-        // Upgrade previously auto-populated unadjusted Nestlé (3.51 / 6 / 15) to Underlying EPS
-        if ((symUpper === 'NESN.SW' || symUpper === 'NESN') && Math.abs(Number(params.eps) - 3.51) < 0.05 && Number(params.pe) === 15) {
-            return true;
+        // Upgrade previously auto-populated Nestlé (3.51 / 6 / 15 or auto 20% MoS) to 15% MoS
+        if (symUpper === 'NESN.SW' || symUpper === 'NESN') {
+            if (Math.abs(Number(params.eps) - 3.51) < 0.05 && Number(params.pe) === 15) return true;
+            if (Math.abs(Number(params.eps) - 4.6) < 0.05 && Number(params.pe) === 20 && Number(params.mos) === 20) return true;
         }
         return false;
     };
@@ -300,13 +303,26 @@ export function FairValueCalculator() {
         const maxSensibleExitPe = (autoDiv >= 5.0 && effectivePe < 14) ? 13.5 : Math.min(22, ruleOneMax);
         const autoPe = parseFloat((Math.round(Math.min(Math.max(rawExitPe, 8), maxSensibleExitPe) * 2) / 2).toFixed(1));
 
+        // 5. Smart Margin of Safety (15% for Swiss / defensive quality blue-chips, 20% standard)
+        const currencyStr = (qData?.currency || stockObj?.currency || '').toUpperCase();
+        const sectorStr = (stockObj?.sector || '').toLowerCase();
+        const isDefensiveSector = sectorStr.includes('konsum') || sectorStr.includes('consumer') || sectorStr.includes('nahrung') || sectorStr.includes('pharma') || sectorStr.includes('gesundheit') || sectorStr.includes('health');
+        const isSwissBlueChip = symUpper.endsWith('.SW') || currencyStr === 'CHF';
+
+        let autoMos = 20;
+        if (preset?.mos !== undefined) {
+            autoMos = preset.mos;
+        } else if ((isSwissBlueChip || isDefensiveSector) && autoPe >= 15 && autoDiv >= 1.5 && autoDiv <= 4.8) {
+            autoMos = 15;
+        }
+
         return {
             eps: autoEps,
             growthRate: autoGrowth,
             pe: autoPe,
             dividendYield: autoDiv,
             discountRate: 8,
-            mos: 20,
+            mos: autoMos,
             epsLabel,
             growthLabel
         };
@@ -395,7 +411,7 @@ export function FairValueCalculator() {
                         setDividendYield(state.dividendYield ? parseFloat(Number(state.dividendYield).toFixed(2)) : 0);
                         setDiscountRate(state.discountRate || 8);
                         setMos(state.mos || 20);
-                        setIsSavedForStock(true);
+                        setIsSavedForStock(Boolean(state.isCustom));
                     }
                     loadStockData(state.symbol, state.name || state.symbol, hasValidSavedEps, state.isin);
                 }
@@ -424,7 +440,8 @@ export function FairValueCalculator() {
                 pe: numPe,
                 dividendYield: numDiv,
                 discountRate: numDisc,
-                mos: numMos
+                mos: numMos,
+                isCustom: isSavedForStock
             };
             localStorage.setItem('fair_value_state', JSON.stringify(state));
 
@@ -435,11 +452,12 @@ export function FairValueCalculator() {
                     pe: numPe,
                     dividendYield: numDiv,
                     discountRate: numDisc,
-                    mos: numMos
+                    mos: numMos,
+                    isCustom: isSavedForStock
                 });
             }
         }
-    }, [selectedSymbol, eps, growthRate, pe, dividendYield, discountRate, mos, quote]);
+    }, [selectedSymbol, eps, growthRate, pe, dividendYield, discountRate, mos, isSavedForStock, quote]);
 
     // Categorized Suggestions (Holdings & Watchlist)
     const localMatches = useMemo(() => {
@@ -509,9 +527,16 @@ export function FairValueCalculator() {
         }
 
         // Check if we already have saved Fair Value parameters for this specific stock (either on Stock object or in localStorage map)
-        const rawSavedStockParams = (existingStock?.fairValueParams && Number(existingStock.fairValueParams.eps) > 0)
+        const localSaved = getSavedSymbolParams(symbol);
+        const stockSaved = (existingStock?.fairValueParams && Number(existingStock.fairValueParams.eps) > 0)
             ? existingStock.fairValueParams
-            : getSavedSymbolParams(symbol);
+            : null;
+        let rawSavedStockParams = stockSaved || localSaved;
+        if (localSaved && stockSaved) {
+            const localTime = localSaved.updatedAt ? new Date(localSaved.updatedAt).getTime() : 0;
+            const stockTime = stockSaved.updatedAt ? new Date(stockSaved.updatedAt).getTime() : 0;
+            rawSavedStockParams = localTime >= stockTime ? localSaved : stockSaved;
+        }
         const savedStockParams = (rawSavedStockParams && !isStaleAutoDefault(symbol, rawSavedStockParams))
             ? rawSavedStockParams
             : null;
@@ -523,9 +548,9 @@ export function FairValueCalculator() {
             setDividendYield(parseFloat(Number(savedStockParams.dividendYield || 0).toFixed(2)));
             setDiscountRate(savedStockParams.discountRate || 8);
             setMos(savedStockParams.mos || 20);
-            setEpsSourceLabel('Gespeichert');
-            setGrowthSourceLabel('Gespeichert');
-            setIsSavedForStock(true);
+            setEpsSourceLabel(savedStockParams.isCustom ? 'Manuell / Gespeichert' : 'Gespeichert');
+            setGrowthSourceLabel(savedStockParams.isCustom ? 'Manuell / Gespeichert' : 'Gespeichert');
+            setIsSavedForStock(Boolean(savedStockParams.isCustom));
         }
 
         try {
@@ -711,7 +736,8 @@ export function FairValueCalculator() {
                 || Math.abs((prevParams.pe || 0) - numPe) > 0.001
                 || Math.abs((prevParams.dividendYield || 0) - numDiv) > 0.001
                 || Math.abs((prevParams.discountRate || 0) - numDisc) > 0.001
-                || Math.abs((prevParams.mos || 0) - numMos) > 0.001;
+                || Math.abs((prevParams.mos || 0) - numMos) > 0.001
+                || Boolean(prevParams.isCustom) !== Boolean(isSavedForStock);
 
             const fvChanged = !existingStock.fairValue || Math.abs(existingStock.fairValue - calculation.fairValue) > 0.01;
 
@@ -726,14 +752,15 @@ export function FairValueCalculator() {
                             dividendYield: numDiv,
                             discountRate: numDisc,
                             mos: numMos,
+                            isCustom: isSavedForStock,
                             updatedAt: new Date().toISOString()
                         }
                     });
-                }, 600);
+                }, 250);
                 return () => clearTimeout(timer);
             }
         }
-    }, [selectedSymbol, calculation, eps, growthRate, pe, dividendYield, discountRate, mos, stocks, updateStock, quote]);
+    }, [selectedSymbol, calculation, eps, growthRate, pe, dividendYield, discountRate, mos, isSavedForStock, stocks, updateStock, quote]);
 
     // Comparison Logic
     const currentPrice = quote?.price || 0;
@@ -1233,6 +1260,8 @@ export function FairValueCalculator() {
                                                         type="button"
                                                         onClick={() => {
                                                             setGrowthRate(calculatedCagr);
+                                                            setGrowthSourceLabel('Manuell / Gespeichert');
+                                                            setIsSavedForStock(true);
                                                             setShowGrowthHelper(false);
                                                         }}
                                                         disabled={calculatedCagr <= 0}
@@ -1357,7 +1386,10 @@ export function FairValueCalculator() {
                                             type="number"
                                             step="0.5"
                                             value={discountRate}
-                                            onChange={(e) => setDiscountRate(e.target.value)}
+                                            onChange={(e) => {
+                                                setDiscountRate(e.target.value);
+                                                setIsSavedForStock(true);
+                                            }}
                                             className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
@@ -1374,7 +1406,10 @@ export function FairValueCalculator() {
                                             type="number"
                                             step="5"
                                             value={mos}
-                                            onChange={(e) => setMos(e.target.value)}
+                                            onChange={(e) => {
+                                                setMos(e.target.value);
+                                                setIsSavedForStock(true);
+                                            }}
                                             className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
