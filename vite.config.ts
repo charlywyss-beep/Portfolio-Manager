@@ -42,17 +42,19 @@ export default defineConfig({
             'MUV2.DE': 'MURGY'
           };
 
-          // HELPER: Fetch KCV from Timeseries (No Crumb Needed)
+          // HELPER: Fetch KCV & Normalized EPS from Timeseries (No Crumb Needed)
           const fetchCashflowTimeseries = async (sym: string) => {
             try {
-              const tsUrl = `https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${sym}?period1=1492524108&period2=1912524108&type=trailingOperatingCashFlow,annualOperatingCashFlow,trailingMarketCap`;
+              const tsUrl = `https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${sym}?period1=1492524108&period2=1912524108&type=trailingOperatingCashFlow,annualOperatingCashFlow,trailingMarketCap,trailingNormalizedDilutedEPS,annualNormalizedDilutedEPS,trailingDilutedEPS,annualDilutedEPS`;
               const response = await fetch(tsUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-              if (!response.ok) return { flow: null, cap: null };
+              if (!response.ok) return { flow: null, cap: null, normalizedEps: null, dilutedEps: null };
               const data: any = await response.json();
               const tsResults = data?.timeseries?.result || [];
               
               let flow = null;
               let cap = null;
+              let normalizedEps = null;
+              let dilutedEps = null;
 
               const mcItem = tsResults.find((r: any) => r.meta?.type?.[0] === 'trailingMarketCap');
               if (mcItem && mcItem.trailingMarketCap?.length > 0) {
@@ -67,9 +69,25 @@ export default defineConfig({
                  }
               }
 
-              return { flow, cap };
+              const normEpsItem = tsResults.find((r: any) => r.meta?.type?.[0] === 'trailingNormalizedDilutedEPS' || r.meta?.type?.[0] === 'annualNormalizedDilutedEPS');
+              if (normEpsItem) {
+                 const arr = normEpsItem.trailingNormalizedDilutedEPS || normEpsItem.annualNormalizedDilutedEPS;
+                 if (arr && arr.length > 0) {
+                    normalizedEps = arr[arr.length - 1]?.reportedValue?.raw || null;
+                 }
+              }
+
+              const dilEpsItem = tsResults.find((r: any) => r.meta?.type?.[0] === 'trailingDilutedEPS' || r.meta?.type?.[0] === 'annualDilutedEPS');
+              if (dilEpsItem) {
+                 const arr = dilEpsItem.trailingDilutedEPS || dilEpsItem.annualDilutedEPS;
+                 if (arr && arr.length > 0) {
+                    dilutedEps = arr[arr.length - 1]?.reportedValue?.raw || null;
+                 }
+              }
+
+              return { flow, cap, normalizedEps, dilutedEps };
             } catch (e) {
-              return { flow: null, cap: null };
+              return { flow: null, cap: null, normalizedEps: null, dilutedEps: null };
             }
           };
 
@@ -81,7 +99,7 @@ export default defineConfig({
               // We also fetch basic quote to ensure we have marketCap
               const [result, quoteBasic, quoteFundamental] = await Promise.all([
                  yahooFinance.quoteSummary(fundamentalSymbol, {
-                    modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'financialData']
+                    modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'financialData', 'earningsTrend']
                  }).catch(() => null),
                  yahooFinance.quote(sym).catch(() => null),
                  (fundamentalSymbol !== sym) ? yahooFinance.quote(fundamentalSymbol).catch(() => null) : null
@@ -104,6 +122,9 @@ export default defineConfig({
                        if (tsFallback.cap && tsFallback.flow && tsFallback.flow > 0) {
                            kcvValue = tsFallback.cap / tsFallback.flow;
                        }
+                       const fallbackEps = (tsFallback.dilutedEps && tsFallback.dilutedEps > 0)
+                           ? tsFallback.dilutedEps
+                           : (tsFallback.normalizedEps && tsFallback.normalizedEps > 0 ? tsFallback.normalizedEps : null);
                        
                        return {
                            symbol: sym,
@@ -114,9 +135,10 @@ export default defineConfig({
                            currency: chartMeta.currency,
                            regularMarketTime: chartMeta.regularMarketTime,
                            marketState: null,
-                           trailingPE: null,
+                           trailingPE: (chartMeta.regularMarketPrice && fallbackEps) ? (chartMeta.regularMarketPrice / fallbackEps) : null,
                            forwardPE: null,
-                           eps: null,
+                           eps: fallbackEps,
+                           forwardEps: tsFallback.normalizedEps || null,
                            dividendYield: null,
                            kcv: kcvValue,
                            regularMarketOpen: chartMeta.chartPreviousClose,
@@ -136,6 +158,8 @@ export default defineConfig({
               const summaryDetail: any = result?.summaryDetail || {};
               const defaultKeyStatistics: any = result?.defaultKeyStatistics || {};
               const summaryProfile: any = result?.summaryProfile || {};
+              const financialData: any = result?.financialData || {};
+              const earningsTrend: any = result?.earningsTrend || {};
 
               const currency = price.currency || quoteBasic?.currency;
               const rawPrice = price.regularMarketPrice || quoteBasic?.regularMarketPrice;
@@ -144,7 +168,7 @@ export default defineConfig({
               const getRawVal = (obj: any) => typeof obj === 'object' && obj !== null && 'raw' in obj ? obj.raw : obj;
 
               let kcvValue = null;
-              let operatingCashflow = getRawVal(result?.financialData?.operatingCashflow) || tsFallback.flow;
+              let operatingCashflow = getRawVal(financialData.operatingCashflow) || tsFallback.flow;
               const marketCap = getRawVal(summaryDetail.marketCap) || getRawVal(quoteFundamental?.marketCap) || tsFallback.cap || getRawVal(quoteBasic?.marketCap);
               
               if (operatingCashflow && marketCap && operatingCashflow > 0) {
@@ -153,6 +177,53 @@ export default defineConfig({
 
               // Use quoteBasic for price if available (more reliable for intl)
               const activePrice = quoteBasic || price;
+              const finalMarketPrice = activePrice.regularMarketPrice || rawPrice;
+
+              const trailingPEVal = getRawVal(quoteBasic?.trailingPE) || getRawVal(summaryDetail.trailingPE) || getRawVal(defaultKeyStatistics.trailingPE) || null;
+              const forwardPEVal = getRawVal(quoteBasic?.forwardPE) || getRawVal(summaryDetail.forwardPE) || getRawVal(defaultKeyStatistics.forwardPE) || getRawVal(financialData.forwardPE) || null;
+
+              const rawTrailingEps = getRawVal(quoteBasic?.epsTrailingTwelveMonths) ?? getRawVal(defaultKeyStatistics.trailingEps) ?? tsFallback.dilutedEps ?? null;
+              const rawForwardEps = getRawVal(quoteBasic?.epsForward)
+                  || getRawVal(defaultKeyStatistics.forwardEps)
+                  || getRawVal((quoteBasic as any)?.epsCurrentYear)
+                  || tsFallback.normalizedEps
+                  || (finalMarketPrice && forwardPEVal && forwardPEVal > 0 ? finalMarketPrice / forwardPEVal : null);
+
+              // Smart EPS selection: if trailing EPS is missing, <= 0, or heavily distorted (< 40% of forward/normalized EPS due to one-off write-offs like KHC), use forward/normalized EPS
+              let bestEps = rawTrailingEps;
+              let epsSource = 'TTM';
+              if (!bestEps || bestEps <= 0 || (rawForwardEps && rawForwardEps > 0 && bestEps < rawForwardEps * 0.4)) {
+                  if (rawForwardEps && rawForwardEps > 0) {
+                      bestEps = rawForwardEps;
+                      epsSource = 'Forward / Bereinigt';
+                  } else if (tsFallback.normalizedEps && tsFallback.normalizedEps > 0) {
+                      bestEps = tsFallback.normalizedEps;
+                      epsSource = 'Bereinigt (Norm.)';
+                  } else if (finalMarketPrice && kcvValue && kcvValue > 0) {
+                      bestEps = (finalMarketPrice / kcvValue) * 0.75;
+                      epsSource = 'Cashflow-Schätzung';
+                  }
+              }
+
+              // Extract 5Y Growth Rate if available
+              let growthRate5Y: number | null = null;
+              const trends = earningsTrend?.trend || [];
+              const fiveYearTrend = trends.find((t: any) => t.period === '+5y' || t.period === '5y');
+              if (fiveYearTrend?.growth) {
+                  growthRate5Y = getRawVal(fiveYearTrend.growth);
+              }
+              if (growthRate5Y === null || growthRate5Y === undefined) {
+                  const nextYearTrend = trends.find((t: any) => t.period === '+1y');
+                  const earningsGrowth = getRawVal(financialData.earningsGrowth);
+                  const revenueGrowth = getRawVal(financialData.revenueGrowth);
+                  if (nextYearTrend?.growth && getRawVal(nextYearTrend.growth)) {
+                      growthRate5Y = getRawVal(nextYearTrend.growth);
+                  } else if (earningsGrowth && earningsGrowth > -0.2 && earningsGrowth < 0.5) {
+                      growthRate5Y = earningsGrowth;
+                  } else if (revenueGrowth && revenueGrowth > -0.1 && revenueGrowth < 0.4) {
+                      growthRate5Y = revenueGrowth;
+                  }
+              }
 
               return {
                 symbol: sym,
@@ -160,15 +231,19 @@ export default defineConfig({
                 shortName: activePrice.shortName || price.shortName,
                 displayName: activePrice.displayName || activePrice.longName || price.longName,
 
-                regularMarketPrice: activePrice.regularMarketPrice || rawPrice,
+                regularMarketPrice: finalMarketPrice,
                 currency: activePrice.currency || currency,
 
                 regularMarketTime: activePrice.regularMarketTime || price.regularMarketTime || (Math.floor(Date.now() / 1000)),
                 marketState: activePrice.marketState || price.marketState || null,
 
-                trailingPE: getRawVal(quoteBasic?.trailingPE) || getRawVal(summaryDetail.trailingPE) || getRawVal(defaultKeyStatistics.trailingPE) || null,
-                forwardPE: getRawVal(quoteBasic?.forwardPE) || getRawVal(summaryDetail.forwardPE) || getRawVal(defaultKeyStatistics.forwardPE) || null,
-                eps: getRawVal(quoteBasic?.epsTrailingTwelveMonths) || getRawVal(defaultKeyStatistics.trailingEps) || null,
+                trailingPE: trailingPEVal,
+                forwardPE: forwardPEVal,
+                eps: bestEps,
+                rawTrailingEps,
+                forwardEps: rawForwardEps,
+                epsSource,
+                growthRate: growthRate5Y,
                 dividendYield: getRawVal(summaryDetail.dividendYield) ? getRawVal(summaryDetail.dividendYield) * 100 : (getRawVal(quoteBasic?.dividendYield) || null),
                 kcv: kcvValue,
 

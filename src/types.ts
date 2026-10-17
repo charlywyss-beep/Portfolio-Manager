@@ -62,6 +62,15 @@ export interface Stock {
     logoUrl?: string;
     targetPrice?: number; // Desired buy price (Fair Value) -> Buy Limit
     fairValue?: number; // Calculated Intrinsic Value (without Margin of Safety)
+    fairValueParams?: {
+        eps: number;
+        growthRate: number;
+        pe: number;
+        dividendYield: number;
+        discountRate: number;
+        mos: number;
+        updatedAt?: string;
+    };
     sellLimit?: number; // Desired sell price -> Sell Limit
     notes?: string; // Personal notes about the stock
     plannedPurchase?: PlannedPurchase; // Complete planned purchase simulation data
@@ -70,6 +79,7 @@ export interface Stock {
     forwardPE?: number; // KGV (Forecast)
     kcv?: number; // Kurs-Cashflow-Verhältnis (Price-to-Cash-Flow)
     eps?: number; // Earnings Per Share (Trailing 12M)
+    forwardEps?: number; // Expected Forward EPS
     quickLinks?: QuickLink[]; // NEW: Custom URLs for charts, financial sites, etc.
     marketState?: 'REGULAR' | 'CLOSED' | 'PRE' | 'POST' | 'PREPRE' | 'POSTPOST'; // Yahoo Finance Market State
     sectorWeights?: { [key: string]: number }; // NEW: For ETFs (Sector Allocation)

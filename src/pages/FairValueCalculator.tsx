@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
@@ -107,15 +107,217 @@ export function FairValueCalculator() {
 
     // Calculator Inputs
     const [eps, setEps] = useState<number | string>(0);
-    const [growthRate, setGrowthRate] = useState<number | string>(10); // %
+    const [growthRate, setGrowthRate] = useState<number | string>(6); // %
     const [pe, setPe] = useState<number | string>(15);
     const [dividendYield, setDividendYield] = useState<number | string>(0);
-    const [discountRate, setDiscountRate] = useState<number | string>(11); // % (MARR)
+    const [discountRate, setDiscountRate] = useState<number | string>(8); // % (MARR)
     const [mos, setMos] = useState<number | string>(20); // % Margin of Safety
+    const [epsSourceLabel, setEpsSourceLabel] = useState<string>('TTM');
+    const [growthSourceLabel, setGrowthSourceLabel] = useState<string>('Auto-Schätzung');
+    const [isSavedForStock, setIsSavedForStock] = useState<boolean>(false);
 
     // Persistence Ref to avoid cycles
     const isRestoring = useRef(false);
     const [showGuide, setShowGuide] = useState(false);
+
+    // Helper: Read/Write per-symbol parameters in localStorage
+    const getSavedSymbolParams = (sym: string) => {
+        try {
+            const key = sym.toUpperCase();
+            const mapRaw = localStorage.getItem('fair_value_params_map');
+            if (mapRaw) {
+                const map = JSON.parse(mapRaw);
+                if (map[key] && Number(map[key].eps) > 0) {
+                    return map[key];
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to read fair_value_params_map', e);
+        }
+        return null;
+    };
+
+    const saveSymbolParamsToLocal = (sym: string, params: { eps: number; growthRate: number; pe: number; dividendYield: number; discountRate: number; mos: number }) => {
+        try {
+            const key = sym.toUpperCase();
+            const mapRaw = localStorage.getItem('fair_value_params_map');
+            const map = mapRaw ? JSON.parse(mapRaw) : {};
+            map[key] = { ...params, updatedAt: new Date().toISOString() };
+            localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+        } catch (e) {
+            console.warn('Failed to write fair_value_params_map', e);
+        }
+    };
+
+    // Known fundamental baselines for special-case stocks (e.g. one-time GAAP write-offs like KHC or conglomerates like BRK-B)
+    const FUNDAMENTAL_FALLBACKS: Record<string, { epsRatio?: number; eps?: number; growth: number; pe: number; div?: number; label: string }> = {
+        'KHC': { eps: 2.60, growth: 2.0, pe: 11.5, div: 6.8, label: 'Operativ / Bereinigt' },
+        'BRK-B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, label: 'Operativer Gewinn' },
+        'BRK.B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, label: 'Operativer Gewinn' },
+    };
+
+    // Smart Automatic Parameter Calculator for any stock
+    const computeSmartAutoParams = (qData: any, aData: any, stockObj: any, symbolStr: string) => {
+        const symUpper = (symbolStr || '').toUpperCase();
+        const price = qData?.price || stockObj?.currentPrice || 0;
+        const preset = FUNDAMENTAL_FALLBACKS[symUpper];
+
+        // 1. Dividend Yield (%)
+        let autoDiv = 0;
+        if (qData?.dividendYield !== null && qData?.dividendYield !== undefined && qData.dividendYield >= 0) {
+            autoDiv = Number(qData.dividendYield);
+        } else if (stockObj?.dividendYield !== undefined && stockObj.dividendYield >= 0) {
+            autoDiv = Number(stockObj.dividendYield);
+        } else if (preset?.div !== undefined) {
+            autoDiv = preset.div;
+        }
+        autoDiv = parseFloat(Math.min(Math.max(autoDiv, 0), 25).toFixed(2));
+
+        // 2. Smart EPS (protect against negative/zero GAAP TTM EPS from one-time goodwill write-offs)
+        const trailingPE = qData?.trailingPE || stockObj?.trailingPE || null;
+        const forwardPE = qData?.forwardPE || aData?.forwardPE || stockObj?.forwardPE || null;
+        const kcv = qData?.kcv || aData?.kcv || stockObj?.kcv || null;
+
+        const rawEps = qData?.eps ?? aData?.eps ?? stockObj?.eps ?? null;
+        const forwardEps = qData?.forwardEps ?? stockObj?.forwardEps ?? (price > 0 && forwardPE && forwardPE > 0 ? price / forwardPE : null);
+
+        let autoEps = 0;
+        let epsLabel = qData?.epsSource || 'TTM';
+
+        if (rawEps && rawEps > 0 && (!forwardEps || rawEps >= forwardEps * 0.4)) {
+            autoEps = rawEps;
+            epsLabel = qData?.epsSource || 'TTM';
+        } else if (forwardEps && forwardEps > 0) {
+            autoEps = forwardEps;
+            epsLabel = 'Forward / Bereinigt';
+        } else if (price > 0 && trailingPE && trailingPE > 0) {
+            autoEps = price / trailingPE;
+            epsLabel = 'Aus KGV berechnet';
+        } else if (price > 0 && kcv && kcv > 0) {
+            autoEps = (price / kcv) * 0.75;
+            epsLabel = 'Cashflow-Schätzung';
+        } else if (preset?.eps) {
+            autoEps = preset.eps;
+            epsLabel = preset.label;
+        } else if (price > 0) {
+            // Final safety net if all fundamental endpoints are blocked: estimate from conservative market multiple
+            const estMultiple = autoDiv >= 4.5 ? 11 : autoDiv >= 2.5 ? 15 : 18;
+            autoEps = price / estMultiple;
+            epsLabel = 'Markt-Schätzung';
+        }
+
+        // Override if a known special-case stock still got 0 or extreme distortion
+        if (preset && (autoEps <= 0 || (symUpper === 'KHC' && autoEps < 1.5))) {
+            autoEps = preset.eps || autoEps;
+            epsLabel = preset.label;
+        }
+
+        autoEps = parseFloat(Number(autoEps).toFixed(2));
+
+        // Effective P/E for classification
+        const effectivePe = (forwardPE && forwardPE > 0)
+            ? forwardPE
+            : (trailingPE && trailingPE > 0 && trailingPE < 60)
+                ? trailingPE
+                : (price > 0 && autoEps > 0 ? price / autoEps : 15);
+
+        // 3. Smart 5Y Growth Rate (%)
+        const rawApiGrowth = qData?.growthRate ?? aData?.growthRate ?? null;
+        let autoGrowth = 6.0;
+        let growthLabel = 'Fundamental-Profil';
+
+        if (preset && symUpper === 'KHC') {
+            autoGrowth = preset.growth;
+            growthLabel = 'Konservativ (Dividendenwert)';
+        } else if (rawApiGrowth !== null && rawApiGrowth !== undefined && isFinite(rawApiGrowth) && rawApiGrowth !== 0) {
+            let apiPct = rawApiGrowth * 100;
+            // Guardrails based on fundamental profile
+            if (autoDiv >= 4.5 && effectivePe < 14) {
+                // High-dividend, low-PE mature value stock (e.g. KHC, BAT, VZ): cap overly optimistic analyst growth
+                apiPct = Math.min(Math.max(apiPct, 1.5), 4.0);
+                growthLabel = 'Prognose (Konservativ begrenzt)';
+            } else if (autoDiv >= 3.0 && effectivePe < 17) {
+                apiPct = Math.min(Math.max(apiPct, 2.0), 7.5);
+                growthLabel = 'Analysten-Prognose (5J)';
+            } else {
+                apiPct = Math.min(Math.max(apiPct, 2.0), 15.0);
+                growthLabel = 'Analysten-Prognose (5J)';
+            }
+            autoGrowth = parseFloat((Math.round(apiPct * 2) / 2).toFixed(1));
+        } else if (preset?.growth) {
+            autoGrowth = preset.growth;
+            growthLabel = 'Fundamental-Profil';
+        } else {
+            // Intelligent Fundamental Profile Heuristic (instead of blind 10% for everything)
+            if (autoDiv >= 4.5 || effectivePe <= 12) {
+                autoGrowth = 2.0;
+                growthLabel = 'Reifer Dividendenwert';
+            } else if (autoDiv >= 3.0 && effectivePe <= 16.5) {
+                autoGrowth = 4.5;
+                growthLabel = 'Klassischer Dividendenwert';
+            } else if (autoDiv >= 1.5 && effectivePe <= 22) {
+                autoGrowth = 6.5;
+                growthLabel = 'Qualitäts-/Standardwert';
+            } else if (effectivePe > 24 && autoDiv < 1.5) {
+                autoGrowth = 10.0;
+                growthLabel = 'Wachstumswert';
+            } else {
+                autoGrowth = 6.0;
+                growthLabel = 'Standard-Profil';
+            }
+        }
+
+        // 4. Smart Exit P/E (Verkaufs-KGV in 5J)
+        let rawExitPe = 15;
+        if (preset && symUpper === 'KHC') {
+            rawExitPe = preset.pe;
+        } else if (trailingPE && trailingPE > 0 && forwardPE && forwardPE > 0) {
+            // If trailingPE is distorted upwards (> 1.5x forwardPE), trust forwardPE
+            if (trailingPE > forwardPE * 1.5) {
+                rawExitPe = forwardPE;
+            } else {
+                rawExitPe = (trailingPE + forwardPE) / 2;
+            }
+        } else if (forwardPE && forwardPE > 0) {
+            rawExitPe = forwardPE;
+        } else if (trailingPE && trailingPE > 0) {
+            rawExitPe = trailingPE;
+        } else if (price > 0 && autoEps > 0) {
+            rawExitPe = price / autoEps;
+        }
+
+        // Apply sensible 5-year exit multiple guardrails (8 to 22, and within Rule #1 limit)
+        const ruleOneMax = Math.max(15, autoGrowth * 2);
+        const maxSensibleExitPe = autoDiv >= 4.5 ? 13.5 : Math.min(22, ruleOneMax);
+        const autoPe = parseFloat((Math.round(Math.min(Math.max(rawExitPe, 8), maxSensibleExitPe) * 2) / 2).toFixed(1));
+
+        return {
+            eps: autoEps,
+            growthRate: autoGrowth,
+            pe: autoPe,
+            dividendYield: autoDiv,
+            discountRate: 8,
+            mos: 20,
+            epsLabel,
+            growthLabel
+        };
+    };
+
+    // Handler: Force re-apply automatic realistic values for current stock
+    const applyAutoValues = () => {
+        if (!selectedSymbol) return;
+        const existingStock = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol.toLowerCase());
+        const smart = computeSmartAutoParams(quote, analysis, existingStock, selectedSymbol);
+        setEps(smart.eps);
+        setGrowthRate(smart.growthRate);
+        setPe(smart.pe);
+        setDividendYield(smart.dividendYield);
+        setDiscountRate(smart.discountRate);
+        setMos(smart.mos);
+        setEpsSourceLabel(smart.epsLabel);
+        setGrowthSourceLabel(smart.growthLabel);
+        setIsSavedForStock(false);
+    };
 
     // Wachstums-Helfer State
     const [showGrowthHelper, setShowGrowthHelper] = useState(false);
@@ -159,17 +361,19 @@ export function FairValueCalculator() {
             if (savedState) {
                 const state = JSON.parse(savedState);
                 if (state.symbol) {
-                    console.log("Restoring Fair Value Session:", state.symbol);
-                    isRestoring.current = true;
-                    // Restore Inputs State with rounding to prevent float issues (v3.13.43)
-                    setEps(state.eps ? parseFloat(Number(state.eps).toFixed(2)) : 0);
-                    setGrowthRate(state.growthRate || 10);
-                    setPe(state.pe ? parseFloat(Number(state.pe).toFixed(2)) : 15);
-                    setDividendYield(state.dividendYield ? parseFloat(Number(state.dividendYield).toFixed(2)) : 0);
-                    setDiscountRate(state.discountRate || 11);
-                    setMos(state.mos || 20);
-
-                    loadStockData(state.symbol, state.name || state.symbol, true, state.isin);
+                    const hasValidSavedEps = Number(state.eps) > 0;
+                    console.log("Restoring Fair Value Session:", state.symbol, { hasValidSavedEps });
+                    if (hasValidSavedEps) {
+                        isRestoring.current = true;
+                        setEps(parseFloat(Number(state.eps).toFixed(2)));
+                        setGrowthRate(state.growthRate ?? 6);
+                        setPe(state.pe ? parseFloat(Number(state.pe).toFixed(2)) : 15);
+                        setDividendYield(state.dividendYield ? parseFloat(Number(state.dividendYield).toFixed(2)) : 0);
+                        setDiscountRate(state.discountRate || 8);
+                        setMos(state.mos || 20);
+                        setIsSavedForStock(true);
+                    }
+                    loadStockData(state.symbol, state.name || state.symbol, hasValidSavedEps, state.isin);
                 }
             }
         } catch (e) {
@@ -177,21 +381,39 @@ export function FairValueCalculator() {
         }
     }, []);
 
-    // 2. PERSISTENCE: Save logic on Change
+    // 2. PERSISTENCE: Save logic on Change (both active session AND per-symbol map)
     useEffect(() => {
         if (!isRestoring.current && selectedSymbol) {
+            const numEps = typeof eps === 'string' ? parseFloat(eps) || 0 : eps;
+            const numGrowth = typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : growthRate;
+            const numPe = typeof pe === 'string' ? parseFloat(pe) || 0 : pe;
+            const numDiv = typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : dividendYield;
+            const numDisc = typeof discountRate === 'string' ? parseFloat(discountRate) || 0 : discountRate;
+            const numMos = typeof mos === 'string' ? parseFloat(mos) || 0 : mos;
+
             const state = {
                 symbol: selectedSymbol,
                 name: quote?.name,
                 isin: quote?.isin,
-                eps,
-                growthRate,
-                pe,
-                dividendYield,
-                discountRate,
-                mos
+                eps: numEps,
+                growthRate: numGrowth,
+                pe: numPe,
+                dividendYield: numDiv,
+                discountRate: numDisc,
+                mos: numMos
             };
             localStorage.setItem('fair_value_state', JSON.stringify(state));
+
+            if (numEps > 0) {
+                saveSymbolParamsToLocal(selectedSymbol, {
+                    eps: numEps,
+                    growthRate: numGrowth,
+                    pe: numPe,
+                    dividendYield: numDiv,
+                    discountRate: numDisc,
+                    mos: numMos
+                });
+            }
         }
     }, [selectedSymbol, eps, growthRate, pe, dividendYield, discountRate, mos, quote]);
 
@@ -262,13 +484,21 @@ export function FairValueCalculator() {
             isinToUse = existingStock.isin;
         }
 
-        if (!preventReset) {
-            // Check if we already have this stock in Portfolio/Watchlist to pre-fill known data
-            setEps(existingStock?.eps ? parseFloat(existingStock.eps.toFixed(2)) : 0);
-            setGrowthRate(10);
-            const initialPe = existingStock?.trailingPE || existingStock?.forwardPE || 15;
-            setPe(parseFloat(initialPe.toFixed(2)));
-            setDividendYield(existingStock?.dividendYield ? parseFloat(existingStock.dividendYield.toFixed(2)) : 0);
+        // Check if we already have saved Fair Value parameters for this specific stock (either on Stock object or in localStorage map)
+        const savedStockParams = (existingStock?.fairValueParams && Number(existingStock.fairValueParams.eps) > 0)
+            ? existingStock.fairValueParams
+            : getSavedSymbolParams(symbol);
+
+        if (!preventReset && savedStockParams) {
+            setEps(parseFloat(Number(savedStockParams.eps).toFixed(2)));
+            setGrowthRate(parseFloat(Number(savedStockParams.growthRate).toFixed(2)));
+            setPe(parseFloat(Number(savedStockParams.pe).toFixed(2)));
+            setDividendYield(parseFloat(Number(savedStockParams.dividendYield || 0).toFixed(2)));
+            setDiscountRate(savedStockParams.discountRate || 8);
+            setMos(savedStockParams.mos || 20);
+            setEpsSourceLabel('Gespeichert');
+            setGrowthSourceLabel('Gespeichert');
+            setIsSavedForStock(true);
         }
 
         try {
@@ -306,15 +536,15 @@ export function FairValueCalculator() {
             if (finalQuote.error || !finalQuote.price) {
                 setError('Keine autom. Daten gefunden. Bitte Werte manuell eingeben.');
                 finalQuote = {
-                    price: 0,
-                    currency: 'USD',
+                    price: existingStock?.currentPrice || 0,
+                    currency: existingStock?.currency || 'USD',
                     marketTime: new Date(),
-                    trailingPE: 0,
-                    forwardPE: 0,
-                    eps: 0,
-                    dividendYield: 0,
+                    trailingPE: existingStock?.trailingPE || 0,
+                    forwardPE: existingStock?.forwardPE || 0,
+                    eps: existingStock?.eps || 0,
+                    dividendYield: existingStock?.dividendYield || 0,
                     country: null,
-                    name: initialName || symbol,
+                    name: initialName || existingStock?.name || symbol,
                     isin: isinToUse || null,
                     error: finalQuote.error
                 };
@@ -360,25 +590,17 @@ export function FairValueCalculator() {
             setQuote(finalQuote);
             setAnalysis(a || { growthRate: null });
 
-            if (!preventReset && (finalQuote.price || 0) > 0) {
-                if (finalQuote.eps) setEps(parseFloat(finalQuote.eps.toFixed(2)));
-                if (a && a.growthRate) {
-                    setGrowthRate(parseFloat((a.growthRate * 100).toFixed(2)));
-                } else {
-                    setGrowthRate(10);
-                }
-                const initialPe = finalQuote.trailingPE || finalQuote.forwardPE || 15;
-                setPe(parseFloat(initialPe.toFixed(2)));
-
-                if (finalQuote.dividendYield || finalQuote.dividendYield === 0) {
-                    setDividendYield(parseFloat(finalQuote.dividendYield.toFixed(2)));
-                } else {
-                    // Fallback to existing stock data if API returns null but we have it in Portfolio
-                    const existingStock = stocks.find(s => s.symbol.toLowerCase() === symbol.toLowerCase());
-                    if (existingStock?.dividendYield) {
-                        setDividendYield(parseFloat(existingStock.dividendYield.toFixed(2)));
-                    }
-                }
+            if (!preventReset && !savedStockParams) {
+                const smart = computeSmartAutoParams(finalQuote, a, existingStock, symbol);
+                setEps(smart.eps);
+                setGrowthRate(smart.growthRate);
+                setPe(smart.pe);
+                setDividendYield(smart.dividendYield);
+                setDiscountRate(smart.discountRate);
+                setMos(smart.mos);
+                setEpsSourceLabel(smart.epsLabel);
+                setGrowthSourceLabel(smart.growthLabel);
+                setIsSavedForStock(false);
             }
 
             if (preventReset) {
@@ -440,25 +662,51 @@ export function FairValueCalculator() {
         };
     }, [eps, growthRate, pe, discountRate, mos, dividendYield, quote?.price]);
 
-    // 4. AUTO-SYNC: Save Fair Value to Stock (v3.13.53)
-    // When calculation changes, update the stock's fairValue field (but NOT targetPrice!)
-    // MOVED here to access 'calculation' (v3.13.53 Fix)
+    // 4. AUTO-SYNC: Save Fair Value AND Fair Value Parameters to Stock
     useEffect(() => {
         if (!selectedSymbol || !calculation || !quote) return;
 
-        // Find stock in portfolio/watchlist
-        const existingStock = stocks.find(s => s.symbol === selectedSymbol);
+        const existingStock = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol.toLowerCase());
         if (existingStock) {
-            // Only update if value changed significantly to avoid loops
-            if (!existingStock.fairValue || Math.abs(existingStock.fairValue - calculation.fairValue) > 0.01) {
-                // Debounce slightly to avoid rapid updates during typing
+            const numEps = typeof eps === 'string' ? parseFloat(eps) || 0 : eps;
+            const numGrowth = typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : growthRate;
+            const numPe = typeof pe === 'string' ? parseFloat(pe) || 0 : pe;
+            const numDiv = typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : dividendYield;
+            const numDisc = typeof discountRate === 'string' ? parseFloat(discountRate) || 0 : discountRate;
+            const numMos = typeof mos === 'string' ? parseFloat(mos) || 0 : mos;
+
+            if (numEps <= 0) return;
+
+            const prevParams = existingStock.fairValueParams;
+            const paramsChanged = !prevParams
+                || Math.abs((prevParams.eps || 0) - numEps) > 0.001
+                || Math.abs((prevParams.growthRate || 0) - numGrowth) > 0.001
+                || Math.abs((prevParams.pe || 0) - numPe) > 0.001
+                || Math.abs((prevParams.dividendYield || 0) - numDiv) > 0.001
+                || Math.abs((prevParams.discountRate || 0) - numDisc) > 0.001
+                || Math.abs((prevParams.mos || 0) - numMos) > 0.001;
+
+            const fvChanged = !existingStock.fairValue || Math.abs(existingStock.fairValue - calculation.fairValue) > 0.01;
+
+            if (fvChanged || paramsChanged) {
                 const timer = setTimeout(() => {
-                    updateStock(existingStock.id, { fairValue: calculation.fairValue });
-                }, 1000);
+                    updateStock(existingStock.id, {
+                        fairValue: calculation.fairValue,
+                        fairValueParams: {
+                            eps: numEps,
+                            growthRate: numGrowth,
+                            pe: numPe,
+                            dividendYield: numDiv,
+                            discountRate: numDisc,
+                            mos: numMos,
+                            updatedAt: new Date().toISOString()
+                        }
+                    });
+                }, 600);
                 return () => clearTimeout(timer);
             }
         }
-    }, [selectedSymbol, calculation, stocks, updateStock]);
+    }, [selectedSymbol, calculation, eps, growthRate, pe, dividendYield, discountRate, mos, stocks, updateStock, quote]);
 
     // Comparison Logic
     const currentPrice = quote?.price || 0;
@@ -798,12 +1046,30 @@ export function FairValueCalculator() {
                         {/* INPUTS COLUMN */}
                         <div className="space-y-6">
                             <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-6">
-                                <div className="flex items-center justify-between pb-4 border-b border-border">
-                                    <h2 className="text-lg font-semibold flex items-center gap-2">
-                                        <span className="size-2 rounded-full bg-blue-500" />
-                                        Parameter
-                                    </h2>
-                                    <div className="text-right">
+                                <div className="flex items-center justify-between gap-2 pb-4 border-b border-border">
+                                    <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <h2 className="text-lg font-semibold flex items-center gap-2">
+                                                <span className="size-2 rounded-full bg-blue-500" />
+                                                Parameter
+                                            </h2>
+                                            {isSavedForStock && (
+                                                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                                    Gespeichert
+                                                </span>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={applyAutoValues}
+                                                className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-colors"
+                                                title="Realistische Fundamentalwerte automatisch neu einsetzen"
+                                            >
+                                                <RotateCcw className="size-3" />
+                                                <span>Auto-Werte</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="text-right shrink-0">
                                         <div className="text-xs text-muted-foreground">Aktueller Kurs</div>
                                         <div className="font-mono font-bold text-lg">
                                             {formatCurrency(quote.price || 0, quote.currency || 'USD')}
@@ -815,14 +1081,18 @@ export function FairValueCalculator() {
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium flex justify-between">
                                         Gewinn pro Aktie (EPS)
-                                        <span className="text-xs text-muted-foreground font-light">TTM</span>
+                                        <span className="text-xs text-muted-foreground font-light">{epsSourceLabel}</span>
                                     </label>
                                     <div className="relative">
                                         <input
                                             type="number"
                                             step="0.01"
                                             value={eps}
-                                            onChange={(e) => setEps(e.target.value)}
+                                            onChange={(e) => {
+                                                setEps(e.target.value);
+                                                setEpsSourceLabel('Manuell / Gespeichert');
+                                                setIsSavedForStock(true);
+                                            }}
                                             className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{quote.currency || 'USD'}</span>
@@ -854,8 +1124,8 @@ export function FairValueCalculator() {
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium flex justify-between">
                                         Wachstum pro Jahr (nächste 5 Jahre)
-                                        <span className={cn("text-xs font-light", (analysis?.growthRate || analysis?.growthRate === 0) ? "text-green-600" : "text-amber-600")}>
-                                            {(analysis?.growthRate || analysis?.growthRate === 0) ? 'Prognose gefunden' : 'Manuelle Schätzung'}
+                                        <span className={cn("text-xs font-light", growthSourceLabel.includes('Prognose') ? "text-green-500" : "text-muted-foreground")}>
+                                            {growthSourceLabel}
                                         </span>
                                     </label>
                                     <div className="space-y-3">
@@ -864,7 +1134,11 @@ export function FairValueCalculator() {
                                                 type="number"
                                                 step="0.5"
                                                 value={growthRate}
-                                                onChange={(e) => setGrowthRate(e.target.value)}
+                                                onChange={(e) => {
+                                                    setGrowthRate(e.target.value);
+                                                    setGrowthSourceLabel('Manuell / Gespeichert');
+                                                    setIsSavedForStock(true);
+                                                }}
                                                 className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
                                             />
                                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
@@ -995,7 +1269,10 @@ export function FairValueCalculator() {
                                             type="number"
                                             step="0.1"
                                             value={dividendYield}
-                                            onChange={(e) => setDividendYield(e.target.value)}
+                                            onChange={(e) => {
+                                                setDividendYield(e.target.value);
+                                                setIsSavedForStock(true);
+                                            }}
                                             className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
@@ -1024,8 +1301,12 @@ export function FairValueCalculator() {
                                     <div className="relative">
                                         <input
                                             type="number"
+                                            step="0.5"
                                             value={pe}
-                                            onChange={(e) => setPe(parseFloat(e.target.value) || 0)}
+                                            onChange={(e) => {
+                                                setPe(e.target.value);
+                                                setIsSavedForStock(true);
+                                            }}
                                             className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
                                         />
                                         {calculation.isCorrectionNeeded && (

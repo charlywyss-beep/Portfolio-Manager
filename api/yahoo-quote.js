@@ -45,7 +45,7 @@ export default async function handler(req, res) {
         // ALSO fetch quote() for basic data fallback (e.g. price, name)
         const [quoteSummary, quoteBasic] = await Promise.all([
             yahooFinance.quoteSummary(fundamentalSymbol, {
-                modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'topHoldings', 'fundProfile', 'assetProfile', 'financialData']
+                modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'topHoldings', 'fundProfile', 'assetProfile', 'financialData', 'earningsTrend']
             }).catch(() => null),
             yahooFinance.quote(symbol).catch(() => null)
         ]);
@@ -151,13 +151,38 @@ export default async function handler(req, res) {
             return null;
         };
 
+        const finalMarketPrice = quoteBasic?.regularMarketPrice || quoteSummary?.price?.regularMarketPrice;
+        const trailingPEVal = getRawVal(quoteBasic?.trailingPE) || getRawVal(quoteSummary?.summaryDetail?.trailingPE) || null;
+        const forwardPEVal = getRawVal(quoteBasic?.forwardPE) || getRawVal(quoteSummary?.summaryDetail?.forwardPE) || getRawVal(quoteSummary?.defaultKeyStatistics?.forwardPE) || null;
+        const rawTrailingEps = getRawVal(quoteBasic?.epsTrailingTwelveMonths) ?? getRawVal(quoteSummary?.defaultKeyStatistics?.trailingEps) ?? null;
+        const rawForwardEps = getRawVal(quoteBasic?.epsForward) || getRawVal(quoteSummary?.defaultKeyStatistics?.forwardEps) || getRawVal(quoteBasic?.epsCurrentYear) || (finalMarketPrice && forwardPEVal && forwardPEVal > 0 ? finalMarketPrice / forwardPEVal : null);
+
+        let bestEps = rawTrailingEps;
+        let epsSource = 'TTM';
+        if (!bestEps || bestEps <= 0 || (rawForwardEps && rawForwardEps > 0 && bestEps < rawForwardEps * 0.4)) {
+            if (rawForwardEps && rawForwardEps > 0) {
+                bestEps = rawForwardEps;
+                epsSource = 'Forward / Bereinigt';
+            } else if (finalMarketPrice && kcvValue && kcvValue > 0) {
+                bestEps = (finalMarketPrice / kcvValue) * 0.75;
+                epsSource = 'Cashflow-Schätzung';
+            }
+        }
+
+        let growthRate5Y = null;
+        const trends = quoteSummary?.earningsTrend?.trend || [];
+        const fiveYearTrend = trends.find((t) => t.period === '+5y' || t.period === '5y');
+        if (fiveYearTrend?.growth) {
+            growthRate5Y = getRawVal(fiveYearTrend.growth);
+        }
+
         // Prioritize quoteBasic for price data as it's often more reliable for international stocks
         const quote = {
             symbol: symbol,
             longName: quoteBasic?.longName || quoteSummary?.price?.longName,
             shortName: quoteBasic?.shortName || quoteSummary?.price?.shortName,
             displayName: quoteBasic?.displayName || quoteBasic?.longName,
-            regularMarketPrice: quoteBasic?.regularMarketPrice || quoteSummary?.price?.regularMarketPrice,
+            regularMarketPrice: finalMarketPrice,
             // Try ALL sources for Open
             regularMarketOpen: quoteBasic?.regularMarketOpen || quoteSummary?.price?.regularMarketOpen || quoteSummary?.summaryDetail?.open,
             // Try ALL sources for Prev Close
@@ -167,9 +192,14 @@ export default async function handler(req, res) {
             regularMarketTime: (quoteBasic?.regularMarketTime || quoteSummary?.price?.regularMarketTime) ?
                 new Date((quoteBasic?.regularMarketTime || quoteSummary?.price?.regularMarketTime)).getTime() / 1000 : null,
 
-            trailingPE: quoteBasic?.trailingPE || quoteSummary?.summaryDetail?.trailingPE,
-            forwardPE: quoteBasic?.forwardPE || quoteSummary?.summaryDetail?.forwardPE || quoteSummary?.defaultKeyStatistics?.forwardPE,
-            epsTrailingTwelveMonths: quoteBasic?.epsTrailingTwelveMonths || quoteSummary?.defaultKeyStatistics?.trailingEps,
+            trailingPE: trailingPEVal,
+            forwardPE: forwardPEVal,
+            eps: bestEps,
+            epsTrailingTwelveMonths: bestEps,
+            rawTrailingEps,
+            forwardEps: rawForwardEps,
+            epsSource,
+            growthRate: growthRate5Y,
             dividendYield: (quoteSummary?.summaryDetail?.dividendYield) ? quoteSummary.summaryDetail.dividendYield * 100 : (quoteBasic?.dividendYield || null),
             country: quoteSummary?.summaryProfile?.country || null,
             kcv: kcvValue,

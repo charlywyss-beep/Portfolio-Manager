@@ -231,6 +231,9 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
             trailingPE?: number | null,
             forwardPE?: number | null,
             eps?: number | null,
+            forwardEps?: number | null,
+            epsSource?: string | null,
+            growthRate?: number | null,
             dividendYield?: number,
             longName?: string | null,
             shortName?: string | null,
@@ -248,12 +251,25 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
                 // Extraction helper for potential Yahoo objects {raw, fmt}
                 const extractValue = (val: any) => (val && typeof val === 'object' && 'raw' in val) ? val.raw : val;
 
-                const eps = extractValue(res.eps) || extractValue(res.epsTrailingTwelveMonths);
                 let trailingPE = extractValue(res.trailingPE);
                 const forwardPE = extractValue(res.forwardPE);
+                let eps = extractValue(res.eps) ?? extractValue(res.epsTrailingTwelveMonths);
+                const forwardEps = extractValue(res.forwardEps) ?? (price && forwardPE && forwardPE > 0 ? price / forwardPE : null);
+                let epsSource: string | null = res.epsSource || 'TTM';
+
+                // Smart EPS fallback if trailing EPS is missing, <= 0, or heavily distorted by one-time write-offs
+                if (!eps || eps <= 0 || (forwardEps && forwardEps > 0 && eps < forwardEps * 0.4)) {
+                    if (forwardEps && forwardEps > 0) {
+                        eps = forwardEps;
+                        epsSource = 'Forward / Bereinigt';
+                    } else if (price && res.kcv && res.kcv > 0) {
+                        eps = (price / res.kcv) * 0.75;
+                        epsSource = 'Cashflow-Schätzung';
+                    }
+                }
 
                 // Service-level fallback for PE calculation
-                if (!trailingPE && price && eps) {
+                if (!trailingPE && price && eps && eps > 0) {
                     trailingPE = price / eps;
                 }
 
@@ -267,6 +283,9 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
                     trailingPE,
                     forwardPE,
                     eps,
+                    forwardEps,
+                    epsSource,
+                    growthRate: extractValue(res.growthRate) ?? null,
                     dividendYield: extractValue(res.dividendYield) || undefined,
                     longName: res.longName || null,
                     shortName: res.shortName || null,
@@ -293,6 +312,9 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
     trailingPE: number | null,
     forwardPE: number | null,
     eps: number | null,
+    forwardEps?: number | null,
+    epsSource?: string | null,
+    growthRate?: number | null,
     dividendYield: number | null,
     country: string | null,
     marketState?: string | null,
@@ -331,6 +353,9 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
                 trailingPE: batchResult.trailingPE || null,
                 forwardPE: batchResult.forwardPE || null,
                 eps: batchResult.eps || null,
+                forwardEps: (batchResult as any).forwardEps || null,
+                epsSource: (batchResult as any).epsSource || null,
+                growthRate: (batchResult as any).growthRate ?? null,
                 dividendYield: (batchResult as any).dividendYield || null,
                 country: country,
                 marketState: batchResult.marketState || null,
