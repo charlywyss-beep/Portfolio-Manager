@@ -71,6 +71,15 @@ export interface Stock {
         mos: number;
         isCustom?: boolean;
         updatedAt?: string;
+        customBackup?: {
+            eps: number;
+            growthRate: number;
+            pe: number;
+            dividendYield: number;
+            discountRate: number;
+            mos: number;
+            updatedAt?: string;
+        };
     };
     sellLimit?: number; // Desired sell price -> Sell Limit
     notes?: string; // Personal notes about the stock

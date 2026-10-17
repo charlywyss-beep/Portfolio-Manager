@@ -137,12 +137,62 @@ export function FairValueCalculator() {
         return null;
     };
 
-    const saveSymbolParamsToLocal = (sym: string, params: { eps: number; growthRate: number; pe: number; dividendYield: number; discountRate: number; mos: number; isCustom?: boolean }) => {
+    const getCustomBackupForSymbol = (sym: string | null) => {
+        if (!sym) return null;
+        try {
+            const key = sym.toUpperCase();
+            const mapRaw = localStorage.getItem('fair_value_params_map');
+            if (mapRaw) {
+                const map = JSON.parse(mapRaw);
+                if (map[key]?.customBackup && Number(map[key].customBackup.eps) > 0) {
+                    return map[key].customBackup;
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to read customBackup from localStorage', e);
+        }
+        const existingStock = stocks.find(s => s.symbol.toLowerCase() === sym.toLowerCase());
+        if (existingStock?.fairValueParams?.customBackup && Number(existingStock.fairValueParams.customBackup.eps) > 0) {
+            return existingStock.fairValueParams.customBackup;
+        }
+        if (existingStock?.fairValueParams?.isCustom && Number(existingStock.fairValueParams.eps) > 0) {
+            return existingStock.fairValueParams;
+        }
+        return null;
+    };
+
+    const saveSymbolParamsToLocal = (sym: string, params: { eps: number; growthRate: number; pe: number; dividendYield: number; discountRate: number; mos: number; isCustom?: boolean; customBackup?: any }) => {
         try {
             const key = sym.toUpperCase();
             const mapRaw = localStorage.getItem('fair_value_params_map');
             const map = mapRaw ? JSON.parse(mapRaw) : {};
-            map[key] = { ...params, updatedAt: new Date().toISOString() };
+            const now = new Date().toISOString();
+            const prevEntry = map[key] || {};
+            const nextCustomBackup = params.isCustom
+                ? {
+                    eps: params.eps,
+                    growthRate: params.growthRate,
+                    pe: params.pe,
+                    dividendYield: params.dividendYield,
+                    discountRate: params.discountRate,
+                    mos: params.mos,
+                    updatedAt: now
+                }
+                : (params.customBackup || prevEntry.customBackup || (prevEntry.isCustom && Number(prevEntry.eps) > 0 ? {
+                    eps: prevEntry.eps,
+                    growthRate: prevEntry.growthRate,
+                    pe: prevEntry.pe,
+                    dividendYield: prevEntry.dividendYield,
+                    discountRate: prevEntry.discountRate,
+                    mos: prevEntry.mos,
+                    updatedAt: prevEntry.updatedAt || now
+                } : undefined));
+
+            map[key] = {
+                ...params,
+                ...(nextCustomBackup ? { customBackup: nextCustomBackup } : {}),
+                updatedAt: now
+            };
             localStorage.setItem('fair_value_params_map', JSON.stringify(map));
         } catch (e) {
             console.warn('Failed to write fair_value_params_map', e);
@@ -328,10 +378,30 @@ export function FairValueCalculator() {
         };
     };
 
-    // Handler: Force re-apply automatic realistic values for current stock
+    // Handler: Force re-apply automatic realistic values for current stock (while keeping manual values in backup!)
     const applyAutoValues = () => {
         if (!selectedSymbol) return;
         const existingStock = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol.toLowerCase());
+        // Ensure current manual edits are backed up before switching to Auto-Werte
+        if (isSavedForStock) {
+            const numEps = typeof eps === 'string' ? parseFloat(eps) || 0 : eps;
+            const numGrowth = typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : growthRate;
+            const numPe = typeof pe === 'string' ? parseFloat(pe) || 0 : pe;
+            const numDiv = typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : dividendYield;
+            const numDisc = typeof discountRate === 'string' ? parseFloat(discountRate) || 0 : discountRate;
+            const numMos = typeof mos === 'string' ? parseFloat(mos) || 0 : mos;
+            if (numEps > 0) {
+                saveSymbolParamsToLocal(selectedSymbol, {
+                    eps: numEps,
+                    growthRate: numGrowth,
+                    pe: numPe,
+                    dividendYield: numDiv,
+                    discountRate: numDisc,
+                    mos: numMos,
+                    isCustom: true
+                });
+            }
+        }
         const smart = computeSmartAutoParams(quote, analysis, existingStock, selectedSymbol);
         setEps(smart.eps);
         setGrowthRate(smart.growthRate);
@@ -342,6 +412,22 @@ export function FairValueCalculator() {
         setEpsSourceLabel(smart.epsLabel);
         setGrowthSourceLabel(smart.growthLabel);
         setIsSavedForStock(false);
+    };
+
+    // Handler: Restore the user's previously entered manual values for the current stock
+    const restoreManualValues = () => {
+        if (!selectedSymbol) return;
+        const backup = getCustomBackupForSymbol(selectedSymbol);
+        if (!backup) return;
+        setEps(parseFloat(Number(backup.eps).toFixed(2)));
+        setGrowthRate(parseFloat(Number(backup.growthRate).toFixed(2)));
+        setPe(parseFloat(Number(backup.pe).toFixed(2)));
+        setDividendYield(parseFloat(Number(backup.dividendYield || 0).toFixed(2)));
+        setDiscountRate(backup.discountRate || 8);
+        setMos(backup.mos || 20);
+        setEpsSourceLabel('Manuell / Gespeichert');
+        setGrowthSourceLabel('Manuell / Gespeichert');
+        setIsSavedForStock(true);
     };
 
     // Wachstums-Helfer State
@@ -743,6 +829,19 @@ export function FairValueCalculator() {
 
             if (fvChanged || paramsChanged) {
                 const timer = setTimeout(() => {
+                    const now = new Date().toISOString();
+                    const prevCustomBackup = existingStock.fairValueParams?.customBackup || getCustomBackupForSymbol(selectedSymbol);
+                    const nextCustomBackup = isSavedForStock
+                        ? {
+                            eps: numEps,
+                            growthRate: numGrowth,
+                            pe: numPe,
+                            dividendYield: numDiv,
+                            discountRate: numDisc,
+                            mos: numMos,
+                            updatedAt: now
+                        }
+                        : prevCustomBackup;
                     updateStock(existingStock.id, {
                         fairValue: calculation.fairValue,
                         fairValueParams: {
@@ -753,7 +852,8 @@ export function FairValueCalculator() {
                             discountRate: numDisc,
                             mos: numMos,
                             isCustom: isSavedForStock,
-                            updatedAt: new Date().toISOString()
+                            ...(nextCustomBackup ? { customBackup: nextCustomBackup } : {}),
+                            updatedAt: now
                         }
                     });
                 }, 250);
@@ -1109,7 +1209,7 @@ export function FairValueCalculator() {
                                             </h2>
                                             {isSavedForStock && (
                                                 <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                                                    Gespeichert
+                                                    Manuell gespeichert
                                                 </span>
                                             )}
                                             <button
@@ -1121,6 +1221,17 @@ export function FairValueCalculator() {
                                                 <RotateCcw className="size-3" />
                                                 <span>Auto-Werte</span>
                                             </button>
+                                            {!isSavedForStock && getCustomBackupForSymbol(selectedSymbol) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={restoreManualValues}
+                                                    className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-400/30 transition-colors"
+                                                    title="Deine zuvor manuell eingegebenen Werte für diese Aktie wiederherstellen"
+                                                >
+                                                    <Check className="size-3" />
+                                                    <span>Manuelle Werte</span>
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="text-right shrink-0">
