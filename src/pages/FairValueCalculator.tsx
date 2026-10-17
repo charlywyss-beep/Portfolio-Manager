@@ -349,11 +349,19 @@ export function FairValueCalculator() {
         }
 
         // Apply sensible 5-year exit multiple guardrails matching Rule #1 floor of 20 for quality stocks!
+        const WIDE_MOAT_QUALITY = new Set([
+            'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'NVDA', 'META', 'V', 'MA',
+            'PG', 'KO', 'PEP', 'JNJ', 'MCD', 'COST', 'WMT', 'ABBV', 'LLY', 'UNH', 'HD',
+            'ASML.AS', 'ASML', 'SAP.DE', 'SAP', 'NESN.SW', 'ROG.SW', 'NOVN.SW', 'LIN', 'OR.PA'
+        ]);
+        const isWideMoat = WIDE_MOAT_QUALITY.has(symUpper);
         const ruleOneMax = Math.max(20, autoGrowth * 2);
-        const maxSensibleExitPe = (autoDiv >= 5.0 && effectivePe < 14) ? 13.5 : Math.min(22, ruleOneMax);
+        const maxSensibleExitPe = (autoDiv >= 5.0 && effectivePe < 14)
+            ? 13.5
+            : Math.min(isWideMoat || autoGrowth >= 9 ? 25 : 22, ruleOneMax);
         const autoPe = parseFloat((Math.round(Math.min(Math.max(rawExitPe, 8), maxSensibleExitPe) * 2) / 2).toFixed(1));
 
-        // 5. Smart Margin of Safety (15% for Swiss / defensive quality blue-chips, 20% standard)
+        // 5. Smart Margin of Safety (15% for Swiss / defensive / wide-moat quality blue-chips, 20% standard)
         const currencyStr = (qData?.currency || stockObj?.currency || '').toUpperCase();
         const sectorStr = (stockObj?.sector || '').toLowerCase();
         const isDefensiveSector = sectorStr.includes('konsum') || sectorStr.includes('consumer') || sectorStr.includes('nahrung') || sectorStr.includes('pharma') || sectorStr.includes('gesundheit') || sectorStr.includes('health');
@@ -362,7 +370,7 @@ export function FairValueCalculator() {
         let autoMos = 20;
         if (preset?.mos !== undefined) {
             autoMos = preset.mos;
-        } else if ((isSwissBlueChip || isDefensiveSector) && autoPe >= 15 && autoDiv >= 1.5 && autoDiv <= 4.8) {
+        } else if (isWideMoat || ((isSwissBlueChip || isDefensiveSector) && autoPe >= 15 && autoDiv >= 1.5 && autoDiv <= 4.8)) {
             autoMos = 15;
         }
 
@@ -1201,42 +1209,47 @@ export function FairValueCalculator() {
                         <div className="space-y-6">
                             <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-6">
                                 <div className="flex items-center justify-between gap-2 pb-4 border-b border-border">
-                                    <div className="flex flex-col gap-1">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <h2 className="text-lg font-semibold flex items-center gap-2">
-                                                <span className="size-2 rounded-full bg-blue-500" />
-                                                Parameter
-                                            </h2>
-                                            {isSavedForStock && (
-                                                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                                                    Manuell gespeichert
-                                                </span>
+                                    <div className="flex items-center gap-1.5 flex-nowrap min-w-0">
+                                        <h2 className="text-base sm:text-lg font-semibold flex items-center gap-1.5 shrink-0">
+                                            <span className="size-2 rounded-full bg-blue-500 shrink-0" />
+                                            Parameter
+                                        </h2>
+                                        <button
+                                            type="button"
+                                            onClick={applyAutoValues}
+                                            className={cn(
+                                                "flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg border transition-colors whitespace-nowrap shrink-0",
+                                                !isSavedForStock
+                                                    ? "bg-blue-600/25 hover:bg-blue-600/35 text-blue-300 border-blue-400/40"
+                                                    : "bg-blue-600/15 hover:bg-blue-600/30 text-blue-300/90 border-blue-400/25"
                                             )}
-                                            <button
-                                                type="button"
-                                                onClick={applyAutoValues}
-                                                className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-colors"
-                                                title="Realistische Fundamentalwerte automatisch neu einsetzen"
-                                            >
-                                                <RotateCcw className="size-3" />
-                                                <span>Auto-Werte</span>
-                                            </button>
-                                            {!isSavedForStock && getCustomBackupForSymbol(selectedSymbol) && (
+                                            title="Realistische Fundamentalwerte automatisch neu einsetzen"
+                                        >
+                                            <RotateCcw className="size-3 shrink-0" />
+                                            <span>Auto-Werte</span>
+                                        </button>
+                                        {isSavedForStock ? (
+                                            <span className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 whitespace-nowrap shrink-0">
+                                                <Check className="size-3 shrink-0" />
+                                                <span>Manuell</span>
+                                            </span>
+                                        ) : (
+                                            getCustomBackupForSymbol(selectedSymbol) && (
                                                 <button
                                                     type="button"
                                                     onClick={restoreManualValues}
-                                                    className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-400/30 transition-colors"
+                                                    className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-400/30 transition-colors whitespace-nowrap shrink-0"
                                                     title="Deine zuvor manuell eingegebenen Werte für diese Aktie wiederherstellen"
                                                 >
-                                                    <Check className="size-3" />
-                                                    <span>Manuelle Werte</span>
+                                                    <Check className="size-3 shrink-0" />
+                                                    <span>Manuell</span>
                                                 </button>
-                                            )}
-                                        </div>
+                                            )
+                                        )}
                                     </div>
                                     <div className="text-right shrink-0">
                                         <div className="text-xs text-muted-foreground">Aktueller Kurs</div>
-                                        <div className="font-mono font-bold text-lg">
+                                        <div className="font-mono font-bold text-sm sm:text-base whitespace-nowrap">
                                             {formatCurrency(quote.price || 0, quote.currency || 'USD')}
                                         </div>
                                     </div>
@@ -1571,27 +1584,18 @@ export function FairValueCalculator() {
                                             ? "border-emerald-500 bg-emerald-500/5"
                                             : "border-blue-500 bg-blue-500/5"
                                     )}>
-                                        <div className="flex justify-between items-end mb-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-bold text-lg">Kaufpreis</span>
-                                                <span className={cn(
-                                                    "text-[11px] font-semibold px-2 py-0.5 rounded-full border",
-                                                    isSavedForStock
-                                                        ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-                                                        : "bg-blue-500/15 text-blue-400 border-blue-500/30"
-                                                )}>
-                                                    {isSavedForStock ? 'Manuell' : 'Auto-Werte'}
-                                                </span>
-                                            </div>
+                                        <div className="flex justify-between items-end gap-2 mb-1">
+                                            <span className="font-bold text-lg shrink-0">Kaufpreis</span>
                                             <span className={cn(
-                                                "font-mono text-2xl font-bold",
+                                                "font-mono font-bold whitespace-nowrap",
+                                                quote.currency !== 'CHF' ? "text-xl" : "text-2xl",
                                                 isSavedForStock ? "text-emerald-400" : "text-blue-400"
                                             )}>
                                                 {formatCurrency(calculation.buyPrice, quote.currency)}
                                             </span>
                                         </div>
                                         <p className="text-xs text-muted-foreground">
-                                            Maximaler Preis inkl. {mos}% Sicherheitsmarge ({isSavedForStock ? 'Manuell' : 'Auto'})
+                                            Maximaler Preis inkl. {mos}% Sicherheitsmarge ({isSavedForStock ? 'Manuell' : 'Auto-Werte'})
                                         </p>
                                     </div>
 
