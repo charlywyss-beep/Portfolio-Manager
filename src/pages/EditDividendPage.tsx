@@ -74,6 +74,7 @@ export function EditDividendPage() {
         { exDate: '', payDate: '' }
     ]);
     const [fvModeTick, setFvModeTick] = useState(0);
+    const [isSavedFeedback, setIsSavedFeedback] = useState(false);
 
     // Derived state
     const currentStockId = stockId || selectedStockId;
@@ -94,7 +95,7 @@ export function EditDividendPage() {
     }, [stockNameOverride, stock?.name]);
 
 
-    // Pre-fill fields
+    // Pre-fill fields when stock ID changes
     useEffect(() => {
         if (stock) {
             setSymbol(stock.symbol || ''); // Pre-fill symbol
@@ -146,7 +147,7 @@ export function EditDividendPage() {
                 setQuarterlyDates(Array(4).fill({ exDate: '', payDate: '' }));
             }
         }
-    }, [stock]);
+    }, [stock?.id]);
 
 
     // Handlers
@@ -328,13 +329,9 @@ export function EditDividendPage() {
             });
         }
 
-        // Navigate back to watchlist if came from there, otherwise go back
-        const fromWatchlist = searchParams.get('from') === 'watchlist';
-        if (fromWatchlist) {
-            navigate('/watchlist');
-        } else {
-            navigate(-1);
-        }
+        // Stay on page and show saved feedback
+        setIsSavedFeedback(true);
+        setTimeout(() => setIsSavedFeedback(false), 2000);
     };
 
     const { rates, formatCurrency } = useCurrencyFormatter();
@@ -1271,9 +1268,21 @@ export function EditDividendPage() {
                             <div className="pt-4 pb-8">
                                 <button
                                     type="submit"
-                                    className="w-full px-4 py-3 bg-primary text-primary-foreground text-lg font-medium rounded-xl hover:bg-primary/90 shadow-lg"
+                                    className={cn(
+                                        "w-full px-4 py-3 text-lg font-medium rounded-xl shadow-lg transition-all flex items-center justify-center gap-2",
+                                        isSavedFeedback
+                                            ? "bg-emerald-600 text-white"
+                                            : "bg-primary text-primary-foreground hover:bg-primary/90"
+                                    )}
                                 >
-                                    Speichern
+                                    {isSavedFeedback ? (
+                                        <>
+                                            <Check className="size-5" />
+                                            <span>Gespeichert!</span>
+                                        </>
+                                    ) : (
+                                        <span>Speichern</span>
+                                    )}
                                 </button>
                             </div>
                         </>

@@ -46,7 +46,7 @@ const NavItem = ({ to, icon: Icon, label, onClick }: NavItemProps) => {
     return to;
   };
 
-  // Custom active logic: Check if we're on /dividends/edit with from=watchlist
+  // Custom active logic: Check if we're on /dividends/edit
   const isCustomActive = () => {
     const isOnDividendEdit = location.pathname.startsWith('/dividends/edit');
     if (!isOnDividendEdit) return false;
@@ -57,7 +57,6 @@ const NavItem = ({ to, icon: Icon, label, onClick }: NavItemProps) => {
 
     if (to === '/watchlist' && fromWatchlist) return true;
     if (to === '/portfolio' && fromPortfolio) return true;
-    if (to === '/dividends' && (fromWatchlist || fromPortfolio)) return false;
 
     return false;
   };
@@ -69,10 +68,9 @@ const NavItem = ({ to, icon: Icon, label, onClick }: NavItemProps) => {
       className={({ isActive }) => {
         const isOnDividendEdit = location.pathname.startsWith('/dividends/edit');
         const searchParams = new URLSearchParams(location.search);
-        const fromWatchlist = searchParams.get('from') === 'watchlist';
-        const fromPortfolio = searchParams.get('from') === 'portfolio';
+        const fromDividends = searchParams.get('from') === 'dividends';
 
-        if (to === '/dividends' && isOnDividendEdit && (fromWatchlist || fromPortfolio)) {
+        if (to === '/dividends' && isOnDividendEdit && !fromDividends) {
           return cn(
             "flex items-center gap-6 px-4 py-2.5 rounded-md transition-all whitespace-nowrap mx-2 mb-1",
             "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
