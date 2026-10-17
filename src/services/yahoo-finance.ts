@@ -46,7 +46,7 @@ export async function fetchStockHistory(
     symbol: string,
     range: TimeRange,
     _apiKey?: string
-): Promise<{ data: ChartDataPoint[] | null, currency?: string, error?: string, previousClose?: number }> {
+): Promise<{ data: ChartDataPoint[] | null, currency?: string, error?: string, previousClose?: number, open?: number }> {
     try {
         const { period, interval } = getYahooParams(range);
         const url = `/api/yahoo-finance?symbol=${symbol}&period=${period}&interval=${interval}&_=${Date.now()}`;
@@ -66,6 +66,7 @@ export async function fetchStockHistory(
 
         const timestamps = result.timestamp;
         const closes = result.indicators.quote[0].close;
+        const opens = result.indicators.quote[0].open || [];
         const resultCurrency = result.meta?.currency || null;
 
         const points: ChartDataPoint[] = timestamps
@@ -82,6 +83,10 @@ export async function fetchStockHistory(
         const rawPrevClose = result.meta?.regularMarketPreviousClose || result.meta?.chartPreviousClose || result.meta?.previousClose;
         let normalizedPrevClose = rawPrevClose ? normalizeYahooPrice(rawPrevClose, resultCurrency, symbol) : undefined;
 
+        const firstValidOpen = opens.find((o: number | null | undefined) => o !== null && o !== undefined && o > 0);
+        const rawOpen = result.meta?.regularMarketOpen || firstValidOpen;
+        let normalizedOpen = rawOpen ? normalizeYahooPrice(rawOpen, resultCurrency, symbol) : (points.length > 0 ? points[0].value : undefined);
+
         // Smart Baseline Validation
         if (range === '1D' && points.length > 0 && normalizedPrevClose) {
             const firstPoint = points[0].value;
@@ -97,7 +102,7 @@ export async function fetchStockHistory(
             else if (ratio > 0.008 && ratio < 0.012) normalizedPrevClose = normalizedPrevClose / 100;
         }
 
-        return { data: points.length > 0 ? points : null, currency: resultCurrency, previousClose: normalizedPrevClose };
+        return { data: points.length > 0 ? points : null, currency: resultCurrency, previousClose: normalizedPrevClose, open: normalizedOpen };
 
     } catch (error) {
         console.error("Yahoo Finance Proxy Error:", error);
@@ -129,26 +134,28 @@ const MANUAL_COUNTRY_OVERRIDES: Record<string, string> = {
 export async function fetchStockPricePrecise(symbol: string): Promise<{
     price: number | null,
     previousClose: number | null,
+    open?: number | null,
     marketTime: Date | null,
     currency: string | null,
     error?: string
 }> {
     try {
         const history = await fetchStockHistory(symbol, '1D');
-        if (history.error) return { price: null, previousClose: null, marketTime: null, currency: null, error: history.error };
+        if (history.error) return { price: null, previousClose: null, open: null, marketTime: null, currency: null, error: history.error };
 
         if (history.data && history.data.length > 0) {
             const lastPoint = history.data[history.data.length - 1];
             return {
                 price: lastPoint.value,
                 previousClose: history.previousClose || null,
+                open: history.open || history.data[0].value || null,
                 marketTime: new Date(lastPoint.date),
                 currency: history.currency || null
             };
         }
-        return { price: null, previousClose: null, marketTime: null, currency: null, error: 'No chart data' };
+        return { price: null, previousClose: null, open: null, marketTime: null, currency: null, error: 'No chart data' };
     } catch (e) {
-        return { price: null, previousClose: null, marketTime: null, currency: null, error: 'Network error' };
+        return { price: null, previousClose: null, open: null, marketTime: null, currency: null, error: 'Network error' };
     }
 }
 
@@ -164,6 +171,8 @@ async function executeFallback(symbol: string) {
                 price: precise.price,
                 currency: precise.currency,
                 marketTime: precise.marketTime,
+                open: precise.open || null,
+                previousClose: precise.previousClose || null,
                 trailingPE: null,
                 forwardPE: null,
                 eps: null,
@@ -183,6 +192,7 @@ async function executeFallback(symbol: string) {
 export async function fetchStockQuotes(symbols: string[]): Promise<Record<string, {
     price: number,
     currency?: string | null,
+    open?: number,
     previousClose?: number,
     marketTime?: Date,
     marketState?: string | null,
@@ -214,6 +224,7 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
         const updateMap: Record<string, {
             price: number,
             currency?: string | null,
+            open?: number,
             previousClose?: number,
             marketTime?: Date,
             marketState?: string | null,
@@ -231,6 +242,7 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
         results.forEach((res: any) => {
             if (res.symbol && res.regularMarketPrice) {
                 const price = normalizeYahooPrice(res.regularMarketPrice, res.currency, res.symbol);
+                const open = res.regularMarketOpen ? normalizeYahooPrice(res.regularMarketOpen, res.currency, res.symbol) : undefined;
                 const previousClose = res.regularMarketPreviousClose ? normalizeYahooPrice(res.regularMarketPreviousClose, res.currency, res.symbol) : undefined;
 
                 // Extraction helper for potential Yahoo objects {raw, fmt}
@@ -248,6 +260,7 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
                 updateMap[res.symbol] = {
                     price,
                     currency: res.currency || null,
+                    open,
                     previousClose,
                     marketTime: res.regularMarketTime ? new Date(res.regularMarketTime * 1000) : undefined,
                     marketState: res.marketState || null,

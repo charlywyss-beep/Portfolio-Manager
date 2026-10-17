@@ -181,6 +181,25 @@ export function StockDetail() {
         } else {
             // Price is already normalized by fetchStockHistory (v3.12.72)
             setChartData(response.data);
+
+            // Sync Open & PreviousClose from 1D Chart so "Eröffnung / Vortag" is always current
+            if (rangeToUse === '1D' && response.data && response.data.length > 0) {
+                const chartUpdates: any = {};
+                const derivedOpen = (response as any).open || response.data[0].value;
+                if (derivedOpen && Math.abs((currentStock.open || 0) - derivedOpen) > 0.001) {
+                    chartUpdates.open = derivedOpen;
+                }
+                if (response.previousClose && Math.abs((currentStock.previousClose || 0) - response.previousClose) > 0.001) {
+                    chartUpdates.previousClose = response.previousClose;
+                }
+                if (Object.keys(chartUpdates).length > 0) {
+                    if (stockFromContext) {
+                        updateStock(currentStock.id, chartUpdates);
+                    } else {
+                        setVirtualStock((prev: any) => ({ ...prev, ...chartUpdates }));
+                    }
+                }
+            }
         }
 
         // Parallel: Fetch latest Quote (METADATA ONLY)
@@ -198,6 +217,14 @@ export function StockDetail() {
                 const updates: any = {};
                 let hasUpdates = false;
 
+                if (quoteResponse.open !== undefined && quoteResponse.open !== null && rangeToUse !== '1D' && Math.abs((currentStock.open || 0) - quoteResponse.open) > 0.01) {
+                    updates.open = quoteResponse.open;
+                    hasUpdates = true;
+                }
+                if (quoteResponse.previousClose !== undefined && quoteResponse.previousClose !== null && rangeToUse !== '1D' && Math.abs((currentStock.previousClose || 0) - quoteResponse.previousClose) > 0.01) {
+                    updates.previousClose = quoteResponse.previousClose;
+                    hasUpdates = true;
+                }
                 if (quoteResponse.trailingPE !== undefined && quoteResponse.trailingPE !== null && Math.abs((trailingPE || 0) - quoteResponse.trailingPE) > 0.01) {
                     updates.trailingPE = quoteResponse.trailingPE;
                     hasUpdates = true;
