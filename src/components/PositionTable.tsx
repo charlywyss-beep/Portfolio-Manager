@@ -48,8 +48,8 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Invest</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Kurs</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Wert</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">+/-</th>
                                 <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">%</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">+/-</th>
                                 <th className="text-right py-3 px-2 w-[80px] md:sticky md:-right-px bg-card z-30 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
@@ -147,6 +147,17 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                             </div>
                                         </td>
 
+                                        {/* % */}
+                                        <td className="px-4 py-3 text-right">
+                                            <div className={cn(
+                                                "flex items-center justify-end gap-1 font-medium",
+                                                pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                            )}>
+                                                {pos.gainLossTotal >= 0 ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
+                                                {pos.gainLossTotal >= 0 ? '+' : ''}{pos.gainLossTotalPercent.toFixed(2)}%
+                                            </div>
+                                        </td>
+
                                         {/* Gesamt +/- */}
                                         <td className="px-4 py-3 text-right">
                                             <div className="flex flex-col items-end gap-0.5">
@@ -184,14 +195,6 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                                                 </div>
                                                             )}
 
-                                                            {/* Forex Impact (Optional, keep if needed or tabularize it too?) 
-                                                            Original: (Währung: +5'704.93 CHF)
-                                                            This is usually small text below. Standardizing it might make it too prominent?
-                                                            The user explicitly asked for tabular alignment for "+/-". 
-                                                            To be safe, I will keep Forex Impact as is but ensure it doesn't break flow.
-                                                            Or should I align it too? 
-                                                            The screenshot shows separate lines. I will keep it simple for now, focusing on the main numbers.
-                                                        */}
                                                             {!isNativeCHF && (
                                                                 <div className={cn(
                                                                     "flex items-center justify-end gap-1.5 font-medium tabular-nums text-xs mt-0.5",
@@ -210,16 +213,6 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                                         </>
                                                     );
                                                 })()}
-                                            </div>
-                                        </td>
-
-                                        <td className="px-4 py-3 text-right">
-                                            <div className={cn(
-                                                "flex items-center justify-end gap-1 font-medium",
-                                                pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                            )}>
-                                                {pos.gainLossTotal >= 0 ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
-                                                {pos.gainLossTotal >= 0 ? '+' : ''}{pos.gainLossTotalPercent.toFixed(2)}%
                                             </div>
                                         </td>
 
