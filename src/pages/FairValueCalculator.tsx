@@ -1323,67 +1323,71 @@ export function FairValueCalculator() {
 
                         {/* INPUTS COLUMN */}
                         <div className="space-y-6">
-                            <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-6">
-                                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pb-4 border-b border-border">
-                                    <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
-                                        <h2 className="text-base sm:text-lg font-semibold flex items-center gap-1.5 shrink-0">
-                                            <span className="size-2 rounded-full bg-blue-500 shrink-0" />
-                                            Parameter
-                                        </h2>
-                                        <button
-                                            type="button"
-                                            onClick={applyAutoValues}
-                                            className={cn(
-                                                "flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg border transition-colors whitespace-nowrap shrink-0",
-                                                !isSavedForStock
-                                                    ? "bg-blue-600/25 hover:bg-blue-600/35 text-blue-300 border-blue-400/40"
-                                                    : "bg-blue-600/15 hover:bg-blue-600/30 text-blue-300/90 border-blue-400/25"
-                                            )}
-                                            title="Realistische Fundamentalwerte automatisch neu einsetzen"
-                                        >
-                                            <RotateCcw className="size-3 shrink-0" />
-                                            <span>Auto</span>
-                                        </button>
-                                        {isSavedForStock ? (
-                                            <span className="inline-flex items-center gap-1 text-xs font-semibold pl-2 pr-1 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 whitespace-nowrap shrink-0">
-                                                <Check className="size-3 shrink-0" />
-                                                <span>Manuell</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={clearManualValues}
-                                                    className="ml-0.5 p-0.5 rounded hover:bg-rose-500/30 text-emerald-300/80 hover:text-rose-200 transition-colors"
-                                                    title="Manuelle Eingabe löschen und auf Auto-Werte zurücksetzen"
-                                                >
-                                                    <X className="size-3 shrink-0" />
-                                                </button>
-                                            </span>
-                                        ) : (
-                                            getCustomBackupForSymbol(selectedSymbol) && (
-                                                <div className="inline-flex items-center rounded-lg bg-emerald-600/20 border border-emerald-400/30 whitespace-nowrap shrink-0 overflow-hidden">
-                                                    <button
-                                                        type="button"
-                                                        onClick={restoreManualValues}
-                                                        className="flex items-center gap-1 text-xs font-semibold pl-2 pr-1.5 py-1 hover:bg-emerald-600/35 text-emerald-300 transition-colors"
-                                                        title="Deine zuvor manuell eingegebenen Werte für diese Aktie wiederherstellen"
-                                                    >
-                                                        <Check className="size-3 shrink-0" />
-                                                        <span>Manuell</span>
-                                                    </button>
+                            <div className="bg-card border border-border rounded-xl p-4 sm:p-6 shadow-sm space-y-6">
+                                <div className="space-y-3 pb-4 border-b border-border">
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
+                                            <h2 className="text-base sm:text-lg font-semibold flex items-center gap-1.5 shrink-0">
+                                                <span className="size-2 rounded-full bg-blue-500 shrink-0" />
+                                                Parameter
+                                            </h2>
+                                            <button
+                                                type="button"
+                                                onClick={applyAutoValues}
+                                                className={cn(
+                                                    "flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg border transition-colors whitespace-nowrap shrink-0",
+                                                    !isSavedForStock
+                                                        ? "bg-blue-600/25 hover:bg-blue-600/35 text-blue-300 border-blue-400/40"
+                                                        : "bg-blue-600/15 hover:bg-blue-600/30 text-blue-300/90 border-blue-400/25"
+                                                )}
+                                                title="Realistische Fundamentalwerte automatisch neu einsetzen"
+                                            >
+                                                <RotateCcw className="size-3 shrink-0" />
+                                                <span>Auto</span>
+                                            </button>
+                                            {isSavedForStock ? (
+                                                <span className="inline-flex items-center gap-1 text-xs font-semibold pl-2 pr-1 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 whitespace-nowrap shrink-0">
+                                                    <Check className="size-3 shrink-0" />
+                                                    <span>Manuell</span>
                                                     <button
                                                         type="button"
                                                         onClick={clearManualValues}
-                                                        className="px-1.5 py-1 hover:bg-rose-500/30 text-emerald-300/80 hover:text-rose-200 border-l border-emerald-400/25 transition-colors"
-                                                        title="Gespeicherte manuelle Eingabe löschen"
+                                                        className="ml-0.5 p-0.5 rounded hover:bg-rose-500/30 text-emerald-300/80 hover:text-rose-200 transition-colors"
+                                                        title="Manuelle Eingabe löschen und auf Auto-Werte zurücksetzen"
                                                     >
                                                         <X className="size-3 shrink-0" />
                                                     </button>
-                                                </div>
-                                            )
-                                        )}
+                                                </span>
+                                            ) : (
+                                                getCustomBackupForSymbol(selectedSymbol) && (
+                                                    <div className="inline-flex items-center rounded-lg bg-emerald-600/20 border border-emerald-400/30 whitespace-nowrap shrink-0 overflow-hidden">
+                                                        <button
+                                                            type="button"
+                                                            onClick={restoreManualValues}
+                                                            className="flex items-center gap-1 text-xs font-semibold pl-2 pr-1.5 py-1 hover:bg-emerald-600/35 text-emerald-300 transition-colors"
+                                                            title="Deine zuvor manuell eingegebenen Werte für diese Aktie wiederherstellen"
+                                                        >
+                                                            <Check className="size-3 shrink-0" />
+                                                            <span>Manuell</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={clearManualValues}
+                                                            className="px-1.5 py-1 hover:bg-rose-500/30 text-emerald-300/80 hover:text-rose-200 border-l border-emerald-400/25 transition-colors"
+                                                            title="Gespeicherte manuelle Eingabe löschen"
+                                                        >
+                                                            <X className="size-3 shrink-0" />
+                                                        </button>
+                                                    </div>
+                                                )
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="text-right shrink-0 ml-auto">
-                                        <div className="text-xs text-muted-foreground">Aktueller Kurs</div>
-                                        <div className="font-mono font-bold text-sm sm:text-base whitespace-nowrap">
+                                    <div className="flex flex-col items-center justify-center text-center py-2.5 px-4 rounded-xl bg-muted/40 border border-border/60">
+                                        <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-0.5">
+                                            Aktueller Kurs
+                                        </div>
+                                        <div className="font-mono font-extrabold text-xl sm:text-2xl text-foreground whitespace-nowrap">
                                             {formatCurrency(quote.price || 0, quote.currency || 'USD')}
                                         </div>
                                     </div>
@@ -1391,9 +1395,9 @@ export function FairValueCalculator() {
 
                                 {/* EPS */}
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium flex justify-between">
-                                        Gewinn pro Aktie (EPS)
-                                        <span className="text-xs text-muted-foreground font-light">{epsSourceLabel}</span>
+                                    <label className="text-sm font-medium flex items-center justify-between gap-2">
+                                        <span className="shrink-0 whitespace-nowrap">Gewinn pro Aktie (EPS)</span>
+                                        <span className="text-xs text-muted-foreground font-light whitespace-nowrap truncate">{epsSourceLabel}</span>
                                     </label>
                                     <div className="relative">
                                         <input
@@ -1434,9 +1438,9 @@ export function FairValueCalculator() {
 
                                 {/* GROWTH */}
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium flex justify-between">
-                                        Wachstum pro Jahr (nächste 5 Jahre)
-                                        <span className={cn("text-xs font-light", growthSourceLabel.includes('Prognose') ? "text-green-500" : "text-muted-foreground")}>
+                                    <label className="text-sm font-medium flex items-center justify-between gap-2">
+                                        <span className="shrink-0 whitespace-nowrap">Wachstum pro Jahr (5J)</span>
+                                        <span className={cn("text-xs font-light whitespace-nowrap truncate", growthSourceLabel.includes('Prognose') ? "text-green-500" : "text-muted-foreground")}>
                                             {growthSourceLabel}
                                         </span>
                                     </label>

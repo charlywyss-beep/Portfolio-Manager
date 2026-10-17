@@ -2,13 +2,13 @@
 
 export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number; pe: number; div?: number; mos?: number; label: string }> = {
     'KHC': { eps: 2.60, growth: 2.0, pe: 11.5, div: 6.8, mos: 20, label: 'Operativ / Bereinigt' },
-    'BATS.L': { eps: 3.62, growth: 3.0, pe: 11.5, mos: 20, label: 'Adjusted EPS (Bereinigt)' },
-    'BTI': { eps: 4.65, growth: 3.0, pe: 11.5, mos: 20, label: 'Adjusted EPS (Bereinigt)' },
-    'NESN.SW': { eps: 4.60, growth: 5.0, pe: 20.0, mos: 15, label: 'Bereinigter Gewinn (Underlying)' },
-    'NESN': { eps: 4.60, growth: 5.0, pe: 20.0, mos: 15, label: 'Bereinigter Gewinn (Underlying)' },
+    'BATS.L': { eps: 3.62, growth: 3.0, pe: 11.5, mos: 20, label: 'Bereinigt (Adj. EPS)' },
+    'BTI': { eps: 4.65, growth: 3.0, pe: 11.5, mos: 20, label: 'Bereinigt (Adj. EPS)' },
+    'NESN.SW': { eps: 4.60, growth: 5.0, pe: 20.0, mos: 15, label: 'Bereinigt (Underlying)' },
+    'NESN': { eps: 4.60, growth: 5.0, pe: 20.0, mos: 15, label: 'Bereinigt (Underlying)' },
     'ROG.SW': { eps: 18.80, growth: 5.5, pe: 16.5, mos: 15, label: 'Core EPS (Bereinigt)' },
     'NOVN.SW': { eps: 6.80, growth: 5.5, pe: 16.0, mos: 15, label: 'Core EPS (Bereinigt)' },
-    'O': { eps: 4.20, growth: 3.5, pe: 15.0, mos: 15, label: 'AFFO (Cashflow je Aktie)' },
+    'O': { eps: 4.20, growth: 3.5, pe: 15.0, mos: 15, label: 'AFFO (Cashflow)' },
     'BRK-B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, mos: 15, label: 'Operativer Gewinn' },
     'BRK.B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, mos: 15, label: 'Operativer Gewinn' },
 };
@@ -93,7 +93,7 @@ export function computeSmartAutoParams(qData: any, aData: any, stockObj: any, sy
         let apiPct = rawApiGrowth * 100;
         if (autoDiv >= 4.5 && effectivePe < 14) {
             apiPct = Math.min(Math.max(apiPct, 2.5), 4.5);
-            growthLabel = 'Prognose (Konservativ begrenzt)';
+            growthLabel = 'Prognose (Konservativ)';
         } else if (autoDiv >= 3.0 && effectivePe < 18) {
             apiPct = Math.min(Math.max(apiPct, 3.0), 7.5);
             growthLabel = 'Analysten-Prognose (5J)';
