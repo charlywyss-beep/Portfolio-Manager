@@ -128,16 +128,6 @@ function App() {
             {isSidebarOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
 
-          {/* Mobile Cloud Sync Button */}
-          <button
-            onClick={() => setIsCloudSyncOpen(true)}
-            className="fixed top-4 right-4 z-[1100] p-2 bg-card border border-border rounded-lg shadow-lg lg:hidden hover:bg-accent transition-colors text-foreground"
-            aria-label="Cloud Sync"
-            title="☁️ GitHub Cloud-Sync"
-          >
-            <Cloud className="size-5 text-sky-400" />
-          </button>
-
           {/* Mobile Sidebar Overlay */}
           {isSidebarOpen && (
             <div
@@ -183,7 +173,10 @@ function App() {
 
               <button
                 type="button"
-                onClick={() => setIsCloudSyncOpen(true)}
+                onClick={() => {
+                  closeSidebarOnMobile();
+                  setIsCloudSyncOpen(true);
+                }}
                 className="flex items-center gap-1.5 text-xs font-bold bg-blue-600/40 hover:bg-blue-600/60 text-white px-2.5 py-1 rounded-full transition-all border border-blue-400/50 shadow-sm"
                 title="☁️ GitHub Cloud-Sync"
               >
