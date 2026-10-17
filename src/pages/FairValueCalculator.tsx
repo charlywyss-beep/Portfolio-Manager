@@ -748,10 +748,12 @@ export function FairValueCalculator() {
             }
 
             // Normalize London Stock Exchange (GBp / Pence) 100x P/E distortion (e.g. 1276.71 -> 12.77)
-            if (finalQuote.trailingPE && finalQuote.trailingPE > 150 && (symbol.toUpperCase().endsWith('.L') || finalQuote.currency === 'GBp' || (finalQuote.price > 0 && finalQuote.eps && finalQuote.eps > 0 && (finalQuote.price / finalQuote.eps) < 60))) {
+            const qPriceNum = Number(finalQuote.price || 0);
+            const qEpsNum = Number(finalQuote.eps || 0);
+            if (finalQuote.trailingPE && finalQuote.trailingPE > 150 && (symbol.toUpperCase().endsWith('.L') || finalQuote.currency === 'GBp' || (qPriceNum > 0 && qEpsNum > 0 && (qPriceNum / qEpsNum) < 60))) {
                 finalQuote.trailingPE = parseFloat((finalQuote.trailingPE / 100).toFixed(2));
             }
-            if (finalQuote.forwardPE && finalQuote.forwardPE > 150 && (symbol.toUpperCase().endsWith('.L') || finalQuote.currency === 'GBp' || (finalQuote.price > 0 && finalQuote.eps && finalQuote.eps > 0 && (finalQuote.price / finalQuote.eps) < 60))) {
+            if (finalQuote.forwardPE && finalQuote.forwardPE > 150 && (symbol.toUpperCase().endsWith('.L') || finalQuote.currency === 'GBp' || (qPriceNum > 0 && qEpsNum > 0 && (qPriceNum / qEpsNum) < 60))) {
                 finalQuote.forwardPE = parseFloat((finalQuote.forwardPE / 100).toFixed(2));
             }
 
