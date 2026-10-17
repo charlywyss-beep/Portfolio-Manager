@@ -439,9 +439,9 @@ export function PriceHistoryChart({
 
                 {/* Dynamic Header Info (Replaces Tooltip) - MOVED OUTSIDE SCROLL CONTAINER */}
                 {hoveredData && (
-                    <div className="flex justify-end items-center gap-4 text-[10px] sm:text-xs animate-in fade-in duration-200 z-[60] bg-background/80 backdrop-blur-sm p-1 rounded-lg border border-border/50 shadow-sm absolute right-0 top-[52px] sm:static sm:bg-transparent sm:border-0 sm:shadow-none sm:p-0">
+                    <div className="flex justify-end items-center gap-3 sm:gap-4 text-xs sm:text-sm animate-in fade-in duration-200 z-[60] bg-background/95 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-border shadow-md absolute right-0 top-[52px] sm:static sm:bg-transparent sm:border-0 sm:shadow-none sm:p-0">
                         <div className="flex flex-col items-end leading-tight">
-                            <span className="font-medium text-foreground">
+                            <span className="font-bold text-xs sm:text-sm text-foreground">
                                 {(() => {
                                     const d = new Date(hoveredData.date);
                                     const weekday = d.toLocaleDateString('de-DE', { weekday: 'short' });
@@ -449,30 +449,30 @@ export function PriceHistoryChart({
                                     return `${weekday} ${dateStr}`;
                                 })()}
                             </span>
-                            <span className="text-foreground">
+                            <span className="text-[11px] sm:text-xs font-medium text-foreground">
                                 {new Date(hoveredData.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         </div>
-                        <div className="h-6 w-px bg-border" />
+                        <div className="h-7 w-px bg-border" />
                         <div className="flex flex-col items-end leading-tight">
-                            <span className="font-bold tabular-nums">
+                            <span className="font-bold text-sm sm:text-base tabular-nums text-foreground">
                                 {formatCurrency(hoveredData.value, displayCurrency)}
                             </span>
-                            <span className="text-[10px] text-foreground">Kurs</span>
+                            <span className="text-[11px] sm:text-xs font-medium text-foreground">Kurs</span>
                         </div>
                         {hoveredData.sma200 && (
                             <>
-                                <div className="h-6 w-px bg-border" />
+                                <div className="h-7 w-px bg-border" />
                                 <div className="flex flex-col items-end leading-tight">
                                     <div className="flex items-center gap-1.5">
-                                        <span className="font-bold tabular-nums text-foreground">
+                                        <span className="font-bold text-xs sm:text-sm tabular-nums text-foreground">
                                             {formatCurrency(hoveredData.sma200, displayCurrency)}
                                         </span>
                                         {(() => {
                                             const diff = ((hoveredData.value - hoveredData.sma200) / hoveredData.sma200) * 100;
                                             return (
                                                 <span className={cn(
-                                                    "font-bold tabular-nums",
+                                                    "font-bold text-xs sm:text-sm tabular-nums",
                                                     diff >= 0 ? "text-green-500" : "text-red-500"
                                                 )}>
                                                     {diff > 0 ? '+' : ''}{diff.toFixed(2)}%
@@ -480,7 +480,7 @@ export function PriceHistoryChart({
                                             );
                                         })()}
                                     </div>
-                                    <span className="text-[10px] text-amber-500 font-bold">SMA 200</span>
+                                    <span className="text-[11px] sm:text-xs text-amber-500 font-bold">SMA 200</span>
                                 </div>
                             </>
                         )}
