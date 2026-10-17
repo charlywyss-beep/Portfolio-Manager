@@ -983,7 +983,7 @@ export function FairValueCalculator() {
         && (actualCurrentPe > 0 && (typeof pe === 'string' ? parseFloat(pe) || 0 : pe) > actualCurrentPe + 0.5);
 
     return (
-        <div className="max-w-6xl mx-auto pl-14 pr-4 py-4 md:p-8 md:pl-14 lg:p-8 space-y-8 pb-32">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 md:p-8 space-y-6 sm:space-y-8 pb-32">
             {/* Guide Modal */}
             {showGuide && (
                 <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
@@ -1098,19 +1098,29 @@ export function FairValueCalculator() {
             )}
 
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2 border-b border-border">
-                <div className="flex items-center gap-4">
-                    <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                        <Telescope className="size-7" />
+            <div className="sticky top-0 z-40 bg-background/95 backdrop-blur -mx-3 sm:-mx-4 px-3 sm:px-4 py-3 -mt-4 lg:static lg:m-0 lg:p-0 lg:pb-2 lg:bg-transparent flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-6 border-b border-border">
+                <div className="flex items-center justify-between gap-2 pl-11 lg:pl-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="size-9 sm:size-12 rounded-xl sm:rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner shrink-0">
+                            <Telescope className="size-5 sm:size-7" />
+                        </div>
+                        <div className="min-w-0">
+                            <h1 className="text-lg sm:text-2xl font-bold tracking-tight truncate">Finanzteleskop Rechner</h1>
+                            <p className="text-xs sm:text-sm text-muted-foreground font-medium hidden sm:block">Ermittlung des fairen Werts nach Rule #1 & DCF Logik</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Finanzteleskop Rechner</h1>
-                        <p className="text-sm text-muted-foreground font-medium">Ermittlung des fairen Werts nach Rule #1 & DCF Logik</p>
-                    </div>
+                    <button
+                        onClick={() => setShowGuide(true)}
+                        className="md:hidden flex items-center gap-1.5 px-2.5 py-1.5 bg-secondary/50 hover:bg-secondary text-secondary-foreground rounded-lg transition-all border border-secondary/50 text-xs font-medium shrink-0"
+                        title="Wie funktioniert das? (Anleitung)"
+                    >
+                        <BookOpen className="size-3.5" />
+                        <span>Anleitung</span>
+                    </button>
                 </div>
                 <button
                     onClick={() => setShowGuide(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-secondary/50 hover:bg-secondary text-secondary-foreground rounded-lg transition-all border border-secondary/50 font-medium group"
+                    className="hidden md:flex items-center gap-2 px-4 py-2 bg-secondary/50 hover:bg-secondary text-secondary-foreground rounded-lg transition-all border border-secondary/50 font-medium group shrink-0"
                 >
                     <BookOpen className="size-4 group-hover:scale-110 transition-transform" />
                     Wie funktioniert das? (Anleitung)
