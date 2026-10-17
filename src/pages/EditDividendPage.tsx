@@ -732,21 +732,42 @@ export function EditDividendPage() {
                                             className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg mt-auto"
                                         />
                                     </div>
-                                    <div className="flex flex-col h-full gap-2">
-                                        <div className="flex justify-between items-center min-h-[28px]">
-                                            <label className="text-sm font-medium">Kauflimit</label>
-                                        </div>
-                                        <input
-                                            type="text"
-                                            inputMode="decimal"
-                                            autoComplete="off"
-                                            placeholder="Optional"
-                                            value={targetPrice}
-                                            onChange={(e) => setTargetPrice(e.target.value)}
-                                            onFocus={(e) => e.target.select()}
-                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg mt-auto"
-                                        />
-                                    </div>
+                                    {(() => {
+                                        const currentStockObj = stocks.find(s => String(s.id) === String(currentStockId));
+                                        const parsedFv = parseFloat((fairValue || '').toString().replace(',', '.'));
+                                        const mosPct = currentStockObj?.fairValueParams?.mos ?? 20;
+                                        const calcBuyPrice = !isNaN(parsedFv) && parsedFv > 0 ? parsedFv * (1 - mosPct / 100) : null;
+                                        return (
+                                            <div className="flex flex-col h-full gap-2">
+                                                <div className="flex justify-between items-center min-h-[28px]">
+                                                    <label className="text-sm font-medium">Kauflimit</label>
+                                                    {calcBuyPrice !== null && (
+                                                        <span className="text-xs font-medium text-emerald-400">Kaufpreis</span>
+                                                    )}
+                                                </div>
+                                                <div className="relative mt-auto">
+                                                    <input
+                                                        type="text"
+                                                        inputMode="decimal"
+                                                        autoComplete="off"
+                                                        placeholder="Optional"
+                                                        value={targetPrice}
+                                                        onChange={(e) => setTargetPrice(e.target.value)}
+                                                        onFocus={(e) => e.target.select()}
+                                                        className={`w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg ${calcBuyPrice !== null ? 'pr-20' : ''}`}
+                                                    />
+                                                    {calcBuyPrice !== null && (
+                                                        <span
+                                                            className="absolute right-3 top-1/2 -translate-y-1/2 font-mono font-semibold text-base text-emerald-400 pointer-events-none select-none"
+                                                            title={`Errechneter Kaufpreis inkl. ${mosPct}% Sicherheitsmarge`}
+                                                        >
+                                                            {calcBuyPrice.toFixed(2)}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
                                     <div className="flex flex-col h-full gap-2">
                                         <div className="flex justify-between items-center min-h-[28px]">
                                             <label className="text-sm font-medium">Verkaufslimit</label>
