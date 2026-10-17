@@ -149,11 +149,26 @@ export function FairValueCalculator() {
         }
     };
 
-    // Known fundamental baselines for special-case stocks (e.g. one-time GAAP write-offs like KHC or conglomerates like BRK-B)
-    const FUNDAMENTAL_FALLBACKS: Record<string, { epsRatio?: number; eps?: number; growth: number; pe: number; div?: number; label: string }> = {
+    // Known fundamental baselines for special-case stocks (e.g. one-time IFRS/GAAP restructuring/write-offs, REIT AFFO, or conglomerates)
+    const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number; pe: number; div?: number; label: string }> = {
         'KHC': { eps: 2.60, growth: 2.0, pe: 11.5, div: 6.8, label: 'Operativ / Bereinigt' },
+        'NESN.SW': { eps: 4.60, growth: 5.0, pe: 20.0, label: 'Bereinigter Gewinn (Underlying)' },
+        'NESN': { eps: 4.60, growth: 5.0, pe: 20.0, label: 'Bereinigter Gewinn (Underlying)' },
+        'ROG.SW': { eps: 18.80, growth: 5.5, pe: 16.5, label: 'Core EPS (Bereinigt)' },
+        'NOVN.SW': { eps: 6.80, growth: 5.5, pe: 16.0, label: 'Core EPS (Bereinigt)' },
+        'O': { eps: 4.20, growth: 3.5, pe: 15.0, label: 'AFFO (Cashflow je Aktie)' },
         'BRK-B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, label: 'Operativer Gewinn' },
         'BRK.B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, label: 'Operativer Gewinn' },
+    };
+
+    const isStaleAutoDefault = (sym: string, params: any) => {
+        if (!params || Number(params.eps) <= 0) return true;
+        const symUpper = sym.toUpperCase();
+        // Upgrade previously auto-populated unadjusted Nestlé (3.51 / 6 / 15) to Underlying EPS
+        if ((symUpper === 'NESN.SW' || symUpper === 'NESN') && Math.abs(Number(params.eps) - 3.51) < 0.05 && Number(params.pe) === 15) {
+            return true;
+        }
+        return false;
     };
 
     // Smart Automatic Parameter Calculator for any stock
@@ -173,7 +188,7 @@ export function FairValueCalculator() {
         }
         autoDiv = parseFloat(Math.min(Math.max(autoDiv, 0), 25).toFixed(2));
 
-        // 2. Smart EPS (protect against negative/zero GAAP TTM EPS from one-time goodwill write-offs)
+        // 2. Smart EPS (protect against negative/zero or restructuring-depressed GAAP/IFRS TTM EPS)
         const trailingPE = qData?.trailingPE || stockObj?.trailingPE || null;
         const forwardPE = qData?.forwardPE || aData?.forwardPE || stockObj?.forwardPE || null;
         const kcv = qData?.kcv || aData?.kcv || stockObj?.kcv || null;
@@ -184,7 +199,10 @@ export function FairValueCalculator() {
         let autoEps = 0;
         let epsLabel = qData?.epsSource || 'TTM';
 
-        if (rawEps && rawEps > 0 && (!forwardEps || rawEps >= forwardEps * 0.4)) {
+        if (preset && (!rawEps || rawEps <= 0 || rawEps < preset.eps * 0.85)) {
+            autoEps = preset.eps;
+            epsLabel = preset.label;
+        } else if (rawEps && rawEps > 0 && (!forwardEps || rawEps >= forwardEps * 0.88)) {
             autoEps = rawEps;
             epsLabel = qData?.epsSource || 'TTM';
         } else if (forwardEps && forwardEps > 0) {
@@ -201,15 +219,9 @@ export function FairValueCalculator() {
             epsLabel = preset.label;
         } else if (price > 0) {
             // Final safety net if all fundamental endpoints are blocked: estimate from conservative market multiple
-            const estMultiple = autoDiv >= 4.5 ? 11 : autoDiv >= 2.5 ? 15 : 18;
+            const estMultiple = autoDiv >= 4.5 ? 11 : autoDiv >= 2.5 ? 16 : 18;
             autoEps = price / estMultiple;
             epsLabel = 'Markt-Schätzung';
-        }
-
-        // Override if a known special-case stock still got 0 or extreme distortion
-        if (preset && (autoEps <= 0 || (symUpper === 'KHC' && autoEps < 1.5))) {
-            autoEps = preset.eps || autoEps;
-            epsLabel = preset.label;
         }
 
         autoEps = parseFloat(Number(autoEps).toFixed(2));
@@ -226,9 +238,9 @@ export function FairValueCalculator() {
         let autoGrowth = 6.0;
         let growthLabel = 'Fundamental-Profil';
 
-        if (preset && symUpper === 'KHC') {
+        if (preset) {
             autoGrowth = preset.growth;
-            growthLabel = 'Konservativ (Dividendenwert)';
+            growthLabel = 'Qualitäts-/Branchenprofil';
         } else if (rawApiGrowth !== null && rawApiGrowth !== undefined && isFinite(rawApiGrowth) && rawApiGrowth !== 0) {
             let apiPct = rawApiGrowth * 100;
             // Guardrails based on fundamental profile
@@ -236,26 +248,23 @@ export function FairValueCalculator() {
                 // High-dividend, low-PE mature value stock (e.g. KHC, BAT, VZ): cap overly optimistic analyst growth
                 apiPct = Math.min(Math.max(apiPct, 1.5), 4.0);
                 growthLabel = 'Prognose (Konservativ begrenzt)';
-            } else if (autoDiv >= 3.0 && effectivePe < 17) {
-                apiPct = Math.min(Math.max(apiPct, 2.0), 7.5);
+            } else if (autoDiv >= 3.0 && effectivePe < 18) {
+                apiPct = Math.min(Math.max(apiPct, 2.5), 7.5);
                 growthLabel = 'Analysten-Prognose (5J)';
             } else {
-                apiPct = Math.min(Math.max(apiPct, 2.0), 15.0);
+                apiPct = Math.min(Math.max(apiPct, 2.5), 15.0);
                 growthLabel = 'Analysten-Prognose (5J)';
             }
             autoGrowth = parseFloat((Math.round(apiPct * 2) / 2).toFixed(1));
-        } else if (preset?.growth) {
-            autoGrowth = preset.growth;
-            growthLabel = 'Fundamental-Profil';
         } else {
             // Intelligent Fundamental Profile Heuristic (instead of blind 10% for everything)
-            if (autoDiv >= 4.5 || effectivePe <= 12) {
+            if ((autoDiv >= 4.8 && effectivePe <= 14) || effectivePe <= 11.5) {
                 autoGrowth = 2.0;
                 growthLabel = 'Reifer Dividendenwert';
-            } else if (autoDiv >= 3.0 && effectivePe <= 16.5) {
-                autoGrowth = 4.5;
+            } else if (autoDiv >= 3.0 && effectivePe <= 17.5) {
+                autoGrowth = 5.0;
                 growthLabel = 'Klassischer Dividendenwert';
-            } else if (autoDiv >= 1.5 && effectivePe <= 22) {
+            } else if (autoDiv >= 1.5 && effectivePe <= 23) {
                 autoGrowth = 6.5;
                 growthLabel = 'Qualitäts-/Standardwert';
             } else if (effectivePe > 24 && autoDiv < 1.5) {
@@ -269,11 +278,11 @@ export function FairValueCalculator() {
 
         // 4. Smart Exit P/E (Verkaufs-KGV in 5J)
         let rawExitPe = 15;
-        if (preset && symUpper === 'KHC') {
+        if (preset) {
             rawExitPe = preset.pe;
         } else if (trailingPE && trailingPE > 0 && forwardPE && forwardPE > 0) {
-            // If trailingPE is distorted upwards (> 1.5x forwardPE), trust forwardPE
-            if (trailingPE > forwardPE * 1.5) {
+            // If trailingPE is distorted upwards (> 1.4x forwardPE), trust forwardPE
+            if (trailingPE > forwardPE * 1.4) {
                 rawExitPe = forwardPE;
             } else {
                 rawExitPe = (trailingPE + forwardPE) / 2;
@@ -286,9 +295,9 @@ export function FairValueCalculator() {
             rawExitPe = price / autoEps;
         }
 
-        // Apply sensible 5-year exit multiple guardrails (8 to 22, and within Rule #1 limit)
-        const ruleOneMax = Math.max(15, autoGrowth * 2);
-        const maxSensibleExitPe = autoDiv >= 4.5 ? 13.5 : Math.min(22, ruleOneMax);
+        // Apply sensible 5-year exit multiple guardrails matching Rule #1 floor of 20 for quality stocks!
+        const ruleOneMax = Math.max(20, autoGrowth * 2);
+        const maxSensibleExitPe = (autoDiv >= 5.0 && effectivePe < 14) ? 13.5 : Math.min(22, ruleOneMax);
         const autoPe = parseFloat((Math.round(Math.min(Math.max(rawExitPe, 8), maxSensibleExitPe) * 2) / 2).toFixed(1));
 
         return {
@@ -376,7 +385,7 @@ export function FairValueCalculator() {
             if (savedState) {
                 const state = JSON.parse(savedState);
                 if (state.symbol) {
-                    const hasValidSavedEps = Number(state.eps) > 0;
+                    const hasValidSavedEps = Number(state.eps) > 0 && !isStaleAutoDefault(state.symbol, state);
                     console.log("Restoring Fair Value Session:", state.symbol, { hasValidSavedEps });
                     if (hasValidSavedEps) {
                         isRestoring.current = true;
@@ -500,9 +509,12 @@ export function FairValueCalculator() {
         }
 
         // Check if we already have saved Fair Value parameters for this specific stock (either on Stock object or in localStorage map)
-        const savedStockParams = (existingStock?.fairValueParams && Number(existingStock.fairValueParams.eps) > 0)
+        const rawSavedStockParams = (existingStock?.fairValueParams && Number(existingStock.fairValueParams.eps) > 0)
             ? existingStock.fairValueParams
             : getSavedSymbolParams(symbol);
+        const savedStockParams = (rawSavedStockParams && !isStaleAutoDefault(symbol, rawSavedStockParams))
+            ? rawSavedStockParams
+            : null;
 
         if (!preventReset && savedStockParams) {
             setEps(parseFloat(Number(savedStockParams.eps).toFixed(2)));

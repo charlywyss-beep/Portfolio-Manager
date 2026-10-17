@@ -41,10 +41,9 @@ export default async function handler(req, res) {
         const fundamentalSymbol = PRIMARY_TICKER_MAP[symbol] || symbol;
 
         // Fetch robust data using yahoo-finance2
-        // SINGLE REQUEST: Use quoteSummary() for rich details (using fundamentalSymbol)
-        // ALSO fetch quote() for basic data fallback (e.g. price, name)
+        // Use local symbol for quoteSummary so EPS/PE match local share ratio & currency
         const [quoteSummary, quoteBasic] = await Promise.all([
-            yahooFinance.quoteSummary(fundamentalSymbol, {
+            yahooFinance.quoteSummary(symbol, {
                 modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'topHoldings', 'fundProfile', 'assetProfile', 'financialData', 'earningsTrend']
             }).catch(() => null),
             yahooFinance.quote(symbol).catch(() => null)
@@ -127,17 +126,20 @@ export default async function handler(req, res) {
         // Run KCV logic
         let kcvValue = null;
         let operatingCashflow = 0;
+        let kcvMarketCap = getRawVal(quoteSummary?.summaryDetail?.marketCap) || getRawVal(quoteBasic?.marketCap);
         
         if (quoteSummary?.financialData?.operatingCashflow) {
             operatingCashflow = getRawVal(quoteSummary.financialData.operatingCashflow);
         } else {
-            operatingCashflow = await fetchCashflowTimeseries(fundamentalSymbol);
+            operatingCashflow = await fetchCashflowTimeseries(symbol);
+            if (!operatingCashflow && fundamentalSymbol !== symbol) {
+                operatingCashflow = await fetchCashflowTimeseries(fundamentalSymbol);
+                kcvMarketCap = getRawVal(quoteFundamental?.marketCap) || kcvMarketCap;
+            }
         }
-
-        const marketCap = getRawVal(quoteSummary?.summaryDetail?.marketCap) || getRawVal(quoteFundamental?.marketCap) || getRawVal(quoteBasic?.marketCap);
         
-        if (operatingCashflow && marketCap && operatingCashflow > 0) {
-            kcvValue = marketCap / operatingCashflow;
+        if (operatingCashflow && kcvMarketCap && operatingCashflow > 0) {
+            kcvValue = kcvMarketCap / operatingCashflow;
         }
 
         // Deep Property Retriever
@@ -159,7 +161,7 @@ export default async function handler(req, res) {
 
         let bestEps = rawTrailingEps;
         let epsSource = 'TTM';
-        if (!bestEps || bestEps <= 0 || (rawForwardEps && rawForwardEps > 0 && bestEps < rawForwardEps * 0.4)) {
+        if (!bestEps || bestEps <= 0 || (rawForwardEps && rawForwardEps > 0 && bestEps < rawForwardEps * 0.88)) {
             if (rawForwardEps && rawForwardEps > 0) {
                 bestEps = rawForwardEps;
                 epsSource = 'Forward / Bereinigt';

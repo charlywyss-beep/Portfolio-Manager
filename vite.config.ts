@@ -96,16 +96,19 @@ export default defineConfig({
             try {
               const fundamentalSymbol = PRIMARY_TICKER_MAP[sym] || sym;
 
-              // We also fetch basic quote to ensure we have marketCap
+              // Always fetch quoteSummary on the actual symbol `sym` so EPS/PE/Dividend match local share currency & ratio!
               const [result, quoteBasic, quoteFundamental] = await Promise.all([
-                 yahooFinance.quoteSummary(fundamentalSymbol, {
+                 yahooFinance.quoteSummary(sym, {
                     modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'summaryProfile', 'financialData', 'earningsTrend']
                  }).catch(() => null),
                  yahooFinance.quote(sym).catch(() => null),
                  (fundamentalSymbol !== sym) ? yahooFinance.quote(fundamentalSymbol).catch(() => null) : null
               ]);
               
-              const tsFallback = await fetchCashflowTimeseries(fundamentalSymbol);
+              const tsLocal = await fetchCashflowTimeseries(sym);
+              const tsFallback = (fundamentalSymbol !== sym && (!tsLocal.flow || !tsLocal.cap))
+                  ? await fetchCashflowTimeseries(fundamentalSymbol)
+                  : tsLocal;
 
               if (!result && !quoteBasic) {
                    // BULLETPROOF FALLBACK for totally crumb-blocked IPs
@@ -122,9 +125,9 @@ export default defineConfig({
                        if (tsFallback.cap && tsFallback.flow && tsFallback.flow > 0) {
                            kcvValue = tsFallback.cap / tsFallback.flow;
                        }
-                       const fallbackEps = (tsFallback.dilutedEps && tsFallback.dilutedEps > 0)
-                           ? tsFallback.dilutedEps
-                           : (tsFallback.normalizedEps && tsFallback.normalizedEps > 0 ? tsFallback.normalizedEps : null);
+                       const fallbackEps = (tsLocal.normalizedEps && tsLocal.normalizedEps > 0)
+                           ? tsLocal.normalizedEps
+                           : (tsLocal.dilutedEps && tsLocal.dilutedEps > 0 ? tsLocal.dilutedEps : null);
                        
                        return {
                            symbol: sym,
@@ -138,7 +141,7 @@ export default defineConfig({
                            trailingPE: (chartMeta.regularMarketPrice && fallbackEps) ? (chartMeta.regularMarketPrice / fallbackEps) : null,
                            forwardPE: null,
                            eps: fallbackEps,
-                           forwardEps: tsFallback.normalizedEps || null,
+                           forwardEps: tsLocal.normalizedEps || null,
                            dividendYield: null,
                            kcv: kcvValue,
                            regularMarketOpen: chartMeta.chartPreviousClose,
@@ -182,22 +185,22 @@ export default defineConfig({
               const trailingPEVal = getRawVal(quoteBasic?.trailingPE) || getRawVal(summaryDetail.trailingPE) || getRawVal(defaultKeyStatistics.trailingPE) || null;
               const forwardPEVal = getRawVal(quoteBasic?.forwardPE) || getRawVal(summaryDetail.forwardPE) || getRawVal(defaultKeyStatistics.forwardPE) || getRawVal(financialData.forwardPE) || null;
 
-              const rawTrailingEps = getRawVal(quoteBasic?.epsTrailingTwelveMonths) ?? getRawVal(defaultKeyStatistics.trailingEps) ?? tsFallback.dilutedEps ?? null;
+              const rawTrailingEps = getRawVal(quoteBasic?.epsTrailingTwelveMonths) ?? getRawVal(defaultKeyStatistics.trailingEps) ?? tsLocal.dilutedEps ?? null;
               const rawForwardEps = getRawVal(quoteBasic?.epsForward)
                   || getRawVal(defaultKeyStatistics.forwardEps)
                   || getRawVal((quoteBasic as any)?.epsCurrentYear)
-                  || tsFallback.normalizedEps
+                  || tsLocal.normalizedEps
                   || (finalMarketPrice && forwardPEVal && forwardPEVal > 0 ? finalMarketPrice / forwardPEVal : null);
 
-              // Smart EPS selection: if trailing EPS is missing, <= 0, or heavily distorted (< 40% of forward/normalized EPS due to one-off write-offs like KHC), use forward/normalized EPS
+              // Smart EPS selection: if trailing EPS is missing, <= 0, or depressed by > 12% vs forward/normalized EPS (e.g. one-time restructuring/write-offs like Nestlé or Kraft Heinz), use forward/normalized EPS
               let bestEps = rawTrailingEps;
               let epsSource = 'TTM';
-              if (!bestEps || bestEps <= 0 || (rawForwardEps && rawForwardEps > 0 && bestEps < rawForwardEps * 0.4)) {
+              if (!bestEps || bestEps <= 0 || (rawForwardEps && rawForwardEps > 0 && bestEps < rawForwardEps * 0.88)) {
                   if (rawForwardEps && rawForwardEps > 0) {
                       bestEps = rawForwardEps;
                       epsSource = 'Forward / Bereinigt';
-                  } else if (tsFallback.normalizedEps && tsFallback.normalizedEps > 0) {
-                      bestEps = tsFallback.normalizedEps;
+                  } else if (tsLocal.normalizedEps && tsLocal.normalizedEps > 0) {
+                      bestEps = tsLocal.normalizedEps;
                       epsSource = 'Bereinigt (Norm.)';
                   } else if (finalMarketPrice && kcvValue && kcvValue > 0) {
                       bestEps = (finalMarketPrice / kcvValue) * 0.75;
