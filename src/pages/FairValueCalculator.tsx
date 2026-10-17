@@ -137,6 +137,16 @@ export function FairValueCalculator() {
         return null;
     };
 
+    const isAccidentalCrossCopy = (sym: string | null, p: any) => {
+        if (!sym || !p) return false;
+        const symUpper = sym.toUpperCase();
+        // Detect MSFT values (17.95 EPS / 0.79% Div) accidentally copied onto another stock during async loading
+        if (symUpper !== 'MSFT' && Math.abs(Number(p.eps) - 17.95) < 0.02 && Math.abs(Number(p.dividendYield) - 0.79) < 0.02) {
+            return true;
+        }
+        return false;
+    };
+
     const getCustomBackupForSymbol = (sym: string | null) => {
         if (!sym) return null;
         try {
@@ -144,52 +154,63 @@ export function FairValueCalculator() {
             const mapRaw = localStorage.getItem('fair_value_params_map');
             if (mapRaw) {
                 const map = JSON.parse(mapRaw);
-                if (map[key]?.customBackup && Number(map[key].customBackup.eps) > 0) {
-                    return map[key].customBackup;
+                if (map[key]) {
+                    const cb = map[key].customBackup;
+                    if (cb && Number(cb.eps) > 0 && !isAccidentalCrossCopy(sym, cb)) {
+                        return cb;
+                    }
+                    return null;
                 }
             }
         } catch (e) {
             console.warn('Failed to read customBackup from localStorage', e);
         }
         const existingStock = stocks.find(s => s.symbol.toLowerCase() === sym.toLowerCase());
-        if (existingStock?.fairValueParams?.customBackup && Number(existingStock.fairValueParams.customBackup.eps) > 0) {
-            return existingStock.fairValueParams.customBackup;
+        const stockCb = existingStock?.fairValueParams?.customBackup;
+        if (stockCb && Number(stockCb.eps) > 0 && !isAccidentalCrossCopy(sym, stockCb)) {
+            return stockCb;
         }
-        if (existingStock?.fairValueParams?.isCustom && Number(existingStock.fairValueParams.eps) > 0) {
+        if (existingStock?.fairValueParams?.isCustom && Number(existingStock.fairValueParams.eps) > 0 && !isAccidentalCrossCopy(sym, existingStock.fairValueParams)) {
             return existingStock.fairValueParams;
         }
         return null;
     };
 
-    const saveSymbolParamsToLocal = (sym: string, params: { eps: number; growthRate: number; pe: number; dividendYield: number; discountRate: number; mos: number; isCustom?: boolean; customBackup?: any }) => {
+    const saveSymbolParamsToLocal = (sym: string, params: { eps: number; growthRate: number; pe: number; dividendYield: number; discountRate: number; mos: number; isCustom?: boolean; customBackup?: any; clearCustomBackup?: boolean }) => {
         try {
             const key = sym.toUpperCase();
             const mapRaw = localStorage.getItem('fair_value_params_map');
             const map = mapRaw ? JSON.parse(mapRaw) : {};
             const now = new Date().toISOString();
             const prevEntry = map[key] || {};
-            const nextCustomBackup = params.isCustom
-                ? {
-                    eps: params.eps,
-                    growthRate: params.growthRate,
-                    pe: params.pe,
-                    dividendYield: params.dividendYield,
-                    discountRate: params.discountRate,
-                    mos: params.mos,
-                    updatedAt: now
-                }
-                : (params.customBackup || prevEntry.customBackup || (prevEntry.isCustom && Number(prevEntry.eps) > 0 ? {
-                    eps: prevEntry.eps,
-                    growthRate: prevEntry.growthRate,
-                    pe: prevEntry.pe,
-                    dividendYield: prevEntry.dividendYield,
-                    discountRate: prevEntry.discountRate,
-                    mos: prevEntry.mos,
-                    updatedAt: prevEntry.updatedAt || now
-                } : undefined));
+            const validPrevBackup = prevEntry.customBackup && !isAccidentalCrossCopy(sym, prevEntry.customBackup) ? prevEntry.customBackup : undefined;
+            const validPrevAsBackup = prevEntry.isCustom && Number(prevEntry.eps) > 0 && !isAccidentalCrossCopy(sym, prevEntry) ? {
+                eps: prevEntry.eps,
+                growthRate: prevEntry.growthRate,
+                pe: prevEntry.pe,
+                dividendYield: prevEntry.dividendYield,
+                discountRate: prevEntry.discountRate,
+                mos: prevEntry.mos,
+                updatedAt: prevEntry.updatedAt || now
+            } : undefined;
 
+            const nextCustomBackup = params.clearCustomBackup
+                ? undefined
+                : params.isCustom
+                    ? {
+                        eps: params.eps,
+                        growthRate: params.growthRate,
+                        pe: params.pe,
+                        dividendYield: params.dividendYield,
+                        discountRate: params.discountRate,
+                        mos: params.mos,
+                        updatedAt: now
+                    }
+                    : (params.customBackup || validPrevBackup || validPrevAsBackup);
+
+            const { clearCustomBackup, ...restParams } = params;
             map[key] = {
-                ...params,
+                ...restParams,
                 ...(nextCustomBackup ? { customBackup: nextCustomBackup } : {}),
                 updatedAt: now
             };
@@ -215,7 +236,9 @@ export function FairValueCalculator() {
 
     const isStaleAutoDefault = (sym: string, params: any) => {
         if (!params || Number(params.eps) <= 0) return true;
-        // Never overwrite parameters that the user manually edited!
+        // Clean up accidental cross-stock copy from async loading race condition
+        if (isAccidentalCrossCopy(sym, params)) return true;
+        // Never overwrite legitimate parameters that the user manually edited!
         if (params.isCustom) return false;
         const symUpper = sym.toUpperCase();
         // Upgrade previously auto-populated Nestlé (3.51 / 6 / 15 or auto 20% MoS) to 15% MoS
@@ -452,6 +475,49 @@ export function FairValueCalculator() {
         setIsSavedForStock(true);
     };
 
+    // Handler: Delete manual values / backup for the current stock and reset to Auto
+    const clearManualValues = () => {
+        if (!selectedSymbol) return;
+        const existingStock = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol.toLowerCase());
+        const smart = computeSmartAutoParams(quote, analysis, existingStock, selectedSymbol);
+
+        saveSymbolParamsToLocal(selectedSymbol, {
+            eps: smart.eps,
+            growthRate: smart.growthRate,
+            pe: smart.pe,
+            dividendYield: smart.dividendYield,
+            discountRate: smart.discountRate,
+            mos: smart.mos,
+            isCustom: false,
+            clearCustomBackup: true
+        });
+
+        if (existingStock) {
+            updateStock(existingStock.id, {
+                fairValueParams: {
+                    eps: smart.eps,
+                    growthRate: smart.growthRate,
+                    pe: smart.pe,
+                    dividendYield: smart.dividendYield,
+                    discountRate: smart.discountRate,
+                    mos: smart.mos,
+                    isCustom: false,
+                    updatedAt: new Date().toISOString()
+                }
+            });
+        }
+
+        setEps(smart.eps);
+        setGrowthRate(smart.growthRate);
+        setPe(smart.pe);
+        setDividendYield(smart.dividendYield);
+        setDiscountRate(smart.discountRate);
+        setMos(smart.mos);
+        setEpsSourceLabel(smart.epsLabel);
+        setGrowthSourceLabel(smart.growthLabel);
+        setIsSavedForStock(false);
+    };
+
     // Wachstums-Helfer State
     const [showGrowthHelper, setShowGrowthHelper] = useState(false);
     const [startEps, setStartEps] = useState<number | string>(0);
@@ -531,7 +597,7 @@ export function FairValueCalculator() {
 
     // 2. PERSISTENCE: Save logic on Change (both active session AND per-symbol map)
     useEffect(() => {
-        if (!isRestoring.current && selectedSymbol) {
+        if (!isRestoring.current && !loadingData && selectedSymbol && quote) {
             const numEps = typeof eps === 'string' ? parseFloat(eps) || 0 : eps;
             const numGrowth = typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : growthRate;
             const numPe = typeof pe === 'string' ? parseFloat(pe) || 0 : pe;
@@ -565,7 +631,7 @@ export function FairValueCalculator() {
                 });
             }
         }
-    }, [selectedSymbol, eps, growthRate, pe, dividendYield, discountRate, mos, isSavedForStock, quote]);
+    }, [selectedSymbol, eps, growthRate, pe, dividendYield, discountRate, mos, isSavedForStock, quote, loadingData]);
 
     // Categorized Suggestions (Holdings & Watchlist)
     const localMatches = useMemo(() => {
@@ -620,6 +686,7 @@ export function FairValueCalculator() {
     // Load Data Logic
     const loadStockData = async (symbol: string, initialName?: string, preventReset: boolean = false, initialIsin?: string) => {
         let isinToUse = initialIsin;
+        isRestoring.current = true;
         setLoadingData(true);
         setError(null);
         setSearchResults([]);
@@ -645,6 +712,7 @@ export function FairValueCalculator() {
             const stockTime = stockSaved.updatedAt ? new Date(stockSaved.updatedAt).getTime() : 0;
             rawSavedStockParams = localTime >= stockTime ? localSaved : stockSaved;
         }
+        const wasCrossCopied = isAccidentalCrossCopy(symbol, rawSavedStockParams);
         const savedStockParams = (rawSavedStockParams && !isStaleAutoDefault(symbol, rawSavedStockParams))
             ? rawSavedStockParams
             : null;
@@ -659,6 +727,8 @@ export function FairValueCalculator() {
             setEpsSourceLabel(savedStockParams.isCustom ? 'Manuell / Gespeichert' : 'Gespeichert');
             setGrowthSourceLabel(savedStockParams.isCustom ? 'Manuell / Gespeichert' : 'Gespeichert');
             setIsSavedForStock(Boolean(savedStockParams.isCustom));
+        } else if (!preventReset) {
+            setIsSavedForStock(false);
         }
 
         try {
@@ -771,15 +841,24 @@ export function FairValueCalculator() {
                 setEpsSourceLabel(smart.epsLabel);
                 setGrowthSourceLabel(smart.growthLabel);
                 setIsSavedForStock(false);
-            }
-
-            if (preventReset) {
-                isRestoring.current = false;
+                if (wasCrossCopied) {
+                    saveSymbolParamsToLocal(symbol, {
+                        eps: smart.eps,
+                        growthRate: smart.growthRate,
+                        pe: smart.pe,
+                        dividendYield: smart.dividendYield,
+                        discountRate: smart.discountRate,
+                        mos: smart.mos,
+                        isCustom: false,
+                        clearCustomBackup: true
+                    });
+                }
             }
 
         } catch (e) {
             console.error(e);
         } finally {
+            isRestoring.current = false;
             setLoadingData(false);
         }
     };
@@ -834,7 +913,7 @@ export function FairValueCalculator() {
 
     // 4. AUTO-SYNC: Save Fair Value AND Fair Value Parameters to Stock
     useEffect(() => {
-        if (!selectedSymbol || !calculation || !quote) return;
+        if (isRestoring.current || loadingData || !selectedSymbol || !calculation || !quote) return;
 
         const existingStock = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol.toLowerCase());
         if (existingStock) {
@@ -862,7 +941,7 @@ export function FairValueCalculator() {
             if (fvChanged || paramsChanged) {
                 const timer = setTimeout(() => {
                     const now = new Date().toISOString();
-                    const prevCustomBackup = existingStock.fairValueParams?.customBackup || getCustomBackupForSymbol(selectedSymbol);
+                    const prevCustomBackup = getCustomBackupForSymbol(selectedSymbol);
                     const nextCustomBackup = isSavedForStock
                         ? {
                             eps: numEps,
@@ -892,7 +971,7 @@ export function FairValueCalculator() {
                 return () => clearTimeout(timer);
             }
         }
-    }, [selectedSymbol, calculation, eps, growthRate, pe, dividendYield, discountRate, mos, isSavedForStock, stocks, updateStock, quote]);
+    }, [selectedSymbol, calculation, eps, growthRate, pe, dividendYield, discountRate, mos, isSavedForStock, stocks, updateStock, quote, loadingData]);
 
     // Comparison Logic
     const currentPrice = quote?.price || 0;
@@ -1255,21 +1334,39 @@ export function FairValueCalculator() {
                                             <span>Auto</span>
                                         </button>
                                         {isSavedForStock ? (
-                                            <span className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 whitespace-nowrap shrink-0">
+                                            <span className="inline-flex items-center gap-1 text-xs font-semibold pl-2 pr-1 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 whitespace-nowrap shrink-0">
                                                 <Check className="size-3 shrink-0" />
                                                 <span>Manuell</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={clearManualValues}
+                                                    className="ml-0.5 p-0.5 rounded hover:bg-rose-500/30 text-emerald-300/80 hover:text-rose-200 transition-colors"
+                                                    title="Manuelle Eingabe löschen und auf Auto-Werte zurücksetzen"
+                                                >
+                                                    <X className="size-3 shrink-0" />
+                                                </button>
                                             </span>
                                         ) : (
                                             getCustomBackupForSymbol(selectedSymbol) && (
-                                                <button
-                                                    type="button"
-                                                    onClick={restoreManualValues}
-                                                    className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-400/30 transition-colors whitespace-nowrap shrink-0"
-                                                    title="Deine zuvor manuell eingegebenen Werte für diese Aktie wiederherstellen"
-                                                >
-                                                    <Check className="size-3 shrink-0" />
-                                                    <span>Manuell</span>
-                                                </button>
+                                                <div className="inline-flex items-center rounded-lg bg-emerald-600/20 border border-emerald-400/30 whitespace-nowrap shrink-0 overflow-hidden">
+                                                    <button
+                                                        type="button"
+                                                        onClick={restoreManualValues}
+                                                        className="flex items-center gap-1 text-xs font-semibold pl-2 pr-1.5 py-1 hover:bg-emerald-600/35 text-emerald-300 transition-colors"
+                                                        title="Deine zuvor manuell eingegebenen Werte für diese Aktie wiederherstellen"
+                                                    >
+                                                        <Check className="size-3 shrink-0" />
+                                                        <span>Manuell</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={clearManualValues}
+                                                        className="px-1.5 py-1 hover:bg-rose-500/30 text-emerald-300/80 hover:text-rose-200 border-l border-emerald-400/25 transition-colors"
+                                                        title="Gespeicherte manuelle Eingabe löschen"
+                                                    >
+                                                        <X className="size-3 shrink-0" />
+                                                    </button>
+                                                </div>
                                             )
                                         )}
                                     </div>
