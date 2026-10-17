@@ -187,35 +187,35 @@ export function Watchlist() {
     return (
         <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20">
             {/* Sticky Header + Tabs Container */}
-            <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+            <div className="sticky top-0 z-50 bg-background pb-3 sm:pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
                 {/* Header */}
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
-                    <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 lg:pl-6">
-                        <div className="flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-blue-600 dark:text-blue-400">
-                                    <Eye className="size-6" />
+                    <div className="w-full px-3 sm:px-4 py-3 sm:py-4 md:px-6 lg:px-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+                            <div className="flex items-center gap-3 pl-12 lg:pl-0">
+                                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-blue-600 dark:text-blue-400 shrink-0">
+                                    <Eye className="size-5 sm:size-6" />
                                 </div>
                                 <div>
-                                    <h1 className="text-3xl font-bold tracking-tight">Watchlist</h1>
+                                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Watchlist</h1>
                                     <p className="text-muted-foreground hidden md:block">Aktien beobachten und Dividenden prüfen</p>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2 ml-auto">
+                            <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto justify-end">
                                 {/* Global Refresh Button */}
                                 <button
                                     onClick={() => refreshAllPrices(true)}
                                     disabled={isGlobalRefreshing}
                                     className={cn(
-                                        "flex items-center gap-2 px-4 py-2 rounded-lg border font-medium transition-all shadow-sm",
+                                        "flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-lg border font-medium transition-all shadow-sm shrink-0",
                                         "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
                                         "active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                                     )}
                                     title="Preise jetzt aktualisieren"
                                 >
                                     <RefreshCw className={cn("size-4", isGlobalRefreshing && "animate-spin")} />
-                                    <span className="hidden sm:inline">
+                                    <span className="hidden md:inline">
                                         {isGlobalRefreshing
                                             ? 'Aktualisiere...'
                                             : lastGlobalRefresh
@@ -225,18 +225,18 @@ export function Watchlist() {
                                 </button>
                                 <button
                                     onClick={() => setIsPerformanceModalOpen(true)}
-                                    className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors font-medium border border-border shadow-sm"
+                                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-3 sm:px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors font-medium border border-border shadow-sm whitespace-nowrap"
                                 >
-                                    <TrendingUp className="size-4 text-blue-500" />
+                                    <TrendingUp className="size-4 text-blue-500 shrink-0" />
                                     <span>Details</span>
                                 </button>
                                 <button
                                     onClick={() => {
                                         navigate('/calculator?mode=new&from=watchlist');
                                     }}
-                                    className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm"
+                                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary text-primary-foreground px-3 sm:px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm whitespace-nowrap"
                                 >
-                                    <Plus className="size-4" />
+                                    <Plus className="size-4 shrink-0" />
                                     <span>Hinzufügen</span>
                                 </button>
                             </div>

@@ -173,33 +173,33 @@ export function Portfolio() {
     return (
         <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20">
             {/* Sticky Header - Matched to Watchlist design */}
-            <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+            <div className="sticky top-0 z-50 bg-background pb-3 sm:pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
-                    <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 lg:pl-6">
-                        <div className="flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 text-emerald-600 dark:text-emerald-400">
-                                    <BarChart3 className="size-6" />
+                    <div className="w-full px-3 sm:px-4 py-3 sm:py-4 md:px-6 lg:px-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+                            <div className="flex items-center gap-3 pl-12 lg:pl-0">
+                                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
+                                    <BarChart3 className="size-5 sm:size-6" />
                                 </div>
                                 <div>
-                                    <h1 className="text-3xl font-bold tracking-tight">Positionen</h1>
+                                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Positionen</h1>
                                     <p className="text-muted-foreground hidden md:block">Aktien, ETFs und Festgeld verwalten</p>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2 ml-auto">
+                            <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
                                 <button
                                     onClick={() => refreshAllPrices(true)}
                                     disabled={isGlobalRefreshing}
                                     className={cn(
-                                        "flex items-center gap-2 px-4 py-2 rounded-lg border font-medium transition-all shadow-sm",
+                                        "flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-lg border font-medium transition-all shadow-sm shrink-0",
                                         "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
                                         "active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                                     )}
                                     title="Alle Aktienpreise aktualisieren"
                                 >
                                     <RefreshCw className={cn("size-4", isGlobalRefreshing && "animate-spin")} />
-                                    <span className="hidden sm:inline">
+                                    <span className="hidden md:inline">
                                         {isGlobalRefreshing
                                             ? 'Aktualisiere...'
                                             : lastGlobalRefresh
@@ -209,20 +209,21 @@ export function Portfolio() {
                                 </button>
                                 <button
                                     onClick={() => setIsAddFixedDepositModalOpen(true)}
-                                    className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors font-medium border border-border shadow-sm"
+                                    className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-3 sm:px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors font-medium border border-border shadow-sm shrink-0"
+                                    title="Bank / Vorsorge"
                                 >
                                     <Landmark className="size-4" />
-                                    <span className="hidden sm:inline">Bank / Vorsorge</span>
+                                    <span className="hidden md:inline">Bank / Vorsorge</span>
                                 </button>
                                 <button
                                     onClick={() => navigate('/calculator?mode=buy&from=portfolio')}
-                                    className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm"
+                                    className="flex items-center justify-center gap-1.5 sm:gap-2 bg-primary text-primary-foreground px-3 sm:px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm shrink-0 whitespace-nowrap"
                                 >
                                     <Plus className="size-4" />
                                     <span>Neu</span>
                                 </button>
                                 <select
-                                    className="pl-3 pr-8 py-2 rounded-lg border border-border bg-card text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer"
+                                    className="flex-1 sm:flex-none min-w-0 pl-2.5 sm:pl-3 pr-7 sm:pr-8 py-2 rounded-lg border border-border bg-card text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer truncate"
                                     value={sortConfig.key}
                                     onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
                                 >
