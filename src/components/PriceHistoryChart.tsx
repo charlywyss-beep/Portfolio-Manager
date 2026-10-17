@@ -783,7 +783,7 @@ export function PriceHistoryChart({
                                 }}
                                 axisLine={false}
                                 tickLine={false}
-                                width={40}
+                                width={46}
                                 mirror={false}
                             />
                             {effectivePurchasePrice && (
@@ -793,9 +793,10 @@ export function PriceHistoryChart({
                                     strokeDasharray="3 3"
                                     label={{
                                         position: 'right',
-                                        value: 'Kauf',
+                                        value: 'Ø Kauf',
                                         fill: '#3b82f6',
-                                        fontSize: 10
+                                        fontSize: 12,
+                                        fontWeight: 700
                                     }}
                                 />
                             )}
@@ -808,7 +809,8 @@ export function PriceHistoryChart({
                                         position: 'right',
                                         value: 'Stop',
                                         fill: '#dc2626',
-                                        fontSize: 10
+                                        fontSize: 12,
+                                        fontWeight: 700
                                     }}
                                 />
                             )}
