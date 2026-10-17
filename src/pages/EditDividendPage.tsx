@@ -866,34 +866,6 @@ export function EditDividendPage() {
                                             setFvModeTick(t => t + 1);
                                         };
 
-                                        const handleFairValueInput = (val: string) => {
-                                            setFairValue(val);
-                                            const numVal = parseFloat(val.replace(',', '.'));
-                                            if (symKey && !isNaN(numVal) && numVal > 0) {
-                                                const now = new Date().toISOString();
-                                                try {
-                                                    const mapRaw = localStorage.getItem('fair_value_params_map');
-                                                    const map = mapRaw ? JSON.parse(mapRaw) : {};
-                                                    const base = activeParams || smartAuto;
-                                                    const updatedBackup = {
-                                                        ...(map[symKey]?.customBackup || stockParams?.customBackup || base),
-                                                        manualFairValue: numVal,
-                                                        updatedAt: now
-                                                    };
-                                                    map[symKey] = {
-                                                        ...base,
-                                                        isCustom: true,
-                                                        customBackup: updatedBackup,
-                                                        updatedAt: now
-                                                    };
-                                                    localStorage.setItem('fair_value_params_map', JSON.stringify(map));
-                                                    setFvModeTick(t => t + 1);
-                                                } catch {
-                                                    // ignore
-                                                }
-                                            }
-                                        };
-
                                         return (
                                             <>
                                                 <div className="flex flex-col h-full gap-2">
@@ -955,7 +927,14 @@ export function EditDividendPage() {
                                                 </div>
                                                 <div className="flex flex-col h-full gap-2">
                                                     <div className="flex justify-between items-center min-h-[28px]">
-                                                        <label className="text-sm font-medium">Fairer Wert</label>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => navigate(`/fair-value?stock=${encodeURIComponent(String(currentStockId || symKey))}`)}
+                                                            className="text-sm font-medium hover:text-primary transition-colors cursor-pointer text-left"
+                                                            title="Zum Fenster Fairer Wert wechseln"
+                                                        >
+                                                            Fairer Wert
+                                                        </button>
                                                         {!isNaN(parsedFv) && parsedFv > 0 && (
                                                             <button
                                                                 type="button"
@@ -974,19 +953,18 @@ export function EditDividendPage() {
                                                     </div>
                                                     <input
                                                         type="text"
-                                                        inputMode="decimal"
-                                                        autoComplete="off"
+                                                        readOnly
                                                         placeholder="Optional"
                                                         value={fairValue}
-                                                        onChange={(e) => handleFairValueInput(e.target.value)}
-                                                        onFocus={(e) => e.target.select()}
+                                                        onClick={() => navigate(`/fair-value?stock=${encodeURIComponent(String(currentStockId || symKey))}`)}
+                                                        title="Klicken, um zum Fenster Fairer Wert zu wechseln"
                                                         className={cn(
-                                                            "w-full px-3 py-2 border rounded-md bg-background text-lg mt-auto font-mono font-semibold transition-colors",
+                                                            "w-full px-3 py-2 border rounded-md bg-background text-lg mt-auto font-mono font-semibold transition-colors cursor-pointer",
                                                             !isNaN(parsedFv) && parsedFv > 0
                                                                 ? isManualFv
-                                                                    ? "border-emerald-500/60 text-emerald-400 focus:border-emerald-400"
-                                                                    : "border-blue-500/60 text-blue-400 focus:border-blue-400"
-                                                                : "text-foreground"
+                                                                    ? "border-emerald-500/60 hover:border-emerald-400 text-emerald-400"
+                                                                    : "border-blue-500/60 hover:border-blue-400 text-blue-400"
+                                                                : "text-foreground hover:border-primary/50"
                                                         )}
                                                     />
                                                 </div>

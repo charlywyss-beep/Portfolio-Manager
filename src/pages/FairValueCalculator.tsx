@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
@@ -55,6 +55,7 @@ const StockListItem = ({ stock, onClick, subtitle }: { stock: any; onClick: () =
 
 export function FairValueCalculator() {
     const { positions, stocks, watchlists, updateStock } = usePortfolio();
+    const [searchParams] = useSearchParams();
 
     // Search State
     const [searchTerm, setSearchTerm] = useState('');
@@ -557,7 +558,7 @@ export function FairValueCalculator() {
     useEffect(() => {
         try {
             const urlParams = new URLSearchParams(window.location.search);
-            const stockParam = urlParams.get('stock');
+            const stockParam = searchParams.get('stock') || urlParams.get('stock');
             if (stockParam) {
                 const matchedStock = stocks.find(
                     s => String(s.id) === String(stockParam) || s.symbol.toLowerCase() === stockParam.toLowerCase()
