@@ -1668,7 +1668,7 @@ export function FairValueCalculator() {
 
                         {/* RESULTS COLUMN */}
                         <div className="space-y-6">
-                            <div className="bg-card border border-border rounded-xl p-6 shadow-sm h-full flex flex-col">
+                            <div className="bg-card border border-border rounded-xl p-4 sm:p-6 shadow-sm h-full flex flex-col overflow-hidden">
                                 <h2 className="text-lg font-semibold flex items-center gap-2 mb-6">
                                     <span className="size-2 rounded-full bg-purple-500" />
                                     Bewertung
@@ -1703,20 +1703,37 @@ export function FairValueCalculator() {
                                 <div className="flex-1 space-y-4">
                                     {/* Buy Price */}
                                     <div className={cn(
-                                        "p-4 rounded-xl border-2 transition-all shadow-sm",
+                                        "p-3.5 sm:p-4 rounded-xl border-2 transition-all shadow-sm",
                                         isSavedForStock
                                             ? "border-emerald-500 bg-emerald-500/5"
                                             : "border-blue-500 bg-blue-500/5"
                                     )}>
-                                        <div className="flex justify-between items-end gap-2 mb-1">
-                                            <span className="font-bold text-lg shrink-0">Kaufpreis</span>
-                                            <span className={cn(
-                                                "font-mono font-bold whitespace-nowrap",
-                                                quote.currency !== 'CHF' ? "text-xl" : "text-2xl",
-                                                isSavedForStock ? "text-emerald-400" : "text-blue-400"
-                                            )}>
-                                                {formatCurrency(calculation.buyPrice, quote.currency)}
-                                            </span>
+                                        <div className="flex justify-between items-start sm:items-end gap-2 mb-1">
+                                            <span className="font-bold text-base sm:text-lg shrink-0 whitespace-nowrap">Kaufpreis</span>
+                                            {quote.currency !== 'CHF' ? (
+                                                <>
+                                                    <div className={cn(
+                                                        "sm:hidden flex flex-col items-end font-mono font-bold leading-tight text-right",
+                                                        isSavedForStock ? "text-emerald-400" : "text-blue-400"
+                                                    )}>
+                                                        <span className="text-lg whitespace-nowrap">{formatCurrency(calculation.buyPrice, quote.currency, false)}</span>
+                                                        <span className="text-xs opacity-90 whitespace-nowrap">{formatCurrency(calculation.buyPrice, quote.currency).split(' - ')[1]}</span>
+                                                    </div>
+                                                    <span className={cn(
+                                                        "hidden sm:inline font-mono font-bold text-xl whitespace-nowrap",
+                                                        isSavedForStock ? "text-emerald-400" : "text-blue-400"
+                                                    )}>
+                                                        {formatCurrency(calculation.buyPrice, quote.currency)}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <span className={cn(
+                                                    "font-mono font-bold text-xl sm:text-2xl whitespace-nowrap",
+                                                    isSavedForStock ? "text-emerald-400" : "text-blue-400"
+                                                )}>
+                                                    {formatCurrency(calculation.buyPrice, quote.currency, false)}
+                                                </span>
+                                            )}
                                         </div>
                                         <p className="text-xs text-muted-foreground">
                                             Maximaler Preis inkl. {mos}% Sicherheitsmarge ({isSavedForStock ? 'Manuell' : 'Auto-Werte'})
@@ -1724,12 +1741,24 @@ export function FairValueCalculator() {
                                     </div>
 
                                     {/* Fair Value */}
-                                    <div className="p-4 rounded-xl border border-border bg-card">
-                                        <div className="flex justify-between items-end gap-2 mb-1">
-                                            <span className="font-medium shrink-0">Fairer Wert</span>
-                                            <span className="font-mono text-xl whitespace-nowrap">
-                                                {formatCurrency(calculation.fairValue, quote.currency)}
-                                            </span>
+                                    <div className="p-3.5 sm:p-4 rounded-xl border border-border bg-card">
+                                        <div className="flex justify-between items-start sm:items-end gap-2 mb-1">
+                                            <span className="font-medium text-base shrink-0 whitespace-nowrap">Fairer Wert</span>
+                                            {quote.currency !== 'CHF' ? (
+                                                <>
+                                                    <div className="sm:hidden flex flex-col items-end font-mono leading-tight text-right">
+                                                        <span className="text-lg font-semibold whitespace-nowrap">{formatCurrency(calculation.fairValue, quote.currency, false)}</span>
+                                                        <span className="text-xs text-muted-foreground whitespace-nowrap">{formatCurrency(calculation.fairValue, quote.currency).split(' - ')[1]}</span>
+                                                    </div>
+                                                    <span className="hidden sm:inline font-mono text-xl whitespace-nowrap">
+                                                        {formatCurrency(calculation.fairValue, quote.currency)}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <span className="font-mono text-lg sm:text-xl whitespace-nowrap">
+                                                    {formatCurrency(calculation.fairValue, quote.currency, false)}
+                                                </span>
+                                            )}
                                         </div>
                                         <p className="text-xs text-muted-foreground">
                                             Innerer Wert heute ({discountRate}% Zielrendite + Dividenden)
@@ -1742,12 +1771,24 @@ export function FairValueCalculator() {
                                     </div>
 
                                     {/* Future Value */}
-                                    <div className="p-4 rounded-xl border border-border bg-muted/10">
-                                        <div className="flex justify-between items-end mb-1">
-                                            <span className="text-sm font-medium text-muted-foreground">Zielkurs (5 Jahre)</span>
-                                            <span className="font-mono text-lg text-muted-foreground">
-                                                {formatCurrency(calculation.futurePrice, quote.currency)}
-                                            </span>
+                                    <div className="p-3.5 sm:p-4 rounded-xl border border-border bg-muted/10">
+                                        <div className="flex justify-between items-start sm:items-end gap-2 mb-1">
+                                            <span className="text-sm font-medium text-muted-foreground shrink-0 whitespace-nowrap">Zielkurs (5 Jahre)</span>
+                                            {quote.currency !== 'CHF' ? (
+                                                <>
+                                                    <div className="sm:hidden flex flex-col items-end font-mono text-muted-foreground leading-tight text-right">
+                                                        <span className="text-base font-medium whitespace-nowrap">{formatCurrency(calculation.futurePrice, quote.currency, false)}</span>
+                                                        <span className="text-xs opacity-80 whitespace-nowrap">{formatCurrency(calculation.futurePrice, quote.currency).split(' - ')[1]}</span>
+                                                    </div>
+                                                    <span className="hidden sm:inline font-mono text-lg text-muted-foreground whitespace-nowrap">
+                                                        {formatCurrency(calculation.futurePrice, quote.currency)}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <span className="font-mono text-base sm:text-lg text-muted-foreground whitespace-nowrap">
+                                                    {formatCurrency(calculation.futurePrice, quote.currency, false)}
+                                                </span>
+                                            )}
                                         </div>
                                         <p className="text-xs text-muted-foreground">
                                             Gewinn {calculation.futureEps.toFixed(2)} × KGV {calculation.exitPe.toFixed(1)}
