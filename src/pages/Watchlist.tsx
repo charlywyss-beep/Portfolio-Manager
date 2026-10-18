@@ -661,20 +661,20 @@ function WatchlistTable({
         <div
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            className="overflow-y-auto max-h-[calc(100dvh-280px)] md:max-h-none w-full border-b border-border snap-y snap-mandatory scroll-pt-12 md:snap-none md:scroll-pt-0"
+            className="overflow-y-auto max-h-[calc(100dvh-280px)] md:max-h-none w-full border-b border-border snap-y snap-mandatory scroll-pt-[50px] md:snap-none md:scroll-pt-0"
         >
             <table className="w-full text-left border-collapse md:min-w-[1200px] xl:min-w-0 table-fixed">
                 <thead>
                     <tr className="border-b bg-muted/20">
                         {/* 0. Aktie */}
-                        <th className="px-3 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider whitespace-normal sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] touch-pan-y">
+                        <th className="px-3 md:px-4 py-0 md:py-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider whitespace-normal sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] touch-pan-y align-middle">
                             Aktie
                         </th>
 
                         {/* 1. Div. Rendite */}
                         <th
                             className={cn(
-                                "px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card md:w-[10%]",
+                                "px-2 md:px-4 py-0 md:py-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card md:w-[10%] align-middle",
                                 mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
                             )}
                             onClick={() => {
@@ -684,24 +684,23 @@ function WatchlistTable({
                                 });
                             }}
                         >
-                            <div className="flex md:hidden items-center justify-between gap-1 w-full">
+                            <div className="flex md:hidden items-center justify-between gap-1 w-full h-12">
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
                                     disabled={mobileColIndex === 0}
-                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity"
+                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                 >
                                     <ChevronLeft className="size-4" />
                                 </button>
-                                <div className="flex flex-col items-center flex-1">
-                                    <span>Div. Rendite {sortConfig.key === 'yield' && (sortConfig.direction === 'desc' ? '↓' : '↑')}</span>
-                                    <span className="text-[10px] text-muted-foreground font-normal normal-case">1 von 7 (wischen ↔)</span>
-                                </div>
+                                <span className="truncate text-center flex-1">
+                                    Div. Rendite (1/7) {sortConfig.key === 'yield' && (sortConfig.direction === 'desc' ? '↓' : '↑')}
+                                </span>
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(6, i + 1)); }}
                                     disabled={mobileColIndex === 6}
-                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity"
+                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                 >
                                     <ChevronRight className="size-4" />
                                 </button>
@@ -714,28 +713,27 @@ function WatchlistTable({
                         {/* 2. Aktueller Kurs */}
                         <th
                             className={cn(
-                                "px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card md:w-[15%]",
+                                "px-2 md:px-4 py-0 md:py-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card md:w-[15%] align-middle",
                                 mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell"
                             )}
                         >
-                            <div className="flex md:hidden items-center justify-between gap-1 w-full">
+                            <div className="flex md:hidden items-center justify-between gap-1 w-full h-12">
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
                                     disabled={mobileColIndex === 0}
-                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity"
+                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                 >
                                     <ChevronLeft className="size-4" />
                                 </button>
-                                <div className="flex flex-col items-center flex-1">
-                                    <span>Aktueller Kurs</span>
-                                    <span className="text-[10px] text-muted-foreground font-normal normal-case">2 von 7 (wischen ↔)</span>
-                                </div>
+                                <span className="truncate text-center flex-1">
+                                    Aktueller Kurs (2/7)
+                                </span>
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(6, i + 1)); }}
                                     disabled={mobileColIndex === 6}
-                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity"
+                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                 >
                                     <ChevronRight className="size-4" />
                                 </button>
@@ -746,7 +744,7 @@ function WatchlistTable({
                         {/* 3. Kauflimit */}
                         <th
                             className={cn(
-                                "px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card md:w-[15%]",
+                                "px-2 md:px-4 py-0 md:py-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card md:w-[15%] align-middle",
                                 mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell"
                             )}
                             onClick={() => {
@@ -756,24 +754,23 @@ function WatchlistTable({
                                 });
                             }}
                         >
-                            <div className="flex md:hidden items-center justify-between gap-1 w-full">
+                            <div className="flex md:hidden items-center justify-between gap-1 w-full h-12">
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
                                     disabled={mobileColIndex === 0}
-                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity"
+                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                 >
                                     <ChevronLeft className="size-4" />
                                 </button>
-                                <div className="flex flex-col items-center flex-1">
-                                    <span>Kauflimit {sortConfig.key === 'gap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}</span>
-                                    <span className="text-[10px] text-muted-foreground font-normal normal-case">3 von 7 (wischen ↔)</span>
-                                </div>
+                                <span className="truncate text-center flex-1">
+                                    Kauflimit (3/7) {sortConfig.key === 'gap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
+                                </span>
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(6, i + 1)); }}
                                     disabled={mobileColIndex === 6}
-                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity"
+                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                 >
                                     <ChevronRight className="size-4" />
                                 </button>
@@ -786,7 +783,7 @@ function WatchlistTable({
                         {/* 4. Verkaufslimit */}
                         <th
                             className={cn(
-                                "px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card md:w-[10%]",
+                                "px-2 md:px-4 py-0 md:py-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card md:w-[10%] align-middle",
                                 mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell"
                             )}
                             onClick={() => {
@@ -796,24 +793,23 @@ function WatchlistTable({
                                 });
                             }}
                         >
-                            <div className="flex md:hidden items-center justify-between gap-1 w-full">
+                            <div className="flex md:hidden items-center justify-between gap-1 w-full h-12">
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
                                     disabled={mobileColIndex === 0}
-                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity"
+                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                 >
                                     <ChevronLeft className="size-4" />
                                 </button>
-                                <div className="flex flex-col items-center flex-1">
-                                    <span>Verkaufslimit {sortConfig.key === 'sellGap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}</span>
-                                    <span className="text-[10px] text-muted-foreground font-normal normal-case">4 von 7 (wischen ↔)</span>
-                                </div>
+                                <span className="truncate text-center flex-1">
+                                    Verkaufslimit (4/7) {sortConfig.key === 'sellGap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
+                                </span>
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(6, i + 1)); }}
                                     disabled={mobileColIndex === 6}
-                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity"
+                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                 >
                                     <ChevronRight className="size-4" />
                                 </button>
@@ -826,28 +822,27 @@ function WatchlistTable({
                         {/* 5. EX-Tag */}
                         <th
                             className={cn(
-                                "px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card md:w-[10%]",
+                                "px-2 md:px-4 py-0 md:py-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card md:w-[10%] align-middle",
                                 mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell"
                             )}
                         >
-                            <div className="flex md:hidden items-center justify-between gap-1 w-full">
+                            <div className="flex md:hidden items-center justify-between gap-1 w-full h-12">
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
                                     disabled={mobileColIndex === 0}
-                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity"
+                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                 >
                                     <ChevronLeft className="size-4" />
                                 </button>
-                                <div className="flex flex-col items-center flex-1">
-                                    <span>EX-Tag</span>
-                                    <span className="text-[10px] text-muted-foreground font-normal normal-case">5 von 7 (wischen ↔)</span>
-                                </div>
+                                <span className="truncate text-center flex-1">
+                                    EX-Tag (5/7)
+                                </span>
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(6, i + 1)); }}
                                     disabled={mobileColIndex === 6}
-                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity"
+                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                 >
                                     <ChevronRight className="size-4" />
                                 </button>
@@ -858,28 +853,27 @@ function WatchlistTable({
                         {/* 6. Zahl-Tag */}
                         <th
                             className={cn(
-                                "px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card md:w-[10%]",
+                                "px-2 md:px-4 py-0 md:py-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card md:w-[10%] align-middle",
                                 mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell"
                             )}
                         >
-                            <div className="flex md:hidden items-center justify-between gap-1 w-full">
+                            <div className="flex md:hidden items-center justify-between gap-1 w-full h-12">
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
                                     disabled={mobileColIndex === 0}
-                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity"
+                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                 >
                                     <ChevronLeft className="size-4" />
                                 </button>
-                                <div className="flex flex-col items-center flex-1">
-                                    <span>Zahl-Tag</span>
-                                    <span className="text-[10px] text-muted-foreground font-normal normal-case">6 von 7 (wischen ↔)</span>
-                                </div>
+                                <span className="truncate text-center flex-1">
+                                    Zahl-Tag (6/7)
+                                </span>
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(6, i + 1)); }}
                                     disabled={mobileColIndex === 6}
-                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity"
+                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                 >
                                     <ChevronRight className="size-4" />
                                 </button>
@@ -890,28 +884,27 @@ function WatchlistTable({
                         {/* 7. Aktionen */}
                         <th
                             className={cn(
-                                "px-4 py-3 md:p-4 md:pl-12 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-center md:w-[110px] md:sticky md:top-0 md:-right-px md:z-40 bg-card md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] sticky top-0 z-30",
+                                "px-2 md:px-4 md:pl-12 py-0 md:py-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-center md:w-[110px] md:sticky md:top-0 md:-right-px md:z-40 bg-card md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] sticky top-0 z-30 align-middle",
                                 mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell"
                             )}
                         >
-                            <div className="flex md:hidden items-center justify-between gap-1 w-full">
+                            <div className="flex md:hidden items-center justify-between gap-1 w-full h-12">
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
                                     disabled={mobileColIndex === 0}
-                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity"
+                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                 >
                                     <ChevronLeft className="size-4" />
                                 </button>
-                                <div className="flex flex-col items-center flex-1">
-                                    <span>Aktionen</span>
-                                    <span className="text-[10px] text-muted-foreground font-normal normal-case">7 von 7 (wischen ↔)</span>
-                                </div>
+                                <span className="truncate text-center flex-1">
+                                    Aktionen (7/7)
+                                </span>
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(6, i + 1)); }}
                                     disabled={mobileColIndex === 6}
-                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity"
+                                    className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                 >
                                     <ChevronRight className="size-4" />
                                 </button>
