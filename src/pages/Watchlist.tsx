@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -371,21 +371,19 @@ export function Watchlist() {
                         </button>
 
                         {isOwnedStocksOpen && (
-                            <div className="overflow-x-auto overflow-y-auto max-h-[calc(100dvh-280px)] md:max-h-none w-full overscroll-x-none border-b border-border snap-both snap-mandatory scroll-pl-[170px] scroll-pt-12 md:snap-none md:scroll-pl-0 md:scroll-pt-0">
-                                <WatchlistTable
-                                    stocks={ownedStocks}
-                                    sortConfig={sortConfig}
-                                    setSortConfig={setSortConfig}
-                                    onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                    onBuy={(stock) => handleBuy(stock)}
-                                    // Blue "Edit" button now opens details page
-                                    onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                    onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
-                                    formatCurrency={formatCurrency}
-                                    convertToCHF={convertToCHF}
-                                    emptyMessage="Keine Aktien im Bestand."
-                                />
-                            </div>
+                            <WatchlistTable
+                                stocks={ownedStocks}
+                                sortConfig={sortConfig}
+                                setSortConfig={setSortConfig}
+                                onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
+                                onBuy={(stock) => handleBuy(stock)}
+                                // Blue "Edit" button now opens details page
+                                onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
+                                onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
+                                formatCurrency={formatCurrency}
+                                convertToCHF={convertToCHF}
+                                emptyMessage="Keine Aktien im Bestand."
+                            />
                         )}
                     </div>
                 )}
@@ -423,21 +421,19 @@ export function Watchlist() {
                         </button>
 
                         {isOwnedEtfsOpen && (
-                            <div className="overflow-x-auto overflow-y-auto max-h-[calc(100dvh-280px)] md:max-h-none w-full overscroll-x-none border-b border-border snap-both snap-mandatory scroll-pl-[170px] scroll-pt-12 md:snap-none md:scroll-pl-0 md:scroll-pt-0">
-                                <WatchlistTable
-                                    stocks={ownedEtfs}
-                                    sortConfig={sortConfig}
-                                    setSortConfig={setSortConfig}
-                                    onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                    onBuy={(stock) => handleBuy(stock)}
-                                    // Blue "Edit" button now opens details page
-                                    onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                    onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
-                                    formatCurrency={formatCurrency}
-                                    convertToCHF={convertToCHF}
-                                    emptyMessage="Keine ETFs im Bestand."
-                                />
-                            </div>
+                            <WatchlistTable
+                                stocks={ownedEtfs}
+                                sortConfig={sortConfig}
+                                setSortConfig={setSortConfig}
+                                onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
+                                onBuy={(stock) => handleBuy(stock)}
+                                // Blue "Edit" button now opens details page
+                                onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
+                                onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
+                                formatCurrency={formatCurrency}
+                                convertToCHF={convertToCHF}
+                                emptyMessage="Keine ETFs im Bestand."
+                            />
                         )}
                     </div>
                 )}
@@ -475,21 +471,19 @@ export function Watchlist() {
                         </button>
 
                         {isPotentialStocksOpen && (
-                            <div className="overflow-x-auto overflow-y-auto max-h-[calc(100dvh-280px)] md:max-h-none w-full overscroll-x-none border-b border-border snap-both snap-mandatory scroll-pl-[170px] scroll-pt-12 md:snap-none md:scroll-pl-0 md:scroll-pt-0">
-                                <WatchlistTable
-                                    stocks={potentialStocks}
-                                    sortConfig={sortConfig}
-                                    setSortConfig={setSortConfig}
-                                    onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                    onBuy={(stock) => handleBuy(stock)}
-                                    // Blue "Edit" button now opens details page
-                                    onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                    onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
-                                    formatCurrency={formatCurrency}
-                                    convertToCHF={convertToCHF}
-                                    emptyMessage="Keine potenziellen Aktien auf der Watchlist."
-                                />
-                            </div>
+                            <WatchlistTable
+                                stocks={potentialStocks}
+                                sortConfig={sortConfig}
+                                setSortConfig={setSortConfig}
+                                onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
+                                onBuy={(stock) => handleBuy(stock)}
+                                // Blue "Edit" button now opens details page
+                                onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
+                                onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
+                                formatCurrency={formatCurrency}
+                                convertToCHF={convertToCHF}
+                                emptyMessage="Keine potenziellen Aktien auf der Watchlist."
+                            />
                         )}
                     </div>
                 )}
@@ -527,21 +521,19 @@ export function Watchlist() {
                         </button>
 
                         {isPotentialEtfsOpen && (
-                            <div className="overflow-x-auto overflow-y-auto max-h-[calc(100dvh-280px)] md:max-h-none w-full overscroll-x-none border-b border-border snap-both snap-mandatory scroll-pl-[170px] scroll-pt-12 md:snap-none md:scroll-pl-0 md:scroll-pt-0">
-                                <WatchlistTable
-                                    stocks={potentialEtfs}
-                                    sortConfig={sortConfig}
-                                    setSortConfig={setSortConfig}
-                                    onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                    onBuy={(stock) => handleBuy(stock)}
-                                    // Blue "Edit" button now opens details page
-                                    onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                    onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
-                                    formatCurrency={formatCurrency}
-                                    convertToCHF={convertToCHF}
-                                    emptyMessage="Keine potenziellen ETFs auf der Watchlist."
-                                />
-                            </div>
+                            <WatchlistTable
+                                stocks={potentialEtfs}
+                                sortConfig={sortConfig}
+                                setSortConfig={setSortConfig}
+                                onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
+                                onBuy={(stock) => handleBuy(stock)}
+                                // Blue "Edit" button now opens details page
+                                onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
+                                onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
+                                formatCurrency={formatCurrency}
+                                convertToCHF={convertToCHF}
+                                emptyMessage="Keine potenziellen ETFs auf der Watchlist."
+                            />
                         )}
 
 
@@ -621,6 +613,21 @@ function WatchlistTable({
     convertToCHF,
     emptyMessage
 }: WatchlistTableProps) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const gestureRef = useRef<{
+        startX: number;
+        startY: number;
+        startScrollLeft: number;
+        startScrollTop: number;
+        lockedAxis: 'x' | 'y' | null;
+    }>({
+        startX: 0,
+        startY: 0,
+        startScrollLeft: 0,
+        startScrollTop: 0,
+        lockedAxis: null
+    });
+
     if (stocks.length === 0) {
         return (
             <div className="p-12 text-center text-muted-foreground">
@@ -632,63 +639,153 @@ function WatchlistTable({
         );
     }
 
+    const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+        const container = containerRef.current;
+        if (!container) return;
+        const touch = e.touches[0];
+        gestureRef.current = {
+            startX: touch.clientX,
+            startY: touch.clientY,
+            startScrollLeft: container.scrollLeft,
+            startScrollTop: container.scrollTop,
+            lockedAxis: null
+        };
+    };
+
+    const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+        const container = containerRef.current;
+        if (!container) return;
+        const touch = e.touches[0];
+        const dx = Math.abs(touch.clientX - gestureRef.current.startX);
+        const dy = Math.abs(touch.clientY - gestureRef.current.startY);
+
+        if (gestureRef.current.lockedAxis === null) {
+            if (dx > 6 || dy > 6) {
+                gestureRef.current.lockedAxis = dy > dx ? 'y' : 'x';
+            }
+        }
+
+        if (gestureRef.current.lockedAxis === 'y') {
+            // Strictly lock horizontal scroll position so columns do NOT shift when scrolling rows
+            if (container.scrollLeft !== gestureRef.current.startScrollLeft) {
+                container.scrollLeft = gestureRef.current.startScrollLeft;
+            }
+        } else if (gestureRef.current.lockedAxis === 'x') {
+            // Strictly lock vertical scroll position so rows do not jump while swiping columns
+            if (container.scrollTop !== gestureRef.current.startScrollTop) {
+                container.scrollTop = gestureRef.current.startScrollTop;
+            }
+        }
+    };
+
+    const handleTouchEnd = () => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        if (gestureRef.current.lockedAxis === 'y') {
+            // Lock horizontal back to starting column
+            container.scrollLeft = gestureRef.current.startScrollLeft;
+
+            // Snap cleanly to the nearest full row vertically
+            const rows = container.querySelectorAll('tbody tr');
+            if (rows.length > 0) {
+                const headerHeight = 48;
+                const currentTop = container.scrollTop;
+                let closestTop = 0;
+                let minDiff = Infinity;
+
+                rows.forEach((row) => {
+                    const rowEl = row as HTMLElement;
+                    const offset = rowEl.offsetTop - headerHeight;
+                    const diff = Math.abs(offset - currentTop);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        closestTop = offset;
+                    }
+                });
+
+                if (minDiff > 6 && minDiff < 45 && closestTop >= 0) {
+                    container.scrollTo({ top: closestTop, behavior: 'smooth' });
+                }
+            }
+        }
+
+        gestureRef.current.lockedAxis = null;
+    };
+
+    const handleScroll = () => {
+        if (gestureRef.current.lockedAxis === 'y' && containerRef.current) {
+            if (containerRef.current.scrollLeft !== gestureRef.current.startScrollLeft) {
+                containerRef.current.scrollLeft = gestureRef.current.startScrollLeft;
+            }
+        }
+    };
+
     return (
-        <table className="w-full text-left border-collapse md:min-w-[1200px] xl:min-w-0 table-fixed">
-            <thead>
-                <tr className="border-b bg-muted/20">
-                    <th className="px-3 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider whitespace-normal sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px]">Aktie</th>
-                    <th
-                        className="px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors w-[calc(100vw-204px)] md:w-[10%] sticky top-0 z-30 bg-card [scroll-snap-align:none_start] snap-always"
-                        onClick={() => {
-                            setSortConfig({
-                                key: 'yield',
-                                direction: sortConfig.key === 'yield' && sortConfig.direction === 'desc' ? 'asc' : 'desc'
-                            });
-                        }}
-                    >
-                        Div. Rendite {sortConfig.key === 'yield' && (sortConfig.direction === 'desc' ? '↓' : '↑')}
-                    </th>
-                    <th className="px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right w-[calc(100vw-204px)] md:w-[15%] sticky top-0 z-30 bg-card [scroll-snap-align:none_start] snap-always">Aktueller Kurs</th>
-                    <th
-                        className="px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors w-[calc(100vw-204px)] md:w-[15%] sticky top-0 z-30 bg-card [scroll-snap-align:none_start] snap-always"
-                        onClick={() => {
-                            setSortConfig({
-                                key: 'gap',
-                                direction: sortConfig.key === 'gap' && sortConfig.direction === 'asc' ? 'desc' : 'asc'
-                            });
-                        }}
-                    >
-                        Kauflimit {sortConfig.key === 'gap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
-                    </th>
-                    <th
-                        className="px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors w-[calc(100vw-204px)] md:w-[10%] sticky top-0 z-30 bg-card [scroll-snap-align:none_start] snap-always"
-                        onClick={() => {
-                            setSortConfig({
-                                key: 'sellGap',
-                                direction: sortConfig.key === 'sellGap' && sortConfig.direction === 'asc' ? 'desc' : 'asc'
-                            });
-                        }}
-                    >
-                        Verkaufslimit {sortConfig.key === 'sellGap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
-                    </th>
-                    <th className="px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right w-[calc(100vw-204px)] md:w-[10%] sticky top-0 z-30 bg-card [scroll-snap-align:none_start] snap-always">EX-Tag</th>
-                    <th className="px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right w-[calc(100vw-204px)] md:w-[10%] sticky top-0 z-30 bg-card [scroll-snap-align:none_start] snap-always">Zahl-Tag</th>
-                    <th className="px-4 py-3 md:p-4 md:pl-12 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-center w-[calc(100vw-204px)] md:w-[110px] md:sticky md:top-0 md:-right-px md:z-40 bg-card md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] sticky top-0 z-30 [scroll-snap-align:none_start] snap-always">Aktionen</th>
-                </tr>
-            </thead>
-            <tbody className="divide-y">
-                {stocks.map((stock) => {
-                    const currentDiv = getCurrentDividendPeriod(stock);
+        <div
+            ref={containerRef}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onScroll={handleScroll}
+            className="overflow-x-auto overflow-y-auto max-h-[calc(100dvh-280px)] md:max-h-none w-full overscroll-x-none border-b border-border snap-x snap-mandatory scroll-pl-[170px] md:snap-none md:scroll-pl-0"
+        >
+            <table className="w-full text-left border-collapse md:min-w-[1200px] xl:min-w-0 table-fixed">
+                <thead>
+                    <tr className="border-b bg-muted/20">
+                        <th className="px-3 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider whitespace-normal sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px]">Aktie</th>
+                        <th
+                            className="px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors w-[calc(100vw-204px)] md:w-[10%] sticky top-0 z-30 bg-card snap-start snap-always"
+                            onClick={() => {
+                                setSortConfig({
+                                    key: 'yield',
+                                    direction: sortConfig.key === 'yield' && sortConfig.direction === 'desc' ? 'asc' : 'desc'
+                                });
+                            }}
+                        >
+                            Div. Rendite {sortConfig.key === 'yield' && (sortConfig.direction === 'desc' ? '↓' : '↑')}
+                        </th>
+                        <th className="px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right w-[calc(100vw-204px)] md:w-[15%] sticky top-0 z-30 bg-card snap-start snap-always">Aktueller Kurs</th>
+                        <th
+                            className="px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors w-[calc(100vw-204px)] md:w-[15%] sticky top-0 z-30 bg-card snap-start snap-always"
+                            onClick={() => {
+                                setSortConfig({
+                                    key: 'gap',
+                                    direction: sortConfig.key === 'gap' && sortConfig.direction === 'asc' ? 'desc' : 'asc'
+                                });
+                            }}
+                        >
+                            Kauflimit {sortConfig.key === 'gap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
+                        </th>
+                        <th
+                            className="px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors w-[calc(100vw-204px)] md:w-[10%] sticky top-0 z-30 bg-card snap-start snap-always"
+                            onClick={() => {
+                                setSortConfig({
+                                    key: 'sellGap',
+                                    direction: sortConfig.key === 'sellGap' && sortConfig.direction === 'asc' ? 'desc' : 'asc'
+                                });
+                            }}
+                        >
+                            Verkaufslimit {sortConfig.key === 'sellGap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
+                        </th>
+                        <th className="px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right w-[calc(100vw-204px)] md:w-[10%] sticky top-0 z-30 bg-card snap-start snap-always">EX-Tag</th>
+                        <th className="px-4 py-3 md:p-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-right w-[calc(100vw-204px)] md:w-[10%] sticky top-0 z-30 bg-card snap-start snap-always">Zahl-Tag</th>
+                        <th className="px-4 py-3 md:p-4 md:pl-12 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider text-center w-[calc(100vw-204px)] md:w-[110px] md:sticky md:top-0 md:-right-px md:z-40 bg-card md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] sticky top-0 z-30 snap-start snap-always">Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y">
+                    {stocks.map((stock) => {
+                        const currentDiv = getCurrentDividendPeriod(stock);
 
-                    const isUnderTarget = stock.targetPrice && stock.currentPrice <= stock.targetPrice;
-                    const isOverSell = stock.sellLimit && stock.currentPrice >= stock.sellLimit;
-                    const stockChange = stock.previousClose ? ((stock.currentPrice - stock.previousClose) / stock.previousClose) * 100 : 0;
-                    const calcState = estimateMarketState(stock.symbol, stock.currency);
-                    const isMarketOpen = calcState === 'REGULAR';
+                        const isUnderTarget = stock.targetPrice && stock.currentPrice <= stock.targetPrice;
+                        const isOverSell = stock.sellLimit && stock.currentPrice >= stock.sellLimit;
+                        const stockChange = stock.previousClose ? ((stock.currentPrice - stock.previousClose) / stock.previousClose) * 100 : 0;
+                        const calcState = estimateMarketState(stock.symbol, stock.currency);
+                        const isMarketOpen = calcState === 'REGULAR';
 
-                    return (
-                        <tr key={stock.id} className="hover:bg-muted/30 transition-colors group [scroll-snap-align:start_none]">
-                            <td className="p-3 md:p-4 [scroll-snap-align:start_none] sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] overflow-hidden w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px]">
+                        return (
+                            <tr key={stock.id} className="hover:bg-muted/30 transition-colors group">
+                                <td className="p-3 md:p-4 sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] overflow-hidden w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px]">
                                 <div className="absolute inset-0 bg-card -z-10" />
                                 <div className="flex items-center gap-2.5 md:gap-3 relative">
                                     <Logo
@@ -894,5 +991,6 @@ function WatchlistTable({
                 })}
             </tbody>
         </table>
-    );
+    </div>
+);
 }
