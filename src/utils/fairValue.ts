@@ -1,7 +1,7 @@
 // Shared Fair Value calculation and Smart Auto-Parameter helpers
 
 export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number; pe: number; div?: number; mos?: number; label: string }> = {
-    'AMZN': { eps: 12.50, growth: 12.0, pe: 20.0, div: 0, mos: 15, label: 'TTM Bereinigt (Analysten)' },
+    'AMZN': { eps: 7.17, growth: 12.0, pe: 20.0, div: 0, mos: 15, label: 'TTM' },
     'MSFT': { eps: 17.95, growth: 13.0, pe: 20.0, div: 0.79, mos: 15, label: 'TTM Bereinigt (Analysten)' },
     'KHC': { eps: 2.60, growth: 2.0, pe: 11.5, div: 6.8, mos: 20, label: 'Operativ / Bereinigt' },
     'BATS.L': { eps: 3.62, growth: 3.0, pe: 11.5, mos: 20, label: 'Bereinigt (Adj. EPS)' },

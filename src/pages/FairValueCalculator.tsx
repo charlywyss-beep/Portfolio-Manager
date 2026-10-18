@@ -243,9 +243,9 @@ export function FairValueCalculator() {
         if (symUpper === 'NESN.SW' || symUpper === 'NESN') {
             if (Number(params.pe) > 17.5) return true;
         }
-        // Upgrade previously auto-populated Amazon (PE > 20.5)
+        // Upgrade previously auto-populated Amazon (old 12.5 EPS or out-of-range PE)
         if (symUpper === 'AMZN') {
-            if (Number(params.pe) > 20.5 || Math.abs(Number(params.eps) - 7.17) < 0.2) {
+            if (Math.abs(Number(params.eps) - 12.5) < 0.25 || Number(params.pe) > 25.5) {
                 return true;
             }
         }
