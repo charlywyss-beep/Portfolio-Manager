@@ -629,7 +629,7 @@ export function Dashboard() {
                             <div className="col-span-1 lg:col-span-4 p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm min-w-0 overflow-hidden flex flex-col">
                                 <div className="flex items-center justify-between mb-4 md:mb-6 gap-2">
                                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                                        <h3 className="text-base md:text-lg font-bold text-foreground dark:text-white truncate">Watchlist Chancen</h3>
+                                        <h3 className="text-base md:text-lg font-bold text-white truncate" style={{ color: '#ffffff' }}>Watchlist Chancen</h3>
                                         <Info className="size-4 md:size-5 text-blue-500 flex-shrink-0" />
                                         <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-medium">
                                             {filteredWatchlistDividends.length}
@@ -726,7 +726,8 @@ export function Dashboard() {
                                     <span>{filteredWatchlistDividends.length} {filteredWatchlistDividends.length === 1 ? 'Aktie' : 'Aktien'}</span>
                                     <button
                                         onClick={() => navigate('/watchlist')}
-                                        className="text-foreground dark:text-white hover:underline font-medium"
+                                        className="hover:underline font-medium text-white"
+                                        style={{ color: '#ffffff' }}
                                     >
                                         Zur Watchlist →
                                     </button>
