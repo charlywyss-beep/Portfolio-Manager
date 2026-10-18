@@ -852,8 +852,11 @@ export function FairValueCalculator() {
 
     // Comparison Logic
     const currentPrice = quote?.price || 0;
-    const isUndervalued = currentPrice < calculation.buyPrice;
-    const isFair = !isUndervalued && currentPrice <= calculation.fairValue;
+    const isUndervalued = calculation.buyPrice > 0 && currentPrice <= calculation.buyPrice;
+    const overvaluationPct = calculation.fairValue > 0 ? ((currentPrice - calculation.fairValue) / calculation.fairValue) * 100 : 0;
+    const isFairHold = !isUndervalued && overvaluationPct <= 12;
+    const isRichHold = !isUndervalued && overvaluationPct > 12 && overvaluationPct <= 45;
+    const isOverheated = !isUndervalued && overvaluationPct > 45;
     const actualCurrentPe = quote?.trailingPE || (currentPrice > 0 && (typeof eps === 'string' ? parseFloat(eps) : eps) > 0 ? currentPrice / (typeof eps === 'string' ? parseFloat(eps) || 1 : eps) : 0);
     const isYieldGap = (((typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : growthRate) + (typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : dividendYield)) < ((typeof discountRate === 'string' ? parseFloat(discountRate) || 0 : discountRate) - 0.5))
         && (actualCurrentPe > 0 && (typeof pe === 'string' ? parseFloat(pe) || 0 : pe) > actualCurrentPe + 0.5);
@@ -1622,13 +1625,18 @@ export function FairValueCalculator() {
                                     <div className={cn(
                                         "relative size-40 rounded-full flex flex-col items-center justify-center border-4 shadow-xl transition-all duration-500 text-center px-2",
                                         isUndervalued
-                                            ? "bg-green-100 border-green-500 text-green-700 shadow-green-500/20"
-                                            : isFair
-                                                ? "bg-yellow-50 border-yellow-500 text-yellow-700 shadow-yellow-500/20"
-                                                : "bg-red-50 border-red-500 text-red-700 shadow-red-500/20"
+                                            ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-emerald-500/20"
+                                            : isFairHold
+                                                ? "bg-yellow-500/10 border-yellow-500 text-yellow-500 shadow-yellow-500/20"
+                                                : isRichHold
+                                                    ? "bg-amber-500/10 border-amber-500 text-amber-500 shadow-amber-500/20"
+                                                    : "bg-red-500/10 border-red-500 text-red-500 shadow-red-500/20"
                                     )}>
-                                        <div className="text-xs uppercase font-black tracking-widest mb-1 opacity-80">
-                                            {isUndervalued ? 'KAUFEN' : isFair ? 'HOLD' : 'TEUER'}
+                                        <div className="text-xs uppercase font-black tracking-widest mb-0.5 opacity-90">
+                                            {isUndervalued ? 'KAUFEN' : (isFairHold || isRichHold) ? 'HOLD' : 'TEUER'}
+                                        </div>
+                                        <div className="text-[10px] uppercase font-bold tracking-tight opacity-75 mb-1">
+                                            {isUndervalued ? 'Sicherheitsmarge' : isFairHold ? 'Fairer Bereich' : isRichHold ? 'Gut bezahlt' : 'Überhitzt'}
                                         </div>
                                         <div className="text-xl font-bold leading-tight break-words max-w-full">
                                             {formatCurrency(currentPrice, quote.currency, false)}
@@ -1638,7 +1646,7 @@ export function FairValueCalculator() {
                                                 {formatCurrency(currentPrice, quote.currency).split(' - ')[1]}
                                             </div>
                                         )}
-                                        <div className="text-xs mt-2 opacity-60 font-bold">Aktueller Kurs</div>
+                                        <div className="text-[11px] mt-1.5 opacity-60 font-semibold">Aktueller Kurs</div>
                                     </div>
                                 </div>
 
@@ -1655,9 +1663,11 @@ export function FairValueCalculator() {
                                             "p-4 rounded-xl border text-center transition-all mb-4",
                                             isUndervalued
                                                 ? "bg-emerald-500/10 border-emerald-500/30"
-                                                : isFair
-                                                    ? "bg-amber-500/10 border-amber-500/30"
-                                                    : "bg-rose-500/10 border-rose-500/30"
+                                                : isFairHold
+                                                    ? "bg-yellow-500/10 border-yellow-500/30"
+                                                    : isRichHold
+                                                        ? "bg-amber-500/10 border-amber-500/30"
+                                                        : "bg-rose-500/10 border-rose-500/30"
                                         )}>
                                             <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                                                 Bewertung
@@ -1666,19 +1676,26 @@ export function FairValueCalculator() {
                                                 "text-3xl sm:text-4xl font-extrabold font-mono tracking-tight",
                                                 isUndervalued
                                                     ? "text-emerald-400"
-                                                    : isFair
-                                                        ? "text-amber-400"
-                                                        : "text-rose-400"
+                                                    : isFairHold
+                                                        ? "text-yellow-400"
+                                                        : isRichHold
+                                                            ? "text-amber-400"
+                                                            : "text-rose-400"
                                             )}>
-                                                {discountPct > 0 ? `+${discountPct} %` : `${discountPct} %`}
+                                                {isUndervalued ? `+${discountPct} %` : `-${overvaluationPct} %`}
                                             </div>
                                             <div className="text-xs sm:text-sm font-medium mt-1.5 text-muted-foreground">
-                                                {potentialPct > 0 ? (
+                                                {isUndervalued && (
                                                     <>Aktie hat <span className="font-bold text-emerald-400">+{potentialPct} %</span> Potenzial zum fairen Wert.</>
-                                                ) : potentialPct < 0 ? (
-                                                    <>Aktie ist ca. <span className="font-bold text-rose-400">{Math.abs(overvaluationPct)} %</span> überbewertet.</>
-                                                ) : (
-                                                    'Aktie notiert exakt auf fairem Wert.'
+                                                )}
+                                                {isFairHold && (
+                                                    <>Aktie notiert nahe am fairen Wert. Ideal für <span className="font-bold text-yellow-400">Bestände (Hold)</span>.</>
+                                                )}
+                                                {isRichHold && (
+                                                    <>Gut bezahlt (+{overvaluationPct} % über fairem Wert). Für Bestände: <span className="font-bold text-amber-400">Entspannt halten</span> – aktuell kein Neukauf.</>
+                                                )}
+                                                {isOverheated && (
+                                                    <>Aktie ist ca. <span className="font-bold text-rose-400">{overvaluationPct} %</span> überbewertet. Kein Neukauf.</>
                                                 )}
                                             </div>
                                         </div>
