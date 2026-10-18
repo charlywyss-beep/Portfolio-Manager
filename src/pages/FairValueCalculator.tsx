@@ -1601,7 +1601,11 @@ export function FairValueCalculator() {
                                                 <span className="text-muted-foreground">Langfristiges Wachstum (DCF):</span>
                                                 <span className={cn(
                                                     "font-mono font-bold",
-                                                    calculation.equivalentTerminalGrowth <= 2.0 ? "text-emerald-400" : "text-purple-400"
+                                                    calculation.equivalentTerminalGrowth < 0
+                                                        ? "text-rose-400"
+                                                        : calculation.equivalentTerminalGrowth <= 2.0
+                                                            ? "text-emerald-400"
+                                                            : "text-purple-400"
                                                 )}>
                                                     {calculation.equivalentTerminalGrowth > 0 ? '+' : ''}{calculation.equivalentTerminalGrowth.toFixed(1)} %
                                                 </span>
@@ -1628,8 +1632,14 @@ export function FairValueCalculator() {
                                     </div>
                                     {calculation.equivalentTerminalGrowth !== null && (
                                         <p className="text-[11px] text-muted-foreground/85 mt-1.5 leading-snug">
-                                            💡 <strong>Entspricht {calculation.equivalentTerminalGrowth > 0 ? '+' : ''}{calculation.equivalentTerminalGrowth.toFixed(1)} %</strong> langfristigem Wachstum (Terminal Growth) in DCF-Tools wie DeltaValue.
-                                            {valuationProfile === 'conservative' ? (
+                                            💡 <strong className={calculation.equivalentTerminalGrowth < 0 ? "text-rose-400" : calculation.equivalentTerminalGrowth <= 2.0 ? "text-emerald-400" : "text-purple-400"}>
+                                                Entspricht {calculation.equivalentTerminalGrowth > 0 ? '+' : ''}{calculation.equivalentTerminalGrowth.toFixed(1)} %
+                                            </strong> langfristigem Wachstum (Terminal Growth) in DCF-Tools wie DeltaValue.
+                                            {calculation.equivalentTerminalGrowth < 0 ? (
+                                                <span className="block text-rose-400/90 mt-0.5 font-medium">
+                                                    ⚠️ <em>Negatives Terminal Growth:</em> Ein KGV von {pe} impliziert rechnerisch schrumpfende Dauererträge (z.B. zyklische Talsohle oder Risikoabschlag).
+                                                </span>
+                                            ) : valuationProfile === 'conservative' ? (
                                                 <span className="block text-blue-400/90 mt-0.5 font-medium">
                                                     🛡️ <em>Sichtweise A (Sicherheit):</em> KGV gedeckelt, damit ewiges Wachstum strikt &le; 2,0 % (BIP-Grenze) bleibt.
                                                 </span>
