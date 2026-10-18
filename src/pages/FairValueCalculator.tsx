@@ -1654,8 +1654,8 @@ export function FairValueCalculator() {
                                 {calculation.fairValue > 0 && currentPrice > 0 && (() => {
                                     const fv = calculation.fairValue;
                                     const curP = currentPrice;
-                                    const discountPct = Math.round(((fv - curP) / fv) * 100);
-                                    const potentialPct = Math.round(((fv - curP) / curP) * 100);
+                                    const diffPct = Math.round(((fv - curP) / fv) * 100);
+                                    const potentialPct = curP > 0 ? Math.round(((fv - curP) / curP) * 100) : 0;
                                     const overvaluationPct = Math.round(((curP - fv) / fv) * 100);
 
                                     return (
@@ -1677,12 +1677,12 @@ export function FairValueCalculator() {
                                                 isUndervalued
                                                     ? "text-emerald-400"
                                                     : isFairHold
-                                                        ? "text-yellow-400"
+                                                        ? (diffPct >= 0 ? "text-emerald-400" : "text-yellow-400")
                                                         : isRichHold
                                                             ? "text-amber-400"
                                                             : "text-rose-400"
                                             )}>
-                                                {isUndervalued ? `+${discountPct} %` : `-${overvaluationPct} %`}
+                                                {diffPct > 0 ? `+${diffPct} %` : diffPct < 0 ? `${diffPct} %` : `0 %`}
                                             </div>
                                             <div className="text-xs sm:text-sm font-medium mt-1.5 text-muted-foreground">
                                                 {isUndervalued && (
@@ -1693,7 +1693,15 @@ export function FairValueCalculator() {
                                                 )}
                                                 {isFairHold && (
                                                     <>
-                                                        <div>Aktie notiert nahe am fairen Wert.</div>
+                                                        <div>
+                                                            {diffPct > 0 ? (
+                                                                <>Aktie notiert <span className="font-bold text-emerald-400">+{diffPct} % unter</span> fairem Wert.</>
+                                                            ) : diffPct < 0 ? (
+                                                                <>Aktie notiert <span className="font-bold text-yellow-400">+{Math.abs(diffPct)} % über</span> fairem Wert.</>
+                                                            ) : (
+                                                                <>Aktie notiert exakt auf fairem Wert.</>
+                                                            )}
+                                                        </div>
                                                         <div className="mt-1 text-xs text-muted-foreground/90"><span className="font-bold text-yellow-400">Bestände halten</span>.</div>
                                                     </>
                                                 )}
