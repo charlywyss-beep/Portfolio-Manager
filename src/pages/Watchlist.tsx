@@ -668,13 +668,13 @@ function WatchlistTable({
         <div
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            className="overflow-y-auto max-h-[calc(100dvh-280px)] md:max-h-none w-full border-b border-border snap-y snap-mandatory scroll-pt-[50px] md:snap-none md:scroll-pt-0"
+            className="overflow-y-auto max-h-[calc(100dvh-280px)] md:max-h-[600px] w-full border-b border-border snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
         >
             <table className="w-full text-left border-collapse md:min-w-[1200px] xl:min-w-0 table-fixed">
                 <thead>
                     <tr className="border-b bg-muted/20">
                         {/* 0. Aktie */}
-                        <th className="px-3 md:px-4 py-0 md:py-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider whitespace-normal sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] touch-pan-y align-middle">
+                        <th className="px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] touch-pan-y align-middle">
                             Aktie
                         </th>
 
@@ -932,7 +932,7 @@ function WatchlistTable({
 
                         return (
                             <tr key={stock.id} className="hover:bg-muted/30 transition-colors group snap-start snap-always h-[60px] md:h-auto">
-                                <td className="px-3 py-1.5 md:p-4 h-[60px] md:h-auto sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] overflow-hidden w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] touch-pan-y align-middle">
+                                <td className="px-3 py-1.5 md:p-4 h-[60px] md:h-auto sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] overflow-hidden w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] touch-pan-y align-middle">
                                     <div className="absolute inset-0 bg-card -z-10" />
                                     <div className="flex items-center gap-2 md:gap-3 relative">
                                         <Logo

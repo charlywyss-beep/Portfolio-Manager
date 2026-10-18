@@ -35,29 +35,28 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                     {headerAction && <div className="ml-auto">{headerAction}</div>}
                 </div>
             )}
-            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden overflow-clip">
-                <div className="overflow-x-auto overscroll-x-none">
-
-                    <table className="w-full text-sm text-left">
+            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                <div className="overflow-x-auto overflow-y-auto max-h-[calc(100dvh-280px)] md:max-h-[600px] overscroll-contain">
+                    <table className="w-full text-sm text-left border-collapse">
                         <thead>
-                            <tr className="border-b border-border">
-                                <th className="text-left py-3 px-4 font-semibold min-w-[160px] md:w-[100px] md:max-w-[100px] sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktie</th>
+                            <tr className="border-b border-border bg-muted/20">
+                                <th className="text-left py-3 px-4 font-semibold min-w-[160px] md:w-[100px] md:max-w-[100px] sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">Aktie</th>
 
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Anzahl</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Ø Kauf</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Invest</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Kurs</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Wert</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">%</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">+/-</th>
-                                <th className="text-right py-3 px-2 w-[80px] md:sticky md:-right-px bg-card z-30 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Anzahl</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Ø Kauf</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Invest</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Kurs</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Wert</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">%</th>
+                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">+/-</th>
+                                <th className="text-right py-3 px-2 w-[80px] sticky top-0 md:sticky md:top-0 md:-right-px bg-card z-30 md:z-40 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">Aktion</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
                             {data.map((pos) => {
                                 return (
                                     <tr key={pos.id} className="group hover:bg-muted/30 transition-colors border-b border-border/50 last:border-0 border-l border-r border-transparent hover:border-border/50">
-                                        <td className="px-4 py-3 min-w-[160px] md:w-[100px] md:max-w-[100px] sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <td className="px-4 py-3 min-w-[160px] md:w-[100px] md:max-w-[100px] sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center gap-3">
                                                 <Logo
@@ -216,7 +215,7 @@ export function PositionTable({ title, icon: Icon, data, emptyMessage, setSelect
                                             </div>
                                         </td>
 
-                                        <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] md:sticky md:-right-px z-40 group-hover:bg-muted transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] md:sticky md:-right-px z-10 md:z-20 group-hover:bg-muted transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center justify-center gap-1">
                                                 <button

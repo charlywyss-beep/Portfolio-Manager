@@ -120,7 +120,7 @@ export function WatchlistPerformanceModal({ isOpen, onClose, activeWatchlistId }
                 onClick={() => handleRowClick(stock.id)}
                 className="hover:bg-muted/30 transition-colors cursor-pointer group"
             >
-                <td className="py-4 px-4">
+                <td className="py-4 px-4 sticky left-0 z-10 bg-card group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                     <div className="flex items-center gap-3">
                         <Logo
                             url={stock.logoUrl}
@@ -221,15 +221,15 @@ export function WatchlistPerformanceModal({ isOpen, onClose, activeWatchlistId }
 
                 <div className="overflow-auto p-0 flex-1">
                     <table className="w-full text-xs md:text-sm border-collapse">
-                        <thead className="bg-muted/30 sticky top-0 z-10">
-                            <tr className="border-b border-border">
-                                <th className="text-left py-3 px-4 font-semibold text-muted-foreground uppercase tracking-wider">Aktie</th>
-                                <th className="text-right py-3 px-2 font-semibold text-muted-foreground uppercase tracking-wider">Kurs</th>
-                                <th className="text-right py-3 px-2 font-semibold text-muted-foreground uppercase tracking-wider">Tag %</th>
-                                <th className="text-right py-3 px-2 font-semibold text-muted-foreground uppercase tracking-wider">Tag CHF</th>
-                                <th className="text-right py-3 px-2 font-semibold text-muted-foreground uppercase tracking-wider border-l border-border/50">Kauflimit</th>
-                                <th className="text-right py-3 px-2 font-semibold text-muted-foreground uppercase tracking-wider border-r border-border/50">Gap %</th>
-                                <th className="text-right py-3 px-4 font-semibold text-muted-foreground uppercase tracking-wider bg-blue-500/5">Status Portfolio</th>
+                        <thead>
+                            <tr className="border-b border-border bg-muted/20">
+                                <th className="text-left py-3 px-4 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">Aktie</th>
+                                <th className="text-right py-3 px-2 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 z-30 bg-card align-middle">Kurs</th>
+                                <th className="text-right py-3 px-2 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 z-30 bg-card align-middle">Tag %</th>
+                                <th className="text-right py-3 px-2 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 z-30 bg-card align-middle">Tag CHF</th>
+                                <th className="text-right py-3 px-2 font-semibold text-muted-foreground uppercase tracking-wider border-l border-border/50 sticky top-0 z-30 bg-card align-middle">Kauflimit</th>
+                                <th className="text-right py-3 px-2 font-semibold text-muted-foreground uppercase tracking-wider border-r border-border/50 sticky top-0 z-30 bg-card align-middle">Gap %</th>
+                                <th className="text-right py-3 px-4 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 z-30 bg-card align-middle">Status Portfolio</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border/50">

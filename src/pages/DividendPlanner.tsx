@@ -267,13 +267,13 @@ export function DividendPlanner() {
                 <div
                     onTouchStart={handleTouchStart}
                     onTouchEnd={handleTouchEnd}
-                    className="overflow-y-auto max-h-[calc(100dvh-280px)] md:max-h-none w-full border-b border-border snap-y snap-mandatory scroll-pt-[50px] md:snap-none md:scroll-pt-0"
+                    className="overflow-y-auto max-h-[calc(100dvh-280px)] md:max-h-[600px] w-full border-b border-border snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
                 >
                     <table className="w-full text-left border-collapse md:min-w-[1000px] xl:min-w-0 table-fixed">
                         <thead>
                             <tr className="border-b border-border bg-muted/20">
                                 {/* 0. Aktie */}
-                                <th className="px-3 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider whitespace-normal sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle">
+                                <th className="px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle">
                                     Aktie
                                 </th>
 
@@ -612,7 +612,7 @@ export function DividendPlanner() {
                                     return (
                                         <tr key={position.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group snap-start snap-always h-[60px] md:h-auto">
                                             {/* 0. Aktie */}
-                                            <td className="px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle">
+                                            <td className="px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle">
                                                 <div className="absolute inset-0 bg-card -z-10" />
                                                 <div className="relative flex items-center gap-2 md:gap-3">
                                                     <div
@@ -763,7 +763,7 @@ export function DividendPlanner() {
                                             </td>
 
                                             {/* 9. Aktion */}
-                                            <td className={cn("px-2 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-center md:w-[60px] md:min-w-[60px] md:max-w-[60px] md:sticky md:-right-px bg-card z-20 group-hover:bg-muted/30 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle", mobileColIndex === 8 ? "table-cell" : "hidden md:table-cell")}>
+                                            <td className={cn("px-2 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-center md:w-[60px] md:min-w-[60px] md:max-w-[60px] md:sticky md:-right-px bg-card z-10 group-hover:bg-muted/30 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle", mobileColIndex === 8 ? "table-cell" : "hidden md:table-cell")}>
                                                 <div className="absolute inset-0 bg-card -z-10" />
                                                 <div className="relative flex items-center justify-center">
                                                     <button
@@ -845,18 +845,18 @@ export function DividendPlanner() {
                             <h2 className="text-lg font-semibold">Bank Erträge & Gebühren</h2>
                         </div>
 
-                        <div className="overflow-x-auto overscroll-x-none">
-                            <table className="w-full min-w-[1000px]">
+                        <div className="overflow-x-auto overflow-y-auto max-h-[calc(100dvh-280px)] md:max-h-[500px] overscroll-contain">
+                            <table className="w-full min-w-[1000px] border-collapse">
                                 <thead>
-                                    <tr className="border-b border-border">
-                                        <th className="text-left py-3 px-4 font-semibold sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">Bank / Institut</th>
-                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Betrag</th>
-                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zins %</th>
-                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Ø Monatlich</th>
-                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Frequenz</th>
-                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Quartalsweise</th>
-                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
-                                        <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] md:sticky md:-right-px bg-card z-50 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                    <tr className="border-b border-border bg-muted/20">
+                                        <th className="text-left py-3 px-4 font-semibold sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">Bank / Institut</th>
+                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Betrag</th>
+                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Zins %</th>
+                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Ø Monatlich</th>
+                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Frequenz</th>
+                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Quartalsweise</th>
+                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Jährlich</th>
+                                        <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky top-0 md:sticky md:top-0 md:-right-px bg-card z-30 md:z-40 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">Aktion</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -864,7 +864,7 @@ export function DividendPlanner() {
                                         const isNegative = data.isNegative;
                                         return (
                                             <tr key={data.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group">
-                                                <td className="py-3 px-4 sticky -left-px z-10 bg-card group-hover:bg-muted/50 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <td className="py-3 px-4 sticky left-0 z-10 bg-card group-hover:bg-muted/50 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                     <div className="flex items-center gap-3">
                                                         <Logo
                                                             url={data.logoUrl}
@@ -897,7 +897,7 @@ export function DividendPlanner() {
                                                 <td className={`text-right py-3 px-4 font-semibold whitespace-nowrap ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                                                     {isNegative ? '-' : '+'} CHF {Math.abs(data.annual).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
-                                                <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] md:sticky md:-right-px bg-card z-40 group-hover:bg-muted/50 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] md:sticky md:-right-px bg-card z-10 md:z-20 group-hover:bg-muted/50 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                                     <div className="flex items-center justify-end gap-1">
                                                         <button
                                                             onClick={() => navigate('/portfolio')}

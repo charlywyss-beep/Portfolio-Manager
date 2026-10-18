@@ -37,17 +37,17 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                     <span>Konto hinzufügen</span>
                 </button>
             </div>
-            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden overflow-clip">
-                <div className="overflow-x-auto overscroll-x-none">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
-                            <tr>
-                                <th className="px-4 py-3 sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] lg:w-[250px] min-w-[180px] lg:min-w-[250px] max-w-[180px] lg:max-w-[250px]">Bank / Institut</th>
-                                <th className="px-4 py-3 w-[130px] lg:w-[150px] min-w-[130px] lg:min-w-[150px] max-w-[130px] lg:max-w-[150px]">Konto-Typ</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">Betrag</th>
-                                <th className="px-4 py-3 text-right min-w-[100px]">Zins p.a.</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">Jährlicher Ertrag</th>
-                                <th className="px-1 py-3 text-center md:sticky md:-right-px bg-card z-50 w-[60px] min-w-[60px] max-w-[60px] md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                <div className="overflow-x-auto overflow-y-auto max-h-[calc(100dvh-280px)] md:max-h-[500px] overscroll-contain">
+                    <table className="w-full text-sm text-left border-collapse">
+                        <thead className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">
+                            <tr className="border-b border-border bg-muted/20">
+                                <th className="px-4 py-3 sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] lg:w-[250px] min-w-[180px] lg:min-w-[250px] max-w-[180px] lg:max-w-[250px] align-middle">Bank / Institut</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card w-[130px] lg:w-[150px] min-w-[130px] lg:min-w-[150px] max-w-[130px] lg:max-w-[150px] align-middle">Konto-Typ</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card text-right whitespace-nowrap min-w-[120px] align-middle">Betrag</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card text-right min-w-[100px] align-middle">Zins p.a.</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card text-right whitespace-nowrap min-w-[120px] align-middle">Jährlicher Ertrag</th>
+                                <th className="px-1 py-3 sticky top-0 md:sticky md:top-0 md:-right-px text-center bg-card z-30 md:z-40 w-[60px] min-w-[60px] max-w-[60px] md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">Aktion</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -67,7 +67,7 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
 
                                 return (
                                     <tr key={fd.id} className="group hover:bg-muted/30 transition-colors">
-                                        <td className="px-4 py-3 font-medium sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <td className="px-4 py-3 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center gap-3">
                                                 <Logo
@@ -110,7 +110,7 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                                             isNegative ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"
                                         )}>    {isNegative ? '-' : '+'}CHF {Math.abs(netAnnualReturn).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </td>
-                                        <td className="px-1 py-3 w-[60px] min-w-[60px] max-w-[60px] md:sticky md:-right-px z-40 group-hover:bg-muted/30 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <td className="px-1 py-3 w-[60px] min-w-[60px] max-w-[60px] md:sticky md:-right-px z-10 md:z-20 group-hover:bg-muted/30 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center justify-center gap-1">
                                                 <button
