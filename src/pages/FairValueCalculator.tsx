@@ -1376,13 +1376,18 @@ export function FairValueCalculator() {
                                             <span>Qualität (B)</span>
                                         </button>
                                     </div>
-                                    <div className="flex flex-col items-center justify-center text-center py-2.5 px-4 rounded-xl bg-muted/40 border border-border/60">
+                                    <div className="flex flex-col items-center justify-center text-center py-2 px-3 rounded-xl bg-muted/40 border border-border/60">
                                         <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-0.5">
                                             Aktueller Kurs
                                         </div>
-                                        <div className="font-mono font-extrabold text-xl sm:text-2xl text-foreground whitespace-nowrap">
-                                            {formatCurrency(quote.price || 0, quote.currency || 'USD')}
+                                        <div className="font-mono font-bold text-base sm:text-lg text-foreground whitespace-nowrap leading-tight">
+                                            {formatCurrency(quote.price || 0, quote.currency || 'USD', false)}
                                         </div>
+                                        {quote.currency && quote.currency !== 'CHF' && (
+                                            <div className="font-mono text-xs sm:text-sm font-semibold text-muted-foreground mt-0.5 whitespace-nowrap leading-tight">
+                                                {formatCurrency(quote.price || 0, quote.currency || 'USD').split(' - ')[1]}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
