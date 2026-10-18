@@ -1,13 +1,13 @@
 // Shared Fair Value calculation and Smart Auto-Parameter helpers
 
 export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number; pe: number; div?: number; mos?: number; label: string }> = {
-    'AMZN': { eps: 12.50, growth: 12.0, pe: 22.0, div: 0, mos: 15, label: 'TTM Bereinigt (Analysten)' },
-    'MSFT': { eps: 17.95, growth: 13.0, pe: 22.0, div: 0.79, mos: 15, label: 'TTM Bereinigt (Analysten)' },
+    'AMZN': { eps: 12.50, growth: 12.0, pe: 20.0, div: 0, mos: 15, label: 'TTM Bereinigt (Analysten)' },
+    'MSFT': { eps: 17.95, growth: 13.0, pe: 20.0, div: 0.79, mos: 15, label: 'TTM Bereinigt (Analysten)' },
     'KHC': { eps: 2.60, growth: 2.0, pe: 11.5, div: 6.8, mos: 20, label: 'Operativ / Bereinigt' },
     'BATS.L': { eps: 3.62, growth: 3.0, pe: 11.5, mos: 20, label: 'Bereinigt (Adj. EPS)' },
     'BTI': { eps: 4.65, growth: 3.0, pe: 11.5, mos: 20, label: 'Bereinigt (Adj. EPS)' },
-    'NESN.SW': { eps: 4.60, growth: 5.0, pe: 20.0, mos: 15, label: 'Bereinigt (Underlying)' },
-    'NESN': { eps: 4.60, growth: 5.0, pe: 20.0, mos: 15, label: 'Bereinigt (Underlying)' },
+    'NESN.SW': { eps: 4.60, growth: 5.0, pe: 17.0, mos: 15, label: 'Bereinigt (Underlying)' },
+    'NESN': { eps: 4.60, growth: 5.0, pe: 17.0, mos: 15, label: 'Bereinigt (Underlying)' },
     'ROG.SW': { eps: 18.80, growth: 5.5, pe: 16.5, mos: 15, label: 'Core EPS (Bereinigt)' },
     'NOVN.SW': { eps: 6.80, growth: 5.5, pe: 16.0, mos: 15, label: 'Core EPS (Bereinigt)' },
     'O': { eps: 4.20, growth: 3.5, pe: 15.0, mos: 15, label: 'AFFO (Cashflow)' },
@@ -148,10 +148,29 @@ export function computeSmartAutoParams(qData: any, aData: any, stockObj: any, sy
         rawExitPe = price / autoEps;
     }
 
-    const ruleOneMax = Math.max(isWideMoat ? 22 : 20, Math.min(22, autoGrowth * 2));
-    const maxSensibleExitPe = (autoDiv >= 5.0 && effectivePe < 14)
-        ? Math.min(13.0, effectivePe)
-        : Math.min(isWideMoat ? 22.0 : (autoGrowth >= 9 ? 20.0 : 18.0), isWideMoat ? Math.max(22.0, ruleOneMax) : ruleOneMax);
+    // 4. Smart Exit P/E (Verkaufs-KGV in 5J) - strictly capped so Terminal Growth never exceeds 2.0%
+    let maxSensibleExitPe = 20.0;
+    if (autoDiv >= 4.8) {
+        // High dividend / mature value (e.g. Tobacco, Utilities, Kraft Heinz) -> Terminal Growth 0.5% - 1.0%
+        maxSensibleExitPe = Math.min(13.0, Math.max(10.0, effectivePe < 14 ? effectivePe : 12.0));
+    } else if (autoDiv >= 3.0) {
+        // Classic mature defensive dividend stock (e.g. Nestlé, Roche, Novartis, Coca-Cola) -> Terminal Growth 1.0% - 1.5%
+        maxSensibleExitPe = Math.min(17.0, Math.max(14.0, effectivePe < 18 ? effectivePe : 16.5));
+    } else if (autoDiv >= 1.5) {
+        // Quality dividend compounder (e.g. Pepsi, P&G, McD) -> Terminal Growth ~1.5%
+        maxSensibleExitPe = Math.min(18.5, Math.max(15.0, effectivePe < 20 ? effectivePe : 18.0));
+    } else if (isWideMoat || (effectivePe > 24 && autoDiv < 1.5)) {
+        // Quality Tech / Growth (e.g. Microsoft, Amazon, Google) -> Terminal Growth strictly <= 2.0%
+        maxSensibleExitPe = 20.0;
+    } else {
+        // Standard profile
+        maxSensibleExitPe = Math.min(18.0, Math.max(14.0, effectivePe));
+    }
+
+    if (preset) {
+        rawExitPe = preset.pe;
+    }
+
     const autoPe = parseFloat((Math.round(Math.min(Math.max(rawExitPe, 8), maxSensibleExitPe) * 2) / 2).toFixed(1));
 
     // 5. Smart Margin of Safety (15% for Swiss / defensive / wide-moat quality blue-chips, 20% standard)

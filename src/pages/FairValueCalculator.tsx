@@ -238,15 +238,19 @@ export function FairValueCalculator() {
         if (symUpper === 'BATS.L' && Number(params.growthRate) === 2 && Number(params.pe) === 13.5) {
             return true;
         }
-        // Upgrade previously auto-populated Amazon (EPS ~7.17, or older PE 20 / Growth 10, or previous 14% / PE 28)
+        // Upgrade previously auto-populated Nestlé (PE > 17.5)
+        if (symUpper === 'NESN.SW' || symUpper === 'NESN') {
+            if (Number(params.pe) > 17.5) return true;
+        }
+        // Upgrade previously auto-populated Amazon (PE > 20.5)
         if (symUpper === 'AMZN') {
-            if (Math.abs(Number(params.eps) - 7.17) < 0.2 || (Number(params.pe) === 20 && Number(params.growthRate) <= 10) || (Number(params.pe) === 28 && Number(params.growthRate) === 14)) {
+            if (Number(params.pe) > 20.5 || Math.abs(Number(params.eps) - 7.17) < 0.2) {
                 return true;
             }
         }
-        // Upgrade previously auto-populated Microsoft (PE > 24 to realistic PE 22 / 2% terminal growth)
+        // Upgrade previously auto-populated Microsoft (PE > 20.5)
         if (symUpper === 'MSFT') {
-            if (Number(params.pe) > 24) {
+            if (Number(params.pe) > 20.5) {
                 return true;
             }
         }
@@ -708,7 +712,7 @@ export function FairValueCalculator() {
 
         const futureEps = valEps * Math.pow(1 + valGrowth / 100, 5);
         const isWideMoatStock = WIDE_MOAT_QUALITY.has((selectedSymbol || '').toUpperCase());
-        const ruleOneLimit = Math.max(isWideMoatStock ? 22 : 20, Math.min(22, valGrowth * 2)); // Limit of 22 for realistic <= 2.0% terminal growth
+        const ruleOneLimit = Math.max(isWideMoatStock ? 20 : 18, Math.min(20, valGrowth * 2)); // Strict cap at 20 for <= 2.0% terminal growth
         const exitPe = valPe; // Remove hard cap, use user input directly
         const futurePrice = futureEps * exitPe;
 
