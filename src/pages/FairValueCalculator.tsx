@@ -1055,7 +1055,7 @@ export function FairValueCalculator() {
             )}
 
             {/* Header */}
-            <div className="sticky top-0 z-40 bg-background/95 backdrop-blur -mx-3 sm:-mx-4 px-3 sm:px-4 py-3 -mt-4 lg:static lg:m-0 lg:p-0 lg:pb-2 lg:bg-transparent flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-6 border-b border-border">
+            <div className="sticky top-0 z-40 bg-background/95 backdrop-blur -mx-3 sm:-mx-4 md:-mx-6 px-3 sm:px-4 md:px-6 py-3 -mt-4 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-6 border-b border-border shadow-sm">
                 <div className="flex items-center justify-between gap-2 pl-11 lg:pl-0">
                     <div className="flex items-center gap-3 min-w-0">
                         <div className="size-9 sm:size-12 rounded-xl sm:rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner shrink-0">
@@ -1307,79 +1307,77 @@ export function FairValueCalculator() {
                         <div className="space-y-6">
                             <div className="bg-card border border-border rounded-xl p-4 sm:p-6 shadow-sm space-y-6">
                                 <div className="space-y-3 pb-4 border-b border-border">
-                                    <div className="flex flex-wrap items-center justify-between gap-2">
-                                        <div className="flex items-center gap-1.5 flex-wrap shrink-0">
-                                            <h2 className="text-base sm:text-lg font-semibold flex items-center gap-1.5 shrink-0 mr-1">
-                                                <span className="size-2 rounded-full bg-blue-500 shrink-0" />
-                                                Parameter
-                                            </h2>
-                                            <div className="inline-flex items-center rounded-lg border border-border/80 p-0.5 bg-muted/40 shrink-0 gap-0.5">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <h2 className="text-base sm:text-lg font-semibold flex items-center gap-1.5 shrink-0">
+                                            <span className="size-2 rounded-full bg-blue-500 shrink-0" />
+                                            Parameter
+                                        </h2>
+                                        {isSavedForStock ? (
+                                            <span className="inline-flex items-center gap-1 text-xs font-semibold pl-2 pr-1 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 whitespace-nowrap shrink-0">
+                                                <Check className="size-3 shrink-0" />
+                                                <span>Manuell</span>
                                                 <button
                                                     type="button"
-                                                    onClick={() => applyAutoValues('conservative')}
-                                                    className={cn(
-                                                        "flex items-center gap-1 text-[11px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-md transition-all whitespace-nowrap",
-                                                        !isSavedForStock && valuationProfile === 'conservative'
-                                                            ? "bg-blue-600 text-white shadow-sm font-semibold"
-                                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/80 font-medium"
-                                                    )}
-                                                    title="Sichtweise A: Auto Sicherheit (KGV max. 20, Terminal Growth ≤ 2.0 %, Buffett-Baseline)"
+                                                    onClick={clearManualValues}
+                                                    className="ml-0.5 p-0.5 rounded hover:bg-rose-500/30 text-emerald-300/80 hover:text-rose-200 transition-colors"
+                                                    title="Manuelle Eingabe löschen und auf Auto-Werte zurücksetzen"
                                                 >
-                                                    <ShieldCheck className="size-3.5 shrink-0" />
-                                                    <span><span className="hidden xl:inline">Auto </span>Sicherheit (A)</span>
+                                                    <X className="size-3 shrink-0" />
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => applyAutoValues('quality')}
-                                                    className={cn(
-                                                        "flex items-center gap-1 text-[11px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-md transition-all whitespace-nowrap",
-                                                        !isSavedForStock && valuationProfile === 'quality'
-                                                            ? "bg-purple-600 text-white shadow-sm font-semibold"
-                                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/80 font-medium"
-                                                    )}
-                                                    title="Sichtweise B: Auto Qualität (Historische Qualitätsbewertung KGV bis 25 für Wide-Moat Compounder)"
-                                                >
-                                                    <Sparkles className="size-3.5 shrink-0" />
-                                                    <span><span className="hidden xl:inline">Auto </span>Qualität (B)</span>
-                                                </button>
-                                            </div>
-                                            {isSavedForStock ? (
-                                                <span className="inline-flex items-center gap-1 text-xs font-semibold pl-2 pr-1 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 whitespace-nowrap shrink-0">
-                                                    <Check className="size-3 shrink-0" />
-                                                    <span>Manuell</span>
+                                            </span>
+                                        ) : (
+                                            getCustomBackupForSymbol(selectedSymbol) && (
+                                                <div className="inline-flex items-center rounded-lg bg-emerald-600/20 border border-emerald-400/30 whitespace-nowrap shrink-0 overflow-hidden">
+                                                    <button
+                                                        type="button"
+                                                        onClick={restoreManualValues}
+                                                        className="flex items-center gap-1 text-xs font-semibold pl-2 pr-1.5 py-1 hover:bg-emerald-600/35 text-emerald-300 transition-colors"
+                                                        title="Deine zuvor manuell eingegebenen Werte für diese Aktie wiederherstellen"
+                                                    >
+                                                        <Check className="size-3 shrink-0" />
+                                                        <span>Manuell</span>
+                                                    </button>
                                                     <button
                                                         type="button"
                                                         onClick={clearManualValues}
-                                                        className="ml-0.5 p-0.5 rounded hover:bg-rose-500/30 text-emerald-300/80 hover:text-rose-200 transition-colors"
-                                                        title="Manuelle Eingabe löschen und auf Auto-Werte zurücksetzen"
+                                                        className="px-1.5 py-1 hover:bg-rose-500/30 text-emerald-300/80 hover:text-rose-200 border-l border-emerald-400/25 transition-colors"
+                                                        title="Gespeicherte manuelle Eingabe löschen"
                                                     >
                                                         <X className="size-3 shrink-0" />
                                                     </button>
-                                                </span>
-                                            ) : (
-                                                getCustomBackupForSymbol(selectedSymbol) && (
-                                                    <div className="inline-flex items-center rounded-lg bg-emerald-600/20 border border-emerald-400/30 whitespace-nowrap shrink-0 overflow-hidden">
-                                                        <button
-                                                            type="button"
-                                                            onClick={restoreManualValues}
-                                                            className="flex items-center gap-1 text-xs font-semibold pl-2 pr-1.5 py-1 hover:bg-emerald-600/35 text-emerald-300 transition-colors"
-                                                            title="Deine zuvor manuell eingegebenen Werte für diese Aktie wiederherstellen"
-                                                        >
-                                                            <Check className="size-3 shrink-0" />
-                                                            <span>Manuell</span>
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={clearManualValues}
-                                                            className="px-1.5 py-1 hover:bg-rose-500/30 text-emerald-300/80 hover:text-rose-200 border-l border-emerald-400/25 transition-colors"
-                                                            title="Gespeicherte manuelle Eingabe löschen"
-                                                        >
-                                                            <X className="size-3 shrink-0" />
-                                                        </button>
-                                                    </div>
-                                                )
+                                                </div>
+                                            )
+                                        )}
+                                    </div>
+                                    <div className="grid grid-cols-2 rounded-lg border border-border/80 p-0.5 bg-muted/40 gap-1 w-full">
+                                        <button
+                                            type="button"
+                                            onClick={() => applyAutoValues('conservative')}
+                                            className={cn(
+                                                "flex items-center justify-center gap-1 text-xs px-2.5 py-1.5 rounded-md transition-all whitespace-nowrap font-medium",
+                                                !isSavedForStock && valuationProfile === 'conservative'
+                                                    ? "bg-blue-600 text-white shadow-sm font-semibold"
+                                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
                                             )}
-                                        </div>
+                                            title="Sichtweise A: Auto Sicherheit (KGV max. 20, Terminal Growth ≤ 2.0 %, Buffett-Baseline)"
+                                        >
+                                            <ShieldCheck className="size-3.5 shrink-0" />
+                                            <span>Sicherheit (A)</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => applyAutoValues('quality')}
+                                            className={cn(
+                                                "flex items-center justify-center gap-1 text-xs px-2.5 py-1.5 rounded-md transition-all whitespace-nowrap font-medium",
+                                                !isSavedForStock && valuationProfile === 'quality'
+                                                    ? "bg-purple-600 text-white shadow-sm font-semibold"
+                                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                                            )}
+                                            title="Sichtweise B: Auto Qualität (Historische Qualitätsbewertung KGV bis 25 für Wide-Moat Compounder)"
+                                        >
+                                            <Sparkles className="size-3.5 shrink-0" />
+                                            <span>Qualität (B)</span>
+                                        </button>
                                     </div>
                                     <div className="flex flex-col items-center justify-center text-center py-2.5 px-4 rounded-xl bg-muted/40 border border-border/60">
                                         <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-0.5">
