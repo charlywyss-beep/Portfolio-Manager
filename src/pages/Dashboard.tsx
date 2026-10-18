@@ -23,11 +23,20 @@ import { fetchHistoricalClose } from '../services/yahoo-finance';
 
 // Helper to translate frequency to German
 const translateFrequency = (freq?: string) => {
-    switch (freq) {
-        case 'quarterly': return 'Quartalsweise';
-        case 'semi-annually': return 'Halbjährlich';
-        case 'annually': return 'Jährlich';
-        case 'monthly': return 'Monatlich';
+    switch (freq?.toLowerCase()) {
+        case 'quarterly':
+        case 'quartalsweise':
+        case 'im quartal':
+            return 'im Quartal';
+        case 'semi-annually':
+        case 'halbjährlich':
+            return 'Halbjährlich';
+        case 'annually':
+        case 'jährlich':
+            return 'Jährlich';
+        case 'monthly':
+        case 'monatlich':
+            return 'Monatlich';
         default: return 'Jährlich';
     }
 };
@@ -602,13 +611,13 @@ export function Dashboard() {
                                                         </span>
                                                     </div>
 
-                                                    {/* Betrag */}
+                                                    {/* Betrag (USD & CHF exakt gleich gross) */}
                                                     <div className="text-right shrink-0">
-                                                        <div className="font-bold text-xs sm:text-sm text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
+                                                        <div className="font-bold text-xs text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
                                                             {formatCurrency(div.amount, div.currency, false)}
                                                         </div>
                                                         {div.currency !== 'CHF' && (
-                                                            <div className="font-bold text-[11px] sm:text-xs text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
+                                                            <div className="font-bold text-xs text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
                                                                 {formatCurrency(convertToCHF(div.amount, div.currency), 'CHF', false)}
                                                             </div>
                                                         )}
@@ -641,7 +650,7 @@ export function Dashboard() {
                                                         </div>
                                                     </div>
 
-                                                    <p className="text-[10px] sm:text-xs font-medium text-muted-foreground whitespace-nowrap shrink-0">
+                                                    <p className="text-[10px] sm:text-xs font-medium text-muted-foreground whitespace-nowrap shrink-0 pl-2 text-right">
                                                         {translateFrequency(div.stock.dividendFrequency)}
                                                     </p>
                                                 </div>
@@ -766,7 +775,7 @@ export function Dashboard() {
                                                             </div>
 
                                                             {item.stock.dividendFrequency && (
-                                                                <p className="text-[10px] sm:text-xs font-medium text-muted-foreground whitespace-nowrap shrink-0">
+                                                                <p className="text-[10px] sm:text-xs font-medium text-muted-foreground whitespace-nowrap shrink-0 pl-2 text-right">
                                                                     {translateFrequency(item.stock.dividendFrequency)}
                                                                 </p>
                                                             )}
