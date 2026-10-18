@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Calendar, TrendingUp, Edit, Trash2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, TrendingUp, Edit, Trash2, RefreshCw, ChevronLeft, ChevronRight, Landmark } from 'lucide-react';
 import { Logo } from '../components/Logo';
 import { cn } from '../utils';
 import { useState, useEffect, useRef } from 'react';
@@ -48,6 +48,42 @@ export function DividendPlanner() {
             }
         }
         touchStartRef.current = null;
+    };
+
+    // Bank Erträge: 0: Betrag, 1: Zins %, 2: Ø Monatlich, 3: Frequenz, 4: Quartalsweise, 5: Jährlich, 6: Aktion
+    const [mobileBankColIndex, setMobileBankColIndex] = useState(2); // Default: Ø Monatlich
+    const bankTouchStartRef = useRef<{ x: number; y: number; time: number; isStockCol: boolean } | null>(null);
+
+    const handleBankTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+        const touch = e.touches[0];
+        const isStockCol = !!(e.target as HTMLElement)?.closest('th:first-child, td:first-child');
+        bankTouchStartRef.current = {
+            x: touch.clientX,
+            y: touch.clientY,
+            time: Date.now(),
+            isStockCol
+        };
+    };
+
+    const handleBankTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+        if (!bankTouchStartRef.current || bankTouchStartRef.current.isStockCol) {
+            bankTouchStartRef.current = null;
+            return;
+        }
+        const touch = e.changedTouches[0];
+        const dx = touch.clientX - bankTouchStartRef.current.x;
+        const dy = touch.clientY - bankTouchStartRef.current.y;
+        const dt = Date.now() - bankTouchStartRef.current.time;
+
+        // Horizontal swipe: only when touch started to the right of the first column (> 140px)
+        if (bankTouchStartRef.current.x > 140 && Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy) * 1.2 && dt < 700) {
+            if (dx < 0) {
+                setMobileBankColIndex((i) => Math.min(6, i + 1));
+            } else {
+                setMobileBankColIndex((i) => Math.max(0, i - 1));
+            }
+        }
+        bankTouchStartRef.current = null;
     };
 
     // Calculate projected dividends from yield
@@ -300,57 +336,49 @@ export function DividendPlanner() {
             </div>
 
             {/* Tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 shrink-0">
+            <div className={cn(
+                "grid gap-1.5 pb-1 shrink-0",
+                bankRows.length > 0 ? "grid-cols-3" : "grid-cols-2"
+            )}>
                 <button
                     onClick={() => setActiveDivTab('dividends')}
                     className={cn(
-                        "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all border shadow-sm shrink-0",
+                        "flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all border shadow-sm truncate",
                         activeDivTab === 'dividends'
                             ? "bg-primary text-primary-foreground border-primary"
                             : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
                     )}
                 >
-                    <TrendingUp className="size-4" />
-                    <span>Dividenden</span>
-                    <span className={cn(
-                        "text-xs px-1.5 py-0.5 rounded-full font-mono",
-                        activeDivTab === 'dividends' ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
-                    )}>
-                        {projectedDividends.length}
-                    </span>
+                    <TrendingUp className="size-3.5 sm:size-4 shrink-0" />
+                    <span className="truncate">Dividenden</span>
                 </button>
 
                 {bankRows.length > 0 && (
                     <button
                         onClick={() => setActiveDivTab('bank')}
                         className={cn(
-                            "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all border shadow-sm shrink-0",
+                            "flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all border shadow-sm truncate",
                             activeDivTab === 'bank'
                                 ? "bg-primary text-primary-foreground border-primary"
                                 : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
                         )}
                     >
-                        <span>Bank-Erträge</span>
-                        <span className={cn(
-                            "text-xs px-1.5 py-0.5 rounded-full font-mono",
-                            activeDivTab === 'bank' ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
-                        )}>
-                            {bankRows.length}
-                        </span>
+                        <Landmark className="size-3.5 sm:size-4 shrink-0" />
+                        <span className="truncate">Bank-Erträge</span>
                     </button>
                 )}
 
                 <button
                     onClick={() => setActiveDivTab('calendar')}
                     className={cn(
-                        "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all border shadow-sm shrink-0",
+                        "flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all border shadow-sm truncate",
                         activeDivTab === 'calendar'
                             ? "bg-primary text-primary-foreground border-primary"
                             : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
                     )}
                 >
-                    <Calendar className="size-4" />
-                    <span>Monats-Kalender</span>
+                    <Calendar className="size-3.5 sm:size-4 shrink-0" />
+                    <span className="truncate">Monatlich</span>
                 </button>
             </div>
 
@@ -902,18 +930,235 @@ export function DividendPlanner() {
                         <h2 className="text-base md:text-lg font-semibold">Bank Erträge & Gebühren</h2>
                     </div>
 
-                    <div className="overflow-y-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0">
-                        <table className="w-full text-xs md:text-sm border-collapse md:min-w-[1000px]">
+                    <div
+                        onTouchStart={handleBankTouchStart}
+                        onTouchEnd={handleBankTouchEnd}
+                        className="overflow-y-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
+                    >
+                        <table className="w-full text-xs md:text-sm border-collapse table-fixed md:table-auto">
                             <thead>
                                 <tr className="border-b border-border bg-muted/20">
-                                    <th className="text-left py-3 px-4 font-semibold sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">Bank / Institut</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Betrag</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Zins %</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Ø Monatlich</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Frequenz</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Quartalsweise</th>
-                                    <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Jährlich</th>
-                                    <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky top-0 md:sticky md:-right-px bg-card z-30 md:z-40 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">Aktion</th>
+                                    {/* 0. Bank / Institut */}
+                                    <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle">
+                                        Bank / Institut
+                                    </th>
+
+                                    {/* 1. Betrag */}
+                                    <th
+                                        className={cn(
+                                            "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                            mobileBankColIndex === 0 ? "table-cell" : "hidden md:table-cell"
+                                        )}
+                                    >
+                                        <div className="flex md:hidden items-center justify-between w-full h-12">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.max(0, i - 1)); }}
+                                                disabled={mobileBankColIndex === 0}
+                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            >
+                                                <ChevronLeft className="size-4" />
+                                            </button>
+                                            <span className="whitespace-nowrap text-center flex-1 px-1">
+                                                Betrag
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.min(6, i + 1)); }}
+                                                disabled={mobileBankColIndex === 6}
+                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            >
+                                                <ChevronRight className="size-4" />
+                                            </button>
+                                        </div>
+                                        <span className="hidden md:inline">Betrag</span>
+                                    </th>
+
+                                    {/* 2. Zins % */}
+                                    <th
+                                        className={cn(
+                                            "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                            mobileBankColIndex === 1 ? "table-cell" : "hidden md:table-cell"
+                                        )}
+                                    >
+                                        <div className="flex md:hidden items-center justify-between w-full h-12">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.max(0, i - 1)); }}
+                                                disabled={mobileBankColIndex === 0}
+                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            >
+                                                <ChevronLeft className="size-4" />
+                                            </button>
+                                            <span className="whitespace-nowrap text-center flex-1 px-1">
+                                                Zins %
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.min(6, i + 1)); }}
+                                                disabled={mobileBankColIndex === 6}
+                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            >
+                                                <ChevronRight className="size-4" />
+                                            </button>
+                                        </div>
+                                        <span className="hidden md:inline">Zins %</span>
+                                    </th>
+
+                                    {/* 3. Ø Monatlich */}
+                                    <th
+                                        className={cn(
+                                            "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                            mobileBankColIndex === 2 ? "table-cell" : "hidden md:table-cell"
+                                        )}
+                                    >
+                                        <div className="flex md:hidden items-center justify-between w-full h-12">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.max(0, i - 1)); }}
+                                                disabled={mobileBankColIndex === 0}
+                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            >
+                                                <ChevronLeft className="size-4" />
+                                            </button>
+                                            <span className="whitespace-nowrap text-center flex-1 px-1">
+                                                Ø Monatlich
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.min(6, i + 1)); }}
+                                                disabled={mobileBankColIndex === 6}
+                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            >
+                                                <ChevronRight className="size-4" />
+                                            </button>
+                                        </div>
+                                        <span className="hidden md:inline">Ø Monatlich</span>
+                                    </th>
+
+                                    {/* 4. Frequenz */}
+                                    <th
+                                        className={cn(
+                                            "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                            mobileBankColIndex === 3 ? "table-cell" : "hidden md:table-cell"
+                                        )}
+                                    >
+                                        <div className="flex md:hidden items-center justify-between w-full h-12">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.max(0, i - 1)); }}
+                                                disabled={mobileBankColIndex === 0}
+                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            >
+                                                <ChevronLeft className="size-4" />
+                                            </button>
+                                            <span className="whitespace-nowrap text-center flex-1 px-1">
+                                                Frequenz
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.min(6, i + 1)); }}
+                                                disabled={mobileBankColIndex === 6}
+                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            >
+                                                <ChevronRight className="size-4" />
+                                            </button>
+                                        </div>
+                                        <span className="hidden md:inline">Frequenz</span>
+                                    </th>
+
+                                    {/* 5. Quartalsweise */}
+                                    <th
+                                        className={cn(
+                                            "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                            mobileBankColIndex === 4 ? "table-cell" : "hidden md:table-cell"
+                                        )}
+                                    >
+                                        <div className="flex md:hidden items-center justify-between w-full h-12">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.max(0, i - 1)); }}
+                                                disabled={mobileBankColIndex === 0}
+                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            >
+                                                <ChevronLeft className="size-4" />
+                                            </button>
+                                            <span className="whitespace-nowrap text-center flex-1 px-1">
+                                                Quartalsweise
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.min(6, i + 1)); }}
+                                                disabled={mobileBankColIndex === 6}
+                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            >
+                                                <ChevronRight className="size-4" />
+                                            </button>
+                                        </div>
+                                        <span className="hidden md:inline">Quartalsweise</span>
+                                    </th>
+
+                                    {/* 6. Jährlich */}
+                                    <th
+                                        className={cn(
+                                            "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                            mobileBankColIndex === 5 ? "table-cell" : "hidden md:table-cell"
+                                        )}
+                                    >
+                                        <div className="flex md:hidden items-center justify-between w-full h-12">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.max(0, i - 1)); }}
+                                                disabled={mobileBankColIndex === 0}
+                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            >
+                                                <ChevronLeft className="size-4" />
+                                            </button>
+                                            <span className="whitespace-nowrap text-center flex-1 px-1">
+                                                Jährlich
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.min(6, i + 1)); }}
+                                                disabled={mobileBankColIndex === 6}
+                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            >
+                                                <ChevronRight className="size-4" />
+                                            </button>
+                                        </div>
+                                        <span className="hidden md:inline">Jährlich</span>
+                                    </th>
+
+                                    {/* 7. Aktion */}
+                                    <th
+                                        className={cn(
+                                            "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:w-[60px] md:min-w-[60px] md:max-w-[60px] sticky top-0 md:sticky md:-right-px bg-card z-30 md:z-40 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle",
+                                            mobileBankColIndex === 6 ? "table-cell" : "hidden md:table-cell"
+                                        )}
+                                    >
+                                        <div className="flex md:hidden items-center justify-between w-full h-12">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.max(0, i - 1)); }}
+                                                disabled={mobileBankColIndex === 0}
+                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            >
+                                                <ChevronLeft className="size-4" />
+                                            </button>
+                                            <span className="whitespace-nowrap text-center flex-1 px-1">
+                                                Aktion
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.min(6, i + 1)); }}
+                                                disabled={mobileBankColIndex === 6}
+                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            >
+                                                <ChevronRight className="size-4" />
+                                            </button>
+                                        </div>
+                                        <span className="hidden md:inline">Aktion</span>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -921,7 +1166,8 @@ export function DividendPlanner() {
                                     const isNegative = data.isNegative;
                                     return (
                                         <tr key={data.id} className="border-b border-border/50 last:border-0 hover:bg-muted/50 transition-colors group snap-start snap-always h-[60px] md:h-auto">
-                                            <td className="py-3 px-4 sticky left-0 z-20 bg-card group-hover:bg-muted/50 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] h-[60px] md:h-auto align-middle">
+                                            <td className="px-3 py-1.5 md:py-3 md:px-4 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] h-[60px] md:h-auto align-middle w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px]">
+                                                    <div className="absolute inset-0 bg-card -z-10" />
                                                     <div className="flex items-center gap-3">
                                                         <Logo
                                                             url={data.logoUrl}
@@ -929,32 +1175,32 @@ export function DividendPlanner() {
                                                             fallback="BK"
                                                         />
                                                         <div>
-                                                            <div className="font-semibold">{data.name}</div>
-                                                            <div className={`text-xs font-medium ${isNegative ? 'text-red-500' : 'text-green-600'}`}>
+                                                            <div className="font-semibold text-xs md:text-sm">{data.name}</div>
+                                                            <div className={`text-[10px] md:text-xs font-medium ${isNegative ? 'text-red-500' : 'text-green-600'}`}>
                                                                 {isNegative ? 'Konto-Gebühren' : 'Bank-Zinsen'}
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="text-right py-3 px-4 font-medium whitespace-nowrap">
+                                                <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right font-medium whitespace-nowrap align-middle", mobileBankColIndex === 0 ? "table-cell" : "hidden md:table-cell")}>
                                                     CHF {data.depositAmount?.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground">
+                                                <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right text-muted-foreground align-middle", mobileBankColIndex === 1 ? "table-cell" : "hidden md:table-cell")}>
                                                     {data.yield > 0 ? `${data.yield.toFixed(2)}%` : '-'}
                                                 </td>
-                                                <td className={`text-right py-3 px-4 font-medium whitespace-nowrap ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                                <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right font-medium whitespace-nowrap align-middle", mobileBankColIndex === 2 ? "table-cell" : "hidden md:table-cell", isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400')}>
                                                     {isNegative ? '-' : '+'} {Math.abs(data.annual / 12).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                                 </td>
-                                                <td className="text-right py-3 px-4 text-muted-foreground">
+                                                <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right text-muted-foreground align-middle", mobileBankColIndex === 3 ? "table-cell" : "hidden md:table-cell")}>
                                                     Jährlich
                                                 </td>
-                                                <td className={`text-right py-3 px-4 font-medium whitespace-nowrap ${isNegative ? 'text-red-600/70' : 'text-green-600/70'}`}>
+                                                <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right font-medium whitespace-nowrap align-middle", mobileBankColIndex === 4 ? "table-cell" : "hidden md:table-cell", isNegative ? 'text-red-600/70' : 'text-green-600/70')}>
                                                     {isNegative ? '-' : '+'} CHF {Math.abs(data.quarterly).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
-                                                <td className={`text-right py-3 px-4 font-semibold whitespace-nowrap ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                                <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right font-semibold whitespace-nowrap align-middle", mobileBankColIndex === 5 ? "table-cell" : "hidden md:table-cell", isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400')}>
                                                     {isNegative ? '-' : '+'} CHF {Math.abs(data.annual).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
-                                                <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] md:sticky md:-right-px bg-card z-10 md:z-20 group-hover:bg-muted/50 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                                <td className={cn("px-2 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-center md:w-[60px] md:min-w-[60px] md:max-w-[60px] md:sticky md:-right-px bg-card z-10 md:z-20 group-hover:bg-muted/50 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle", mobileBankColIndex === 6 ? "table-cell" : "hidden md:table-cell")}>
                                                     <div className="flex items-center justify-end gap-1">
                                                         <button
                                                             onClick={() => navigate('/portfolio')}
