@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCurrencyFormatter } from '../utils/currency';
 
 import { getCurrentDividendPeriod, translateFrequency } from '../utils/dividend';
-import { Eye, Plus, Trash2, Edit, ShoppingBag, RefreshCw, TrendingUp, ChevronDown, ChevronRight, ChevronLeft, PieChart } from 'lucide-react';
+import { Eye, Plus, Trash2, Edit, ShoppingBag, RefreshCw, TrendingUp, ChevronDown, ChevronRight, ChevronLeft, PieChart, ArrowLeft } from 'lucide-react';
 
 import { Logo } from '../components/Logo';
 import { cn } from '../utils';
@@ -192,7 +192,15 @@ export function Watchlist() {
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
                     <div className="w-full px-3 sm:px-4 py-3.5 sm:py-4 md:px-6 lg:px-6">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div className="flex items-center gap-3 pl-12 lg:pl-0 min-h-[38px]">
+                            <div className="flex items-center gap-2.5 sm:gap-3 pl-12 lg:pl-0 min-h-[38px]">
+                                <button
+                                    onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')}
+                                    className="flex items-center justify-center p-2 rounded-xl bg-card border border-border text-foreground hover:bg-accent transition-all shadow-sm active:scale-95 shrink-0 group"
+                                    title="Zurück"
+                                    aria-label="Zurück"
+                                >
+                                    <ArrowLeft className="size-5 transition-transform group-hover:-translate-x-0.5" />
+                                </button>
                                 <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-blue-600 dark:text-blue-400 shrink-0">
                                     <Eye className="size-5 sm:size-6" />
                                 </div>
