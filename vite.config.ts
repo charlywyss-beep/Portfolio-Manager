@@ -254,6 +254,8 @@ export default defineConfig({
                 regularMarketPreviousClose: getRawVal(quoteBasic?.regularMarketPreviousClose) || getRawVal(summaryDetail.previousClose) || getRawVal(price.regularMarketPreviousClose) || null,
 
                 country: summaryProfile.country || null,
+                sector: summaryProfile.sector || null,
+                industry: summaryProfile.industry || null,
                 sectorWeights: null,
                 countryWeights: null
               };

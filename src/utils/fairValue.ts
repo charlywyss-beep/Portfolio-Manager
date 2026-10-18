@@ -200,10 +200,11 @@ export function computeSmartAutoParams(
 
     const autoPe = parseFloat((Math.round(Math.min(Math.max(rawExitPe, 8), maxSensibleExitPe) * 2) / 2).toFixed(1));
 
-    // 5. Smart Margin of Safety (15% for Swiss / defensive / wide-moat quality blue-chips, 20% standard)
+    // 5. Smart Margin of Safety (15% for Swiss / defensive / wide-moat quality blue-chips, 20% standard, 25% cyclicals)
     const currencyStr = (qData?.currency || stockObj?.currency || '').toUpperCase();
-    const sectorStr = (stockObj?.sector || '').toLowerCase();
+    const sectorStr = (qData?.sector || stockObj?.sector || '').toLowerCase();
     const isDefensiveSector = sectorStr.includes('konsum') || sectorStr.includes('consumer') || sectorStr.includes('nahrung') || sectorStr.includes('pharma') || sectorStr.includes('gesundheit') || sectorStr.includes('health');
+    const isCyclicalSector = sectorStr.includes('semi') || sectorStr.includes('halbleiter') || sectorStr.includes('auto') || sectorStr.includes('chemie') || sectorStr.includes('basic materials') || sectorStr.includes('rohstoff') || sectorStr.includes('cyclical') || sectorStr.includes('zyklisch');
     const isSwissBlueChip = symUpper.endsWith('.SW') || currencyStr === 'CHF';
 
     let autoMos = 20;
@@ -211,6 +212,8 @@ export function computeSmartAutoParams(
         autoMos = preset.mos;
     } else if (isWideMoat || ((isSwissBlueChip || isDefensiveSector) && autoPe >= 15 && autoDiv >= 1.5 && autoDiv <= 4.8)) {
         autoMos = 15;
+    } else if (isCyclicalSector) {
+        autoMos = 25;
     }
 
     return {

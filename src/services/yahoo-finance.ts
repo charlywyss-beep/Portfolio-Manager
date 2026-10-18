@@ -283,7 +283,8 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
     shortName?: string | null,
     displayName?: string | null,
     isin?: string | null,
-    kcv?: number | null
+    kcv?: number | null,
+    sector?: string | null
 }>> {
     if (symbols.length === 0) return {};
 
@@ -318,7 +319,8 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
             shortName?: string | null,
             displayName?: string | null,
             isin?: string | null,
-            kcv?: number | null
+            kcv?: number | null,
+            sector?: string | null
         }> = {};
 
         results.forEach((res: any) => {
@@ -370,7 +372,8 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
                     shortName: res.shortName || null,
                     displayName: res.displayName || null,
                     isin: res.isin || null,
-                    kcv: res.kcv || null
+                    kcv: res.kcv || null,
+                    sector: res.sector || res.industry || null
                 };
             }
         });
@@ -401,6 +404,7 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
     previousClose?: number | null,
     sectorWeights?: { [key: string]: number } | null,
     countryWeights?: { [key: string]: number } | null,
+    sector?: string | null,
     name?: string | null,
     isin?: string | null,
     exDividendDate?: Date | null,
@@ -442,6 +446,7 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
                 previousClose: batchResult.previousClose || null,
                 sectorWeights: sectorWeights,
                 countryWeights: countryWeights,
+                sector: (batchResult as any).sector || null,
                 name: batchResult.longName || batchResult.shortName || batchResult.displayName || initialName || symbol,
                 isin: batchResult.isin || null,
                 exDividendDate: (batchResult as any).exDividendDate ? new Date((batchResult as any).exDividendDate * 1000) : null,

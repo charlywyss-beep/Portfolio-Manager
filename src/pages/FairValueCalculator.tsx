@@ -54,6 +54,20 @@ const StockListItem = ({ stock, onClick, subtitle }: { stock: any; onClick: () =
     </button>
 );
 
+const SECTOR_TRANSLATIONS: Record<string, string> = {
+    'Consumer Defensive': 'Basiskonsumgüter (Defensiv)',
+    'Consumer Cyclical': 'Zyklischer Konsum',
+    'Healthcare': 'Gesundheitswesen / Pharma',
+    'Technology': 'Technologie',
+    'Financial Services': 'Finanzdienstleistungen',
+    'Industrials': 'Industrie',
+    'Energy': 'Energie',
+    'Utilities': 'Versorger',
+    'Real Estate': 'Immobilien / REITs',
+    'Basic Materials': 'Rohstoffe / Grundstoffe',
+    'Communication Services': 'Kommunikationsdienste'
+};
+
 export function FairValueCalculator() {
     const { positions, stocks, watchlists, updateStock } = usePortfolio();
     const [searchParams] = useSearchParams();
@@ -674,6 +688,10 @@ export function FairValueCalculator() {
                 finalQuote.forwardPE = parseFloat((finalQuote.forwardPE / 100).toFixed(2));
             }
 
+            if (!finalQuote.sector && existingStock?.sector) {
+                finalQuote.sector = existingStock.sector;
+            }
+
             setQuote(finalQuote);
             setAnalysis(a || { growthRate: null });
 
@@ -952,6 +970,47 @@ export function FairValueCalculator() {
                                     </p>
                                 </div>
 
+                                <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                                    <h3 className="font-bold flex items-center gap-2 mb-2">
+                                        <div className="size-2 rounded-full bg-blue-500" />
+                                        Sicherheitsmarge (Margin of Safety) nach Sektoren
+                                    </h3>
+                                    <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+                                        Puffer gegen Schätzfehler, Konjunkturkrisen und Marktschwankungen (nach Benjamin Graham &amp; Warren Buffett). Je krisensicherer und stabiler die Erträge, desto geringer darf die Marge gewählt werden:
+                                    </p>
+                                    <div className="space-y-2 text-xs">
+                                        <div className="p-2.5 rounded-lg bg-background/60 border border-border/60">
+                                            <div className="font-bold text-foreground flex items-center justify-between">
+                                                <span>15 % – Defensive Qualitätsführer &amp; Schweizer Bluechips</span>
+                                                <span className="text-emerald-500 font-mono font-bold">15 %</span>
+                                            </div>
+                                            <div className="text-muted-foreground text-[11px] mt-1 leading-snug">
+                                                Schweizer Qualitätswerte in CHF (Nestlé, Roche, Novartis), globale Basiskonsumgüter (Procter &amp; Gamble, Coca-Cola) und Wide-Moat-Giganten (Microsoft, Apple, Berkshire Hathaway) mit hoher Preissetzungsmacht und planbaren Cashflows.
+                                            </div>
+                                        </div>
+
+                                        <div className="p-2.5 rounded-lg bg-background/60 border border-border/60">
+                                            <div className="font-bold text-foreground flex items-center justify-between">
+                                                <span>20 % – Standard-Werte, Tabak, REITs &amp; Versorger</span>
+                                                <span className="text-blue-500 font-mono font-bold">20 %</span>
+                                            </div>
+                                            <div className="text-muted-foreground text-[11px] mt-1 leading-snug">
+                                                Reguläre Industrie- und Standard-Aktien, Tabakkonzerne (BAT, Philip Morris) mit regulatorischen Sonderrisiken, Immobilien / REITs (Realty Income) sowie Versorger. Der klassische Standard-Puffer für solide Dividendenwerte.
+                                            </div>
+                                        </div>
+
+                                        <div className="p-2.5 rounded-lg bg-background/60 border border-border/60">
+                                            <div className="font-bold text-foreground flex items-center justify-between">
+                                                <span>25 % – 30 % – Zykliker, Halbleiter &amp; Turnarounds</span>
+                                                <span className="text-amber-500 font-mono font-bold">25–30 %</span>
+                                            </div>
+                                            <div className="text-muted-foreground text-[11px] mt-1 leading-snug">
+                                                Stark konjunkturabhängige Branchen (Automobilbau, Halbleiter / Chips, Chemie, Rohstoffe / Bergbau) sowie Unternehmen mit hoher Verschuldung. Hier ist ein größerer Sicherheitspuffer unerlässlich.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
                                     <h3 className="font-bold flex items-center gap-2 mb-2 text-primary">
                                         <Calculator className="size-4" />
@@ -1158,10 +1217,25 @@ export function FairValueCalculator() {
                             >
                                 {quote?.name || stocks.find(s => s.symbol === selectedSymbol)?.name || selectedSymbol}
                             </Link>
-                            <div className="text-sm text-muted-foreground flex items-center gap-2">
+                            <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-2 mt-0.5">
                                 <span className="font-mono font-medium">{selectedSymbol}</span>
                                 <span className="opacity-30">•</span>
                                 <span>{quote?.currency || 'USD'}</span>
+                                {(() => {
+                                    const stockSect = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol?.toLowerCase())?.sector;
+                                    const rawSec = quote?.sector || stockSect;
+                                    if (!rawSec) return null;
+                                    const displaySec = SECTOR_TRANSLATIONS[rawSec] || rawSec;
+                                    return (
+                                        <>
+                                            <span className="opacity-30">•</span>
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-muted/80 border border-border/60 text-foreground">
+                                                <span className="text-muted-foreground text-[11px]">Sektor:</span>
+                                                <span>{displaySec}</span>
+                                            </span>
+                                        </>
+                                    );
+                                })()}
                             </div>
                         </div>
                         <button
@@ -1592,8 +1666,11 @@ export function FairValueCalculator() {
 
                                 {/* MARGIN OF SAFETY */}
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium flex justify-between">
-                                        Sicherheitsmarge
+                                    <label className="text-sm font-medium flex justify-between items-center">
+                                        <span>Sicherheitsmarge</span>
+                                        <span className="text-xs text-muted-foreground font-light">
+                                            {Number(mos) <= 15 ? 'Qualitätsführer / Defensiv' : Number(mos) <= 20 ? 'Standard / Tabak / REITs' : 'Zykliker / Risiko'}
+                                        </span>
                                     </label>
                                     <div className="relative">
                                         <input
@@ -1607,6 +1684,26 @@ export function FairValueCalculator() {
                                             className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 pt-1">
+                                        {[15, 20, 25, 30].map((val) => (
+                                            <button
+                                                key={val}
+                                                type="button"
+                                                onClick={() => {
+                                                    setMos(val);
+                                                    setIsSavedForStock(true);
+                                                }}
+                                                className={cn(
+                                                    "px-2.5 py-1 text-xs rounded-md border font-mono transition-colors",
+                                                    Number(mos) === val
+                                                        ? "bg-primary text-primary-foreground border-primary font-bold"
+                                                        : "bg-muted/50 hover:bg-muted text-muted-foreground border-border/60"
+                                                )}
+                                            >
+                                                {val}%
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
