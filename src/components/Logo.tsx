@@ -7,9 +7,10 @@ interface LogoProps {
     fallback: React.ReactNode;
     size?: string;
     className?: string;
+    onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }
 
-export const Logo = ({ url, alt, fallback, size = "size-8", className }: LogoProps) => {
+export const Logo = ({ url, alt, fallback, size = "size-8", className, onClick }: LogoProps) => {
     const [error, setError] = useState(false);
 
     // Reset error when url changes
@@ -19,22 +20,28 @@ export const Logo = ({ url, alt, fallback, size = "size-8", className }: LogoPro
 
     if (!url || error) {
         return (
-            <div className={cn(
-                size,
-                "rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 text-xs shrink-0 select-none",
-                className
-            )}>
+            <div
+                onClick={onClick}
+                className={cn(
+                    size,
+                    "rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 text-xs shrink-0 select-none",
+                    className
+                )}
+            >
                 {fallback}
             </div>
         );
     }
 
     return (
-        <div className={cn(
-            size,
-            "rounded-lg bg-white p-1 border border-border shadow-sm flex items-center justify-center shrink-0 overflow-hidden",
-            className
-        )}>
+        <div
+            onClick={onClick}
+            className={cn(
+                size,
+                "rounded-lg bg-white p-1 border border-border shadow-sm flex items-center justify-center shrink-0 overflow-hidden",
+                className
+            )}
+        >
             <img
                 src={url}
                 alt={alt}

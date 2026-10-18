@@ -18,6 +18,7 @@ import { RiskAnalysisCard } from '../components/RiskAnalysisCard';
 import { TopPerformersCard } from '../components/TopPerformersCard';
 import { PerformanceDetailsModal } from '../components/PerformanceDetailsModal';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { Logo } from '../components/Logo';
 import { PieChart as PieChartIcon } from 'lucide-react';
 import { fetchHistoricalClose } from '../services/yahoo-finance';
 
@@ -570,14 +571,17 @@ export function Dashboard() {
                                             className="flex items-center justify-between p-2 md:p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer gap-2 min-w-0"
                                         >
                                             <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
-                                                {div.stock?.logoUrl && (
-                                                    <img
-                                                        src={div.stock.logoUrl}
-                                                        alt={div.stock.name}
-                                                        className="h-8 w-auto max-w-10 md:max-w-12 rounded-lg bg-white object-contain p-1 border border-border flex-shrink-0"
-                                                        onError={(e) => (e.currentTarget.style.display = 'none')}
-                                                    />
-                                                )}
+                                                <Logo
+                                                    url={div.stock?.logoUrl}
+                                                    alt={div.stock.name}
+                                                    fallback={div.stock.symbol?.slice(0, 2) || '••'}
+                                                    size="size-10"
+                                                    className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/stock/${div.stock.symbol}`);
+                                                    }}
+                                                />
                                                 <div className="min-w-0 flex-1">
                                                     <p
                                                         className="font-bold text-base md:text-lg leading-tight mb-1 cursor-pointer hover:text-primary transition-colors truncate"
@@ -592,29 +596,29 @@ export function Dashboard() {
                                                     <div className="flex flex-col gap-1 mt-1">
                                                         {showExWarning ? (
                                                             <div className="grid grid-cols-[auto_auto] items-center gap-x-2.5 gap-y-1 text-[11px] w-fit">
-                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap w-full" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
+                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap w-24" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
                                                                     <Bell className="size-2.5 flex-shrink-0" />
-                                                                    <span>Ex in {daysToEx} T.</span>
+                                                                    <span className="truncate">Ex in {daysToEx} T.</span>
                                                                 </div>
-                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-right">
+                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-right w-20">
                                                                     {new Date(div.exDate!).toLocaleDateString('de-DE')}
                                                                 </span>
 
-                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap w-full">
+                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap w-24">
                                                                     <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
                                                                     <span>Zahltag</span>
                                                                 </div>
-                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-right">
+                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-right w-20">
                                                                     {new Date(div.payDate).toLocaleDateString('de-DE')}
                                                                 </span>
                                                             </div>
                                                         ) : (
-                                                            <div className="flex items-center gap-2 text-[11px]">
-                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap">
+                                                            <div className="grid grid-cols-[auto_auto] items-center gap-x-2.5 gap-y-1 text-[11px] w-fit">
+                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap w-24">
                                                                     <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
                                                                     <span>Zahltag</span>
                                                                 </div>
-                                                                <span className="font-mono text-muted-foreground whitespace-nowrap">
+                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-right w-20">
                                                                     {new Date(div.payDate).toLocaleDateString('de-DE')}
                                                                 </span>
                                                             </div>
@@ -678,15 +682,14 @@ export function Dashboard() {
                                             return (
                                                 <div key={idx} className="flex items-center justify-between p-2 md:p-3 rounded-lg border border-transparent border-b-border hover:bg-muted/50 transition-colors gap-2 min-w-0">
                                                     <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
-                                                        {item.stock.logoUrl && (
-                                                            <img
-                                                                src={item.stock.logoUrl}
-                                                                alt={item.stock.name}
-                                                                className="h-8 w-auto max-w-10 md:max-w-12 rounded-lg bg-white object-contain p-1 border border-border flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
-                                                                onClick={() => navigate('/watchlist')}
-                                                                onError={(e) => (e.currentTarget.style.display = 'none')}
-                                                            />
-                                                        )}
+                                                        <Logo
+                                                            url={item.stock?.logoUrl}
+                                                            alt={item.stock.name}
+                                                            fallback={item.stock.symbol?.slice(0, 2) || '••'}
+                                                            size="size-10"
+                                                            className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                                                            onClick={() => navigate(`/stock/${item.stock.symbol}`)}
+                                                        />
                                                         <div className="min-w-0 flex-1">
                                                             <p
                                                                 className="font-bold text-base md:text-lg text-foreground cursor-pointer hover:text-primary transition-colors leading-tight mb-1 truncate"
@@ -706,29 +709,29 @@ export function Dashboard() {
                                                                         <div key={dIdx} className="min-w-0">
                                                                             {payDate ? (
                                                                                 <div className="grid grid-cols-[auto_auto] items-center gap-x-2.5 gap-y-1 text-[11px] w-fit">
-                                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap w-full" title={`Ex-Datum am ${new Date(date).toLocaleDateString('de-DE')}`}>
+                                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap w-24" title={`Ex-Datum am ${new Date(date).toLocaleDateString('de-DE')}`}>
                                                                                         <Bell className="size-2.5 flex-shrink-0" />
-                                                                                        <span>Ex in {daysToEx} T.</span>
+                                                                                        <span className="truncate">Ex in {daysToEx} T.</span>
                                                                                     </div>
-                                                                                    <span className="font-mono text-muted-foreground whitespace-nowrap text-right">
+                                                                                    <span className="font-mono text-muted-foreground whitespace-nowrap text-right w-20">
                                                                                         {new Date(date).toLocaleDateString('de-DE')}
                                                                                     </span>
 
-                                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap w-full">
+                                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap w-24">
                                                                                         <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
                                                                                         <span>Zahltag</span>
                                                                                     </div>
-                                                                                    <span className="font-mono text-muted-foreground whitespace-nowrap text-right">
+                                                                                    <span className="font-mono text-muted-foreground whitespace-nowrap text-right w-20">
                                                                                         {new Date(payDate).toLocaleDateString('de-DE')}
                                                                                     </span>
                                                                                 </div>
                                                                             ) : (
-                                                                                <div className="flex items-center gap-2 text-[11px]">
-                                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap">
+                                                                                <div className="grid grid-cols-[auto_auto] items-center gap-x-2.5 gap-y-1 text-[11px] w-fit">
+                                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap w-24">
                                                                                         <Bell className="size-2.5 flex-shrink-0" />
-                                                                                        <span>Ex in {daysToEx} T.</span>
+                                                                                        <span className="truncate">Ex in {daysToEx} T.</span>
                                                                                     </div>
-                                                                                    <span className="font-mono text-muted-foreground whitespace-nowrap">
+                                                                                    <span className="font-mono text-muted-foreground whitespace-nowrap text-right w-20">
                                                                                         {new Date(date).toLocaleDateString('de-DE')}
                                                                                     </span>
                                                                                 </div>
