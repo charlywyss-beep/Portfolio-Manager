@@ -724,6 +724,30 @@ export function FairValueCalculator() {
         const fairValue = discountedFuturePrice + totalDiscountedDividends;
         const buyPrice = fairValue * (1 - valMos / 100);
 
+        // Equivalent Terminal Growth rate for 2-phase DCF tools (e.g. DeltaValue)
+        let equivalentTerminalGrowth: number | null = null;
+        if (valEps > 0 && futureEps > 0 && exitPe > 0 && valDisc > 0) {
+            const rDec = valDisc / 100;
+            const gDec = valGrowth / 100;
+            let sumPhase1Eps = 0;
+            for (let t = 1; t <= 5; t++) {
+                sumPhase1Eps += (valEps * Math.pow(1 + gDec, t)) / Math.pow(1 + rDec, t);
+            }
+            const targetPvTv = fairValue - sumPhase1Eps;
+            if (targetPvTv > 0) {
+                const targetTv = targetPvTv * Math.pow(1 + rDec, 5);
+                const gSolve = (targetTv * rDec - futureEps) / (targetTv + futureEps);
+                if (isFinite(gSolve) && gSolve < rDec) {
+                    equivalentTerminalGrowth = parseFloat((gSolve * 100).toFixed(1));
+                }
+            } else {
+                const gPure = (exitPe * rDec - 1) / (exitPe + 1);
+                if (isFinite(gPure) && gPure < rDec) {
+                    equivalentTerminalGrowth = parseFloat((gPure * 100).toFixed(1));
+                }
+            }
+        }
+
         return {
             futureEps,
             ruleOneLimit,
@@ -732,7 +756,8 @@ export function FairValueCalculator() {
             fairValue,
             buyPrice,
             totalDiscountedDividends,
-            isCorrectionNeeded: valPe > ruleOneLimit
+            isCorrectionNeeded: valPe > ruleOneLimit,
+            equivalentTerminalGrowth
         };
     }, [eps, growthRate, pe, discountRate, mos, dividendYield, quote?.price]);
 
@@ -1439,6 +1464,14 @@ export function FairValueCalculator() {
                                             <span>KGV-Obergrenze (Rule #1):</span>
                                             <span className="font-mono">{calculation.ruleOneLimit.toFixed(2)}</span>
                                         </div>
+                                        {calculation.equivalentTerminalGrowth !== null && (
+                                            <div className="flex justify-between items-center pt-1.5 border-t border-border/40">
+                                                <span className="text-muted-foreground">Langfristiges Wachstum (DCF):</span>
+                                                <span className="font-mono font-bold text-emerald-400">
+                                                    {calculation.equivalentTerminalGrowth > 0 ? '+' : ''}{calculation.equivalentTerminalGrowth.toFixed(1)} %
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="relative">
                                         <input
@@ -1458,6 +1491,11 @@ export function FairValueCalculator() {
                                             </div>
                                         )}
                                     </div>
+                                    {calculation.equivalentTerminalGrowth !== null && (
+                                        <p className="text-[11px] text-muted-foreground/85 mt-1.5 leading-snug">
+                                            💡 <strong>Entspricht {calculation.equivalentTerminalGrowth > 0 ? '+' : ''}{calculation.equivalentTerminalGrowth.toFixed(1)} %</strong> langfristigem Wachstum (Terminal Growth) in DCF-Tools wie DeltaValue.
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="h-px bg-border my-4" />
