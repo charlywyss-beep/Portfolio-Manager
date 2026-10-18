@@ -630,16 +630,18 @@ export function FairValueCalculator() {
             }
 
             if (finalQuote.error || !finalQuote.price) {
-                setError('Keine autom. Daten gefunden. Bitte Werte manuell eingeben.');
+                if (!finalQuote.price && !existingStock?.currentPrice) {
+                    setError('Keine autom. Daten gefunden. Bitte Werte manuell eingeben.');
+                }
                 finalQuote = {
-                    price: existingStock?.currentPrice || 0,
-                    currency: existingStock?.currency || 'USD',
+                    price: finalQuote.price || existingStock?.currentPrice || 0,
+                    currency: finalQuote.currency || existingStock?.currency || 'USD',
                     marketTime: new Date(),
-                    trailingPE: existingStock?.trailingPE || 0,
-                    forwardPE: existingStock?.forwardPE || 0,
-                    eps: existingStock?.eps || 0,
-                    dividendYield: existingStock?.dividendYield || 0,
-                    country: null,
+                    trailingPE: finalQuote.trailingPE || existingStock?.trailingPE || 0,
+                    forwardPE: finalQuote.forwardPE || existingStock?.forwardPE || 0,
+                    eps: finalQuote.eps || existingStock?.eps || 0,
+                    dividendYield: finalQuote.dividendYield || existingStock?.dividendYield || 0,
+                    country: finalQuote.country || null,
                     name: initialName || existingStock?.name || symbol,
                     isin: isinToUse || null,
                     error: finalQuote.error
@@ -1261,9 +1263,19 @@ export function FairValueCalculator() {
 
             {
                 error && (
-                    <div className="p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 flex items-center gap-3 animate-in fade-in">
-                        <TriangleAlert className="size-5 shrink-0" />
-                        <div>{error}</div>
+                    <div className="p-4 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-xl border border-red-200 dark:border-red-900/50 flex items-center justify-between gap-3 animate-in fade-in">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <TriangleAlert className="size-5 shrink-0 text-red-500" />
+                            <div className="text-sm font-medium">{error}</div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setError(null)}
+                            className="p-1 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors shrink-0"
+                            title="Banner schliessen"
+                        >
+                            <X className="size-5" />
+                        </button>
                     </div>
                 )
             }
@@ -1848,26 +1860,23 @@ export function FairValueCalculator() {
                                             ? "border-emerald-500 bg-emerald-500/5"
                                             : "border-blue-500 bg-blue-500/5"
                                     )}>
-                                        <div className="flex justify-between items-start sm:items-end gap-2 mb-1">
+                                        <div className="flex justify-between items-center gap-2 mb-1">
                                             <span className="font-bold text-base sm:text-lg shrink-0 whitespace-nowrap">Kaufpreis</span>
                                             {quote.currency !== 'CHF' ? (
                                                 <div className={cn(
                                                     "flex flex-col items-end font-mono leading-tight text-right shrink-0",
                                                     isSavedForStock ? "text-emerald-400" : "text-blue-400"
                                                 )}>
-                                                    <div className="flex items-baseline gap-1.5 flex-wrap justify-end">
-                                                        <span className="text-base sm:text-lg xl:text-xl font-bold whitespace-nowrap">
-                                                            {formatCurrency(calculation.buyPrice, quote.currency, false)}
-                                                        </span>
-                                                        <span className="hidden xl:inline text-xs sm:text-sm opacity-60 font-semibold">-</span>
-                                                        <span className="text-xs sm:text-sm font-semibold opacity-90 whitespace-nowrap">
-                                                            {formatCurrency(calculation.buyPrice, quote.currency).split(' - ')[1]}
-                                                        </span>
-                                                    </div>
+                                                    <span className="text-base sm:text-lg font-bold whitespace-nowrap">
+                                                        {formatCurrency(calculation.buyPrice, quote.currency, false)}
+                                                    </span>
+                                                    <span className="text-base sm:text-lg font-bold opacity-80 whitespace-nowrap">
+                                                        {formatCurrency(calculation.buyPrice, quote.currency).split(' - ')[1]}
+                                                    </span>
                                                 </div>
                                             ) : (
                                                 <span className={cn(
-                                                    "font-mono font-bold text-base sm:text-lg xl:text-xl whitespace-nowrap",
+                                                    "font-mono font-bold text-base sm:text-lg whitespace-nowrap",
                                                     isSavedForStock ? "text-emerald-400" : "text-blue-400"
                                                 )}>
                                                     {formatCurrency(calculation.buyPrice, quote.currency, false)}
@@ -1881,22 +1890,19 @@ export function FairValueCalculator() {
 
                                     {/* Fair Value */}
                                     <div className="p-3.5 sm:p-4 rounded-xl border border-border bg-card">
-                                        <div className="flex justify-between items-start sm:items-end gap-2 mb-1">
+                                        <div className="flex justify-between items-center gap-2 mb-1">
                                             <span className="font-medium text-base shrink-0 whitespace-nowrap">Fairer Wert</span>
                                             {quote.currency !== 'CHF' ? (
                                                 <div className="flex flex-col items-end font-mono leading-tight text-right shrink-0">
-                                                    <div className="flex items-baseline gap-1.5 flex-wrap justify-end">
-                                                        <span className="text-base sm:text-lg xl:text-xl font-semibold whitespace-nowrap">
-                                                            {formatCurrency(calculation.fairValue, quote.currency, false)}
-                                                        </span>
-                                                        <span className="hidden xl:inline text-xs sm:text-sm text-muted-foreground/60">-</span>
-                                                        <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
-                                                            {formatCurrency(calculation.fairValue, quote.currency).split(' - ')[1]}
-                                                        </span>
-                                                    </div>
+                                                    <span className="text-base sm:text-lg font-semibold whitespace-nowrap">
+                                                        {formatCurrency(calculation.fairValue, quote.currency, false)}
+                                                    </span>
+                                                    <span className="text-base sm:text-lg font-semibold text-muted-foreground whitespace-nowrap">
+                                                        {formatCurrency(calculation.fairValue, quote.currency).split(' - ')[1]}
+                                                    </span>
                                                 </div>
                                             ) : (
-                                                <span className="font-mono text-base sm:text-lg xl:text-xl whitespace-nowrap">
+                                                <span className="font-mono text-base sm:text-lg whitespace-nowrap">
                                                     {formatCurrency(calculation.fairValue, quote.currency, false)}
                                                 </span>
                                             )}
@@ -1913,22 +1919,19 @@ export function FairValueCalculator() {
 
                                     {/* Future Value */}
                                     <div className="p-3.5 sm:p-4 rounded-xl border border-border bg-muted/10">
-                                        <div className="flex justify-between items-start sm:items-end gap-2 mb-1">
+                                        <div className="flex justify-between items-center gap-2 mb-1">
                                             <span className="text-sm font-medium text-muted-foreground shrink-0 whitespace-nowrap">Zielkurs (5 Jahre)</span>
                                             {quote.currency !== 'CHF' ? (
                                                 <div className="flex flex-col items-end font-mono text-muted-foreground leading-tight text-right shrink-0">
-                                                    <div className="flex items-baseline gap-1.5 flex-wrap justify-end">
-                                                        <span className="text-sm sm:text-base xl:text-lg font-medium whitespace-nowrap">
-                                                            {formatCurrency(calculation.futurePrice, quote.currency, false)}
-                                                        </span>
-                                                        <span className="hidden xl:inline text-xs opacity-60">-</span>
-                                                        <span className="text-xs opacity-85 whitespace-nowrap">
-                                                            {formatCurrency(calculation.futurePrice, quote.currency).split(' - ')[1]}
-                                                        </span>
-                                                    </div>
+                                                    <span className="text-sm sm:text-base font-medium whitespace-nowrap">
+                                                        {formatCurrency(calculation.futurePrice, quote.currency, false)}
+                                                    </span>
+                                                    <span className="text-sm sm:text-base font-medium opacity-80 whitespace-nowrap">
+                                                        {formatCurrency(calculation.futurePrice, quote.currency).split(' - ')[1]}
+                                                    </span>
                                                 </div>
                                             ) : (
-                                                <span className="font-mono text-sm sm:text-base xl:text-lg whitespace-nowrap">
+                                                <span className="font-mono text-sm sm:text-base whitespace-nowrap">
                                                     {formatCurrency(calculation.futurePrice, quote.currency, false)}
                                                 </span>
                                             )}
