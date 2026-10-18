@@ -1033,8 +1033,9 @@ function WatchlistTable({
                                             "font-bold text-[15px] md:text-sm whitespace-nowrap leading-tight",
                                             (() => {
                                                 const dDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                                if (dDays !== null && dDays < 0) return "text-green-600 dark:text-green-400 font-medium";
+                                                if (dDays !== null && dDays < 0) return "text-red-500 dark:text-red-400 font-medium";
                                                 if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-orange-500 font-medium";
+                                                if (dDays !== null && dDays > 14) return "text-green-600 dark:text-green-400 font-medium";
                                                 return "text-muted-foreground";
                                             })()
                                         )}>
