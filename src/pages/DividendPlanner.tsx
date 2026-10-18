@@ -687,7 +687,7 @@ export function DividendPlanner() {
                                                 <div className="flex flex-col items-end justify-center">
                                                     <span className="font-semibold text-[13px] md:text-sm tabular-nums leading-tight">{frequencyFormatted}</span>
                                                     {divCurrency !== 'CHF' && frequencyCHFFormatted && (
-                                                        <span className="text-[11px] text-muted-foreground tabular-nums leading-tight mt-0.5">
+                                                        <span className="text-[13px] md:text-sm font-semibold text-green-600 dark:text-green-400 tabular-nums leading-tight mt-0.5">
                                                             {frequencyCHFFormatted}
                                                         </span>
                                                     )}
@@ -699,7 +699,7 @@ export function DividendPlanner() {
                                                 <div className="flex flex-col items-end justify-center">
                                                     <span className="font-bold text-[13px] md:text-sm tabular-nums leading-tight">{annualFormatted}</span>
                                                     {divCurrency !== 'CHF' && (
-                                                        <span className="text-[11px] text-muted-foreground tabular-nums leading-tight mt-0.5">
+                                                        <span className="text-[13px] md:text-sm font-bold text-green-600 dark:text-green-400 tabular-nums leading-tight mt-0.5">
                                                             {annualCHFFormatted}
                                                         </span>
                                                     )}
