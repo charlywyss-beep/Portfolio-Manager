@@ -99,16 +99,16 @@ export function Watchlist() {
                 if (!targetB) return -1;
                 const gapA = (a.currentPrice - targetA) / targetA;
                 const gapB = (b.currentPrice - targetB) / targetB;
-                return gapA - gapB;
+                return sortConfig.direction === 'asc' ? gapA - gapB : gapB - gapA;
             }
             if (sortConfig.key === 'sellGap') {
                 const sellA = a.sellLimit || 0;
                 const sellB = b.sellLimit || 0;
                 if (!sellA) return 1;
                 if (!sellB) return -1;
-                const gapA = (sellA - a.currentPrice) / sellA;
-                const gapB = (sellB - b.currentPrice) / sellB;
-                return gapA - gapB;
+                const gapA = (a.currentPrice - sellA) / sellA;
+                const gapB = (b.currentPrice - sellB) / sellB;
+                return sortConfig.direction === 'asc' ? gapA - gapB : gapB - gapA;
             }
             return 0;
         });
@@ -1000,11 +1000,18 @@ function WatchlistTable({
                                                 {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
                                             </span>
                                         </div>
-                                        {stock.targetPrice ? (
-                                            <span className="text-xs font-semibold text-foreground/85 whitespace-nowrap leading-tight">
-                                                Gap: {((stock.currentPrice - stock.targetPrice) / stock.targetPrice * 100).toFixed(1)}%
-                                            </span>
-                                        ) : null}
+                                        {stock.targetPrice ? (() => {
+                                            const buyGap = ((stock.currentPrice - stock.targetPrice) / stock.targetPrice * 100);
+                                            const isReached = buyGap <= 0;
+                                            return (
+                                                <span className={cn(
+                                                    "text-xs font-semibold whitespace-nowrap leading-tight",
+                                                    isReached ? "text-green-600 dark:text-green-400 font-bold" : "text-red-500 dark:text-red-400"
+                                                )}>
+                                                    Gap: {buyGap > 0 ? '+' : ''}{buyGap.toFixed(1)}%
+                                                </span>
+                                            );
+                                        })() : null}
                                     </div>
                                 </td>
                                 <td className={cn("px-3 py-1.5 md:p-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell")}>
@@ -1020,11 +1027,18 @@ function WatchlistTable({
                                                 {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency, false) : '-'}
                                             </span>
                                         </div>
-                                        {stock.sellLimit ? (
-                                            <span className="text-xs font-semibold text-foreground/85 whitespace-nowrap leading-tight">
-                                                Gap: {((stock.sellLimit - stock.currentPrice) / stock.sellLimit * 100).toFixed(1)}%
-                                            </span>
-                                        ) : null}
+                                        {stock.sellLimit ? (() => {
+                                            const sellGap = ((stock.currentPrice - stock.sellLimit) / stock.sellLimit * 100);
+                                            const isReached = sellGap >= 0;
+                                            return (
+                                                <span className={cn(
+                                                    "text-xs font-semibold whitespace-nowrap leading-tight",
+                                                    isReached ? "text-green-600 dark:text-green-400 font-bold" : "text-muted-foreground"
+                                                )}>
+                                                    Gap: {sellGap > 0 ? '+' : ''}{sellGap.toFixed(1)}%
+                                                </span>
+                                            );
+                                        })() : null}
                                     </div>
                                 </td>
                                 <td className={cn("px-3 py-1.5 md:p-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell")}>
