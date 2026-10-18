@@ -531,18 +531,18 @@ export function Dashboard() {
                 </div >
 
                 {/* Reordered: Dividends & Watchlist */}
-                < div className="grid grid-cols-1 lg:grid-cols-7 gap-6" >
+                <div className="grid grid-cols-1 lg:grid-cols-7 gap-6 w-full max-w-full overflow-hidden">
                     {/* Upcoming Dividends List */}
-                    < div className="col-span-1 lg:col-span-3 p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm" >
-                        <div className="flex items-center justify-between mb-4 md:mb-6">
-                            <div className="flex items-center gap-3">
-                                <h3 className="text-lg font-bold">Nächste Dividenden Auszahlungen</h3>
-                                <Calendar className="size-5 text-muted-foreground" />
+                    <div className="col-span-1 lg:col-span-3 p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm min-w-0 overflow-hidden flex flex-col">
+                        <div className="flex items-center justify-between mb-4 md:mb-6 gap-2">
+                            <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                                <h3 className="text-base md:text-lg font-bold truncate">Nächste Dividenden</h3>
+                                <Calendar className="size-4 md:size-5 text-muted-foreground flex-shrink-0" />
                             </div>
                             <select
                                 value={upcomingTimeframe}
                                 onChange={(e) => setUpcomingTimeframe(Number(e.target.value))}
-                                className="text-xs px-2 py-1 rounded border border-border bg-background"
+                                className="text-xs px-2 py-1 rounded border border-border bg-background flex-shrink-0 cursor-pointer"
                                 title="Zeitraum auswählen"
                                 aria-label="Zeitraum auswählen"
                             >
@@ -552,7 +552,7 @@ export function Dashboard() {
                                 <option value={365}>1 Jahr</option>
                             </select>
                         </div>
-                        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1 md:pr-2">
+                        <div className="space-y-3 flex-1 max-h-[420px] md:max-h-[500px] overflow-y-auto pr-1 md:pr-2 overscroll-contain touch-pan-y">
                             {upcomingDividends
                                 .filter(div => {
                                     const diffTime = new Date(div.payDate).getTime() - new Date().getTime();
@@ -567,35 +567,36 @@ export function Dashboard() {
                                         <div
                                             key={idx}
                                             onClick={() => navigate('/dividends')}
-                                            className="flex items-center justify-between p-2 md:p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                                            className="flex items-center justify-between p-2 md:p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer gap-2 min-w-0"
                                         >
-                                            <div className="flex items-center gap-2 md:gap-3">
+                                            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
                                                 {div.stock?.logoUrl && (
                                                     <img
                                                         src={div.stock.logoUrl}
                                                         alt={div.stock.name}
-                                                        className="h-8 w-auto max-w-12 rounded-lg bg-white object-contain p-1 border border-border"
+                                                        className="h-8 w-auto max-w-10 md:max-w-12 rounded-lg bg-white object-contain p-1 border border-border flex-shrink-0"
                                                         onError={(e) => (e.currentTarget.style.display = 'none')}
                                                     />
                                                 )}
-                                                <div>
+                                                <div className="min-w-0 flex-1">
                                                     <p
-                                                        className="font-bold text-lg leading-tight mb-1 cursor-pointer hover:text-primary transition-colors"
+                                                        className="font-bold text-base md:text-lg leading-tight mb-1 cursor-pointer hover:text-primary transition-colors truncate"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             navigate(`/stock/${div.stock.symbol}`);
                                                         }}
+                                                        title={div.stock.name}
                                                     >
                                                         {smartWrap(div.stock.name)}
                                                     </p>
                                                     <div className="flex flex-col gap-1 mt-1">
                                                         {showExWarning && (
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold shadow-sm whitespace-nowrap w-[110px] justify-center text-center flex-shrink-0" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
-                                                                    <Bell className="size-3 flex-shrink-0" />
-                                                                    <span>Ex in {daysToEx} Tagen</span>
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[11px] font-bold shadow-sm whitespace-nowrap flex-shrink-0" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
+                                                                    <Bell className="size-2.5 flex-shrink-0" />
+                                                                    <span>Ex in {daysToEx} T.</span>
                                                                 </div>
-                                                                <span className="text-xs text-muted-foreground">{new Date(div.exDate!).toLocaleDateString('de-DE')}</span>
+                                                                <span className="text-[11px] text-muted-foreground whitespace-nowrap">{new Date(div.exDate!).toLocaleDateString('de-DE')}</span>
                                                             </div>
                                                         )}
                                                         <p className="text-xs font-medium text-muted-foreground">
@@ -604,7 +605,7 @@ export function Dashboard() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="text-right flex flex-col items-end gap-0.5">
+                                            <div className="text-right flex flex-col items-end gap-0.5 flex-shrink-0">
                                                 <div className="font-bold text-base sm:text-lg md:text-xl text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
                                                     {formatCurrency(div.amount, div.currency, false)}
                                                 </div>
@@ -613,28 +614,31 @@ export function Dashboard() {
                                                         {formatCurrency(convertToCHF(div.amount, div.currency), 'CHF', false)}
                                                     </div>
                                                 )}
-                                                <p className="text-sm font-medium text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
+                                                <p className="text-xs font-medium text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
                                             </div>
                                         </div>
                                     )
                                 })}
                             {upcomingDividends.length === 0 && <p className="text-sm text-muted-foreground">Keine anstehenden Dividenden.</p>}
                         </div>
-                    </div >
+                    </div>
 
                     {/* Watchlist Opportunities (Blue Info Cards) */}
                     {
                         upcomingWatchlistDividends.length > 0 && (
-                            <div className="col-span-1 lg:col-span-4 p-6 rounded-xl bg-card border border-border shadow-sm">
-                                <div className="flex items-center justify-between mb-6">
-                                    <div className="flex items-center gap-3">
-                                        <h3 className="text-lg font-bold text-blue-800 dark:text-blue-400">Watchlist Chancen</h3>
-                                        <Info className="size-5 text-blue-500" />
+                            <div className="col-span-1 lg:col-span-4 p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm min-w-0 overflow-hidden flex flex-col">
+                                <div className="flex items-center justify-between mb-4 md:mb-6 gap-2">
+                                    <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                                        <h3 className="text-base md:text-lg font-bold text-blue-800 dark:text-blue-400 truncate">Watchlist Chancen</h3>
+                                        <Info className="size-4 md:size-5 text-blue-500 flex-shrink-0" />
+                                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-medium">
+                                            {filteredWatchlistDividends.length}
+                                        </span>
                                     </div>
                                     <select
                                         value={watchlistTimeframe}
                                         onChange={(e) => setWatchlistTimeframe(Number(e.target.value))}
-                                        className="text-xs px-2 py-1 rounded border border-border bg-background"
+                                        className="text-xs px-2 py-1 rounded border border-border bg-background flex-shrink-0 cursor-pointer"
                                         title="Zeitraum auswählen"
                                         aria-label="Zeitraum auswählen"
                                     >
@@ -644,7 +648,7 @@ export function Dashboard() {
                                         <option value={365}>1 Jahr</option>
                                     </select>
                                 </div>
-                                <div className="space-y-4 flex-1 overflow-y-auto max-h-[500px]">
+                                <div className="space-y-3 flex-1 overflow-y-auto max-h-[420px] md:max-h-[500px] pr-1 overscroll-contain touch-pan-y divide-y divide-border/40">
                                     {filteredWatchlistDividends.length > 0 ? (
                                         filteredWatchlistDividends.map((item, idx) => {
                                             // Filter dates again for display based on selection
@@ -655,22 +659,26 @@ export function Dashboard() {
                                             });
 
                                             return (
-                                                <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-transparent border-b-border hover:bg-muted/50 transition-colors">
-                                                    <div className="flex items-center gap-3">
+                                                <div key={idx} className="flex items-center justify-between p-2 md:p-3 rounded-lg border border-transparent border-b-border hover:bg-muted/50 transition-colors gap-2 min-w-0">
+                                                    <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
                                                         {item.stock.logoUrl && (
                                                             <img
                                                                 src={item.stock.logoUrl}
                                                                 alt={item.stock.name}
-                                                                className="h-8 w-auto max-w-12 rounded-lg bg-white object-contain p-1 border border-border cursor-pointer hover:opacity-80 transition-opacity"
+                                                                className="h-8 w-auto max-w-10 md:max-w-12 rounded-lg bg-white object-contain p-1 border border-border flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
                                                                 onClick={() => navigate('/watchlist')}
                                                                 onError={(e) => (e.currentTarget.style.display = 'none')}
                                                             />
                                                         )}
-                                                        <div>
-                                                            <p className="font-bold text-lg text-foreground cursor-pointer hover:text-primary transition-colors leading-tight mb-1" onClick={() => navigate(`/stock/${item.stock.symbol}`)}>
+                                                        <div className="min-w-0 flex-1">
+                                                            <p
+                                                                className="font-bold text-base md:text-lg text-foreground cursor-pointer hover:text-primary transition-colors leading-tight mb-1 truncate"
+                                                                onClick={() => navigate(`/stock/${item.stock.symbol}`)}
+                                                                title={item.stock.name}
+                                                            >
                                                                 {item.stock.name}
                                                             </p>
-                                                            <div className="flex flex-wrap flex-col items-start gap-1 mt-0.5">
+                                                            <div className="flex flex-col items-start gap-1 mt-0.5">
                                                                 {visibleDates.map((date, dIdx) => {
                                                                     const daysToEx = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                                                                     // Find corresponding pay date
@@ -678,16 +686,16 @@ export function Dashboard() {
                                                                     const payDate = dateObj?.payDate || (item.stock.dividendExDate === date ? item.stock.dividendPayDate : null);
 
                                                                     return (
-                                                                        <div key={dIdx} className="flex flex-col gap-0.5">
-                                                                            <div className="flex items-center gap-2">
-                                                                                <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold shadow-sm whitespace-nowrap w-[110px] justify-center text-center flex-shrink-0">
-                                                                                    <Bell className="size-3 flex-shrink-0" />
-                                                                                    <span>Ex in {daysToEx} Tagen</span>
+                                                                        <div key={dIdx} className="flex flex-col gap-0.5 min-w-0">
+                                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[11px] font-bold shadow-sm whitespace-nowrap flex-shrink-0">
+                                                                                    <Bell className="size-2.5 flex-shrink-0" />
+                                                                                    <span>Ex in {daysToEx} T.</span>
                                                                                 </div>
-                                                                                <span className="text-xs font-medium text-muted-foreground">{new Date(date).toLocaleDateString('de-DE')}</span>
+                                                                                <span className="text-[11px] font-medium text-muted-foreground whitespace-nowrap">{new Date(date).toLocaleDateString('de-DE')}</span>
                                                                             </div>
                                                                             {payDate && (
-                                                                                <p className="text-xs font-medium text-muted-foreground pl-1">
+                                                                                <p className="text-[11px] font-medium text-muted-foreground pl-0.5">
                                                                                     Zahltag: {new Date(payDate).toLocaleDateString('de-DE')}
                                                                                 </p>
                                                                             )}
@@ -697,12 +705,12 @@ export function Dashboard() {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="flex flex-col items-end">
-                                                        <div className="px-3 py-1 text-center min-w-[80px]">
-                                                            <p className="font-bold text-xl md:text-2xl text-green-600 dark:text-green-400">
-                                                                {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}% ` : '-'}
+                                                    <div className="flex flex-col items-end flex-shrink-0">
+                                                        <div className="px-2 md:px-3 py-1 text-right sm:text-center min-w-[70px]">
+                                                            <p className="font-bold text-lg md:text-2xl text-green-600 dark:text-green-400 whitespace-nowrap">
+                                                                {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}%` : '-'}
                                                             </p>
-                                                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mt-0.5">Rendite</p>
+                                                            <p className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mt-0.5">Rendite</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -714,10 +722,19 @@ export function Dashboard() {
                                         </p>
                                     )}
                                 </div>
+                                <div className="mt-3 pt-2 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground flex-shrink-0">
+                                    <span>{filteredWatchlistDividends.length} {filteredWatchlistDividends.length === 1 ? 'Aktie' : 'Aktien'}</span>
+                                    <button
+                                        onClick={() => navigate('/watchlist')}
+                                        className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                                    >
+                                        Zur Watchlist →
+                                    </button>
+                                </div>
                             </div>
                         )
                     }
-                </div >
+                </div>
 
                 {/* NEW: Advanced Charts Section */}
                 < div className="grid grid-cols-1 lg:grid-cols-2 gap-6" >
