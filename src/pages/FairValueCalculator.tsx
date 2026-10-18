@@ -238,9 +238,9 @@ export function FairValueCalculator() {
         if (symUpper === 'BATS.L' && Number(params.growthRate) === 2 && Number(params.pe) === 13.5) {
             return true;
         }
-        // Upgrade previously auto-populated Amazon (EPS ~7.17 or PE 20 / Growth 10 from unadjusted Yahoo trailing TTM)
+        // Upgrade previously auto-populated Amazon (EPS ~7.17, or older PE 20 / Growth 10, or previous 14% / PE 28)
         if (symUpper === 'AMZN') {
-            if (Math.abs(Number(params.eps) - 7.17) < 0.2 || (Number(params.pe) === 20 && Number(params.growthRate) <= 10)) {
+            if (Math.abs(Number(params.eps) - 7.17) < 0.2 || (Number(params.pe) === 20 && Number(params.growthRate) <= 10) || (Number(params.pe) === 28 && Number(params.growthRate) === 14)) {
                 return true;
             }
         }
