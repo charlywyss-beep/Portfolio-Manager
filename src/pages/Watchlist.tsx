@@ -609,7 +609,7 @@ function WatchlistTable({
 }: WatchlistTableProps) {
     // 0: Div. Rendite, 1: Aktueller Kurs, 2: Kauflimit, 3: Verkaufslimit, 4: EX-Tag, 5: Zahl-Tag, 6: Aktionen
     const [mobileColIndex, setMobileColIndex] = useState(1);
-    const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+    const touchStartRef = useRef<{ x: number; y: number; time: number; isStockCol: boolean } | null>(null);
 
     if (stocks.length === 0) {
         return (
@@ -624,15 +624,20 @@ function WatchlistTable({
 
     const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
         const touch = e.touches[0];
+        const isStockCol = !!(e.target as HTMLElement)?.closest('th:first-child, td:first-child');
         touchStartRef.current = {
             x: touch.clientX,
             y: touch.clientY,
-            time: Date.now()
+            time: Date.now(),
+            isStockCol
         };
     };
 
     const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
-        if (!touchStartRef.current) return;
+        if (!touchStartRef.current || touchStartRef.current.isStockCol) {
+            touchStartRef.current = null;
+            return;
+        }
         const touch = e.changedTouches[0];
         const dx = touch.clientX - touchStartRef.current.x;
         const dy = touch.clientY - touchStartRef.current.y;

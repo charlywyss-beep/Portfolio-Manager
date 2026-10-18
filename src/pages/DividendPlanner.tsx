@@ -16,19 +16,24 @@ export function DividendPlanner() {
 
     // 0: Anteile, 1: Rendite %, 2: Div./Akt., 3: Frequenz, 4: Quartalsweise, 5: Jährlich, 6: EX-Tag, 7: Zahl-Tag, 8: Aktion
     const [mobileColIndex, setMobileColIndex] = useState(1);
-    const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+    const touchStartRef = useRef<{ x: number; y: number; time: number; isStockCol: boolean } | null>(null);
 
     const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
         const touch = e.touches[0];
+        const isStockCol = !!(e.target as HTMLElement)?.closest('th:first-child, td:first-child');
         touchStartRef.current = {
             x: touch.clientX,
             y: touch.clientY,
-            time: Date.now()
+            time: Date.now(),
+            isStockCol
         };
     };
 
     const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
-        if (!touchStartRef.current) return;
+        if (!touchStartRef.current || touchStartRef.current.isStockCol) {
+            touchStartRef.current = null;
+            return;
+        }
         const touch = e.changedTouches[0];
         const dx = touch.clientX - touchStartRef.current.x;
         const dy = touch.clientY - touchStartRef.current.y;

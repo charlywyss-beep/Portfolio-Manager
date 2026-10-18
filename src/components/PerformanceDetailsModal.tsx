@@ -20,25 +20,30 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
     // 0: Kurs, 1: % am DD.MM., 2: CHF am DD.MM., 3: Performance %, 4: Performance CHF
     const [mobileColIndex, setMobileColIndex] = useState(0);
-    const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+    const touchStartRef = useRef<{ x: number; y: number; time: number; isStockCol: boolean } | null>(null);
 
     const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
         const touch = e.touches[0];
+        const isStockCol = !!(e.target as HTMLElement)?.closest('th:first-child, td:first-child');
         touchStartRef.current = {
             x: touch.clientX,
             y: touch.clientY,
-            time: Date.now()
+            time: Date.now(),
+            isStockCol
         };
     };
 
     const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
-        if (!touchStartRef.current) return;
+        if (!touchStartRef.current || touchStartRef.current.isStockCol) {
+            touchStartRef.current = null;
+            return;
+        }
         const touch = e.changedTouches[0];
         const dx = touch.clientX - touchStartRef.current.x;
         const dy = touch.clientY - touchStartRef.current.y;
         const dt = Date.now() - touchStartRef.current.time;
 
-        // Horizontal swipe: only when touch started to the right of the "Aktie" column (> 140px)
+        // Horizontal swipe: only when touch started to the right of the "Aktie" column (> 140px) and is horizontal
         if (touchStartRef.current.x > 140 && Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy) * 1.2 && dt < 700) {
             if (dx < 0) {
                 setMobileColIndex((i) => Math.min(4, i + 1));
@@ -172,23 +177,22 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                 <div
                     onTouchStart={handleTouchStart}
                     onTouchEnd={handleTouchEnd}
-                    className="overflow-y-auto p-0 flex-1 w-full snap-y snap-mandatory scroll-pt-[50px] md:snap-none md:scroll-pt-0"
+                    className="overflow-y-auto p-0 flex-1 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
                 >
                     <table className="w-full text-xs md:text-sm border-collapse table-fixed md:table-auto">
                         <thead className="bg-muted/30 sticky top-0 z-10">
                             <tr className="border-b border-border">
                                 {/* 0. Aktie / ETF */}
-                                <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-medium text-muted-foreground text-[13px] md:text-xs uppercase md:normal-case tracking-wider md:tracking-normal sticky top-0 left-0 z-30 bg-card md:bg-muted/30 shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-auto md:min-w-0 md:max-w-none touch-pan-y align-middle">
+                                <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-30 bg-card md:bg-muted/30 shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] overflow-hidden touch-pan-y align-middle">
                                     Aktie / ETF
                                 </th>
 
                                 {/* 1. Kurs */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle",
+                                        "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle md:w-[80px]",
                                         mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
                                     )}
-                                    style={{ width: '80px', whiteSpace: 'nowrap' }}
                                 >
                                     <div className="flex md:hidden items-center justify-between w-full h-12">
                                         <button
@@ -217,10 +221,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 {/* 2. % am Datum */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle",
+                                        "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle md:w-[70px]",
                                         mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell"
                                     )}
-                                    style={{ width: '70px', whiteSpace: 'nowrap' }}
                                 >
                                     <div className="flex md:hidden items-center justify-between w-full h-12">
                                         <button
@@ -249,10 +252,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 {/* 3. CHF am Datum */}
                                 <th
                                     className={cn(
-                                        "px-1 md:pr-4 md:pl-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle",
+                                        "px-1 md:pr-4 md:pl-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle md:w-[90px]",
                                         mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell"
                                     )}
-                                    style={{ width: '90px', whiteSpace: 'nowrap' }}
                                 >
                                     <div className="flex md:hidden items-center justify-between w-full h-12">
                                         <button
@@ -279,15 +281,14 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 </th>
 
                                 {/* Spacer (Desktop only) */}
-                                <th className="hidden md:table-cell" style={{ width: '90px' }}></th>
+                                <th className="hidden md:table-cell md:w-[90px]"></th>
 
                                 {/* 4. Performance % */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle",
+                                        "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle md:w-[60px]",
                                         mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell"
                                     )}
-                                    style={{ width: '60px', whiteSpace: 'nowrap' }}
                                 >
                                     <div className="flex md:hidden items-center justify-between w-full h-12">
                                         <button
@@ -316,10 +317,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 {/* 5. Performance CHF */}
                                 <th
                                     className={cn(
-                                        "px-1 md:pr-4 md:pl-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle",
+                                        "px-1 md:pr-4 md:pl-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle md:w-[150px]",
                                         mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell"
                                     )}
-                                    style={{ width: '150px', whiteSpace: 'nowrap' }}
                                 >
                                     <div className="flex md:hidden items-center justify-between w-full h-12">
                                         <button
@@ -377,7 +377,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         className="hover:bg-muted/30 transition-colors cursor-pointer group border-b border-border/50 snap-start snap-always h-[60px] md:h-auto"
                                     >
                                         {/* 0. Aktie / ETF */}
-                                        <td className="px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-auto md:min-w-0 md:max-w-none touch-pan-y align-middle">
+                                        <td className="px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] overflow-hidden touch-pan-y align-middle">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="flex items-center gap-2 md:gap-3 relative">
                                                 <Logo
@@ -387,17 +387,20 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                                     size="size-8 md:size-10"
                                                 />
                                                 <div className="flex flex-col min-w-0 flex-1 justify-center">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <div className="truncate block font-bold text-[13px] md:text-sm group-hover:text-primary transition-colors leading-tight" title={p.stock.name}>
-                                                            {p.stock.name}
-                                                        </div>
+                                                    <span
+                                                        className="font-bold text-[13px] md:text-sm truncate block group-hover:text-primary transition-colors cursor-pointer leading-tight"
+                                                        title={p.stock.name}
+                                                    >
+                                                        {p.stock.name}
+                                                    </span>
+                                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                                        <span className="text-[11px] text-muted-foreground uppercase truncate">{p.stock.symbol}</span>
                                                         {isMarketOpen ? (
                                                             <div className="size-2 flex-shrink-0 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
                                                         ) : (
                                                             <div className="size-2 flex-shrink-0 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${calcState})`} />
                                                         )}
                                                     </div>
-                                                    <span className="text-[11px] text-muted-foreground uppercase truncate mt-0.5">{p.stock.symbol}</span>
                                                 </div>
                                             </div>
                                         </td>
@@ -405,10 +408,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 1. Current Price (Original currency only) */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-right font-medium whitespace-nowrap align-middle",
+                                                "px-3 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-right font-medium whitespace-nowrap align-middle md:w-[80px]",
                                                 mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
                                             )}
-                                            style={{ width: '80px' }}
                                         >
                                             <span className="font-bold text-[15px] md:text-sm text-foreground">
                                                 {formatCurrency(p.stock.currentPrice, p.stock.currency, false)}
@@ -418,11 +420,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 2. Daily Performance % */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle",
+                                                "px-3 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle md:w-[70px]",
                                                 mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell",
                                                 isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                             )}
-                                            style={{ width: '70px' }}
                                         >
                                             <span className="tabular-nums">{isDailyPositive ? '+' : ''}{p.dailyGainPercent.toFixed(2)}%</span>
                                         </td>
@@ -430,26 +431,24 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 3. Daily Performance CHF */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-3 md:pr-4 md:pl-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle",
+                                                "px-3 py-1.5 md:py-3 md:pr-4 md:pl-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle md:w-[90px]",
                                                 mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell",
                                                 isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                             )}
-                                            style={{ width: '90px' }}
                                         >
                                             <span className="tabular-nums">{isDailyPositive ? '+' : ''}{formatCurrency(dailyGainCHF, 'CHF').replace('CHF', '').trim()} CHF</span>
                                         </td>
 
                                         {/* Spacer (Desktop only) */}
-                                        <td className="hidden md:table-cell" style={{ width: '90px' }}></td>
+                                        <td className="hidden md:table-cell md:w-[90px]"></td>
 
                                         {/* 4. Total Performance % */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle",
+                                                "px-3 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle md:w-[60px]",
                                                 mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell",
                                                 isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                             )}
-                                            style={{ width: '60px' }}
                                         >
                                             <span className="tabular-nums">{isTotalPositive ? '+' : ''}{totalGainPercent.toFixed(2)}%</span>
                                         </td>
@@ -457,11 +456,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 5. Total Performance CHF */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-3 md:pr-4 md:pl-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle",
+                                                "px-3 py-1.5 md:py-3 md:pr-4 md:pl-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle md:w-[150px]",
                                                 mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell",
                                                 isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                             )}
-                                            style={{ width: '150px' }}
                                         >
                                             <span className="tabular-nums">{isTotalPositive ? '+' : ''}{formatCurrency(totalGainCHF, 'CHF').replace('CHF', '').trim()} CHF</span>
                                         </td>
