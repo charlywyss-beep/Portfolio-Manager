@@ -563,7 +563,7 @@ export function DividendPlanner() {
                                 projectedDividends.map((data: any) => {
                                     const { position, stock, annualDividendNative, annualDividendCHF, divCurrency } = data!;
 
-                                    // Dividend per payout period (Frequenzweise) and Annual: Original currency only
+                                    // Dividend per payout period (Frequenzweise) and Annual: Original currency + CHF
                                     const annualNative = annualDividendNative || 0;
                                     let displayAnnualNative = annualNative;
                                     let displayAnnualCurrency = divCurrency;
@@ -579,13 +579,13 @@ export function DividendPlanner() {
                                     // stock.dividendAmount is dividend per share per payout event.
                                     // Total per event for position = stock.dividendAmount * position.shares
                                     let perPaymentNative = 0;
+                                    const freqFactor = stock.dividendFrequency === 'quarterly' ? 4
+                                        : stock.dividendFrequency === 'semi-annually' ? 2
+                                            : stock.dividendFrequency === 'monthly' ? 12
+                                                : 1;
                                     if (stock.dividendAmount && position.shares) {
                                         perPaymentNative = stock.dividendAmount * position.shares;
                                     } else {
-                                        const freqFactor = stock.dividendFrequency === 'quarterly' ? 4
-                                            : stock.dividendFrequency === 'semi-annually' ? 2
-                                                : stock.dividendFrequency === 'monthly' ? 12
-                                                    : 1;
                                         perPaymentNative = annualNative / freqFactor;
                                     }
                                     let displayPaymentNative = perPaymentNative;
@@ -595,6 +595,12 @@ export function DividendPlanner() {
                                     const frequencyFormatted = perPaymentNative > 0
                                         ? `${displayPaymentNative.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${displayAnnualCurrency}`
                                         : '-';
+
+                                    const perPaymentCHF = annualDividendCHF / freqFactor;
+                                    const frequencyCHFFormatted = perPaymentCHF > 0
+                                        ? `${perPaymentCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`
+                                        : null;
+                                    const annualCHFFormatted = `${annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`;
 
                                     const currentDiv = getCurrentDividendPeriod(stock);
 
@@ -677,13 +683,27 @@ export function DividendPlanner() {
                                             </td>
 
                                             {/* 5. Frequenzweise */}
-                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right font-semibold text-sm align-middle whitespace-nowrap", mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell")}>
-                                                <span className="tabular-nums">{frequencyFormatted}</span>
+                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right align-middle whitespace-nowrap", mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell")}>
+                                                <div className="flex flex-col items-end justify-center">
+                                                    <span className="font-semibold text-[13px] md:text-sm tabular-nums leading-tight">{frequencyFormatted}</span>
+                                                    {divCurrency !== 'CHF' && frequencyCHFFormatted && (
+                                                        <span className="text-[11px] text-muted-foreground tabular-nums leading-tight mt-0.5">
+                                                            {frequencyCHFFormatted}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
 
                                             {/* 6. Jährlich */}
-                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right font-bold text-sm align-middle whitespace-nowrap", mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell")}>
-                                                <span className="tabular-nums">{annualFormatted}</span>
+                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right align-middle whitespace-nowrap", mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell")}>
+                                                <div className="flex flex-col items-end justify-center">
+                                                    <span className="font-bold text-[13px] md:text-sm tabular-nums leading-tight">{annualFormatted}</span>
+                                                    {divCurrency !== 'CHF' && (
+                                                        <span className="text-[11px] text-muted-foreground tabular-nums leading-tight mt-0.5">
+                                                            {annualCHFFormatted}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
 
                                             {/* 7. EX-Tag */}
