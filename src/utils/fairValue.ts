@@ -114,7 +114,7 @@ export function computeSmartAutoParams(
 
     if (symUpper === 'TSLA') {
         autoGrowth = isQualityMode ? 26.0 : 22.0;
-        growthLabel = isQualityMode ? 'KI / Robotaxi Wachstums-Szenario' : 'Konsens-Prognose (Sicherheit)';
+        growthLabel = isQualityMode ? 'KI / Robotaxi Wachstums-Szenario' : 'Konsens-Prognose';
     } else if (preset) {
         autoGrowth = isQualityMode
             ? parseFloat((preset.growth + (preset.growth <= 3.5 ? 1.0 : preset.growth <= 7.0 ? 0.5 : preset.growth >= 18.0 ? 2.0 : 1.0)).toFixed(1))
