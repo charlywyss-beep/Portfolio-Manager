@@ -7,7 +7,6 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, BarChart3, Calendar, Info, Plus, Trash2, Edit, Bell, RefreshCw, X, LayoutDashboard } from 'lucide-react';
 import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
-import { smartWrap } from '../utils/text';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { HistoryChart } from '../components/HistoryChart';
 import { AddHistoryEntryModal } from '../components/AddHistoryEntryModal';
@@ -329,9 +328,9 @@ export function Dashboard() {
                 )}
 
                 {/* Top Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
                     {/* Total Value */}
-                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm order-1">
+                    <div className="p-5 sm:p-6 rounded-xl bg-card border border-border shadow-sm order-1">
                         <div className="flex justify-between items-start mb-4">
                             <div className="p-2 rounded-lg bg-primary/10 text-primary">
                                 <DollarSign className="size-6" />
@@ -355,29 +354,29 @@ export function Dashboard() {
                                 {totals.gainLoss >= 0 ? '+' : ''}{totals.gainLoss.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF Gewinn/Verlust
                             </p>
 
-                            <div className="mt-4 pt-4 border-t border-border flex flex-col gap-1">
-                                <div className="flex items-center justify-between gap-4 text-sm">
-                                    <span className="text-muted-foreground">Aktien/ETF:</span>
-                                    <span className="font-medium text-foreground">
+                            <div className="mt-4 pt-4 border-t border-border flex flex-col gap-1.5">
+                                <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                                    <span className="text-muted-foreground truncate">Aktien/ETF:</span>
+                                    <span className="font-medium text-foreground whitespace-nowrap shrink-0">
                                         {totals.totalValueStock.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                     </span>
                                 </div>
-                                <div className="flex items-center justify-between gap-4 text-sm">
-                                    <span className="text-muted-foreground">Bankguthaben:</span>
-                                    <span className="font-medium text-foreground">
+                                <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                                    <span className="text-muted-foreground truncate">Bankguthaben:</span>
+                                    <span className="font-medium text-foreground whitespace-nowrap shrink-0">
                                         {totals.totalValueBank.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                     </span>
                                 </div>
-                                <div className="flex items-center justify-between gap-4 text-sm">
-                                    <span className="text-muted-foreground">Vorsorgekapital:</span>
-                                    <span className="font-medium text-white">
+                                <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                                    <span className="text-muted-foreground truncate">Vorsorgekapital:</span>
+                                    <span className="font-medium text-white whitespace-nowrap shrink-0">
                                         {totals.totalValueVorsorge.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
                                     </span>
                                 </div>
                                 <div className="h-px bg-border my-0.5 opacity-50" />
-                                <div className="flex items-center justify-between gap-4 text-sm opacity-75">
-                                    <span className="text-muted-foreground">Total:</span>
-                                    <span className="font-medium text-foreground">
+                                <div className="flex items-center justify-between gap-2 text-xs sm:text-sm opacity-85">
+                                    <span className="text-muted-foreground truncate font-medium">Total:</span>
+                                    <span className="font-semibold text-foreground whitespace-nowrap shrink-0">
                                         {(totals.totalValueStock + totals.totalValueBank + totals.totalValueVorsorge).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                     </span>
                                 </div>
@@ -532,12 +531,12 @@ export function Dashboard() {
                 </div >
 
                 {/* Reordered: Dividends & Watchlist */}
-                <div className="grid grid-cols-1 lg:grid-cols-7 gap-6 w-full max-w-full overflow-hidden">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full max-w-full overflow-hidden">
                     {/* Upcoming Dividends List */}
-                    <div className="col-span-1 lg:col-span-3 p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm min-w-0 overflow-hidden flex flex-col">
+                    <div className="col-span-1 p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm min-w-0 overflow-hidden flex flex-col">
                         <div className="flex items-center justify-between mb-4 md:mb-6 gap-2">
                             <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                                <h3 className="text-base md:text-lg font-bold truncate">Nächste Dividenden</h3>
+                                <h3 className="text-base md:text-lg font-bold shrink-0">Nächste Dividenden</h3>
                                 <Calendar className="size-4 md:size-5 text-muted-foreground flex-shrink-0" />
                             </div>
                             <select
@@ -584,61 +583,52 @@ export function Dashboard() {
                                                 />
                                                 <div className="min-w-0 flex-1">
                                                     <p
-                                                        className="font-bold text-base md:text-lg leading-tight mb-1 cursor-pointer hover:text-primary transition-colors truncate"
+                                                        className="font-bold text-sm sm:text-base leading-tight mb-1 cursor-pointer hover:text-primary transition-colors truncate"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             navigate(`/stock/${div.stock.symbol}`);
                                                         }}
                                                         title={div.stock.name}
                                                     >
-                                                        {smartWrap(div.stock.name)}
+                                                        {div.stock.name}
                                                     </p>
-                                                    <div className="flex flex-col gap-1 mt-1">
-                                                        {showExWarning ? (
-                                                            <div className="grid grid-cols-[auto_auto] items-center gap-x-2.5 gap-y-1 text-[11px] w-fit">
-                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap w-24" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
+                                                    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] mt-1">
+                                                        {showExWarning && (
+                                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap text-[10px] sm:text-[11px]" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
                                                                     <Bell className="size-2.5 flex-shrink-0" />
-                                                                    <span className="truncate">Ex in {daysToEx} T.</span>
+                                                                    <span>Ex in {daysToEx} T.</span>
                                                                 </div>
-                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-right w-20">
+                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] sm:text-[11px]">
                                                                     {new Date(div.exDate!).toLocaleDateString('de-DE')}
-                                                                </span>
-
-                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap w-24">
-                                                                    <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
-                                                                    <span>Zahltag</span>
-                                                                </div>
-                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-right w-20">
-                                                                    {new Date(div.payDate).toLocaleDateString('de-DE')}
-                                                                </span>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="grid grid-cols-[auto_auto] items-center gap-x-2.5 gap-y-1 text-[11px] w-fit">
-                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap w-24">
-                                                                    <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
-                                                                    <span>Zahltag</span>
-                                                                </div>
-                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-right w-20">
-                                                                    {new Date(div.payDate).toLocaleDateString('de-DE')}
                                                                 </span>
                                                             </div>
                                                         )}
+                                                        <div className="flex items-center gap-1.5 shrink-0">
+                                                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap text-[10px] sm:text-[11px]">
+                                                                <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
+                                                                <span>Zahltag</span>
+                                                            </div>
+                                                            <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] sm:text-[11px]">
+                                                                {new Date(div.payDate).toLocaleDateString('de-DE')}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="text-right flex flex-col items-end gap-0.5 flex-shrink-0">
-                                                <div className="font-bold text-base sm:text-lg md:text-xl text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
+                                            <div className="text-right flex flex-col items-end gap-0.5 shrink-0 pl-2">
+                                                <div className="font-bold text-sm sm:text-base md:text-lg text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
                                                     {formatCurrency(div.amount, div.currency, false)}
                                                 </div>
                                                 {div.currency !== 'CHF' && (
-                                                    <div className="font-bold text-sm sm:text-base md:text-lg text-green-600 dark:text-green-400 whitespace-nowrap leading-tight opacity-90">
+                                                    <div className="font-bold text-xs sm:text-sm text-green-600 dark:text-green-400 whitespace-nowrap leading-tight opacity-90">
                                                         {formatCurrency(convertToCHF(div.amount, div.currency), 'CHF', false)}
                                                     </div>
                                                 )}
-                                                <p className="text-xs font-medium text-muted-foreground">{translateFrequency(div.stock.dividendFrequency)}</p>
+                                                <p className="text-[10px] sm:text-xs font-medium text-muted-foreground whitespace-nowrap">{translateFrequency(div.stock.dividendFrequency)}</p>
                                             </div>
                                         </div>
-                                    )
+                                    );
                                 })}
                             {upcomingDividends.length === 0 && <p className="text-sm text-muted-foreground">Keine anstehenden Dividenden.</p>}
                         </div>
@@ -647,10 +637,10 @@ export function Dashboard() {
                     {/* Watchlist Opportunities (Blue Info Cards) */}
                     {
                         upcomingWatchlistDividends.length > 0 && (
-                            <div className="col-span-1 lg:col-span-4 p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm min-w-0 overflow-hidden flex flex-col">
+                            <div className="col-span-1 p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm min-w-0 overflow-hidden flex flex-col">
                                 <div className="flex items-center justify-between mb-4 md:mb-6 gap-2">
                                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                                        <h3 className="text-base md:text-lg font-bold text-white truncate" style={{ color: '#ffffff' }}>Watchlist Chancen</h3>
+                                        <h3 className="text-base md:text-lg font-bold text-white shrink-0" style={{ color: '#ffffff' }}>Watchlist Chancen</h3>
                                         <Info className="size-4 md:size-5 text-blue-500 flex-shrink-0" />
                                         <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-medium">
                                             {filteredWatchlistDividends.length}
@@ -692,7 +682,7 @@ export function Dashboard() {
                                                         />
                                                         <div className="min-w-0 flex-1">
                                                             <p
-                                                                className="font-bold text-base md:text-lg text-foreground cursor-pointer hover:text-primary transition-colors leading-tight mb-1 truncate"
+                                                                className="font-bold text-sm sm:text-base text-foreground cursor-pointer hover:text-primary transition-colors leading-tight mb-1 truncate"
                                                                 onClick={() => navigate(`/stock/${item.stock.symbol}`)}
                                                                 title={item.stock.name}
                                                             >
@@ -707,44 +697,37 @@ export function Dashboard() {
 
                                                                     return (
                                                                         <div key={dIdx} className="min-w-0">
-                                                                            {payDate ? (
-                                                                                <div className="grid grid-cols-[auto_auto] items-center gap-x-2.5 gap-y-1 text-[11px] w-fit">
-                                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap w-24" title={`Ex-Datum am ${new Date(date).toLocaleDateString('de-DE')}`}>
+                                                                            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
+                                                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap text-[10px] sm:text-[11px]" title={`Ex-Datum am ${new Date(date).toLocaleDateString('de-DE')}`}>
                                                                                         <Bell className="size-2.5 flex-shrink-0" />
-                                                                                        <span className="truncate">Ex in {daysToEx} T.</span>
+                                                                                        <span>Ex in {daysToEx} T.</span>
                                                                                     </div>
-                                                                                    <span className="font-mono text-muted-foreground whitespace-nowrap text-right w-20">
-                                                                                        {new Date(date).toLocaleDateString('de-DE')}
-                                                                                    </span>
-
-                                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap w-24">
-                                                                                        <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
-                                                                                        <span>Zahltag</span>
-                                                                                    </div>
-                                                                                    <span className="font-mono text-muted-foreground whitespace-nowrap text-right w-20">
-                                                                                        {new Date(payDate).toLocaleDateString('de-DE')}
-                                                                                    </span>
-                                                                                </div>
-                                                                            ) : (
-                                                                                <div className="grid grid-cols-[auto_auto] items-center gap-x-2.5 gap-y-1 text-[11px] w-fit">
-                                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap w-24">
-                                                                                        <Bell className="size-2.5 flex-shrink-0" />
-                                                                                        <span className="truncate">Ex in {daysToEx} T.</span>
-                                                                                    </div>
-                                                                                    <span className="font-mono text-muted-foreground whitespace-nowrap text-right w-20">
+                                                                                    <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] sm:text-[11px]">
                                                                                         {new Date(date).toLocaleDateString('de-DE')}
                                                                                     </span>
                                                                                 </div>
-                                                                            )}
+                                                                                {payDate && (
+                                                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap text-[10px] sm:text-[11px]">
+                                                                                            <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
+                                                                                            <span>Zahltag</span>
+                                                                                        </div>
+                                                                                        <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] sm:text-[11px]">
+                                                                                            {new Date(payDate).toLocaleDateString('de-DE')}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
                                                                         </div>
                                                                     );
                                                                 })}
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="flex flex-col items-end flex-shrink-0">
-                                                        <div className="px-2 md:px-3 py-1 text-right sm:text-center min-w-[70px]">
-                                                            <p className="font-bold text-lg md:text-2xl text-green-600 dark:text-green-400 whitespace-nowrap">
+                                                    <div className="flex flex-col items-end shrink-0 pl-2">
+                                                        <div className="px-2 py-1 text-right">
+                                                            <p className="font-bold text-base sm:text-lg md:text-xl text-green-600 dark:text-green-400 whitespace-nowrap">
                                                                 {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}%` : '-'}
                                                             </p>
                                                             <p className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mt-0.5">Rendite</p>
@@ -778,7 +761,7 @@ export function Dashboard() {
                 < div className="grid grid-cols-1 lg:grid-cols-2 gap-6" >
                     {/* Dividend Calendar */}
                     {/* Dividend Calendar */}
-                    <div className="p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm">
+                    <div className="p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden">
                         <div className="flex items-center justify-between mb-4 md:mb-6">
                             <div className="flex items-center gap-2">
                                 <Calendar className="size-5 text-blue-500" />
@@ -789,7 +772,7 @@ export function Dashboard() {
                     </div>
 
                     {/* Asset Allocation */}
-                    <div className="p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm">
+                    <div className="p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-2">
                                 <PieChartIcon className="size-5 text-purple-500" />
@@ -800,7 +783,7 @@ export function Dashboard() {
                     </div>
 
                     {/* Risk Analysis Card */}
-                    <div className="lg:col-span-2 p-0">
+                    <div className="lg:col-span-2 p-0 overflow-hidden">
                         <RiskAnalysisCard />
                     </div>
 

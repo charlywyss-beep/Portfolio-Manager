@@ -54,23 +54,23 @@ export function TopPerformersCard({ className }: { className?: string }) {
         );
 
         return (
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 min-w-0">
                 <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{label}</span>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                     <Logo
                         url={item.stock.logoUrl}
                         alt={item.stock.name}
                         fallback={item.stock.symbol.slice(0, 2)}
                         size="size-10" // Prominent Logo size
-                        className="rounded-lg shadow-sm"
+                        className="rounded-lg shadow-sm shrink-0"
                     />
-                    <div className="min-w-0">
-                        <h4 className="font-bold text-sm truncate max-w-[150px] md:max-w-[200px]" title={item.stock.name}>
+                    <div className="min-w-0 flex-1">
+                        <h4 className="font-bold text-sm truncate" title={item.stock.name}>
                             {item.stock.name}
                         </h4>
-                        <p className={`text-xs font-bold ${item.totalGainPercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        <p className={`text-xs font-bold truncate ${item.totalGainPercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                             {item.totalGainPercent > 0 ? '+' : ''}{item.totalGainPercent.toFixed(2)}%
-                            <span className="text-muted-foreground font-normal ml-1">
+                            <span className="text-muted-foreground font-normal ml-1 whitespace-nowrap">
                                 ({formatCurrency(item.totalGainCHF, 'CHF')})
                             </span>
                         </p>

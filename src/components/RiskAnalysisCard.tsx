@@ -33,7 +33,7 @@ export function RiskAnalysisCard() {
     }
 
     return (
-        <div className="p-3 md:p-4 rounded-xl bg-card border border-border shadow-sm h-full flex flex-col">
+        <div className="p-3 md:p-4 rounded-xl bg-card border border-border shadow-sm h-full flex flex-col overflow-hidden">
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                     <ScoreIcon className={cn("size-5", scoreColor)} />

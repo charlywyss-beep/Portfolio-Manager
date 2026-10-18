@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useExchangeRates } from '../context/ExchangeRateContext';
@@ -259,83 +259,90 @@ export function AssetAllocationChart() {
         return null;
     };
 
-    const [isMobile, setIsMobile] = useState(false);
     const totalValue = useMemo(() => data.reduce((sum, item) => sum + item.value, 0), [data]);
 
-    useEffect(() => {
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth < 768);
-        };
-
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
-
     return (
-        <div className="h-[450px] w-full min-h-[300px] min-w-0 flex flex-col items-center">
+        <div className="w-full min-w-0 flex flex-col">
             {/* Tabs */}
-            <div className="flex p-1 bg-muted/50 rounded-lg mb-4">
-                <button
-                    onClick={() => setActiveTab('sector')}
-                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === 'sector' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-                >
-                    Sektor
-                </button>
-                <button
-                    onClick={() => setActiveTab('country')}
-                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === 'country' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-                >
-                    Land
-                </button>
-                <button
-                    onClick={() => setActiveTab('currency')}
-                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === 'currency' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-                >
-                    Währung
-                </button>
+            <div className="flex justify-center mb-4">
+                <div className="flex p-1 bg-muted/50 rounded-lg">
+                    <button
+                        onClick={() => setActiveTab('sector')}
+                        className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === 'sector' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                        Sektor
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('country')}
+                        className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === 'country' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                        Land
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('currency')}
+                        className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === 'currency' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                        Währung
+                    </button>
+                </div>
             </div>
 
             {hasMounted && data.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
-                    <PieChart>
-                        <Pie
-                            data={data}
-                            cx={isMobile ? "50%" : "50%"}
-                            cy="45%"
-                            innerRadius="50%"
-                            outerRadius="90%"
-                            paddingAngle={2}
-                            dataKey="value"
-                            label={({ percent }) => (percent && percent * 100 > 4) ? `${(percent * 100).toFixed(0)}%` : ''}
-                            labelLine={false}
-                        >
-                            {data.map((_, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
-                            ))}
-                        </Pie>
-                        <Tooltip content={<CustomTooltip />} />
-                        <Legend
-                            layout={isMobile ? "horizontal" : "vertical"}
-                            verticalAlign={isMobile ? "bottom" : "middle"}
-                            align={isMobile ? "center" : "right"}
-                            wrapperStyle={isMobile ? { fontSize: '11px', paddingTop: '20px', width: '100%' } : { fontSize: '12px', opacity: 0.9, paddingLeft: '20px', maxWidth: '40%' }}
-                            iconSize={isMobile ? 10 : 12}
-                            formatter={(value: string) => {
-                                const item = data.find(d => d.name === value);
-                                if (!item || totalValue === 0) return value;
-                                const percentage = (item.value / totalValue) * 100;
-                                return (
-                                    <span className="text-foreground/90 ml-1">
-                                        {value} <span className="font-bold text-primary/80 ml-1 text-[10px]">{percentage.toFixed(1)}%</span>
-                                    </span>
-                                );
-                            }}
-                        />
-                    </PieChart>
-                </ResponsiveContainer>
+                <div className="flex flex-col sm:flex-row items-center gap-4 w-full h-[320px] sm:h-[300px]">
+                    {/* Donut Chart */}
+                    <div className="w-full sm:w-[50%] h-[180px] sm:h-full relative shrink-0">
+                        <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
+                            <PieChart>
+                                <Pie
+                                    data={data}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius="55%"
+                                    outerRadius="88%"
+                                    paddingAngle={2}
+                                    dataKey="value"
+                                    label={({ percent }) => (percent && percent * 100 > 5) ? `${(percent * 100).toFixed(0)}%` : ''}
+                                    labelLine={false}
+                                >
+                                    {data.map((_, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
+                                    ))}
+                                </Pie>
+                                <Tooltip content={<CustomTooltip />} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+
+                    {/* Custom Scrollable Legend */}
+                    <div className="w-full sm:w-[50%] flex flex-col max-h-[130px] sm:max-h-[290px] overflow-y-auto pr-1.5 space-y-1 text-xs overscroll-contain">
+                        {data.map((item, index) => {
+                            const percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+                            return (
+                                <div
+                                    key={item.name}
+                                    className="flex items-center justify-between py-1 px-1.5 rounded hover:bg-muted/50 transition-colors group"
+                                >
+                                    <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
+                                        <span
+                                            className="size-2.5 rounded-full shrink-0"
+                                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                                        />
+                                        <span className="truncate text-foreground/90 font-medium text-xs" title={item.name}>
+                                            {item.name}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                        <span className="font-bold text-primary text-xs font-mono">
+                                            {percentage.toFixed(1)}%
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
             ) : (
-                <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+                <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">
                     Keine Daten verfügbar
                 </div>
             )}
