@@ -396,7 +396,7 @@ export function DividendPlanner() {
                                     <span className="hidden md:inline">Frequenz</span>
                                 </th>
 
-                                {/* 5. Quartalsweise */}
+                                {/* 5. Frequenzweise */}
                                 <th
                                     className={cn(
                                         "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
@@ -413,7 +413,7 @@ export function DividendPlanner() {
                                             <ChevronLeft className="size-4" />
                                         </button>
                                         <span className="whitespace-nowrap text-center flex-1 px-1">
-                                            Quartalsweise
+                                            Frequenzweise
                                         </span>
                                         <button
                                             type="button"
@@ -424,7 +424,7 @@ export function DividendPlanner() {
                                             <ChevronRight className="size-4" />
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline">Quartalsweise</span>
+                                    <span className="hidden md:inline">Frequenzweise</span>
                                 </th>
 
                                 {/* 6. Jährlich */}
@@ -561,9 +561,9 @@ export function DividendPlanner() {
                                 </tr>
                             ) : (
                                 projectedDividends.map((data: any) => {
-                                    const { position, stock, annualDividendNative, annualDividendCHF, quarterlyDividendCHF, divCurrency } = data!;
+                                    const { position, stock, annualDividendNative, annualDividendCHF, divCurrency } = data!;
 
-                                    // Annual Display Logic: Original currency only
+                                    // Dividend per payout period (Frequenzweise) and Annual: Original currency only
                                     const annualNative = annualDividendNative || 0;
                                     let displayAnnualNative = annualNative;
                                     let displayAnnualCurrency = divCurrency;
@@ -574,6 +574,27 @@ export function DividendPlanner() {
                                     const annualFormatted = divCurrency !== 'CHF'
                                         ? `${displayAnnualNative.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${displayAnnualCurrency}`
                                         : `${annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`;
+
+                                    // Payout amount per frequency in native currency
+                                    // stock.dividendAmount is dividend per share per payout event.
+                                    // Total per event for position = stock.dividendAmount * position.shares
+                                    let perPaymentNative = 0;
+                                    if (stock.dividendAmount && position.shares) {
+                                        perPaymentNative = stock.dividendAmount * position.shares;
+                                    } else {
+                                        const freqFactor = stock.dividendFrequency === 'quarterly' ? 4
+                                            : stock.dividendFrequency === 'semi-annually' ? 2
+                                                : stock.dividendFrequency === 'monthly' ? 12
+                                                    : 1;
+                                        perPaymentNative = annualNative / freqFactor;
+                                    }
+                                    let displayPaymentNative = perPaymentNative;
+                                    if (divCurrency === 'GBp') {
+                                        displayPaymentNative /= 100;
+                                    }
+                                    const frequencyFormatted = perPaymentNative > 0
+                                        ? `${displayPaymentNative.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${displayAnnualCurrency}`
+                                        : '-';
 
                                     const currentDiv = getCurrentDividendPeriod(stock);
 
@@ -655,9 +676,9 @@ export function DividendPlanner() {
                                                 {!stock.dividendFrequency && '-'}
                                             </td>
 
-                                            {/* 5. Quartalsweise */}
+                                            {/* 5. Frequenzweise */}
                                             <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right font-semibold text-sm align-middle whitespace-nowrap", mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell")}>
-                                                {(stock.dividendFrequency !== 'annually' && quarterlyDividendCHF > 0) ? `${quarterlyDividendCHF.toFixed(2)} CHF` : '-'}
+                                                <span className="tabular-nums">{frequencyFormatted}</span>
                                             </td>
 
                                             {/* 6. Jährlich */}
