@@ -592,40 +592,49 @@ export function Dashboard() {
                                                     >
                                                         {div.stock.name}
                                                     </p>
-                                                    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] mt-1">
-                                                        {showExWarning && (
-                                                            <div className="flex items-center gap-1.5 shrink-0">
-                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap text-[10px] sm:text-[11px]" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
+                                                    <div className="grid grid-cols-[auto_auto] items-center gap-x-2 gap-y-1 text-[11px] mt-1 w-fit">
+                                                        {showExWarning ? (
+                                                            <>
+                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap text-[10px] sm:text-[11px] w-[80px]" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
                                                                     <Bell className="size-2.5 flex-shrink-0" />
-                                                                    <span>Ex in {daysToEx} T.</span>
+                                                                    <span className="truncate">Ex in {daysToEx} T.</span>
                                                                 </div>
-                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] sm:text-[11px]">
+                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-right text-[10px] sm:text-[11px] w-[72px]">
                                                                     {new Date(div.exDate!).toLocaleDateString('de-DE')}
                                                                 </span>
-                                                            </div>
+
+                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap text-[10px] sm:text-[11px] w-[80px]">
+                                                                    <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
+                                                                    <span>Zahltag</span>
+                                                                </div>
+                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-right text-[10px] sm:text-[11px] w-[72px]">
+                                                                    {new Date(div.payDate).toLocaleDateString('de-DE')}
+                                                                </span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap text-[10px] sm:text-[11px] w-[80px]">
+                                                                    <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
+                                                                    <span>Zahltag</span>
+                                                                </div>
+                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-right text-[10px] sm:text-[11px] w-[72px]">
+                                                                    {new Date(div.payDate).toLocaleDateString('de-DE')}
+                                                                </span>
+                                                            </>
                                                         )}
-                                                        <div className="flex items-center gap-1.5 shrink-0">
-                                                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap text-[10px] sm:text-[11px]">
-                                                                <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
-                                                                <span>Zahltag</span>
-                                                            </div>
-                                                            <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] sm:text-[11px]">
-                                                                {new Date(div.payDate).toLocaleDateString('de-DE')}
-                                                            </span>
-                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="text-right flex flex-col items-end gap-0.5 shrink-0 pl-2">
-                                                <div className="font-bold text-sm sm:text-base md:text-lg text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
+                                                <div className="font-bold text-sm sm:text-base text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
                                                     {formatCurrency(div.amount, div.currency, false)}
                                                 </div>
                                                 {div.currency !== 'CHF' && (
-                                                    <div className="font-bold text-xs sm:text-sm text-green-600 dark:text-green-400 whitespace-nowrap leading-tight opacity-90">
+                                                    <div className="font-bold text-sm sm:text-base text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
                                                         {formatCurrency(convertToCHF(div.amount, div.currency), 'CHF', false)}
                                                     </div>
                                                 )}
-                                                <p className="text-[10px] sm:text-xs font-medium text-muted-foreground whitespace-nowrap">{translateFrequency(div.stock.dividendFrequency)}</p>
+                                                <p className="text-[10px] sm:text-xs font-medium text-muted-foreground whitespace-nowrap mt-0.5">{translateFrequency(div.stock.dividendFrequency)}</p>
                                             </div>
                                         </div>
                                     );
@@ -697,26 +706,25 @@ export function Dashboard() {
 
                                                                     return (
                                                                         <div key={dIdx} className="min-w-0">
-                                                                            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
-                                                                                <div className="flex items-center gap-1.5 shrink-0">
-                                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap text-[10px] sm:text-[11px]" title={`Ex-Datum am ${new Date(date).toLocaleDateString('de-DE')}`}>
-                                                                                        <Bell className="size-2.5 flex-shrink-0" />
-                                                                                        <span>Ex in {daysToEx} T.</span>
-                                                                                    </div>
-                                                                                    <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] sm:text-[11px]">
-                                                                                        {new Date(date).toLocaleDateString('de-DE')}
-                                                                                    </span>
+                                                                            <div className="grid grid-cols-[auto_auto] items-center gap-x-2 gap-y-1 text-[11px] w-fit">
+                                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap text-[10px] sm:text-[11px] w-[80px]" title={`Ex-Datum am ${new Date(date).toLocaleDateString('de-DE')}`}>
+                                                                                    <Bell className="size-2.5 flex-shrink-0" />
+                                                                                    <span className="truncate">Ex in {daysToEx} T.</span>
                                                                                 </div>
+                                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-right text-[10px] sm:text-[11px] w-[72px]">
+                                                                                    {new Date(date).toLocaleDateString('de-DE')}
+                                                                                </span>
+
                                                                                 {payDate && (
-                                                                                    <div className="flex items-center gap-1.5 shrink-0">
-                                                                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap text-[10px] sm:text-[11px]">
+                                                                                    <>
+                                                                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap text-[10px] sm:text-[11px] w-[80px]">
                                                                                             <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
                                                                                             <span>Zahltag</span>
                                                                                         </div>
-                                                                                        <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] sm:text-[11px]">
+                                                                                        <span className="font-mono text-muted-foreground whitespace-nowrap text-right text-[10px] sm:text-[11px] w-[72px]">
                                                                                             {new Date(payDate).toLocaleDateString('de-DE')}
                                                                                         </span>
-                                                                                    </div>
+                                                                                    </>
                                                                                 )}
                                                                             </div>
                                                                         </div>
@@ -726,11 +734,11 @@ export function Dashboard() {
                                                         </div>
                                                     </div>
                                                     <div className="flex flex-col items-end shrink-0 pl-2">
-                                                        <div className="px-2 py-1 text-right">
-                                                            <p className="font-bold text-base sm:text-lg md:text-xl text-green-600 dark:text-green-400 whitespace-nowrap">
+                                                        <div className="text-right">
+                                                            <p className="font-bold text-sm sm:text-base text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
                                                                 {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}%` : '-'}
                                                             </p>
-                                                            <p className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mt-0.5">Rendite</p>
+                                                            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-semibold mt-0.5">Rendite</p>
                                                         </div>
                                                     </div>
                                                 </div>
