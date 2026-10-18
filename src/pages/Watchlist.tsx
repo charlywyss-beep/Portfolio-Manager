@@ -19,7 +19,7 @@ import type { Stock } from '../types';
 export function Watchlist() {
     const navigate = useNavigate();
     const { stocks, watchlists, positions, removeFromWatchlist, addPosition, updatePosition, deletePosition, lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices, refreshTick, createWatchlist, deleteWatchlist, renameWatchlist } = usePortfolio(); // Get refresh + tick
-    const { formatCurrency, convertToCHF } = useCurrencyFormatter();
+    const { formatCurrency } = useCurrencyFormatter();
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
     const [editPosition, setEditPosition] = useState<any>(null); // State for editing position
     const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
@@ -381,7 +381,6 @@ export function Watchlist() {
                                 onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                 onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
                                 formatCurrency={formatCurrency}
-                                convertToCHF={convertToCHF}
                                 emptyMessage="Keine Aktien im Bestand."
                             />
                         )}
@@ -431,7 +430,6 @@ export function Watchlist() {
                                 onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                 onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
                                 formatCurrency={formatCurrency}
-                                convertToCHF={convertToCHF}
                                 emptyMessage="Keine ETFs im Bestand."
                             />
                         )}
@@ -481,7 +479,6 @@ export function Watchlist() {
                                 onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                 onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
                                 formatCurrency={formatCurrency}
-                                convertToCHF={convertToCHF}
                                 emptyMessage="Keine potenziellen Aktien auf der Watchlist."
                             />
                         )}
@@ -531,7 +528,6 @@ export function Watchlist() {
                                 onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
                                 onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
                                 formatCurrency={formatCurrency}
-                                convertToCHF={convertToCHF}
                                 emptyMessage="Keine potenziellen ETFs auf der Watchlist."
                             />
                         )}
@@ -597,7 +593,6 @@ interface WatchlistTableProps {
     onEdit: (id: string) => void;
     onRemove: (id: string) => void;
     formatCurrency: any;
-    convertToCHF: (amount: number, from: string) => number;
     emptyMessage: string;
 }
 
@@ -610,7 +605,6 @@ function WatchlistTable({
     onEdit,
     onRemove,
     formatCurrency,
-    convertToCHF,
     emptyMessage
 }: WatchlistTableProps) {
     // 0: Div. Rendite, 1: Aktueller Kurs, 2: Kauflimit, 3: Verkaufslimit, 4: EX-Tag, 5: Zahl-Tag, 6: Aktionen
@@ -924,209 +918,184 @@ function WatchlistTable({
                         const isMarketOpen = calcState === 'REGULAR';
 
                         return (
-                            <tr key={stock.id} className="hover:bg-muted/30 transition-colors group snap-start snap-always">
-                                <td className="p-3 md:p-4 sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] overflow-hidden w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] touch-pan-y">
-                                <div className="absolute inset-0 bg-card -z-10" />
-                                <div className="flex items-center gap-2.5 md:gap-3 relative">
-                                    <Logo
-                                        url={stock.logoUrl}
-                                        alt={stock.name}
-                                        fallback={stock.symbol.slice(0, 2)}
-                                        size="size-9 md:size-10"
-                                    />
-                                    <div className="flex flex-col min-w-0 flex-1">
-                                        <span
-                                            className="font-bold text-[13px] md:text-sm whitespace-pre-wrap break-words leading-snug group-hover:text-primary transition-colors cursor-pointer"
-                                            onClick={() => onNavigate(stock.id)}
-                                            title={stock.name}
-                                        >
-                                            {stock.name}
-                                        </span>
-                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                            <span className="text-xs text-muted-foreground uppercase truncate">{stock.symbol}</span>
-                                            {isMarketOpen ? (
-                                                <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0 shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
-                                            ) : (
-                                                <div className="size-2 rounded-full bg-red-500 shrink-0 border border-background" title={`Markt geschlossen (${calcState})`} />
-                                            )}
+                            <tr key={stock.id} className="hover:bg-muted/30 transition-colors group snap-start snap-always h-[60px] md:h-auto">
+                                <td className="px-3 py-1.5 md:p-4 h-[60px] md:h-auto sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] overflow-hidden w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] touch-pan-y align-middle">
+                                    <div className="absolute inset-0 bg-card -z-10" />
+                                    <div className="flex items-center gap-2 md:gap-3 relative">
+                                        <Logo
+                                            url={stock.logoUrl}
+                                            alt={stock.name}
+                                            fallback={stock.symbol.slice(0, 2)}
+                                            size="size-8 md:size-10"
+                                        />
+                                        <div className="flex flex-col min-w-0 flex-1 justify-center">
+                                            <span
+                                                className="font-bold text-[13px] md:text-sm truncate block group-hover:text-primary transition-colors cursor-pointer"
+                                                onClick={() => onNavigate(stock.id)}
+                                                title={stock.name}
+                                            >
+                                                {stock.name}
+                                            </span>
+                                            <div className="flex items-center gap-1.5 mt-0.5">
+                                                <span className="text-xs text-muted-foreground uppercase truncate">{stock.symbol}</span>
+                                                {isMarketOpen ? (
+                                                    <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0 shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
+                                                ) : (
+                                                    <div className="size-2 rounded-full bg-red-500 shrink-0 border border-background" title={`Markt geschlossen (${calcState})`} />
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </td>
-                            <td className={cn("p-4 text-right", mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell")}>
-                                <div className="flex flex-col items-end gap-0.5">
-                                    <span className="font-bold text-base md:text-sm text-green-600 dark:text-green-400">
-                                        {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
-                                    </span>
-                                    <span className="text-xs md:text-[11px] text-muted-foreground uppercase tracking-tight">
-                                        {translateFrequency(stock.dividendFrequency)}
-                                    </span>
-                                </div>
-                            </td>
-                            <td className={cn("p-4 text-right", mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell")}>
-                                <div className="flex flex-col items-end gap-0.5">
-                                    <span className="font-bold text-[15px] md:text-sm text-foreground whitespace-nowrap">
-                                        {formatCurrency(stock.currentPrice, stock.currency, false)}
-                                    </span>
-                                    {stock.currency !== 'CHF' && (
-                                        <span className="font-bold text-[15px] md:text-sm text-foreground whitespace-nowrap">
-                                            {formatCurrency(convertToCHF(stock.currentPrice, stock.currency), 'CHF', false)}
+                                </td>
+                                <td className={cn("px-3 py-1.5 md:p-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell")}>
+                                    <div className="flex flex-col items-end justify-center gap-0.5">
+                                        <span className="font-bold text-sm md:text-sm text-green-600 dark:text-green-400 leading-tight">
+                                            {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
                                         </span>
-                                    )}
-                                    {stock.previousClose !== undefined && (
-                                        <span className={cn(
-                                            "text-sm md:text-xs font-bold px-2 py-0.5 rounded-md mt-1 whitespace-nowrap",
-                                            stockChange >= 0
-                                                ? "bg-green-500/15 text-green-600 dark:text-green-400"
-                                                : "bg-red-500/15 text-red-600 dark:text-red-400"
-                                        )}>
-                                            {stockChange >= 0 ? '+' : ''}{stockChange.toFixed(2)}%
+                                        <span className="text-[11px] text-muted-foreground uppercase tracking-tight leading-tight">
+                                            {translateFrequency(stock.dividendFrequency)}
                                         </span>
-                                    )}
-                                </div>
-                            </td>
-                            <td className={cn("p-4 text-right", mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell")}>
-                                <div className="flex flex-col items-end gap-1">
-                                    <div className="flex items-center gap-2">
-                                        {isUnderTarget && (
-                                            <div className="size-2.5 rounded-full bg-green-500 animate-pulse shrink-0" title="Limit erreicht!" />
-                                        )}
-                                        <div className="flex flex-col items-end gap-0.5">
+                                    </div>
+                                </td>
+                                <td className={cn("px-3 py-1.5 md:p-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell")}>
+                                    <div className="flex flex-col items-end justify-center gap-0.5">
+                                        <span className="font-bold text-[15px] md:text-sm text-foreground whitespace-nowrap leading-tight">
+                                            {formatCurrency(stock.currentPrice, stock.currency, false)}
+                                        </span>
+                                        {stock.previousClose !== undefined && (
                                             <span className={cn(
-                                                "font-bold text-[15px] md:text-sm whitespace-nowrap",
+                                                "text-xs font-bold px-1.5 py-0.5 rounded leading-tight whitespace-nowrap",
+                                                stockChange >= 0
+                                                    ? "bg-green-500/15 text-green-600 dark:text-green-400"
+                                                    : "bg-red-500/15 text-red-600 dark:text-red-400"
+                                            )}>
+                                                {stockChange >= 0 ? '+' : ''}{stockChange.toFixed(2)}%
+                                            </span>
+                                        )}
+                                    </div>
+                                </td>
+                                <td className={cn("px-3 py-1.5 md:p-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell")}>
+                                    <div className="flex flex-col items-end justify-center gap-0.5">
+                                        <div className="flex items-center gap-1.5">
+                                            {isUnderTarget && (
+                                                <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0" title="Limit erreicht!" />
+                                            )}
+                                            <span className={cn(
+                                                "font-bold text-[15px] md:text-sm whitespace-nowrap leading-tight",
                                                 isUnderTarget ? "text-green-600 dark:text-green-400" : "text-foreground"
                                             )}>
                                                 {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
                                             </span>
-                                            {stock.targetPrice && stock.currency !== 'CHF' && (
-                                                <span className={cn(
-                                                    "font-bold text-[15px] md:text-sm whitespace-nowrap",
-                                                    isUnderTarget ? "text-green-600 dark:text-green-400" : "text-foreground"
-                                                )}>
-                                                    {formatCurrency(convertToCHF(stock.targetPrice, stock.currency), 'CHF', false)}
-                                                </span>
-                                            )}
                                         </div>
+                                        {stock.targetPrice ? (
+                                            <span className="text-xs font-semibold text-foreground/85 whitespace-nowrap leading-tight">
+                                                Gap: {((stock.currentPrice - stock.targetPrice) / stock.targetPrice * 100).toFixed(1)}%
+                                            </span>
+                                        ) : null}
                                     </div>
-                                    {stock.targetPrice && (
-                                        <span className="text-sm md:text-xs font-semibold text-foreground/85 whitespace-nowrap">
-                                            Gap: {((stock.currentPrice - stock.targetPrice) / stock.targetPrice * 100).toFixed(1)}%
-                                        </span>
-                                    )}
-                                </div>
-                            </td>
-                            <td className={cn("p-4 text-right", mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell")}>
-                                <div className="flex flex-col items-end gap-1">
-                                    <div className="flex items-center gap-2">
-                                        {isOverSell && (
-                                            <div className="size-2.5 rounded-full bg-green-500 animate-pulse shrink-0" title="Verkaufslimit erreicht!" />
-                                        )}
-                                        <div className="flex flex-col items-end gap-0.5">
+                                </td>
+                                <td className={cn("px-3 py-1.5 md:p-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell")}>
+                                    <div className="flex flex-col items-end justify-center gap-0.5">
+                                        <div className="flex items-center gap-1.5">
+                                            {isOverSell && (
+                                                <div className="size-2.5 rounded-full bg-green-500 animate-pulse shrink-0" title="Verkaufslimit erreicht!" />
+                                            )}
                                             <span className={cn(
-                                                "font-bold text-[15px] md:text-sm whitespace-nowrap",
+                                                "font-bold text-[15px] md:text-sm whitespace-nowrap leading-tight",
                                                 isOverSell ? "text-green-600 dark:text-green-400" : "text-foreground"
                                             )}>
                                                 {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency, false) : '-'}
                                             </span>
-                                            {stock.sellLimit && stock.currency !== 'CHF' && (
-                                                <span className={cn(
-                                                    "font-bold text-[15px] md:text-sm whitespace-nowrap",
-                                                    isOverSell ? "text-green-600 dark:text-green-400" : "text-foreground"
-                                                )}>
-                                                    {formatCurrency(convertToCHF(stock.sellLimit, stock.currency), 'CHF', false)}
-                                                </span>
-                                            )}
                                         </div>
+                                        {stock.sellLimit ? (
+                                            <span className="text-xs font-semibold text-foreground/85 whitespace-nowrap leading-tight">
+                                                Gap: {((stock.sellLimit - stock.currentPrice) / stock.sellLimit * 100).toFixed(1)}%
+                                            </span>
+                                        ) : null}
                                     </div>
-                                    {stock.sellLimit && (
-                                        <span className="text-sm md:text-xs font-semibold text-foreground/85 whitespace-nowrap">
-                                            Gap: {((stock.sellLimit - stock.currentPrice) / stock.sellLimit * 100).toFixed(1)}%
+                                </td>
+                                <td className={cn("px-3 py-1.5 md:p-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell")}>
+                                    <div className="flex flex-col items-end justify-center gap-0.5">
+                                        <span className={cn(
+                                            "font-bold text-[15px] md:text-sm whitespace-nowrap leading-tight",
+                                            (() => {
+                                                const dDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                                                if (dDays !== null && dDays < 0) return "text-green-600 dark:text-green-400 font-medium";
+                                                if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-orange-500 font-medium";
+                                                return "text-muted-foreground";
+                                            })()
+                                        )}>
+                                            {currentDiv.exDate
+                                                ? new Date(currentDiv.exDate).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' })
+                                                : '-'}
                                         </span>
-                                    )}
-                                </div>
-                            </td>
-                            <td className={cn("p-4 text-right", mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell")}>
-                                <div className="flex flex-col items-end gap-0.5">
-                                    <span className={cn(
-                                        "font-bold text-[15px] md:text-sm whitespace-nowrap",
-                                        (() => {
-                                            const dDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                            if (dDays !== null && dDays < 0) return "text-green-600 dark:text-green-400 font-medium";
-                                            if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-orange-500 font-medium";
-                                            return "text-muted-foreground";
-                                        })()
-                                    )}>
-                                        {currentDiv.exDate
-                                            ? new Date(currentDiv.exDate).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' })
-                                            : '-'}
-                                    </span>
-                                    {currentDiv.status === 'ex-dividend' && (
-                                        <span className="text-[11px] font-bold text-orange-500 bg-orange-100 dark:bg-orange-950/50 px-1.5 py-0.5 rounded leading-none uppercase">
-                                            Ex-Div
+                                        {currentDiv.status === 'ex-dividend' && (
+                                            <span className="text-[11px] font-bold text-orange-500 bg-orange-100 dark:bg-orange-950/50 px-1.5 py-0.5 rounded leading-none uppercase">
+                                                Ex-Div
+                                            </span>
+                                        )}
+                                    </div>
+                                </td>
+                                <td className={cn("px-3 py-1.5 md:p-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell")}>
+                                    <div className="flex flex-col items-end justify-center gap-0.5">
+                                        <span className={cn(
+                                            "font-bold text-[15px] md:text-sm whitespace-nowrap leading-tight",
+                                            (() => {
+                                                const payDays = currentDiv.payDate ? Math.ceil((new Date(currentDiv.payDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                                                const exDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                                                if (payDays !== null && payDays < 0) return "text-green-600 dark:text-green-400 font-medium";
+                                                if (exDays !== null && exDays < 0 && payDays !== null && payDays >= 0) return "text-orange-500 font-medium";
+                                                if (payDays !== null && payDays >= 0 && payDays <= 14) return "text-orange-500 font-medium";
+                                                return "text-muted-foreground";
+                                            })()
+                                        )}>
+                                            {currentDiv.payDate
+                                                ? new Date(currentDiv.payDate).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' })
+                                                : '-'}
                                         </span>
-                                    )}
-                                </div>
-                            </td>
-                            <td className={cn("p-4 text-right", mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell")}>
-                                <div className="flex flex-col items-end gap-0.5">
-                                    <span className={cn(
-                                        "font-bold text-[15px] md:text-sm whitespace-nowrap",
-                                        (() => {
-                                            const payDays = currentDiv.payDate ? Math.ceil((new Date(currentDiv.payDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                            const exDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                            if (payDays !== null && payDays < 0) return "text-green-600 dark:text-green-400 font-medium";
-                                            if (exDays !== null && exDays < 0 && payDays !== null && payDays >= 0) return "text-orange-500 font-medium";
-                                            if (payDays !== null && payDays >= 0 && payDays <= 14) return "text-orange-500 font-medium";
-                                            return "text-muted-foreground";
-                                        })()
-                                    )}>
-                                        {currentDiv.payDate
-                                            ? new Date(currentDiv.payDate).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' })
-                                            : '-'}
-                                    </span>
-                                    {currentDiv.status === 'paid' && (
-                                        <span className="text-[11px] font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-950/50 px-1.5 py-0.5 rounded leading-none uppercase">
-                                            Bezahlt
-                                        </span>
-                                    )}
-                                </div>
-                            </td>
-                            <td className={cn("p-4 md:pl-12 md:sticky md:-right-px z-10 group-hover:bg-muted/30 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]", mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell")}>
-                                <div className="absolute inset-0 bg-card -z-10" />
-                                <div className="flex items-center justify-center gap-2 relative">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onBuy(stock);
-                                        }}
-                                        className="p-2 text-green-600 bg-green-500/10 hover:bg-green-500/20 rounded-lg transition-colors"
-                                        title="Kaufen"
-                                    >
-                                        <ShoppingBag className="size-4" />
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onEdit(stock.id);
-                                        }}
-                                        className="p-2 text-blue-600 bg-blue-500/10 hover:bg-blue-500/20 rounded-lg transition-colors"
-                                        title="Bearbeiten"
-                                    >
-                                        <Edit className="size-4" />
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onRemove(stock.id);
-                                        }}
-                                        className="p-2 text-red-500 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
-                                        title="Entfernen"
-                                    >
-                                        <Trash2 className="size-4" />
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
+                                        {currentDiv.status === 'paid' && (
+                                            <span className="text-[11px] font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-950/50 px-1.5 py-0.5 rounded leading-none uppercase">
+                                                Bezahlt
+                                            </span>
+                                        )}
+                                    </div>
+                                </td>
+                                <td className={cn("px-2 py-1.5 md:p-4 h-[60px] md:h-auto md:pl-12 md:sticky md:-right-px z-10 group-hover:bg-muted/30 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle", mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell")}>
+                                    <div className="absolute inset-0 bg-card -z-10" />
+                                    <div className="flex items-center justify-center gap-1.5 relative">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onBuy(stock);
+                                            }}
+                                            className="p-1.5 text-green-600 bg-green-500/10 hover:bg-green-500/20 rounded-lg transition-colors"
+                                            title="Kaufen"
+                                        >
+                                            <ShoppingBag className="size-4" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onEdit(stock.id);
+                                            }}
+                                            className="p-1.5 text-blue-600 bg-blue-500/10 hover:bg-blue-500/20 rounded-lg transition-colors"
+                                            title="Bearbeiten"
+                                        >
+                                            <Edit className="size-4" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onRemove(stock.id);
+                                            }}
+                                            className="p-1.5 text-red-500 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
+                                            title="Entfernen"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
                     );
                 })}
             </tbody>
