@@ -567,87 +567,78 @@ export function Dashboard() {
                                         <div
                                             key={idx}
                                             onClick={() => navigate('/dividends')}
-                                            className="flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-lg border border-transparent border-b-border/40 hover:bg-muted/50 transition-colors cursor-pointer min-w-0"
+                                            className="grid items-center p-2 sm:p-2.5 rounded-lg border border-transparent border-b-border/40 hover:bg-muted/50 transition-colors cursor-pointer gap-2 min-w-0"
+                                            style={{ gridTemplateColumns: 'minmax(0, 1fr) 62px 62px 72px' }}
                                         >
-                                            {/* Spalte Links: Logo */}
-                                            <Logo
-                                                url={div.stock?.logoUrl}
-                                                alt={div.stock.name}
-                                                fallback={div.stock.symbol?.slice(0, 2) || '••'}
-                                                size="size-9 sm:size-10"
-                                                className="cursor-pointer hover:opacity-80 transition-opacity shrink-0 mt-0.5"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    navigate(`/stock/${div.stock.symbol}`);
-                                                }}
-                                            />
+                                            {/* Spalte 1: Aktie (Logo + Name + Symbol) */}
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <Logo
+                                                    url={div.stock?.logoUrl}
+                                                    alt={div.stock.name}
+                                                    fallback={div.stock.symbol?.slice(0, 2) || '••'}
+                                                    size="size-8 sm:size-9"
+                                                    className="cursor-pointer hover:opacity-80 transition-opacity shrink-0"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/stock/${div.stock.symbol}`);
+                                                    }}
+                                                />
+                                                <div className="min-w-0 flex-1">
+                                                    <p
+                                                        className="font-bold text-xs sm:text-sm leading-tight cursor-pointer hover:text-primary transition-colors truncate text-foreground"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigate(`/stock/${div.stock.symbol}`);
+                                                        }}
+                                                        title={div.stock.name}
+                                                    >
+                                                        {div.stock.name}
+                                                    </p>
+                                                    <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground truncate block">
+                                                        {div.stock.symbol}
+                                                    </span>
+                                                </div>
+                                            </div>
 
-                                            {/* Spalte Rechts: Content (Name + Betrag oben, Termine unten) */}
-                                            <div className="min-w-0 flex-1 flex flex-col gap-1.5">
-                                                {/* Zeile 1: Name + Betrag */}
-                                                <div className="flex items-start justify-between gap-2 min-w-0">
-                                                    <div className="min-w-0 flex-1">
-                                                        <p
-                                                            className="font-bold text-sm sm:text-base leading-tight cursor-pointer hover:text-primary transition-colors truncate text-foreground"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                navigate(`/stock/${div.stock.symbol}`);
-                                                            }}
-                                                            title={div.stock.name}
-                                                        >
-                                                            {div.stock.name}
-                                                        </p>
-                                                        <span className="text-[11px] font-mono text-muted-foreground truncate block">
-                                                            {div.stock.symbol}
+                                            {/* Spalte 2: Ex-Tag */}
+                                            <div className="w-[62px] shrink-0">
+                                                {showExWarning ? (
+                                                    <div className="flex flex-col items-start gap-0.5">
+                                                        <div className="flex items-center gap-0.5 px-1 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap text-[9px] leading-none" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
+                                                            <Bell className="size-2.5 shrink-0" />
+                                                            <span>Ex in {daysToEx} T.</span>
+                                                        </div>
+                                                        <span className="font-mono text-muted-foreground whitespace-nowrap text-[9px] sm:text-[10px] pl-0.5 font-medium leading-none">
+                                                            {new Date(div.exDate!).toLocaleDateString('de-DE')}
                                                         </span>
                                                     </div>
+                                                ) : (
+                                                    <div className="w-full" />
+                                                )}
+                                            </div>
 
-                                                    {/* Betrag */}
-                                                    <div className="text-right shrink-0">
-                                                        <div className="font-bold text-sm sm:text-base text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
-                                                            {formatCurrency(div.amount, div.currency, false)}
-                                                        </div>
-                                                        {div.currency !== 'CHF' && (
-                                                            <div className="font-bold text-sm sm:text-base text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
-                                                                {formatCurrency(convertToCHF(div.amount, div.currency), 'CHF', false)}
-                                                            </div>
-                                                        )}
-                                                        <p className="text-[10px] sm:text-xs font-medium text-muted-foreground whitespace-nowrap">{translateFrequency(div.stock.dividendFrequency)}</p>
-                                                    </div>
+                                            {/* Spalte 3: Zahltag */}
+                                            <div className="w-[62px] shrink-0 flex flex-col items-start gap-0.5">
+                                                <div className="flex items-center gap-0.5 px-1 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap text-[9px] leading-none">
+                                                    <Calendar className="size-2.5 shrink-0 opacity-70" />
+                                                    <span>Zahltag</span>
                                                 </div>
+                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-[9px] sm:text-[10px] pl-0.5 font-medium leading-none">
+                                                    {new Date(div.payDate).toLocaleDateString('de-DE')}
+                                                </span>
+                                            </div>
 
-                                                {/* Zeile 2: Feste Spalten für Ex-Tag & Zahltag */}
-                                                <div className="flex items-start gap-4 pt-1 border-t border-border/25">
-                                                    {/* Spalte Ex-Tag */}
-                                                    <div className="w-[74px] sm:w-[80px] shrink-0">
-                                                        {showExWarning ? (
-                                                            <div className="flex flex-col items-start gap-0.5">
-                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap text-[10px]" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
-                                                                    <Bell className="size-2.5 shrink-0" />
-                                                                    <span>Ex in {daysToEx} T.</span>
-                                                                </div>
-                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] pl-0.5 font-medium">
-                                                                    {new Date(div.exDate!).toLocaleDateString('de-DE')}
-                                                                </span>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="w-full h-full flex flex-col items-start gap-0.5 opacity-30">
-                                                                <span className="text-[10px] text-muted-foreground font-mono">—</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Spalte Zahltag */}
-                                                    <div className="w-[74px] sm:w-[80px] shrink-0 flex flex-col items-start gap-0.5">
-                                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap text-[10px]">
-                                                            <Calendar className="size-2.5 shrink-0 opacity-70" />
-                                                            <span>Zahltag</span>
-                                                        </div>
-                                                        <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] pl-0.5 font-medium">
-                                                            {new Date(div.payDate).toLocaleDateString('de-DE')}
-                                                        </span>
-                                                    </div>
+                                            {/* Spalte 4: Betrag (kleinere Schriftgrösse für USD & CHF) */}
+                                            <div className="w-[72px] shrink-0 text-right flex flex-col items-end gap-0.5">
+                                                <div className="font-bold text-xs sm:text-sm text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
+                                                    {formatCurrency(div.amount, div.currency, false)}
                                                 </div>
+                                                {div.currency !== 'CHF' && (
+                                                    <div className="font-bold text-[11px] sm:text-xs text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
+                                                        {formatCurrency(convertToCHF(div.amount, div.currency), 'CHF', false)}
+                                                    </div>
+                                                )}
+                                                <p className="text-[9px] sm:text-[10px] font-medium text-muted-foreground whitespace-nowrap leading-none">{translateFrequency(div.stock.dividendFrequency)}</p>
                                             </div>
                                         </div>
                                     );
@@ -700,84 +691,73 @@ export function Dashboard() {
                                             return (
                                                 <div
                                                     key={idx}
-                                                    className="flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-lg border border-transparent border-b-border/40 hover:bg-muted/50 transition-colors min-w-0"
+                                                    className="grid items-center p-2 sm:p-2.5 rounded-lg border border-transparent border-b-border/40 hover:bg-muted/50 transition-colors gap-2 min-w-0"
+                                                    style={{ gridTemplateColumns: 'minmax(0, 1fr) 62px 62px 72px' }}
                                                 >
-                                                    {/* Spalte Links: Logo */}
-                                                    <Logo
-                                                        url={item.stock?.logoUrl}
-                                                        alt={item.stock.name}
-                                                        fallback={item.stock.symbol?.slice(0, 2) || '••'}
-                                                        size="size-9 sm:size-10"
-                                                        className="cursor-pointer hover:opacity-80 transition-opacity shrink-0 mt-0.5"
-                                                        onClick={() => navigate(`/stock/${item.stock.symbol}`)}
-                                                    />
+                                                    {/* Spalte 1: Aktie (Logo + Name + Symbol) */}
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <Logo
+                                                            url={item.stock?.logoUrl}
+                                                            alt={item.stock.name}
+                                                            fallback={item.stock.symbol?.slice(0, 2) || '••'}
+                                                            size="size-8 sm:size-9"
+                                                            className="cursor-pointer hover:opacity-80 transition-opacity shrink-0"
+                                                            onClick={() => navigate(`/stock/${item.stock.symbol}`)}
+                                                        />
+                                                        <div className="min-w-0 flex-1">
+                                                            <p
+                                                                className="font-bold text-xs sm:text-sm leading-tight cursor-pointer hover:text-primary transition-colors truncate text-foreground"
+                                                                onClick={() => navigate(`/stock/${item.stock.symbol}`)}
+                                                                title={item.stock.name}
+                                                            >
+                                                                {item.stock.name}
+                                                            </p>
+                                                            <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground truncate block">
+                                                                {item.stock.symbol}
+                                                            </span>
+                                                        </div>
+                                                    </div>
 
-                                                    {/* Spalte Rechts: Content (Name + Rendite oben, Termine unten) */}
-                                                    <div className="min-w-0 flex-1 flex flex-col gap-1.5">
-                                                        {/* Zeile 1: Name + Rendite */}
-                                                        <div className="flex items-start justify-between gap-2 min-w-0">
-                                                            <div className="min-w-0 flex-1">
-                                                                <p
-                                                                    className="font-bold text-sm sm:text-base leading-tight cursor-pointer hover:text-primary transition-colors truncate text-foreground"
-                                                                    onClick={() => navigate(`/stock/${item.stock.symbol}`)}
-                                                                    title={item.stock.name}
-                                                                >
-                                                                    {item.stock.name}
-                                                                </p>
-                                                                <span className="text-[11px] font-mono text-muted-foreground truncate block">
-                                                                    {item.stock.symbol}
+                                                    {/* Spalte 2: Ex-Tag */}
+                                                    <div className="w-[62px] shrink-0">
+                                                        {nextExDate ? (
+                                                            <div className="flex flex-col items-start gap-0.5">
+                                                                <div className="flex items-center gap-0.5 px-1 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap text-[9px] leading-none" title={`Ex-Datum am ${new Date(nextExDate).toLocaleDateString('de-DE')}`}>
+                                                                    <Bell className="size-2.5 shrink-0" />
+                                                                    <span>Ex in {daysToEx} T.</span>
+                                                                </div>
+                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-[9px] sm:text-[10px] pl-0.5 font-medium leading-none">
+                                                                    {new Date(nextExDate).toLocaleDateString('de-DE')}
                                                                 </span>
                                                             </div>
+                                                        ) : (
+                                                            <div className="w-full" />
+                                                        )}
+                                                    </div>
 
-                                                            {/* Rendite */}
-                                                            <div className="text-right shrink-0">
-                                                                <div className="font-bold text-sm sm:text-base text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
-                                                                    {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}%` : '-'}
+                                                    {/* Spalte 3: Zahltag */}
+                                                    <div className="w-[62px] shrink-0 flex flex-col items-start gap-0.5">
+                                                        {payDate ? (
+                                                            <>
+                                                                <div className="flex items-center gap-0.5 px-1 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap text-[9px] leading-none">
+                                                                    <Calendar className="size-2.5 shrink-0 opacity-70" />
+                                                                    <span>Zahltag</span>
                                                                 </div>
-                                                                <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-semibold">Rendite</p>
-                                                            </div>
-                                                        </div>
+                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-[9px] sm:text-[10px] pl-0.5 font-medium leading-none">
+                                                                    {new Date(payDate).toLocaleDateString('de-DE')}
+                                                                </span>
+                                                            </>
+                                                        ) : (
+                                                            <div className="w-full" />
+                                                        )}
+                                                    </div>
 
-                                                        {/* Zeile 2: Feste Spalten für Ex-Tag & Zahltag */}
-                                                        <div className="flex items-start gap-4 pt-1 border-t border-border/25">
-                                                            {/* Spalte Ex-Tag */}
-                                                            <div className="w-[74px] sm:w-[80px] shrink-0">
-                                                                {nextExDate ? (
-                                                                    <div className="flex flex-col items-start gap-0.5">
-                                                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap text-[10px]" title={`Ex-Datum am ${new Date(nextExDate).toLocaleDateString('de-DE')}`}>
-                                                                            <Bell className="size-2.5 shrink-0" />
-                                                                            <span>Ex in {daysToEx} T.</span>
-                                                                        </div>
-                                                                        <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] pl-0.5 font-medium">
-                                                                            {new Date(nextExDate).toLocaleDateString('de-DE')}
-                                                                        </span>
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="w-full h-full flex flex-col items-start gap-0.5 opacity-30">
-                                                                        <span className="text-[10px] text-muted-foreground font-mono">—</span>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-
-                                                            {/* Spalte Zahltag */}
-                                                            <div className="w-[74px] sm:w-[80px] shrink-0 flex flex-col items-start gap-0.5">
-                                                                {payDate ? (
-                                                                    <>
-                                                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap text-[10px]">
-                                                                            <Calendar className="size-2.5 shrink-0 opacity-70" />
-                                                                            <span>Zahltag</span>
-                                                                        </div>
-                                                                        <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] pl-0.5 font-medium">
-                                                                            {new Date(payDate).toLocaleDateString('de-DE')}
-                                                                        </span>
-                                                                    </>
-                                                                ) : (
-                                                                    <div className="w-full h-full flex flex-col items-start gap-0.5 opacity-30">
-                                                                        <span className="text-[10px] text-muted-foreground font-mono">—</span>
-                                                                    </div>
-                                                                )}
-                                                            </div>
+                                                    {/* Spalte 4: Rendite % (kleinere Schriftgrösse für % & Rendite) */}
+                                                    <div className="w-[72px] shrink-0 text-right flex flex-col items-end gap-0.5">
+                                                        <div className="font-bold text-xs sm:text-sm text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
+                                                            {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}%` : '-'}
                                                         </div>
+                                                        <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wider font-semibold leading-none">Rendite</p>
                                                     </div>
                                                 </div>
                                             );
