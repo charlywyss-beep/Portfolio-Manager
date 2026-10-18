@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Calendar, TrendingUp, Edit, Trash2, RefreshCw } from 'lucide-react';
+import { Calendar, TrendingUp, Edit, Trash2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Logo } from '../components/Logo';
 import { cn } from '../utils';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import { useCurrencyFormatter } from '../utils/currency';
 import { getCurrentDividendPeriod } from '../utils/dividend';
@@ -13,6 +13,37 @@ export function DividendPlanner() {
     const navigate = useNavigate();
     const { stocks, positions, fixedDeposits, deleteFixedDeposit, lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices } = usePortfolio();
     const { convertToCHF } = useCurrencyFormatter();
+
+    // 0: Anteile, 1: Rendite %, 2: Div./Akt., 3: Frequenz, 4: Quartalsweise, 5: Jährlich, 6: EX-Tag, 7: Zahl-Tag, 8: Aktion
+    const [mobileColIndex, setMobileColIndex] = useState(1);
+    const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+
+    const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+        const touch = e.touches[0];
+        touchStartRef.current = {
+            x: touch.clientX,
+            y: touch.clientY,
+            time: Date.now()
+        };
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+        if (!touchStartRef.current) return;
+        const touch = e.changedTouches[0];
+        const dx = touch.clientX - touchStartRef.current.x;
+        const dy = touch.clientY - touchStartRef.current.y;
+        const dt = Date.now() - touchStartRef.current.time;
+
+        // Horizontal swipe: only when touch started to the right of the "Aktie" column (> 140px)
+        if (touchStartRef.current.x > 140 && Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy) * 1.2 && dt < 700) {
+            if (dx < 0) {
+                setMobileColIndex((i) => Math.min(8, i + 1));
+            } else {
+                setMobileColIndex((i) => Math.max(0, i - 1));
+            }
+        }
+        touchStartRef.current = null;
+    };
 
     // Calculate projected dividends from yield
     const projectedDividends = positions
@@ -228,20 +259,297 @@ export function DividendPlanner() {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto overscroll-x-none">
-                    <table className="w-full min-w-[1000px]">
+                <div
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                    className="overflow-y-auto max-h-[calc(100dvh-280px)] md:max-h-none w-full border-b border-border snap-y snap-mandatory scroll-pt-[50px] md:snap-none md:scroll-pt-0"
+                >
+                    <table className="w-full text-left border-collapse md:min-w-[1000px] xl:min-w-0 table-fixed">
                         <thead>
-                            <tr className="border-b border-border">
-                                <th className="text-left py-3 px-4 font-semibold sticky -left-px z-30 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[160px] md:w-[100px] md:max-w-[100px]">Aktie</th>
-                                <th className="text-right py-3 px-4 font-semibold">Anteile</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Rendite %</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Div./Akt.</th>
-                                <th className="text-right py-3 px-4 font-semibold">Frequenz</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Quartalsweise</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Jährlich</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">EX-Tag</th>
-                                <th className="text-right py-3 px-4 font-semibold whitespace-nowrap">Zahl-Tag</th>
-                                <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] md:sticky md:-right-px bg-card z-50 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                            <tr className="border-b border-border bg-muted/20">
+                                {/* 0. Aktie */}
+                                <th className="px-3 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider whitespace-normal sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle">
+                                    Aktie
+                                </th>
+
+                                {/* 1. Anteile */}
+                                <th
+                                    className={cn(
+                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
+                                    )}
+                                >
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                            disabled={mobileColIndex === 0}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronLeft className="size-4" />
+                                        </button>
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            Anteile
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
+                                            disabled={mobileColIndex === 8}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronRight className="size-4" />
+                                        </button>
+                                    </div>
+                                    <span className="hidden md:inline">Anteile</span>
+                                </th>
+
+                                {/* 2. Rendite % */}
+                                <th
+                                    className={cn(
+                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell"
+                                    )}
+                                >
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                            disabled={mobileColIndex === 0}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronLeft className="size-4" />
+                                        </button>
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            Rendite %
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
+                                            disabled={mobileColIndex === 8}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronRight className="size-4" />
+                                        </button>
+                                    </div>
+                                    <span className="hidden md:inline">Rendite %</span>
+                                </th>
+
+                                {/* 3. Div./Akt. */}
+                                <th
+                                    className={cn(
+                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell"
+                                    )}
+                                >
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                            disabled={mobileColIndex === 0}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronLeft className="size-4" />
+                                        </button>
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            Div./Akt.
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
+                                            disabled={mobileColIndex === 8}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronRight className="size-4" />
+                                        </button>
+                                    </div>
+                                    <span className="hidden md:inline">Div./Akt.</span>
+                                </th>
+
+                                {/* 4. Frequenz */}
+                                <th
+                                    className={cn(
+                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell"
+                                    )}
+                                >
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                            disabled={mobileColIndex === 0}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronLeft className="size-4" />
+                                        </button>
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            Frequenz
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
+                                            disabled={mobileColIndex === 8}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronRight className="size-4" />
+                                        </button>
+                                    </div>
+                                    <span className="hidden md:inline">Frequenz</span>
+                                </th>
+
+                                {/* 5. Quartalsweise */}
+                                <th
+                                    className={cn(
+                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell"
+                                    )}
+                                >
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                            disabled={mobileColIndex === 0}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronLeft className="size-4" />
+                                        </button>
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            Quartalsweise
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
+                                            disabled={mobileColIndex === 8}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronRight className="size-4" />
+                                        </button>
+                                    </div>
+                                    <span className="hidden md:inline">Quartalsweise</span>
+                                </th>
+
+                                {/* 6. Jährlich */}
+                                <th
+                                    className={cn(
+                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell"
+                                    )}
+                                >
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                            disabled={mobileColIndex === 0}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronLeft className="size-4" />
+                                        </button>
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            Jährlich
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
+                                            disabled={mobileColIndex === 8}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronRight className="size-4" />
+                                        </button>
+                                    </div>
+                                    <span className="hidden md:inline">Jährlich</span>
+                                </th>
+
+                                {/* 7. EX-Tag */}
+                                <th
+                                    className={cn(
+                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell"
+                                    )}
+                                >
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                            disabled={mobileColIndex === 0}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronLeft className="size-4" />
+                                        </button>
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            EX-Tag
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
+                                            disabled={mobileColIndex === 8}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronRight className="size-4" />
+                                        </button>
+                                    </div>
+                                    <span className="hidden md:inline">EX-Tag</span>
+                                </th>
+
+                                {/* 8. Zahl-Tag */}
+                                <th
+                                    className={cn(
+                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        mobileColIndex === 7 ? "table-cell" : "hidden md:table-cell"
+                                    )}
+                                >
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                            disabled={mobileColIndex === 0}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronLeft className="size-4" />
+                                        </button>
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            Zahl-Tag
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
+                                            disabled={mobileColIndex === 8}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronRight className="size-4" />
+                                        </button>
+                                    </div>
+                                    <span className="hidden md:inline">Zahl-Tag</span>
+                                </th>
+
+                                {/* 9. Aktion */}
+                                <th
+                                    className={cn(
+                                        "px-1 md:px-1 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:w-[60px] md:min-w-[60px] md:max-w-[60px] md:sticky md:-right-px bg-card z-30 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] sticky top-0 align-middle",
+                                        mobileColIndex === 8 ? "table-cell" : "hidden md:table-cell"
+                                    )}
+                                >
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                            disabled={mobileColIndex === 0}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronLeft className="size-4" />
+                                        </button>
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            Aktion
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
+                                            disabled={mobileColIndex === 8}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronRight className="size-4" />
+                                        </button>
+                                    </div>
+                                    <span className="hidden md:inline">Aktion</span>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -255,48 +563,28 @@ export function DividendPlanner() {
                                 projectedDividends.map((data: any) => {
                                     const { position, stock, annualDividendNative, annualDividendCHF, quarterlyDividendCHF, divCurrency } = data!;
 
-                                    // Annual Display Logic
-                                    let annualDisplay: React.ReactNode;
-                                    if (divCurrency !== 'CHF') {
-                                        // Manual Format for Tabular Alignment
-                                        const annualNative = annualDividendNative || 0;
-                                        let displayAnnualNative = annualNative;
-                                        let displayAnnualCurrency = divCurrency;
-                                        if (divCurrency === 'GBp') {
-                                            displayAnnualNative /= 100;
-                                            displayAnnualCurrency = 'GBP';
-                                        }
-
-                                        annualDisplay = (
-                                            <div className="flex flex-col items-end gap-0.5">
-                                                <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
-                                                    <span>{displayAnnualNative.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                                    <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">{displayAnnualCurrency}</span>
-                                                </div>
-                                                <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
-                                                    <span>{annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                                    <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">CHF</span>
-                                                </div>
-                                            </div>
-                                        );
-                                    } else {
-                                        annualDisplay = (
-                                            <div className="flex items-center justify-end gap-1.5 font-medium tabular-nums">
-                                                <span>{annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                                <span className="w-8 text-left text-[11px] uppercase text-muted-foreground/80 sm:text-sm sm:text-foreground/90 sm:w-8 translate-y-[0.5px]">CHF</span>
-                                            </div>
-                                        );
+                                    // Annual Display Logic: Original currency only
+                                    const annualNative = annualDividendNative || 0;
+                                    let displayAnnualNative = annualNative;
+                                    let displayAnnualCurrency = divCurrency;
+                                    if (divCurrency === 'GBp') {
+                                        displayAnnualNative /= 100;
+                                        displayAnnualCurrency = 'GBP';
                                     }
+                                    const annualFormatted = divCurrency !== 'CHF'
+                                        ? `${displayAnnualNative.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${displayAnnualCurrency}`
+                                        : `${annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`;
 
                                     const currentDiv = getCurrentDividendPeriod(stock);
 
                                     return (
-                                        <tr key={position.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group">
-                                            <td className="py-3 px-4 sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] min-w-[160px] md:w-[100px] md:max-w-[100px]">
+                                        <tr key={position.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group snap-start snap-always h-[60px] md:h-auto">
+                                            {/* 0. Aktie */}
+                                            <td className="px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle">
                                                 <div className="absolute inset-0 bg-card -z-10" />
-                                                <div className="relative flex items-center gap-3">
+                                                <div className="relative flex items-center gap-2 md:gap-3">
                                                     <div
-                                                        className="cursor-pointer hover:scale-110 transition-transform p-1 -m-1"
+                                                        className="cursor-pointer hover:scale-110 transition-transform p-0.5 shrink-0"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             navigate(`/stock/${stock.id}`);
@@ -321,91 +609,119 @@ export function DividendPlanner() {
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <div>
-                                                        <div className="font-medium text-sm text-foreground truncate max-w-[90px] md:max-w-none" title={stock.name}>{stock.name}</div>
-                                                        <div className="text-xs text-muted-foreground">{stock.symbol}</div>
+                                                    <div className="flex flex-col min-w-0 flex-1 justify-center">
+                                                        <div
+                                                            className="font-bold text-[13px] md:text-sm text-foreground truncate block leading-tight cursor-pointer hover:text-primary transition-colors"
+                                                            title={stock.name}
+                                                            onClick={() => navigate(`/stock/${stock.id}`)}
+                                                        >
+                                                            {stock.name}
+                                                        </div>
+                                                        <div className="text-xs text-muted-foreground uppercase truncate mt-0.5">{stock.symbol}</div>
                                                     </div>
                                                 </div>
-                                                {/* Ex-Date Warning Indicator */}
                                                 {position.plannedPurchase?.savedAt && (
                                                     <div className="absolute top-1 right-1">
                                                         <div className="size-1.5 rounded-full bg-orange-500" title="Geplanter Kauf" />
                                                     </div>
                                                 )}
                                             </td>
-                                            <td className="text-right py-3 px-4 font-medium">{position.shares}</td>
-                                            <td className="text-right py-3 px-4 text-green-600 dark:text-green-400 font-medium">
-                                                {stock.dividendYield?.toFixed(2)}%
+
+                                            {/* 1. Anteile */}
+                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right font-medium align-middle", mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell")}>
+                                                <span className="font-bold text-sm tabular-nums whitespace-nowrap">{position.shares}</span>
                                             </td>
-                                            <td className="text-right py-3 px-4 text-muted-foreground">
-                                                {stock.dividendAmount?.toFixed(2)} {divCurrency}
+
+                                            {/* 2. Rendite % */}
+                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell")}>
+                                                <span className="text-sm font-bold text-green-600 dark:text-green-400 tabular-nums whitespace-nowrap">
+                                                    {stock.dividendYield?.toFixed(2)}%
+                                                </span>
                                             </td>
-                                            <td className="text-right py-3 px-4 capitalize text-sm">
+
+                                            {/* 3. Div./Akt. */}
+                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell")}>
+                                                <span className="text-sm font-semibold text-foreground tabular-nums whitespace-nowrap">
+                                                    {stock.dividendAmount?.toFixed(2)} {divCurrency}
+                                                </span>
+                                            </td>
+
+                                            {/* 4. Frequenz */}
+                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right capitalize text-xs md:text-sm align-middle whitespace-nowrap", mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell")}>
                                                 {stock.dividendFrequency === 'annually' && 'Jährlich'}
                                                 {stock.dividendFrequency === 'semi-annually' && 'Halbjährlich'}
                                                 {stock.dividendFrequency === 'quarterly' && 'Quartalsweise'}
                                                 {stock.dividendFrequency === 'monthly' && 'Monatlich'}
                                                 {!stock.dividendFrequency && '-'}
                                             </td>
-                                            <td className="text-right py-3 px-4">
-                                                {(stock.dividendFrequency !== 'annually' && quarterlyDividendCHF > 0) ? quarterlyDividendCHF.toFixed(2) : '-'}
+
+                                            {/* 5. Quartalsweise */}
+                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right font-semibold text-sm align-middle whitespace-nowrap", mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell")}>
+                                                {(stock.dividendFrequency !== 'annually' && quarterlyDividendCHF > 0) ? `${quarterlyDividendCHF.toFixed(2)} CHF` : '-'}
                                             </td>
-                                            <td className="text-right py-3 px-4 font-semibold whitespace-nowrap relative group/annual">
-                                                {annualDisplay}
+
+                                            {/* 6. Jährlich */}
+                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right font-bold text-sm align-middle whitespace-nowrap", mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell")}>
+                                                <span className="tabular-nums">{annualFormatted}</span>
                                             </td>
-                                            <td className="text-right py-3 px-4 text-muted-foreground">
-                                                <div className="flex flex-col items-end gap-1">
-                                                    <span className={(() => {
-                                                        const dDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                                        if (dDays !== null && dDays < 0) return "text-green-600 font-medium"; // Past -> Green
-                                                        if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-orange-500 font-medium"; // Soon -> Orange
-                                                        return "";
-                                                    })()}>
+
+                                            {/* 7. EX-Tag */}
+                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell")}>
+                                                <div className="flex flex-col items-end justify-center gap-0.5">
+                                                    <span className={cn(
+                                                        "font-bold text-[13px] md:text-sm whitespace-nowrap leading-tight",
+                                                        (() => {
+                                                            const dDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                                                            if (dDays !== null && dDays < 0) return "text-green-600 dark:text-green-400 font-medium";
+                                                            if (dDays !== null && dDays >= 0 && dDays <= 14) return "text-orange-500 font-medium";
+                                                            return "text-muted-foreground";
+                                                        })()
+                                                    )}>
                                                         {currentDiv.exDate
-                                                            ? new Date(currentDiv.exDate).toLocaleDateString('de-DE')
+                                                            ? new Date(currentDiv.exDate).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' })
                                                             : '-'}
                                                     </span>
                                                     {currentDiv.status === 'ex-dividend' && (
-                                                        <span className="text-[10px] font-bold text-orange-500 bg-orange-100 dark:bg-orange-950/50 px-1.5 py-0.5 rounded">
+                                                        <span className="text-[11px] font-bold text-orange-500 bg-orange-100 dark:bg-orange-950/50 px-1.5 py-0.5 rounded leading-none uppercase">
                                                             Ex-Div
                                                         </span>
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="text-right py-3 px-4 text-muted-foreground">
-                                                <div className="flex flex-col items-end gap-1">
-                                                    <span className={(() => {
-                                                        const payDays = currentDiv.payDate ? Math.ceil((new Date(currentDiv.payDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                                                        const exDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
 
-                                                        // Paid (Past) -> Green
-                                                        if (payDays !== null && payDays < 0) return "text-green-600 font-medium";
-
-                                                        // Ex-Date passed + Pay-Date future -> Orange (Waiting for payment)
-                                                        if (exDays !== null && exDays < 0 && payDays !== null && payDays >= 0) return "text-orange-500 font-medium";
-
-                                                        // Soon check (fallback if Ex-Date not available or future)
-                                                        if (payDays !== null && payDays >= 0 && payDays <= 14) return "text-orange-500 font-medium";
-
-                                                        return "";
-                                                    })()}>
+                                            {/* 8. Zahl-Tag */}
+                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 7 ? "table-cell" : "hidden md:table-cell")}>
+                                                <div className="flex flex-col items-end justify-center gap-0.5">
+                                                    <span className={cn(
+                                                        "font-bold text-[13px] md:text-sm whitespace-nowrap leading-tight",
+                                                        (() => {
+                                                            const payDays = currentDiv.payDate ? Math.ceil((new Date(currentDiv.payDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                                                            const exDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+                                                            if (payDays !== null && payDays < 0) return "text-green-600 dark:text-green-400 font-medium";
+                                                            if (exDays !== null && exDays < 0 && payDays !== null && payDays >= 0) return "text-orange-500 font-medium";
+                                                            if (payDays !== null && payDays >= 0 && payDays <= 14) return "text-orange-500 font-medium";
+                                                            return "text-muted-foreground";
+                                                        })()
+                                                    )}>
                                                         {currentDiv.payDate
-                                                            ? new Date(currentDiv.payDate).toLocaleDateString('de-DE')
+                                                            ? new Date(currentDiv.payDate).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' })
                                                             : '-'}
                                                     </span>
                                                     {currentDiv.status === 'paid' && (
-                                                        <span className="text-[10px] font-bold text-green-600 bg-green-100 dark:bg-green-950/50 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                        <span className="text-[11px] font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-950/50 px-1.5 py-0.5 rounded leading-none uppercase">
                                                             Bezahlt
                                                         </span>
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] md:sticky md:-right-px bg-card z-40 group-hover:bg-muted/30 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+
+                                            {/* 9. Aktion */}
+                                            <td className={cn("px-2 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-center md:w-[60px] md:min-w-[60px] md:max-w-[60px] md:sticky md:-right-px bg-card z-20 group-hover:bg-muted/30 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle", mobileColIndex === 8 ? "table-cell" : "hidden md:table-cell")}>
                                                 <div className="absolute inset-0 bg-card -z-10" />
-                                                <div className="relative flex items-center justify-end gap-1">
+                                                <div className="relative flex items-center justify-center">
                                                     <button
                                                         onClick={() => navigate(`/dividends/edit/${stock.id}`)}
-                                                        className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
+                                                        className="p-1.5 hover:bg-primary/10 text-primary rounded-lg transition-colors"
                                                         title="Bearbeiten"
                                                     >
                                                         <Edit className="size-4" />

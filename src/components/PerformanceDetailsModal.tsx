@@ -1,6 +1,6 @@
-import { X, TrendingUp, RefreshCw } from 'lucide-react';
+import { X, TrendingUp, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { Logo } from './Logo';
@@ -17,6 +17,37 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     const { convertToCHF, formatCurrency } = useCurrencyFormatter();
     const { refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh, refreshTick } = usePortfolio();
     const navigate = useNavigate();
+
+    // 0: Kurs, 1: % am DD.MM., 2: CHF am DD.MM., 3: Performance %, 4: Performance CHF
+    const [mobileColIndex, setMobileColIndex] = useState(0);
+    const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+
+    const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+        const touch = e.touches[0];
+        touchStartRef.current = {
+            x: touch.clientX,
+            y: touch.clientY,
+            time: Date.now()
+        };
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+        if (!touchStartRef.current) return;
+        const touch = e.changedTouches[0];
+        const dx = touch.clientX - touchStartRef.current.x;
+        const dy = touch.clientY - touchStartRef.current.y;
+        const dt = Date.now() - touchStartRef.current.time;
+
+        // Horizontal swipe: only when touch started to the right of the "Aktie" column (> 140px)
+        if (touchStartRef.current.x > 140 && Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy) * 1.2 && dt < 700) {
+            if (dx < 0) {
+                setMobileColIndex((i) => Math.min(4, i + 1));
+            } else {
+                setMobileColIndex((i) => Math.max(0, i - 1));
+            }
+        }
+        touchStartRef.current = null;
+    };
 
     // Prevent body scroll when modal is open
     useEffect(() => {
@@ -74,6 +105,8 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
         navigate(`/stock/${stockId}?from=performance`);
         onClose();
     };
+
+    const todayDateLabel = new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
 
     return (
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
@@ -136,21 +169,181 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                     </div>
                 </div>
 
-                <div className="overflow-y-auto p-0 flex-1">
-                    <table className="w-full text-xs md:text-sm">
+                <div
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                    className="overflow-y-auto p-0 flex-1 w-full snap-y snap-mandatory scroll-pt-[50px] md:snap-none md:scroll-pt-0"
+                >
+                    <table className="w-full text-xs md:text-sm border-collapse table-fixed md:table-auto">
                         <thead className="bg-muted/30 sticky top-0 z-10">
                             <tr className="border-b border-border">
-                                <th className="text-left py-2 px-4 font-medium text-muted-foreground">Aktie / ETF</th>
-                                <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '80px', whiteSpace: 'nowrap' }}>Kurs</th>
-                                <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '70px', whiteSpace: 'nowrap' }}>
-                                    % am {new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })}
+                                {/* 0. Aktie / ETF */}
+                                <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-medium text-muted-foreground text-[13px] md:text-xs uppercase md:normal-case tracking-wider md:tracking-normal sticky top-0 left-0 z-30 bg-card md:bg-muted/30 shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-auto md:min-w-0 md:max-w-none touch-pan-y align-middle">
+                                    Aktie / ETF
                                 </th>
-                                <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '90px', whiteSpace: 'nowrap' }}>
-                                    CHF am {new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })}
+
+                                {/* 1. Kurs */}
+                                <th
+                                    className={cn(
+                                        "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle",
+                                        mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
+                                    )}
+                                    style={{ width: '80px', whiteSpace: 'nowrap' }}
+                                >
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                            disabled={mobileColIndex === 0}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronLeft className="size-4" />
+                                        </button>
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            Kurs
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(4, i + 1)); }}
+                                            disabled={mobileColIndex === 4}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronRight className="size-4" />
+                                        </button>
+                                    </div>
+                                    <span className="hidden md:inline">Kurs</span>
                                 </th>
-                                <th style={{ width: '90px' }}></th>
-                                <th className="text-right py-2 px-1 font-medium text-muted-foreground text-xs" style={{ width: '60px', whiteSpace: 'nowrap' }}>Performance %</th>
-                                <th className="text-right py-2 pr-4 pl-1 font-medium text-muted-foreground text-xs" style={{ width: '150px', whiteSpace: 'nowrap' }}>Performance CHF</th>
+
+                                {/* 2. % am Datum */}
+                                <th
+                                    className={cn(
+                                        "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle",
+                                        mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell"
+                                    )}
+                                    style={{ width: '70px', whiteSpace: 'nowrap' }}
+                                >
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                            disabled={mobileColIndex === 0}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronLeft className="size-4" />
+                                        </button>
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            % am {todayDateLabel}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(4, i + 1)); }}
+                                            disabled={mobileColIndex === 4}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronRight className="size-4" />
+                                        </button>
+                                    </div>
+                                    <span className="hidden md:inline">% am {todayDateLabel}</span>
+                                </th>
+
+                                {/* 3. CHF am Datum */}
+                                <th
+                                    className={cn(
+                                        "px-1 md:pr-4 md:pl-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle",
+                                        mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell"
+                                    )}
+                                    style={{ width: '90px', whiteSpace: 'nowrap' }}
+                                >
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                            disabled={mobileColIndex === 0}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronLeft className="size-4" />
+                                        </button>
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            CHF am {todayDateLabel}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(4, i + 1)); }}
+                                            disabled={mobileColIndex === 4}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronRight className="size-4" />
+                                        </button>
+                                    </div>
+                                    <span className="hidden md:inline">CHF am {todayDateLabel}</span>
+                                </th>
+
+                                {/* Spacer (Desktop only) */}
+                                <th className="hidden md:table-cell" style={{ width: '90px' }}></th>
+
+                                {/* 4. Performance % */}
+                                <th
+                                    className={cn(
+                                        "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle",
+                                        mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell"
+                                    )}
+                                    style={{ width: '60px', whiteSpace: 'nowrap' }}
+                                >
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                            disabled={mobileColIndex === 0}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronLeft className="size-4" />
+                                        </button>
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            Performance %
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(4, i + 1)); }}
+                                            disabled={mobileColIndex === 4}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronRight className="size-4" />
+                                        </button>
+                                    </div>
+                                    <span className="hidden md:inline">Performance %</span>
+                                </th>
+
+                                {/* 5. Performance CHF */}
+                                <th
+                                    className={cn(
+                                        "px-1 md:pr-4 md:pl-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle",
+                                        mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell"
+                                    )}
+                                    style={{ width: '150px', whiteSpace: 'nowrap' }}
+                                >
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                            disabled={mobileColIndex === 0}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronLeft className="size-4" />
+                                        </button>
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            Performance CHF
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(4, i + 1)); }}
+                                            disabled={mobileColIndex === 4}
+                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                        >
+                                            <ChevronRight className="size-4" />
+                                        </button>
+                                    </div>
+                                    <span className="hidden md:inline">Performance CHF</span>
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -174,7 +367,6 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 const isTotalPositive = totalGainCHF >= 0;
 
                                 // Market State Logic (v3.11.481):
-                                // Strict Time-based.
                                 const calcState = estimateMarketState(p.stock.symbol, p.stock.currency);
                                 const isMarketOpen = calcState === 'REGULAR'; // Only Regular Trading Hours = Green
 
@@ -182,54 +374,96 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                     <tr
                                         key={p.id}
                                         onClick={() => handleRowClick(p.stock.id)}
-                                        className="hover:bg-muted/30 transition-colors cursor-pointer group border-b border-border/50"
+                                        className="hover:bg-muted/30 transition-colors cursor-pointer group border-b border-border/50 snap-start snap-always h-[60px] md:h-auto"
                                     >
-                                        <td className="py-3 px-4 font-medium">
-                                            <div className="flex items-center gap-3">
+                                        {/* 0. Aktie / ETF */}
+                                        <td className="px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-auto md:min-w-0 md:max-w-none touch-pan-y align-middle">
+                                            <div className="absolute inset-0 bg-card -z-10" />
+                                            <div className="flex items-center gap-2 md:gap-3 relative">
                                                 <Logo
                                                     url={p.stock.logoUrl}
                                                     alt={p.stock.name}
                                                     fallback={p.stock.symbol.slice(0, 2)}
-                                                    size="size-10"
+                                                    size="size-8 md:size-10"
                                                 />
-                                                <div className="flex flex-col min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="break-words whitespace-pre-line text-sm group-hover:text-primary transition-colors leading-tight">{p.stock.name}</div>
+                                                <div className="flex flex-col min-w-0 flex-1 justify-center">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <div className="truncate block font-bold text-[13px] md:text-sm group-hover:text-primary transition-colors leading-tight" title={p.stock.name}>
+                                                            {p.stock.name}
+                                                        </div>
                                                         {isMarketOpen ? (
-                                                            <div className="size-2.5 flex-shrink-0 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
+                                                            <div className="size-2 flex-shrink-0 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
                                                         ) : (
-                                                            <div className="size-2.5 flex-shrink-0 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${calcState})`} />
+                                                            <div className="size-2 flex-shrink-0 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${calcState})`} />
                                                         )}
                                                     </div>
-                                                    <span className="text-[10px] text-muted-foreground">{p.stock.symbol}</span>
+                                                    <span className="text-[11px] text-muted-foreground uppercase truncate mt-0.5">{p.stock.symbol}</span>
                                                 </div>
                                             </div>
                                         </td>
-                                        {/* Current Price */}
-                                        <td className="py-3 px-1 text-right font-medium whitespace-nowrap" style={{ width: '80px' }}>
-                                            <div className="flex flex-col items-end">
-                                                <span>{formatCurrency(p.stock.currentPrice, p.stock.currency, false)}</span>
-                                                {p.stock.currency !== 'CHF' && (
-                                                    <span className="text-muted-foreground">
-                                                        {formatCurrency(convertToCHF(p.stock.currentPrice, p.stock.currency), 'CHF', false)}
-                                                    </span>
-                                                )}
-                                            </div>
+
+                                        {/* 1. Current Price (Original currency only) */}
+                                        <td
+                                            className={cn(
+                                                "px-3 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-right font-medium whitespace-nowrap align-middle",
+                                                mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
+                                            )}
+                                            style={{ width: '80px' }}
+                                        >
+                                            <span className="font-bold text-[15px] md:text-sm text-foreground">
+                                                {formatCurrency(p.stock.currentPrice, p.stock.currency, false)}
+                                            </span>
                                         </td>
-                                        {/* Daily Performance */}
-                                        <td className={cn("py-3 px-1 text-right font-medium text-xs", isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '70px' }}>
-                                            {isDailyPositive ? '+' : ''}{p.dailyGainPercent.toFixed(2)}%
+
+                                        {/* 2. Daily Performance % */}
+                                        <td
+                                            className={cn(
+                                                "px-3 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle",
+                                                mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell",
+                                                isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                            )}
+                                            style={{ width: '70px' }}
+                                        >
+                                            <span className="tabular-nums">{isDailyPositive ? '+' : ''}{p.dailyGainPercent.toFixed(2)}%</span>
                                         </td>
-                                        <td className={cn("py-3 pr-4 pl-1 text-right font-medium", isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '90px' }}>
-                                            {isDailyPositive ? '+' : ''}{formatCurrency(dailyGainCHF, 'CHF').replace('CHF', '').trim()}
+
+                                        {/* 3. Daily Performance CHF */}
+                                        <td
+                                            className={cn(
+                                                "px-3 py-1.5 md:py-3 md:pr-4 md:pl-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle",
+                                                mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell",
+                                                isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                            )}
+                                            style={{ width: '90px' }}
+                                        >
+                                            <span className="tabular-nums">{isDailyPositive ? '+' : ''}{formatCurrency(dailyGainCHF, 'CHF').replace('CHF', '').trim()} CHF</span>
                                         </td>
-                                        <td style={{ width: '90px' }}></td>
-                                        {/* Total Performance */}
-                                        <td className={cn("py-3 px-1 text-right font-medium text-xs", isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '60px' }}>
-                                            {isTotalPositive ? '+' : ''}{totalGainPercent.toFixed(2)}%
+
+                                        {/* Spacer (Desktop only) */}
+                                        <td className="hidden md:table-cell" style={{ width: '90px' }}></td>
+
+                                        {/* 4. Total Performance % */}
+                                        <td
+                                            className={cn(
+                                                "px-3 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle",
+                                                mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell",
+                                                isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                            )}
+                                            style={{ width: '60px' }}
+                                        >
+                                            <span className="tabular-nums">{isTotalPositive ? '+' : ''}{totalGainPercent.toFixed(2)}%</span>
                                         </td>
-                                        <td className={cn("py-3 pr-4 pl-1 text-right font-bold", isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")} style={{ width: '150px' }}>
-                                            {isTotalPositive ? '+' : ''}{formatCurrency(totalGainCHF, 'CHF').replace('CHF', '').trim()}
+
+                                        {/* 5. Total Performance CHF */}
+                                        <td
+                                            className={cn(
+                                                "px-3 py-1.5 md:py-3 md:pr-4 md:pl-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle",
+                                                mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell",
+                                                isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                            )}
+                                            style={{ width: '150px' }}
+                                        >
+                                            <span className="tabular-nums">{isTotalPositive ? '+' : ''}{formatCurrency(totalGainCHF, 'CHF').replace('CHF', '').trim()} CHF</span>
                                         </td>
                                     </tr>
                                 );
