@@ -180,17 +180,17 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                     className="overflow-y-auto p-0 flex-1 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
                 >
                     <table className="w-full text-xs md:text-sm border-collapse table-fixed md:table-auto">
-                        <thead className="bg-muted/30 sticky top-0 z-10">
-                            <tr className="border-b border-border">
+                        <thead>
+                            <tr className="border-b border-border bg-muted/20">
                                 {/* 0. Aktie / ETF */}
-                                <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-30 bg-card md:bg-muted/30 shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] overflow-hidden touch-pan-y align-middle">
+                                <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] touch-pan-y align-middle">
                                     Aktie / ETF
                                 </th>
 
                                 {/* 1. Kurs */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle md:w-[80px]",
+                                        "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle md:w-[80px]",
                                         mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -221,7 +221,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 {/* 2. % am Datum */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle md:w-[70px]",
+                                        "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle md:w-[70px]",
                                         mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -252,7 +252,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 {/* 3. CHF am Datum */}
                                 <th
                                     className={cn(
-                                        "px-1 md:pr-4 md:pl-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle md:w-[90px]",
+                                        "px-1 md:pr-4 md:pl-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle md:w-[90px]",
                                         mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -281,12 +281,12 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 </th>
 
                                 {/* Spacer (Desktop only) */}
-                                <th className="hidden md:table-cell md:w-[90px]"></th>
+                                <th className="hidden md:table-cell md:w-[90px] sticky top-0 z-30 bg-card"></th>
 
                                 {/* 4. Performance % */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle md:w-[60px]",
+                                        "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle md:w-[60px]",
                                         mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -317,7 +317,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 {/* 5. Performance CHF */}
                                 <th
                                     className={cn(
-                                        "px-1 md:pr-4 md:pl-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-20 bg-card md:bg-muted/30 align-middle md:w-[150px]",
+                                        "px-1 md:pr-4 md:pl-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle md:w-[150px]",
                                         mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
