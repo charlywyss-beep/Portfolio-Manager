@@ -1686,16 +1686,30 @@ export function FairValueCalculator() {
                                             </div>
                                             <div className="text-xs sm:text-sm font-medium mt-1.5 text-muted-foreground">
                                                 {isUndervalued && (
-                                                    <>Aktie hat <span className="font-bold text-emerald-400">+{potentialPct} %</span> Potenzial zum fairen Wert.</>
+                                                    <>
+                                                        <div>Aktie hat <span className="font-bold text-emerald-400">+{potentialPct} %</span> Potenzial zum fairen Wert.</div>
+                                                        <div className="mt-1 text-xs text-muted-foreground/90">Attraktive Sicherheitsmarge für Neukäufe.</div>
+                                                    </>
                                                 )}
                                                 {isFairHold && (
-                                                    <>Aktie notiert nahe am fairen Wert. Ideal für <span className="font-bold text-yellow-400">Bestände (Hold)</span>.</>
+                                                    <>
+                                                        <div>Aktie notiert nahe am fairen Wert.</div>
+                                                        <div className="mt-1 text-xs text-muted-foreground/90">Ideal für <span className="font-bold text-yellow-400">Bestände (Hold)</span>.</div>
+                                                    </>
                                                 )}
                                                 {isRichHold && (
-                                                    <>Gut bezahlt (+{overvaluationPct} % über fairem Wert). Für Bestände: <span className="font-bold text-amber-400">Entspannt halten</span> – aktuell kein Neukauf.</>
+                                                    <>
+                                                        <div>Gut bezahlt (+{overvaluationPct} % über fairem Wert).</div>
+                                                        <div className="mt-1 text-xs text-muted-foreground/90">
+                                                            Für Bestände: <span className="font-bold text-amber-400">Entspannt halten</span> – aktuell kein Neukauf.
+                                                        </div>
+                                                    </>
                                                 )}
                                                 {isOverheated && (
-                                                    <>Aktie ist ca. <span className="font-bold text-rose-400">{overvaluationPct} %</span> überbewertet. Kein Neukauf.</>
+                                                    <>
+                                                        <div>Aktie ist ca. <span className="font-bold text-rose-400">{overvaluationPct} %</span> überbewertet.</div>
+                                                        <div className="mt-1 text-xs text-muted-foreground/90">Aktuell kein Neukauf.</div>
+                                                    </>
                                                 )}
                                             </div>
                                         </div>
