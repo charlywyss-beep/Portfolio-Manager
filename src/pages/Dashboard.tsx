@@ -567,15 +567,16 @@ export function Dashboard() {
                                         <div
                                             key={idx}
                                             onClick={() => navigate('/dividends')}
-                                            className="flex items-center justify-between p-2 md:p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer gap-2 min-w-0"
+                                            className="grid grid-cols-[1fr_auto_auto_auto] items-center p-2 md:p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer gap-2 sm:gap-3 min-w-0"
                                         >
-                                            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+                                            {/* Spalte 1: Aktie (Logo + Name + Ticker) */}
+                                            <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
                                                 <Logo
                                                     url={div.stock?.logoUrl}
                                                     alt={div.stock.name}
                                                     fallback={div.stock.symbol?.slice(0, 2) || '••'}
-                                                    size="size-10"
-                                                    className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                                                    size="size-9 sm:size-10"
+                                                    className="cursor-pointer hover:opacity-80 transition-opacity shrink-0"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         navigate(`/stock/${div.stock.symbol}`);
@@ -583,7 +584,7 @@ export function Dashboard() {
                                                 />
                                                 <div className="min-w-0 flex-1">
                                                     <p
-                                                        className="font-bold text-sm sm:text-base leading-tight mb-1 cursor-pointer hover:text-primary transition-colors truncate"
+                                                        className="font-bold text-sm sm:text-base leading-tight cursor-pointer hover:text-primary transition-colors truncate"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             navigate(`/stock/${div.stock.symbol}`);
@@ -592,32 +593,42 @@ export function Dashboard() {
                                                     >
                                                         {div.stock.name}
                                                     </p>
-                                                    <div className="flex items-start gap-x-3 sm:gap-x-4 mt-1">
-                                                        {showExWarning && (
-                                                            <div className="flex flex-col items-start gap-0.5 shrink-0">
-                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap text-[10px] sm:text-[11px]" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
-                                                                    <Bell className="size-2.5 flex-shrink-0" />
-                                                                    <span>Ex in {daysToEx} T.</span>
-                                                                </div>
-                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] sm:text-[11px] pl-0.5 font-medium">
-                                                                    {new Date(div.exDate!).toLocaleDateString('de-DE')}
-                                                                </span>
-                                                            </div>
-                                                        )}
-
-                                                        <div className="flex flex-col items-start gap-0.5 shrink-0">
-                                                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap text-[10px] sm:text-[11px]">
-                                                                <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
-                                                                <span>Zahltag</span>
-                                                            </div>
-                                                            <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] sm:text-[11px] pl-0.5 font-medium">
-                                                                {new Date(div.payDate).toLocaleDateString('de-DE')}
-                                                            </span>
-                                                        </div>
-                                                    </div>
+                                                    <span className="text-[11px] font-mono text-muted-foreground truncate block">
+                                                        {div.stock.symbol}
+                                                    </span>
                                                 </div>
                                             </div>
-                                            <div className="text-right flex flex-col items-end gap-0.5 shrink-0 pl-2">
+
+                                            {/* Spalte 2: Ex-Tag */}
+                                            <div className="w-[72px] sm:w-[78px] shrink-0">
+                                                {showExWarning ? (
+                                                    <div className="flex flex-col items-start gap-0.5">
+                                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap text-[10px]" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
+                                                            <Bell className="size-2.5 shrink-0" />
+                                                            <span>Ex in {daysToEx} T.</span>
+                                                        </div>
+                                                        <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] pl-0.5 font-medium">
+                                                            {new Date(div.exDate!).toLocaleDateString('de-DE')}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-full" />
+                                                )}
+                                            </div>
+
+                                            {/* Spalte 3: Zahltag */}
+                                            <div className="w-[72px] sm:w-[78px] shrink-0 flex flex-col items-start gap-0.5">
+                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap text-[10px]">
+                                                    <Calendar className="size-2.5 shrink-0 opacity-70" />
+                                                    <span>Zahltag</span>
+                                                </div>
+                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] pl-0.5 font-medium">
+                                                    {new Date(div.payDate).toLocaleDateString('de-DE')}
+                                                </span>
+                                            </div>
+
+                                            {/* Spalte 4: Betrag */}
+                                            <div className="w-[82px] sm:w-[92px] shrink-0 text-right flex flex-col items-end gap-0.5">
                                                 <div className="font-bold text-sm sm:text-base text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
                                                     {formatCurrency(div.amount, div.currency, false)}
                                                 </div>
@@ -626,7 +637,7 @@ export function Dashboard() {
                                                         {formatCurrency(convertToCHF(div.amount, div.currency), 'CHF', false)}
                                                     </div>
                                                 )}
-                                                <p className="text-[10px] sm:text-xs font-medium text-muted-foreground whitespace-nowrap mt-0.5">{translateFrequency(div.stock.dividendFrequency)}</p>
+                                                <p className="text-[10px] sm:text-xs font-medium text-muted-foreground whitespace-nowrap">{translateFrequency(div.stock.dividendFrequency)}</p>
                                             </div>
                                         </div>
                                     );
@@ -670,70 +681,77 @@ export function Dashboard() {
                                                 return diffDays <= watchlistTimeframe;
                                             });
 
+                                            const nextExDate = visibleDates[0];
+                                            if (!nextExDate) return null;
+                                            const daysToEx = Math.ceil((new Date(nextExDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                                            const dateObj = item.stock.dividendDates?.find(d => d.exDate === nextExDate);
+                                            const payDate = dateObj?.payDate || (item.stock.dividendExDate === nextExDate ? item.stock.dividendPayDate : null);
+
                                             return (
-                                                <div key={idx} className="flex items-center justify-between p-2 md:p-3 rounded-lg border border-transparent border-b-border hover:bg-muted/50 transition-colors gap-2 min-w-0">
-                                                    <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+                                                <div
+                                                    key={idx}
+                                                    className="grid grid-cols-[1fr_auto_auto_auto] items-center p-2 md:p-3 rounded-lg border border-transparent border-b-border hover:bg-muted/50 transition-colors gap-2 sm:gap-3 min-w-0"
+                                                >
+                                                    {/* Spalte 1: Aktie (Logo + Name + Symbol) */}
+                                                    <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
                                                         <Logo
                                                             url={item.stock?.logoUrl}
                                                             alt={item.stock.name}
                                                             fallback={item.stock.symbol?.slice(0, 2) || '••'}
-                                                            size="size-10"
-                                                            className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                                                            size="size-9 sm:size-10"
+                                                            className="cursor-pointer hover:opacity-80 transition-opacity shrink-0"
                                                             onClick={() => navigate(`/stock/${item.stock.symbol}`)}
                                                         />
                                                         <div className="min-w-0 flex-1">
                                                             <p
-                                                                className="font-bold text-sm sm:text-base text-foreground cursor-pointer hover:text-primary transition-colors leading-tight mb-1 truncate"
+                                                                className="font-bold text-sm sm:text-base leading-tight cursor-pointer hover:text-primary transition-colors truncate"
                                                                 onClick={() => navigate(`/stock/${item.stock.symbol}`)}
                                                                 title={item.stock.name}
                                                             >
                                                                 {item.stock.name}
                                                             </p>
-                                                            <div className="flex flex-col items-start gap-1 mt-0.5">
-                                                                {visibleDates.map((date, dIdx) => {
-                                                                    const daysToEx = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                                                                    // Find corresponding pay date
-                                                                    const dateObj = item.stock.dividendDates?.find(d => d.exDate === date);
-                                                                    const payDate = dateObj?.payDate || (item.stock.dividendExDate === date ? item.stock.dividendPayDate : null);
-
-                                                                    return (
-                                                                        <div key={dIdx} className="min-w-0">
-                                                                            <div className="flex items-start gap-x-3 sm:gap-x-4">
-                                                                                <div className="flex flex-col items-start gap-0.5 shrink-0">
-                                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap text-[10px] sm:text-[11px]" title={`Ex-Datum am ${new Date(date).toLocaleDateString('de-DE')}`}>
-                                                                                        <Bell className="size-2.5 flex-shrink-0" />
-                                                                                        <span>Ex in {daysToEx} T.</span>
-                                                                                    </div>
-                                                                                    <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] sm:text-[11px] pl-0.5 font-medium">
-                                                                                        {new Date(date).toLocaleDateString('de-DE')}
-                                                                                    </span>
-                                                                                </div>
-
-                                                                                {payDate && (
-                                                                                    <div className="flex flex-col items-start gap-0.5 shrink-0">
-                                                                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap text-[10px] sm:text-[11px]">
-                                                                                            <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
-                                                                                            <span>Zahltag</span>
-                                                                                        </div>
-                                                                                        <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] sm:text-[11px] pl-0.5 font-medium">
-                                                                                            {new Date(payDate).toLocaleDateString('de-DE')}
-                                                                                        </span>
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                            </div>
+                                                            <span className="text-[11px] font-mono text-muted-foreground truncate block">
+                                                                {item.stock.symbol}
+                                                            </span>
                                                         </div>
                                                     </div>
-                                                    <div className="flex flex-col items-end shrink-0 pl-2">
-                                                        <div className="text-right">
-                                                            <p className="font-bold text-sm sm:text-base text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
-                                                                {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}%` : '-'}
-                                                            </p>
-                                                            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-semibold mt-0.5">Rendite</p>
+
+                                                    {/* Spalte 2: Ex-Tag */}
+                                                    <div className="w-[72px] sm:w-[78px] shrink-0">
+                                                        <div className="flex flex-col items-start gap-0.5">
+                                                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap text-[10px]" title={`Ex-Datum am ${new Date(nextExDate).toLocaleDateString('de-DE')}`}>
+                                                                <Bell className="size-2.5 shrink-0" />
+                                                                <span>Ex in {daysToEx} T.</span>
+                                                            </div>
+                                                            <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] pl-0.5 font-medium">
+                                                                {new Date(nextExDate).toLocaleDateString('de-DE')}
+                                                            </span>
                                                         </div>
+                                                    </div>
+
+                                                    {/* Spalte 3: Zahltag */}
+                                                    <div className="w-[72px] sm:w-[78px] shrink-0 flex flex-col items-start gap-0.5">
+                                                        {payDate ? (
+                                                            <>
+                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap text-[10px]">
+                                                                    <Calendar className="size-2.5 shrink-0 opacity-70" />
+                                                                    <span>Zahltag</span>
+                                                                </div>
+                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-[10px] pl-0.5 font-medium">
+                                                                    {new Date(payDate).toLocaleDateString('de-DE')}
+                                                                </span>
+                                                            </>
+                                                        ) : (
+                                                            <div className="w-full" />
+                                                        )}
+                                                    </div>
+
+                                                    {/* Spalte 4: Rendite % */}
+                                                    <div className="w-[82px] sm:w-[92px] shrink-0 text-right flex flex-col items-end gap-0.5">
+                                                        <div className="font-bold text-sm sm:text-base text-green-600 dark:text-green-400 whitespace-nowrap leading-tight">
+                                                            {item.stock.dividendYield ? `${item.stock.dividendYield.toFixed(2)}%` : '-'}
+                                                        </div>
+                                                        <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-semibold">Rendite</p>
                                                     </div>
                                                 </div>
                                             );

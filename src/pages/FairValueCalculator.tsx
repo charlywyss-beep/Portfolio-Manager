@@ -1798,7 +1798,7 @@ export function FairValueCalculator() {
                                                             ? "text-amber-400"
                                                             : "text-rose-400"
                                             )}>
-                                                <span>{diffPct > 0 ? `+${diffPct}%` : diffPct < 0 ? `${diffPct}%` : `0%`}</span>
+                                                <span>{diffPct > 0 ? `+${diffPct}%` : diffPct < 0 ? `+${overvaluationPct}%` : `0%`}</span>
                                                 <span className="text-sm sm:text-base font-bold font-sans uppercase tracking-normal opacity-90">
                                                     {diffPct > 0 ? 'unterbewertet' : diffPct < 0 ? 'überbewertet' : 'fair bewertet'}
                                                 </span>

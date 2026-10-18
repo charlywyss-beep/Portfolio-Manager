@@ -17,10 +17,11 @@ export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number
     'ZURN': { eps: 35.0, growth: 4.0, pe: 11.5, div: 5.2, mos: 15, label: 'Konsens EPS' },
     'BRK-B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, mos: 15, label: 'Operativer Gewinn' },
     'BRK.B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, mos: 15, label: 'Operativer Gewinn' },
+    'TSLA': { eps: 3.20, growth: 20.0, pe: 35.0, div: 0, mos: 20, label: 'Konsens EPS (Forward/Normalisiert)' },
 };
 
 export const WIDE_MOAT_QUALITY = new Set([
-    'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'NVDA', 'META', 'V', 'MA',
+    'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'NVDA', 'META', 'TSLA', 'V', 'MA',
     'PG', 'KO', 'PEP', 'JNJ', 'MCD', 'COST', 'WMT', 'ABBV', 'LLY', 'UNH', 'HD',
     'ASML.AS', 'ASML', 'SAP.DE', 'SAP', 'NESN.SW', 'ROG.SW', 'NOVN.SW', 'LIN', 'OR.PA',
     'SREN.SW', 'SREN', 'ZURN.SW', 'ZURN',
@@ -113,7 +114,7 @@ export function computeSmartAutoParams(
 
     if (preset) {
         autoGrowth = isQualityMode
-            ? parseFloat((preset.growth + (preset.growth <= 3.5 ? 1.0 : preset.growth <= 7.0 ? 0.5 : 1.0)).toFixed(1))
+            ? parseFloat((preset.growth + (preset.growth <= 3.5 ? 1.0 : preset.growth <= 7.0 ? 0.5 : preset.growth >= 18.0 ? 2.0 : 1.0)).toFixed(1))
             : preset.growth;
         growthLabel = isQualityMode ? 'Qualitäts-/Marktprofil' : 'Qualitäts-/Branchenprofil';
     } else if (rawApiGrowth !== null && rawApiGrowth !== undefined && isFinite(rawApiGrowth) && rawApiGrowth !== 0) {
@@ -177,7 +178,9 @@ export function computeSmartAutoParams(
     // Mode A (conservative / safety): capped at 20.0 so Terminal Growth strictly <= 2.0%
     // Mode B (quality / market): allows historical quality multiple premium (e.g. 25 for Big Tech compounders, 18.5 for Nestlé)
     let maxSensibleExitPe = isQualityMode ? 25.0 : 20.0;
-    if (autoDiv >= 4.8) {
+    if (symUpper === 'TSLA') {
+        maxSensibleExitPe = isQualityMode ? 45.0 : 35.0;
+    } else if (autoDiv >= 4.8) {
         // High dividend / mature value (e.g. Tobacco, Utilities, Kraft Heinz, Swiss Re)
         maxSensibleExitPe = isQualityMode ? 13.5 : Math.min(13.0, Math.max(10.0, effectivePe < 14 ? effectivePe : 12.0));
     } else if (autoDiv >= 3.0) {
@@ -198,6 +201,8 @@ export function computeSmartAutoParams(
         if (preset) {
             if (symUpper === 'AMZN' || symUpper === 'MSFT') {
                 rawExitPe = 25.0;
+            } else if (symUpper === 'TSLA') {
+                rawExitPe = 40.0;
             } else if (symUpper.startsWith('BRK-') || symUpper.startsWith('BRK.') || symUpper === 'BRK') {
                 rawExitPe = 21.0;
             } else if (symUpper === 'NESN.SW' || symUpper === 'NESN') {
