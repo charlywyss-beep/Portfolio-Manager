@@ -1780,7 +1780,7 @@ export function FairValueCalculator() {
                                                 Bewertung
                                             </div>
                                             <div className={cn(
-                                                "text-3xl sm:text-4xl font-extrabold font-mono tracking-tight",
+                                                "text-2xl sm:text-3xl font-extrabold font-mono tracking-tight flex items-baseline justify-center gap-2 flex-wrap",
                                                 isUndervalued
                                                     ? "text-emerald-400"
                                                     : isFairHold
@@ -1789,7 +1789,10 @@ export function FairValueCalculator() {
                                                             ? "text-amber-400"
                                                             : "text-rose-400"
                                             )}>
-                                                {diffPct > 0 ? `+${diffPct} %` : diffPct < 0 ? `${diffPct} %` : `0 %`}
+                                                <span>{diffPct > 0 ? `+${diffPct} %` : diffPct < 0 ? `${diffPct} %` : `0 %`}</span>
+                                                <span className="text-sm sm:text-base font-bold font-sans uppercase tracking-normal opacity-90">
+                                                    {diffPct > 0 ? 'unterbewertet' : diffPct < 0 ? 'überbewertet' : 'fair bewertet'}
+                                                </span>
                                             </div>
                                             <div className="text-xs sm:text-sm font-medium mt-1.5 text-muted-foreground">
                                                 {isUndervalued && (
