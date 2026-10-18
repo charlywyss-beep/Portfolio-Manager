@@ -1694,7 +1694,7 @@ export function FairValueCalculator() {
                                                 {isFairHold && (
                                                     <>
                                                         <div>Aktie notiert nahe am fairen Wert.</div>
-                                                        <div className="mt-1 text-xs text-muted-foreground/90">Ideal für <span className="font-bold text-yellow-400">Bestände (Hold)</span>.</div>
+                                                        <div className="mt-1 text-xs text-muted-foreground/90"><span className="font-bold text-yellow-400">Bestände halten</span>.</div>
                                                     </>
                                                 )}
                                                 {isRichHold && (
