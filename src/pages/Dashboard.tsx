@@ -592,9 +592,9 @@ export function Dashboard() {
                                                     >
                                                         {div.stock.name}
                                                     </p>
-                                                    <div className="flex flex-wrap items-start gap-x-3 gap-y-1.5 mt-1">
+                                                    <div className="flex items-start gap-x-3 sm:gap-x-4 mt-1">
                                                         {showExWarning && (
-                                                            <div className="flex flex-col items-start gap-0.5">
+                                                            <div className="flex flex-col items-start gap-0.5 shrink-0">
                                                                 <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap text-[10px] sm:text-[11px]" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
                                                                     <Bell className="size-2.5 flex-shrink-0" />
                                                                     <span>Ex in {daysToEx} T.</span>
@@ -605,7 +605,7 @@ export function Dashboard() {
                                                             </div>
                                                         )}
 
-                                                        <div className="flex flex-col items-start gap-0.5">
+                                                        <div className="flex flex-col items-start gap-0.5 shrink-0">
                                                             <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap text-[10px] sm:text-[11px]">
                                                                 <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
                                                                 <span>Zahltag</span>
@@ -698,8 +698,8 @@ export function Dashboard() {
 
                                                                     return (
                                                                         <div key={dIdx} className="min-w-0">
-                                                                            <div className="flex flex-wrap items-start gap-x-3 gap-y-1.5">
-                                                                                <div className="flex flex-col items-start gap-0.5">
+                                                                            <div className="flex items-start gap-x-3 sm:gap-x-4">
+                                                                                <div className="flex flex-col items-start gap-0.5 shrink-0">
                                                                                     <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap text-[10px] sm:text-[11px]" title={`Ex-Datum am ${new Date(date).toLocaleDateString('de-DE')}`}>
                                                                                         <Bell className="size-2.5 flex-shrink-0" />
                                                                                         <span>Ex in {daysToEx} T.</span>
@@ -710,7 +710,7 @@ export function Dashboard() {
                                                                                 </div>
 
                                                                                 {payDate && (
-                                                                                    <div className="flex flex-col items-start gap-0.5">
+                                                                                    <div className="flex flex-col items-start gap-0.5 shrink-0">
                                                                                         <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap text-[10px] sm:text-[11px]">
                                                                                             <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
                                                                                             <span>Zahltag</span>
