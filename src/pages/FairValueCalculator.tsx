@@ -255,6 +255,12 @@ export function FairValueCalculator() {
                 return true;
             }
         }
+        // Upgrade previously auto-populated Berkshire (GAAP EPS > 30 instead of operating earnings)
+        if (symUpper.startsWith('BRK-') || symUpper.startsWith('BRK.') || symUpper === 'BRK') {
+            if (Number(params.eps) > 30) {
+                return true;
+            }
+        }
         return false;
     };
 

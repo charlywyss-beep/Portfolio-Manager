@@ -18,7 +18,8 @@ export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number
 export const WIDE_MOAT_QUALITY = new Set([
     'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'NVDA', 'META', 'V', 'MA',
     'PG', 'KO', 'PEP', 'JNJ', 'MCD', 'COST', 'WMT', 'ABBV', 'LLY', 'UNH', 'HD',
-    'ASML.AS', 'ASML', 'SAP.DE', 'SAP', 'NESN.SW', 'ROG.SW', 'NOVN.SW', 'LIN', 'OR.PA'
+    'ASML.AS', 'ASML', 'SAP.DE', 'SAP', 'NESN.SW', 'ROG.SW', 'NOVN.SW', 'LIN', 'OR.PA',
+    'BRK-B', 'BRK.B', 'BRK-A', 'BRK.A'
 ]);
 
 export function computeSmartAutoParams(
@@ -64,7 +65,10 @@ export function computeSmartAutoParams(
     let autoEps = 0;
     let epsLabel = qData?.epsSource || 'TTM';
 
-    if (preset && (!rawEps || rawEps <= 0 || rawEps < preset.eps * 0.85)) {
+    if (symUpper.startsWith('BRK-') || symUpper.startsWith('BRK.') || symUpper === 'BRK') {
+        autoEps = preset?.eps || 21.0;
+        epsLabel = 'Operativer Gewinn (Buffett)';
+    } else if (preset && (!rawEps || rawEps <= 0 || rawEps < preset.eps * 0.85)) {
         autoEps = preset.eps;
         epsLabel = preset.label;
     } else if (rawEps && rawEps > 0 && (!forwardEps || rawEps >= forwardEps * 0.88)) {
@@ -180,6 +184,8 @@ export function computeSmartAutoParams(
         if (isQualityMode) {
             if (symUpper === 'AMZN' || symUpper === 'MSFT') {
                 rawExitPe = 25.0;
+            } else if (symUpper.startsWith('BRK-') || symUpper.startsWith('BRK.') || symUpper === 'BRK') {
+                rawExitPe = 21.0;
             } else if (symUpper === 'NESN.SW' || symUpper === 'NESN') {
                 rawExitPe = 18.5;
             } else if (symUpper === 'ROG.SW') {
