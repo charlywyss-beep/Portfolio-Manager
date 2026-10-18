@@ -154,8 +154,8 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
                 {/* Summary Totals */}
                 <div className="grid grid-cols-2 gap-4 p-4 bg-muted/20 border-b border-border shrink-0">
-                    <div className="bg-card p-3 rounded-lg border border-border shadow-sm flex flex-col">
-                        <span className="text-xs text-muted-foreground font-medium mb-1">Tages-Performance (heute)</span>
+                    <div className="bg-card p-3 rounded-lg border border-border shadow-sm flex flex-col justify-between">
+                        <span className="text-xs text-muted-foreground font-medium mb-1 truncate">Tages-Performance</span>
                         <span className={cn(
                             "text-base sm:text-lg md:text-xl font-bold tracking-tight",
                             totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
@@ -163,8 +163,8 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                             {totalDailyGain >= 0 ? '+' : ''}{formatCurrency(totalDailyGain, 'CHF')}
                         </span>
                     </div>
-                    <div className="bg-card p-3 rounded-lg border border-border shadow-sm flex flex-col">
-                        <span className="text-xs text-muted-foreground font-medium mb-1">Gesamt-Performance</span>
+                    <div className="bg-card p-3 rounded-lg border border-border shadow-sm flex flex-col justify-between">
+                        <span className="text-xs text-muted-foreground font-medium mb-1 truncate">Gesamt-Performance</span>
                         <span className={cn(
                             "text-base sm:text-lg md:text-xl font-bold tracking-tight",
                             totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
