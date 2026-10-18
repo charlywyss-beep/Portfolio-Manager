@@ -1513,7 +1513,7 @@ export function FairValueCalculator() {
                                 </h2>
 
                                 {/* Traffic Light */}
-                                <div className="flex justify-center mb-8">
+                                <div className="flex justify-center mb-6">
                                     <div className={cn(
                                         "relative size-40 rounded-full flex flex-col items-center justify-center border-4 shadow-xl transition-all duration-500 text-center px-2",
                                         isUndervalued
@@ -1536,6 +1536,49 @@ export function FairValueCalculator() {
                                         <div className="text-xs mt-2 opacity-60 font-bold">Aktueller Kurs</div>
                                     </div>
                                 </div>
+
+                                {/* DeltaValue Style Bewertung Card */}
+                                {calculation.fairValue > 0 && currentPrice > 0 && (() => {
+                                    const fv = calculation.fairValue;
+                                    const curP = currentPrice;
+                                    const discountPct = Math.round(((fv - curP) / fv) * 100);
+                                    const potentialPct = Math.round(((fv - curP) / curP) * 100);
+                                    const overvaluationPct = Math.round(((curP - fv) / fv) * 100);
+
+                                    return (
+                                        <div className={cn(
+                                            "p-4 rounded-xl border text-center transition-all mb-4",
+                                            isUndervalued
+                                                ? "bg-emerald-500/10 border-emerald-500/30"
+                                                : isFair
+                                                    ? "bg-amber-500/10 border-amber-500/30"
+                                                    : "bg-rose-500/10 border-rose-500/30"
+                                        )}>
+                                            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                                                Bewertung
+                                            </div>
+                                            <div className={cn(
+                                                "text-3xl sm:text-4xl font-extrabold font-mono tracking-tight",
+                                                isUndervalued
+                                                    ? "text-emerald-400"
+                                                    : isFair
+                                                        ? "text-amber-400"
+                                                        : "text-rose-400"
+                                            )}>
+                                                {discountPct > 0 ? `+${discountPct} %` : `${discountPct} %`}
+                                            </div>
+                                            <div className="text-xs sm:text-sm font-medium mt-1.5 text-muted-foreground">
+                                                {potentialPct > 0 ? (
+                                                    <>Aktie hat <span className="font-bold text-emerald-400">+{potentialPct} %</span> Potenzial zum fairen Wert.</>
+                                                ) : potentialPct < 0 ? (
+                                                    <>Aktie ist ca. <span className="font-bold text-rose-400">{Math.abs(overvaluationPct)} %</span> überbewertet.</>
+                                                ) : (
+                                                    'Aktie notiert exakt auf fairem Wert.'
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
 
                                 {/* Value Stack */}
                                 <div className="flex-1 space-y-4">
@@ -1633,16 +1676,6 @@ export function FairValueCalculator() {
                                         </p>
                                     </div>
                                 </div>
-
-                                {/* Overvaluation Warning */}
-                                {!isUndervalued && !isFair && (
-                                    <div className="mt-6 p-3 bg-red-100/50 text-red-800 rounded-lg flex items-start gap-2 text-sm border border-red-200 animate-in fade-in">
-                                        <TriangleAlert className="size-4 shrink-0 mt-0.5" />
-                                        <div>
-                                            Aktie ist ca. {currentPrice && calculation.fairValue ? Math.round(((currentPrice - calculation.fairValue) / calculation.fairValue) * 100) : '-'}% überbewertet.
-                                        </div>
-                                    </div>
-                                )}
 
                             </div>
                         </div>
