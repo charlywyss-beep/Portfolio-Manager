@@ -496,8 +496,13 @@ export function FairValueCalculator() {
         if (!searchTerm) {
             const ownedIds = new Set(positions.map(p => p.stockId));
             const watchlistIds = new Set(watchlists.flatMap(w => w.stockIds));
-            const owned = stocks.filter(s => ownedIds.has(s.id));
-            const watch = stocks.filter(s => watchlistIds.has(s.id) && !ownedIds.has(s.id));
+            const sortByName = (a: any, b: any) => {
+                const nameA = (a.name || a.symbol || '').trim();
+                const nameB = (b.name || b.symbol || '').trim();
+                return nameA.localeCompare(nameB, 'de', { sensitivity: 'base', numeric: true });
+            };
+            const owned = stocks.filter(s => ownedIds.has(s.id)).sort(sortByName);
+            const watch = stocks.filter(s => watchlistIds.has(s.id) && !ownedIds.has(s.id)).sort(sortByName);
             return { owned, watch, filtered: [] };
         }
 
