@@ -590,18 +590,35 @@ export function Dashboard() {
                                                         {smartWrap(div.stock.name)}
                                                     </p>
                                                     <div className="flex flex-col gap-1 mt-1">
-                                                        {showExWarning && (
-                                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[11px] font-bold shadow-sm whitespace-nowrap flex-shrink-0" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
+                                                        {showExWarning ? (
+                                                            <div className="grid grid-cols-[auto_auto] items-center gap-x-2.5 gap-y-1 text-[11px] w-fit">
+                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap w-full" title={`Ex-Datum am ${new Date(div.exDate!).toLocaleDateString('de-DE')}`}>
                                                                     <Bell className="size-2.5 flex-shrink-0" />
                                                                     <span>Ex in {daysToEx} T.</span>
                                                                 </div>
-                                                                <span className="text-[11px] text-muted-foreground whitespace-nowrap">{new Date(div.exDate!).toLocaleDateString('de-DE')}</span>
+                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-right">
+                                                                    {new Date(div.exDate!).toLocaleDateString('de-DE')}
+                                                                </span>
+
+                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap w-full">
+                                                                    <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
+                                                                    <span>Zahltag</span>
+                                                                </div>
+                                                                <span className="font-mono text-muted-foreground whitespace-nowrap text-right">
+                                                                    {new Date(div.payDate).toLocaleDateString('de-DE')}
+                                                                </span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center gap-2 text-[11px]">
+                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap">
+                                                                    <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
+                                                                    <span>Zahltag</span>
+                                                                </div>
+                                                                <span className="font-mono text-muted-foreground whitespace-nowrap">
+                                                                    {new Date(div.payDate).toLocaleDateString('de-DE')}
+                                                                </span>
                                                             </div>
                                                         )}
-                                                        <p className="text-xs font-medium text-muted-foreground">
-                                                            Zahltag: {new Date(div.payDate).toLocaleDateString('de-DE')}
-                                                        </p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -686,18 +703,35 @@ export function Dashboard() {
                                                                     const payDate = dateObj?.payDate || (item.stock.dividendExDate === date ? item.stock.dividendPayDate : null);
 
                                                                     return (
-                                                                        <div key={dIdx} className="flex flex-col gap-0.5 min-w-0">
-                                                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[11px] font-bold shadow-sm whitespace-nowrap flex-shrink-0">
-                                                                                    <Bell className="size-2.5 flex-shrink-0" />
-                                                                                    <span>Ex in {daysToEx} T.</span>
+                                                                        <div key={dIdx} className="min-w-0">
+                                                                            {payDate ? (
+                                                                                <div className="grid grid-cols-[auto_auto] items-center gap-x-2.5 gap-y-1 text-[11px] w-fit">
+                                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap w-full" title={`Ex-Datum am ${new Date(date).toLocaleDateString('de-DE')}`}>
+                                                                                        <Bell className="size-2.5 flex-shrink-0" />
+                                                                                        <span>Ex in {daysToEx} T.</span>
+                                                                                    </div>
+                                                                                    <span className="font-mono text-muted-foreground whitespace-nowrap text-right">
+                                                                                        {new Date(date).toLocaleDateString('de-DE')}
+                                                                                    </span>
+
+                                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/70 text-muted-foreground font-medium whitespace-nowrap w-full">
+                                                                                        <Calendar className="size-2.5 flex-shrink-0 opacity-70" />
+                                                                                        <span>Zahltag</span>
+                                                                                    </div>
+                                                                                    <span className="font-mono text-muted-foreground whitespace-nowrap text-right">
+                                                                                        {new Date(payDate).toLocaleDateString('de-DE')}
+                                                                                    </span>
                                                                                 </div>
-                                                                                <span className="text-[11px] font-medium text-muted-foreground whitespace-nowrap">{new Date(date).toLocaleDateString('de-DE')}</span>
-                                                                            </div>
-                                                                            {payDate && (
-                                                                                <p className="text-[11px] font-medium text-muted-foreground pl-0.5">
-                                                                                    Zahltag: {new Date(payDate).toLocaleDateString('de-DE')}
-                                                                                </p>
+                                                                            ) : (
+                                                                                <div className="flex items-center gap-2 text-[11px]">
+                                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold shadow-sm whitespace-nowrap">
+                                                                                        <Bell className="size-2.5 flex-shrink-0" />
+                                                                                        <span>Ex in {daysToEx} T.</span>
+                                                                                    </div>
+                                                                                    <span className="font-mono text-muted-foreground whitespace-nowrap">
+                                                                                        {new Date(date).toLocaleDateString('de-DE')}
+                                                                                    </span>
+                                                                                </div>
                                                                             )}
                                                                         </div>
                                                                     );
