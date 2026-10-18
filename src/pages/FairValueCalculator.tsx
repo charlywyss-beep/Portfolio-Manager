@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
+import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, ShieldCheck, Sparkles } from 'lucide-react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
@@ -117,6 +117,7 @@ export function FairValueCalculator() {
     const [epsSourceLabel, setEpsSourceLabel] = useState<string>('TTM');
     const [growthSourceLabel, setGrowthSourceLabel] = useState<string>('Auto-Schätzung');
     const [isSavedForStock, setIsSavedForStock] = useState<boolean>(false);
+    const [valuationProfile, setValuationProfile] = useState<'conservative' | 'quality'>('conservative');
 
     // Persistence Ref to avoid cycles
     const isRestoring = useRef(false);
@@ -178,7 +179,7 @@ export function FairValueCalculator() {
         return null;
     };
 
-    const saveSymbolParamsToLocal = (sym: string, params: { eps: number; growthRate: number; pe: number; dividendYield: number; discountRate: number; mos: number; isCustom?: boolean; customBackup?: any; clearCustomBackup?: boolean }) => {
+    const saveSymbolParamsToLocal = (sym: string, params: { eps: number; growthRate: number; pe: number; dividendYield: number; discountRate: number; mos: number; isCustom?: boolean; customBackup?: any; clearCustomBackup?: boolean; valuationMode?: 'conservative' | 'quality' }) => {
         try {
             const key = sym.toUpperCase();
             const mapRaw = localStorage.getItem('fair_value_params_map');
@@ -258,8 +259,9 @@ export function FairValueCalculator() {
     };
 
     // Handler: Force re-apply automatic realistic values for current stock (while keeping manual values in backup!)
-    const applyAutoValues = () => {
+    const applyAutoValues = (mode: 'conservative' | 'quality' = valuationProfile) => {
         if (!selectedSymbol) return;
+        setValuationProfile(mode);
         const existingStock = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol.toLowerCase());
         // Ensure current manual edits are backed up before switching to Auto-Werte
         if (isSavedForStock) {
@@ -277,11 +279,12 @@ export function FairValueCalculator() {
                     dividendYield: numDiv,
                     discountRate: numDisc,
                     mos: numMos,
-                    isCustom: true
+                    isCustom: true,
+                    valuationMode: mode
                 });
             }
         }
-        const smart = computeSmartAutoParams(quote, analysis, existingStock, selectedSymbol);
+        const smart = computeSmartAutoParams(quote, analysis, existingStock, selectedSymbol, mode);
         setEps(smart.eps);
         setGrowthRate(smart.growthRate);
         setPe(smart.pe);
@@ -313,7 +316,7 @@ export function FairValueCalculator() {
     const clearManualValues = () => {
         if (!selectedSymbol) return;
         const existingStock = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol.toLowerCase());
-        const smart = computeSmartAutoParams(quote, analysis, existingStock, selectedSymbol);
+        const smart = computeSmartAutoParams(quote, analysis, existingStock, selectedSymbol, valuationProfile);
 
         saveSymbolParamsToLocal(selectedSymbol, {
             eps: smart.eps,
@@ -323,7 +326,8 @@ export function FairValueCalculator() {
             discountRate: smart.discountRate,
             mos: smart.mos,
             isCustom: false,
-            clearCustomBackup: true
+            clearCustomBackup: true,
+            valuationMode: valuationProfile
         });
 
         if (existingStock) {
@@ -558,6 +562,9 @@ export function FairValueCalculator() {
             setDividendYield(parseFloat(Number(savedStockParams.dividendYield || 0).toFixed(2)));
             setDiscountRate(savedStockParams.discountRate || 8);
             setMos(savedStockParams.mos || 20);
+            if (savedStockParams.valuationMode) {
+                setValuationProfile(savedStockParams.valuationMode);
+            }
             setEpsSourceLabel(savedStockParams.isCustom ? 'Manuell / Gespeichert' : 'Gespeichert');
             setGrowthSourceLabel(savedStockParams.isCustom ? 'Manuell / Gespeichert' : 'Gespeichert');
             setIsSavedForStock(Boolean(savedStockParams.isCustom));
@@ -665,7 +672,7 @@ export function FairValueCalculator() {
             setAnalysis(a || { growthRate: null });
 
             if (!preventReset && !savedStockParams) {
-                const smart = computeSmartAutoParams(finalQuote, a, existingStock, symbol);
+                const smart = computeSmartAutoParams(finalQuote, a, existingStock, symbol, valuationProfile);
                 setEps(smart.eps);
                 setGrowthRate(smart.growthRate);
                 setPe(smart.pe);
@@ -684,7 +691,8 @@ export function FairValueCalculator() {
                         discountRate: smart.discountRate,
                         mos: smart.mos,
                         isCustom: false,
-                        clearCustomBackup: true
+                        clearCustomBackup: true,
+                        valuationMode: valuationProfile
                     });
                 }
             }
@@ -712,7 +720,8 @@ export function FairValueCalculator() {
 
         const futureEps = valEps * Math.pow(1 + valGrowth / 100, 5);
         const isWideMoatStock = WIDE_MOAT_QUALITY.has((selectedSymbol || '').toUpperCase());
-        const ruleOneLimit = Math.max(isWideMoatStock ? 20 : 18, Math.min(20, valGrowth * 2)); // Strict cap at 20 for <= 2.0% terminal growth
+        const maxPeCap = valuationProfile === 'quality' ? (isWideMoatStock ? 25 : 22) : 20;
+        const ruleOneLimit = Math.max(isWideMoatStock ? maxPeCap : 18, Math.min(maxPeCap, valGrowth * 2));
         const exitPe = valPe; // Remove hard cap, use user input directly
         const futurePrice = futureEps * exitPe;
 
@@ -769,7 +778,7 @@ export function FairValueCalculator() {
             isCorrectionNeeded: valPe > ruleOneLimit,
             equivalentTerminalGrowth
         };
-    }, [eps, growthRate, pe, discountRate, mos, dividendYield, quote?.price]);
+    }, [eps, growthRate, pe, discountRate, mos, dividendYield, quote?.price, valuationProfile, selectedSymbol]);
 
     // 4. AUTO-SYNC: Save Fair Value AND Fair Value Parameters to Stock
     useEffect(() => {
@@ -794,7 +803,8 @@ export function FairValueCalculator() {
                 || Math.abs((prevParams.dividendYield || 0) - numDiv) > 0.001
                 || Math.abs((prevParams.discountRate || 0) - numDisc) > 0.001
                 || Math.abs((prevParams.mos || 0) - numMos) > 0.001
-                || Boolean(prevParams.isCustom) !== Boolean(isSavedForStock);
+                || Boolean(prevParams.isCustom) !== Boolean(isSavedForStock)
+                || prevParams.valuationMode !== valuationProfile;
 
             const fvChanged = !existingStock.fairValue || Math.abs(existingStock.fairValue - calculation.fairValue) > 0.01;
 
@@ -823,6 +833,7 @@ export function FairValueCalculator() {
                             discountRate: numDisc,
                             mos: numMos,
                             isCustom: isSavedForStock,
+                            valuationMode: valuationProfile,
                             ...(nextCustomBackup ? { customBackup: nextCustomBackup } : {}),
                             updatedAt: now
                         }
@@ -831,7 +842,7 @@ export function FairValueCalculator() {
                 return () => clearTimeout(timer);
             }
         }
-    }, [selectedSymbol, calculation, eps, growthRate, pe, dividendYield, discountRate, mos, isSavedForStock, stocks, updateStock, quote, loadingData]);
+    }, [selectedSymbol, calculation, eps, growthRate, pe, dividendYield, discountRate, mos, isSavedForStock, valuationProfile, stocks, updateStock, quote, loadingData]);
 
     // Comparison Logic
     const currentPrice = quote?.price || 0;
@@ -867,6 +878,18 @@ export function FairValueCalculator() {
                             </section>
 
                             <div className="grid gap-6">
+                                <div className="p-4 rounded-xl bg-primary/10 border border-primary/25 space-y-2">
+                                    <h3 className="font-bold flex items-center gap-2 text-foreground text-sm">
+                                        <ShieldCheck className="size-4 text-blue-500" />
+                                        Zwei Auto-Sichtweisen: Sicherheit (A) vs. Qualität (B)
+                                    </h3>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        <strong>🛡️ Auto Sicherheit (A):</strong> Konservative Value-Schule (Buffett-Baseline). Das KGV wird so begrenzt (max. 20 für Big Tech, 17 für Konsumgüter), dass das mathematisch implizierte ewige Wachstum (Terminal Growth) strikt unter der Weltwirtschafts-Wachstumsgrenze (&le; 2,0 %) bleibt.
+                                    </p>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        <strong>⭐ Auto Qualität (B):</strong> Markt- und Qualitätsschule. Erlaubt historische Qualitätsmultiples (bis KGV 25 für Ausnahme-Unternehmen mit unangefochtenem Moat wie Microsoft oder Amazon), da diese Champions über Jahrzehnte mit Bewertungsprämie gehandelt werden.
+                                    </p>
+                                </div>
                                 <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
                                     <h3 className="font-bold flex items-center gap-2 mb-2">
                                         <div className="size-2 rounded-full bg-blue-500" />
@@ -1185,25 +1208,41 @@ export function FairValueCalculator() {
                             <div className="bg-card border border-border rounded-xl p-4 sm:p-6 shadow-sm space-y-6">
                                 <div className="space-y-3 pb-4 border-b border-border">
                                     <div className="flex flex-wrap items-center justify-between gap-2">
-                                        <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
-                                            <h2 className="text-base sm:text-lg font-semibold flex items-center gap-1.5 shrink-0">
+                                        <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+                                            <h2 className="text-base sm:text-lg font-semibold flex items-center gap-1.5 shrink-0 mr-1">
                                                 <span className="size-2 rounded-full bg-blue-500 shrink-0" />
                                                 Parameter
                                             </h2>
-                                            <button
-                                                type="button"
-                                                onClick={applyAutoValues}
-                                                className={cn(
-                                                    "flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg border transition-colors whitespace-nowrap shrink-0",
-                                                    !isSavedForStock
-                                                        ? "bg-blue-600/25 hover:bg-blue-600/35 text-blue-300 border-blue-400/40"
-                                                        : "bg-blue-600/15 hover:bg-blue-600/30 text-blue-300/90 border-blue-400/25"
-                                                )}
-                                                title="Realistische Fundamentalwerte automatisch neu einsetzen"
-                                            >
-                                                <RotateCcw className="size-3 shrink-0" />
-                                                <span>Auto</span>
-                                            </button>
+                                            <div className="inline-flex items-center rounded-lg border border-border/80 p-0.5 bg-muted/40 shrink-0 gap-0.5">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => applyAutoValues('conservative')}
+                                                    className={cn(
+                                                        "flex items-center gap-1 text-xs px-2.5 py-1 rounded-md transition-all whitespace-nowrap",
+                                                        !isSavedForStock && valuationProfile === 'conservative'
+                                                            ? "bg-blue-600 text-white shadow-sm font-semibold"
+                                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/80 font-medium"
+                                                    )}
+                                                    title="Sichtweise A: Auto Sicherheit (KGV max. 20, Terminal Growth ≤ 2.0 %, Buffett-Baseline)"
+                                                >
+                                                    <ShieldCheck className="size-3.5 shrink-0" />
+                                                    <span>Auto Sicherheit (A)</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => applyAutoValues('quality')}
+                                                    className={cn(
+                                                        "flex items-center gap-1 text-xs px-2.5 py-1 rounded-md transition-all whitespace-nowrap",
+                                                        !isSavedForStock && valuationProfile === 'quality'
+                                                            ? "bg-purple-600 text-white shadow-sm font-semibold"
+                                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/80 font-medium"
+                                                    )}
+                                                    title="Sichtweise B: Auto Qualität (Historische Qualitätsbewertung KGV bis 25 für Wide-Moat Compounder)"
+                                                >
+                                                    <Sparkles className="size-3.5 shrink-0" />
+                                                    <span>Auto Qualität (B)</span>
+                                                </button>
+                                            </div>
                                             {isSavedForStock ? (
                                                 <span className="inline-flex items-center gap-1 text-xs font-semibold pl-2 pr-1 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 whitespace-nowrap shrink-0">
                                                     <Check className="size-3 shrink-0" />
@@ -1477,7 +1516,10 @@ export function FairValueCalculator() {
                                         {calculation.equivalentTerminalGrowth !== null && (
                                             <div className="flex justify-between items-center pt-1.5 border-t border-border/40">
                                                 <span className="text-muted-foreground">Langfristiges Wachstum (DCF):</span>
-                                                <span className="font-mono font-bold text-emerald-400">
+                                                <span className={cn(
+                                                    "font-mono font-bold",
+                                                    calculation.equivalentTerminalGrowth <= 2.0 ? "text-emerald-400" : "text-purple-400"
+                                                )}>
                                                     {calculation.equivalentTerminalGrowth > 0 ? '+' : ''}{calculation.equivalentTerminalGrowth.toFixed(1)} %
                                                 </span>
                                             </div>
@@ -1497,13 +1539,22 @@ export function FairValueCalculator() {
                                         {calculation.isCorrectionNeeded && (
                                             <div className="text-xs text-amber-600 mt-2 flex items-center gap-1.5 leading-tight font-medium">
                                                 <TriangleAlert className="size-3.5 shrink-0" />
-                                                <span>KGV über klassischem Rule #1 Limit (Ref: {calculation.ruleOneLimit.toFixed(1)})</span>
+                                                <span>KGV über gewähltem Limit (Ref: {calculation.ruleOneLimit.toFixed(1)})</span>
                                             </div>
                                         )}
                                     </div>
                                     {calculation.equivalentTerminalGrowth !== null && (
                                         <p className="text-[11px] text-muted-foreground/85 mt-1.5 leading-snug">
                                             💡 <strong>Entspricht {calculation.equivalentTerminalGrowth > 0 ? '+' : ''}{calculation.equivalentTerminalGrowth.toFixed(1)} %</strong> langfristigem Wachstum (Terminal Growth) in DCF-Tools wie DeltaValue.
+                                            {valuationProfile === 'conservative' ? (
+                                                <span className="block text-blue-400/90 mt-0.5 font-medium">
+                                                    🛡️ <em>Sichtweise A (Sicherheit):</em> KGV gedeckelt, damit ewiges Wachstum strikt &le; 2,0 % (BIP-Grenze) bleibt.
+                                                </span>
+                                            ) : (
+                                                <span className="block text-purple-400/90 mt-0.5 font-medium">
+                                                    ⭐ <em>Sichtweise B (Qualität):</em> Historischer Qualitätsaufschlag erlaubt (bis KGV 25 für Wide-Moat-Champions).
+                                                </span>
+                                            )}
                                         </p>
                                     )}
                                 </div>

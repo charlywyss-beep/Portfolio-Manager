@@ -21,9 +21,16 @@ export const WIDE_MOAT_QUALITY = new Set([
     'ASML.AS', 'ASML', 'SAP.DE', 'SAP', 'NESN.SW', 'ROG.SW', 'NOVN.SW', 'LIN', 'OR.PA'
 ]);
 
-export function computeSmartAutoParams(qData: any, aData: any, stockObj: any, symbolStr: string) {
+export function computeSmartAutoParams(
+    qData: any,
+    aData: any,
+    stockObj: any,
+    symbolStr: string,
+    valuationMode: 'conservative' | 'quality' = 'conservative'
+) {
     const symUpper = (symbolStr || '').toUpperCase();
     const isWideMoat = WIDE_MOAT_QUALITY.has(symUpper);
+    const isQualityMode = valuationMode === 'quality';
     const price = qData?.price || stockObj?.currentPrice || 0;
     const preset = FUNDAMENTAL_FALLBACKS[symUpper];
 
@@ -148,27 +155,41 @@ export function computeSmartAutoParams(qData: any, aData: any, stockObj: any, sy
         rawExitPe = price / autoEps;
     }
 
-    // 4. Smart Exit P/E (Verkaufs-KGV in 5J) - strictly capped so Terminal Growth never exceeds 2.0%
-    let maxSensibleExitPe = 20.0;
+    // 4. Smart Exit P/E (Verkaufs-KGV in 5J)
+    // Mode A (conservative / safety): capped at 20.0 so Terminal Growth strictly <= 2.0%
+    // Mode B (quality / market): allows historical quality multiple premium (e.g. 25 for Big Tech compounders, 18.5 for Nestlé)
+    let maxSensibleExitPe = isQualityMode ? 25.0 : 20.0;
     if (autoDiv >= 4.8) {
-        // High dividend / mature value (e.g. Tobacco, Utilities, Kraft Heinz) -> Terminal Growth 0.5% - 1.0%
-        maxSensibleExitPe = Math.min(13.0, Math.max(10.0, effectivePe < 14 ? effectivePe : 12.0));
+        // High dividend / mature value (e.g. Tobacco, Utilities, Kraft Heinz)
+        maxSensibleExitPe = isQualityMode ? 13.5 : Math.min(13.0, Math.max(10.0, effectivePe < 14 ? effectivePe : 12.0));
     } else if (autoDiv >= 3.0) {
-        // Classic mature defensive dividend stock (e.g. Nestlé, Roche, Novartis, Coca-Cola) -> Terminal Growth 1.0% - 1.5%
-        maxSensibleExitPe = Math.min(17.0, Math.max(14.0, effectivePe < 18 ? effectivePe : 16.5));
+        // Classic mature defensive dividend stock (e.g. Nestlé, Roche, Novartis, Coca-Cola)
+        maxSensibleExitPe = isQualityMode ? 18.5 : Math.min(17.0, Math.max(14.0, effectivePe < 18 ? effectivePe : 16.5));
     } else if (autoDiv >= 1.5) {
-        // Quality dividend compounder (e.g. Pepsi, P&G, McD) -> Terminal Growth ~1.5%
-        maxSensibleExitPe = Math.min(18.5, Math.max(15.0, effectivePe < 20 ? effectivePe : 18.0));
+        // Quality dividend compounder (e.g. Pepsi, P&G, McD)
+        maxSensibleExitPe = isQualityMode ? 20.0 : Math.min(18.5, Math.max(15.0, effectivePe < 20 ? effectivePe : 18.0));
     } else if (isWideMoat || (effectivePe > 24 && autoDiv < 1.5)) {
-        // Quality Tech / Growth (e.g. Microsoft, Amazon, Google) -> Terminal Growth strictly <= 2.0%
-        maxSensibleExitPe = 20.0;
+        // Quality Tech / Growth (e.g. Microsoft, Amazon, Google, Apple)
+        maxSensibleExitPe = isQualityMode ? 25.0 : 20.0;
     } else {
         // Standard profile
-        maxSensibleExitPe = Math.min(18.0, Math.max(14.0, effectivePe));
+        maxSensibleExitPe = isQualityMode ? 20.0 : Math.min(18.0, Math.max(14.0, effectivePe));
     }
 
     if (preset) {
-        rawExitPe = preset.pe;
+        if (isQualityMode) {
+            if (symUpper === 'AMZN' || symUpper === 'MSFT') {
+                rawExitPe = 25.0;
+            } else if (symUpper === 'NESN.SW' || symUpper === 'NESN') {
+                rawExitPe = 18.5;
+            } else if (symUpper === 'ROG.SW') {
+                rawExitPe = 18.0;
+            } else {
+                rawExitPe = Math.min(preset.pe + 2.0, maxSensibleExitPe);
+            }
+        } else {
+            rawExitPe = preset.pe;
+        }
     }
 
     const autoPe = parseFloat((Math.round(Math.min(Math.max(rawExitPe, 8), maxSensibleExitPe) * 2) / 2).toFixed(1));
@@ -194,7 +215,8 @@ export function computeSmartAutoParams(qData: any, aData: any, stockObj: any, sy
         discountRate: 8,
         mos: autoMos,
         epsLabel,
-        growthLabel
+        growthLabel: isQualityMode ? `${growthLabel} (Markt)` : `${growthLabel} (Sicherheit)`,
+        valuationMode
     };
 }
 

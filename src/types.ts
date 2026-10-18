@@ -71,6 +71,7 @@ export interface Stock {
         mos: number;
         isCustom?: boolean;
         updatedAt?: string;
+        valuationMode?: 'conservative' | 'quality';
         customBackup?: {
             eps: number;
             growthRate: number;
@@ -79,6 +80,7 @@ export interface Stock {
             discountRate: number;
             mos: number;
             updatedAt?: string;
+            valuationMode?: 'conservative' | 'quality';
         };
     };
     sellLimit?: number; // Desired sell price -> Sell Limit
