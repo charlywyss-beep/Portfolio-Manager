@@ -11,6 +11,10 @@ export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number
     'ROG.SW': { eps: 18.80, growth: 5.5, pe: 16.5, mos: 15, label: 'Core EPS (Bereinigt)' },
     'NOVN.SW': { eps: 6.80, growth: 5.5, pe: 16.0, mos: 15, label: 'Core EPS (Bereinigt)' },
     'O': { eps: 4.20, growth: 3.5, pe: 15.0, mos: 15, label: 'AFFO (Cashflow)' },
+    'SREN.SW': { eps: 16.42, growth: 2.5, pe: 9.5, div: 4.82, mos: 20, label: 'Konsens EPS' },
+    'SREN': { eps: 16.42, growth: 2.5, pe: 9.5, div: 4.82, mos: 20, label: 'Konsens EPS' },
+    'ZURN.SW': { eps: 35.0, growth: 4.0, pe: 11.5, div: 5.2, mos: 15, label: 'Konsens EPS' },
+    'ZURN': { eps: 35.0, growth: 4.0, pe: 11.5, div: 5.2, mos: 15, label: 'Konsens EPS' },
     'BRK-B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, mos: 15, label: 'Operativer Gewinn' },
     'BRK.B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, mos: 15, label: 'Operativer Gewinn' },
 };
@@ -19,6 +23,7 @@ export const WIDE_MOAT_QUALITY = new Set([
     'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'NVDA', 'META', 'V', 'MA',
     'PG', 'KO', 'PEP', 'JNJ', 'MCD', 'COST', 'WMT', 'ABBV', 'LLY', 'UNH', 'HD',
     'ASML.AS', 'ASML', 'SAP.DE', 'SAP', 'NESN.SW', 'ROG.SW', 'NOVN.SW', 'LIN', 'OR.PA',
+    'SREN.SW', 'SREN', 'ZURN.SW', 'ZURN',
     'BRK-B', 'BRK.B', 'BRK-A', 'BRK.A'
 ]);
 
@@ -107,36 +112,38 @@ export function computeSmartAutoParams(
     let growthLabel = 'Fundamental-Profil';
 
     if (preset) {
-        autoGrowth = preset.growth;
-        growthLabel = 'Qualitäts-/Branchenprofil';
+        autoGrowth = isQualityMode
+            ? parseFloat((preset.growth + (preset.growth <= 3.5 ? 1.0 : preset.growth <= 7.0 ? 0.5 : 1.0)).toFixed(1))
+            : preset.growth;
+        growthLabel = isQualityMode ? 'Qualitäts-/Marktprofil' : 'Qualitäts-/Branchenprofil';
     } else if (rawApiGrowth !== null && rawApiGrowth !== undefined && isFinite(rawApiGrowth) && rawApiGrowth !== 0) {
         let apiPct = rawApiGrowth * 100;
         if (autoDiv >= 4.5 && effectivePe < 14) {
-            apiPct = Math.min(Math.max(apiPct, 2.5), 4.5);
-            growthLabel = 'Prognose (Konservativ)';
+            apiPct = Math.min(Math.max(apiPct, 2.5), isQualityMode ? 5.0 : 4.0);
+            growthLabel = isQualityMode ? 'Prognose (Markt)' : 'Prognose (Konservativ)';
         } else if (autoDiv >= 3.0 && effectivePe < 18) {
-            apiPct = Math.min(Math.max(apiPct, 3.0), 7.5);
-            growthLabel = 'Analysten-Prognose (5J)';
+            apiPct = Math.min(Math.max(apiPct, 3.0), isQualityMode ? 8.5 : 7.0);
+            growthLabel = isQualityMode ? 'Analysten-Prognose (Markt)' : 'Analysten-Prognose (5J)';
         } else {
-            apiPct = Math.min(Math.max(apiPct, 2.5), 15.0);
-            growthLabel = 'Analysten-Prognose (5J)';
+            apiPct = Math.min(Math.max(apiPct, 2.5), isQualityMode ? 16.0 : 14.0);
+            growthLabel = isQualityMode ? 'Analysten-Prognose (Markt)' : 'Analysten-Prognose (5J)';
         }
         autoGrowth = parseFloat((Math.round(apiPct * 2) / 2).toFixed(1));
     } else {
         if ((autoDiv >= 4.8 && effectivePe <= 14) || effectivePe <= 11.5) {
-            autoGrowth = autoDiv >= 5.0 && autoDiv < 6.0 ? 3.0 : 2.5;
+            autoGrowth = isQualityMode ? 3.5 : 2.5;
             growthLabel = 'Reifer Dividendenwert';
         } else if (autoDiv >= 3.0 && effectivePe <= 17.5) {
-            autoGrowth = 5.0;
+            autoGrowth = isQualityMode ? 6.0 : 5.0;
             growthLabel = 'Klassischer Dividendenwert';
         } else if (autoDiv >= 1.5 && effectivePe <= 23) {
-            autoGrowth = 6.5;
+            autoGrowth = isQualityMode ? 7.5 : 6.0;
             growthLabel = 'Qualitäts-/Standardwert';
         } else if (effectivePe > 24 && autoDiv < 1.5) {
-            autoGrowth = isWideMoat ? 13.0 : 10.0;
+            autoGrowth = isWideMoat ? (isQualityMode ? 14.5 : 12.5) : (isQualityMode ? 11.5 : 9.5);
             growthLabel = isWideMoat ? 'Wachstumswert (Wide Moat)' : 'Wachstumswert';
         } else {
-            autoGrowth = 6.0;
+            autoGrowth = isQualityMode ? 7.0 : 5.5;
             growthLabel = 'Standard-Profil';
         }
     }
@@ -159,12 +166,19 @@ export function computeSmartAutoParams(
         rawExitPe = price / autoEps;
     }
 
-    // 4. Smart Exit P/E (Verkaufs-KGV in 5J)
+    // Determine sector characteristics
+    const currencyStr = (qData?.currency || stockObj?.currency || '').toUpperCase();
+    const sectorStr = (qData?.sector || stockObj?.sector || '').toLowerCase();
+    const isDefensiveSector = sectorStr.includes('konsum') || sectorStr.includes('consumer') || sectorStr.includes('nahrung') || sectorStr.includes('pharma') || sectorStr.includes('gesundheit') || sectorStr.includes('health') || sectorStr.includes('versicherung') || sectorStr.includes('insurance') || sectorStr.includes('rückversicherung') || sectorStr.includes('reinsurance');
+    const isCyclicalSector = sectorStr.includes('semi') || sectorStr.includes('halbleiter') || sectorStr.includes('auto') || sectorStr.includes('chemie') || sectorStr.includes('basic materials') || sectorStr.includes('rohstoff') || sectorStr.includes('cyclical') || sectorStr.includes('zyklisch');
+    const isSwissBlueChip = symUpper.endsWith('.SW') || currencyStr === 'CHF';
+
+    // Caps
     // Mode A (conservative / safety): capped at 20.0 so Terminal Growth strictly <= 2.0%
     // Mode B (quality / market): allows historical quality multiple premium (e.g. 25 for Big Tech compounders, 18.5 for Nestlé)
     let maxSensibleExitPe = isQualityMode ? 25.0 : 20.0;
     if (autoDiv >= 4.8) {
-        // High dividend / mature value (e.g. Tobacco, Utilities, Kraft Heinz)
+        // High dividend / mature value (e.g. Tobacco, Utilities, Kraft Heinz, Swiss Re)
         maxSensibleExitPe = isQualityMode ? 13.5 : Math.min(13.0, Math.max(10.0, effectivePe < 14 ? effectivePe : 12.0));
     } else if (autoDiv >= 3.0) {
         // Classic mature defensive dividend stock (e.g. Nestlé, Roche, Novartis, Coca-Cola)
@@ -180,8 +194,8 @@ export function computeSmartAutoParams(
         maxSensibleExitPe = isQualityMode ? 20.0 : Math.min(18.0, Math.max(14.0, effectivePe));
     }
 
-    if (preset) {
-        if (isQualityMode) {
+    if (isQualityMode) {
+        if (preset) {
             if (symUpper === 'AMZN' || symUpper === 'MSFT') {
                 rawExitPe = 25.0;
             } else if (symUpper.startsWith('BRK-') || symUpper.startsWith('BRK.') || symUpper === 'BRK') {
@@ -190,10 +204,22 @@ export function computeSmartAutoParams(
                 rawExitPe = 18.5;
             } else if (symUpper === 'ROG.SW') {
                 rawExitPe = 18.0;
+            } else if (symUpper.startsWith('SREN')) {
+                rawExitPe = 11.5;
+            } else if (symUpper.startsWith('ZURN')) {
+                rawExitPe = 13.0;
             } else {
                 rawExitPe = Math.min(preset.pe + 2.0, maxSensibleExitPe);
             }
         } else {
+            // General stocks without preset:
+            // Mode B allows a fair normalized quality multiple (+1.5 to 2.5 PE points)
+            const qualityBoost = autoDiv >= 4.5 ? 2.0 : isWideMoat ? 3.0 : 2.0;
+            const floorMultiple = (isSwissBlueChip || isDefensiveSector) ? 11.5 : 10.0;
+            rawExitPe = Math.min(Math.max(rawExitPe + qualityBoost, floorMultiple), maxSensibleExitPe);
+        }
+    } else {
+        if (preset) {
             rawExitPe = preset.pe;
         }
     }
@@ -201,19 +227,20 @@ export function computeSmartAutoParams(
     const autoPe = parseFloat((Math.round(Math.min(Math.max(rawExitPe, 8), maxSensibleExitPe) * 2) / 2).toFixed(1));
 
     // 5. Smart Margin of Safety (15% for Swiss / defensive / wide-moat quality blue-chips, 20% standard, 25% cyclicals)
-    const currencyStr = (qData?.currency || stockObj?.currency || '').toUpperCase();
-    const sectorStr = (qData?.sector || stockObj?.sector || '').toLowerCase();
-    const isDefensiveSector = sectorStr.includes('konsum') || sectorStr.includes('consumer') || sectorStr.includes('nahrung') || sectorStr.includes('pharma') || sectorStr.includes('gesundheit') || sectorStr.includes('health');
-    const isCyclicalSector = sectorStr.includes('semi') || sectorStr.includes('halbleiter') || sectorStr.includes('auto') || sectorStr.includes('chemie') || sectorStr.includes('basic materials') || sectorStr.includes('rohstoff') || sectorStr.includes('cyclical') || sectorStr.includes('zyklisch');
-    const isSwissBlueChip = symUpper.endsWith('.SW') || currencyStr === 'CHF';
-
     let autoMos = 20;
     if (preset?.mos !== undefined) {
-        autoMos = preset.mos;
-    } else if (isWideMoat || ((isSwissBlueChip || isDefensiveSector) && autoPe >= 15 && autoDiv >= 1.5 && autoDiv <= 4.8)) {
+        autoMos = isQualityMode
+            ? (isSwissBlueChip || isWideMoat ? 15 : preset.mos)
+            : (preset.mos <= 15 ? 15 : 20);
+    } else if (isQualityMode && (isSwissBlueChip || isWideMoat || isDefensiveSector)) {
+        // In Quality Mode: Top-tier Swiss bluechips, Wide Moats and defensive leaders have 15% Margin of Safety!
+        autoMos = 15;
+    } else if (isWideMoat || ((isSwissBlueChip || isDefensiveSector) && autoPe >= 14 && autoDiv >= 1.5 && autoDiv <= 4.8)) {
         autoMos = 15;
     } else if (isCyclicalSector) {
         autoMos = 25;
+    } else {
+        autoMos = 20;
     }
 
     return {
