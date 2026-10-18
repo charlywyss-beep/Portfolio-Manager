@@ -24,8 +24,8 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
         )) || [];
 
     return (
-        <div className="space-y-3">
-            <div className="flex items-center gap-2">
+        <div className="flex-1 min-h-0 flex flex-col space-y-3 overflow-hidden">
+            <div className="flex items-center gap-2 shrink-0">
                 <Landmark className="size-6 text-primary" />
                 <h2 className="text-xl font-bold tracking-tight">Bankguthaben</h2>
                 <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{filteredFixedDeposits.length} Konten</span>
@@ -37,8 +37,8 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                     <span>Konto hinzufügen</span>
                 </button>
             </div>
-            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-                <div className="overflow-y-auto max-h-[70vh] md:max-h-[500px] p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0">
+            <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                <div className="overflow-y-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0">
                     <table className="w-full text-sm text-left border-collapse">
                         <thead className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">
                             <tr className="border-b border-border bg-muted/20">

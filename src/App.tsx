@@ -130,7 +130,7 @@ function App() {
   return (
     <ExchangeRateProvider>
       <PortfolioProvider>
-        <div className="flex h-screen bg-background text-foreground font-sans antialiased text-sm">
+        <div className="flex h-screen h-[100dvh] bg-background text-foreground font-sans antialiased text-sm">
           {/* Mobile Hamburger Menu Button */}
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -225,7 +225,7 @@ function App() {
           </aside>
 
           {/* Main Content */}
-          <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background transition-all duration-300">
+          <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-background transition-all duration-300 flex flex-col">
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/portfolio" element={<Portfolio />} />

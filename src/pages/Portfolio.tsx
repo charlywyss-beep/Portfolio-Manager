@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Plus, PieChart, BarChart3, Landmark, RefreshCw } from 'lucide-react';
+import { Plus, PieChart, BarChart3, Landmark, RefreshCw, ShieldCheck } from 'lucide-react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils'; // Import cn
 import { EditPositionModal } from '../components/EditPositionModal';
@@ -11,13 +11,26 @@ import { VorsorgeSection } from '../components/VorsorgeSection';
 import { FixedDepositTable } from '../components/FixedDepositTable';
 
 export function Portfolio() {
-    const { positions: rawPositions, stocks, deletePosition, updatePosition, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh } = usePortfolio();
+    const { positions: rawPositions, stocks, fixedDeposits, deletePosition, updatePosition, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh } = usePortfolio();
     const navigate = useNavigate();
     const [isAddFixedDepositModalOpen, setIsAddFixedDepositModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedPosition, setSelectedPosition] = useState<any>(null);
     const [editingFixedDeposit, setEditingFixedDeposit] = useState<any>(null);
     const { convertToCHF } = useCurrencyFormatter();
+
+    // Persistent Tab State
+    const [activeTab, setActiveTab] = useState<'stocks' | 'etfs' | 'vorsorge' | 'bank'>(() => {
+        const saved = localStorage.getItem('portfolio_active_tab');
+        if (saved === 'stocks' || saved === 'etfs' || saved === 'vorsorge' || saved === 'bank') {
+            return saved;
+        }
+        return 'stocks';
+    });
+
+    useEffect(() => {
+        localStorage.setItem('portfolio_active_tab', activeTab);
+    }, [activeTab]);
 
     // Force re-render every minute to update the "Updated X min ago" text
     // Also trigger auto-refresh after 5 minutes
@@ -103,10 +116,6 @@ export function Portfolio() {
         // FX Impact calculation
         const forexImpactCHF = currentValueCHF - currentValAtEntryFx;
 
-        // This is strictly "FX contribution to Current Value". 
-        // If you want "FX contribution to P/L", it's slightly more complex, but this is a standard approx.
-
-
         return {
             ...pos,
             stock,
@@ -117,12 +126,11 @@ export function Portfolio() {
             dailyChange,
             dailyChangePercent,
             dailyValueChange,
-            buyValueCHF, // New: Fixes Invest Column
-            gainLossTotalCHF, // New
-            forexImpactCHF // New
+            buyValueCHF,
+            gainLossTotalCHF,
+            forexImpactCHF
         };
     }).filter(Boolean) as any[];
-
 
     // Sorting
     const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'currency' | 'value' | 'performance', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
@@ -133,16 +141,15 @@ export function Portfolio() {
                 return a.stock.name.localeCompare(b.stock.name);
             }
             if (sortConfig.key === 'currency') {
-                // Primary: Currency, Secondary: Name
                 const currComp = a.stock.currency.localeCompare(b.stock.currency);
                 if (currComp !== 0) return currComp;
                 return a.stock.name.localeCompare(b.stock.name);
             }
             if (sortConfig.key === 'value') {
-                return b.currentValueCHF - a.currentValueCHF; // High to Low
+                return b.currentValueCHF - a.currentValueCHF;
             }
             if (sortConfig.key === 'performance') {
-                return b.gainLossTotalPercent - a.gainLossTotalPercent; // Best first
+                return b.gainLossTotalPercent - a.gainLossTotalPercent;
             }
             return 0;
         });
@@ -152,6 +159,8 @@ export function Portfolio() {
 
     const stockPositions = sortedPositions.filter(p => !p.stock.type || p.stock.type === 'stock');
     const etfPositions = sortedPositions.filter(p => p.stock.type === 'etf');
+    const vorsorgeDeposits = fixedDeposits?.filter(fd => fd.accountType === 'vorsorge') || [];
+    const filteredFixedDeposits = fixedDeposits?.filter(fd => fd.accountType !== 'vorsorge') || [];
 
     const handleUpdate = (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number, newPurchases?: any[]) => {
         const updates: any = { shares: newShares };
@@ -171,11 +180,11 @@ export function Portfolio() {
     };
 
     return (
-        <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20">
-            {/* Sticky Header - Matched to Watchlist design */}
-            <div className="sticky top-0 z-50 bg-background pb-3 sm:pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+        <div className="h-full flex flex-col p-4 md:p-6 space-y-3 bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden">
+            {/* Header - Fixed Height */}
+            <div className="shrink-0 bg-background pb-2 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
-                    <div className="w-full px-3 sm:px-4 py-3.5 sm:py-4 md:px-6 lg:px-6">
+                    <div className="w-full px-3 sm:px-4 py-3 sm:py-3.5 md:px-6 lg:px-6">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="flex items-center gap-3 pl-12 lg:pl-0 min-h-[38px]">
                                 <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
@@ -238,40 +247,125 @@ export function Portfolio() {
                 </div>
             </div>
 
-            {/* Aktien Table */}
-            <PositionTable
-                title="Aktien"
-                icon={BarChart3}
-                data={stockPositions}
-                emptyMessage="Noch keine Aktien im Depot."
-                setSelectedPosition={setSelectedPosition}
-                setIsEditModalOpen={setIsEditModalOpen}
-                hideHeader={true}
-            />
+            {/* Sub-Tabs: Aktien | ETFs | Vorsorge | Bank */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 shrink-0">
+                <button
+                    onClick={() => setActiveTab('stocks')}
+                    className={cn(
+                        "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all border shadow-sm shrink-0",
+                        activeTab === 'stocks'
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+                    )}
+                >
+                    <BarChart3 className="size-4" />
+                    <span>Aktien</span>
+                    <span className={cn(
+                        "text-xs px-1.5 py-0.5 rounded-full font-mono",
+                        activeTab === 'stocks' ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                    )}>
+                        {stockPositions.length}
+                    </span>
+                </button>
 
-            {/* ETFs Table */}
-            <PositionTable
-                title="ETFs"
-                icon={PieChart}
-                data={etfPositions}
-                emptyMessage="Noch keine ETFs im Depot."
-                setSelectedPosition={setSelectedPosition}
-                setIsEditModalOpen={setIsEditModalOpen}
-            />
+                <button
+                    onClick={() => setActiveTab('etfs')}
+                    className={cn(
+                        "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all border shadow-sm shrink-0",
+                        activeTab === 'etfs'
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+                    )}
+                >
+                    <PieChart className="size-4" />
+                    <span>ETFs</span>
+                    <span className={cn(
+                        "text-xs px-1.5 py-0.5 rounded-full font-mono",
+                        activeTab === 'etfs' ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                    )}>
+                        {etfPositions.length}
+                    </span>
+                </button>
 
-            {/* Vorsorge Section */}
-            <VorsorgeSection
-                searchTerm=""
-                setIsAddFixedDepositModalOpen={setIsAddFixedDepositModalOpen}
-                setEditingFixedDeposit={setEditingFixedDeposit}
-            />
+                <button
+                    onClick={() => setActiveTab('vorsorge')}
+                    className={cn(
+                        "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all border shadow-sm shrink-0",
+                        activeTab === 'vorsorge'
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+                    )}
+                >
+                    <ShieldCheck className="size-4" />
+                    <span>Vorsorge</span>
+                    <span className={cn(
+                        "text-xs px-1.5 py-0.5 rounded-full font-mono",
+                        activeTab === 'vorsorge' ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                    )}>
+                        {vorsorgeDeposits.length}
+                    </span>
+                </button>
 
-            {/* Bankguthaben Table */}
-            <FixedDepositTable
-                searchTerm=""
-                setIsAddFixedDepositModalOpen={setIsAddFixedDepositModalOpen}
-                setEditingFixedDeposit={setEditingFixedDeposit}
-            />
+                <button
+                    onClick={() => setActiveTab('bank')}
+                    className={cn(
+                        "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all border shadow-sm shrink-0",
+                        activeTab === 'bank'
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+                    )}
+                >
+                    <Landmark className="size-4" />
+                    <span>Bankguthaben</span>
+                    <span className={cn(
+                        "text-xs px-1.5 py-0.5 rounded-full font-mono",
+                        activeTab === 'bank' ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                    )}>
+                        {filteredFixedDeposits.length}
+                    </span>
+                </button>
+            </div>
+
+            {/* Active Section fills flex-1 min-h-0 */}
+            {activeTab === 'stocks' && (
+                <PositionTable
+                    title="Aktien"
+                    icon={BarChart3}
+                    data={stockPositions}
+                    emptyMessage="Noch keine Aktien im Depot."
+                    setSelectedPosition={setSelectedPosition}
+                    setIsEditModalOpen={setIsEditModalOpen}
+                    hideHeader={true}
+                />
+            )}
+
+            {activeTab === 'etfs' && (
+                <PositionTable
+                    title="ETFs"
+                    icon={PieChart}
+                    data={etfPositions}
+                    emptyMessage="Noch keine ETFs im Depot."
+                    setSelectedPosition={setSelectedPosition}
+                    setIsEditModalOpen={setIsEditModalOpen}
+                    hideHeader={true}
+                />
+            )}
+
+            {activeTab === 'vorsorge' && (
+                <VorsorgeSection
+                    searchTerm=""
+                    setIsAddFixedDepositModalOpen={setIsAddFixedDepositModalOpen}
+                    setEditingFixedDeposit={setEditingFixedDeposit}
+                />
+            )}
+
+            {activeTab === 'bank' && (
+                <FixedDepositTable
+                    searchTerm=""
+                    setIsAddFixedDepositModalOpen={setIsAddFixedDepositModalOpen}
+                    setEditingFixedDeposit={setEditingFixedDeposit}
+                />
+            )}
 
             <AddFixedDepositModal
                 isOpen={isAddFixedDepositModalOpen}

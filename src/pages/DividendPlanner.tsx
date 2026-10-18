@@ -179,6 +179,17 @@ export function DividendPlanner() {
     // Sorting
     const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'yield' | 'amount' | 'date', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
 
+    // Persistent Tab State
+    const [activeDivTab, setActiveDivTab] = useState<'dividends' | 'bank' | 'calendar'>(() => {
+        const saved = localStorage.getItem('dividend_active_tab');
+        if (saved === 'dividends' || saved === 'bank' || saved === 'calendar') return saved;
+        return 'dividends';
+    });
+
+    useEffect(() => {
+        localStorage.setItem('dividend_active_tab', activeDivTab);
+    }, [activeDivTab]);
+
     projectedDividends.sort((a, b) => {
         if (!a || !b) return 0;
         if (sortConfig.key === 'name') {
@@ -202,18 +213,18 @@ export function DividendPlanner() {
     });
 
     return (
-        <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20">
-            {/* Header - Matched to Portfolio/Watchlist design */}
-            <div className="sticky top-0 z-50 bg-background pb-3 sm:pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+        <div className="h-full flex flex-col p-4 md:p-6 space-y-3 bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden">
+            {/* Header - Fixed Height */}
+            <div className="shrink-0 bg-background pb-2 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
-                    <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 lg:pl-6">
+                    <div className="w-full pl-14 pr-4 py-3 sm:py-3.5 md:px-6 md:pl-14 lg:pl-6">
                         <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
-                                <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600 dark:text-green-400">
-                                    <TrendingUp className="size-6" />
+                                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600 dark:text-green-400 shrink-0">
+                                    <TrendingUp className="size-5 sm:size-6" />
                                 </div>
                                 <div>
-                                    <h1 className="text-3xl font-bold tracking-tight">Dividenden</h1>
+                                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dividenden</h1>
                                     <p className="text-muted-foreground hidden md:block">Übersicht aller erwarteten Zahlungen</p>
                                 </div>
                             </div>
@@ -245,30 +256,129 @@ export function DividendPlanner() {
                 </div>
             </div>
 
-            {/* Main Dividend Table */}
-            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-                <div className="flex items-center justify-between p-4 border-b border-border bg-card">
-                    <h2 className="text-lg font-semibold">Erwartete Dividenden</h2>
-
-                    <div className="flex items-center gap-3">
-                        <select
-                            className="pl-3 pr-8 py-1.5 rounded-lg border border-border bg-card text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer"
-                            value={sortConfig.key}
-                            onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
-                        >
-                            <option value="name">Name (A-Z)</option>
-                            <option value="yield">Rendite % (Hoch)</option>
-                            <option value="amount">Betrag (Hoch)</option>
-                            <option value="date">Datum (Nächstes)</option>
-                        </select>
+            {/* Summary Cards - Fixed Height */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 shrink-0">
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl p-2.5 md:p-3 border border-green-200 dark:border-green-800 shadow-sm flex flex-col justify-between">
+                    <span className="text-xs font-medium text-green-900 dark:text-green-100 flex items-center gap-1.5 mb-0.5">
+                        <TrendingUp className="size-3" />
+                        Jährlich
+                    </span>
+                    <div className="text-base sm:text-lg md:text-xl font-bold text-green-600 dark:text-green-400">
+                        {totalAnnualNet.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-xs font-normal opacity-80">CHF</span>
                     </div>
                 </div>
 
-                <div
-                    onTouchStart={handleTouchStart}
-                    onTouchEnd={handleTouchEnd}
-                    className="overflow-y-auto max-h-[70vh] md:max-h-[600px] p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
+                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-xl p-2.5 md:p-3 border border-blue-200 dark:border-blue-800 shadow-sm flex flex-col justify-between">
+                    <span className="text-xs font-medium text-blue-900 dark:text-blue-100 flex items-center gap-1.5 mb-0.5">
+                        <Calendar className="size-3" />
+                        Ø Monatlich
+                    </span>
+                    <div className="text-base sm:text-lg md:text-xl font-bold text-blue-800 dark:text-blue-400">
+                        {totalMonthly.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-xs font-normal opacity-80">CHF</span>
+                    </div>
+                </div>
+
+                <div className="bg-card rounded-xl p-2.5 md:p-3 border border-border shadow-sm flex flex-col justify-between">
+                    <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 mb-0.5">
+                        <TrendingUp className="size-3" />
+                        Ø Rendite
+                    </span>
+                    <div className="text-base sm:text-lg md:text-xl font-bold text-foreground">
+                        {(projectedDividends.reduce((acc, curr) => acc + (curr?.stock.dividendYield || 0), 0) / (projectedDividends.length || 1)).toFixed(2)}%
+                    </div>
+                </div>
+
+                <div className="bg-card rounded-xl p-2.5 md:p-3 border border-border shadow-sm flex flex-col justify-between">
+                    <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 mb-0.5">
+                        <Calendar className="size-3" />
+                        Zahler
+                    </span>
+                    <div className="text-base sm:text-lg md:text-xl font-bold text-foreground">
+                        {projectedDividends.length} <span className="text-xs font-normal text-muted-foreground">Aktien</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 shrink-0">
+                <button
+                    onClick={() => setActiveDivTab('dividends')}
+                    className={cn(
+                        "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all border shadow-sm shrink-0",
+                        activeDivTab === 'dividends'
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+                    )}
                 >
+                    <TrendingUp className="size-4" />
+                    <span>Dividenden</span>
+                    <span className={cn(
+                        "text-xs px-1.5 py-0.5 rounded-full font-mono",
+                        activeDivTab === 'dividends' ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                    )}>
+                        {projectedDividends.length}
+                    </span>
+                </button>
+
+                {bankRows.length > 0 && (
+                    <button
+                        onClick={() => setActiveDivTab('bank')}
+                        className={cn(
+                            "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all border shadow-sm shrink-0",
+                            activeDivTab === 'bank'
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+                        )}
+                    >
+                        <span>Bank-Erträge</span>
+                        <span className={cn(
+                            "text-xs px-1.5 py-0.5 rounded-full font-mono",
+                            activeDivTab === 'bank' ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                        )}>
+                            {bankRows.length}
+                        </span>
+                    </button>
+                )}
+
+                <button
+                    onClick={() => setActiveDivTab('calendar')}
+                    className={cn(
+                        "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all border shadow-sm shrink-0",
+                        activeDivTab === 'calendar'
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+                    )}
+                >
+                    <Calendar className="size-4" />
+                    <span>Monats-Kalender</span>
+                </button>
+            </div>
+
+            {/* Main Dividend Table */}
+            {activeDivTab === 'dividends' && (
+                <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between p-3 border-b border-border bg-card shrink-0">
+                        <h2 className="text-base md:text-lg font-semibold">Erwartete Dividenden</h2>
+
+                        <div className="flex items-center gap-3">
+                            <select
+                                className="pl-3 pr-8 py-1.5 rounded-lg border border-border bg-card text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer"
+                                value={sortConfig.key}
+                                onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
+                            >
+                                <option value="name">Name (A-Z)</option>
+                                <option value="yield">Rendite % (Hoch)</option>
+                                <option value="amount">Betrag (Hoch)</option>
+                                <option value="date">Datum (Nächstes)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div
+                        onTouchStart={handleTouchStart}
+                        onTouchEnd={handleTouchEnd}
+                        className="overflow-y-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
+                    >
                     <table className="w-full text-xs md:text-sm border-collapse table-fixed md:table-auto">
                         <thead>
                             <tr className="border-b border-border bg-muted/20">
@@ -782,69 +892,17 @@ export function DividendPlanner() {
                         </tbody>
                     </table>
                 </div>
-            </div >
-
-            {/* Summary Cards - Below Table */}
-            < div className="grid grid-cols-2 md:grid-cols-4 gap-4" >
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl p-4 border border-green-200 dark:border-green-800">
-                    <div className="flex flex-col">
-                        <span className="text-xs font-medium text-green-900 dark:text-green-100 flex items-center gap-2 mb-1">
-                            <TrendingUp className="size-3" />
-                            Jährlich
-                        </span>
-                        <div className="text-xl font-bold text-green-600 dark:text-green-400 flex flex-col items-start leading-none">
-                            <span className="text-xs font-medium opacity-80 mb-0.5">CHF</span>
-                            <span>{totalAnnualNet.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
-                    <div className="flex flex-col">
-                        <span className="text-xs font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2 mb-1">
-                            <Calendar className="size-3" />
-                            Ø Monatlich
-                        </span>
-                        <div className="text-xl font-bold text-blue-800 dark:text-blue-400 flex flex-col items-start leading-none">
-                            <span className="text-xs font-medium opacity-80 mb-0.5">CHF</span>
-                            <span>{totalMonthly.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-card rounded-xl p-4 border border-border shadow-sm">
-                    <div className="flex flex-col">
-                        <span className="text-xs font-medium text-muted-foreground flex items-center gap-2 mb-1">
-                            <TrendingUp className="size-3" />
-                            Ø Dividenden-Rendite
-                        </span>
-                        <div className="text-xl font-bold text-foreground">
-                            {(projectedDividends.reduce((acc, curr) => acc + (curr?.stock.dividendYield || 0), 0) / (projectedDividends.length || 1)).toFixed(2)}%
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-card rounded-xl p-4 border border-border shadow-sm">
-                    <div className="flex flex-col">
-                        <span className="text-xs font-medium text-muted-foreground flex items-center gap-2 mb-1">
-                            <Calendar className="size-3" />
-                            Zahler
-                        </span>
-                        <div className="text-xl font-bold text-foreground">
-                            {projectedDividends.length} <span className="text-xs font-normal text-muted-foreground">Positionen</span>
-                        </div>
-                    </div>
-                </div>
-            </div >
+            </div>
+            )}
 
             {/* Bank Accounts Section */}
-            {bankRows.length > 0 && (
-                <div className="bg-card rounded-xl border shadow-sm animate-in slide-in-from-bottom-4 duration-700 overflow-hidden">
-                    <div className="flex items-center justify-between p-4 border-b bg-muted/30">
-                        <h2 className="text-lg font-semibold">Bank Erträge & Gebühren</h2>
+            {activeDivTab === 'bank' && bankRows.length > 0 && (
+                <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between p-3 border-b bg-muted/30 shrink-0">
+                        <h2 className="text-base md:text-lg font-semibold">Bank Erträge & Gebühren</h2>
                     </div>
 
-                    <div className="overflow-y-auto max-h-[70vh] md:max-h-[500px] p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0">
+                    <div className="overflow-y-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0">
                         <table className="w-full text-xs md:text-sm border-collapse md:min-w-[1000px]">
                             <thead>
                                 <tr className="border-b border-border bg-muted/20">
@@ -927,22 +985,21 @@ export function DividendPlanner() {
                     </div>
                 )
             }
-            {/* Dividend Calendar Chart (Moved Down) */}
-            <div className="mt-8 mb-8">
-                <div className="flex items-center gap-2 mb-4">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                        <TrendingUp className="w-5 h-5 text-primary" />
+            {/* Dividend Calendar Chart */}
+            {activeDivTab === 'calendar' && (
+                <div className="flex-1 min-h-0 overflow-y-auto bg-card border border-border rounded-xl p-4 md:p-6 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                            <TrendingUp className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-foreground">Monatliche Dividenden (Geschätzt)</h2>
+                            <p className="text-sm text-muted-foreground">Prognostizierte Verteilung der Zahlungen über das Jahr</p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 className="text-lg font-bold text-foreground">Monatliche Dividenden (Geschätzt)</h2>
-                        <p className="text-sm text-muted-foreground">Prognostizierte Verteilung der Zahlungen über das Jahr</p>
-                    </div>
-                </div>
-
-                <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
                     <DividendCalendarChart />
                 </div>
-            </div>
+            )}
         </div >
     );
 }

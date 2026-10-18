@@ -28,14 +28,15 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
     const totalVorsorge = vorsorgeDeposits.reduce((sum, fd) => sum + fd.amount, 0);
 
     return (
-        <div className="space-y-3">
-            <div className="flex items-center gap-2">
+        <div className="flex-1 min-h-0 flex flex-col space-y-3 overflow-hidden">
+            <div className="flex items-center gap-2 shrink-0">
                 <ShieldCheck className="size-6 text-primary" />
                 <h2 className="text-xl font-bold tracking-tight">Vorsorge</h2>
+                <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{vorsorgeDeposits.length} Konten</span>
             </div>
 
-            <div className="bg-card border border-border rounded-xl p-3 shadow-sm">
-                <div className="flex justify-between items-end mb-3 border-b border-border pb-2">
+            <div className="bg-card border border-border rounded-xl p-3 shadow-sm shrink-0">
+                <div className="flex justify-between items-end border-b border-border pb-2">
                     <div>
                         <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Vorsorge Status</h3>
                         <p className="text-xs text-muted-foreground mt-1">Total über alle 3a Konten</p>
@@ -48,16 +49,16 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                 </div>
             </div>
 
-            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden overflow-clip">
-                <div className="overflow-x-auto overscroll-x-none">
+            <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                <div className="overflow-y-auto flex-1 min-h-0 p-0 w-full">
                     <table className="w-full text-sm text-left">
                         <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
                             <tr>
-                                <th className="px-4 py-3 sticky -left-px z-20 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] lg:w-[250px] min-w-[180px] lg:min-w-[250px] max-w-[180px] lg:max-w-[250px]">Bank / Institut</th>
-                                <th className="px-4 py-3 w-[130px] lg:w-[150px] min-w-[130px] lg:min-w-[150px] max-w-[130px] lg:max-w-[150px]">Konto-Typ</th>
-                                <th className="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">Vermögen</th>
-                                <th className="px-4 py-3 min-w-[300px]">Fortschritt 2025</th>
-                                <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px bg-card z-50 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                <th className="px-4 py-3 sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] lg:w-[250px] min-w-[180px] lg:min-w-[250px] max-w-[180px] lg:max-w-[250px]">Bank / Institut</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card w-[130px] lg:w-[150px] min-w-[130px] lg:min-w-[150px] max-w-[130px] lg:max-w-[150px]">Konto-Typ</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card text-right whitespace-nowrap min-w-[120px]">Vermögen</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card min-w-[300px]">Fortschritt 2025</th>
+                                <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky top-0 md:sticky md:-right-px bg-card z-30 md:z-40 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">

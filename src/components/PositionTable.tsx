@@ -73,20 +73,20 @@ export function PositionTable({
     };
 
     return (
-        <div className="space-y-3">
+        <div className="flex-1 min-h-0 flex flex-col space-y-3 overflow-hidden">
             {!hideHeader && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                     <Icon className="size-6 text-primary" />
                     <h2 className="text-xl font-bold tracking-tight">{title}</h2>
                     <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{data.length} Positionen</span>
                     {headerAction && <div className="ml-auto">{headerAction}</div>}
                 </div>
             )}
-            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+            <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border bg-card shadow-sm overflow-hidden">
                 <div
                     onTouchStart={handleTouchStart}
                     onTouchEnd={handleTouchEnd}
-                    className="overflow-y-auto max-h-[70vh] md:max-h-[600px] p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
+                    className="overflow-y-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
                 >
                     <table className="w-full text-xs md:text-sm border-collapse table-fixed md:table-auto">
                         <thead>

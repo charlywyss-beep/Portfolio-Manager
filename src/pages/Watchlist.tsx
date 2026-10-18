@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCurrencyFormatter } from '../utils/currency';
 
 import { getCurrentDividendPeriod, translateFrequency } from '../utils/dividend';
-import { Eye, Plus, Trash2, Edit, ShoppingBag, RefreshCw, TrendingUp, ChevronDown, ChevronRight, ChevronLeft, PieChart, ArrowLeft } from 'lucide-react';
+import { Eye, Plus, Trash2, Edit, ShoppingBag, RefreshCw, TrendingUp, ChevronRight, ChevronLeft, PieChart, ArrowLeft } from 'lucide-react';
 
 import { Logo } from '../components/Logo';
 import { cn } from '../utils';
@@ -23,19 +23,6 @@ export function Watchlist() {
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
     const [editPosition, setEditPosition] = useState<any>(null); // State for editing position
     const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
-
-    // Collapsible states
-    // Collapsible states - Persisted
-    const [isOwnedStocksOpen, setIsOwnedStocksOpen] = useState(() => localStorage.getItem('wl_sec_owned_stocks') !== 'false'); // Default true
-    const [isOwnedEtfsOpen, setIsOwnedEtfsOpen] = useState(() => localStorage.getItem('wl_sec_owned_etfs') !== 'false'); // Default true
-    const [isPotentialStocksOpen, setIsPotentialStocksOpen] = useState(() => localStorage.getItem('wl_sec_pot_stocks') === 'true'); // Default false
-    const [isPotentialEtfsOpen, setIsPotentialEtfsOpen] = useState(() => localStorage.getItem('wl_sec_pot_etfs') === 'true'); // Default false
-
-    // Persist collapsible states
-    useEffect(() => { localStorage.setItem('wl_sec_owned_stocks', String(isOwnedStocksOpen)); }, [isOwnedStocksOpen]);
-    useEffect(() => { localStorage.setItem('wl_sec_owned_etfs', String(isOwnedEtfsOpen)); }, [isOwnedEtfsOpen]);
-    useEffect(() => { localStorage.setItem('wl_sec_pot_stocks', String(isPotentialStocksOpen)); }, [isPotentialStocksOpen]);
-    useEffect(() => { localStorage.setItem('wl_sec_pot_etfs', String(isPotentialEtfsOpen)); }, [isPotentialEtfsOpen]);
 
 
     // Multi-Watchlist State - Persist in localStorage to survive navigation
@@ -128,28 +115,7 @@ export function Watchlist() {
         !positions.some(p => String(p.stockId) === String(s.id)) && s.type === 'etf'
     );
 
-
-    // Visibility Logic: Context-sensitive
-    // Show sections if we have owned OR potential items of that type
-    const hasStocks = ownedStocks.length > 0 || potentialStocks.length > 0;
-    const hasEtfs = ownedEtfs.length > 0 || potentialEtfs.length > 0;
-
-    // Show Stock Sections if: We have any stocks (owned or potential) OR we have NO ETFs (default view)
-    const showStockSections = hasStocks || !hasEtfs;
-    // Show ETF Sections if: We have any ETFs (owned or potential) OR we have NO Stocks
-    const showEtfSections = hasEtfs || !hasStocks;
-
     // Unified Timer Tracking (v3.12.70): Replaced local interval with dependency on global refreshTick
-    useEffect(() => {
-        // Auto-collapse if empty
-        if (ownedStocks.length === 0) {
-            setIsOwnedStocksOpen(false);
-        }
-
-        if (ownedEtfs.length === 0) {
-            setIsOwnedEtfsOpen(false);
-        }
-    }, [ownedStocks.length, ownedEtfs.length]);
 
     useEffect(() => {
         // Auto-refresh if last refresh was more than 5 minutes ago
@@ -184,13 +150,44 @@ export function Watchlist() {
         navigate(`/calculator?stock=${stock.id}&mode=buy&from=watchlist`);
     };
 
+    const subTabs: Array<{ id: string; label: string; count: number; icon: any; stocks: Stock[] }> = activeWatchlistId === 'owned'
+        ? [
+            { id: 'owned-stocks', label: 'Aktien', count: ownedStocks.length, icon: ShoppingBag, stocks: ownedStocks },
+            { id: 'owned-etfs', label: 'ETFs', count: ownedEtfs.length, icon: PieChart, stocks: ownedEtfs }
+        ]
+        : [
+            ...(potentialStocks.length > 0 || (ownedStocks.length === 0 && potentialEtfs.length === 0 && ownedEtfs.length === 0)
+                ? [{ id: 'pot-stocks', label: ownedStocks.length > 0 ? 'Watchlist Aktien' : 'Aktien', count: potentialStocks.length, icon: ShoppingBag, stocks: potentialStocks }]
+                : []),
+            ...(potentialEtfs.length > 0 || (ownedEtfs.length === 0 && potentialStocks.length === 0 && ownedStocks.length === 0)
+                ? [{ id: 'pot-etfs', label: ownedEtfs.length > 0 ? 'Watchlist ETFs' : 'ETFs', count: potentialEtfs.length, icon: PieChart, stocks: potentialEtfs }]
+                : []),
+            ...(ownedStocks.length > 0
+                ? [{ id: 'owned-stocks', label: 'Bestand Aktien', count: ownedStocks.length, icon: ShoppingBag, stocks: ownedStocks }]
+                : []),
+            ...(ownedEtfs.length > 0
+                ? [{ id: 'owned-etfs', label: 'Bestand ETFs', count: ownedEtfs.length, icon: PieChart, stocks: ownedEtfs }]
+                : [])
+        ];
+
+    const [activeSubTab, setActiveSubTab] = useState<string>('owned-stocks');
+
+    useEffect(() => {
+        if (!subTabs.some(t => t.id === activeSubTab) && subTabs.length > 0) {
+            setActiveSubTab(subTabs[0].id);
+        }
+    }, [activeWatchlistId, subTabs, activeSubTab]);
+
+    const currentTab = subTabs.find(t => t.id === activeSubTab) || subTabs[0];
+    const currentTabStocks = currentTab?.stocks || [];
+
     return (
-        <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20">
-            {/* Sticky Header + Tabs Container */}
-            <div className="sticky top-0 z-50 bg-background pb-3 sm:pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+        <div className="h-full flex flex-col p-4 md:p-6 space-y-3 bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden">
+            {/* Header + Tabs Container - Fixed Height */}
+            <div className="shrink-0 bg-background pb-1 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
                 {/* Header */}
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
-                    <div className="w-full px-3 sm:px-4 py-3.5 sm:py-4 md:px-6 lg:px-6">
+                    <div className="w-full px-3 sm:px-4 py-3 sm:py-3.5 md:px-6 lg:px-6">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="flex items-center gap-2.5 sm:gap-3 pl-12 lg:pl-0 min-h-[38px]">
                                 <button
@@ -253,7 +250,7 @@ export function Watchlist() {
                 </div>
 
                 {/* Watchlist Tabs */}
-                <div className="-mx-4 md:-mx-6 px-4 md:px-6 pb-2 mt-2 overflow-x-auto bg-background">
+                <div className="-mx-4 md:-mx-6 px-4 md:px-6 pb-2 mt-2 overflow-x-auto bg-background shrink-0">
                     <div className="flex items-center gap-2 min-w-max">
                         {/* 1. Bestand (Always first) */}
                         <button
@@ -344,203 +341,73 @@ export function Watchlist() {
                 </div>
             </div>
 
-            <div className="w-full space-y-8">
-                {/* 1. OWNED STOCKS (Always Visible) */}
-                {showStockSections && (
-                    <div className="bg-card rounded-xl border shadow-sm w-full overflow-hidden">
-
+            {/* Sub-Tabs: Switches between the active sections of this list */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 shrink-0">
+                {subTabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeSubTab === tab.id;
+                    return (
                         <button
-                            onClick={() => setIsOwnedStocksOpen(!isOwnedStocksOpen)}
-                            className="w-full flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-green-500/5 gap-2 hover:bg-green-500/10 transition-colors text-left"
+                            key={tab.id}
+                            onClick={() => setActiveSubTab(tab.id)}
+                            className={cn(
+                                "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all border shadow-sm shrink-0",
+                                isActive
+                                    ? "bg-primary text-primary-foreground border-primary"
+                                    : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+                            )}
                         >
-                            <div className="flex items-center gap-2">
-                                <ShoppingBag className="size-5 text-green-600" />
-                                <h2 className="text-lg font-bold">Aktien im Bestand</h2>
-                                {isOwnedStocksOpen ? <ChevronDown className="size-4 ml-2 opacity-50" /> : <ChevronRight className="size-4 ml-2 opacity-50" />}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-xs font-medium text-muted-foreground bg-background/50 px-3 py-1.5 rounded-lg border border-border/50">
-                                <span className="hidden sm:inline">Legende:</span>
-                                <div className="flex items-center gap-1.5">
-                                    <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                                        <div className="size-2 rounded-full bg-green-500 animate-pulse" />
-                                        <span className="font-bold">KAUFEN</span>
-                                    </div>
-                                    <span>Kurs &lt; Limit</span>
-                                </div>
-                                <div className="w-px h-3 bg-border hidden sm:block" />
-                                <div className="flex items-center gap-1.5">
-                                    <div className="flex items-center gap-1 text-red-500">
-                                        <div className="size-2 rounded-full bg-red-500" />
-                                        <span className="font-bold">KEINE INFO</span>
-                                    </div>
-                                    <span>Limit fehlt</span>
-                                </div>
-                            </div>
+                            <Icon className="size-4" />
+                            <span>{tab.label}</span>
+                            <span className={cn(
+                                "text-xs px-1.5 py-0.5 rounded-full font-mono",
+                                isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                            )}>
+                                {tab.count}
+                            </span>
                         </button>
+                    );
+                })}
+            </div>
 
-                        {isOwnedStocksOpen && (
-                            <WatchlistTable
-                                stocks={ownedStocks}
-                                sortConfig={sortConfig}
-                                setSortConfig={setSortConfig}
-                                onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                onBuy={(stock) => handleBuy(stock)}
-                                // Blue "Edit" button now opens details page
-                                onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
-                                formatCurrency={formatCurrency}
-                                emptyMessage="Keine Aktien im Bestand."
-                            />
-                        )}
+            {/* Table card fills flex-1 min-h-0 */}
+            <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                {/* Header / Legend Bar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 sm:p-3 border-b bg-muted/20 shrink-0 gap-2">
+                    <div className="flex items-center gap-2">
+                        {currentTab?.icon && <currentTab.icon className="size-4 text-primary" />}
+                        <h2 className="text-sm sm:text-base font-bold">{currentTab?.label}</h2>
+                        <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{currentTabStocks.length}</span>
                     </div>
-                )}
-
-                {/* 2. OWNED ETFS (Always Visible if present) */}
-                {showEtfSections && ownedEtfs.length > 0 && (
-                    <div className="bg-card rounded-xl border shadow-sm w-full overflow-hidden">
-                        <button
-                            onClick={() => setIsOwnedEtfsOpen(!isOwnedEtfsOpen)}
-                            className="w-full flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-green-500/5 gap-2 hover:bg-green-500/10 transition-colors text-left"
-                        >
-                            <div className="flex items-center gap-2">
-                                <PieChart className="size-5 text-green-600" />
-                                <h2 className="text-lg font-bold">ETFs im Bestand</h2>
-                                {isOwnedEtfsOpen ? <ChevronDown className="size-4 ml-2 opacity-50" /> : <ChevronRight className="size-4 ml-2 opacity-50" />}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-xs font-medium text-muted-foreground bg-background/50 px-3 py-1.5 rounded-lg border border-border/50">
-                                <span className="hidden sm:inline">Legende:</span>
-                                <div className="flex items-center gap-1.5">
-                                    <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                                        <div className="size-2 rounded-full bg-green-500 animate-pulse" />
-                                        <span className="font-bold">KAUFEN</span>
-                                    </div>
-                                    <span>Kurs &lt; Limit</span>
-                                </div>
-                                <div className="w-px h-3 bg-border hidden sm:block" />
-                                <div className="flex items-center gap-1.5">
-                                    <div className="flex items-center gap-1 text-red-500">
-                                        <div className="size-2 rounded-full bg-red-500" />
-                                        <span className="font-bold">KEINE INFO</span>
-                                    </div>
-                                    <span>Limit fehlt</span>
-                                </div>
-                            </div>
-                        </button>
-
-                        {isOwnedEtfsOpen && (
-                            <WatchlistTable
-                                stocks={ownedEtfs}
-                                sortConfig={sortConfig}
-                                setSortConfig={setSortConfig}
-                                onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                onBuy={(stock) => handleBuy(stock)}
-                                // Blue "Edit" button now opens details page
-                                onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
-                                formatCurrency={formatCurrency}
-                                emptyMessage="Keine ETFs im Bestand."
-                            />
-                        )}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-xs font-medium text-muted-foreground bg-background/50 px-2.5 py-1 rounded-lg border border-border/50">
+                        <span className="hidden sm:inline">Legende:</span>
+                        <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                            <div className="size-2 rounded-full bg-green-500 animate-pulse" />
+                            <span className="font-bold">KAUFEN</span>
+                            <span className="text-muted-foreground hidden md:inline">Kurs &lt; Limit</span>
+                        </div>
+                        <div className="w-px h-3 bg-border hidden sm:block" />
+                        <div className="flex items-center gap-1 text-red-500">
+                            <div className="size-2 rounded-full bg-red-500" />
+                            <span className="font-bold">KEINE INFO</span>
+                            <span className="text-muted-foreground hidden md:inline">Limit fehlt</span>
+                        </div>
                     </div>
-                )}
+                </div>
 
-                {/* 3. POTENTIAL STOCKS (Collapsible, Default Closed) - Hide if in 'Bestand' mode */}
-                {activeWatchlistId !== 'owned' && showStockSections && (
-                    <div className="bg-card rounded-xl border shadow-sm w-full overflow-hidden">
-                        <button
-                            onClick={() => setIsPotentialStocksOpen(!isPotentialStocksOpen)}
-                            className="w-full flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-blue-500/5 gap-2 hover:bg-blue-500/10 transition-colors text-left"
-                        >
-                            <div className="flex items-center gap-2">
-                                <TrendingUp className="size-5 text-blue-600" />
-                                <h2 className="text-lg font-bold">Potenzielle Aktien: {potentialStocks.length}</h2>
-                                {isPotentialStocksOpen ? <ChevronDown className="size-4 ml-2 opacity-50" /> : <ChevronRight className="size-4 ml-2 opacity-50" />}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-xs font-medium text-muted-foreground bg-background/50 px-3 py-1.5 rounded-lg border border-border/50">
-                                <span className="hidden sm:inline">Legende:</span>
-                                <div className="flex items-center gap-1.5">
-                                    <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                                        <div className="size-2 rounded-full bg-green-500 animate-pulse" />
-                                        <span className="font-bold">KAUFEN</span>
-                                    </div>
-                                    <span>Kurs &lt; Limit</span>
-                                </div>
-                                <div className="w-px h-3 bg-border hidden sm:block" />
-                                <div className="flex items-center gap-1.5">
-                                    <div className="flex items-center gap-1 text-red-500">
-                                        <div className="size-2 rounded-full bg-red-500" />
-                                        <span className="font-bold">KEINE INFO</span>
-                                    </div>
-                                    <span>Limit fehlt</span>
-                                </div>
-                            </div>
-                        </button>
-
-                        {isPotentialStocksOpen && (
-                            <WatchlistTable
-                                stocks={potentialStocks}
-                                sortConfig={sortConfig}
-                                setSortConfig={setSortConfig}
-                                onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                onBuy={(stock) => handleBuy(stock)}
-                                // Blue "Edit" button now opens details page
-                                onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
-                                formatCurrency={formatCurrency}
-                                emptyMessage="Keine potenziellen Aktien auf der Watchlist."
-                            />
-                        )}
-                    </div>
-                )}
-
-                {/* 4. POTENTIAL ETFS (Collapsible, Default Closed) - Hide if in 'Bestand' mode */}
-                {activeWatchlistId !== 'owned' && showEtfSections && (
-                    <div className="bg-card rounded-xl border shadow-sm w-full overflow-hidden">
-                        <button
-                            onClick={() => setIsPotentialEtfsOpen(!isPotentialEtfsOpen)}
-                            className="w-full flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-blue-500/5 gap-2 hover:bg-blue-500/10 transition-colors text-left"
-                        >
-                            <div className="flex items-center gap-2">
-                                <PieChart className="size-5 text-blue-600" />
-                                <h2 className="text-lg font-bold">Potenzielle ETFs: {potentialEtfs.length}</h2>
-                                {isPotentialEtfsOpen ? <ChevronDown className="size-4 ml-2 opacity-50" /> : <ChevronRight className="size-4 ml-2 opacity-50" />}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-xs font-medium text-muted-foreground bg-background/50 px-3 py-1.5 rounded-lg border border-border/50">
-                                <span className="hidden sm:inline">Legende:</span>
-                                <div className="flex items-center gap-1.5">
-                                    <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                                        <div className="size-2 rounded-full bg-green-500 animate-pulse" />
-                                        <span className="font-bold">KAUFEN</span>
-                                    </div>
-                                    <span>Kurs &lt; Limit</span>
-                                </div>
-                                <div className="w-px h-3 bg-border hidden sm:block" />
-                                <div className="flex items-center gap-1.5">
-                                    <div className="flex items-center gap-1 text-red-500">
-                                        <div className="size-2 rounded-full bg-red-500" />
-                                        <span className="font-bold">KEINE INFO</span>
-                                    </div>
-                                    <span>Limit fehlt</span>
-                                </div>
-                            </div>
-                        </button>
-
-                        {isPotentialEtfsOpen && (
-                            <WatchlistTable
-                                stocks={potentialEtfs}
-                                sortConfig={sortConfig}
-                                setSortConfig={setSortConfig}
-                                onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                onBuy={(stock) => handleBuy(stock)}
-                                // Blue "Edit" button now opens details page
-                                onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
-                                onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
-                                formatCurrency={formatCurrency}
-                                emptyMessage="Keine potenziellen ETFs auf der Watchlist."
-                            />
-                        )}
-                    </div>
-                )}
+                {/* Watchlist Table */}
+                <WatchlistTable
+                    stocks={currentTabStocks}
+                    sortConfig={sortConfig}
+                    setSortConfig={setSortConfig}
+                    onNavigate={(id) => navigate(`/stock/${id}?from=watchlist`)}
+                    onBuy={(stock) => handleBuy(stock)}
+                    onEdit={(id) => navigate(`/stock/${id}?from=watchlist`)}
+                    onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
+                    formatCurrency={formatCurrency}
+                    emptyMessage="Keine Positionen in dieser Ansicht."
+                />
+            </div>
 
 
                 {/* AddPositionModal for buying from watchlist */}
@@ -586,7 +453,6 @@ export function Watchlist() {
                     />
                 )}
             </div>
-        </div>
     );
 }
 
@@ -619,11 +485,9 @@ function WatchlistTable({
 
     if (stocks.length === 0) {
         return (
-            <div className="p-12 text-center text-muted-foreground">
-                <div className="flex flex-col items-center gap-2">
-                    <ShoppingBag className="size-12 opacity-20" />
-                    <p>{emptyMessage}</p>
-                </div>
+            <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
+                <ShoppingBag className="size-12 opacity-20 mb-2" />
+                <p>{emptyMessage}</p>
             </div>
         );
     }
@@ -666,7 +530,7 @@ function WatchlistTable({
         <div
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            className="overflow-y-auto max-h-[70vh] md:max-h-[600px] p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
+            className="overflow-y-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
         >
             <table className="w-full text-xs md:text-sm border-collapse table-fixed md:table-auto">
                 <thead>
