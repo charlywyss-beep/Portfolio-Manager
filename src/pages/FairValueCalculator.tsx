@@ -244,6 +244,12 @@ export function FairValueCalculator() {
                 return true;
             }
         }
+        // Upgrade previously auto-populated Microsoft (PE > 24 to realistic PE 22 / 2% terminal growth)
+        if (symUpper === 'MSFT') {
+            if (Number(params.pe) > 24) {
+                return true;
+            }
+        }
         return false;
     };
 
@@ -702,7 +708,7 @@ export function FairValueCalculator() {
 
         const futureEps = valEps * Math.pow(1 + valGrowth / 100, 5);
         const isWideMoatStock = WIDE_MOAT_QUALITY.has((selectedSymbol || '').toUpperCase());
-        const ruleOneLimit = Math.max(isWideMoatStock ? 28 : 20, valGrowth * 2); // Floor of 28 for wide-moat tech leaders / 20 standard
+        const ruleOneLimit = Math.max(isWideMoatStock ? 22 : 20, Math.min(22, valGrowth * 2)); // Limit of 22 for realistic <= 2.0% terminal growth
         const exitPe = valPe; // Remove hard cap, use user input directly
         const futurePrice = futureEps * exitPe;
 
