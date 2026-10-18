@@ -10,10 +10,9 @@ interface FixedDepositTableProps {
     searchTerm: string;
     setIsAddFixedDepositModalOpen: (open: boolean) => void;
     setEditingFixedDeposit: (deposit: any) => void;
-    stickyTop?: number;
 }
 
-export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, setEditingFixedDeposit, stickyTop }: FixedDepositTableProps) {
+export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, setEditingFixedDeposit }: FixedDepositTableProps) {
     const { fixedDeposits, deleteFixedDeposit } = usePortfolio();
     const { formatCurrency } = useCurrencyFormatter();
     const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean, fdId: string | null, name: string }>({ isOpen: false, fdId: null, name: '' });
@@ -38,17 +37,17 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                     <span>Konto hinzufügen</span>
                 </button>
             </div>
-            <div className="rounded-xl border border-border bg-card shadow-sm">
-                <div className="overflow-x-auto">
+            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                <div className="overflow-y-auto max-h-[70vh] md:max-h-[500px] p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0">
                     <table className="w-full text-sm text-left border-collapse">
                         <thead className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">
                             <tr className="border-b border-border bg-muted/20">
-                                <th style={{ top: stickyTop }} className="px-4 py-3 sticky left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] lg:w-[250px] min-w-[180px] lg:min-w-[250px] max-w-[180px] lg:max-w-[250px] align-middle">Bank / Institut</th>
-                                <th style={{ top: stickyTop }} className="px-4 py-3 sticky z-30 bg-card w-[130px] lg:w-[150px] min-w-[130px] lg:min-w-[150px] max-w-[130px] lg:max-w-[150px] align-middle">Konto-Typ</th>
-                                <th style={{ top: stickyTop }} className="px-4 py-3 sticky z-30 bg-card text-right whitespace-nowrap min-w-[120px] align-middle">Betrag</th>
-                                <th style={{ top: stickyTop }} className="px-4 py-3 sticky z-30 bg-card text-right min-w-[100px] align-middle">Zins p.a.</th>
-                                <th style={{ top: stickyTop }} className="px-4 py-3 sticky z-30 bg-card text-right whitespace-nowrap min-w-[120px] align-middle">Jährlicher Ertrag</th>
-                                <th style={{ top: stickyTop }} className="px-1 py-3 sticky md:sticky md:-right-px text-center bg-card z-30 md:z-40 w-[60px] min-w-[60px] max-w-[60px] md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">Aktion</th>
+                                <th className="px-4 py-3 sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] lg:w-[250px] min-w-[180px] lg:min-w-[250px] max-w-[180px] lg:max-w-[250px] align-middle">Bank / Institut</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card w-[130px] lg:w-[150px] min-w-[130px] lg:min-w-[150px] max-w-[130px] lg:max-w-[150px] align-middle">Konto-Typ</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card text-right whitespace-nowrap min-w-[120px] align-middle">Betrag</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card text-right min-w-[100px] align-middle">Zins p.a.</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card text-right whitespace-nowrap min-w-[120px] align-middle">Jährlicher Ertrag</th>
+                                <th className="px-1 py-3 sticky top-0 md:sticky md:-right-px text-center bg-card z-30 md:z-40 w-[60px] min-w-[60px] max-w-[60px] md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">Aktion</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -67,8 +66,8 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                                 const isNegative = netAnnualReturn < 0;
 
                                 return (
-                                    <tr key={fd.id} className="group hover:bg-muted/30 transition-colors">
-                                        <td className="px-4 py-3 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                    <tr key={fd.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors group snap-start snap-always h-[60px] md:h-auto">
+                                        <td className="px-4 py-3 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] h-[60px] md:h-auto align-middle">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center gap-3">
                                                 <Logo

@@ -17,7 +17,6 @@ interface PositionTableProps {
     setIsEditModalOpen: (open: boolean) => void;
     headerAction?: React.ReactNode;
     hideHeader?: boolean;
-    stickyTop?: number;
 }
 
 export function PositionTable({
@@ -28,8 +27,7 @@ export function PositionTable({
     setSelectedPosition,
     setIsEditModalOpen,
     headerAction,
-    hideHeader,
-    stickyTop
+    hideHeader
 }: PositionTableProps) {
     const { deletePosition } = usePortfolio();
     const navigate = useNavigate();
@@ -84,28 +82,24 @@ export function PositionTable({
                     {headerAction && <div className="ml-auto">{headerAction}</div>}
                 </div>
             )}
-            <div className="rounded-xl border border-border bg-card shadow-sm">
+            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
                 <div
                     onTouchStart={handleTouchStart}
                     onTouchEnd={handleTouchEnd}
-                    className="w-full overflow-x-hidden md:overflow-x-auto"
+                    className="overflow-y-auto max-h-[70vh] md:max-h-[600px] p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
                 >
-                    <table className="w-full text-sm text-left border-collapse table-fixed md:table-auto">
+                    <table className="w-full text-xs md:text-sm border-collapse table-fixed md:table-auto">
                         <thead>
                             <tr className="border-b border-border bg-muted/20">
                                 {/* 0. Aktie */}
-                                <th
-                                    style={{ top: stickyTop }}
-                                    className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle"
-                                >
+                                <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle">
                                     Aktie
                                 </th>
 
                                 {/* 1. Anzahl */}
                                 <th
-                                    style={{ top: stickyTop }}
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card align-middle",
+                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
                                         mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -135,9 +129,8 @@ export function PositionTable({
 
                                 {/* 2. Ø Kauf */}
                                 <th
-                                    style={{ top: stickyTop }}
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card align-middle",
+                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
                                         mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -167,9 +160,8 @@ export function PositionTable({
 
                                 {/* 3. Invest */}
                                 <th
-                                    style={{ top: stickyTop }}
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card align-middle",
+                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
                                         mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -199,9 +191,8 @@ export function PositionTable({
 
                                 {/* 4. Kurs */}
                                 <th
-                                    style={{ top: stickyTop }}
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card align-middle",
+                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
                                         mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -231,9 +222,8 @@ export function PositionTable({
 
                                 {/* 5. Wert */}
                                 <th
-                                    style={{ top: stickyTop }}
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card align-middle",
+                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
                                         mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -263,9 +253,8 @@ export function PositionTable({
 
                                 {/* 6. % */}
                                 <th
-                                    style={{ top: stickyTop }}
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card align-middle",
+                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
                                         mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -295,9 +284,8 @@ export function PositionTable({
 
                                 {/* 7. +/- */}
                                 <th
-                                    style={{ top: stickyTop }}
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card align-middle",
+                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
                                         mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -327,9 +315,8 @@ export function PositionTable({
 
                                 {/* 8. Aktion */}
                                 <th
-                                    style={{ top: stickyTop }}
                                     className={cn(
-                                        "px-1 md:px-2 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:text-right sticky md:sticky md:-right-px bg-card z-30 md:z-40 md:w-[80px] md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle",
+                                        "px-1 md:px-2 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:text-right sticky top-0 md:sticky md:top-0 md:-right-px bg-card z-30 md:z-40 md:w-[80px] md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle",
                                         mobileColIndex === 7 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -361,9 +348,9 @@ export function PositionTable({
                         <tbody className="divide-y divide-border">
                             {data.map((pos) => {
                                 return (
-                                    <tr key={pos.id} className="group hover:bg-muted/30 transition-colors border-b border-border/50 last:border-0 border-l border-r border-transparent hover:border-border/50">
+                                    <tr key={pos.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors group snap-start snap-always h-[60px] md:h-auto">
                                         {/* 0. Aktie */}
-                                        <td className="px-3 md:px-4 py-3 w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <td className="px-3 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center gap-2.5 sm:gap-3">
                                                 <Logo
@@ -373,36 +360,36 @@ export function PositionTable({
                                                 />
                                                 <div className="min-w-0 flex-1 flex flex-col items-start gap-0.5">
                                                     <div
-                                                        className="font-semibold text-foreground cursor-pointer hover:text-primary transition-colors text-sm whitespace-pre-line truncate max-w-full"
+                                                        className="font-semibold text-foreground cursor-pointer hover:text-primary transition-colors text-xs sm:text-sm whitespace-pre-line truncate max-w-full"
                                                         onClick={() => navigate(`/stock/${pos.stock.id}?from=portfolio`)}
                                                     >
                                                         {pos.stock.name}
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <div className="text-xs font-mono text-muted-foreground">{pos.stock.symbol}</div>
+                                                        <div className="text-[10px] sm:text-xs font-mono text-muted-foreground">{pos.stock.symbol}</div>
                                                         {(() => {
                                                             const calculatedState = estimateMarketState(pos.stock.symbol, pos.stock.currency);
                                                             const isMarketOpen = calculatedState === 'REGULAR';
 
                                                             return isMarketOpen ? (
-                                                                <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calculatedState})`} />
+                                                                <div className="size-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calculatedState})`} />
                                                             ) : (
-                                                                <div className="size-2.5 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${calculatedState})`} />
+                                                                <div className="size-2 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${calculatedState})`} />
                                                             );
                                                         })()}
                                                     </div>
-                                                    <div className="text-[10px] text-muted-foreground/80">{pos.stock.sector}</div>
+                                                    <div className="text-[9px] sm:text-[10px] text-muted-foreground/80">{pos.stock.sector}</div>
                                                 </div>
                                             </div>
                                         </td>
 
                                         {/* 1. Anzahl */}
-                                        <td className={cn("px-4 py-3 text-right font-medium", mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell")}>
+                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right font-medium align-middle", mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell")}>
                                             {pos.shares}
                                         </td>
 
                                         {/* 2. Kauf Kurs */}
-                                        <td className={cn("px-4 py-3 text-right", mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell")}>
+                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell")}>
                                             <div className="flex flex-col items-end">
                                                 <span className="font-medium whitespace-nowrap">{formatCurrency(pos.buyPriceAvg, pos.stock.currency, false)}</span>
                                                 {pos.stock.currency !== 'CHF' && (
@@ -414,7 +401,7 @@ export function PositionTable({
                                         </td>
 
                                         {/* 3. Invest */}
-                                        <td className={cn("px-4 py-3 text-right font-medium", mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell")}>
+                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right font-medium align-middle", mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell")}>
                                             <div className="flex flex-col items-end">
                                                 <span className="font-medium whitespace-nowrap">{formatCurrency(pos.buyValue, pos.stock.currency, false)}</span>
                                                 {pos.stock.currency !== 'CHF' && (
@@ -426,7 +413,7 @@ export function PositionTable({
                                         </td>
 
                                         {/* 4. Aktueller Kurs */}
-                                        <td className={cn("px-4 py-3 text-right", mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell")}>
+                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell")}>
                                             <div className="flex flex-col items-end">
                                                 <span className="font-medium whitespace-nowrap">{formatCurrency(pos.stock.currentPrice, pos.stock.currency, false)}</span>
                                                 {pos.stock.currency !== 'CHF' && (
@@ -438,7 +425,7 @@ export function PositionTable({
                                         </td>
 
                                         {/* 5. Aktueller Wert */}
-                                        <td className={cn("px-4 py-3 text-right font-bold", mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell")}>
+                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right font-bold align-middle", mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell")}>
                                             <div className="flex flex-col items-end">
                                                 <span className="font-medium whitespace-nowrap">{formatCurrency(pos.currentValue, pos.stock.currency, false)}</span>
                                                 {pos.stock.currency !== 'CHF' && (
@@ -450,7 +437,7 @@ export function PositionTable({
                                         </td>
 
                                         {/* 6. % */}
-                                        <td className={cn("px-4 py-3 text-right", mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell")}>
+                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell")}>
                                             <div className={cn(
                                                 "flex items-center justify-end gap-1 font-medium",
                                                 pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
@@ -461,7 +448,7 @@ export function PositionTable({
                                         </td>
 
                                         {/* 7. Gesamt +/- */}
-                                        <td className={cn("px-4 py-3 text-right", mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell")}>
+                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell")}>
                                             <div className="flex flex-col items-end gap-0.5">
                                                 {(() => {
                                                     const nativeGain = pos.gainLossTotal;
@@ -519,7 +506,7 @@ export function PositionTable({
 
                                         {/* 8. Aktion */}
                                         <td className={cn(
-                                            "text-center py-3 px-1 md:w-[80px] md:min-w-[80px] md:max-w-[80px] md:sticky md:-right-px z-10 md:z-20 group-hover:bg-muted transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]",
+                                            "text-center py-1.5 md:py-2 px-1 h-[60px] md:h-auto md:w-[80px] md:min-w-[80px] md:max-w-[80px] md:sticky md:-right-px z-10 md:z-20 group-hover:bg-muted transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle",
                                             mobileColIndex === 7 ? "table-cell" : "hidden md:table-cell"
                                         )}>
                                             <div className="absolute inset-0 bg-card -z-10" />

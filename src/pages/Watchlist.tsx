@@ -24,22 +24,6 @@ export function Watchlist() {
     const [editPosition, setEditPosition] = useState<any>(null); // State for editing position
     const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
 
-    const headerRef = useRef<HTMLDivElement>(null);
-    const [headerHeight, setHeaderHeight] = useState(120);
-
-    useEffect(() => {
-        if (!headerRef.current) return;
-        const updateHeight = () => {
-            if (headerRef.current) {
-                setHeaderHeight(headerRef.current.offsetHeight);
-            }
-        };
-        updateHeight();
-        const observer = new ResizeObserver(updateHeight);
-        observer.observe(headerRef.current);
-        return () => observer.disconnect();
-    }, []);
-
     // Collapsible states
     // Collapsible states - Persisted
     const [isOwnedStocksOpen, setIsOwnedStocksOpen] = useState(() => localStorage.getItem('wl_sec_owned_stocks') !== 'false'); // Default true
@@ -203,7 +187,7 @@ export function Watchlist() {
     return (
         <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20">
             {/* Sticky Header + Tabs Container */}
-            <div ref={headerRef} className="sticky top-0 z-50 bg-background -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+            <div className="sticky top-0 z-50 bg-background pb-3 sm:pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
                 {/* Header */}
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
                     <div className="w-full px-3 sm:px-4 py-3.5 sm:py-4 md:px-6 lg:px-6">
@@ -363,7 +347,7 @@ export function Watchlist() {
             <div className="w-full space-y-8">
                 {/* 1. OWNED STOCKS (Always Visible) */}
                 {showStockSections && (
-                    <div className="bg-card rounded-xl border shadow-sm w-full">
+                    <div className="bg-card rounded-xl border shadow-sm w-full overflow-hidden">
 
                         <button
                             onClick={() => setIsOwnedStocksOpen(!isOwnedStocksOpen)}
@@ -406,7 +390,6 @@ export function Watchlist() {
                                 onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
                                 formatCurrency={formatCurrency}
                                 emptyMessage="Keine Aktien im Bestand."
-                                stickyTop={headerHeight}
                             />
                         )}
                     </div>
@@ -414,7 +397,7 @@ export function Watchlist() {
 
                 {/* 2. OWNED ETFS (Always Visible if present) */}
                 {showEtfSections && ownedEtfs.length > 0 && (
-                    <div className="bg-card rounded-xl border shadow-sm w-full">
+                    <div className="bg-card rounded-xl border shadow-sm w-full overflow-hidden">
                         <button
                             onClick={() => setIsOwnedEtfsOpen(!isOwnedEtfsOpen)}
                             className="w-full flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-green-500/5 gap-2 hover:bg-green-500/10 transition-colors text-left"
@@ -456,7 +439,6 @@ export function Watchlist() {
                                 onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
                                 formatCurrency={formatCurrency}
                                 emptyMessage="Keine ETFs im Bestand."
-                                stickyTop={headerHeight}
                             />
                         )}
                     </div>
@@ -464,7 +446,7 @@ export function Watchlist() {
 
                 {/* 3. POTENTIAL STOCKS (Collapsible, Default Closed) - Hide if in 'Bestand' mode */}
                 {activeWatchlistId !== 'owned' && showStockSections && (
-                    <div className="bg-card rounded-xl border shadow-sm w-full">
+                    <div className="bg-card rounded-xl border shadow-sm w-full overflow-hidden">
                         <button
                             onClick={() => setIsPotentialStocksOpen(!isPotentialStocksOpen)}
                             className="w-full flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-blue-500/5 gap-2 hover:bg-blue-500/10 transition-colors text-left"
@@ -506,7 +488,6 @@ export function Watchlist() {
                                 onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
                                 formatCurrency={formatCurrency}
                                 emptyMessage="Keine potenziellen Aktien auf der Watchlist."
-                                stickyTop={headerHeight}
                             />
                         )}
                     </div>
@@ -514,7 +495,7 @@ export function Watchlist() {
 
                 {/* 4. POTENTIAL ETFS (Collapsible, Default Closed) - Hide if in 'Bestand' mode */}
                 {activeWatchlistId !== 'owned' && showEtfSections && (
-                    <div className="bg-card rounded-xl border shadow-sm w-full">
+                    <div className="bg-card rounded-xl border shadow-sm w-full overflow-hidden">
                         <button
                             onClick={() => setIsPotentialEtfsOpen(!isPotentialEtfsOpen)}
                             className="w-full flex flex-col md:flex-row md:items-center justify-between p-4 border-b bg-blue-500/5 gap-2 hover:bg-blue-500/10 transition-colors text-left"
@@ -556,7 +537,6 @@ export function Watchlist() {
                                 onRemove={(id) => removeFromWatchlist(id, activeWatchlistId)}
                                 formatCurrency={formatCurrency}
                                 emptyMessage="Keine potenziellen ETFs auf der Watchlist."
-                                stickyTop={headerHeight}
                             />
                         )}
                     </div>
@@ -620,7 +600,6 @@ interface WatchlistTableProps {
     onRemove: (id: string) => void;
     formatCurrency: any;
     emptyMessage: string;
-    stickyTop?: number;
 }
 
 function WatchlistTable({
@@ -632,8 +611,7 @@ function WatchlistTable({
     onEdit,
     onRemove,
     formatCurrency,
-    emptyMessage,
-    stickyTop
+    emptyMessage
 }: WatchlistTableProps) {
     // 0: Div. Rendite, 1: Aktueller Kurs, 2: Kauflimit, 3: Verkaufslimit, 4: EX-Tag, 5: Zahl-Tag, 6: Aktionen
     const [mobileColIndex, setMobileColIndex] = useState(1);
@@ -688,21 +666,20 @@ function WatchlistTable({
         <div
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            className="w-full overflow-x-hidden md:overflow-x-auto"
+            className="overflow-y-auto max-h-[70vh] md:max-h-[600px] p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
         >
-            <table className="w-full text-left border-collapse md:min-w-[1200px] xl:min-w-0 table-fixed">
+            <table className="w-full text-xs md:text-sm border-collapse table-fixed md:table-auto">
                 <thead>
                     <tr className="border-b bg-muted/20">
                         {/* 0. Aktie */}
-                        <th style={{ top: stickyTop }} className="px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] touch-pan-y align-middle">
+                        <th className="px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] touch-pan-y align-middle">
                             Aktie
                         </th>
 
                         {/* 1. Div. Rendite */}
                         <th
-                            style={{ top: stickyTop }}
                             className={cn(
-                                "px-1 md:px-4 py-0 md:py-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky z-30 bg-card md:w-[10%] align-middle",
+                                "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card md:w-[10%] align-middle",
                                 mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
                             )}
                             onClick={() => {
@@ -740,9 +717,8 @@ function WatchlistTable({
 
                         {/* 2. Aktueller Kurs */}
                         <th
-                            style={{ top: stickyTop }}
                             className={cn(
-                                "px-1 md:px-4 py-0 md:py-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card md:w-[15%] align-middle",
+                                "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card md:w-[15%] align-middle",
                                 mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell"
                             )}
                         >
@@ -772,9 +748,8 @@ function WatchlistTable({
 
                         {/* 3. Kauflimit */}
                         <th
-                            style={{ top: stickyTop }}
                             className={cn(
-                                "px-1 md:px-4 py-0 md:py-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky z-30 bg-card md:w-[15%] align-middle",
+                                "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card md:w-[15%] align-middle",
                                 mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell"
                             )}
                             onClick={() => {
@@ -812,9 +787,8 @@ function WatchlistTable({
 
                         {/* 4. Verkaufslimit */}
                         <th
-                            style={{ top: stickyTop }}
                             className={cn(
-                                "px-1 md:px-4 py-0 md:py-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky z-30 bg-card md:w-[10%] align-middle",
+                                "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card md:w-[10%] align-middle",
                                 mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell"
                             )}
                             onClick={() => {
@@ -852,9 +826,8 @@ function WatchlistTable({
 
                         {/* 5. EX-Tag */}
                         <th
-                            style={{ top: stickyTop }}
                             className={cn(
-                                "px-1 md:px-4 py-0 md:py-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card md:w-[10%] align-middle",
+                                "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card md:w-[10%] align-middle",
                                 mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell"
                             )}
                         >
@@ -884,9 +857,8 @@ function WatchlistTable({
 
                         {/* 6. Zahl-Tag */}
                         <th
-                            style={{ top: stickyTop }}
                             className={cn(
-                                "px-1 md:px-4 py-0 md:py-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card md:w-[10%] align-middle",
+                                "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card md:w-[10%] align-middle",
                                 mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell"
                             )}
                         >
@@ -916,9 +888,8 @@ function WatchlistTable({
 
                         {/* 7. Aktionen */}
                         <th
-                            style={{ top: stickyTop }}
                             className={cn(
-                                "px-1 md:px-4 md:pl-12 py-0 md:py-4 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:w-[110px] md:sticky md:-right-px md:z-40 bg-card md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] sticky z-30 align-middle",
+                                "px-1 md:px-4 md:pl-12 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:w-[110px] sticky top-0 md:sticky md:-right-px md:z-40 bg-card md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] z-30 align-middle",
                                 mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell"
                             )}
                         >
@@ -958,8 +929,8 @@ function WatchlistTable({
                         const isMarketOpen = calcState === 'REGULAR';
 
                         return (
-                            <tr key={stock.id} className="hover:bg-muted/30 transition-colors group snap-start snap-always h-[60px] md:h-auto">
-                                <td className="px-3 py-1.5 md:p-4 h-[60px] md:h-auto sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] overflow-hidden w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] touch-pan-y align-middle">
+                            <tr key={stock.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors group snap-start snap-always h-[60px] md:h-auto">
+                                <td className="px-3 py-1.5 md:p-4 h-[60px] md:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] overflow-hidden w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] touch-pan-y align-middle">
                                     <div className="absolute inset-0 bg-card -z-10" />
                                     <div className="flex items-center gap-2 md:gap-3 relative">
                                         <Logo
