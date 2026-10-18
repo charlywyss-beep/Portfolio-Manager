@@ -1054,211 +1054,205 @@ export function FairValueCalculator() {
                 </div>
             )}
 
-            {/* Header */}
-            <div className="sticky top-0 z-40 bg-background/95 backdrop-blur -mx-3 sm:-mx-4 md:-mx-6 px-3 sm:px-4 md:px-6 py-3 -mt-4 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-6 border-b border-border shadow-sm">
-                <div className="flex items-center justify-between gap-2 pl-11 lg:pl-0">
-                    <div className="flex items-center gap-3 min-w-0">
-                        <div className="size-9 sm:size-12 rounded-xl sm:rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner shrink-0">
-                            <Telescope className="size-5 sm:size-7" />
+            {/* STICKY HEADER & ACTIVE STOCK / SEARCH BAR */}
+            <div className="sticky top-0 z-40 bg-background/95 backdrop-blur -mx-3 sm:-mx-4 md:-mx-6 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 -mt-4 border-b border-border shadow-sm space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pl-11 lg:pl-0">
+                        <div className="size-8 sm:size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner shrink-0">
+                            <Telescope className="size-4 sm:size-6" />
                         </div>
                         <div className="min-w-0">
-                            <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">Fairer Wert</h1>
-                            <p className="text-xs sm:text-sm text-muted-foreground font-medium hidden sm:block">Ermittlung des fairen Werts nach Rule #1 & DCF Logik</p>
+                            <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight truncate">Fairer Wert</h1>
+                            <p className="text-[11px] sm:text-xs text-muted-foreground font-medium hidden sm:block">Ermittlung des fairen Werts nach Rule #1 & DCF Logik</p>
                         </div>
                     </div>
                     <button
                         onClick={() => setShowGuide(true)}
-                        className="md:hidden flex items-center gap-1.5 px-2.5 py-1.5 bg-secondary/50 hover:bg-secondary text-secondary-foreground rounded-lg transition-all border border-secondary/50 text-xs font-medium shrink-0"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary/60 hover:bg-secondary text-secondary-foreground rounded-lg transition-all border border-secondary text-xs font-medium shrink-0 group"
                         title="Wie funktioniert das? (Anleitung)"
                     >
-                        <BookOpen className="size-3.5" />
+                        <BookOpen className="size-3.5 group-hover:scale-110 transition-transform" />
+                        <span className="hidden sm:inline">Wie funktioniert das? </span>
                         <span>Anleitung</span>
                     </button>
                 </div>
-                <button
-                    onClick={() => setShowGuide(true)}
-                    className="hidden md:flex items-center gap-2 px-4 py-2 bg-secondary/50 hover:bg-secondary text-secondary-foreground rounded-lg transition-all border border-secondary/50 font-medium group shrink-0"
-                >
-                    <BookOpen className="size-4 group-hover:scale-110 transition-transform" />
-                    Wie funktioniert das? (Anleitung)
-                </button>
-            </div>
 
-            {/* Search Bar (Rich Version) */}
-            <div className="relative z-50">
-                {!selectedSymbol || searchTerm ? (
-                    <div className="relative" ref={searchRef}>
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                        <input
-                            type="text"
-                            placeholder="Aktie suchen (Bestände, Watchlist oder Global)..."
-                            value={searchTerm}
-                            onChange={(e) => {
-                                setSearchTerm(e.target.value);
-                                setShowStockList(true);
-                            }}
-                            onFocus={() => setShowStockList(true)}
-                            className="w-full pl-9 pr-4 py-3 rounded-xl border border-border bg-card shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-primary/20"
-                        />
-                        {isSearching && (
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                <div className="size-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                            </div>
-                        )}
+                {/* Search Bar OR Selected Stock Card */}
+                <div className="relative">
+                    {!selectedSymbol || searchTerm ? (
+                        <div className="relative" ref={searchRef}>
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                            <input
+                                type="text"
+                                placeholder="Aktie suchen (Bestände, Watchlist oder Global)..."
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setShowStockList(true);
+                                }}
+                                onFocus={() => setShowStockList(true)}
+                                className="w-full pl-9 pr-4 py-2 sm:py-2.5 rounded-xl border border-border bg-card shadow-sm text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                            {isSearching && (
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    <div className="size-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                                </div>
+                            )}
 
-                        {showStockList && (
-                            <div className="absolute left-0 right-0 top-full max-h-80 overflow-y-auto border border-border rounded-xl divide-y divide-border bg-card shadow-2xl z-50 mt-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                                {searchTerm ? (
-                                    // SEARCH RESULTS (Local + Global)
-                                    <>
-                                        {localMatches.filtered.length > 0 && (
-                                            <div className="bg-primary/5 border-b border-border/50">
-                                                <div className="px-3 py-2 text-xs font-bold text-primary uppercase tracking-widest flex items-center justify-between">
-                                                    <span>Deine Bestände / Watchlist</span>
-                                                    <span className="bg-primary/10 px-2 py-0.5 rounded-full">{localMatches.filtered.length}</span>
+                            {showStockList && (
+                                <div className="absolute left-0 right-0 top-full max-h-80 overflow-y-auto border border-border rounded-xl divide-y divide-border bg-card shadow-2xl z-50 mt-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {searchTerm ? (
+                                        // SEARCH RESULTS (Local + Global)
+                                        <>
+                                            {localMatches.filtered.length > 0 && (
+                                                <div className="bg-primary/5 border-b border-border/50">
+                                                    <div className="px-3 py-2 text-xs font-bold text-primary uppercase tracking-widest flex items-center justify-between">
+                                                        <span>Deine Bestände / Watchlist</span>
+                                                        <span className="bg-primary/10 px-2 py-0.5 rounded-full">{localMatches.filtered.length}</span>
+                                                    </div>
+                                                    {localMatches.filtered.map(stock => (
+                                                        <StockListItem
+                                                            key={stock.id}
+                                                            stock={stock}
+                                                            onClick={() => handleLocalSelect(stock)}
+                                                            subtitle={positions.some(p => p.stockId === stock.id) ? "Portfolio" : "Watchlist"}
+                                                        />
+                                                    ))}
                                                 </div>
-                                                {localMatches.filtered.map(stock => (
-                                                    <StockListItem
-                                                        key={stock.id}
-                                                        stock={stock}
-                                                        onClick={() => handleLocalSelect(stock)}
-                                                        subtitle={positions.some(p => p.stockId === stock.id) ? "Portfolio" : "Watchlist"}
-                                                    />
-                                                ))}
-                                            </div>
-                                        )}
+                                            )}
 
-                                        {searchResults.length > 0 ? (
-                                            <div>
-                                                {localMatches.filtered.length > 0 && (
-                                                    <div className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-widest bg-muted/30 border-b border-border/50">
-                                                        Globaler Markt
+                                            {searchResults.length > 0 ? (
+                                                <div>
+                                                    {localMatches.filtered.length > 0 && (
+                                                        <div className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-widest bg-muted/30 border-b border-border/50">
+                                                            Globaler Markt
+                                                        </div>
+                                                    )}
+                                                    {searchResults
+                                                        // Filter out items already shown in local results to avoid duplicates
+                                                        .filter(res => !localMatches.filtered.some(local => local.symbol.toLowerCase() === res.symbol.toLowerCase()))
+                                                        .map((res, idx) => (
+                                                            <button
+                                                                key={`${res.symbol}-${idx}`}
+                                                                onClick={() => loadStockData(res.symbol, res.name || res.shortname, false, res.isin)}
+                                                                className="w-full p-3 hover:bg-muted transition-colors text-left flex items-center justify-between group border-b border-border/50 last:border-0"
+                                                            >
+                                                                <div>
+                                                                    <div className="font-semibold flex items-center gap-2">
+                                                                        <span>{res.symbol}</span>
+                                                                        <span className="text-xs text-muted-foreground font-bold border px-1.5 py-0.5 rounded uppercase">{res.exchDisp || res.exch}</span>
+                                                                    </div>
+                                                                    <div className="text-sm text-muted-foreground truncate max-w-[200px] md:max-w-md">
+                                                                        {res.name || res.shortname || res.longname}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <div className="text-xs font-bold text-primary/70 uppercase tracking-tighter">Yahoo Global</div>
+                                                                </div>
+                                                            </button>
+                                                        ))}
+                                                </div>
+                                            ) : !isSearching && localMatches.filtered.length === 0 ? (
+                                                <div className="p-8 text-center text-muted-foreground italic">Keine Treffer gefunden</div>
+                                            ) : null}
+                                        </>
+                                    ) : (
+                                        // CATEGORIZED SUGGESTIONS (Holdings & Watchlist - No search term)
+                                        localMatches && (
+                                            <>
+                                                {localMatches.owned.length > 0 && (
+                                                    <div className="bg-muted/30">
+                                                        <div className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center justify-between">
+                                                            <span>Deine Bestände</span>
+                                                            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full">{localMatches.owned.length}</span>
+                                                        </div>
+                                                        {localMatches.owned.map(stock => (
+                                                            <StockListItem key={stock.id} stock={stock} onClick={() => handleLocalSelect(stock)} subtitle="Im Portfolio" />
+                                                        ))}
                                                     </div>
                                                 )}
-                                                {searchResults
-                                                    // Filter out items already shown in local results to avoid duplicates
-                                                    .filter(res => !localMatches.filtered.some(local => local.symbol.toLowerCase() === res.symbol.toLowerCase()))
-                                                    .map((res, idx) => (
-                                                        <button
-                                                            key={`${res.symbol}-${idx}`}
-                                                            onClick={() => loadStockData(res.symbol, res.name || res.shortname, false, res.isin)}
-                                                            className="w-full p-3 hover:bg-muted transition-colors text-left flex items-center justify-between group border-b border-border/50 last:border-0"
-                                                        >
-                                                            <div>
-                                                                <div className="font-semibold flex items-center gap-2">
-                                                                    <span>{res.symbol}</span>
-                                                                    <span className="text-xs text-muted-foreground font-bold border px-1.5 py-0.5 rounded uppercase">{res.exchDisp || res.exch}</span>
-                                                                </div>
-                                                                <div className="text-sm text-muted-foreground truncate max-w-[200px] md:max-w-md">
-                                                                    {res.name || res.shortname || res.longname}
-                                                                </div>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <div className="text-xs font-bold text-primary/70 uppercase tracking-tighter">Yahoo Global</div>
-                                                            </div>
-                                                        </button>
-                                                    ))}
-                                            </div>
-                                        ) : !isSearching && localMatches.filtered.length === 0 ? (
-                                            <div className="p-8 text-center text-muted-foreground italic">Keine Treffer gefunden</div>
-                                        ) : null}
-                                    </>
-                                ) : (
-                                    // CATEGORIZED SUGGESTIONS (Holdings & Watchlist - No search term)
-                                    localMatches && (
-                                        <>
-                                            {localMatches.owned.length > 0 && (
-                                                <div className="bg-muted/30">
-                                                    <div className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center justify-between">
-                                                        <span>Deine Bestände</span>
-                                                        <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full">{localMatches.owned.length}</span>
+                                                {localMatches.watch.length > 0 && (
+                                                    <div>
+                                                        <div className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center justify-between border-t border-border/50">
+                                                            <span>Watchlist</span>
+                                                            <span className="bg-blue-500/10 text-blue-600 px-2 py-0.5 rounded-full">{localMatches.watch.length}</span>
+                                                        </div>
+                                                        {localMatches.watch.map((stock: any) => (
+                                                            <StockListItem key={stock.id} stock={stock} onClick={() => handleLocalSelect(stock)} subtitle="Beobachtet" />
+                                                        ))}
                                                     </div>
-                                                    {localMatches.owned.map(stock => (
-                                                        <StockListItem key={stock.id} stock={stock} onClick={() => handleLocalSelect(stock)} subtitle="Im Portfolio" />
-                                                    ))}
-                                                </div>
-                                            )}
-                                            {localMatches.watch.length > 0 && (
-                                                <div className="">
-                                                    <div className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center justify-between border-t border-border/50">
-                                                        <span>Watchlist</span>
-                                                        <span className="bg-blue-500/10 text-blue-600 px-2 py-0.5 rounded-full">{localMatches.watch.length}</span>
+                                                )}
+                                                {localMatches.owned.length === 0 && localMatches.watch.length === 0 && (
+                                                    <div className="p-8 text-center text-muted-foreground">
+                                                        Keine Bestände oder Watchlist-Einträge gefunden. Nutze die Suche für neue Titel.
                                                     </div>
-                                                    {localMatches.watch.map((stock: any) => (
-                                                        <StockListItem key={stock.id} stock={stock} onClick={() => handleLocalSelect(stock)} subtitle="Beobachtet" />
-                                                    ))}
-                                                </div>
-                                            )}
-                                            {localMatches.owned.length === 0 && localMatches.watch.length === 0 && (
-                                                <div className="p-8 text-center text-muted-foreground">
-                                                    Keine Bestände oder Watchlist-Einträge gefunden. Nutze die Suche für neue Titel.
-                                                </div>
-                                            )}
-                                        </>
-                                    )
-                                )}
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    // SELECTED STOCK DISPLAY
-                    <div className="flex items-center gap-4 p-4 bg-muted/40 border border-border rounded-xl animate-in fade-in zoom-in-95 group">
-                        {quote?.logoUrl || stocks.find(s => s.symbol === selectedSymbol)?.logoUrl ? (
-                            <div className="size-14 rounded-xl p-2 bg-white border border-border flex items-center justify-center overflow-hidden">
-                                <img
-                                    src={quote?.logoUrl || stocks.find(s => s.symbol === selectedSymbol)?.logoUrl}
-                                    alt="Logo"
-                                    className="w-full h-full object-contain"
-                                />
-                            </div>
-                        ) : (
-                            <div className="size-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 text-xl">
-                                {selectedSymbol?.slice(0, 2)}
-                            </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                            <Link
-                                to={`/stock/${selectedSymbol}`}
-                                className="font-bold text-xl truncate hover:text-primary transition-colors block"
-                                title="Zur Detailansicht"
-                            >
-                                {quote?.name || stocks.find(s => s.symbol === selectedSymbol)?.name || selectedSymbol}
-                            </Link>
-                            <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-2 mt-0.5">
-                                <span className="font-mono font-medium">{selectedSymbol}</span>
-                                <span className="opacity-30">•</span>
-                                <span>{quote?.currency || 'USD'}</span>
-                                {(() => {
-                                    const stockSect = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol?.toLowerCase())?.sector;
-                                    const rawSec = quote?.sector || stockSect;
-                                    if (!rawSec) return null;
-                                    const displaySec = SECTOR_TRANSLATIONS[rawSec] || rawSec;
-                                    return (
-                                        <>
-                                            <span className="opacity-30">•</span>
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-muted/80 border border-border/60 text-foreground">
-                                                <span className="text-muted-foreground text-[11px]">Sektor:</span>
-                                                <span>{displaySec}</span>
-                                            </span>
-                                        </>
-                                    );
-                                })()}
-                            </div>
+                                                )}
+                                            </>
+                                        )
+                                    )}
+                                </div>
+                            )}
                         </div>
-                        <button
-                            onClick={() => {
-                                setSelectedSymbol(null);
-                                setQuote(null);
-                                setAnalysis(null);
-                                localStorage.removeItem('fair_value_state');
-                            }}
-                            className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                            title="Aktie entfernen"
-                        >
-                            <X className="size-6" />
-                        </button>
-                    </div>
-                )}
+                    ) : (
+                        // SELECTED STOCK DISPLAY (Stays sticky with header!)
+                        <div className="flex items-center gap-3 p-2.5 sm:p-3 bg-card/90 backdrop-blur border border-border rounded-xl shadow-sm">
+                            {quote?.logoUrl || stocks.find(s => s.symbol === selectedSymbol)?.logoUrl ? (
+                                <div className="size-10 sm:size-11 rounded-lg p-1 bg-white border border-border flex items-center justify-center overflow-hidden shrink-0">
+                                    <img
+                                        src={quote?.logoUrl || stocks.find(s => s.symbol === selectedSymbol)?.logoUrl}
+                                        alt="Logo"
+                                        className="w-full h-full object-contain"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="size-10 sm:size-11 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 text-sm shrink-0">
+                                    {selectedSymbol?.slice(0, 2)}
+                                </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                                <Link
+                                    to={`/stock/${selectedSymbol}`}
+                                    className="font-bold text-base sm:text-lg truncate hover:text-primary transition-colors block leading-tight"
+                                    title="Zur Detailansicht"
+                                >
+                                    {quote?.name || stocks.find(s => s.symbol === selectedSymbol)?.name || selectedSymbol}
+                                </Link>
+                                <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-1.5 mt-0.5">
+                                    <span className="font-mono font-semibold">{selectedSymbol}</span>
+                                    <span className="opacity-30">•</span>
+                                    <span>{quote?.currency || 'USD'}</span>
+                                    {(() => {
+                                        const stockSect = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol?.toLowerCase())?.sector;
+                                        const rawSec = quote?.sector || stockSect;
+                                        if (!rawSec) return null;
+                                        const displaySec = SECTOR_TRANSLATIONS[rawSec] || rawSec;
+                                        return (
+                                            <>
+                                                <span className="opacity-30">•</span>
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-muted/80 border border-border/60 text-foreground">
+                                                    <span className="text-muted-foreground text-[10px]">Sektor:</span>
+                                                    <span>{displaySec}</span>
+                                                </span>
+                                            </>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setSelectedSymbol(null);
+                                    setQuote(null);
+                                    setAnalysis(null);
+                                    localStorage.removeItem('fair_value_state');
+                                }}
+                                className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-all shrink-0"
+                                title="Aktie entfernen"
+                            >
+                                <X className="size-5" />
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {
