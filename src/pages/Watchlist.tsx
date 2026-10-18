@@ -371,7 +371,7 @@ export function Watchlist() {
                         </button>
 
                         {isOwnedStocksOpen && (
-                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border">
+                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border snap-x snap-mandatory scroll-pl-[170px] md:snap-none md:scroll-pl-0">
                                 <WatchlistTable
                                     stocks={ownedStocks}
                                     sortConfig={sortConfig}
@@ -423,7 +423,7 @@ export function Watchlist() {
                         </button>
 
                         {isOwnedEtfsOpen && (
-                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border">
+                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border snap-x snap-mandatory scroll-pl-[170px] md:snap-none md:scroll-pl-0">
                                 <WatchlistTable
                                     stocks={ownedEtfs}
                                     sortConfig={sortConfig}
@@ -475,7 +475,7 @@ export function Watchlist() {
                         </button>
 
                         {isPotentialStocksOpen && (
-                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border">
+                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border snap-x snap-mandatory scroll-pl-[170px] md:snap-none md:scroll-pl-0">
                                 <WatchlistTable
                                     stocks={potentialStocks}
                                     sortConfig={sortConfig}
@@ -527,7 +527,7 @@ export function Watchlist() {
                         </button>
 
                         {isPotentialEtfsOpen && (
-                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border">
+                            <div className="overflow-x-auto w-full overscroll-x-none border-b border-border snap-x snap-mandatory scroll-pl-[170px] md:snap-none md:scroll-pl-0">
                                 <WatchlistTable
                                     stocks={potentialEtfs}
                                     sortConfig={sortConfig}
@@ -636,9 +636,9 @@ function WatchlistTable({
         <table className="w-full text-left border-collapse min-w-[1200px] xl:min-w-0 table-fixed">
             <thead>
                 <tr className="border-b bg-muted/20">
-                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider whitespace-normal sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[150px] min-w-[150px] max-w-[150px] md:w-[200px] md:min-w-[200px] md:max-w-[200px]">Aktie</th>
+                    <th className="p-3 md:p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider whitespace-normal sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px]">Aktie</th>
                     <th
-                        className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors w-[10%] sticky top-0 z-30 bg-card"
+                        className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors w-[10%] sticky top-0 z-30 bg-card snap-start snap-always"
                         onClick={() => {
                             setSortConfig({
                                 key: 'yield',
@@ -648,9 +648,9 @@ function WatchlistTable({
                     >
                         Div. Rendite {sortConfig.key === 'yield' && (sortConfig.direction === 'desc' ? '↓' : '↑')}
                     </th>
-                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right w-[15%] sticky top-0 z-30 bg-card">Aktueller Kurs</th>
+                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right w-[15%] sticky top-0 z-30 bg-card snap-start snap-always">Aktueller Kurs</th>
                     <th
-                        className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors w-[15%] sticky top-0 z-30 bg-card"
+                        className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors w-[15%] sticky top-0 z-30 bg-card snap-start snap-always"
                         onClick={() => {
                             setSortConfig({
                                 key: 'gap',
@@ -661,7 +661,7 @@ function WatchlistTable({
                         Kauflimit {sortConfig.key === 'gap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
                     </th>
                     <th
-                        className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors w-[10%] sticky top-0 z-30 bg-card"
+                        className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors w-[10%] sticky top-0 z-30 bg-card snap-start snap-always"
                         onClick={() => {
                             setSortConfig({
                                 key: 'sellGap',
@@ -671,9 +671,9 @@ function WatchlistTable({
                     >
                         Verkaufslimit {sortConfig.key === 'sellGap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
                     </th>
-                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right w-[10%] sticky top-0 z-30 bg-card">EX-Tag</th>
-                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right w-[10%] sticky top-0 z-30 bg-card">Zahl-Tag</th>
-                    <th className="p-4 md:pl-12 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-center w-[110px] md:sticky md:top-0 md:-right-px md:z-40 bg-card md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] sticky top-0 z-30">Aktionen</th>
+                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right w-[10%] sticky top-0 z-30 bg-card snap-start snap-always">EX-Tag</th>
+                    <th className="p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right w-[10%] sticky top-0 z-30 bg-card snap-start snap-always">Zahl-Tag</th>
+                    <th className="p-4 md:pl-12 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-center w-[110px] md:sticky md:top-0 md:-right-px md:z-40 bg-card md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] sticky top-0 z-30 snap-start snap-always">Aktionen</th>
                 </tr>
             </thead>
             <tbody className="divide-y">
@@ -688,31 +688,31 @@ function WatchlistTable({
 
                     return (
                         <tr key={stock.id} className="hover:bg-muted/30 transition-colors group">
-                            <td className="p-4 sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[150px] min-w-[150px] max-w-[150px] md:w-[200px] md:min-w-[200px] md:max-w-[200px]">
+                            <td className="p-3 md:p-4 sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] overflow-hidden w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px]">
                                 <div className="absolute inset-0 bg-card -z-10" />
-                                <div className="flex items-center gap-3 relative">
+                                <div className="flex items-center gap-2.5 md:gap-3 relative">
                                     <Logo
                                         url={stock.logoUrl}
                                         alt={stock.name}
                                         fallback={stock.symbol.slice(0, 2)}
-                                        size="size-10"
+                                        size="size-9 md:size-10"
                                     />
-                                    <div className="flex flex-col min-w-0">
-                                        <div className="flex items-center gap-1.5">
-                                            <span
-                                                className="font-bold text-sm whitespace-pre-wrap leading-snug group-hover:text-primary transition-colors cursor-pointer"
-                                                onClick={() => onNavigate(stock.id)}
-                                                title={stock.name}
-                                            >
-                                                {stock.name}
-                                            </span>
+                                    <div className="flex flex-col min-w-0 flex-1">
+                                        <span
+                                            className="font-bold text-[13px] md:text-sm whitespace-pre-wrap break-words leading-snug group-hover:text-primary transition-colors cursor-pointer"
+                                            onClick={() => onNavigate(stock.id)}
+                                            title={stock.name}
+                                        >
+                                            {stock.name}
+                                        </span>
+                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                            <span className="text-xs text-muted-foreground uppercase truncate">{stock.symbol}</span>
                                             {isMarketOpen ? (
                                                 <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0 shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
                                             ) : (
                                                 <div className="size-2 rounded-full bg-red-500 shrink-0 border border-background" title={`Markt geschlossen (${calcState})`} />
                                             )}
                                         </div>
-                                        <span className="text-xs text-muted-foreground uppercase">{stock.symbol}</span>
                                     </div>
                                 </div>
                             </td>
