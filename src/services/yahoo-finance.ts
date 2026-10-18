@@ -110,6 +110,85 @@ export async function fetchStockHistory(
     }
 }
 
+export interface HistoricalCloseData {
+    symbol: string;
+    close: number;
+    startDate: string;
+    currency?: string | null;
+}
+
+const historicalCloseCache = new Map<string, { data: HistoricalCloseData; timestamp: number }>();
+const HISTORICAL_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+export function clearHistoricalCloseCache(): void {
+    historicalCloseCache.clear();
+}
+
+export async function fetchHistoricalClose(
+    symbol: string,
+    range: '1W' | '1M' | '6M' | '1Y'
+): Promise<HistoricalCloseData | null> {
+    if (!symbol) return null;
+
+    const cacheKey = `${symbol.toUpperCase()}_${range}`;
+    const cached = historicalCloseCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < HISTORICAL_CACHE_TTL_MS)) {
+        return cached.data;
+    }
+
+    const rangeParamMap: Record<string, string> = {
+        '1W': '5d',
+        '1M': '1mo',
+        '6M': '6mo',
+        '1Y': '1y'
+    };
+
+    const period = rangeParamMap[range] || '5d';
+
+    try {
+        const url = `/api/yahoo-finance?symbol=${encodeURIComponent(symbol)}&period=${period}&interval=1d&_=${Date.now()}`;
+        const response = await fetch(url);
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        const result = data.chart?.result?.[0];
+        if (!result || !result.timestamp || !result.indicators?.quote?.[0]?.close) {
+            return null;
+        }
+
+        const timestamps: number[] = result.timestamp;
+        const closes: (number | null)[] = result.indicators.quote[0].close;
+        const currency: string | null = result.meta?.currency || null;
+
+        let firstValidIndex = -1;
+        for (let i = 0; i < closes.length; i++) {
+            if (closes[i] !== null && closes[i] !== undefined && (closes[i] as number) > 0) {
+                firstValidIndex = i;
+                break;
+            }
+        }
+
+        if (firstValidIndex === -1) return null;
+
+        const rawClose = closes[firstValidIndex] as number;
+        const normalizedClose = normalizeYahooPrice(rawClose, currency, symbol);
+        const startDate = new Date(timestamps[firstValidIndex] * 1000).toISOString();
+
+        const closeData: HistoricalCloseData = {
+            symbol,
+            close: normalizedClose,
+            startDate,
+            currency
+        };
+
+        historicalCloseCache.set(cacheKey, { data: closeData, timestamp: Date.now() });
+        return closeData;
+    } catch (e) {
+        console.warn(`[fetchHistoricalClose] Failed to fetch for ${symbol} (${range}):`, e);
+        return null;
+    }
+}
+
 // Helper to find logo
 export async function fetchCompanyLogo(query: string): Promise<string | null> {
     try {

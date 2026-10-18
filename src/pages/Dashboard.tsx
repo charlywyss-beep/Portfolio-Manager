@@ -19,6 +19,7 @@ import { TopPerformersCard } from '../components/TopPerformersCard';
 import { PerformanceDetailsModal } from '../components/PerformanceDetailsModal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { PieChart as PieChartIcon } from 'lucide-react';
+import { fetchHistoricalClose } from '../services/yahoo-finance';
 
 // Helper to translate frequency to German
 const translateFrequency = (freq?: string) => {
@@ -116,6 +117,121 @@ export function Dashboard() {
     const [watchlistTimeframe, setWatchlistTimeframe] = useState<number>(90); // Default 90 days
     const [upcomingTimeframe, setUpcomingTimeframe] = useState<number>(90); // Default 90 days
     const [performancePeriod, setPerformancePeriod] = useState<string>('1D'); // Performance Period selection
+    const [periodPerformance, setPeriodPerformance] = useState<Record<string, { gainCHF: number; gainPercent: number; startDate: string }>>({});
+    const [isPeriodLoading, setIsPeriodLoading] = useState(false);
+
+    // Reset cached period performance when portfolio is refreshed
+    useEffect(() => {
+        if (lastGlobalRefresh) {
+            setPeriodPerformance({});
+        }
+    }, [lastGlobalRefresh]);
+
+    useEffect(() => {
+        if (performancePeriod === '1D' || positions.length === 0) return;
+
+        // If already cached in state, don't refetch
+        if (periodPerformance[performancePeriod]) return;
+
+        let isCancelled = false;
+
+        async function computePeriodPerformance() {
+            setIsPeriodLoading(true);
+
+            try {
+                const rangeKey = performancePeriod as '1W' | '1M' | '6M' | '1Y';
+                const results = await Promise.all(
+                    positions.map(async (pos) => {
+                        const symbol = pos.stock?.symbol;
+                        if (!symbol) {
+                            return {
+                                pos,
+                                baselinePrice: pos.buyPriceAvg,
+                                startDate: null
+                            };
+                        }
+
+                        const hist = await fetchHistoricalClose(symbol, rangeKey);
+                        let baselinePrice = pos.buyPriceAvg;
+                        let startDate = hist?.startDate || null;
+
+                        if (hist && hist.close > 0) {
+                            if (pos.buyDate && hist.startDate && new Date(pos.buyDate) > new Date(hist.startDate)) {
+                                baselinePrice = pos.buyPriceAvg;
+                            } else {
+                                baselinePrice = hist.close;
+                            }
+                        }
+
+                        return {
+                            pos,
+                            baselinePrice,
+                            startDate
+                        };
+                    })
+                );
+
+                if (isCancelled) return;
+
+                let totalPastCHF = 0;
+                let totalCurrentCHF = 0;
+                let earliestDate: string | null = null;
+
+                for (const r of results) {
+                    const currentPrice = r.pos.stock.currentPrice || r.baselinePrice;
+                    const pastValNative = r.pos.shares * r.baselinePrice;
+                    const currValNative = r.pos.shares * currentPrice;
+
+                    const pastValCHF = convertToCHF(pastValNative, r.pos.stock.currency);
+                    const currValCHF = convertToCHF(currValNative, r.pos.stock.currency);
+
+                    totalPastCHF += pastValCHF;
+                    totalCurrentCHF += currValCHF;
+
+                    if (r.startDate) {
+                        if (!earliestDate || new Date(r.startDate) < new Date(earliestDate)) {
+                            earliestDate = r.startDate;
+                        }
+                    }
+                }
+
+                const gainCHF = totalCurrentCHF - totalPastCHF;
+                const gainPercent = totalPastCHF > 0 ? (gainCHF / totalPastCHF) * 100 : 0;
+
+                let formattedStartDate = '';
+                if (earliestDate) {
+                    formattedStartDate = `seit ${new Date(earliestDate).toLocaleDateString('de-CH')}`;
+                } else {
+                    const daysMap: Record<string, number> = { '1W': 7, '1M': 30, '6M': 180, '1Y': 365 };
+                    const days = daysMap[performancePeriod] || 7;
+                    const d = new Date();
+                    d.setDate(d.getDate() - days);
+                    formattedStartDate = `seit ${d.toLocaleDateString('de-CH')}`;
+                }
+
+                setPeriodPerformance(prev => ({
+                    ...prev,
+                    [performancePeriod]: {
+                        gainCHF,
+                        gainPercent,
+                        startDate: formattedStartDate
+                    }
+                }));
+            } catch (err) {
+                console.error('[Dashboard] Error computing period performance:', err);
+            } finally {
+                if (!isCancelled) {
+                    setIsPeriodLoading(false);
+                }
+            }
+        }
+
+        computePeriodPerformance();
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [performancePeriod, positions, convertToCHF, periodPerformance]);
 
 
 
@@ -355,57 +471,31 @@ export function Dashboard() {
                             let displayValue = 0;
                             let displayPercent = 0;
                             let displayLabel = 'seit gestern';
-                            let isDataAvailable = true;
+                            let isLoading = false;
 
                             if (performancePeriod === '1D') {
                                 displayValue = totals.dailyGain;
                                 displayPercent = totals.dailyGainPercent;
+                                displayLabel = 'seit gestern';
                             } else {
-                                // Historical Calculation
-                                const daysMap: Record<string, number> = { '1W': 7, '1M': 30, '6M': 180, '1Y': 365 };
-                                const days = daysMap[performancePeriod] || 7;
-                                const targetDate = new Date();
-                                targetDate.setDate(targetDate.getDate() - days);
-                                const targetDateStr = targetDate.toISOString().split('T')[0];
-
-                                // Check History
-                                const sortedHistory = [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                                // Find latest entry BEFORE or ON target date
-                                const entry = sortedHistory.find(h => h.date <= targetDateStr) || sortedHistory[sortedHistory.length - 1];
-
-                                if (entry) {
-                                    // Determine if history entry has split data (Stock/ETF separated) to compare apples to apples
-                                    const hasSplitData = entry.stockValue !== undefined || entry.etfValue !== undefined;
-
-                                    let pastValue = 0;
-                                    let currentVal = 0;
-
-                                    if (hasSplitData) {
-                                        // History: Sum of Clean Stock + Clean ETF
-                                        pastValue = (entry.stockValue || 0) + (entry.etfValue || 0);
-                                        // Current: totals.totalValueStock is already Combined (Stock + ETF)
-                                        currentVal = totals.totalValueStock;
-                                    } else {
-                                        // Legacy History: Contains only totalValue (likely including Bank)
-                                        pastValue = entry.totalValue;
-                                        // Current: Compare with Total Value (incl Bank) to match legacy scope
-                                        currentVal = totals.totalValue;
-                                    }
-
-                                    const change = currentVal - pastValue;
-                                    displayValue = change;
-                                    displayPercent = pastValue !== 0 ? (change / pastValue) * 100 : 0;
-                                    displayLabel = `seit ${new Date(entry.date).toLocaleDateString('de-CH')}`;
+                                const perf = periodPerformance[performancePeriod];
+                                if (perf) {
+                                    displayValue = perf.gainCHF;
+                                    displayPercent = perf.gainPercent;
+                                    displayLabel = perf.startDate;
                                 } else {
-                                    isDataAvailable = false;
+                                    isLoading = isPeriodLoading;
                                 }
                             }
 
-                            if (!isDataAvailable && performancePeriod !== '1D') {
+                            if (isLoading) {
                                 return (
                                     <div>
                                         <p className="text-sm text-muted-foreground font-medium">Performance</p>
-                                        <p className="text-sm text-muted-foreground mt-1">Keine historischen Daten verfügbar.</p>
+                                        <div className="animate-pulse space-y-2 mt-2">
+                                            <div className="h-7 bg-muted rounded w-36"></div>
+                                            <div className="h-4 bg-muted rounded w-24"></div>
+                                        </div>
                                     </div>
                                 );
                             }
