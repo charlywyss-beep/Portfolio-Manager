@@ -1,6 +1,7 @@
 // Shared Fair Value calculation and Smart Auto-Parameter helpers
 
 export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number; pe: number; div?: number; mos?: number; label: string }> = {
+    'AMZN': { eps: 12.50, growth: 14.0, pe: 28.0, div: 0, mos: 15, label: 'TTM Bereinigt (Analysten)' },
     'KHC': { eps: 2.60, growth: 2.0, pe: 11.5, div: 6.8, mos: 20, label: 'Operativ / Bereinigt' },
     'BATS.L': { eps: 3.62, growth: 3.0, pe: 11.5, mos: 20, label: 'Bereinigt (Adj. EPS)' },
     'BTI': { eps: 4.65, growth: 3.0, pe: 11.5, mos: 20, label: 'Bereinigt (Adj. EPS)' },
@@ -13,8 +14,15 @@ export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number
     'BRK.B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, mos: 15, label: 'Operativer Gewinn' },
 };
 
+export const WIDE_MOAT_QUALITY = new Set([
+    'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'NVDA', 'META', 'V', 'MA',
+    'PG', 'KO', 'PEP', 'JNJ', 'MCD', 'COST', 'WMT', 'ABBV', 'LLY', 'UNH', 'HD',
+    'ASML.AS', 'ASML', 'SAP.DE', 'SAP', 'NESN.SW', 'ROG.SW', 'NOVN.SW', 'LIN', 'OR.PA'
+]);
+
 export function computeSmartAutoParams(qData: any, aData: any, stockObj: any, symbolStr: string) {
     const symUpper = (symbolStr || '').toUpperCase();
+    const isWideMoat = WIDE_MOAT_QUALITY.has(symUpper);
     const price = qData?.price || stockObj?.currentPrice || 0;
     const preset = FUNDAMENTAL_FALLBACKS[symUpper];
 
@@ -113,8 +121,8 @@ export function computeSmartAutoParams(qData: any, aData: any, stockObj: any, sy
             autoGrowth = 6.5;
             growthLabel = 'Qualitäts-/Standardwert';
         } else if (effectivePe > 24 && autoDiv < 1.5) {
-            autoGrowth = 10.0;
-            growthLabel = 'Wachstumswert';
+            autoGrowth = isWideMoat ? 13.0 : 10.0;
+            growthLabel = isWideMoat ? 'Wachstumswert (Wide Moat)' : 'Wachstumswert';
         } else {
             autoGrowth = 6.0;
             growthLabel = 'Standard-Profil';
@@ -139,16 +147,10 @@ export function computeSmartAutoParams(qData: any, aData: any, stockObj: any, sy
         rawExitPe = price / autoEps;
     }
 
-    const WIDE_MOAT_QUALITY = new Set([
-        'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'NVDA', 'META', 'V', 'MA',
-        'PG', 'KO', 'PEP', 'JNJ', 'MCD', 'COST', 'WMT', 'ABBV', 'LLY', 'UNH', 'HD',
-        'ASML.AS', 'ASML', 'SAP.DE', 'SAP', 'NESN.SW', 'ROG.SW', 'NOVN.SW', 'LIN', 'OR.PA'
-    ]);
-    const isWideMoat = WIDE_MOAT_QUALITY.has(symUpper);
-    const ruleOneMax = Math.max(20, autoGrowth * 2);
+    const ruleOneMax = Math.max(isWideMoat ? 28 : 20, autoGrowth * 2);
     const maxSensibleExitPe = (autoDiv >= 5.0 && effectivePe < 14)
         ? Math.min(13.0, effectivePe)
-        : Math.min(isWideMoat || autoGrowth >= 9 ? 25 : 22, ruleOneMax);
+        : Math.min(isWideMoat ? 30 : (autoGrowth >= 9 ? 25 : 22), isWideMoat ? Math.max(30, ruleOneMax) : ruleOneMax);
     const autoPe = parseFloat((Math.round(Math.min(Math.max(rawExitPe, 8), maxSensibleExitPe) * 2) / 2).toFixed(1));
 
     // 5. Smart Margin of Safety (15% for Swiss / defensive / wide-moat quality blue-chips, 20% standard)
