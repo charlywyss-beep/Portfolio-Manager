@@ -17,7 +17,7 @@ export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number
     'ZURN': { eps: 35.0, growth: 4.0, pe: 11.5, div: 5.2, mos: 15, label: 'Konsens EPS' },
     'BRK-B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, mos: 15, label: 'Operativer Gewinn' },
     'BRK.B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, mos: 15, label: 'Operativer Gewinn' },
-    'TSLA': { eps: 3.20, growth: 20.0, pe: 35.0, div: 0, mos: 20, label: 'Konsens EPS (Forward/Normalisiert)' },
+    'TSLA': { eps: 3.50, growth: 22.0, pe: 38.0, div: 0, mos: 20, label: 'Konsens EPS (Forward 2025/26)' },
 };
 
 export const WIDE_MOAT_QUALITY = new Set([
@@ -112,7 +112,10 @@ export function computeSmartAutoParams(
     let autoGrowth = 6.0;
     let growthLabel = 'Fundamental-Profil';
 
-    if (preset) {
+    if (symUpper === 'TSLA') {
+        autoGrowth = isQualityMode ? 26.0 : 22.0;
+        growthLabel = isQualityMode ? 'KI / Robotaxi Wachstums-Szenario' : 'Konsens-Prognose (Sicherheit)';
+    } else if (preset) {
         autoGrowth = isQualityMode
             ? parseFloat((preset.growth + (preset.growth <= 3.5 ? 1.0 : preset.growth <= 7.0 ? 0.5 : preset.growth >= 18.0 ? 2.0 : 1.0)).toFixed(1))
             : preset.growth;
@@ -179,7 +182,7 @@ export function computeSmartAutoParams(
     // Mode B (quality / market): allows historical quality multiple premium (e.g. 25 for Big Tech compounders, 18.5 for Nestlé)
     let maxSensibleExitPe = isQualityMode ? 25.0 : 20.0;
     if (symUpper === 'TSLA') {
-        maxSensibleExitPe = isQualityMode ? 45.0 : 35.0;
+        maxSensibleExitPe = isQualityMode ? 50.0 : 38.0;
     } else if (autoDiv >= 4.8) {
         // High dividend / mature value (e.g. Tobacco, Utilities, Kraft Heinz, Swiss Re)
         maxSensibleExitPe = isQualityMode ? 13.5 : Math.min(13.0, Math.max(10.0, effectivePe < 14 ? effectivePe : 12.0));
@@ -202,7 +205,7 @@ export function computeSmartAutoParams(
             if (symUpper === 'AMZN' || symUpper === 'MSFT') {
                 rawExitPe = 25.0;
             } else if (symUpper === 'TSLA') {
-                rawExitPe = 40.0;
+                rawExitPe = 48.0;
             } else if (symUpper.startsWith('BRK-') || symUpper.startsWith('BRK.') || symUpper === 'BRK') {
                 rawExitPe = 21.0;
             } else if (symUpper === 'NESN.SW' || symUpper === 'NESN') {

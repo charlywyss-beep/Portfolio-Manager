@@ -751,7 +751,10 @@ export function FairValueCalculator() {
 
         const futureEps = valEps * Math.pow(1 + valGrowth / 100, 5);
         const isWideMoatStock = WIDE_MOAT_QUALITY.has((selectedSymbol || '').toUpperCase());
-        const maxPeCap = valuationProfile === 'quality' ? (isWideMoatStock ? 25 : 22) : 20;
+        const isTesla = (selectedSymbol || '').toUpperCase() === 'TSLA';
+        const maxPeCap = isTesla
+            ? (valuationProfile === 'quality' ? 50 : 38)
+            : (valuationProfile === 'quality' ? (isWideMoatStock ? 25 : 22) : 20);
         const ruleOneLimit = Math.max(isWideMoatStock ? maxPeCap : 18, Math.min(maxPeCap, valGrowth * 2));
         const exitPe = valPe; // Remove hard cap, use user input directly
         const futurePrice = futureEps * exitPe;
@@ -1654,7 +1657,7 @@ export function FairValueCalculator() {
                                                 </span>
                                             ) : (
                                                 <span className="block text-purple-400/90 mt-0.5 font-medium">
-                                                    ⭐ <em>Sichtweise B (Qualität):</em> Historischer Qualitätsaufschlag erlaubt (bis KGV 25 für Wide-Moat-Champions).
+                                                    ⭐ <em>Sichtweise B (Qualität):</em> Historischer Qualitätsaufschlag erlaubt (bis KGV 25 für Wide-Moat-Champions, KGV 48–50 für Hyper-Growth/Tech wie Tesla).
                                                 </span>
                                             )}
                                         </p>
