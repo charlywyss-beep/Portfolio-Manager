@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 import { Plus, PieChart, BarChart3, Landmark, RefreshCw } from 'lucide-react';
@@ -18,6 +18,22 @@ export function Portfolio() {
     const [selectedPosition, setSelectedPosition] = useState<any>(null);
     const [editingFixedDeposit, setEditingFixedDeposit] = useState<any>(null);
     const { convertToCHF } = useCurrencyFormatter();
+
+    const headerRef = useRef<HTMLDivElement>(null);
+    const [headerHeight, setHeaderHeight] = useState(114);
+
+    useEffect(() => {
+        if (!headerRef.current) return;
+        const updateHeight = () => {
+            if (headerRef.current) {
+                setHeaderHeight(headerRef.current.offsetHeight);
+            }
+        };
+        updateHeight();
+        const observer = new ResizeObserver(updateHeight);
+        observer.observe(headerRef.current);
+        return () => observer.disconnect();
+    }, []);
 
     // Force re-render every minute to update the "Updated X min ago" text
     // Also trigger auto-refresh after 5 minutes
@@ -173,7 +189,7 @@ export function Portfolio() {
     return (
         <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20">
             {/* Sticky Header - Matched to Watchlist design */}
-            <div className="sticky top-0 z-50 bg-background pb-3 sm:pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+            <div ref={headerRef} className="sticky top-0 z-50 bg-background -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
                     <div className="w-full px-3 sm:px-4 py-3.5 sm:py-4 md:px-6 lg:px-6">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -247,6 +263,7 @@ export function Portfolio() {
                 setSelectedPosition={setSelectedPosition}
                 setIsEditModalOpen={setIsEditModalOpen}
                 hideHeader={true}
+                stickyTop={headerHeight}
             />
 
             {/* ETFs Table */}
@@ -257,6 +274,7 @@ export function Portfolio() {
                 emptyMessage="Noch keine ETFs im Depot."
                 setSelectedPosition={setSelectedPosition}
                 setIsEditModalOpen={setIsEditModalOpen}
+                stickyTop={headerHeight}
             />
 
             {/* Vorsorge Section */}
@@ -271,6 +289,7 @@ export function Portfolio() {
                 searchTerm=""
                 setIsAddFixedDepositModalOpen={setIsAddFixedDepositModalOpen}
                 setEditingFixedDeposit={setEditingFixedDeposit}
+                stickyTop={headerHeight}
             />
 
             <AddFixedDepositModal

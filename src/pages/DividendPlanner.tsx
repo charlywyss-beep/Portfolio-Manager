@@ -14,6 +14,22 @@ export function DividendPlanner() {
     const { stocks, positions, fixedDeposits, deleteFixedDeposit, lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices } = usePortfolio();
     const { convertToCHF } = useCurrencyFormatter();
 
+    const headerRef = useRef<HTMLDivElement>(null);
+    const [headerHeight, setHeaderHeight] = useState(72);
+
+    useEffect(() => {
+        if (!headerRef.current) return;
+        const updateHeight = () => {
+            if (headerRef.current) {
+                setHeaderHeight(headerRef.current.offsetHeight);
+            }
+        };
+        updateHeight();
+        const observer = new ResizeObserver(updateHeight);
+        observer.observe(headerRef.current);
+        return () => observer.disconnect();
+    }, []);
+
     // 0: Anteile, 1: Rendite %, 2: Div./Akt., 3: Frequenz, 4: Quartalsweise, 5: Jährlich, 6: EX-Tag, 7: Zahl-Tag, 8: Aktion
     const [mobileColIndex, setMobileColIndex] = useState(1);
     const touchStartRef = useRef<{ x: number; y: number; time: number; isStockCol: boolean } | null>(null);
@@ -204,7 +220,7 @@ export function DividendPlanner() {
     return (
         <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20">
             {/* Header - Matched to Portfolio/Watchlist design */}
-            <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+            <div ref={headerRef} className="sticky top-0 z-50 bg-background -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
                     <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 lg:pl-6">
                         <div className="flex items-center justify-between gap-3">
@@ -246,7 +262,7 @@ export function DividendPlanner() {
             </div>
 
             {/* Main Dividend Table */}
-            <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
+            <div className="bg-card rounded-xl border shadow-sm">
                 <div className="flex items-center justify-between p-4 border-b border-border bg-card">
                     <h2 className="text-lg font-semibold">Erwartete Dividenden</h2>
 
@@ -267,20 +283,21 @@ export function DividendPlanner() {
                 <div
                     onTouchStart={handleTouchStart}
                     onTouchEnd={handleTouchEnd}
-                    className="overflow-y-auto max-h-[calc(100dvh-280px)] md:max-h-[600px] w-full border-b border-border snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
+                    className="w-full overflow-x-hidden md:overflow-x-auto"
                 >
                     <table className="w-full text-left border-collapse md:min-w-[1000px] xl:min-w-0 table-fixed">
                         <thead>
                             <tr className="border-b border-border bg-muted/20">
                                 {/* 0. Aktie */}
-                                <th className="px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle">
+                                <th style={{ top: headerHeight }} className="px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle">
                                     Aktie
                                 </th>
 
                                 {/* 1. Anteile */}
                                 <th
+                                    style={{ top: headerHeight }}
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card align-middle",
                                         mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -310,8 +327,9 @@ export function DividendPlanner() {
 
                                 {/* 2. Rendite % */}
                                 <th
+                                    style={{ top: headerHeight }}
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card align-middle",
                                         mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -341,8 +359,9 @@ export function DividendPlanner() {
 
                                 {/* 3. Div./Akt. */}
                                 <th
+                                    style={{ top: headerHeight }}
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card align-middle",
                                         mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -372,8 +391,9 @@ export function DividendPlanner() {
 
                                 {/* 4. Frequenz */}
                                 <th
+                                    style={{ top: headerHeight }}
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card align-middle",
                                         mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -403,8 +423,9 @@ export function DividendPlanner() {
 
                                 {/* 5. Frequenzweise */}
                                 <th
+                                    style={{ top: headerHeight }}
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card align-middle",
                                         mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -434,8 +455,9 @@ export function DividendPlanner() {
 
                                 {/* 6. Jährlich */}
                                 <th
+                                    style={{ top: headerHeight }}
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card align-middle",
                                         mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -465,8 +487,9 @@ export function DividendPlanner() {
 
                                 {/* 7. EX-Tag */}
                                 <th
+                                    style={{ top: headerHeight }}
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card align-middle",
                                         mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -496,8 +519,9 @@ export function DividendPlanner() {
 
                                 {/* 8. Zahl-Tag */}
                                 <th
+                                    style={{ top: headerHeight }}
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        "px-1 md:px-4 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky z-30 bg-card align-middle",
                                         mobileColIndex === 7 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -527,8 +551,9 @@ export function DividendPlanner() {
 
                                 {/* 9. Aktion */}
                                 <th
+                                    style={{ top: headerHeight }}
                                     className={cn(
-                                        "px-1 md:px-1 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:w-[60px] md:min-w-[60px] md:max-w-[60px] md:sticky md:-right-px bg-card z-30 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] sticky top-0 align-middle",
+                                        "px-1 md:px-1 py-0 md:py-3 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:w-[60px] md:min-w-[60px] md:max-w-[60px] md:sticky md:-right-px bg-card z-30 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] sticky align-middle",
                                         mobileColIndex === 8 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -840,23 +865,23 @@ export function DividendPlanner() {
             {/* Bank Accounts Section */}
             {
                 bankRows.length > 0 && (
-                    <div className="bg-card rounded-xl border shadow-sm overflow-hidden animate-in slide-in-from-bottom-4 duration-700">
+                    <div className="bg-card rounded-xl border shadow-sm animate-in slide-in-from-bottom-4 duration-700">
                         <div className="flex items-center justify-between p-4 border-b bg-muted/30">
                             <h2 className="text-lg font-semibold">Bank Erträge & Gebühren</h2>
                         </div>
 
-                        <div className="overflow-x-auto overflow-y-auto max-h-[calc(100dvh-280px)] md:max-h-[500px] overscroll-contain">
+                        <div className="overflow-x-auto">
                             <table className="w-full min-w-[1000px] border-collapse">
                                 <thead>
                                     <tr className="border-b border-border bg-muted/20">
-                                        <th className="text-left py-3 px-4 font-semibold sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">Bank / Institut</th>
-                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Betrag</th>
-                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Zins %</th>
-                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Ø Monatlich</th>
-                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Frequenz</th>
-                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Quartalsweise</th>
-                                        <th className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky top-0 z-30 bg-card align-middle">Jährlich</th>
-                                        <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky top-0 md:sticky md:top-0 md:-right-px bg-card z-30 md:z-40 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">Aktion</th>
+                                        <th style={{ top: headerHeight }} className="text-left py-3 px-4 font-semibold sticky left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">Bank / Institut</th>
+                                        <th style={{ top: headerHeight }} className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky z-30 bg-card align-middle">Betrag</th>
+                                        <th style={{ top: headerHeight }} className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky z-30 bg-card align-middle">Zins %</th>
+                                        <th style={{ top: headerHeight }} className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky z-30 bg-card align-middle">Ø Monatlich</th>
+                                        <th style={{ top: headerHeight }} className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky z-30 bg-card align-middle">Frequenz</th>
+                                        <th style={{ top: headerHeight }} className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky z-30 bg-card align-middle">Quartalsweise</th>
+                                        <th style={{ top: headerHeight }} className="text-right py-3 px-4 font-semibold whitespace-nowrap sticky z-30 bg-card align-middle">Jährlich</th>
+                                        <th style={{ top: headerHeight }} className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky md:sticky md:-right-px bg-card z-30 md:z-40 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">Aktion</th>
                                     </tr>
                                 </thead>
                                 <tbody>
