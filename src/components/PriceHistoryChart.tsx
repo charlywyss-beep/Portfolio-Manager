@@ -320,11 +320,11 @@ export function PriceHistoryChart({
                         )}>
                             <div className="flex items-center gap-1">
                                 <span className="font-medium text-foreground">H:</span>
-                                <span>{formatCurrency(maxPrice, displayCurrency)}</span>
+                                <span>{formatCurrency(maxPrice, displayCurrency, false)}</span>
                             </div>
                             <div className="flex items-center gap-1">
                                 <span className="font-medium text-foreground">T:</span>
-                                <span>{formatCurrency(minPrice, displayCurrency)}</span>
+                                <span>{formatCurrency(minPrice, displayCurrency, false)}</span>
                             </div>
                         </div>
 
@@ -346,18 +346,22 @@ export function PriceHistoryChart({
                                 </div>
                                 <div className="h-8 w-px bg-border shrink-0" />
                                 <div className="flex flex-col items-end leading-snug">
-                                    <span className="font-extrabold text-base tabular-nums text-foreground whitespace-nowrap">
-                                        {formatCurrency(hoveredData.value, displayCurrency)}
-                                    </span>
+                                    <div className="flex items-center gap-1.5">
+                                        <div className={cn("size-2 rounded-full shrink-0 shadow-sm", isPositive ? "bg-green-500" : "bg-red-500")} />
+                                        <span className="font-extrabold text-base tabular-nums text-foreground whitespace-nowrap">
+                                            {formatCurrency(hoveredData.value, displayCurrency, false)}
+                                        </span>
+                                    </div>
                                     <span className="text-xs font-semibold text-foreground">Kurs</span>
                                 </div>
                                 {hoveredData.sma200 && (
                                     <>
                                         <div className="h-8 w-px bg-border shrink-0" />
                                         <div className="flex flex-col items-end leading-snug">
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="size-2 rounded-full bg-amber-500 shadow-sm shrink-0" />
                                                 <span className="font-bold text-xs tabular-nums text-foreground whitespace-nowrap">
-                                                    {formatCurrency(hoveredData.sma200, displayCurrency)}
+                                                    {formatCurrency(hoveredData.sma200, displayCurrency, false)}
                                                 </span>
                                                 {(() => {
                                                     const diff = ((hoveredData.value - hoveredData.sma200) / hoveredData.sma200) * 100;
@@ -510,9 +514,12 @@ export function PriceHistoryChart({
                         </div>
                         <div className="h-8 w-px bg-border" />
                         <div className="flex flex-col items-end leading-snug">
-                            <span className="font-extrabold text-base tabular-nums text-foreground whitespace-nowrap">
-                                {formatCurrency(hoveredData.value, displayCurrency)}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                                <div className={cn("size-2 rounded-full shrink-0 shadow-sm", isPositive ? "bg-green-500" : "bg-red-500")} />
+                                <span className="font-extrabold text-base tabular-nums text-foreground whitespace-nowrap">
+                                    {formatCurrency(hoveredData.value, displayCurrency, false)}
+                                </span>
+                            </div>
                             <span className="text-xs font-semibold text-foreground">Kurs</span>
                         </div>
                         {hoveredData.sma200 && (
@@ -520,8 +527,9 @@ export function PriceHistoryChart({
                                 <div className="h-8 w-px bg-border" />
                                 <div className="flex flex-col items-end leading-snug">
                                     <div className="flex items-center gap-1.5">
+                                        <div className="size-2 rounded-full bg-amber-500 shadow-sm shrink-0" />
                                         <span className="font-bold text-sm tabular-nums text-foreground whitespace-nowrap">
-                                            {formatCurrency(hoveredData.sma200, displayCurrency)}
+                                            {formatCurrency(hoveredData.sma200, displayCurrency, false)}
                                         </span>
                                         {(() => {
                                             const diff = ((hoveredData.value - hoveredData.sma200) / hoveredData.sma200) * 100;
@@ -554,7 +562,7 @@ export function PriceHistoryChart({
                                             {measurement.percent > 0 ? '+' : ''}{measurement.percent.toFixed(2)}%
                                         </span>
                                         <span className="text-xs font-bold text-white">
-                                            {formatCurrency(measurement.diff, displayCurrency, true)}
+                                            {formatCurrency(measurement.diff, displayCurrency, false)}
                                         </span>
                                     </div>
                                     <div className="h-8 w-px bg-white/20" />
