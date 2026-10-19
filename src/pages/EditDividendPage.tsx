@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Trash2, Search, Pencil, Check, Calculator, ShieldCheck, Sparkles, Sliders } from 'lucide-react';
+import { ArrowLeft, Trash2, Search, Pencil, Check, Calculator, ShieldCheck, Sparkles, Sliders, Save, AlertTriangle } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
@@ -74,24 +74,22 @@ export function EditDividendPage() {
     ]);
     const [fvModeTick, setFvModeTick] = useState(0);
     const [isSavedFeedback, setIsSavedFeedback] = useState(false);
+    const [isDirty, setIsDirty] = useState(false);
+    const [showUnsavedModal, setShowUnsavedModal] = useState(false);
 
     // Derived state
     const currentStockId = stockId || selectedStockId;
     const stock = stocks.find(s => s.id === currentStockId);
 
-    const inputRef = useRef<HTMLTextAreaElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
-    // Auto-resize stock name textarea
-    useEffect(() => {
-        if (inputRef.current) {
-            // First reset height to 0 to get the correct scrollHeight (for shrinking)
-            inputRef.current.style.height = '0px';
-            const scrollHeight = inputRef.current.scrollHeight;
-            inputRef.current.style.height = `${scrollHeight}px`;
-            // Prevent scrollbar flicker
-            inputRef.current.style.overflow = 'hidden';
+    const handleBack = () => {
+        if (isDirty) {
+            setShowUnsavedModal(true);
+        } else {
+            navigate(-1);
         }
-    }, [stockNameOverride, stock?.name]);
+    };
 
 
     // Pre-fill fields when stock ID changes
@@ -145,6 +143,8 @@ export function EditDividendPage() {
             } else {
                 setQuarterlyDates(Array(4).fill({ exDate: '', payDate: '' }));
             }
+            setIsDirty(false);
+            setStockNameOverride(undefined);
         }
     }, [stock?.id]);
 
@@ -329,6 +329,7 @@ export function EditDividendPage() {
         }
 
         // Stay on page and show saved feedback
+        setIsDirty(false);
         setIsSavedFeedback(true);
         setTimeout(() => setIsSavedFeedback(false), 2000);
     };
@@ -381,66 +382,88 @@ export function EditDividendPage() {
     return (
         <div className="min-h-screen bg-background pb-20">
             {/* Header */}
-            <div className="flex items-center gap-4 pl-14 pr-4 py-4 md:p-4 md:pl-14 xl:pl-8 border-b border-border bg-background sticky top-0 z-40 w-full transition-all shadow-sm">
+            <div className="flex items-center gap-3 sm:gap-4 pl-14 pr-4 py-3 md:py-4 md:pl-14 xl:pl-8 border-b border-border bg-background/95 backdrop-blur sticky top-0 z-40 w-full transition-all shadow-sm">
                 <button
-                    onClick={() => navigate(-1)}
+                    type="button"
+                    onClick={handleBack}
                     className="flex items-center justify-center p-1.5 bg-white text-blue-600 border border-blue-100 shadow-md hover:bg-blue-50 transition-all font-medium rounded-lg transform active:scale-95 shrink-0"
+                    title="Zurück"
                 >
                     <ArrowLeft className="size-5" />
                     <span className="hidden md:inline text-sm ml-1.5">Zurück</span>
                 </button>
-                <div className="flex-1 flex items-center gap-3">
+                <div className="flex-1 flex items-center gap-3 min-w-0">
                     {logoUrl && (
                         <img
                             src={logoUrl}
                             alt="Logo"
-                            className="size-10 rounded-full bg-white object-contain p-1 border border-border shrink-0"
+                            className="size-9 sm:size-10 rounded-full bg-white object-contain p-1 border border-border shrink-0"
                             onError={(e) => (e.currentTarget.style.display = 'none')}
                         />
                     )}
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                         {stock ? (
-                            <div className="flex items-start gap-2 group/edit w-full min-w-[120px]">
-                                <textarea
+                            <div className="flex items-center gap-2 group/edit w-full min-w-0">
+                                <input
                                     ref={inputRef}
-                                    className="w-full text-xl md:text-2xl font-bold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1 py-2 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground resize-none leading-normal min-h-[40px]"
+                                    type="text"
+                                    className="w-full text-lg sm:text-xl md:text-2xl font-bold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1.5 py-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground truncate leading-tight"
                                     value={stockNameOverride !== undefined ? stockNameOverride : stock.name}
-                                    onChange={(e) => setStockNameOverride(e.target.value)}
-                                    rows={1}
+                                    onChange={(e) => {
+                                        setStockNameOverride(e.target.value);
+                                        setIsDirty(true);
+                                    }}
                                     placeholder="Name der Position"
                                     onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                                        if (e.key === 'Enter') {
                                             handleSubmit(e);
                                         }
                                     }}
                                 />
-                                <div className="flex flex-col gap-2 mt-1.5 pl-2 border-l border-border/50">
-                                    <button
-                                        onClick={() => inputRef.current?.focus()}
-                                        className="p-1.5 text-muted-foreground hover:text-primary hover:bg-muted/50 rounded-lg transition-all"
-                                        title="Klicken zum Bearbeiten"
-                                    >
-                                        <Pencil className="size-5" />
-                                    </button>
-                                    <button
-                                        onClick={handleSubmit}
-                                        className="p-1.5 bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg rounded-lg transition-all transform active:scale-95 flex items-center justify-center"
-                                        title="SPEICHERN (Strg + Enter)"
-                                    >
-                                        <Check className="size-5 stroke-[3]" />
-                                    </button>
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => inputRef.current?.focus()}
+                                    className="p-1.5 text-muted-foreground hover:text-primary hover:bg-muted/50 rounded-lg transition-all shrink-0"
+                                    title="Klicken zum Bearbeiten"
+                                >
+                                    <Pencil className="size-4" />
+                                </button>
                             </div>
                         ) : (
-                            <h1 className="text-xl font-bold">Dividende hinzufügen</h1>
+                            <h1 className="text-xl font-bold truncate">Dividende hinzufügen</h1>
                         )}
-                        <p className="text-sm text-muted-foreground">{stock ? stock.symbol : 'Neue Erfassung'}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">{stock ? stock.symbol : 'Neue Erfassung'}</p>
                     </div>
                 </div>
+
+                {/* Always-visible Header Speichern Button */}
+                <button
+                    type="button"
+                    onClick={handleSubmit}
+                    className={cn(
+                        "flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl font-semibold text-xs sm:text-sm transition-all transform active:scale-95 shadow-md shrink-0 ml-auto cursor-pointer",
+                        isSavedFeedback
+                            ? "bg-emerald-600 text-white shadow-emerald-500/20"
+                            : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20 hover:shadow-lg"
+                    )}
+                    title="SPEICHERN (Strg + Enter)"
+                >
+                    {isSavedFeedback ? (
+                        <>
+                            <Check className="size-4 stroke-[2.5]" />
+                            <span>Gespeichert!</span>
+                        </>
+                    ) : (
+                        <>
+                            <Save className="size-4" />
+                            <span>Speichern</span>
+                        </>
+                    )}
+                </button>
             </div>
 
-            <div className="p-4 max-w-lg mx-auto w-full">
-                <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="p-4 sm:p-6 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto w-full">
+                <form onSubmit={handleSubmit} onChangeCapture={() => setIsDirty(true)} className="space-y-6">
 
                     {/* Stock Selection if no ID passed */}
                     {!stockId && (
@@ -1361,6 +1384,54 @@ export function EditDividendPage() {
                     )}
                 </form>
             </div>
+
+            {/* Modal: Ungespeicherte Änderungen beim Klick auf Zurück */}
+            {showUnsavedModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-card border border-border rounded-2xl p-6 shadow-2xl max-w-sm w-full space-y-4">
+                        <div className="flex items-center gap-3 text-amber-500">
+                            <AlertTriangle className="size-6 shrink-0" />
+                            <h3 className="text-lg font-bold text-foreground">Änderungen speichern?</h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                            Sie haben Änderungen an <strong>{stock?.name || 'dieser Position'}</strong> vorgenommen. Möchten Sie diese vor dem Verlassen speichern?
+                        </p>
+                        <div className="flex flex-col gap-2 pt-2">
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    handleSubmit(e);
+                                    setIsDirty(false);
+                                    setShowUnsavedModal(false);
+                                    navigate(-1);
+                                }}
+                                className="w-full py-2.5 px-4 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                                <Save className="size-4" />
+                                <span>Speichern & Zurück</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsDirty(false);
+                                    setShowUnsavedModal(false);
+                                    navigate(-1);
+                                }}
+                                className="w-full py-2 px-4 bg-muted hover:bg-muted/80 text-foreground font-medium text-sm rounded-xl transition-colors cursor-pointer"
+                            >
+                                Verwerfen
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setShowUnsavedModal(false)}
+                                className="w-full py-1.5 px-4 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                            >
+                                Abbrechen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
