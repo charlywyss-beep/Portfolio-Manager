@@ -4,7 +4,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders } from 'lucide-react';
+import { ArrowLeft, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, Pencil } from 'lucide-react';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
 import { estimateMarketState } from '../utils/market';
@@ -587,10 +587,24 @@ export function StockDetail() {
                     className="bg-card border border-border hover:border-primary/50 rounded-xl p-6 shadow-sm cursor-pointer transition-colors group flex flex-col"
                     title="Daten bearbeiten"
                 >
-                    <h3 className="font-bold text-lg mb-4 flex items-center justify-between gap-2 group-hover:text-primary transition-colors">
-                        <span>Kursdaten</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil text-muted-foreground group-hover:text-primary transition-colors"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
-                    </h3>
+                    <div className="flex items-center justify-between gap-2 mb-4">
+                        <div className="flex items-center gap-2 group-hover:text-primary transition-colors">
+                            <h3 className="font-bold text-lg">Kursdaten</h3>
+                            <Pencil className="size-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/calculator?stock=${encodeURIComponent(String(stock.id))}`);
+                            }}
+                            className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-colors shadow-sm"
+                            title="Aktie direkt in Kauf / Verkauf öffnen"
+                        >
+                            <Calculator className="size-3.5" />
+                            <span>Kauf / Verkauf</span>
+                        </button>
+                    </div>
                     {positions.find(p => p.stockId === stock.id) && (() => {
                         const pos = positions.find(p => p.stockId === stock.id)!;
 

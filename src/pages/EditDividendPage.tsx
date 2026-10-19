@@ -4,7 +4,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
 import { useCurrencyFormatter } from '../utils/currency';
-import { fetchStockHistory } from '../services/yahoo-finance';
+import { fetchStockHistory, fetchStockQuote } from '../services/yahoo-finance';
 import { cn } from '../utils';
 import { computeSmartAutoParams, calculateDcfFairValue } from '../utils/fairValue';
 import { translateSector } from '../utils/sectorTranslation';
@@ -98,7 +98,17 @@ export function EditDividendPage() {
         if (stock) {
             setSymbol(stock.symbol || ''); // Pre-fill symbol
             setIsin(stock.isin || ''); // Pre-fill ISIN
-            setSector(stock.sector ? translateSector(stock.sector) : ''); // Pre-fill Sector
+            const existingSector = stock.sector ? translateSector(stock.sector) : '';
+            setSector(existingSector); // Pre-fill Sector
+            if (!existingSector && stock.symbol) {
+                fetchStockQuote(stock.symbol).then(q => {
+                    if (q && q.sector) {
+                        const translated = translateSector(q.sector);
+                        setSector(translated);
+                        updateStock(stock.id, { sector: translated });
+                    }
+                }).catch(() => {});
+            }
             setPrice(stock.currentPrice ? stock.currentPrice.toFixed(2) : '');
             setTargetPrice(stock.targetPrice ? stock.targetPrice.toFixed(2) : '');
             setSellLimit(stock.sellLimit ? stock.sellLimit.toFixed(2) : '');
@@ -738,8 +748,11 @@ export function EditDividendPage() {
                                                 <button
                                                     type="button"
                                                     onClick={async () => {
-                                                        const res = await fetchStockHistory(symbol, '1D');
-                                                        if (res.data && res.data.length > 0) {
+                                                        const [res, q] = await Promise.all([
+                                                            fetchStockHistory(symbol, '1D'),
+                                                            fetchStockQuote(symbol).catch(() => null)
+                                                        ]);
+                                                        if (res?.data && res.data.length > 0) {
                                                             let val = res.data[res.data.length - 1].value;
 
                                                             setPrice(val.toFixed(2));
@@ -752,6 +765,13 @@ export function EditDividendPage() {
                                                                 if (isFinite(yieldValue)) {
                                                                     setYieldPercent(yieldValue.toFixed(2));
                                                                 }
+                                                            }
+                                                        }
+                                                        if (q && q.sector && !sector) {
+                                                            const translated = translateSector(q.sector);
+                                                            setSector(translated);
+                                                            if (currentStockId) {
+                                                                updateStock(currentStockId, { sector: translated });
                                                             }
                                                         }
                                                     }}
