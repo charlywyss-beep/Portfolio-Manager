@@ -4,7 +4,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, RotateCcw } from 'lucide-react';
+import { ArrowLeft, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders } from 'lucide-react';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
 import { estimateMarketState } from '../utils/market';
@@ -699,16 +699,49 @@ export function StockDetail() {
                         }
 
                         const effectivePrice = stock.currentPrice || 0;
-                        const smartAuto = computeSmartAutoParams(
+                        const smartAutoConservative = computeSmartAutoParams(
                             { price: effectivePrice, dividendYield: stock.dividendYield },
                             null,
                             stock,
-                            symKey
+                            symKey,
+                            'conservative'
                         );
+                        const smartAutoQuality = computeSmartAutoParams(
+                            { price: effectivePrice, dividendYield: stock.dividendYield },
+                            null,
+                            stock,
+                            symKey,
+                            'quality'
+                        );
+
                         const isManualFv = Boolean(activeParams?.isCustom);
-                        const mosPct = activeParams?.mos ?? smartAuto.mos ?? 20;
-                        const effectiveFairValue = stock.fairValue || (activeParams?.eps > 0 ? calculateDcfFairValue(activeParams, effectivePrice).fairValue : 0);
-                        const calcBuyPrice = effectiveFairValue > 0 ? effectiveFairValue * (1 - mosPct / 100) : null;
+                        const currentValuationMode: 'conservative' | 'quality' = activeParams?.valuationMode === 'quality' ? 'quality' : 'conservative';
+                        const currentMode: 'conservative' | 'quality' | 'manual' = isManualFv ? 'manual' : currentValuationMode;
+
+                        let effectiveFairValue = 0;
+                        let calcBuyPrice: number | null = null;
+                        let mosPct = 20;
+
+                        if (currentMode === 'manual') {
+                            mosPct = activeParams?.mos ?? smartAutoConservative.mos ?? 20;
+                            effectiveFairValue = (activeParams?.manualFairValue && Number(activeParams.manualFairValue) > 0)
+                                ? Number(activeParams.manualFairValue)
+                                : (activeParams?.eps > 0 ? calculateDcfFairValue(activeParams, effectivePrice).fairValue : (stock.fairValue || 0));
+                            calcBuyPrice = effectiveFairValue > 0 ? effectiveFairValue * (1 - mosPct / 100) : null;
+                        } else if (currentMode === 'quality') {
+                            const qParams = (activeParams?.valuationMode === 'quality' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : smartAutoQuality;
+                            const dcf = calculateDcfFairValue(qParams, effectivePrice);
+                            effectiveFairValue = dcf.fairValue;
+                            calcBuyPrice = dcf.buyPrice;
+                            mosPct = dcf.mos;
+                        } else {
+                            // 'conservative'
+                            const cParams = (activeParams?.valuationMode === 'conservative' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : smartAutoConservative;
+                            const dcf = calculateDcfFairValue(cParams, effectivePrice);
+                            effectiveFairValue = dcf.fairValue;
+                            calcBuyPrice = dcf.buyPrice;
+                            mosPct = dcf.mos;
+                        }
 
                         const handleToggleFvMode = (e: React.MouseEvent) => {
                             e.stopPropagation();
@@ -724,18 +757,15 @@ export function StockDetail() {
                             const existingLocal = map[symKey] || {};
                             const existingBackup = existingLocal.customBackup || stockParams?.customBackup || (activeParams?.isCustom ? activeParams : null);
 
-                            if (isManualFv) {
-                                const manualBackupToSave = {
-                                    ...(existingBackup || activeParams || smartAuto),
-                                    ...(effectiveFairValue > 0 ? { manualFairValue: effectiveFairValue } : {}),
-                                    updatedAt: now
-                                };
-                                const autoDcf = calculateDcfFairValue(smartAuto, effectivePrice);
-                                const newAutoFv = parseFloat(autoDcf.fairValue.toFixed(2));
+                            if (currentMode === 'conservative') {
+                                // Switch to Qualität (B)
+                                const dcfQuality = calculateDcfFairValue(smartAutoQuality, effectivePrice);
+                                const newFv = parseFloat(dcfQuality.fairValue.toFixed(2));
                                 const nextEntry = {
-                                    ...smartAuto,
+                                    ...smartAutoQuality,
                                     isCustom: false,
-                                    customBackup: manualBackupToSave,
+                                    valuationMode: 'quality' as const,
+                                    ...(existingBackup ? { customBackup: existingBackup } : {}),
                                     updatedAt: now
                                 };
                                 map[symKey] = nextEntry;
@@ -746,19 +776,20 @@ export function StockDetail() {
                                 }
                                 if (stockFromContext) {
                                     updateStock(stock.id, {
-                                        ...(newAutoFv > 0 ? { fairValue: newAutoFv } : {}),
+                                        ...(newFv > 0 ? { fairValue: newFv } : {}),
                                         fairValueParams: nextEntry
                                     });
                                 } else {
                                     setVirtualStock((prev: any) => ({
                                         ...prev,
-                                        ...(newAutoFv > 0 ? { fairValue: newAutoFv } : {}),
+                                        ...(newFv > 0 ? { fairValue: newFv } : {}),
                                         fairValueParams: nextEntry
                                     }));
                                 }
-                            } else {
+                            } else if (currentMode === 'quality') {
+                                // Switch to Manuell
                                 const backupToRestore = existingBackup || {
-                                    ...(activeParams || smartAuto),
+                                    ...(activeParams || smartAutoQuality),
                                     ...(effectiveFairValue > 0 ? { manualFairValue: effectiveFairValue } : {})
                                 };
                                 const restoredDcf = calculateDcfFairValue(backupToRestore, effectivePrice);
@@ -789,6 +820,40 @@ export function StockDetail() {
                                         fairValueParams: nextEntry
                                     }));
                                 }
+                            } else {
+                                // Switch from Manuell to Sicherheit (A)
+                                const manualBackupToSave = {
+                                    ...(existingBackup || activeParams || smartAutoConservative),
+                                    ...(effectiveFairValue > 0 ? { manualFairValue: effectiveFairValue } : {}),
+                                    updatedAt: now
+                                };
+                                const dcfConservative = calculateDcfFairValue(smartAutoConservative, effectivePrice);
+                                const newAutoFv = parseFloat(dcfConservative.fairValue.toFixed(2));
+                                const nextEntry = {
+                                    ...smartAutoConservative,
+                                    isCustom: false,
+                                    valuationMode: 'conservative' as const,
+                                    customBackup: manualBackupToSave,
+                                    updatedAt: now
+                                };
+                                map[symKey] = nextEntry;
+                                try {
+                                    localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                                } catch {
+                                    // ignore
+                                }
+                                if (stockFromContext) {
+                                    updateStock(stock.id, {
+                                        ...(newAutoFv > 0 ? { fairValue: newAutoFv } : {}),
+                                        fairValueParams: nextEntry
+                                    });
+                                } else {
+                                    setVirtualStock((prev: any) => ({
+                                        ...prev,
+                                        ...(newAutoFv > 0 ? { fairValue: newAutoFv } : {}),
+                                        fairValueParams: nextEntry
+                                    }));
+                                }
                             }
                             setFvModeTick(t => t + 1);
                         };
@@ -801,21 +866,39 @@ export function StockDetail() {
                                         onClick={handleToggleFvMode}
                                         className={cn(
                                             "flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded border transition-colors cursor-pointer",
-                                            isManualFv
+                                            currentMode === 'manual'
                                                 ? "text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40"
-                                                : "text-blue-400 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/40"
+                                                : currentMode === 'quality'
+                                                    ? "text-purple-400 bg-purple-500/15 hover:bg-purple-500/25 border-purple-500/40"
+                                                    : "text-blue-400 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/40"
                                         )}
-                                        title="Klicken, um zwischen Kaufpreis (Manuell) und Kaufpreis (Auto) zu wechseln"
+                                        title={
+                                            currentMode === 'conservative'
+                                                ? "Sicherheit (A): Klick für Wechsel zu Qualität (B)"
+                                                : currentMode === 'quality'
+                                                    ? "Qualität (B): Klick für Wechsel zu Manuell"
+                                                    : "Manuell: Klick für Wechsel zu Sicherheit (A)"
+                                        }
                                     >
-                                        <RotateCcw className="size-3 shrink-0" />
-                                        <span>{isManualFv ? 'Kaufpreis (Manuell)' : 'Kaufpreis (Auto)'}</span>
+                                        {currentMode === 'conservative' && <ShieldCheck className="size-3 shrink-0" />}
+                                        {currentMode === 'quality' && <Sparkles className="size-3 shrink-0" />}
+                                        {currentMode === 'manual' && <Sliders className="size-3 shrink-0" />}
+                                        <span>
+                                            {currentMode === 'manual'
+                                                ? 'Kaufpreis (Manuell)'
+                                                : currentMode === 'quality'
+                                                    ? 'Kaufpreis (Qualität B)'
+                                                    : 'Kaufpreis (Sicherheit A)'}
+                                        </span>
                                     </button>
                                     <span className={cn(
                                         "font-medium text-sm tabular-nums",
                                         calcBuyPrice !== null
-                                            ? isManualFv
+                                            ? currentMode === 'manual'
                                                 ? "text-emerald-400"
-                                                : "text-blue-400"
+                                                : currentMode === 'quality'
+                                                    ? "text-purple-400"
+                                                    : "text-blue-400"
                                             : ""
                                     )}>
                                         {calcBuyPrice !== null ? formatCurrency(calcBuyPrice, stock.currency, false) : '-'}
@@ -826,9 +909,11 @@ export function StockDetail() {
                                     <span className={cn(
                                         "font-medium text-sm tabular-nums",
                                         effectiveFairValue > 0
-                                            ? isManualFv
+                                            ? currentMode === 'manual'
                                                 ? "text-emerald-400"
-                                                : "text-blue-400"
+                                                : currentMode === 'quality'
+                                                    ? "text-purple-400"
+                                                    : "text-blue-400"
                                             : ""
                                     )}>
                                         {effectiveFairValue > 0 ? formatCurrency(effectiveFairValue, stock.currency, false) : '-'}

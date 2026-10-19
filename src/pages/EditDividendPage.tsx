@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Trash2, Search, Pencil, Check, Calculator, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Trash2, Search, Pencil, Check, Calculator, ShieldCheck, Sparkles, Sliders } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
@@ -767,19 +767,36 @@ export function EditDividendPage() {
 
                                         const effectivePrice = parseFloat((price || '').toString().replace(',', '.')) || currentStockObj?.currentPrice || 0;
                                         const parsedYield = parseFloat((yieldPercent || '').toString().replace(',', '.'));
-                                        const smartAuto = computeSmartAutoParams(
-                                            {
-                                                price: effectivePrice,
-                                                dividendYield: !isNaN(parsedYield) && parsedYield >= 0 ? parsedYield : currentStockObj?.dividendYield
-                                            },
+                                        const effectiveYield = !isNaN(parsedYield) && parsedYield >= 0 ? parsedYield : currentStockObj?.dividendYield;
+                                        const smartAutoConservative = computeSmartAutoParams(
+                                            { price: effectivePrice, dividendYield: effectiveYield },
                                             null,
                                             currentStockObj,
-                                            symKey
+                                            symKey,
+                                            'conservative'
+                                        );
+                                        const smartAutoQuality = computeSmartAutoParams(
+                                            { price: effectivePrice, dividendYield: effectiveYield },
+                                            null,
+                                            currentStockObj,
+                                            symKey,
+                                            'quality'
                                         );
 
                                         const parsedFv = parseFloat((fairValue || '').toString().replace(',', '.'));
-                                        const mosPct = activeParams?.mos ?? smartAuto.mos ?? 20;
                                         const isManualFv = Boolean(activeParams?.isCustom);
+                                        const currentValuationMode: 'conservative' | 'quality' = activeParams?.valuationMode === 'quality' ? 'quality' : 'conservative';
+                                        const currentMode: 'conservative' | 'quality' | 'manual' = isManualFv ? 'manual' : currentValuationMode;
+
+                                        let mosPct = 20;
+                                        if (currentMode === 'manual') {
+                                             mosPct = activeParams?.mos ?? smartAutoConservative.mos ?? 20;
+                                        } else if (currentMode === 'quality') {
+                                             mosPct = (activeParams?.valuationMode === 'quality' && !activeParams?.isCustom && activeParams?.mos) ? activeParams.mos : smartAutoQuality.mos;
+                                        } else {
+                                             mosPct = (activeParams?.valuationMode === 'conservative' && !activeParams?.isCustom && activeParams?.mos) ? activeParams.mos : smartAutoConservative.mos;
+                                        }
+
                                         const calcBuyPrice = !isNaN(parsedFv) && parsedFv > 0 ? parsedFv * (1 - mosPct / 100) : null;
 
                                         const handleToggleFvMode = () => {
@@ -795,20 +812,15 @@ export function EditDividendPage() {
                                             const existingLocal = map[symKey] || {};
                                             const existingBackup = existingLocal.customBackup || stockParams?.customBackup || (activeParams?.isCustom ? activeParams : null);
 
-                                            if (isManualFv) {
-                                                // Switch from Manuell -> Auto
-                                                const manualBackupToSave = {
-                                                    ...(existingBackup || activeParams || smartAuto),
-                                                    ...(!isNaN(parsedFv) && parsedFv > 0 ? { manualFairValue: parsedFv } : {}),
-                                                    updatedAt: now
-                                                };
-                                                const autoDcf = calculateDcfFairValue(smartAuto, effectivePrice);
-                                                const newAutoFv = parseFloat(autoDcf.fairValue.toFixed(2));
-
+                                            if (currentMode === 'conservative') {
+                                                // Switch to Qualität (B)
+                                                const dcfQuality = calculateDcfFairValue(smartAutoQuality, effectivePrice);
+                                                const newFv = parseFloat(dcfQuality.fairValue.toFixed(2));
                                                 const nextEntry = {
-                                                    ...smartAuto,
+                                                    ...smartAutoQuality,
                                                     isCustom: false,
-                                                    customBackup: manualBackupToSave,
+                                                    valuationMode: 'quality' as const,
+                                                    ...(existingBackup ? { customBackup: existingBackup } : {}),
                                                     updatedAt: now
                                                 };
                                                 map[symKey] = nextEntry;
@@ -817,19 +829,19 @@ export function EditDividendPage() {
                                                 } catch {
                                                     // ignore
                                                 }
-                                                if (newAutoFv > 0) {
-                                                    setFairValue(newAutoFv.toFixed(2));
+                                                if (newFv > 0) {
+                                                    setFairValue(newFv.toFixed(2));
                                                 }
                                                 if (currentStockObj) {
                                                     updateStock(currentStockObj.id, {
-                                                        ...(newAutoFv > 0 ? { fairValue: newAutoFv } : {}),
+                                                        ...(newFv > 0 ? { fairValue: newFv } : {}),
                                                         fairValueParams: nextEntry
                                                     });
                                                 }
-                                            } else {
-                                                // Switch from Auto -> Manuell
+                                            } else if (currentMode === 'quality') {
+                                                // Switch to Manuell
                                                 const backupToRestore = existingBackup || {
-                                                    ...(activeParams || smartAuto),
+                                                    ...(activeParams || smartAutoQuality),
                                                     ...(!isNaN(parsedFv) && parsedFv > 0 ? { manualFairValue: parsedFv } : {})
                                                 };
                                                 const restoredDcf = calculateDcfFairValue(backupToRestore, effectivePrice);
@@ -858,6 +870,38 @@ export function EditDividendPage() {
                                                         fairValueParams: nextEntry
                                                     });
                                                 }
+                                            } else {
+                                                // Switch from Manuell to Sicherheit (A)
+                                                const manualBackupToSave = {
+                                                    ...(existingBackup || activeParams || smartAutoConservative),
+                                                    ...(!isNaN(parsedFv) && parsedFv > 0 ? { manualFairValue: parsedFv } : {}),
+                                                    updatedAt: now
+                                                };
+                                                const dcfConservative = calculateDcfFairValue(smartAutoConservative, effectivePrice);
+                                                const newAutoFv = parseFloat(dcfConservative.fairValue.toFixed(2));
+
+                                                const nextEntry = {
+                                                    ...smartAutoConservative,
+                                                    isCustom: false,
+                                                    valuationMode: 'conservative' as const,
+                                                    customBackup: manualBackupToSave,
+                                                    updatedAt: now
+                                                };
+                                                map[symKey] = nextEntry;
+                                                try {
+                                                    localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                                                } catch {
+                                                    // ignore
+                                                }
+                                                if (newAutoFv > 0) {
+                                                    setFairValue(newAutoFv.toFixed(2));
+                                                }
+                                                if (currentStockObj) {
+                                                    updateStock(currentStockObj.id, {
+                                                        ...(newAutoFv > 0 ? { fairValue: newAutoFv } : {}),
+                                                        fairValueParams: nextEntry
+                                                    });
+                                                }
                                             }
                                             setFvModeTick(t => t + 1);
                                         };
@@ -871,15 +915,32 @@ export function EditDividendPage() {
                                                             <button
                                                                 type="button"
                                                                 onClick={handleToggleFvMode}
-                                                                className={`flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
-                                                                    isManualFv
-                                                                        ? 'text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40'
-                                                                        : 'text-blue-400 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/40'
-                                                                }`}
-                                                                title="Klicken, um zwischen Kaufpreis (Manuell) und Kaufpreis (Auto) zu wechseln"
+                                                                className={cn(
+                                                                    "flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded border transition-colors cursor-pointer",
+                                                                    currentMode === 'manual'
+                                                                        ? "text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40"
+                                                                        : currentMode === 'quality'
+                                                                            ? "text-purple-400 bg-purple-500/15 hover:bg-purple-500/25 border-purple-500/40"
+                                                                            : "text-blue-400 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/40"
+                                                                )}
+                                                                title={
+                                                                    currentMode === 'conservative'
+                                                                        ? "Sicherheit (A): Klick für Wechsel zu Qualität (B)"
+                                                                        : currentMode === 'quality'
+                                                                            ? "Qualität (B): Klick für Wechsel zu Manuell"
+                                                                            : "Manuell: Klick für Wechsel zu Sicherheit (A)"
+                                                                }
                                                             >
-                                                                <RotateCcw className="size-3 shrink-0" />
-                                                                <span>{isManualFv ? 'Kaufpreis (Manuell)' : 'Kaufpreis (Auto)'}</span>
+                                                                {currentMode === 'conservative' && <ShieldCheck className="size-3 shrink-0" />}
+                                                                {currentMode === 'quality' && <Sparkles className="size-3 shrink-0" />}
+                                                                {currentMode === 'manual' && <Sliders className="size-3 shrink-0" />}
+                                                                <span>
+                                                                    {currentMode === 'manual'
+                                                                        ? 'Kaufpreis (Manuell)'
+                                                                        : currentMode === 'quality'
+                                                                            ? 'Kaufpreis (Qualität B)'
+                                                                            : 'Kaufpreis (Sicherheit A)'}
+                                                                </span>
                                                             </button>
                                                         )}
                                                     </div>
@@ -896,10 +957,15 @@ export function EditDividendPage() {
                                                         />
                                                         {calcBuyPrice !== null && (
                                                             <span
-                                                                className={`absolute right-3 top-1/2 -translate-y-1/2 font-mono font-semibold text-base pointer-events-none select-none ${
-                                                                    isManualFv ? 'text-emerald-400' : 'text-blue-400'
-                                                                }`}
-                                                                title={`Errechneter Kaufpreis inkl. ${mosPct}% Sicherheitsmarge (${isManualFv ? 'Manuelle Werte' : 'Auto-Werte'})`}
+                                                                className={cn(
+                                                                    "absolute right-3 top-1/2 -translate-y-1/2 font-mono font-semibold text-base pointer-events-none select-none",
+                                                                    currentMode === 'manual'
+                                                                        ? "text-emerald-400"
+                                                                        : currentMode === 'quality'
+                                                                            ? "text-purple-400"
+                                                                            : "text-blue-400"
+                                                                )}
+                                                                title={`Errechneter Kaufpreis inkl. ${mosPct}% Sicherheitsmarge (${currentMode === 'manual' ? 'Manuelle Werte' : currentMode === 'quality' ? 'Qualität B' : 'Sicherheit A'})`}
                                                             >
                                                                 {calcBuyPrice.toFixed(2)}
                                                             </span>
@@ -935,15 +1001,20 @@ export function EditDividendPage() {
                                                             <button
                                                                 type="button"
                                                                 onClick={handleToggleFvMode}
-                                                                className={`flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
-                                                                    isManualFv
-                                                                        ? 'text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40'
-                                                                        : 'text-blue-400 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/40'
-                                                                }`}
-                                                                title="Klicken, um zwischen Manuell und Auto zu wechseln"
+                                                                className={cn(
+                                                                    "flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded border transition-colors cursor-pointer",
+                                                                    currentMode === 'manual'
+                                                                        ? "text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40"
+                                                                        : currentMode === 'quality'
+                                                                            ? "text-purple-400 bg-purple-500/15 hover:bg-purple-500/25 border-purple-500/40"
+                                                                            : "text-blue-400 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/40"
+                                                                )}
+                                                                title="Klicken, um zwischen Sicherheit (A), Qualität (B) und Manuell zu wechseln"
                                                             >
-                                                                <RotateCcw className="size-3 shrink-0" />
-                                                                <span>{isManualFv ? 'Manuell' : 'Auto'}</span>
+                                                                {currentMode === 'conservative' && <ShieldCheck className="size-3 shrink-0" />}
+                                                                {currentMode === 'quality' && <Sparkles className="size-3 shrink-0" />}
+                                                                {currentMode === 'manual' && <Sliders className="size-3 shrink-0" />}
+                                                                <span>{currentMode === 'manual' ? 'Manuell' : currentMode === 'quality' ? 'Qualität (B)' : 'Sicherheit (A)'}</span>
                                                             </button>
                                                         )}
                                                     </div>
@@ -957,9 +1028,11 @@ export function EditDividendPage() {
                                                         className={cn(
                                                             "w-full px-3 py-2 border rounded-md bg-background text-lg mt-auto font-mono font-semibold transition-colors cursor-pointer",
                                                             !isNaN(parsedFv) && parsedFv > 0
-                                                                ? isManualFv
+                                                                ? currentMode === 'manual'
                                                                     ? "border-emerald-500/60 hover:border-emerald-400 text-emerald-400"
-                                                                    : "border-blue-500/60 hover:border-blue-400 text-blue-400"
+                                                                    : currentMode === 'quality'
+                                                                        ? "border-purple-500/60 hover:border-purple-400 text-purple-400"
+                                                                        : "border-blue-500/60 hover:border-blue-400 text-blue-400"
                                                                 : "text-foreground hover:border-primary/50"
                                                         )}
                                                     />
