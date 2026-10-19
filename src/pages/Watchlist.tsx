@@ -530,21 +530,21 @@ function WatchlistTable({
         <div
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            className="overflow-y-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
+            className="overflow-y-auto overflow-x-hidden xl:overflow-x-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] xl:snap-none xl:scroll-pt-0"
         >
-            <table className="w-full text-xs md:text-sm border-collapse table-fixed md:table-auto">
+            <table className="w-full text-xs xl:text-sm border-collapse table-fixed xl:table-auto">
                 <thead>
                     <tr className="border-b bg-muted/20">
                         {/* 0. Aktie */}
-                        <th className="px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] touch-pan-y align-middle">
+                        <th className="px-3 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[15px] xl:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] sm:w-[220px] min-w-[170px] sm:min-w-[220px] max-w-[170px] sm:max-w-[220px] xl:w-[200px] xl:min-w-[200px] xl:max-w-[200px] touch-pan-y align-middle">
                             Aktie
                         </th>
 
                         {/* 1. Div. Rendite */}
                         <th
                             className={cn(
-                                "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card md:w-[10%] align-middle",
-                                mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
+                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card xl:w-[10%] align-middle",
+                                mobileColIndex === 0 ? "table-cell" : "hidden xl:table-cell"
                             )}
                             onClick={() => {
                                 setSortConfig({
@@ -553,7 +553,7 @@ function WatchlistTable({
                                 });
                             }}
                         >
-                            <div className="flex md:hidden items-center justify-between w-full h-12">
+                            <div className="flex xl:hidden items-center justify-between w-full h-12">
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
@@ -574,7 +574,7 @@ function WatchlistTable({
                                     <ChevronRight className="size-4" />
                                 </button>
                             </div>
-                            <span className="hidden md:inline">
+                            <span className="hidden xl:inline">
                                 Div. Rendite {sortConfig.key === 'yield' && (sortConfig.direction === 'desc' ? '↓' : '↑')}
                             </span>
                         </th>
@@ -582,11 +582,11 @@ function WatchlistTable({
                         {/* 2. Aktueller Kurs */}
                         <th
                             className={cn(
-                                "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card md:w-[15%] align-middle",
-                                mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell"
+                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card xl:w-[15%] align-middle",
+                                mobileColIndex === 1 ? "table-cell" : "hidden xl:table-cell"
                             )}
                         >
-                            <div className="flex md:hidden items-center justify-between w-full h-12">
+                            <div className="flex xl:hidden items-center justify-between w-full h-12">
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
@@ -607,14 +607,14 @@ function WatchlistTable({
                                     <ChevronRight className="size-4" />
                                 </button>
                             </div>
-                            <span className="hidden md:inline">Aktueller Kurs</span>
+                            <span className="hidden xl:inline">Aktueller Kurs</span>
                         </th>
 
                         {/* 3. Kauflimit */}
                         <th
                             className={cn(
-                                "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card md:w-[15%] align-middle",
-                                mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell"
+                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card xl:w-[15%] align-middle",
+                                mobileColIndex === 2 ? "table-cell" : "hidden xl:table-cell"
                             )}
                             onClick={() => {
                                 setSortConfig({
@@ -623,7 +623,7 @@ function WatchlistTable({
                                 });
                             }}
                         >
-                            <div className="flex md:hidden items-center justify-between w-full h-12">
+                            <div className="flex xl:hidden items-center justify-between w-full h-12">
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
@@ -644,7 +644,7 @@ function WatchlistTable({
                                     <ChevronRight className="size-4" />
                                 </button>
                             </div>
-                            <span className="hidden md:inline">
+                            <span className="hidden xl:inline">
                                 Kauflimit {sortConfig.key === 'gap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
                             </span>
                         </th>
@@ -652,8 +652,8 @@ function WatchlistTable({
                         {/* 4. Verkaufslimit */}
                         <th
                             className={cn(
-                                "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card md:w-[10%] align-middle",
-                                mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell"
+                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card xl:w-[10%] align-middle",
+                                mobileColIndex === 3 ? "table-cell" : "hidden xl:table-cell"
                             )}
                             onClick={() => {
                                 setSortConfig({
@@ -662,7 +662,7 @@ function WatchlistTable({
                                 });
                             }}
                         >
-                            <div className="flex md:hidden items-center justify-between w-full h-12">
+                            <div className="flex xl:hidden items-center justify-between w-full h-12">
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
@@ -683,7 +683,7 @@ function WatchlistTable({
                                     <ChevronRight className="size-4" />
                                 </button>
                             </div>
-                            <span className="hidden md:inline">
+                            <span className="hidden xl:inline">
                                 Verkaufslimit {sortConfig.key === 'sellGap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
                             </span>
                         </th>
@@ -691,11 +691,11 @@ function WatchlistTable({
                         {/* 5. EX-Tag */}
                         <th
                             className={cn(
-                                "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card md:w-[10%] align-middle",
-                                mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell"
+                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card xl:w-[10%] align-middle",
+                                mobileColIndex === 4 ? "table-cell" : "hidden xl:table-cell"
                             )}
                         >
-                            <div className="flex md:hidden items-center justify-between w-full h-12">
+                            <div className="flex xl:hidden items-center justify-between w-full h-12">
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
@@ -716,17 +716,17 @@ function WatchlistTable({
                                     <ChevronRight className="size-4" />
                                 </button>
                             </div>
-                            <span className="hidden md:inline">EX-Tag</span>
+                            <span className="hidden xl:inline">EX-Tag</span>
                         </th>
 
                         {/* 6. Zahl-Tag */}
                         <th
                             className={cn(
-                                "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card md:w-[10%] align-middle",
-                                mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell"
+                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card xl:w-[10%] align-middle",
+                                mobileColIndex === 5 ? "table-cell" : "hidden xl:table-cell"
                             )}
                         >
-                            <div className="flex md:hidden items-center justify-between w-full h-12">
+                            <div className="flex xl:hidden items-center justify-between w-full h-12">
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
@@ -747,17 +747,17 @@ function WatchlistTable({
                                     <ChevronRight className="size-4" />
                                 </button>
                             </div>
-                            <span className="hidden md:inline">Zahl-Tag</span>
+                            <span className="hidden xl:inline">Zahl-Tag</span>
                         </th>
 
                         {/* 7. Aktionen */}
                         <th
                             className={cn(
-                                "px-1 md:px-4 md:pl-12 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:w-[110px] sticky top-0 md:sticky md:-right-px md:z-40 bg-card md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] z-30 align-middle",
-                                mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell"
+                                "px-1 xl:px-4 xl:pl-12 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:w-[110px] sticky top-0 xl:sticky xl:-right-px xl:z-40 bg-card xl:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] z-30 align-middle",
+                                mobileColIndex === 6 ? "table-cell" : "hidden xl:table-cell"
                             )}
                         >
-                            <div className="flex md:hidden items-center justify-between w-full h-12">
+                            <div className="flex xl:hidden items-center justify-between w-full h-12">
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
@@ -778,7 +778,7 @@ function WatchlistTable({
                                     <ChevronRight className="size-4" />
                                 </button>
                             </div>
-                            <span className="hidden md:inline">Aktionen</span>
+                            <span className="hidden xl:inline">Aktionen</span>
                         </th>
                     </tr>
                 </thead>
@@ -793,19 +793,19 @@ function WatchlistTable({
                         const isMarketOpen = calcState === 'REGULAR';
 
                         return (
-                            <tr key={stock.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors group snap-start snap-always h-[60px] md:h-auto">
-                                <td className="px-3 py-1.5 md:p-4 h-[60px] md:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] overflow-hidden w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] touch-pan-y align-middle">
+                            <tr key={stock.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors group snap-start snap-always h-[60px] xl:h-auto">
+                                <td className="px-3 py-1.5 xl:p-4 h-[60px] xl:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] overflow-hidden w-[170px] sm:w-[220px] min-w-[170px] sm:min-w-[220px] max-w-[170px] sm:max-w-[220px] xl:w-[200px] xl:min-w-[200px] xl:max-w-[200px] touch-pan-y align-middle">
                                     <div className="absolute inset-0 bg-card -z-10" />
-                                    <div className="flex items-center gap-2 md:gap-3 relative">
+                                    <div className="flex items-center gap-2 xl:gap-3 relative">
                                         <Logo
                                             url={stock.logoUrl}
                                             alt={stock.name}
                                             fallback={stock.symbol.slice(0, 2)}
-                                            size="size-8 md:size-10"
+                                            size="size-8 xl:size-10"
                                         />
                                         <div className="flex flex-col min-w-0 flex-1 justify-center">
                                             <span
-                                                className="font-bold text-[13px] md:text-sm truncate block group-hover:text-primary transition-colors cursor-pointer"
+                                                className="font-bold text-[13px] xl:text-sm truncate block group-hover:text-primary transition-colors cursor-pointer"
                                                 onClick={() => onNavigate(stock.id)}
                                                 title={stock.name}
                                             >
@@ -822,9 +822,9 @@ function WatchlistTable({
                                         </div>
                                     </div>
                                 </td>
-                                <td className={cn("px-3 py-1.5 md:p-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell")}>
+                                <td className={cn("px-3 py-1.5 xl:p-4 h-[60px] xl:h-auto text-right align-middle", mobileColIndex === 0 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="flex flex-col items-end justify-center gap-0.5">
-                                        <span className="font-bold text-sm md:text-sm text-green-600 dark:text-green-400 leading-tight">
+                                        <span className="font-bold text-sm xl:text-sm text-green-600 dark:text-green-400 leading-tight">
                                             {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
                                         </span>
                                         <span className="text-[11px] text-muted-foreground uppercase tracking-tight leading-tight">
@@ -832,9 +832,9 @@ function WatchlistTable({
                                         </span>
                                     </div>
                                 </td>
-                                <td className={cn("px-3 py-1.5 md:p-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell")}>
+                                <td className={cn("px-3 py-1.5 xl:p-4 h-[60px] xl:h-auto text-right align-middle", mobileColIndex === 1 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="flex flex-col items-end justify-center gap-0.5">
-                                        <span className="font-bold text-[15px] md:text-sm text-foreground whitespace-nowrap leading-tight">
+                                        <span className="font-bold text-[15px] xl:text-sm text-foreground whitespace-nowrap leading-tight">
                                             {formatCurrency(stock.currentPrice, stock.currency, false)}
                                         </span>
                                         {stock.previousClose !== undefined && (
@@ -849,14 +849,14 @@ function WatchlistTable({
                                         )}
                                     </div>
                                 </td>
-                                <td className={cn("px-3 py-1.5 md:p-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell")}>
+                                <td className={cn("px-3 py-1.5 xl:p-4 h-[60px] xl:h-auto text-right align-middle", mobileColIndex === 2 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="flex flex-col items-end justify-center gap-0.5">
                                         <div className="flex items-center gap-1.5">
                                             {isUnderTarget && (
                                                 <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0" title="Limit erreicht!" />
                                             )}
                                             <span className={cn(
-                                                "font-bold text-[15px] md:text-sm whitespace-nowrap leading-tight",
+                                                "font-bold text-[15px] xl:text-sm whitespace-nowrap leading-tight",
                                                 isUnderTarget ? "text-green-600 dark:text-green-400" : "text-foreground"
                                             )}>
                                                 {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
@@ -876,14 +876,14 @@ function WatchlistTable({
                                         })() : null}
                                     </div>
                                 </td>
-                                <td className={cn("px-3 py-1.5 md:p-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell")}>
+                                <td className={cn("px-3 py-1.5 xl:p-4 h-[60px] xl:h-auto text-right align-middle", mobileColIndex === 3 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="flex flex-col items-end justify-center gap-0.5">
                                         <div className="flex items-center gap-1.5">
                                             {isOverSell && (
                                                 <div className="size-2.5 rounded-full bg-green-500 animate-pulse shrink-0" title="Verkaufslimit erreicht!" />
                                             )}
                                             <span className={cn(
-                                                "font-bold text-[15px] md:text-sm whitespace-nowrap leading-tight",
+                                                "font-bold text-[15px] xl:text-sm whitespace-nowrap leading-tight",
                                                 isOverSell ? "text-green-600 dark:text-green-400" : "text-foreground"
                                             )}>
                                                 {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency, false) : '-'}
@@ -903,10 +903,10 @@ function WatchlistTable({
                                         })() : null}
                                     </div>
                                 </td>
-                                <td className={cn("px-3 py-1.5 md:p-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell")}>
+                                <td className={cn("px-3 py-1.5 xl:p-4 h-[60px] xl:h-auto text-right align-middle", mobileColIndex === 4 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="flex flex-col items-end justify-center gap-0.5">
                                         <span className={cn(
-                                            "font-bold text-[15px] md:text-sm whitespace-nowrap leading-tight",
+                                            "font-bold text-[15px] xl:text-sm whitespace-nowrap leading-tight",
                                             (() => {
                                                 const dDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
                                                 if (dDays !== null && dDays < 0) return "text-red-500 dark:text-red-400 font-medium";
@@ -926,10 +926,10 @@ function WatchlistTable({
                                         )}
                                     </div>
                                 </td>
-                                <td className={cn("px-3 py-1.5 md:p-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell")}>
+                                <td className={cn("px-3 py-1.5 xl:p-4 h-[60px] xl:h-auto text-right align-middle", mobileColIndex === 5 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="flex flex-col items-end justify-center gap-0.5">
                                         <span className={cn(
-                                            "font-bold text-[15px] md:text-sm whitespace-nowrap leading-tight",
+                                            "font-bold text-[15px] xl:text-sm whitespace-nowrap leading-tight",
                                             (() => {
                                                 const payDays = currentDiv.payDate ? Math.ceil((new Date(currentDiv.payDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
                                                 const exDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
@@ -950,7 +950,7 @@ function WatchlistTable({
                                         )}
                                     </div>
                                 </td>
-                                <td className={cn("px-2 py-1.5 md:p-4 h-[60px] md:h-auto md:pl-12 md:sticky md:-right-px z-10 group-hover:bg-muted/30 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle", mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell")}>
+                                <td className={cn("px-2 py-1.5 xl:p-4 h-[60px] xl:h-auto xl:pl-12 xl:sticky xl:-right-px z-10 group-hover:bg-muted/30 transition-colors xl:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle", mobileColIndex === 6 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="absolute inset-0 bg-card -z-10" />
                                     <div className="flex items-center justify-center gap-1.5 relative">
                                         <button
