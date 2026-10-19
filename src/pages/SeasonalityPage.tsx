@@ -225,9 +225,10 @@ export function SeasonalityPage() {
                                         key={s.id}
                                         onClick={() => selectStock(s.symbol)}
                                         className={cn(
-                                            "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2",
-                                            activeSymbol === s.symbol ? "bg-primary text-primary-foreground" : "hover:bg-accent text-foreground"
+                                            "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2 min-w-0",
+                                            activeSymbol === s.symbol ? "bg-primary text-primary-foreground font-semibold" : "hover:bg-accent text-foreground"
                                         )}
+                                        title={s.name || s.symbol}
                                     >
                                         {/* Logo */}
                                         {s.logoUrl ? (
@@ -237,12 +238,9 @@ export function SeasonalityPage() {
                                                 {(s.name || s.symbol)[0]}
                                             </div>
                                         )}
-                                        {/* Name */}
-                                        <span className="font-medium truncate flex-1">
+                                        {/* Name (Volle Breite) */}
+                                        <span className="truncate flex-1 min-w-0">
                                             {s.name || s.symbol}
-                                        </span>
-                                        <span className={cn("text-xs shrink-0", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                                            {s.symbol}
                                         </span>
                                     </button>
                                 ))}
@@ -267,9 +265,10 @@ export function SeasonalityPage() {
                                             key={s.id}
                                             onClick={() => selectStock(s.symbol)}
                                             className={cn(
-                                                "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2",
-                                                activeSymbol === s.symbol ? "bg-primary text-primary-foreground" : "hover:bg-accent text-foreground"
+                                                "w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2 min-w-0",
+                                                activeSymbol === s.symbol ? "bg-primary text-primary-foreground font-semibold" : "hover:bg-accent text-foreground"
                                             )}
+                                            title={s.name || s.symbol}
                                         >
                                             {/* Logo */}
                                             {s.logoUrl ? (
@@ -279,12 +278,9 @@ export function SeasonalityPage() {
                                                     {(s.name || s.symbol)[0]}
                                                 </div>
                                             )}
-                                            {/* Name */}
-                                            <span className="font-medium truncate flex-1">
+                                            {/* Name (Volle Breite) */}
+                                            <span className="truncate flex-1 min-w-0">
                                                 {s.name || s.symbol}
-                                            </span>
-                                            <span className={cn("text-xs shrink-0", activeSymbol === s.symbol ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                                                {s.symbol}
                                             </span>
                                         </button>
                                     ))}
