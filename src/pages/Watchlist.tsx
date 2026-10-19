@@ -52,7 +52,7 @@ export function Watchlist() {
     const activeWatchlist = watchlists.find(w => w.id === activeWatchlistId) || watchlists[0];
 
     // Sorting
-    const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'yield' | 'gap' | 'sellGap', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
+    const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'yield' | 'gap' | 'sellGap' | 'price', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
 
     // Filter stocks that are in the watchlist
     const watchlistStocks = stocks
@@ -72,16 +72,24 @@ export function Watchlist() {
         })
         .sort((a, b) => {
             if (sortConfig.key === 'name') {
-                return a.name.localeCompare(b.name);
+                return sortConfig.direction === 'asc'
+                    ? a.name.localeCompare(b.name)
+                    : b.name.localeCompare(a.name);
             }
             if (sortConfig.key === 'yield') {
                 const yieldA = a.dividendYield || 0;
                 const yieldB = b.dividendYield || 0;
-                return yieldB - yieldA; // Descending
+                return sortConfig.direction === 'asc' ? yieldA - yieldB : yieldB - yieldA;
+            }
+            if (sortConfig.key === 'price') {
+                const priceA = a.currentPrice || 0;
+                const priceB = b.currentPrice || 0;
+                return sortConfig.direction === 'asc' ? priceA - priceB : priceB - priceA;
             }
             if (sortConfig.key === 'gap') {
                 const targetA = a.targetPrice || 0;
                 const targetB = b.targetPrice || 0;
+                if (!targetA && !targetB) return 0;
                 if (!targetA) return 1;
                 if (!targetB) return -1;
                 const gapA = (a.currentPrice - targetA) / targetA;
@@ -91,6 +99,7 @@ export function Watchlist() {
             if (sortConfig.key === 'sellGap') {
                 const sellA = a.sellLimit || 0;
                 const sellB = b.sellLimit || 0;
+                if (!sellA && !sellB) return 0;
                 if (!sellA) return 1;
                 if (!sellB) return -1;
                 const gapA = (a.currentPrice - sellA) / sellA;
@@ -494,12 +503,13 @@ function WatchlistTable({
 
     const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
         const touch = e.touches[0];
+        const isHeaderOrInteractive = !!(e.target as HTMLElement)?.closest('thead, button, a, input, select');
         const isStockCol = !!(e.target as HTMLElement)?.closest('th:first-child, td:first-child');
         touchStartRef.current = {
             x: touch.clientX,
             y: touch.clientY,
             time: Date.now(),
-            isStockCol
+            isStockCol: isStockCol || isHeaderOrInteractive
         };
     };
 
@@ -546,7 +556,8 @@ function WatchlistTable({
                                 "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card xl:w-[10%] align-middle",
                                 mobileColIndex === 0 ? "table-cell" : "hidden xl:table-cell"
                             )}
-                            onClick={() => {
+                            onClick={(e) => {
+                                if ((e.target as HTMLElement).closest('button')) return;
                                 setSortConfig({
                                     key: 'yield',
                                     direction: sortConfig.key === 'yield' && sortConfig.direction === 'desc' ? 'asc' : 'desc'
@@ -556,22 +567,43 @@ function WatchlistTable({
                             <div className="flex xl:hidden items-center justify-end gap-1.5 sm:gap-2 w-full h-12 pr-4 sm:pr-8 md:pr-12">
                                 <button
                                     type="button"
-                                    onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setMobileColIndex((i) => Math.max(0, i - 1));
+                                    }}
                                     disabled={mobileColIndex === 0}
-                                    className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    title="Vorherige Spalte"
+                                    aria-label="Vorherige Spalte"
                                 >
-                                    <ChevronLeft className="size-4" />
+                                    <ChevronLeft className="size-4 pointer-events-none" />
                                 </button>
-                                <span className="whitespace-nowrap text-center px-1">
+                                <span
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSortConfig({
+                                            key: 'yield',
+                                            direction: sortConfig.key === 'yield' && sortConfig.direction === 'desc' ? 'asc' : 'desc'
+                                        });
+                                    }}
+                                    className="whitespace-nowrap text-center px-1.5 cursor-pointer select-none hover:text-primary active:opacity-70 transition-opacity"
+                                >
                                     Div. Rendite {sortConfig.key === 'yield' && (sortConfig.direction === 'desc' ? '↓' : '↑')}
                                 </span>
                                 <button
                                     type="button"
-                                    onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(6, i + 1)); }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setMobileColIndex((i) => Math.min(6, i + 1));
+                                    }}
                                     disabled={mobileColIndex === 6}
-                                    className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    title="Nächste Spalte"
+                                    aria-label="Nächste Spalte"
                                 >
-                                    <ChevronRight className="size-4" />
+                                    <ChevronRight className="size-4 pointer-events-none" />
                                 </button>
                             </div>
                             <span className="hidden xl:inline">
@@ -582,32 +614,62 @@ function WatchlistTable({
                         {/* 2. Aktueller Kurs */}
                         <th
                             className={cn(
-                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card xl:w-[15%] align-middle",
+                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card xl:w-[15%] align-middle",
                                 mobileColIndex === 1 ? "table-cell" : "hidden xl:table-cell"
                             )}
+                            onClick={(e) => {
+                                if ((e.target as HTMLElement).closest('button')) return;
+                                setSortConfig({
+                                    key: 'price',
+                                    direction: sortConfig.key === 'price' && sortConfig.direction === 'desc' ? 'asc' : 'desc'
+                                });
+                            }}
                         >
                             <div className="flex xl:hidden items-center justify-end gap-1.5 sm:gap-2 w-full h-12 pr-4 sm:pr-8 md:pr-12">
                                 <button
                                     type="button"
-                                    onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setMobileColIndex((i) => Math.max(0, i - 1));
+                                    }}
                                     disabled={mobileColIndex === 0}
-                                    className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    title="Vorherige Spalte"
+                                    aria-label="Vorherige Spalte"
                                 >
-                                    <ChevronLeft className="size-4" />
+                                    <ChevronLeft className="size-4 pointer-events-none" />
                                 </button>
-                                <span className="whitespace-nowrap text-center px-1">
-                                    Aktueller Kurs
+                                <span
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSortConfig({
+                                            key: 'price',
+                                            direction: sortConfig.key === 'price' && sortConfig.direction === 'desc' ? 'asc' : 'desc'
+                                        });
+                                    }}
+                                    className="whitespace-nowrap text-center px-1.5 cursor-pointer select-none hover:text-primary active:opacity-70 transition-opacity"
+                                >
+                                    Aktueller Kurs {sortConfig.key === 'price' && (sortConfig.direction === 'desc' ? '↓' : '↑')}
                                 </span>
                                 <button
                                     type="button"
-                                    onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(6, i + 1)); }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setMobileColIndex((i) => Math.min(6, i + 1));
+                                    }}
                                     disabled={mobileColIndex === 6}
-                                    className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    title="Nächste Spalte"
+                                    aria-label="Nächste Spalte"
                                 >
-                                    <ChevronRight className="size-4" />
+                                    <ChevronRight className="size-4 pointer-events-none" />
                                 </button>
                             </div>
-                            <span className="hidden xl:inline">Aktueller Kurs</span>
+                            <span className="hidden xl:inline">
+                                Aktueller Kurs {sortConfig.key === 'price' && (sortConfig.direction === 'desc' ? '↓' : '↑')}
+                            </span>
                         </th>
 
                         {/* 3. Kauflimit */}
@@ -616,7 +678,8 @@ function WatchlistTable({
                                 "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card xl:w-[15%] align-middle",
                                 mobileColIndex === 2 ? "table-cell" : "hidden xl:table-cell"
                             )}
-                            onClick={() => {
+                            onClick={(e) => {
+                                if ((e.target as HTMLElement).closest('button')) return;
                                 setSortConfig({
                                     key: 'gap',
                                     direction: sortConfig.key === 'gap' && sortConfig.direction === 'asc' ? 'desc' : 'asc'
@@ -626,22 +689,43 @@ function WatchlistTable({
                             <div className="flex xl:hidden items-center justify-end gap-1.5 sm:gap-2 w-full h-12 pr-4 sm:pr-8 md:pr-12">
                                 <button
                                     type="button"
-                                    onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setMobileColIndex((i) => Math.max(0, i - 1));
+                                    }}
                                     disabled={mobileColIndex === 0}
-                                    className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    title="Vorherige Spalte"
+                                    aria-label="Vorherige Spalte"
                                 >
-                                    <ChevronLeft className="size-4" />
+                                    <ChevronLeft className="size-4 pointer-events-none" />
                                 </button>
-                                <span className="whitespace-nowrap text-center px-1">
+                                <span
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSortConfig({
+                                            key: 'gap',
+                                            direction: sortConfig.key === 'gap' && sortConfig.direction === 'asc' ? 'desc' : 'asc'
+                                        });
+                                    }}
+                                    className="whitespace-nowrap text-center px-1.5 cursor-pointer select-none hover:text-primary active:opacity-70 transition-opacity"
+                                >
                                     Kauflimit {sortConfig.key === 'gap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
                                 </span>
                                 <button
                                     type="button"
-                                    onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(6, i + 1)); }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setMobileColIndex((i) => Math.min(6, i + 1));
+                                    }}
                                     disabled={mobileColIndex === 6}
-                                    className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    title="Nächste Spalte"
+                                    aria-label="Nächste Spalte"
                                 >
-                                    <ChevronRight className="size-4" />
+                                    <ChevronRight className="size-4 pointer-events-none" />
                                 </button>
                             </div>
                             <span className="hidden xl:inline">
@@ -655,7 +739,8 @@ function WatchlistTable({
                                 "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card xl:w-[10%] align-middle",
                                 mobileColIndex === 3 ? "table-cell" : "hidden xl:table-cell"
                             )}
-                            onClick={() => {
+                            onClick={(e) => {
+                                if ((e.target as HTMLElement).closest('button')) return;
                                 setSortConfig({
                                     key: 'sellGap',
                                     direction: sortConfig.key === 'sellGap' && sortConfig.direction === 'asc' ? 'desc' : 'asc'
@@ -665,22 +750,43 @@ function WatchlistTable({
                             <div className="flex xl:hidden items-center justify-end gap-1.5 sm:gap-2 w-full h-12 pr-4 sm:pr-8 md:pr-12">
                                 <button
                                     type="button"
-                                    onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setMobileColIndex((i) => Math.max(0, i - 1));
+                                    }}
                                     disabled={mobileColIndex === 0}
-                                    className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    title="Vorherige Spalte"
+                                    aria-label="Vorherige Spalte"
                                 >
-                                    <ChevronLeft className="size-4" />
+                                    <ChevronLeft className="size-4 pointer-events-none" />
                                 </button>
-                                <span className="whitespace-nowrap text-center px-1">
+                                <span
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSortConfig({
+                                            key: 'sellGap',
+                                            direction: sortConfig.key === 'sellGap' && sortConfig.direction === 'asc' ? 'desc' : 'asc'
+                                        });
+                                    }}
+                                    className="whitespace-nowrap text-center px-1.5 cursor-pointer select-none hover:text-primary active:opacity-70 transition-opacity"
+                                >
                                     Verkaufslimit {sortConfig.key === 'sellGap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
                                 </span>
                                 <button
                                     type="button"
-                                    onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(6, i + 1)); }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setMobileColIndex((i) => Math.min(6, i + 1));
+                                    }}
                                     disabled={mobileColIndex === 6}
-                                    className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    title="Nächste Spalte"
+                                    aria-label="Nächste Spalte"
                                 >
-                                    <ChevronRight className="size-4" />
+                                    <ChevronRight className="size-4 pointer-events-none" />
                                 </button>
                             </div>
                             <span className="hidden xl:inline">
@@ -698,22 +804,34 @@ function WatchlistTable({
                             <div className="flex xl:hidden items-center justify-end gap-1.5 sm:gap-2 w-full h-12 pr-4 sm:pr-8 md:pr-12">
                                 <button
                                     type="button"
-                                    onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setMobileColIndex((i) => Math.max(0, i - 1));
+                                    }}
                                     disabled={mobileColIndex === 0}
-                                    className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    title="Vorherige Spalte"
+                                    aria-label="Vorherige Spalte"
                                 >
-                                    <ChevronLeft className="size-4" />
+                                    <ChevronLeft className="size-4 pointer-events-none" />
                                 </button>
-                                <span className="whitespace-nowrap text-center px-1">
+                                <span className="whitespace-nowrap text-center px-1.5 select-none">
                                     EX-Tag
                                 </span>
                                 <button
                                     type="button"
-                                    onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(6, i + 1)); }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setMobileColIndex((i) => Math.min(6, i + 1));
+                                    }}
                                     disabled={mobileColIndex === 6}
-                                    className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    title="Nächste Spalte"
+                                    aria-label="Nächste Spalte"
                                 >
-                                    <ChevronRight className="size-4" />
+                                    <ChevronRight className="size-4 pointer-events-none" />
                                 </button>
                             </div>
                             <span className="hidden xl:inline">EX-Tag</span>
@@ -729,22 +847,34 @@ function WatchlistTable({
                             <div className="flex xl:hidden items-center justify-end gap-1.5 sm:gap-2 w-full h-12 pr-4 sm:pr-8 md:pr-12">
                                 <button
                                     type="button"
-                                    onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setMobileColIndex((i) => Math.max(0, i - 1));
+                                    }}
                                     disabled={mobileColIndex === 0}
-                                    className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    title="Vorherige Spalte"
+                                    aria-label="Vorherige Spalte"
                                 >
-                                    <ChevronLeft className="size-4" />
+                                    <ChevronLeft className="size-4 pointer-events-none" />
                                 </button>
-                                <span className="whitespace-nowrap text-center px-1">
+                                <span className="whitespace-nowrap text-center px-1.5 select-none">
                                     Zahl-Tag
                                 </span>
                                 <button
                                     type="button"
-                                    onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(6, i + 1)); }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setMobileColIndex((i) => Math.min(6, i + 1));
+                                    }}
                                     disabled={mobileColIndex === 6}
-                                    className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    title="Nächste Spalte"
+                                    aria-label="Nächste Spalte"
                                 >
-                                    <ChevronRight className="size-4" />
+                                    <ChevronRight className="size-4 pointer-events-none" />
                                 </button>
                             </div>
                             <span className="hidden xl:inline">Zahl-Tag</span>
@@ -760,22 +890,34 @@ function WatchlistTable({
                             <div className="flex xl:hidden items-center justify-end gap-1.5 sm:gap-2 w-full h-12 pr-4 sm:pr-8 md:pr-12">
                                 <button
                                     type="button"
-                                    onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setMobileColIndex((i) => Math.max(0, i - 1));
+                                    }}
                                     disabled={mobileColIndex === 0}
-                                    className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    title="Vorherige Spalte"
+                                    aria-label="Vorherige Spalte"
                                 >
-                                    <ChevronLeft className="size-4" />
+                                    <ChevronLeft className="size-4 pointer-events-none" />
                                 </button>
-                                <span className="whitespace-nowrap text-center px-1">
+                                <span className="whitespace-nowrap text-center px-1.5 select-none">
                                     Aktionen
                                 </span>
                                 <button
                                     type="button"
-                                    onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(6, i + 1)); }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setMobileColIndex((i) => Math.min(6, i + 1));
+                                    }}
                                     disabled={mobileColIndex === 6}
-                                    className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    title="Nächste Spalte"
+                                    aria-label="Nächste Spalte"
                                 >
-                                    <ChevronRight className="size-4" />
+                                    <ChevronRight className="size-4 pointer-events-none" />
                                 </button>
                             </div>
                             <span className="hidden xl:inline">Aktionen</span>
