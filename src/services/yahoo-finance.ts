@@ -1,5 +1,6 @@
 
 import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
+import { translateSector } from '../utils/sectorTranslation';
 
 // Basic type for a chart data point
 export interface ChartDataPoint {
@@ -373,7 +374,7 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
                     displayName: res.displayName || null,
                     isin: res.isin || null,
                     kcv: res.kcv || null,
-                    sector: res.sector || res.industry || null
+                    sector: translateSector(res.sector, res.industry) || null
                 };
             }
         });

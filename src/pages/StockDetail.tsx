@@ -11,6 +11,7 @@ import { estimateMarketState } from '../utils/market';
 import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { cn } from '../utils';
 import { computeSmartAutoParams, calculateDcfFairValue } from '../utils/fairValue';
+import { translateSector } from '../utils/sectorTranslation';
 import { Logo } from '../components/Logo';
 import { AddToWatchlistModal } from '../components/AddToWatchlistModal'; // New Import
 
@@ -252,8 +253,8 @@ export function StockDetail() {
                     hasUpdates = true;
                 }
 
-                if (quoteResponse.countryWeights !== undefined && quoteResponse.countryWeights !== null) {
-                    updates.countryWeights = quoteResponse.countryWeights;
+                if (quoteResponse.sector && (!currentStock.sector || currentStock.sector === 'Simuliert')) {
+                    updates.sector = quoteResponse.sector;
                     hasUpdates = true;
                 }
                 
@@ -446,7 +447,7 @@ export function StockDetail() {
                                 {stock.sector && stock.sector !== 'Simuliert' && (
                                     <>
                                         <span>•</span>
-                                        <span>{stock.sector}</span>
+                                        <span>{translateSector(stock.sector)}</span>
                                     </>
                                 )}
                             </div>

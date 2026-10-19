@@ -5,6 +5,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { fetchSeasonalityData } from '../services/yahoo-finance';
 import type { MonthlySeasonality } from '../services/yahoo-finance';
 import { cn } from '../utils';
+import { translateSector } from '../utils/sectorTranslation';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 const MONTH_NAMES_FULL = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
@@ -343,7 +344,7 @@ export function SeasonalityPage() {
                                                         {activeSymbol[0]}
                                                     </div>
                                                 )}
-                                                <button
+                                                 <button
                                                     onClick={() => activeStock && navigate(`/stock/${activeStock.id}`)}
                                                     className="text-lg font-bold hover:underline leading-tight text-center"
                                                     disabled={!activeStock}
@@ -351,7 +352,16 @@ export function SeasonalityPage() {
                                                 >
                                                     {activeStock?.name || activeSymbol}
                                                 </button>
-                                                <p className="text-xs text-muted-foreground">
+                                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                                                    <span className="font-bold text-foreground">{activeSymbol}</span>
+                                                    {activeStock?.sector && activeStock.sector !== 'Simuliert' && (
+                                                        <>
+                                                            <span>•</span>
+                                                            <span>{translateSector(activeStock.sector)}</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                                <p className="text-[11px] text-muted-foreground">
                                                     {rangeYears
                                                         ? (rangeYears.start === rangeYears.end ? `${rangeYears.start}` : `${rangeYears.start} – ${rangeYears.end}`)
                                                         : `${new Date().getFullYear() - (years - 1)} – ${new Date().getFullYear()}`}

@@ -10,6 +10,7 @@ import { Eye, Plus, Trash2, Edit, ShoppingBag, RefreshCw, TrendingUp, ChevronRig
 import { Logo } from '../components/Logo';
 import { cn } from '../utils';
 import { estimateMarketState } from '../utils/market';
+import { translateSector } from '../utils/sectorTranslation';
 
 import { AddPositionModal } from '../components/AddPositionModal'; // Import AddPositionModal
 import { EditPositionModal } from '../components/EditPositionModal';
@@ -955,7 +956,13 @@ function WatchlistTable({
                                                 {stock.name}
                                             </span>
                                             <div className="flex items-center gap-1.5 mt-0.5">
-                                                <span className="text-xs text-muted-foreground uppercase truncate">{stock.symbol}</span>
+                                                <span className="text-xs font-semibold text-foreground/80 uppercase truncate">{stock.symbol}</span>
+                                                {stock.sector && stock.sector !== 'Simuliert' && (
+                                                    <>
+                                                        <span className="text-muted-foreground/40 text-[10px]">•</span>
+                                                        <span className="text-xs text-muted-foreground truncate">{translateSector(stock.sector)}</span>
+                                                    </>
+                                                )}
                                                 {isMarketOpen ? (
                                                     <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0 shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
                                                 ) : (

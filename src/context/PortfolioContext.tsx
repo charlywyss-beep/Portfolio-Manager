@@ -5,6 +5,7 @@ import { fetchStockQuotes, fetchStockPricePrecise } from '../services/yahoo-fina
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { estimateMarketState } from '../utils/market';
 import { processMonthlyContributions } from '../utils/vorsorge';
+import { translateSector } from '../utils/sectorTranslation';
 
 interface PortfolioContextType {
     positions: Position[];
@@ -135,11 +136,11 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
     const [stocks, setStocks] = useState<Stock[]>(() => {
         const loaded = safeJSONParse('portfolio_stocks', MOCK_STOCKS);
-        // Data Sanitation: Remove 'Simuliert' from sector (User Request)
+        // Data Sanitation: Remove 'Simuliert' from sector and translate English terms
         if (loaded && Array.isArray(loaded)) {
             return loaded.map((s: Stock) => ({
                 ...s,
-                sector: s.sector === 'Simuliert' ? '' : s.sector
+                sector: s.sector === 'Simuliert' ? '' : (s.sector ? translateSector(s.sector) : '')
             }));
         }
         return loaded;
@@ -557,6 +558,11 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                     finalMarketState = estimateMarketState(s.symbol, s.currency);
                 }
 
+                const shouldPopulateSector = (!s.sector || s.sector === 'Simuliert') && update.sector;
+                const currentSector = shouldPopulateSector
+                    ? update.sector
+                    : (s.sector ? translateSector(s.sector) : s.sector);
+
                 return {
                     ...s,
                     currentPrice: update.price,
@@ -566,7 +572,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                     trailingPE: update.trailingPE !== undefined ? update.trailingPE : s.trailingPE,
                     forwardPE: update.forwardPE !== undefined ? update.forwardPE : s.forwardPE,
                     eps: update.eps !== undefined ? update.eps : s.eps,
-                    dividendYield: update.dividendYield !== undefined ? (update.dividendYield !== null ? parseFloat(update.dividendYield.toFixed(2)) : undefined) : s.dividendYield
+                    dividendYield: update.dividendYield !== undefined ? (update.dividendYield !== null ? parseFloat(update.dividendYield.toFixed(2)) : undefined) : s.dividendYield,
+                    sector: currentSector
                 };
             } else {
                 // Helpful log for debugging why a stock won't update

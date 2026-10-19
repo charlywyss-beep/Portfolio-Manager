@@ -178,6 +178,18 @@ export default async function handler(req, res) {
             growthRate5Y = getRawVal(fiveYearTrend.growth);
         }
 
+        let extractedSector = quoteSummary?.summaryProfile?.sector || quoteSummary?.assetProfile?.sector || quoteBasic?.sector || null;
+        let extractedIndustry = quoteSummary?.summaryProfile?.industry || quoteSummary?.assetProfile?.industry || quoteBasic?.industry || null;
+        if (!extractedSector && fundamentalSymbol !== symbol) {
+            try {
+                const fundProfile = await yahooFinance.quoteSummary(fundamentalSymbol, { modules: ['summaryProfile', 'assetProfile'] }).catch(() => null);
+                if (fundProfile?.summaryProfile?.sector || fundProfile?.assetProfile?.sector) {
+                    extractedSector = fundProfile.summaryProfile?.sector || fundProfile.assetProfile?.sector;
+                    extractedIndustry = fundProfile.summaryProfile?.industry || fundProfile.assetProfile?.industry;
+                }
+            } catch (_) {}
+        }
+
         // Prioritize quoteBasic for price data as it's often more reliable for international stocks
         const quote = {
             symbol: symbol,
@@ -203,7 +215,9 @@ export default async function handler(req, res) {
             epsSource,
             growthRate: growthRate5Y,
             dividendYield: (quoteSummary?.summaryDetail?.dividendYield) ? quoteSummary.summaryDetail.dividendYield * 100 : (quoteBasic?.dividendYield || null),
-            country: quoteSummary?.summaryProfile?.country || null,
+            country: quoteSummary?.summaryProfile?.country || quoteSummary?.assetProfile?.country || null,
+            sector: extractedSector,
+            industry: extractedIndustry,
             kcv: kcvValue,
             // ETF Allocation Data (NEW)
             sectorWeights: (() => {

@@ -7,6 +7,7 @@ import { useCurrencyFormatter } from '../utils/currency';
 import { fetchStockHistory } from '../services/yahoo-finance';
 import { cn } from '../utils';
 import { computeSmartAutoParams, calculateDcfFairValue } from '../utils/fairValue';
+import { translateSector } from '../utils/sectorTranslation';
 
 // Helper to get annual factor
 const getFrequencyFactor = (freq: string) => {
@@ -97,7 +98,7 @@ export function EditDividendPage() {
         if (stock) {
             setSymbol(stock.symbol || ''); // Pre-fill symbol
             setIsin(stock.isin || ''); // Pre-fill ISIN
-            setSector(stock.sector || ''); // Pre-fill Sector
+            setSector(stock.sector ? translateSector(stock.sector) : ''); // Pre-fill Sector
             setPrice(stock.currentPrice ? stock.currentPrice.toFixed(2) : '');
             setTargetPrice(stock.targetPrice ? stock.targetPrice.toFixed(2) : '');
             setSellLimit(stock.sellLimit ? stock.sellLimit.toFixed(2) : '');
@@ -432,7 +433,15 @@ export function EditDividendPage() {
                         ) : (
                             <h1 className="text-xl font-bold truncate">Dividende hinzufügen</h1>
                         )}
-                        <p className="text-xs sm:text-sm text-muted-foreground truncate">{stock ? stock.symbol : 'Neue Erfassung'}</p>
+                        <div className="flex items-center gap-2 text-muted-foreground mt-0.5 text-xs sm:text-sm truncate">
+                            <span className="font-bold text-foreground">{stock ? stock.symbol : 'Neue Erfassung'}</span>
+                            {stock && (sector || stock.sector) && (sector || stock.sector) !== 'Simuliert' && (
+                                <>
+                                    <span>•</span>
+                                    <span>{translateSector(sector || stock.sector)}</span>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
 

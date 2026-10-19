@@ -6,6 +6,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { useCurrencyFormatter } from '../utils/currency';
 import { DecimalInput } from './DecimalInput';
 import { Logo } from './Logo';
+import { translateSector } from '../utils/sectorTranslation';
 
 interface AddPositionModalProps {
     isOpen: boolean;
@@ -263,7 +264,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                                             {stock.type === 'etf' && <span className="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-1.5 py-0.5 rounded">ETF</span>}
                                                         </div>
                                                         <div className="text-sm text-muted-foreground">
-                                                            {stock.symbol} • {stock.sector}
+                                                            {stock.symbol}{stock.sector && stock.sector !== 'Simuliert' ? ` • ${translateSector(stock.sector)}` : ''}
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
@@ -286,7 +287,7 @@ export function AddPositionModal({ isOpen, onClose, stocks, onAdd, preSelectedSt
                                         <div className="flex-1">
                                             <div className="font-semibold">{selectedStock.name}</div>
                                             <div className="text-sm text-muted-foreground">
-                                                {selectedStock.symbol} • {selectedStock.currentPrice.toLocaleString('de-DE', { style: 'currency', currency: selectedStock.currency === 'GBp' ? 'GBP' : selectedStock.currency })}
+                                                {selectedStock.symbol}{selectedStock.sector && selectedStock.sector !== 'Simuliert' ? ` • ${translateSector(selectedStock.sector)}` : ''} • {selectedStock.currentPrice.toLocaleString('de-DE', { style: 'currency', currency: selectedStock.currency === 'GBp' ? 'GBP' : selectedStock.currency })}
                                             </div>
                                         </div>
                                         <button type="button" onClick={() => setSelectedStock(null)} className="text-muted-foreground hover:text-foreground">

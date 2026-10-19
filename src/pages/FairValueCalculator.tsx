@@ -7,6 +7,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 
 import { fetchStockQuote, fetchStockAnalysis, searchStocks } from '../services/yahoo-finance';
 import { computeSmartAutoParams, WIDE_MOAT_QUALITY } from '../utils/fairValue';
+import { translateSector } from '../utils/sectorTranslation';
 
 // Helper Component for Stock Management List Items (Rich UI mimicking Kauf/Verkauf)
 const StockListItem = ({ stock, onClick, subtitle }: { stock: any; onClick: () => void; subtitle?: string }) => (
@@ -53,20 +54,6 @@ const StockListItem = ({ stock, onClick, subtitle }: { stock: any; onClick: () =
         </div>
     </button>
 );
-
-const SECTOR_TRANSLATIONS: Record<string, string> = {
-    'Consumer Defensive': 'Basiskonsumgüter (Defensiv)',
-    'Consumer Cyclical': 'Zyklischer Konsum',
-    'Healthcare': 'Gesundheitswesen / Pharma',
-    'Technology': 'Technologie',
-    'Financial Services': 'Finanzdienstleistungen',
-    'Industrials': 'Industrie',
-    'Energy': 'Energie',
-    'Utilities': 'Versorger',
-    'Real Estate': 'Immobilien / REITs',
-    'Basic Materials': 'Rohstoffe / Grundstoffe',
-    'Communication Services': 'Kommunikationsdienste'
-};
 
 export function FairValueCalculator() {
     const { positions, stocks, watchlists, updateStock } = usePortfolio();
@@ -697,6 +684,8 @@ export function FairValueCalculator() {
 
             if (!finalQuote.sector && existingStock?.sector) {
                 finalQuote.sector = existingStock.sector;
+            } else if (finalQuote.sector && existingStock && (!existingStock.sector || existingStock.sector === 'Simuliert')) {
+                updateStock(existingStock.id, { sector: finalQuote.sector });
             }
 
             setQuote(finalQuote);
@@ -1220,22 +1209,17 @@ export function FairValueCalculator() {
                                 >
                                     {quote?.name || stocks.find(s => s.symbol === selectedSymbol)?.name || selectedSymbol}
                                 </Link>
-                                <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-1.5 mt-0.5">
-                                    <span className="font-mono font-semibold">{selectedSymbol}</span>
-                                    <span className="opacity-30">•</span>
-                                    <span>{quote?.currency || 'USD'}</span>
+                                <div className="flex items-center gap-2 text-muted-foreground mt-0.5 text-xs md:text-sm">
+                                    <span className="font-bold text-foreground">{selectedSymbol}</span>
                                     {(() => {
                                         const stockSect = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol?.toLowerCase())?.sector;
                                         const rawSec = quote?.sector || stockSect;
-                                        if (!rawSec) return null;
-                                        const displaySec = SECTOR_TRANSLATIONS[rawSec] || rawSec;
+                                        if (!rawSec || rawSec === 'Simuliert') return null;
+                                        const displaySec = translateSector(rawSec);
                                         return (
                                             <>
-                                                <span className="opacity-30">•</span>
-                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-muted/80 border border-border/60 text-foreground">
-                                                    <span className="text-muted-foreground text-[10px]">Sektor:</span>
-                                                    <span>{displaySec}</span>
-                                                </span>
+                                                <span>•</span>
+                                                <span>{displaySec}</span>
                                             </>
                                         );
                                     })()}

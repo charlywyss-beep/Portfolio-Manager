@@ -8,6 +8,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { getCurrentDividendPeriod } from '../utils/dividend';
 import { DividendCalendarChart } from '../components/DividendCalendarChart';
+import { translateSector } from '../utils/sectorTranslation';
 
 export function DividendPlanner() {
     const navigate = useNavigate();
@@ -879,7 +880,15 @@ export function DividendPlanner() {
                                                         >
                                                             {stock.name}
                                                         </div>
-                                                        <div className="text-xs text-muted-foreground uppercase truncate mt-0.5">{stock.symbol}</div>
+                                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                                            <span className="text-xs font-semibold text-foreground/80 uppercase truncate">{stock.symbol}</span>
+                                                            {stock.sector && stock.sector !== 'Simuliert' && (
+                                                                <>
+                                                                    <span className="text-muted-foreground/40 text-[10px]">•</span>
+                                                                    <span className="text-xs text-muted-foreground truncate">{translateSector(stock.sector)}</span>
+                                                                </>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 {position.plannedPurchase?.savedAt && (

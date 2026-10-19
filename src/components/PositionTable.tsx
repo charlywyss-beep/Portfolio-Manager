@@ -4,6 +4,7 @@ import { cn } from '../utils';
 import { useCurrencyFormatter } from '../utils/currency';
 import { Logo } from './Logo';
 import { estimateMarketState } from '../utils/market';
+import { translateSector } from '../utils/sectorTranslation';
 import { Edit, Trash2, ArrowUpRight, ArrowDownRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 import { useState, useRef } from 'react';
@@ -365,20 +366,25 @@ export function PositionTable({
                                                     >
                                                         {pos.stock.name}
                                                     </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="text-[10px] sm:text-xs font-mono text-muted-foreground">{pos.stock.symbol}</div>
+                                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                                        <div className="text-[10px] sm:text-xs font-mono font-semibold text-foreground/80">{pos.stock.symbol}</div>
+                                                        {pos.stock.sector && pos.stock.sector !== 'Simuliert' && (
+                                                            <>
+                                                                <span className="text-muted-foreground/40 text-[10px]">•</span>
+                                                                <span className="text-[10px] sm:text-xs text-muted-foreground truncate">{translateSector(pos.stock.sector)}</span>
+                                                            </>
+                                                        )}
                                                         {(() => {
                                                             const calculatedState = estimateMarketState(pos.stock.symbol, pos.stock.currency);
                                                             const isMarketOpen = calculatedState === 'REGULAR';
 
                                                             return isMarketOpen ? (
-                                                                <div className="size-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calculatedState})`} />
+                                                                <div className="size-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background shrink-0" title={`Markt geöffnet (${calculatedState})`} />
                                                             ) : (
-                                                                <div className="size-2 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${calculatedState})`} />
+                                                                <div className="size-2 rounded-full bg-red-500 border border-background shrink-0" title={`Markt geschlossen (${calculatedState})`} />
                                                             );
                                                         })()}
                                                     </div>
-                                                    <div className="text-[9px] sm:text-[10px] text-muted-foreground/80">{pos.stock.sector}</div>
                                                 </div>
                                             </div>
                                         </td>
