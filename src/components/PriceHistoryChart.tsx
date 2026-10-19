@@ -432,7 +432,7 @@ export function PriceHistoryChart({
                 )}
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-6 mb-4">
                 <div className="flex bg-muted/50 p-0.5 rounded-lg items-center overflow-x-auto scroller-none max-w-full sm:max-w-fit">
                     <div className="flex flex-1">
                         {(['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
@@ -498,8 +498,8 @@ export function PriceHistoryChart({
 
                 {/* Desktop Dynamic Header Info (Replaces Tooltip) */}
                 {hoveredData && (
-                    <div className="hidden sm:flex justify-end items-center gap-4 text-sm animate-in fade-in duration-150 z-[60]">
-                        <div className="flex flex-col items-end leading-snug">
+                    <div className="hidden sm:flex items-center gap-4 text-sm animate-in fade-in duration-150 z-[60] border-l border-border/50 pl-3 sm:pl-5">
+                        <div className="flex flex-col items-start leading-snug">
                             <span className="font-bold text-sm text-foreground whitespace-nowrap">
                                 {(() => {
                                     const d = new Date(hoveredData.date);
@@ -513,7 +513,7 @@ export function PriceHistoryChart({
                             </span>
                         </div>
                         <div className="h-8 w-px bg-border" />
-                        <div className="flex flex-col items-end leading-snug">
+                        <div className="flex flex-col items-start leading-snug">
                             <div className="flex items-center gap-1.5">
                                 <div className={cn("size-2 rounded-full shrink-0 shadow-sm", isPositive ? "bg-green-500" : "bg-red-500")} />
                                 <span className="font-extrabold text-base tabular-nums text-foreground whitespace-nowrap">
@@ -525,7 +525,7 @@ export function PriceHistoryChart({
                         {hoveredData.sma200 && (
                             <>
                                 <div className="h-8 w-px bg-border" />
-                                <div className="flex flex-col items-end leading-snug">
+                                <div className="flex flex-col items-start leading-snug">
                                     <div className="flex items-center gap-1.5">
                                         <div className="size-2 rounded-full bg-amber-500 shadow-sm shrink-0" />
                                         <span className="font-bold text-sm tabular-nums text-foreground whitespace-nowrap">
