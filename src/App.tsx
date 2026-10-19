@@ -96,11 +96,14 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isCloudSyncOpen, setIsCloudSyncOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (window.innerWidth < 1280) {
+      return false;
+    }
     const saved = localStorage.getItem('sidebar_open');
     if (saved !== null) {
       return saved === 'true';
     }
-    return window.innerWidth >= 1024;
+    return true;
   });
 
   // Persist sidebar state
@@ -124,7 +127,7 @@ function App() {
 
 
   const closeSidebarOnMobile = () => {
-    if (window.innerWidth < 1024) setIsSidebarOpen(false);
+    if (window.innerWidth < 1280) setIsSidebarOpen(false);
   };
 
   return (
@@ -134,7 +137,7 @@ function App() {
           {/* Mobile Hamburger Menu Button */}
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="fixed top-4 left-4 z-[1100] p-2 bg-card border border-border rounded-lg shadow-lg lg:hidden hover:bg-accent transition-colors"
+            className="fixed top-4 left-4 z-[1100] p-2 bg-card border border-border rounded-lg shadow-lg xl:hidden hover:bg-accent transition-colors"
             aria-label="Toggle menu"
           >
             {isSidebarOpen ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -143,7 +146,7 @@ function App() {
           {/* Mobile Sidebar Overlay */}
           {isSidebarOpen && (
             <div
-              className="fixed inset-0 bg-black/50 z-[1000] lg:hidden backdrop-blur-[2px]"
+              className="fixed inset-0 bg-black/50 z-[1000] xl:hidden backdrop-blur-[2px]"
               onClick={() => setIsSidebarOpen(false)}
             />
           )}
@@ -151,14 +154,14 @@ function App() {
           {/* Sidebar */}
           <aside className={cn(
             "border-r border-border bg-card shadow-lg flex flex-col transition-all duration-300 ease-in-out overflow-hidden",
-            "fixed lg:relative z-[1001] h-full",
+            "fixed xl:relative z-[1001] h-full",
             isSidebarOpen
               ? "translate-x-0 w-fit"
-              : "-translate-x-full w-fit lg:translate-x-0 lg:w-fit lg:border-r"
+              : "-translate-x-full w-fit xl:translate-x-0 xl:w-fit xl:border-r"
           )}>
             <Link
               to="/portfolio"
-              className="flex flex-col cursor-pointer group px-6 pb-6 pt-24 lg:pt-6 border-b border-border hover:bg-muted/50 transition-colors"
+              className="flex flex-col cursor-pointer group px-6 pb-6 pt-24 xl:pt-6 border-b border-border hover:bg-muted/50 transition-colors"
               onClick={closeSidebarOnMobile}
             >
               <div className="flex items-center gap-2 mb-1">

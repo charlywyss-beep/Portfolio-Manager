@@ -186,7 +186,7 @@ export function Portfolio() {
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
                     <div className="w-full px-3 sm:px-4 py-3 sm:py-3.5 md:px-6 lg:px-6">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div className="flex items-center gap-3 pl-12 lg:pl-0 min-h-[38px]">
+                            <div className="flex items-center gap-3 pl-12 xl:pl-0 min-h-[38px]">
                                 <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
                                     <BarChart3 className="size-5 sm:size-6" />
                                 </div>

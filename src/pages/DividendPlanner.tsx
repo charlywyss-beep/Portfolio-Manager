@@ -273,7 +273,7 @@ export function DividendPlanner() {
             {/* Header - Fixed Height */}
             <div className="shrink-0 bg-background pb-2 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
-                    <div className="w-full pl-14 pr-4 py-3 sm:py-3.5 md:px-6 md:pl-14 lg:pl-6">
+                    <div className="w-full pl-14 pr-4 py-3 sm:py-3.5 md:px-6 md:pl-14 xl:pl-6">
                         <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600 dark:text-green-400 shrink-0">

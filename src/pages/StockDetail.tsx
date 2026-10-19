@@ -332,7 +332,7 @@ export function StockDetail() {
         <div className="p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16">
             {/* Sticky Header / Navigation */}
             <div className="sticky top-0 -mx-2 md:-mx-8 px-3 py-2.5 md:px-8 md:py-4 z-50 bg-background/95 backdrop-blur border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-4 md:mb-6">
-                <div className="flex items-center gap-2.5 mb-2.5 md:mb-4 pl-12 lg:pl-0">
+                <div className="flex items-center gap-2.5 mb-2.5 md:mb-4 pl-12 xl:pl-0">
                     <button
                         onClick={() => {
                             const from = searchParams.get('from');
@@ -515,625 +515,616 @@ export function StockDetail() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column: Stats & Chart */}
-                <div className="lg:col-span-2 space-y-6">
-                    {/* Price Chart */}
-                    <div className="bg-card border border-border rounded-xl pl-1 pr-1 py-6 shadow-sm min-h-[450px] flex flex-col">
-                        <div className="flex items-center justify-between gap-2 mb-4 shrink-0">
-                            {/* Left: Title */}
-                            <div className="flex items-center gap-2">
-                                <TrendingUp className="size-5 text-blue-500" />
-                                <h3 className="font-bold text-lg"><span className="md:hidden">Kurs</span><span className="hidden md:inline">Kursverlauf</span></h3>
-                            </div>
-
-                            {/* Center: Performance Button (Only if in Portfolio) */}
-                            {positions.find(p => p.stockId === stock.id) && (
-                                <button
-                                    onClick={() => navigate('/?openPerformance=true')}
-                                    className="flex items-center text-xs md:text-sm text-blue-600 hover:text-blue-700 transition-colors font-medium bg-white px-3 py-1.5 rounded-xl shadow border border-blue-100 whitespace-nowrap hover:scale-105"
-                                >
-                                    <span className="md:hidden">Zurück</span><span className="hidden md:inline">zur Performance</span>
-                                </button>
-                            )}
-
-
-                            {/* Right: Refresh Button */}
-                            <button
-                                onClick={loadData}
-                                disabled={isRefreshing}
-                                className={cn(
-                                    "inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-medium transition-all shadow-sm",
-                                    "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                                    "active:scale-95",
-                                    isRefreshing && "opacity-50 cursor-not-allowed"
-                                )}
-                                title="Daten aktualisieren"
-                            >
-                                <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
-                                <span className="whitespace-nowrap">
-                                    {isRefreshing ? 'Laden...' : lastUpdate ? `${minutesAgo} Min` : 'Laden'}
-                                </span>
-                            </button>
-                        </div>
-                        {/* Price History Chart */}
-                        <div className="flex-1 w-full min-h-0">
-                            <PriceHistoryChart
-                                currentPrice={stock.currentPrice}
-                                currency={stock.currency}
-                                trend={stock.dividendYield && stock.dividendYield > 2 ? 'up' : 'neutral'}
-                                historyData={chartData}
-                                selectedRange={timeRange}
-                                onRangeChange={(range) => setTimeRange(range)}
-                                isRealtime={true}
-                                quoteDate={quoteDate}
-                                previousClose={safePreviousClose || 0}
-                                isMarketOpen={estimateMarketState(stock.symbol, stock.currency) === 'REGULAR'}
-                                purchasePrice={position?.buyPriceAvg}
-                                sellLimit={stock.sellLimit}
-                                stockName={stock.name}
-                                stockSymbol={stock.symbol}
-                            />
-                        </div>
+            {/* Price Chart (Kursverlauf) - Über ganze Breite */}
+            <div className="bg-card border border-border rounded-xl pl-1 pr-1 py-6 shadow-sm min-h-[450px] flex flex-col w-full">
+                <div className="flex items-center justify-between gap-2 mb-4 shrink-0">
+                    {/* Left: Title */}
+                    <div className="flex items-center gap-2">
+                        <TrendingUp className="size-5 text-blue-500" />
+                        <h3 className="font-bold text-lg"><span className="md:hidden">Kurs</span><span className="hidden md:inline">Kursverlauf</span></h3>
                     </div>
 
-                    {/* NEW: ETF Allocation Breakdown */}
-                    {stock.type === 'etf' && (() => {
-                        // FALLBACK LOGIC (View-Time)
-                        const fallback = FALLBACK_ALLOCATIONS[stock.symbol];
-                        const effectiveSectorWeights = stock.sectorWeights || fallback?.sectorWeights;
-                        const effectiveCountryWeights = stock.countryWeights || fallback?.countryWeights;
+                    {/* Center: Performance Button (Only if in Portfolio) */}
+                    {positions.find(p => p.stockId === stock.id) && (
+                        <button
+                            onClick={() => navigate('/?openPerformance=true')}
+                            className="flex items-center text-xs md:text-sm text-blue-600 hover:text-blue-700 transition-colors font-medium bg-white px-3 py-1.5 rounded-xl shadow border border-blue-100 whitespace-nowrap hover:scale-105"
+                        >
+                            <span className="md:hidden">Zurück</span><span className="hidden md:inline">zur Performance</span>
+                        </button>
+                    )}
 
-                        // Normalize Helper
-                        const normalizeCountry = (country: string) => {
-                            if (!country) return 'Unbekannt';
-                            const c = country.toLowerCase().trim();
-                            if (c === 'united states' || c === 'usa' || c === 'us') return 'USA';
-                            if (c === 'united kingdom' || c === 'uk') return 'Grossbritannien';
-                            if (c === 'switzerland' || c === 'ch') return 'Schweiz';
-                            if (c === 'germany' || c === 'de') return 'Deutschland';
-                            // Add simple capitalization fallback
-                            return country.charAt(0).toUpperCase() + country.slice(1).toLowerCase();
-                        };
+
+                    {/* Right: Refresh Button */}
+                    <button
+                        onClick={loadData}
+                        disabled={isRefreshing}
+                        className={cn(
+                            "inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-medium transition-all shadow-sm",
+                            "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                            "active:scale-95",
+                            isRefreshing && "opacity-50 cursor-not-allowed"
+                        )}
+                        title="Daten aktualisieren"
+                    >
+                        <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
+                        <span className="whitespace-nowrap">
+                            {isRefreshing ? 'Laden...' : lastUpdate ? `${minutesAgo} Min` : 'Laden'}
+                        </span>
+                    </button>
+                </div>
+                {/* Price History Chart */}
+                <div className="flex-1 w-full min-h-0">
+                    <PriceHistoryChart
+                        currentPrice={stock.currentPrice}
+                        currency={stock.currency}
+                        trend={stock.dividendYield && stock.dividendYield > 2 ? 'up' : 'neutral'}
+                        historyData={chartData}
+                        selectedRange={timeRange}
+                        onRangeChange={(range) => setTimeRange(range)}
+                        isRealtime={true}
+                        quoteDate={quoteDate}
+                        previousClose={safePreviousClose || 0}
+                        isMarketOpen={estimateMarketState(stock.symbol, stock.currency) === 'REGULAR'}
+                        purchasePrice={position?.buyPriceAvg}
+                        sellLimit={stock.sellLimit}
+                        stockName={stock.name}
+                        stockSymbol={stock.symbol}
+                    />
+                </div>
+            </div>
+
+            {/* Kursdaten & Stammdaten - Darunter nebeneinander */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Kursdaten */}
+                <div
+                    onClick={() => {
+                        const from = searchParams.get('from');
+                        const query = from ? `?from=${from}` : '';
+                        navigate(`/dividends/edit/${stock.id}${query}`);
+                    }}
+                    className="bg-card border border-border hover:border-primary/50 rounded-xl p-6 shadow-sm cursor-pointer transition-colors group flex flex-col"
+                    title="Daten bearbeiten"
+                >
+                    <h3 className="font-bold text-lg mb-4 flex items-center justify-between gap-2 group-hover:text-primary transition-colors">
+                        <span>Kursdaten</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil text-muted-foreground group-hover:text-primary transition-colors"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                    </h3>
+                    {positions.find(p => p.stockId === stock.id) && (() => {
+                        const pos = positions.find(p => p.stockId === stock.id)!;
+
+                        // Native Calculation
+                        const diffNative = stock.currentPrice - pos.buyPriceAvg;
+                        const totalDiffNative = diffNative * pos.shares;
+                        const percentChangeNative = pos.buyPriceAvg > 0 ? (diffNative / pos.buyPriceAvg) * 100 : 0;
+                        const isPositiveNative = totalDiffNative >= 0;
+
+                        // CHF Calculation
+                        // 1. Total Cost in CHF (Historical)
+                        const totalCostCHF = pos.shares * pos.buyPriceAvg * (pos.averageEntryFxRate || 1);
+                        // 2. Current Value in CHF (Live)
+                        const currentValueCHF = convertToCHF(stock.currentPrice * pos.shares, stock.currency);
+                        // 3. Diff and Percent
+                        const totalDiffCHF = currentValueCHF - totalCostCHF;
+                        const percentChangeCHF = totalCostCHF > 0 ? (totalDiffCHF / totalCostCHF) * 100 : 0;
+                        const isPositiveCHF = totalDiffCHF >= 0;
+
+                        const isForeign = stock.currency !== 'CHF';
 
                         return (
-                            <div className="space-y-6">
-                                {(!effectiveSectorWeights && !effectiveCountryWeights) && (
-                                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 text-xs text-yellow-500 flex items-center gap-2">
-                                        <span className="animate-pulse">●</span>
-                                        <span>Lade Allokationsdaten von Yahoo... (Versuche ggf. Refresh oder einen US-Ticker wie VOO)</span>
-                                    </div>
-                                )}
-
-                                {(effectiveSectorWeights || effectiveCountryWeights) && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {/* Sector Allocation */}
-                                        {effectiveSectorWeights && Object.keys(effectiveSectorWeights).length > 0 && (
-                                            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                                                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                                    <TrendingUp className="size-5 text-purple-500" />
-                                                    Branchen Allokation
-                                                </h3>
-                                                <div className="space-y-3">
-                                                    {(Object.entries(effectiveSectorWeights || {}) as [string, number][])
-                                                        .sort(([, a]: [string, number], [, b]: [string, number]) => b - a)
-                                                        .slice(0, 8)
-                                                        .map(([sector, weight]: [string, number]) => {
-                                                            const displayNames: Record<string, string> = {
-                                                                'realestate': 'Immobilien',
-                                                                'healthcare': 'Gesundheitswesen',
-                                                                'basic_materials': 'Rohstoffe',
-                                                                'consumer_cyclical': 'Zykl. Konsumgüter',
-                                                                'financial_services': 'Finanzdienstl.',
-                                                                'consumer_defensive': 'Nicht-zykl. Konsum',
-                                                                'technology': 'Technologie',
-                                                                'utilities': 'Versorger',
-                                                                'financial': 'Finanzen',
-                                                                'communication_services': 'Kommunikation',
-                                                                'energy': 'Energie',
-                                                                'industrials': 'Industrie'
-                                                            };
-                                                            const name = sector.toLowerCase().replace(/\s/g, '_');
-                                                            const displayName = displayNames[name] || sector.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-
-                                                            return (
-                                                                <div key={sector} className="flex items-center justify-between text-sm">
-                                                                    <span className="text-muted-foreground">{displayName}</span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-                                                                            <div className="h-full bg-purple-500 rounded-full" style={{ width: `${weight}%` }} />
-                                                                        </div>
-                                                                        <span className="font-mono font-medium">{weight.toFixed(1)}%</span>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Country Allocation */}
-                                        {effectiveCountryWeights && Object.keys(effectiveCountryWeights).length > 0 && (
-                                            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                                                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                                    <MapIcon className="size-5 text-blue-500" />
-                                                    Länder Allokation
-                                                </h3>
-                                                <div className="space-y-3">
-                                                    {(Object.entries(effectiveCountryWeights || {}) as [string, number][])
-                                                        .sort(([, a]: [string, number], [, b]: [string, number]) => b - a)
-                                                        .slice(0, 8)
-                                                        .map(([country, weight]: [string, number]) => {
-                                                            const displayNames: Record<string, string> = {
-                                                                'us': 'USA',
-                                                                'uk': 'Grossbritannien',
-                                                                'united_kingdom': 'Grossbritannien',
-                                                                'japan': 'Japan',
-                                                                'china': 'China',
-                                                                'canada': 'Kanada',
-                                                                'france': 'Frankreich',
-                                                                'germany': 'Deutschland',
-                                                                'switzerland': 'Schweiz',
-                                                                'australia': 'Australien'
-                                                            };
-                                                            const name = country.toLowerCase().replace(/\s/g, '_');
-                                                            const displayName = normalizeCountry(displayNames[name] || country);
-
-                                                            return (
-                                                                <div key={country} className="flex items-center justify-between text-sm">
-                                                                    <span className="text-muted-foreground">{displayName}</span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-                                                                            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${weight}%` }} />
-                                                                        </div>
-                                                                        <span className="font-mono font-medium">{weight.toFixed(1)}%</span>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                </div>
-                                            </div>
+                            <>
+                                <div className="flex justify-between py-1.5 border-b border-border/50">
+                                    <span className="text-muted-foreground text-sm">Kaufpreis Ø</span>
+                                    <div className="text-right flex flex-col items-end">
+                                        <span className="font-medium text-sm tabular-nums">
+                                            {formatCurrency(pos.buyPriceAvg, stock.currency, false)}
+                                        </span>
+                                        {isForeign && (
+                                            <span className="text-[10px] text-muted-foreground tabular-nums">
+                                                Ø {formatCurrency(totalCostCHF / pos.shares, 'CHF', false)}
+                                            </span>
                                         )}
                                     </div>
-                                )}
-                            </div>
+                                </div>
+                                <div className="flex justify-between py-1.5 border-b border-border/50">
+                                    <span className="text-muted-foreground text-sm">Gewinn/Verlust</span>
+                                    <div className="text-right flex flex-col items-end">
+                                        {/* Native Gain */}
+                                        <span className={cn(
+                                            "font-bold text-sm tabular-nums",
+                                            isPositiveNative ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                        )}>
+                                            {isPositiveNative ? '+' : ''}{percentChangeNative.toFixed(2)}% ({formatCurrency(totalDiffNative, stock.currency, false)})
+                                        </span>
+
+                                        {/* CHF Gain (only if foreign) */}
+                                        {isForeign && (
+                                            <span className={cn(
+                                                "text-[10px] font-medium tabular-nums mt-0.5",
+                                                isPositiveCHF ? "text-emerald-600/80 dark:text-emerald-400/80" : "text-rose-600/80 dark:text-rose-400/80"
+                                            )}>
+                                                in CHF: {isPositiveCHF ? '+' : ''}{percentChangeCHF.toFixed(2)}% ({formatCurrency(totalDiffCHF, 'CHF', false)})
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
                         );
                     })()}
 
+                    <div className="flex justify-between py-1.5 border-b border-border/50">
+                        <span className="text-muted-foreground text-sm">Aktueller Kurs</span>
+                        <span className="font-medium text-sm">{formatCurrency(stock.currentPrice, stock.currency, false)}</span>
+                    </div>
 
+                    {/* Added Open and Previous Close in one line */}
+                    <div className="flex justify-between py-1.5 border-b border-border/50">
+                        <span className="text-muted-foreground text-sm">Eröffnung / Vortag</span>
+                        <span className="font-medium text-sm text-right">
+                            {stock.open ? formatCurrency(stock.open, stock.currency, false) : '-'} / {formatCurrency(safePreviousClose || 0, stock.currency, false)}
+                        </span>
+                    </div>
 
-                </div>
+                    <div className="flex justify-between py-1.5 border-b border-border/50">
+                        <span className="text-muted-foreground text-sm">Kauflimit</span>
+                        <span className="font-medium text-sm">
+                            {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
+                        </span>
+                    </div>
+                    <div className="flex justify-between py-1.5 border-b border-border/50">
+                        <span className="text-muted-foreground text-sm">Verkaufslimit</span>
+                        <span className="font-medium text-sm">
+                            {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency, false) : '-'}
+                        </span>
+                    </div>
+                    {(() => {
+                        void fvModeTick;
+                        const symKey = (stock.symbol || '').toUpperCase();
+                        let localParams: any = null;
+                        try {
+                            const mapRaw = localStorage.getItem('fair_value_params_map');
+                            if (symKey && mapRaw) {
+                                const map = JSON.parse(mapRaw);
+                                if (map[symKey]) localParams = map[symKey];
+                            }
+                        } catch {
+                            // ignore
+                        }
+                        const stockParams = stock.fairValueParams;
+                        let activeParams = stockParams || localParams;
+                        if (localParams && stockParams) {
+                            const localTime = localParams.updatedAt ? new Date(localParams.updatedAt).getTime() : 0;
+                            const stockTime = stockParams.updatedAt ? new Date(stockParams.updatedAt).getTime() : 0;
+                            activeParams = localTime >= stockTime ? localParams : stockParams;
+                        }
 
-                {/* Right Column: Stammdaten & Notes */}
-                <div className="lg:col-span-1 space-y-6">
+                        const effectivePrice = stock.currentPrice || 0;
+                        const smartAuto = computeSmartAutoParams(
+                            { price: effectivePrice, dividendYield: stock.dividendYield },
+                            null,
+                            stock,
+                            symKey
+                        );
+                        const isManualFv = Boolean(activeParams?.isCustom);
+                        const mosPct = activeParams?.mos ?? smartAuto.mos ?? 20;
+                        const effectiveFairValue = stock.fairValue || (activeParams?.eps > 0 ? calculateDcfFairValue(activeParams, effectivePrice).fairValue : 0);
+                        const calcBuyPrice = effectiveFairValue > 0 ? effectiveFairValue * (1 - mosPct / 100) : null;
 
-                    {/* Kursdaten - Moved to TOP as requested */}
-                    <div
-                        onClick={() => {
-                            const from = searchParams.get('from');
-                            const query = from ? `?from=${from}` : '';
-                            navigate(`/dividends/edit/${stock.id}${query}`);
-                        }}
-                        className="bg-card border border-border hover:border-primary/50 rounded-xl p-6 shadow-sm cursor-pointer transition-colors group"
-                        title="Daten bearbeiten"
-                    >
-                        <h3 className="font-bold text-lg mb-4 flex items-center justify-between gap-2 group-hover:text-primary transition-colors">
-                            <span>Kursdaten</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil text-muted-foreground group-hover:text-primary transition-colors"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
-                        </h3>
-                        {positions.find(p => p.stockId === stock.id) && (() => {
-                            const pos = positions.find(p => p.stockId === stock.id)!;
-
-                            // Native Calculation
-                            const diffNative = stock.currentPrice - pos.buyPriceAvg;
-                            const totalDiffNative = diffNative * pos.shares;
-                            const percentChangeNative = pos.buyPriceAvg > 0 ? (diffNative / pos.buyPriceAvg) * 100 : 0;
-                            const isPositiveNative = totalDiffNative >= 0;
-
-                            // CHF Calculation
-                            // 1. Total Cost in CHF (Historical)
-                            const totalCostCHF = pos.shares * pos.buyPriceAvg * (pos.averageEntryFxRate || 1);
-                            // 2. Current Value in CHF (Live)
-                            const currentValueCHF = convertToCHF(stock.currentPrice * pos.shares, stock.currency);
-                            // 3. Diff and Percent
-                            const totalDiffCHF = currentValueCHF - totalCostCHF;
-                            const percentChangeCHF = totalCostCHF > 0 ? (totalDiffCHF / totalCostCHF) * 100 : 0;
-                            const isPositiveCHF = totalDiffCHF >= 0;
-
-                            const isForeign = stock.currency !== 'CHF';
-
-                            return (
-                                <>
-                                    <div className="flex justify-between py-1.5 border-b border-border/50">
-                                        <span className="text-muted-foreground text-sm">Kaufpreis Ø</span>
-                                        <div className="text-right flex flex-col items-end">
-                                            <span className="font-medium text-sm tabular-nums">
-                                                {formatCurrency(pos.buyPriceAvg, stock.currency, false)}
-                                            </span>
-                                            {isForeign && (
-                                                <span className="text-[10px] text-muted-foreground tabular-nums">
-                                                    Ø {formatCurrency(totalCostCHF / pos.shares, 'CHF', false)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-between py-1.5 border-b border-border/50">
-                                        <span className="text-muted-foreground text-sm">Gewinn/Verlust</span>
-                                        <div className="text-right flex flex-col items-end">
-                                            {/* Native Gain */}
-                                            <span className={cn(
-                                                "font-bold text-sm tabular-nums",
-                                                isPositiveNative ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                            )}>
-                                                {isPositiveNative ? '+' : ''}{percentChangeNative.toFixed(2)}% ({formatCurrency(totalDiffNative, stock.currency, false)})
-                                            </span>
-
-                                            {/* CHF Gain (only if foreign) */}
-                                            {isForeign && (
-                                                <span className={cn(
-                                                    "text-[10px] font-medium tabular-nums mt-0.5",
-                                                    isPositiveCHF ? "text-emerald-600/80 dark:text-emerald-400/80" : "text-rose-600/80 dark:text-rose-400/80"
-                                                )}>
-                                                    in CHF: {isPositiveCHF ? '+' : ''}{percentChangeCHF.toFixed(2)}% ({formatCurrency(totalDiffCHF, 'CHF', false)})
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </>
-                            );
-                        })()}
-
-                        <div className="flex justify-between py-1.5 border-b border-border/50">
-                            <span className="text-muted-foreground text-sm">Aktueller Kurs</span>
-                            <span className="font-medium text-sm">{formatCurrency(stock.currentPrice, stock.currency, false)}</span>
-                        </div>
-
-                        {/* Added Open and Previous Close in one line */}
-                        <div className="flex justify-between py-1.5 border-b border-border/50">
-                            <span className="text-muted-foreground text-sm">Eröffnung / Vortag</span>
-                            <span className="font-medium text-sm text-right">
-                                {stock.open ? formatCurrency(stock.open, stock.currency, false) : '-'} / {formatCurrency(safePreviousClose || 0, stock.currency, false)}
-                            </span>
-                        </div>
-
-                        <div className="flex justify-between py-1.5 border-b border-border/50">
-                            <span className="text-muted-foreground text-sm">Kauflimit</span>
-                            <span className="font-medium text-sm">
-                                {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
-                            </span>
-                        </div>
-                        <div className="flex justify-between py-1.5 border-b border-border/50">
-                            <span className="text-muted-foreground text-sm">Verkaufslimit</span>
-                            <span className="font-medium text-sm">
-                                {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency, false) : '-'}
-                            </span>
-                        </div>
-                        {(() => {
-                            void fvModeTick;
-                            const symKey = (stock.symbol || '').toUpperCase();
-                            let localParams: any = null;
+                        const handleToggleFvMode = (e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            if (!symKey) return;
+                            const now = new Date().toISOString();
+                            let map: Record<string, any> = {};
                             try {
                                 const mapRaw = localStorage.getItem('fair_value_params_map');
-                                if (symKey && mapRaw) {
-                                    const map = JSON.parse(mapRaw);
-                                    if (map[symKey]) localParams = map[symKey];
-                                }
+                                if (mapRaw) map = JSON.parse(mapRaw);
                             } catch {
                                 // ignore
                             }
-                            const stockParams = stock.fairValueParams;
-                            let activeParams = stockParams || localParams;
-                            if (localParams && stockParams) {
-                                const localTime = localParams.updatedAt ? new Date(localParams.updatedAt).getTime() : 0;
-                                const stockTime = stockParams.updatedAt ? new Date(stockParams.updatedAt).getTime() : 0;
-                                activeParams = localTime >= stockTime ? localParams : stockParams;
-                            }
+                            const existingLocal = map[symKey] || {};
+                            const existingBackup = existingLocal.customBackup || stockParams?.customBackup || (activeParams?.isCustom ? activeParams : null);
 
-                            const effectivePrice = stock.currentPrice || 0;
-                            const smartAuto = computeSmartAutoParams(
-                                { price: effectivePrice, dividendYield: stock.dividendYield },
-                                null,
-                                stock,
-                                symKey
-                            );
-                            const isManualFv = Boolean(activeParams?.isCustom);
-                            const mosPct = activeParams?.mos ?? smartAuto.mos ?? 20;
-                            const effectiveFairValue = stock.fairValue || (activeParams?.eps > 0 ? calculateDcfFairValue(activeParams, effectivePrice).fairValue : 0);
-                            const calcBuyPrice = effectiveFairValue > 0 ? effectiveFairValue * (1 - mosPct / 100) : null;
-
-                            const handleToggleFvMode = (e: React.MouseEvent) => {
-                                e.stopPropagation();
-                                if (!symKey) return;
-                                const now = new Date().toISOString();
-                                let map: Record<string, any> = {};
+                            if (isManualFv) {
+                                const manualBackupToSave = {
+                                    ...(existingBackup || activeParams || smartAuto),
+                                    ...(effectiveFairValue > 0 ? { manualFairValue: effectiveFairValue } : {}),
+                                    updatedAt: now
+                                };
+                                const autoDcf = calculateDcfFairValue(smartAuto, effectivePrice);
+                                const newAutoFv = parseFloat(autoDcf.fairValue.toFixed(2));
+                                const nextEntry = {
+                                    ...smartAuto,
+                                    isCustom: false,
+                                    customBackup: manualBackupToSave,
+                                    updatedAt: now
+                                };
+                                map[symKey] = nextEntry;
                                 try {
-                                    const mapRaw = localStorage.getItem('fair_value_params_map');
-                                    if (mapRaw) map = JSON.parse(mapRaw);
+                                    localStorage.setItem('fair_value_params_map', JSON.stringify(map));
                                 } catch {
                                     // ignore
                                 }
-                                const existingLocal = map[symKey] || {};
-                                const existingBackup = existingLocal.customBackup || stockParams?.customBackup || (activeParams?.isCustom ? activeParams : null);
-
-                                if (isManualFv) {
-                                    const manualBackupToSave = {
-                                        ...(existingBackup || activeParams || smartAuto),
-                                        ...(effectiveFairValue > 0 ? { manualFairValue: effectiveFairValue } : {}),
-                                        updatedAt: now
-                                    };
-                                    const autoDcf = calculateDcfFairValue(smartAuto, effectivePrice);
-                                    const newAutoFv = parseFloat(autoDcf.fairValue.toFixed(2));
-                                    const nextEntry = {
-                                        ...smartAuto,
-                                        isCustom: false,
-                                        customBackup: manualBackupToSave,
-                                        updatedAt: now
-                                    };
-                                    map[symKey] = nextEntry;
-                                    try {
-                                        localStorage.setItem('fair_value_params_map', JSON.stringify(map));
-                                    } catch {
-                                        // ignore
-                                    }
-                                    if (stockFromContext) {
-                                        updateStock(stock.id, {
-                                            ...(newAutoFv > 0 ? { fairValue: newAutoFv } : {}),
-                                            fairValueParams: nextEntry
-                                        });
-                                    } else {
-                                        setVirtualStock((prev: any) => ({
-                                            ...prev,
-                                            ...(newAutoFv > 0 ? { fairValue: newAutoFv } : {}),
-                                            fairValueParams: nextEntry
-                                        }));
-                                    }
+                                if (stockFromContext) {
+                                    updateStock(stock.id, {
+                                        ...(newAutoFv > 0 ? { fairValue: newAutoFv } : {}),
+                                        fairValueParams: nextEntry
+                                    });
                                 } else {
-                                    const backupToRestore = existingBackup || {
-                                        ...(activeParams || smartAuto),
-                                        ...(effectiveFairValue > 0 ? { manualFairValue: effectiveFairValue } : {})
-                                    };
-                                    const restoredDcf = calculateDcfFairValue(backupToRestore, effectivePrice);
-                                    const newManualFv = (backupToRestore.manualFairValue && Number(backupToRestore.manualFairValue) > 0)
-                                        ? parseFloat(Number(backupToRestore.manualFairValue).toFixed(2))
-                                        : parseFloat(restoredDcf.fairValue.toFixed(2));
-                                    const nextEntry = {
-                                        ...backupToRestore,
-                                        isCustom: true,
-                                        customBackup: backupToRestore,
-                                        updatedAt: now
-                                    };
-                                    map[symKey] = nextEntry;
-                                    try {
-                                        localStorage.setItem('fair_value_params_map', JSON.stringify(map));
-                                    } catch {
-                                        // ignore
-                                    }
-                                    if (stockFromContext) {
-                                        updateStock(stock.id, {
-                                            ...(newManualFv > 0 ? { fairValue: newManualFv } : {}),
-                                            fairValueParams: nextEntry
-                                        });
-                                    } else {
-                                        setVirtualStock((prev: any) => ({
-                                            ...prev,
-                                            ...(newManualFv > 0 ? { fairValue: newManualFv } : {}),
-                                            fairValueParams: nextEntry
-                                        }));
-                                    }
+                                    setVirtualStock((prev: any) => ({
+                                        ...prev,
+                                        ...(newAutoFv > 0 ? { fairValue: newAutoFv } : {}),
+                                        fairValueParams: nextEntry
+                                    }));
                                 }
-                                setFvModeTick(t => t + 1);
-                            };
+                            } else {
+                                const backupToRestore = existingBackup || {
+                                    ...(activeParams || smartAuto),
+                                    ...(effectiveFairValue > 0 ? { manualFairValue: effectiveFairValue } : {})
+                                };
+                                const restoredDcf = calculateDcfFairValue(backupToRestore, effectivePrice);
+                                const newManualFv = (backupToRestore.manualFairValue && Number(backupToRestore.manualFairValue) > 0)
+                                    ? parseFloat(Number(backupToRestore.manualFairValue).toFixed(2))
+                                    : parseFloat(restoredDcf.fairValue.toFixed(2));
+                                const nextEntry = {
+                                    ...backupToRestore,
+                                    isCustom: true,
+                                    customBackup: backupToRestore,
+                                    updatedAt: now
+                                };
+                                map[symKey] = nextEntry;
+                                try {
+                                    localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                                } catch {
+                                    // ignore
+                                }
+                                if (stockFromContext) {
+                                    updateStock(stock.id, {
+                                        ...(newManualFv > 0 ? { fairValue: newManualFv } : {}),
+                                        fairValueParams: nextEntry
+                                    });
+                                } else {
+                                    setVirtualStock((prev: any) => ({
+                                        ...prev,
+                                        ...(newManualFv > 0 ? { fairValue: newManualFv } : {}),
+                                        fairValueParams: nextEntry
+                                    }));
+                                }
+                            }
+                            setFvModeTick(t => t + 1);
+                        };
 
-                            return (
-                                <>
-                                    <div className="flex items-center justify-between py-1.5 border-b border-border/50">
-                                        <button
-                                            type="button"
-                                            onClick={handleToggleFvMode}
-                                            className={cn(
-                                                "flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded border transition-colors cursor-pointer",
-                                                isManualFv
-                                                    ? "text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40"
-                                                    : "text-blue-400 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/40"
-                                            )}
-                                            title="Klicken, um zwischen Kaufpreis (Manuell) und Kaufpreis (Auto) zu wechseln"
-                                        >
-                                            <RotateCcw className="size-3 shrink-0" />
-                                            <span>{isManualFv ? 'Kaufpreis (Manuell)' : 'Kaufpreis (Auto)'}</span>
-                                        </button>
-                                        <span className={cn(
-                                            "font-medium text-sm tabular-nums",
-                                            calcBuyPrice !== null
-                                                ? isManualFv
-                                                    ? "text-emerald-400"
-                                                    : "text-blue-400"
-                                                : ""
-                                        )}>
-                                            {calcBuyPrice !== null ? formatCurrency(calcBuyPrice, stock.currency, false) : '-'}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between py-1.5 border-b border-border/50">
-                                        <span className="text-muted-foreground text-sm">Fairer Wert</span>
-                                        <span className={cn(
-                                            "font-medium text-sm tabular-nums",
-                                            effectiveFairValue > 0
-                                                ? isManualFv
-                                                    ? "text-emerald-400"
-                                                    : "text-blue-400"
-                                                : ""
-                                        )}>
-                                            {effectiveFairValue > 0 ? formatCurrency(effectiveFairValue, stock.currency, false) : '-'}
-                                        </span>
-                                    </div>
-                                </>
-                            );
-                        })()}
-                    </div>
+                        return (
+                            <>
+                                <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                                    <button
+                                        type="button"
+                                        onClick={handleToggleFvMode}
+                                        className={cn(
+                                            "flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded border transition-colors cursor-pointer",
+                                            isManualFv
+                                                ? "text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40"
+                                                : "text-blue-400 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/40"
+                                        )}
+                                        title="Klicken, um zwischen Kaufpreis (Manuell) und Kaufpreis (Auto) zu wechseln"
+                                    >
+                                        <RotateCcw className="size-3 shrink-0" />
+                                        <span>{isManualFv ? 'Kaufpreis (Manuell)' : 'Kaufpreis (Auto)'}</span>
+                                    </button>
+                                    <span className={cn(
+                                        "font-medium text-sm tabular-nums",
+                                        calcBuyPrice !== null
+                                            ? isManualFv
+                                                ? "text-emerald-400"
+                                                : "text-blue-400"
+                                            : ""
+                                    )}>
+                                        {calcBuyPrice !== null ? formatCurrency(calcBuyPrice, stock.currency, false) : '-'}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between py-1.5 border-b border-border/50">
+                                    <span className="text-muted-foreground text-sm">Fairer Wert</span>
+                                    <span className={cn(
+                                        "font-medium text-sm tabular-nums",
+                                        effectiveFairValue > 0
+                                            ? isManualFv
+                                                ? "text-emerald-400"
+                                                : "text-blue-400"
+                                            : ""
+                                    )}>
+                                        {effectiveFairValue > 0 ? formatCurrency(effectiveFairValue, stock.currency, false) : '-'}
+                                    </span>
+                                </div>
+                            </>
+                        );
+                    })()}
+                </div>
 
-                    {/* Stammdaten - Moved below Kursdaten */}
-                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                            <TrendingUp className="size-5 text-blue-500" />
-                            Stammdaten
-                        </h3>
-                        <div className="space-y-3">
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Name</span>
-                                <span className="font-medium text-sm text-right">{stock.name}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Symbol</span>
-                                <span className="font-medium text-sm font-mono">{stock.symbol}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">ISIN</span>
-                                <span className="font-medium text-sm font-mono">{stock.isin || '-'}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Typ</span>
-                                <span className="font-medium text-sm capitalize">{stock.type || 'Aktie'}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Währung</span>
-                                <span className="font-medium text-sm">{stock.currency}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">KGV (P/E)</span>
-                                <span className="font-medium text-sm">
-                                    {stock.trailingPE
-                                        ? stock.trailingPE.toFixed(2)
-                                        : (stock.forwardPE ? `${stock.forwardPE.toFixed(2)} (Fwd)` : (stock.eps && stock.eps > 0 ? (stock.currentPrice / stock.eps).toFixed(2) : '-'))}
-                                </span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">KCV (P/CF)</span>
-                                <span className={`font-medium text-sm ${kcvColorClass}`}>
-                                    {stock.kcv ? stock.kcv.toFixed(2) : '-'}
-                                </span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Div. Frequenz</span>
-                                <span className="font-medium text-sm capitalize">
-                                    {stock.dividendFrequency ? (
-                                        stock.dividendFrequency === 'quarterly' ? 'Quartalsweise' :
-                                            stock.dividendFrequency === 'monthly' ? 'Monatlich' :
-                                                stock.dividendFrequency === 'semi-annually' ? 'Halbjährlich' : 'Jährlich'
-                                    ) : '-'}
-                                </span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-border/50">
-                                <span className="text-muted-foreground text-sm">Div. Rendite</span>
-                                <span className="font-medium text-sm">
-                                    {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
-                                </span>
-                            </div>
+                {/* Stammdaten */}
+                <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
+                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                        <TrendingUp className="size-5 text-blue-500" />
+                        Stammdaten
+                    </h3>
+                    <div className="space-y-3">
+                        <div className="flex justify-between py-1.5 border-b border-border/50">
+                            <span className="text-muted-foreground text-sm">Name</span>
+                            <span className="font-medium text-sm text-right">{stock.name}</span>
+                        </div>
+                        <div className="flex justify-between py-1.5 border-b border-border/50">
+                            <span className="text-muted-foreground text-sm">Symbol</span>
+                            <span className="font-medium text-sm font-mono">{stock.symbol}</span>
+                        </div>
+                        <div className="flex justify-between py-1.5 border-b border-border/50">
+                            <span className="text-muted-foreground text-sm">ISIN</span>
+                            <span className="font-medium text-sm font-mono">{stock.isin || '-'}</span>
+                        </div>
+                        <div className="flex justify-between py-1.5 border-b border-border/50">
+                            <span className="text-muted-foreground text-sm">Typ</span>
+                            <span className="font-medium text-sm capitalize">{stock.type || 'Aktie'}</span>
+                        </div>
+                        <div className="flex justify-between py-1.5 border-b border-border/50">
+                            <span className="text-muted-foreground text-sm">Währung</span>
+                            <span className="font-medium text-sm">{stock.currency}</span>
+                        </div>
+                        <div className="flex justify-between py-1.5 border-b border-border/50">
+                            <span className="text-muted-foreground text-sm">KGV (P/E)</span>
+                            <span className="font-medium text-sm">
+                                {stock.trailingPE
+                                    ? stock.trailingPE.toFixed(2)
+                                    : (stock.forwardPE ? `${stock.forwardPE.toFixed(2)} (Fwd)` : (stock.eps && stock.eps > 0 ? (stock.currentPrice / stock.eps).toFixed(2) : '-'))}
+                            </span>
+                        </div>
+                        <div className="flex justify-between py-1.5 border-b border-border/50">
+                            <span className="text-muted-foreground text-sm">KCV (P/CF)</span>
+                            <span className={`font-medium text-sm ${kcvColorClass}`}>
+                                {stock.kcv ? stock.kcv.toFixed(2) : '-'}
+                            </span>
+                        </div>
+                        <div className="flex justify-between py-1.5 border-b border-border/50">
+                            <span className="text-muted-foreground text-sm">Div. Frequenz</span>
+                            <span className="font-medium text-sm capitalize">
+                                {stock.dividendFrequency ? (
+                                    stock.dividendFrequency === 'quarterly' ? 'Quartalsweise' :
+                                        stock.dividendFrequency === 'monthly' ? 'Monatlich' :
+                                            stock.dividendFrequency === 'semi-annually' ? 'Halbjährlich' : 'Jährlich'
+                                ) : '-'}
+                            </span>
+                        </div>
+                        <div className="flex justify-between py-1.5 border-b border-border/50">
+                            <span className="text-muted-foreground text-sm">Div. Rendite</span>
+                            <span className="font-medium text-sm">
+                                {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
+                            </span>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Right Column: Quick Links & Notes (Vertical Stack) */}
-                <div className="lg:col-span-3 flex flex-col gap-6">
-                    {/* Quick Links Card */}
-                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
-                        <h3 className="font-bold text-lg mb-4">Quick Links</h3>
-                        <div className="space-y-3 flex-1">
-                            {/* Input for adding new links */}
-                            <div className="flex gap-2">
-                                <input
-                                    type="url"
-                                    placeholder="URL einfügen oder reinziehen..."
-                                    className="flex-1 px-3 py-2 text-sm rounded-lg border border-border bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && stock && e.currentTarget.value.trim()) {
-                                            const url = e.currentTarget.value.trim();
-                                            addQuickLink(stock.id, url);
-                                            e.currentTarget.value = '';
-                                        }
-                                    }}
-                                />
-                                <button
-                                    onClick={(e) => {
-                                        const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                                        if (stock && input.value.trim()) {
-                                            addQuickLink(stock.id, input.value.trim());
-                                            input.value = '';
-                                        }
-                                    }}
-                                    className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
-                                >
-                                    + Hinzufügen
-                                </button>
+            {/* NEW: ETF Allocation Breakdown */}
+            {stock.type === 'etf' && (() => {
+                // FALLBACK LOGIC (View-Time)
+                const fallback = FALLBACK_ALLOCATIONS[stock.symbol];
+                const effectiveSectorWeights = stock.sectorWeights || fallback?.sectorWeights;
+                const effectiveCountryWeights = stock.countryWeights || fallback?.countryWeights;
+
+                // Normalize Helper
+                const normalizeCountry = (country: string) => {
+                    if (!country) return 'Unbekannt';
+                    const c = country.toLowerCase().trim();
+                    if (c === 'united states' || c === 'usa' || c === 'us') return 'USA';
+                    if (c === 'united kingdom' || c === 'uk') return 'Grossbritannien';
+                    if (c === 'switzerland' || c === 'ch') return 'Schweiz';
+                    if (c === 'germany' || c === 'de') return 'Deutschland';
+                    // Add simple capitalization fallback
+                    return country.charAt(0).toUpperCase() + country.slice(1).toLowerCase();
+                };
+
+                return (
+                    <div className="space-y-6">
+                        {(!effectiveSectorWeights && !effectiveCountryWeights) && (
+                            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 text-xs text-yellow-500 flex items-center gap-2">
+                                <span className="animate-pulse">●</span>
+                                <span>Lade Allokationsdaten von Yahoo... (Versuche ggf. Refresh oder einen US-Ticker wie VOO)</span>
                             </div>
+                        )}
 
-                            {/* List of saved links */}
-                            {stock?.quickLinks && stock.quickLinks.length > 0 && (
-                                <div className="space-y-2">
-                                    {stock.quickLinks.map((link: any) => (
-                                        <div
-                                            key={link.id}
-                                            className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group"
-                                        >
-                                            <a
-                                                href={link.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex-1 text-sm text-primary hover:underline truncate"
-                                            >
-                                                {link.label || link.url}
-                                            </a>
-                                            <button
-                                                onClick={() => removeQuickLink(stock.id, link.id)}
-                                                className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all opacity-70 hover:opacity-100"
-                                                title="Link entfernen"
-                                            >
-                                                <Trash2 className="size-4" />
-                                            </button>
+                        {(effectiveSectorWeights || effectiveCountryWeights) && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Sector Allocation */}
+                                {effectiveSectorWeights && Object.keys(effectiveSectorWeights).length > 0 && (
+                                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                                            <TrendingUp className="size-5 text-purple-500" />
+                                            Branchen Allokation
+                                        </h3>
+                                        <div className="space-y-3">
+                                            {(Object.entries(effectiveSectorWeights || {}) as [string, number][])
+                                                .sort(([, a]: [string, number], [, b]: [string, number]) => b - a)
+                                                .slice(0, 8)
+                                                .map(([sector, weight]: [string, number]) => {
+                                                    const displayNames: Record<string, string> = {
+                                                        'realestate': 'Immobilien',
+                                                        'healthcare': 'Gesundheitswesen',
+                                                        'basic_materials': 'Rohstoffe',
+                                                        'consumer_cyclical': 'Zykl. Konsumgüter',
+                                                        'financial_services': 'Finanzdienstl.',
+                                                        'consumer_defensive': 'Nicht-zykl. Konsum',
+                                                        'technology': 'Technologie',
+                                                        'utilities': 'Versorger',
+                                                        'financial': 'Finanzen',
+                                                        'communication_services': 'Kommunikation',
+                                                        'energy': 'Energie',
+                                                        'industrials': 'Industrie'
+                                                    };
+                                                    const name = sector.toLowerCase().replace(/\s/g, '_');
+                                                    const displayName = displayNames[name] || sector.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+                                                    return (
+                                                        <div key={sector} className="flex items-center justify-between text-sm">
+                                                            <span className="text-muted-foreground">{displayName}</span>
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                                                                    <div className="h-full bg-purple-500 rounded-full" style={{ width: `${weight}%` }} />
+                                                                </div>
+                                                                <span className="font-mono font-medium">{weight.toFixed(1)}%</span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* Empty state */}
-                            {(!stock?.quickLinks || stock.quickLinks.length === 0) && (
-                                <div className="flex-1 flex items-center justify-center text-center p-8">
-                                    <p className="text-sm text-muted-foreground">
-                                        Keine Links gespeichert.<br />
-                                        Füge Chart- oder Finanz-URLs hinzu.
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Notes Card */}
-                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-bold text-lg flex items-center gap-2">
-                                <Save className="size-5 text-purple-500" />
-                                Persönliche Notizen & Analyse
-                            </h3>
-                            <button
-                                onClick={handleSaveNotes}
-                                className={cn(
-                                    'px-4 py-2 rounded-lg font-medium text-sm transition-all',
-                                    isSaving
-                                        ? 'bg-green-500 text-white'
-                                        : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                                    </div>
                                 )}
+
+                                {/* Country Allocation */}
+                                {effectiveCountryWeights && Object.keys(effectiveCountryWeights).length > 0 && (
+                                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                                            <MapIcon className="size-5 text-blue-500" />
+                                            Länder Allokation
+                                        </h3>
+                                        <div className="space-y-3">
+                                            {(Object.entries(effectiveCountryWeights || {}) as [string, number][])
+                                                .sort(([, a]: [string, number], [, b]: [string, number]) => b - a)
+                                                .slice(0, 8)
+                                                .map(([country, weight]: [string, number]) => {
+                                                    const displayNames: Record<string, string> = {
+                                                        'us': 'USA',
+                                                        'uk': 'Grossbritannien',
+                                                        'united_kingdom': 'Grossbritannien',
+                                                        'japan': 'Japan',
+                                                        'china': 'China',
+                                                        'canada': 'Kanada',
+                                                        'france': 'Frankreich',
+                                                        'germany': 'Deutschland',
+                                                        'switzerland': 'Schweiz',
+                                                        'australia': 'Australien'
+                                                    };
+                                                    const name = country.toLowerCase().replace(/\s/g, '_');
+                                                    const displayName = normalizeCountry(displayNames[name] || country);
+
+                                                    return (
+                                                        <div key={country} className="flex items-center justify-between text-sm">
+                                                            <span className="text-muted-foreground">{displayName}</span>
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                                                                    <div className="h-full bg-blue-500 rounded-full" style={{ width: `${weight}%` }} />
+                                                                </div>
+                                                                <span className="font-mono font-medium">{weight.toFixed(1)}%</span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                );
+            })()}
+
+            {/* Quick Links & Notes (Vertical Stack) */}
+            <div className="flex flex-col gap-6">
+                {/* Quick Links Card */}
+                <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
+                    <h3 className="font-bold text-lg mb-4">Quick Links</h3>
+                    <div className="space-y-3 flex-1">
+                        {/* Input for adding new links */}
+                        <div className="flex gap-2">
+                            <input
+                                type="url"
+                                placeholder="URL einfügen oder reinziehen..."
+                                className="flex-1 px-3 py-2 text-sm rounded-lg border border-border bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && stock && e.currentTarget.value.trim()) {
+                                        const url = e.currentTarget.value.trim();
+                                        addQuickLink(stock.id, url);
+                                        e.currentTarget.value = '';
+                                    }
+                                }}
+                            />
+                            <button
+                                onClick={(e) => {
+                                    const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                                    if (stock && input.value.trim()) {
+                                        addQuickLink(stock.id, input.value.trim());
+                                        input.value = '';
+                                    }
+                                }}
+                                className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
                             >
-                                {isSaving ? 'Gespeichert!' : 'Speichern'}
+                                + Hinzufügen
                             </button>
                         </div>
-                        <textarea
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Schreiben Sie hier Ihre Gedanken zur Aktie (z.B. Kaufgrund, Burggraben, Risiken)..."
-                            className="flex-1 min-h-[300px] w-full p-4 rounded-lg border border-border bg-background/50 resize-y focus:outline-none focus:ring-2 focus:ring-primary/20"
-                        />
-                        <p className="text-xs text-muted-foreground mt-2">
-                            * Notizen werden nur lokal gespeichert.
-                        </p>
+
+                        {/* List of saved links */}
+                        {stock?.quickLinks && stock.quickLinks.length > 0 && (
+                            <div className="space-y-2">
+                                {stock.quickLinks.map((link: any) => (
+                                    <div
+                                        key={link.id}
+                                        className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group"
+                                    >
+                                        <a
+                                            href={link.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex-1 text-sm text-primary hover:underline truncate"
+                                        >
+                                            {link.label || link.url}
+                                        </a>
+                                        <button
+                                            onClick={() => removeQuickLink(stock.id, link.id)}
+                                            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all opacity-70 hover:opacity-100"
+                                            title="Link entfernen"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Empty state */}
+                        {(!stock?.quickLinks || stock.quickLinks.length === 0) && (
+                            <div className="flex-1 flex items-center justify-center text-center p-8">
+                                <p className="text-sm text-muted-foreground">
+                                    Keine Links gespeichert.<br />
+                                    Füge Chart- oder Finanz-URLs hinzu.
+                                </p>
+                            </div>
+                        )}
                     </div>
+                </div>
+
+                {/* Notes Card */}
+                <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-bold text-lg flex items-center gap-2">
+                            <Save className="size-5 text-purple-500" />
+                            Persönliche Notizen & Analyse
+                        </h3>
+                        <button
+                            onClick={handleSaveNotes}
+                            className={cn(
+                                'px-4 py-2 rounded-lg font-medium text-sm transition-all',
+                                isSaving
+                                    ? 'bg-green-500 text-white'
+                                    : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                            )}
+                        >
+                            {isSaving ? 'Gespeichert!' : 'Speichern'}
+                        </button>
+                    </div>
+                    <textarea
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Schreiben Sie hier Ihre Gedanken zur Aktie (z.B. Kaufgrund, Burggraben, Risiken)..."
+                        className="flex-1 min-h-[300px] w-full p-4 rounded-lg border border-border bg-background/50 resize-y focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                        * Notizen werden nur lokal gespeichert.
+                    </p>
                 </div>
             </div>
             {

@@ -1060,7 +1060,7 @@ export function FairValueCalculator() {
             {/* STICKY HEADER & ACTIVE STOCK / SEARCH BAR */}
             <div className="sticky top-0 z-40 bg-background/95 backdrop-blur -mx-3 sm:-mx-4 md:-mx-6 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 -mt-4 border-b border-border shadow-sm space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pl-11 lg:pl-0">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pl-11 xl:pl-0">
                         <div className="size-8 sm:size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner shrink-0">
                             <Telescope className="size-4 sm:size-6" />
                         </div>

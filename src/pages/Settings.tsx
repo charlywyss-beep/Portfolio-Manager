@@ -257,7 +257,7 @@ export function Settings() {
 
     return (
         <div className="px-3 sm:px-6 py-4 sm:py-6 md:p-8 space-y-6 sm:space-y-8 animate-in fade-in duration-500 max-w-full overflow-hidden">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mb-6 sm:mb-8 pl-11 lg:pl-0">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mb-6 sm:mb-8 pl-11 xl:pl-0">
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Einstellungen</h1>
                 <p className="text-xs sm:text-sm text-muted-foreground">Verwalten Sie Ihre Daten-Backups und Systemeinstellungen.</p>
             </div>
