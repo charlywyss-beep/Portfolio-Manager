@@ -14,8 +14,8 @@ export function DividendPlanner() {
     const { stocks, positions, fixedDeposits, deleteFixedDeposit, lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices } = usePortfolio();
     const { convertToCHF } = useCurrencyFormatter();
 
-    // 0: Anteile, 1: Rendite %, 2: Div./Akt., 3: Frequenz, 4: Quartalsweise, 5: Jährlich, 6: EX-Tag, 7: Zahl-Tag, 8: Aktion
-    const [mobileColIndex, setMobileColIndex] = useState(1);
+    // Main table: 0: [Anteile, Rendite %], 1: [Div./Akt., Frequenz], 2: [Frequenzweise, Jährlich], 3: [EX-Tag, Zahl-Tag], 4: [Aktion]
+    const [mobilePage, setMobilePage] = useState(0);
     const touchStartRef = useRef<{ x: number; y: number; time: number; isStockCol: boolean } | null>(null);
 
     const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
@@ -42,16 +42,16 @@ export function DividendPlanner() {
         // Horizontal swipe: only when touch started to the right of the "Aktie" column (> 140px)
         if (touchStartRef.current.x > 140 && Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy) * 1.2 && dt < 700) {
             if (dx < 0) {
-                setMobileColIndex((i) => Math.min(8, i + 1));
+                setMobilePage((p) => Math.min(4, p + 1));
             } else {
-                setMobileColIndex((i) => Math.max(0, i - 1));
+                setMobilePage((p) => Math.max(0, p - 1));
             }
         }
         touchStartRef.current = null;
     };
 
-    // Bank Erträge: 0: Betrag, 1: Zins %, 2: Ø Monatlich, 3: Frequenz, 4: Quartalsweise, 5: Jährlich, 6: Aktion
-    const [mobileBankColIndex, setMobileBankColIndex] = useState(2); // Default: Ø Monatlich
+    // Bank Erträge: 0: [Betrag, Zins %], 1: [Ø Monatlich, Frequenz], 2: [Quartalsweise, Jährlich], 3: [Aktion]
+    const [mobileBankPage, setMobileBankPage] = useState(0);
     const bankTouchStartRef = useRef<{ x: number; y: number; time: number; isStockCol: boolean } | null>(null);
 
     const handleBankTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
@@ -78,9 +78,9 @@ export function DividendPlanner() {
         // Horizontal swipe: only when touch started to the right of the first column (> 140px)
         if (bankTouchStartRef.current.x > 140 && Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy) * 1.2 && dt < 700) {
             if (dx < 0) {
-                setMobileBankColIndex((i) => Math.min(6, i + 1));
+                setMobileBankPage((p) => Math.min(3, p + 1));
             } else {
-                setMobileBankColIndex((i) => Math.max(0, i - 1));
+                setMobileBankPage((p) => Math.max(0, p - 1));
             }
         }
         bankTouchStartRef.current = null;
@@ -215,6 +215,20 @@ export function DividendPlanner() {
     // Sorting
     const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'yield' | 'amount' | 'date', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
 
+    const handleSort = (key: 'name' | 'yield' | 'amount' | 'date') => {
+        setSortConfig((prev) => {
+            const isSameKey = prev.key === key;
+            const defaultDir = key === 'name' ? 'asc' : 'desc';
+            let newDir: 'asc' | 'desc';
+            if (!isSameKey) {
+                newDir = defaultDir;
+            } else {
+                newDir = prev.direction === 'desc' ? 'asc' : 'desc';
+            }
+            return { key, direction: newDir };
+        });
+    };
+
     // Persistent Tab State
     const [activeDivTab, setActiveDivTab] = useState<'dividends' | 'bank' | 'calendar'>(() => {
         const saved = localStorage.getItem('dividend_active_tab');
@@ -229,21 +243,27 @@ export function DividendPlanner() {
     projectedDividends.sort((a, b) => {
         if (!a || !b) return 0;
         if (sortConfig.key === 'name') {
-            return a.stock.name.localeCompare(b.stock.name);
+            return sortConfig.direction === 'asc'
+                ? a.stock.name.localeCompare(b.stock.name)
+                : b.stock.name.localeCompare(a.stock.name);
         }
         if (sortConfig.key === 'yield') {
             const yieldA = a.stock.dividendYield || 0;
             const yieldB = b.stock.dividendYield || 0;
-            return yieldB - yieldA; // Descending
+            return sortConfig.direction === 'asc' ? yieldA - yieldB : yieldB - yieldA;
         }
         if (sortConfig.key === 'amount') {
-            return b.annualDividendCHF - a.annualDividendCHF; // Descending
+            return sortConfig.direction === 'asc'
+                ? a.annualDividendCHF - b.annualDividendCHF
+                : b.annualDividendCHF - a.annualDividendCHF;
         }
         if (sortConfig.key === 'date') {
             // Sort by next Ex-Date or Pay-Date
             const dateA = a.stock.dividendExDate || '9999-12-31';
             const dateB = b.stock.dividendExDate || '9999-12-31';
-            return dateA.localeCompare(dateB);
+            return sortConfig.direction === 'asc'
+                ? dateA.localeCompare(dateB)
+                : dateB.localeCompare(dateA);
         }
         return 0;
     });
@@ -405,293 +425,367 @@ export function DividendPlanner() {
                     <div
                         onTouchStart={handleTouchStart}
                         onTouchEnd={handleTouchEnd}
-                        className="overflow-y-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
+                        className="overflow-y-auto overflow-x-hidden xl:overflow-x-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] xl:snap-none xl:scroll-pt-0"
                     >
-                    <table className="w-full text-xs md:text-sm border-collapse table-fixed md:table-auto">
+                    <table className="w-full text-xs xl:text-sm border-collapse table-fixed xl:table-auto">
                         <thead>
                             <tr className="border-b border-border bg-muted/20">
                                 {/* 0. Aktie */}
-                                <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle">
-                                    Aktie
+                                <th className="text-left px-3 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[15px] xl:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] sm:w-[220px] sm:min-w-[220px] sm:max-w-[220px] xl:w-[180px] xl:min-w-[180px] xl:max-w-[180px] touch-pan-y align-middle">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSort('name')}
+                                        className="flex items-center gap-1 hover:text-foreground text-inherit cursor-pointer select-none text-left"
+                                    >
+                                        <span>Aktie</span>
+                                        {sortConfig.key === 'name' && (
+                                            <span className="font-bold text-sm">
+                                                {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                                            </span>
+                                        )}
+                                    </button>
                                 </th>
 
                                 {/* 1. Anteile */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
-                                        mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
+                                        "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-auto align-middle",
+                                        mobilePage === 0 ? "table-cell" : "hidden xl:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                    <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
                                         <button
                                             type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
-                                            disabled={mobileColIndex === 0}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setMobilePage((p) => Math.max(0, p - 1));
+                                            }}
+                                            disabled={mobilePage === 0}
+                                            className="absolute left-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                            title="Vorherige Spalten"
+                                            aria-label="Vorherige Spalten"
                                         >
-                                            <ChevronLeft className="size-4" />
+                                            <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                        <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
                                             Anteile
                                         </span>
-                                        <button
-                                            type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
-                                            disabled={mobileColIndex === 8}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
-                                        >
-                                            <ChevronRight className="size-4" />
-                                        </button>
                                     </div>
-                                    <span className="hidden md:inline">Anteile</span>
+                                    <span className="hidden xl:inline">Anteile</span>
                                 </th>
 
                                 {/* 2. Rendite % */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
-                                        mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell"
+                                        "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-auto align-middle",
+                                        mobilePage === 0 ? "table-cell" : "hidden xl:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                    <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
                                         <button
                                             type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
-                                            disabled={mobileColIndex === 0}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleSort('yield');
+                                            }}
+                                            className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-xs sm:text-[13px] truncate"
                                         >
-                                            <ChevronLeft className="size-4" />
+                                            <span className="truncate">Rendite %</span>
+                                            {sortConfig.key === 'yield' && (
+                                                <span className="font-bold text-sm text-primary shrink-0">
+                                                    {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                                </span>
+                                            )}
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
-                                            Rendite %
-                                        </span>
                                         <button
                                             type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
-                                            disabled={mobileColIndex === 8}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setMobilePage((p) => Math.min(4, p + 1));
+                                            }}
+                                            disabled={mobilePage === 4}
+                                            className="absolute right-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                            title="Nächste Spalten"
+                                            aria-label="Nächste Spalten"
                                         >
-                                            <ChevronRight className="size-4" />
+                                            <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline">Rendite %</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSort('yield')}
+                                        className="hidden xl:inline-flex items-center gap-1 hover:text-foreground cursor-pointer select-none text-inherit uppercase"
+                                    >
+                                        <span>Rendite %</span>
+                                        {sortConfig.key === 'yield' && (
+                                            <span className="font-bold text-xs">
+                                                {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                            </span>
+                                        )}
+                                    </button>
                                 </th>
 
                                 {/* 3. Div./Akt. */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
-                                        mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell"
+                                        "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-auto align-middle",
+                                        mobilePage === 1 ? "table-cell" : "hidden xl:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                    <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
                                         <button
                                             type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
-                                            disabled={mobileColIndex === 0}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setMobilePage((p) => Math.max(0, p - 1));
+                                            }}
+                                            disabled={mobilePage === 0}
+                                            className="absolute left-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                            title="Vorherige Spalten"
+                                            aria-label="Vorherige Spalten"
                                         >
-                                            <ChevronLeft className="size-4" />
+                                            <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                        <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
                                             Div./Akt.
                                         </span>
-                                        <button
-                                            type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
-                                            disabled={mobileColIndex === 8}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
-                                        >
-                                            <ChevronRight className="size-4" />
-                                        </button>
                                     </div>
-                                    <span className="hidden md:inline">Div./Akt.</span>
+                                    <span className="hidden xl:inline">Div./Akt.</span>
                                 </th>
 
                                 {/* 4. Frequenz */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
-                                        mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell"
+                                        "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-auto align-middle",
+                                        mobilePage === 1 ? "table-cell" : "hidden xl:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-between w-full h-12">
-                                        <button
-                                            type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
-                                            disabled={mobileColIndex === 0}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
-                                        >
-                                            <ChevronLeft className="size-4" />
-                                        </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                    <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
+                                        <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
                                             Frequenz
                                         </span>
                                         <button
                                             type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
-                                            disabled={mobileColIndex === 8}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setMobilePage((p) => Math.min(4, p + 1));
+                                            }}
+                                            disabled={mobilePage === 4}
+                                            className="absolute right-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                            title="Nächste Spalten"
+                                            aria-label="Nächste Spalten"
                                         >
-                                            <ChevronRight className="size-4" />
+                                            <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline">Frequenz</span>
+                                    <span className="hidden xl:inline">Frequenz</span>
                                 </th>
 
                                 {/* 5. Frequenzweise */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
-                                        mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell"
+                                        "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-auto align-middle",
+                                        mobilePage === 2 ? "table-cell" : "hidden xl:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                    <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
                                         <button
                                             type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
-                                            disabled={mobileColIndex === 0}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setMobilePage((p) => Math.max(0, p - 1));
+                                            }}
+                                            disabled={mobilePage === 0}
+                                            className="absolute left-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                            title="Vorherige Spalten"
+                                            aria-label="Vorherige Spalten"
                                         >
-                                            <ChevronLeft className="size-4" />
+                                            <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                        <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
                                             Frequenzweise
                                         </span>
-                                        <button
-                                            type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
-                                            disabled={mobileColIndex === 8}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
-                                        >
-                                            <ChevronRight className="size-4" />
-                                        </button>
                                     </div>
-                                    <span className="hidden md:inline">Frequenzweise</span>
+                                    <span className="hidden xl:inline">Frequenzweise</span>
                                 </th>
 
                                 {/* 6. Jährlich */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
-                                        mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell"
+                                        "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-auto align-middle",
+                                        mobilePage === 2 ? "table-cell" : "hidden xl:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                    <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
                                         <button
                                             type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
-                                            disabled={mobileColIndex === 0}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleSort('amount');
+                                            }}
+                                            className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-xs sm:text-[13px] truncate"
                                         >
-                                            <ChevronLeft className="size-4" />
+                                            <span className="truncate">Jährlich</span>
+                                            {sortConfig.key === 'amount' && (
+                                                <span className="font-bold text-sm text-primary shrink-0">
+                                                    {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                                </span>
+                                            )}
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
-                                            Jährlich
-                                        </span>
                                         <button
                                             type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
-                                            disabled={mobileColIndex === 8}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setMobilePage((p) => Math.min(4, p + 1));
+                                            }}
+                                            disabled={mobilePage === 4}
+                                            className="absolute right-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                            title="Nächste Spalten"
+                                            aria-label="Nächste Spalten"
                                         >
-                                            <ChevronRight className="size-4" />
+                                            <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline">Jährlich</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSort('amount')}
+                                        className="hidden xl:inline-flex items-center gap-1 hover:text-foreground cursor-pointer select-none text-inherit uppercase"
+                                    >
+                                        <span>Jährlich</span>
+                                        {sortConfig.key === 'amount' && (
+                                            <span className="font-bold text-xs">
+                                                {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                            </span>
+                                        )}
+                                    </button>
                                 </th>
 
                                 {/* 7. EX-Tag */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
-                                        mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell"
+                                        "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-auto align-middle",
+                                        mobilePage === 3 ? "table-cell" : "hidden xl:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                    <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
                                         <button
                                             type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
-                                            disabled={mobileColIndex === 0}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setMobilePage((p) => Math.max(0, p - 1));
+                                            }}
+                                            disabled={mobilePage === 0}
+                                            className="absolute left-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                            title="Vorherige Spalten"
+                                            aria-label="Vorherige Spalten"
                                         >
-                                            <ChevronLeft className="size-4" />
+                                            <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
-                                            EX-Tag
-                                        </span>
                                         <button
                                             type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
-                                            disabled={mobileColIndex === 8}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleSort('date');
+                                            }}
+                                            className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-xs sm:text-[13px] truncate"
                                         >
-                                            <ChevronRight className="size-4" />
+                                            <span className="truncate">EX-Tag</span>
+                                            {sortConfig.key === 'date' && (
+                                                <span className="font-bold text-sm text-primary shrink-0">
+                                                    {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                                </span>
+                                            )}
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline">EX-Tag</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSort('date')}
+                                        className="hidden xl:inline-flex items-center gap-1 hover:text-foreground cursor-pointer select-none text-inherit uppercase"
+                                    >
+                                        <span>EX-Tag</span>
+                                        {sortConfig.key === 'date' && (
+                                            <span className="font-bold text-xs">
+                                                {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                            </span>
+                                        )}
+                                    </button>
                                 </th>
 
                                 {/* 8. Zahl-Tag */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
-                                        mobileColIndex === 7 ? "table-cell" : "hidden md:table-cell"
+                                        "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-auto align-middle",
+                                        mobilePage === 3 ? "table-cell" : "hidden xl:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-between w-full h-12">
-                                        <button
-                                            type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
-                                            disabled={mobileColIndex === 0}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
-                                        >
-                                            <ChevronLeft className="size-4" />
-                                        </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                    <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
+                                        <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
                                             Zahl-Tag
                                         </span>
                                         <button
                                             type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
-                                            disabled={mobileColIndex === 8}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setMobilePage((p) => Math.min(4, p + 1));
+                                            }}
+                                            disabled={mobilePage === 4}
+                                            className="absolute right-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                            title="Nächste Spalten"
+                                            aria-label="Nächste Spalten"
                                         >
-                                            <ChevronRight className="size-4" />
+                                            <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline">Zahl-Tag</span>
+                                    <span className="hidden xl:inline">Zahl-Tag</span>
                                 </th>
 
                                 {/* 9. Aktion */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:w-[60px] md:min-w-[60px] md:max-w-[60px] sticky top-0 md:sticky md:-right-px bg-card z-30 md:z-40 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle",
-                                        mobileColIndex === 8 ? "table-cell" : "hidden md:table-cell"
+                                        "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center w-full xl:w-[70px] xl:min-w-[70px] xl:max-w-[70px] sticky top-0 xl:sticky xl:-right-px xl:z-40 bg-card xl:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] z-30 align-middle",
+                                        mobilePage === 4 ? "table-cell" : "hidden xl:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                    <div className="flex xl:hidden items-center justify-center gap-3 w-full h-12 px-2">
                                         <button
                                             type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
-                                            disabled={mobileColIndex === 0}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setMobilePage((p) => Math.max(0, p - 1));
+                                            }}
+                                            disabled={mobilePage === 0}
+                                            className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                            title="Vorherige Spalten"
+                                            aria-label="Vorherige Spalten"
                                         >
-                                            <ChevronLeft className="size-4" />
+                                            <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                        <span className="whitespace-nowrap text-center px-2 select-none font-semibold text-xs sm:text-[13px] text-foreground">
                                             Aktion
                                         </span>
                                         <button
                                             type="button"
-                                            onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(8, i + 1)); }}
-                                            disabled={mobileColIndex === 8}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            disabled={true}
+                                            className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 text-muted-foreground opacity-20 shrink-0 cursor-not-allowed"
+                                            title="Nächste Spalten"
+                                            aria-label="Nächste Spalten"
                                         >
-                                            <ChevronRight className="size-4" />
+                                            <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline">Aktion</span>
+                                    <span className="hidden xl:inline">Aktion</span>
                                 </th>
                             </tr>
                         </thead>
@@ -719,8 +813,6 @@ export function DividendPlanner() {
                                         : `${annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`;
 
                                     // Payout amount per frequency in native currency
-                                    // stock.dividendAmount is dividend per share per payout event.
-                                    // Total per event for position = stock.dividendAmount * position.shares
                                     let perPaymentNative = 0;
                                     const freqFactor = stock.dividendFrequency === 'quarterly' ? 4
                                         : stock.dividendFrequency === 'semi-annually' ? 2
@@ -748,11 +840,11 @@ export function DividendPlanner() {
                                     const currentDiv = getCurrentDividendPeriod(stock);
 
                                     return (
-                                        <tr key={position.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group snap-start snap-always h-[60px] md:h-auto">
+                                        <tr key={position.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group snap-start snap-always h-[60px] xl:h-auto">
                                             {/* 0. Aktie */}
-                                            <td className="px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle">
+                                            <td className="px-3 py-1.5 xl:py-3 xl:px-4 h-[60px] xl:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] sm:w-[220px] sm:min-w-[220px] sm:max-w-[220px] xl:w-[180px] xl:min-w-[180px] xl:max-w-[180px] touch-pan-y align-middle">
                                                 <div className="absolute inset-0 bg-card -z-10" />
-                                                <div className="relative flex items-center gap-2 md:gap-3">
+                                                <div className="relative flex items-center gap-2 xl:gap-3">
                                                     <div
                                                         className="cursor-pointer hover:scale-110 transition-transform p-0.5 shrink-0"
                                                         onClick={(e) => {
@@ -781,7 +873,7 @@ export function DividendPlanner() {
                                                     </div>
                                                     <div className="flex flex-col min-w-0 flex-1 justify-center">
                                                         <div
-                                                            className="font-bold text-[13px] md:text-sm text-foreground truncate block leading-tight cursor-pointer hover:text-primary transition-colors"
+                                                            className="font-bold text-[13px] xl:text-sm text-foreground truncate block leading-tight cursor-pointer hover:text-primary transition-colors"
                                                             title={stock.name}
                                                             onClick={() => navigate(`/stock/${stock.id}`)}
                                                         >
@@ -798,39 +890,49 @@ export function DividendPlanner() {
                                             </td>
 
                                             {/* 1. Anteile */}
-                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right font-medium align-middle", mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell")}>
-                                                <span className="font-bold text-sm tabular-nums whitespace-nowrap">{position.shares}</span>
+                                            <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right font-medium align-middle", mobilePage === 0 ? "table-cell" : "hidden xl:table-cell")}>
+                                                <div className="flex flex-col items-center xl:items-end justify-center">
+                                                    <span className="font-bold text-sm tabular-nums whitespace-nowrap">{position.shares}</span>
+                                                </div>
                                             </td>
 
                                             {/* 2. Rendite % */}
-                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell")}>
-                                                <span className="text-sm font-bold text-green-600 dark:text-green-400 tabular-nums whitespace-nowrap">
-                                                    {stock.dividendYield?.toFixed(2)}%
-                                                </span>
+                                            <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 0 ? "table-cell" : "hidden xl:table-cell")}>
+                                                <div className="flex flex-col items-center xl:items-end justify-center">
+                                                    <span className="text-sm font-bold text-green-600 dark:text-green-400 tabular-nums whitespace-nowrap">
+                                                        {stock.dividendYield?.toFixed(2)}%
+                                                    </span>
+                                                </div>
                                             </td>
 
                                             {/* 3. Div./Akt. */}
-                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell")}>
-                                                <span className="text-sm font-semibold text-foreground tabular-nums whitespace-nowrap">
-                                                    {stock.dividendAmount?.toFixed(2)} {divCurrency}
-                                                </span>
+                                            <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 1 ? "table-cell" : "hidden xl:table-cell")}>
+                                                <div className="flex flex-col items-center xl:items-end justify-center">
+                                                    <span className="text-sm font-semibold text-foreground tabular-nums whitespace-nowrap">
+                                                        {stock.dividendAmount?.toFixed(2)} {divCurrency}
+                                                    </span>
+                                                </div>
                                             </td>
 
                                             {/* 4. Frequenz */}
-                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right capitalize text-xs md:text-sm align-middle whitespace-nowrap", mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell")}>
-                                                {stock.dividendFrequency === 'annually' && 'Jährlich'}
-                                                {stock.dividendFrequency === 'semi-annually' && 'Halbjährlich'}
-                                                {stock.dividendFrequency === 'quarterly' && 'Quartalsweise'}
-                                                {stock.dividendFrequency === 'monthly' && 'Monatlich'}
-                                                {!stock.dividendFrequency && '-'}
+                                            <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right capitalize text-xs xl:text-sm align-middle whitespace-nowrap", mobilePage === 1 ? "table-cell" : "hidden xl:table-cell")}>
+                                                <div className="flex flex-col items-center xl:items-end justify-center">
+                                                    <span>
+                                                        {stock.dividendFrequency === 'annually' && 'Jährlich'}
+                                                        {stock.dividendFrequency === 'semi-annually' && 'Halbjährlich'}
+                                                        {stock.dividendFrequency === 'quarterly' && 'Quartalsweise'}
+                                                        {stock.dividendFrequency === 'monthly' && 'Monatlich'}
+                                                        {!stock.dividendFrequency && '-'}
+                                                    </span>
+                                                </div>
                                             </td>
 
                                             {/* 5. Frequenzweise */}
-                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right align-middle whitespace-nowrap", mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell")}>
-                                                <div className="flex flex-col items-end justify-center">
-                                                    <span className="font-semibold text-[13px] md:text-sm tabular-nums leading-tight">{frequencyFormatted}</span>
+                                            <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right align-middle whitespace-nowrap", mobilePage === 2 ? "table-cell" : "hidden xl:table-cell")}>
+                                                <div className="flex flex-col items-center xl:items-end justify-center">
+                                                    <span className="font-semibold text-[13px] xl:text-sm tabular-nums leading-tight">{frequencyFormatted}</span>
                                                     {divCurrency !== 'CHF' && frequencyCHFFormatted && (
-                                                        <span className="text-[13px] md:text-sm font-semibold text-green-600 dark:text-green-400 tabular-nums leading-tight mt-0.5">
+                                                        <span className="text-[13px] xl:text-sm font-semibold text-green-600 dark:text-green-400 tabular-nums leading-tight mt-0.5">
                                                             {frequencyCHFFormatted}
                                                         </span>
                                                     )}
@@ -838,11 +940,11 @@ export function DividendPlanner() {
                                             </td>
 
                                             {/* 6. Jährlich */}
-                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right align-middle whitespace-nowrap", mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell")}>
-                                                <div className="flex flex-col items-end justify-center">
-                                                    <span className="font-bold text-[13px] md:text-sm tabular-nums leading-tight">{annualFormatted}</span>
+                                            <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right align-middle whitespace-nowrap", mobilePage === 2 ? "table-cell" : "hidden xl:table-cell")}>
+                                                <div className="flex flex-col items-center xl:items-end justify-center">
+                                                    <span className="font-bold text-[13px] xl:text-sm tabular-nums leading-tight">{annualFormatted}</span>
                                                     {divCurrency !== 'CHF' && (
-                                                        <span className="text-[13px] md:text-sm font-bold text-green-600 dark:text-green-400 tabular-nums leading-tight mt-0.5">
+                                                        <span className="text-[13px] xl:text-sm font-bold text-green-600 dark:text-green-400 tabular-nums leading-tight mt-0.5">
                                                             {annualCHFFormatted}
                                                         </span>
                                                     )}
@@ -850,10 +952,10 @@ export function DividendPlanner() {
                                             </td>
 
                                             {/* 7. EX-Tag */}
-                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell")}>
-                                                <div className="flex flex-col items-end justify-center gap-0.5">
+                                            <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 3 ? "table-cell" : "hidden xl:table-cell")}>
+                                                <div className="flex flex-col items-center xl:items-end justify-center gap-0.5">
                                                     <span className={cn(
-                                                        "font-bold text-[13px] md:text-sm whitespace-nowrap leading-tight",
+                                                        "font-bold text-[13px] xl:text-sm whitespace-nowrap leading-tight",
                                                         (() => {
                                                             const dDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
                                                             if (dDays !== null && dDays < 0) return "text-red-500 dark:text-red-400 font-medium";
@@ -875,10 +977,10 @@ export function DividendPlanner() {
                                             </td>
 
                                             {/* 8. Zahl-Tag */}
-                                            <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 7 ? "table-cell" : "hidden md:table-cell")}>
-                                                <div className="flex flex-col items-end justify-center gap-0.5">
+                                            <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 3 ? "table-cell" : "hidden xl:table-cell")}>
+                                                <div className="flex flex-col items-center xl:items-end justify-center gap-0.5">
                                                     <span className={cn(
-                                                        "font-bold text-[13px] md:text-sm whitespace-nowrap leading-tight",
+                                                        "font-bold text-[13px] xl:text-sm whitespace-nowrap leading-tight",
                                                         (() => {
                                                             const payDays = currentDiv.payDate ? Math.ceil((new Date(currentDiv.payDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
                                                             const exDays = currentDiv.exDate ? Math.ceil((new Date(currentDiv.exDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
@@ -901,7 +1003,7 @@ export function DividendPlanner() {
                                             </td>
 
                                             {/* 9. Aktion */}
-                                            <td className={cn("px-2 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-center md:w-[60px] md:min-w-[60px] md:max-w-[60px] md:sticky md:-right-px bg-card z-10 group-hover:bg-muted/30 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle", mobileColIndex === 8 ? "table-cell" : "hidden md:table-cell")}>
+                                            <td className={cn("px-2 py-1.5 xl:py-3 xl:px-1 h-[60px] xl:h-auto text-center w-full xl:w-[70px] xl:min-w-[70px] xl:max-w-[70px] xl:sticky xl:-right-px bg-card z-10 group-hover:bg-muted/30 transition-colors xl:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle", mobilePage === 4 ? "table-cell" : "hidden xl:table-cell")}>
                                                 <div className="absolute inset-0 bg-card -z-10" />
                                                 <div className="relative flex items-center justify-center">
                                                     <button
@@ -933,231 +1035,226 @@ export function DividendPlanner() {
                     <div
                         onTouchStart={handleBankTouchStart}
                         onTouchEnd={handleBankTouchEnd}
-                        className="overflow-y-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
+                        className="overflow-y-auto overflow-x-hidden xl:overflow-x-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] xl:snap-none xl:scroll-pt-0"
                     >
-                        <table className="w-full text-xs md:text-sm border-collapse table-fixed md:table-auto">
+                        <table className="w-full text-xs xl:text-sm border-collapse table-fixed xl:table-auto">
                             <thead>
                                 <tr className="border-b border-border bg-muted/20">
                                     {/* 0. Bank / Institut */}
-                                    <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle">
+                                    <th className="text-left px-3 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[15px] xl:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] sm:w-[220px] sm:min-w-[220px] sm:max-w-[220px] xl:w-[180px] xl:min-w-[180px] xl:max-w-[180px] touch-pan-y align-middle">
                                         Bank / Institut
                                     </th>
 
                                     {/* 1. Betrag */}
                                     <th
                                         className={cn(
-                                            "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
-                                            mobileBankColIndex === 0 ? "table-cell" : "hidden md:table-cell"
+                                            "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-auto align-middle",
+                                            mobileBankPage === 0 ? "table-cell" : "hidden xl:table-cell"
                                         )}
                                     >
-                                        <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
                                             <button
                                                 type="button"
-                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.max(0, i - 1)); }}
-                                                disabled={mobileBankColIndex === 0}
-                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setMobileBankPage((p) => Math.max(0, p - 1));
+                                                }}
+                                                disabled={mobileBankPage === 0}
+                                                className="absolute left-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                                title="Vorherige Spalten"
+                                                aria-label="Vorherige Spalten"
                                             >
-                                                <ChevronLeft className="size-4" />
+                                                <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                             </button>
-                                            <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
                                                 Betrag
                                             </span>
-                                            <button
-                                                type="button"
-                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.min(6, i + 1)); }}
-                                                disabled={mobileBankColIndex === 6}
-                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
-                                            >
-                                                <ChevronRight className="size-4" />
-                                            </button>
                                         </div>
-                                        <span className="hidden md:inline">Betrag</span>
+                                        <span className="hidden xl:inline">Betrag</span>
                                     </th>
 
                                     {/* 2. Zins % */}
                                     <th
                                         className={cn(
-                                            "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
-                                            mobileBankColIndex === 1 ? "table-cell" : "hidden md:table-cell"
+                                            "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-auto align-middle",
+                                            mobileBankPage === 0 ? "table-cell" : "hidden xl:table-cell"
                                         )}
                                     >
-                                        <div className="flex md:hidden items-center justify-between w-full h-12">
-                                            <button
-                                                type="button"
-                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.max(0, i - 1)); }}
-                                                disabled={mobileBankColIndex === 0}
-                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
-                                            >
-                                                <ChevronLeft className="size-4" />
-                                            </button>
-                                            <span className="whitespace-nowrap text-center flex-1 px-1">
+                                        <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
+                                            <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
                                                 Zins %
                                             </span>
                                             <button
                                                 type="button"
-                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.min(6, i + 1)); }}
-                                                disabled={mobileBankColIndex === 6}
-                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setMobileBankPage((p) => Math.min(3, p + 1));
+                                                }}
+                                                disabled={mobileBankPage === 3}
+                                                className="absolute right-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                                title="Nächste Spalten"
+                                                aria-label="Nächste Spalten"
                                             >
-                                                <ChevronRight className="size-4" />
+                                                <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                             </button>
                                         </div>
-                                        <span className="hidden md:inline">Zins %</span>
+                                        <span className="hidden xl:inline">Zins %</span>
                                     </th>
 
                                     {/* 3. Ø Monatlich */}
                                     <th
                                         className={cn(
-                                            "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
-                                            mobileBankColIndex === 2 ? "table-cell" : "hidden md:table-cell"
+                                            "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-auto align-middle",
+                                            mobileBankPage === 1 ? "table-cell" : "hidden xl:table-cell"
                                         )}
                                     >
-                                        <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
                                             <button
                                                 type="button"
-                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.max(0, i - 1)); }}
-                                                disabled={mobileBankColIndex === 0}
-                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setMobileBankPage((p) => Math.max(0, p - 1));
+                                                }}
+                                                disabled={mobileBankPage === 0}
+                                                className="absolute left-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                                title="Vorherige Spalten"
+                                                aria-label="Vorherige Spalten"
                                             >
-                                                <ChevronLeft className="size-4" />
+                                                <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                             </button>
-                                            <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
                                                 Ø Monatlich
                                             </span>
-                                            <button
-                                                type="button"
-                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.min(6, i + 1)); }}
-                                                disabled={mobileBankColIndex === 6}
-                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
-                                            >
-                                                <ChevronRight className="size-4" />
-                                            </button>
                                         </div>
-                                        <span className="hidden md:inline">Ø Monatlich</span>
+                                        <span className="hidden xl:inline">Ø Monatlich</span>
                                     </th>
 
                                     {/* 4. Frequenz */}
                                     <th
                                         className={cn(
-                                            "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
-                                            mobileBankColIndex === 3 ? "table-cell" : "hidden md:table-cell"
+                                            "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-auto align-middle",
+                                            mobileBankPage === 1 ? "table-cell" : "hidden xl:table-cell"
                                         )}
                                     >
-                                        <div className="flex md:hidden items-center justify-between w-full h-12">
-                                            <button
-                                                type="button"
-                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.max(0, i - 1)); }}
-                                                disabled={mobileBankColIndex === 0}
-                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
-                                            >
-                                                <ChevronLeft className="size-4" />
-                                            </button>
-                                            <span className="whitespace-nowrap text-center flex-1 px-1">
+                                        <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
+                                            <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
                                                 Frequenz
                                             </span>
                                             <button
                                                 type="button"
-                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.min(6, i + 1)); }}
-                                                disabled={mobileBankColIndex === 6}
-                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setMobileBankPage((p) => Math.min(3, p + 1));
+                                                }}
+                                                disabled={mobileBankPage === 3}
+                                                className="absolute right-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                                title="Nächste Spalten"
+                                                aria-label="Nächste Spalten"
                                             >
-                                                <ChevronRight className="size-4" />
+                                                <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                             </button>
                                         </div>
-                                        <span className="hidden md:inline">Frequenz</span>
+                                        <span className="hidden xl:inline">Frequenz</span>
                                     </th>
 
                                     {/* 5. Quartalsweise */}
                                     <th
                                         className={cn(
-                                            "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
-                                            mobileBankColIndex === 4 ? "table-cell" : "hidden md:table-cell"
+                                            "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-auto align-middle",
+                                            mobileBankPage === 2 ? "table-cell" : "hidden xl:table-cell"
                                         )}
                                     >
-                                        <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
                                             <button
                                                 type="button"
-                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.max(0, i - 1)); }}
-                                                disabled={mobileBankColIndex === 0}
-                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setMobileBankPage((p) => Math.max(0, p - 1));
+                                                }}
+                                                disabled={mobileBankPage === 0}
+                                                className="absolute left-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                                title="Vorherige Spalten"
+                                                aria-label="Vorherige Spalten"
                                             >
-                                                <ChevronLeft className="size-4" />
+                                                <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                             </button>
-                                            <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
                                                 Quartalsweise
                                             </span>
-                                            <button
-                                                type="button"
-                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.min(6, i + 1)); }}
-                                                disabled={mobileBankColIndex === 6}
-                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
-                                            >
-                                                <ChevronRight className="size-4" />
-                                            </button>
                                         </div>
-                                        <span className="hidden md:inline">Quartalsweise</span>
+                                        <span className="hidden xl:inline">Quartalsweise</span>
                                     </th>
 
                                     {/* 6. Jährlich */}
                                     <th
                                         className={cn(
-                                            "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
-                                            mobileBankColIndex === 5 ? "table-cell" : "hidden md:table-cell"
+                                            "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-auto align-middle",
+                                            mobileBankPage === 2 ? "table-cell" : "hidden xl:table-cell"
                                         )}
                                     >
-                                        <div className="flex md:hidden items-center justify-between w-full h-12">
-                                            <button
-                                                type="button"
-                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.max(0, i - 1)); }}
-                                                disabled={mobileBankColIndex === 0}
-                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
-                                            >
-                                                <ChevronLeft className="size-4" />
-                                            </button>
-                                            <span className="whitespace-nowrap text-center flex-1 px-1">
+                                        <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
+                                            <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
                                                 Jährlich
                                             </span>
                                             <button
                                                 type="button"
-                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.min(6, i + 1)); }}
-                                                disabled={mobileBankColIndex === 6}
-                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setMobileBankPage((p) => Math.min(3, p + 1));
+                                                }}
+                                                disabled={mobileBankPage === 3}
+                                                className="absolute right-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                                title="Nächste Spalten"
+                                                aria-label="Nächste Spalten"
                                             >
-                                                <ChevronRight className="size-4" />
+                                                <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                             </button>
                                         </div>
-                                        <span className="hidden md:inline">Jährlich</span>
+                                        <span className="hidden xl:inline">Jährlich</span>
                                     </th>
 
                                     {/* 7. Aktion */}
                                     <th
                                         className={cn(
-                                            "px-1 md:px-1 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:w-[60px] md:min-w-[60px] md:max-w-[60px] sticky top-0 md:sticky md:-right-px bg-card z-30 md:z-40 md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle",
-                                            mobileBankColIndex === 6 ? "table-cell" : "hidden md:table-cell"
+                                            "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center w-full xl:w-[70px] xl:min-w-[70px] xl:max-w-[70px] sticky top-0 xl:sticky xl:-right-px xl:z-40 bg-card xl:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] z-30 align-middle",
+                                            mobileBankPage === 3 ? "table-cell" : "hidden xl:table-cell"
                                         )}
                                     >
-                                        <div className="flex md:hidden items-center justify-between w-full h-12">
+                                        <div className="flex xl:hidden items-center justify-center gap-3 w-full h-12 px-2">
                                             <button
                                                 type="button"
-                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.max(0, i - 1)); }}
-                                                disabled={mobileBankColIndex === 0}
-                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setMobileBankPage((p) => Math.max(0, p - 1));
+                                                }}
+                                                disabled={mobileBankPage === 0}
+                                                className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                                title="Vorherige Spalten"
+                                                aria-label="Vorherige Spalten"
                                             >
-                                                <ChevronLeft className="size-4" />
+                                                <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                             </button>
-                                            <span className="whitespace-nowrap text-center flex-1 px-1">
+                                            <span className="whitespace-nowrap text-center px-2 select-none font-semibold text-xs sm:text-[13px] text-foreground">
                                                 Aktion
                                             </span>
                                             <button
                                                 type="button"
-                                                onClick={(e) => { e.stopPropagation(); setMobileBankColIndex((i) => Math.min(6, i + 1)); }}
-                                                disabled={mobileBankColIndex === 6}
-                                                className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                                disabled={true}
+                                                className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 text-muted-foreground opacity-20 shrink-0 cursor-not-allowed"
+                                                title="Nächste Spalten"
+                                                aria-label="Nächste Spalten"
                                             >
-                                                <ChevronRight className="size-4" />
+                                                <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                             </button>
                                         </div>
-                                        <span className="hidden md:inline">Aktion</span>
+                                        <span className="hidden xl:inline">Aktion</span>
                                     </th>
                                 </tr>
                             </thead>
@@ -1165,8 +1262,8 @@ export function DividendPlanner() {
                                 {bankRows.map((data: any) => {
                                     const isNegative = data.isNegative;
                                     return (
-                                        <tr key={data.id} className="border-b border-border/50 last:border-0 hover:bg-muted/50 transition-colors group snap-start snap-always h-[60px] md:h-auto">
-                                            <td className="px-3 py-1.5 md:py-3 md:px-4 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] h-[60px] md:h-auto align-middle w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px]">
+                                        <tr key={data.id} className="border-b border-border/50 last:border-0 hover:bg-muted/50 transition-colors group snap-start snap-always h-[60px] xl:h-auto">
+                                            <td className="px-3 py-1.5 xl:py-3 xl:px-4 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] h-[60px] xl:h-auto align-middle w-[160px] min-w-[160px] max-w-[160px] sm:w-[220px] sm:min-w-[220px] sm:max-w-[220px] xl:w-[180px] xl:min-w-[180px] xl:max-w-[180px]">
                                                     <div className="absolute inset-0 bg-card -z-10" />
                                                     <div className="flex items-center gap-3">
                                                         <Logo
@@ -1175,33 +1272,45 @@ export function DividendPlanner() {
                                                             fallback="BK"
                                                         />
                                                         <div>
-                                                            <div className="font-semibold text-xs md:text-sm">{data.name}</div>
-                                                            <div className={`text-[10px] md:text-xs font-medium ${isNegative ? 'text-red-500' : 'text-green-600'}`}>
+                                                            <div className="font-semibold text-xs xl:text-sm">{data.name}</div>
+                                                            <div className={`text-[10px] xl:text-xs font-medium ${isNegative ? 'text-red-500' : 'text-green-600'}`}>
                                                                 {isNegative ? 'Konto-Gebühren' : 'Bank-Zinsen'}
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right font-medium whitespace-nowrap align-middle", mobileBankColIndex === 0 ? "table-cell" : "hidden md:table-cell")}>
-                                                    CHF {data.depositAmount?.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right font-medium whitespace-nowrap align-middle", mobileBankPage === 0 ? "table-cell" : "hidden xl:table-cell")}>
+                                                    <div className="flex flex-col items-center xl:items-end justify-center">
+                                                        <span>CHF {data.depositAmount?.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                    </div>
                                                 </td>
-                                                <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right text-muted-foreground align-middle", mobileBankColIndex === 1 ? "table-cell" : "hidden md:table-cell")}>
-                                                    {data.yield > 0 ? `${data.yield.toFixed(2)}%` : '-'}
+                                                <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right text-muted-foreground align-middle", mobileBankPage === 0 ? "table-cell" : "hidden xl:table-cell")}>
+                                                    <div className="flex flex-col items-center xl:items-end justify-center">
+                                                        <span>{data.yield > 0 ? `${data.yield.toFixed(2)}%` : '-'}</span>
+                                                    </div>
                                                 </td>
-                                                <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right font-medium whitespace-nowrap align-middle", mobileBankColIndex === 2 ? "table-cell" : "hidden md:table-cell", isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400')}>
-                                                    {isNegative ? '-' : '+'} {Math.abs(data.annual / 12).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                                <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right font-medium whitespace-nowrap align-middle", mobileBankPage === 1 ? "table-cell" : "hidden xl:table-cell", isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400')}>
+                                                    <div className="flex flex-col items-center xl:items-end justify-center">
+                                                        <span>{isNegative ? '-' : '+'} {Math.abs(data.annual / 12).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF</span>
+                                                    </div>
                                                 </td>
-                                                <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right text-muted-foreground align-middle", mobileBankColIndex === 3 ? "table-cell" : "hidden md:table-cell")}>
-                                                    Jährlich
+                                                <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right text-muted-foreground align-middle", mobileBankPage === 1 ? "table-cell" : "hidden xl:table-cell")}>
+                                                    <div className="flex flex-col items-center xl:items-end justify-center">
+                                                        <span>Jährlich</span>
+                                                    </div>
                                                 </td>
-                                                <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right font-medium whitespace-nowrap align-middle", mobileBankColIndex === 4 ? "table-cell" : "hidden md:table-cell", isNegative ? 'text-red-600/70' : 'text-green-600/70')}>
-                                                    {isNegative ? '-' : '+'} CHF {Math.abs(data.quarterly).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right font-medium whitespace-nowrap align-middle", mobileBankPage === 2 ? "table-cell" : "hidden xl:table-cell", isNegative ? 'text-red-600/70' : 'text-green-600/70')}>
+                                                    <div className="flex flex-col items-center xl:items-end justify-center">
+                                                        <span>{isNegative ? '-' : '+'} CHF {Math.abs(data.quarterly).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                    </div>
                                                 </td>
-                                                <td className={cn("px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto text-right font-semibold whitespace-nowrap align-middle", mobileBankColIndex === 5 ? "table-cell" : "hidden md:table-cell", isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400')}>
-                                                    {isNegative ? '-' : '+'} CHF {Math.abs(data.annual).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right font-semibold whitespace-nowrap align-middle", mobileBankPage === 2 ? "table-cell" : "hidden xl:table-cell", isNegative ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400')}>
+                                                    <div className="flex flex-col items-center xl:items-end justify-center">
+                                                        <span>{isNegative ? '-' : '+'} CHF {Math.abs(data.annual).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                    </div>
                                                 </td>
-                                                <td className={cn("px-2 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-center md:w-[60px] md:min-w-[60px] md:max-w-[60px] md:sticky md:-right-px bg-card z-10 md:z-20 group-hover:bg-muted/50 transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle", mobileBankColIndex === 6 ? "table-cell" : "hidden md:table-cell")}>
-                                                    <div className="flex items-center justify-end gap-1">
+                                                <td className={cn("px-2 py-1.5 xl:py-3 xl:px-1 h-[60px] xl:h-auto text-center w-full xl:w-[70px] xl:min-w-[70px] xl:max-w-[70px] xl:sticky xl:-right-px bg-card z-10 xl:z-20 group-hover:bg-muted/50 transition-colors xl:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle", mobileBankPage === 3 ? "table-cell" : "hidden xl:table-cell")}>
+                                                    <div className="flex items-center justify-center gap-1">
                                                         <button
                                                             onClick={() => navigate('/portfolio')}
                                                             className="p-2 hover:bg-background rounded-md transition-colors text-muted-foreground hover:text-foreground"
