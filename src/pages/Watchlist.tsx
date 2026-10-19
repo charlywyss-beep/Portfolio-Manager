@@ -488,8 +488,8 @@ function WatchlistTable({
     formatCurrency,
     emptyMessage
 }: WatchlistTableProps) {
-    // 0: Div. Rendite, 1: Aktueller Kurs, 2: Kauflimit, 3: Verkaufslimit, 4: EX-Tag, 5: Zahl-Tag, 6: Aktionen
-    const [mobileColIndex, setMobileColIndex] = useState(1);
+    // 0: [Div. Rendite, Aktueller Kurs], 1: [Kauflimit, Verkaufslimit], 2: [EX-Tag, Zahl-Tag], 3: [Aktionen]
+    const [mobilePage, setMobilePage] = useState(0);
     const touchStartRef = useRef<{ x: number; y: number; time: number; isStockCol: boolean } | null>(null);
 
     const handleSort = (key: string) => {
@@ -581,11 +581,11 @@ function WatchlistTable({
         // Horizontal swipe: only when touch started to the right of the "Aktie" column (> 140px)
         if (touchStartRef.current.x > 140 && Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy) * 1.2 && dt < 700) {
             if (dx < 0) {
-                // Swiped left -> next column
-                setMobileColIndex((i) => Math.min(6, i + 1));
+                // Swiped left -> next page
+                setMobilePage((p) => Math.min(3, p + 1));
             } else {
-                // Swiped right -> prev column
-                setMobileColIndex((i) => Math.max(0, i - 1));
+                // Swiped right -> prev page
+                setMobilePage((p) => Math.max(0, p - 1));
             }
         }
         touchStartRef.current = null;
@@ -619,22 +619,22 @@ function WatchlistTable({
                         {/* 1. Div. Rendite */}
                         <th
                             className={cn(
-                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card xl:w-[10%] align-middle",
-                                mobileColIndex === 0 ? "table-cell" : "hidden xl:table-cell"
+                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-[10%] align-middle",
+                                mobilePage === 0 ? "table-cell" : "hidden xl:table-cell"
                             )}
                         >
-                            <div className="flex xl:hidden items-center justify-center gap-1.5 sm:gap-2 w-full h-12 px-2">
+                            <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
                                 <button
                                     type="button"
                                     onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        setMobileColIndex((i) => Math.max(0, i - 1));
+                                        setMobilePage((p) => Math.max(0, p - 1));
                                     }}
-                                    disabled={mobileColIndex === 0}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
-                                    title="Vorherige Spalte"
-                                    aria-label="Vorherige Spalte"
+                                    disabled={mobilePage === 0}
+                                    className="absolute left-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                    title="Vorherige Spalten"
+                                    aria-label="Vorherige Spalten"
                                 >
                                     <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
@@ -645,28 +645,14 @@ function WatchlistTable({
                                         e.stopPropagation();
                                         handleSort('yield');
                                     }}
-                                    className="flex items-center justify-center gap-1 px-2 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-[13px]"
+                                    className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-xs sm:text-[13px] truncate"
                                 >
-                                    <span>Div. Rendite</span>
+                                    <span className="truncate">Div. Rendite</span>
                                     {sortConfig.key === 'yield' && (
-                                        <span className="font-bold text-sm">
+                                        <span className="font-bold text-sm text-primary shrink-0">
                                             {sortConfig.direction === 'desc' ? '↓' : '↑'}
                                         </span>
                                     )}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        setMobileColIndex((i) => Math.min(6, i + 1));
-                                    }}
-                                    disabled={mobileColIndex === 6}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
-                                    title="Nächste Spalte"
-                                    aria-label="Nächste Spalte"
-                                >
-                                    <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
                             </div>
                             <button
@@ -686,25 +672,11 @@ function WatchlistTable({
                         {/* 2. Aktueller Kurs */}
                         <th
                             className={cn(
-                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card xl:w-[15%] align-middle",
-                                mobileColIndex === 1 ? "table-cell" : "hidden xl:table-cell"
+                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-[15%] align-middle",
+                                mobilePage === 0 ? "table-cell" : "hidden xl:table-cell"
                             )}
                         >
-                            <div className="flex xl:hidden items-center justify-center gap-1.5 sm:gap-2 w-full h-12 px-2">
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        setMobileColIndex((i) => Math.max(0, i - 1));
-                                    }}
-                                    disabled={mobileColIndex === 0}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
-                                    title="Vorherige Spalte"
-                                    aria-label="Vorherige Spalte"
-                                >
-                                    <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
-                                </button>
+                            <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
                                 <button
                                     type="button"
                                     onClick={(e) => {
@@ -712,11 +684,11 @@ function WatchlistTable({
                                         e.stopPropagation();
                                         handleSort('price');
                                     }}
-                                    className="flex items-center justify-center gap-1 px-2 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-[13px]"
+                                    className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-xs sm:text-[13px] truncate"
                                 >
-                                    <span>Aktueller Kurs</span>
+                                    <span className="truncate">Aktueller Kurs</span>
                                     {sortConfig.key === 'price' && (
-                                        <span className="font-bold text-sm">
+                                        <span className="font-bold text-sm text-primary shrink-0">
                                             {sortConfig.direction === 'desc' ? '↓' : '↑'}
                                         </span>
                                     )}
@@ -726,12 +698,12 @@ function WatchlistTable({
                                     onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        setMobileColIndex((i) => Math.min(6, i + 1));
+                                        setMobilePage((p) => Math.min(3, p + 1));
                                     }}
-                                    disabled={mobileColIndex === 6}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
-                                    title="Nächste Spalte"
-                                    aria-label="Nächste Spalte"
+                                    disabled={mobilePage === 3}
+                                    className="absolute right-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                    title="Nächste Spalten"
+                                    aria-label="Nächste Spalten"
                                 >
                                     <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
@@ -753,22 +725,22 @@ function WatchlistTable({
                         {/* 3. Kauflimit */}
                         <th
                             className={cn(
-                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card xl:w-[15%] align-middle",
-                                mobileColIndex === 2 ? "table-cell" : "hidden xl:table-cell"
+                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-[15%] align-middle",
+                                mobilePage === 1 ? "table-cell" : "hidden xl:table-cell"
                             )}
                         >
-                            <div className="flex xl:hidden items-center justify-center gap-1.5 sm:gap-2 w-full h-12 px-2">
+                            <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
                                 <button
                                     type="button"
                                     onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        setMobileColIndex((i) => Math.max(0, i - 1));
+                                        setMobilePage((p) => Math.max(0, p - 1));
                                     }}
-                                    disabled={mobileColIndex === 0}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
-                                    title="Vorherige Spalte"
-                                    aria-label="Vorherige Spalte"
+                                    disabled={mobilePage === 0}
+                                    className="absolute left-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                    title="Vorherige Spalten"
+                                    aria-label="Vorherige Spalten"
                                 >
                                     <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
@@ -779,28 +751,14 @@ function WatchlistTable({
                                         e.stopPropagation();
                                         handleSort('gap');
                                     }}
-                                    className="flex items-center justify-center gap-1 px-2 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-[13px]"
+                                    className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-xs sm:text-[13px] truncate"
                                 >
-                                    <span>Kauflimit</span>
+                                    <span className="truncate">Kauflimit</span>
                                     {sortConfig.key === 'gap' && (
-                                        <span className="font-bold text-sm">
+                                        <span className="font-bold text-sm text-primary shrink-0">
                                             {sortConfig.direction === 'asc' ? '↓' : '↑'}
                                         </span>
                                     )}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        setMobileColIndex((i) => Math.min(6, i + 1));
-                                    }}
-                                    disabled={mobileColIndex === 6}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
-                                    title="Nächste Spalte"
-                                    aria-label="Nächste Spalte"
-                                >
-                                    <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
                             </div>
                             <button
@@ -820,25 +778,11 @@ function WatchlistTable({
                         {/* 4. Verkaufslimit */}
                         <th
                             className={cn(
-                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card xl:w-[10%] align-middle",
-                                mobileColIndex === 3 ? "table-cell" : "hidden xl:table-cell"
+                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-[10%] align-middle",
+                                mobilePage === 1 ? "table-cell" : "hidden xl:table-cell"
                             )}
                         >
-                            <div className="flex xl:hidden items-center justify-center gap-1.5 sm:gap-2 w-full h-12 px-2">
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        setMobileColIndex((i) => Math.max(0, i - 1));
-                                    }}
-                                    disabled={mobileColIndex === 0}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
-                                    title="Vorherige Spalte"
-                                    aria-label="Vorherige Spalte"
-                                >
-                                    <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
-                                </button>
+                            <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
                                 <button
                                     type="button"
                                     onClick={(e) => {
@@ -846,11 +790,11 @@ function WatchlistTable({
                                         e.stopPropagation();
                                         handleSort('sellGap');
                                     }}
-                                    className="flex items-center justify-center gap-1 px-2 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-[13px]"
+                                    className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-xs sm:text-[13px] truncate"
                                 >
-                                    <span>Verkaufslimit</span>
+                                    <span className="truncate">Verkaufslimit</span>
                                     {sortConfig.key === 'sellGap' && (
-                                        <span className="font-bold text-sm">
+                                        <span className="font-bold text-sm text-primary shrink-0">
                                             {sortConfig.direction === 'asc' ? '↓' : '↑'}
                                         </span>
                                     )}
@@ -860,12 +804,12 @@ function WatchlistTable({
                                     onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        setMobileColIndex((i) => Math.min(6, i + 1));
+                                        setMobilePage((p) => Math.min(3, p + 1));
                                     }}
-                                    disabled={mobileColIndex === 6}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
-                                    title="Nächste Spalte"
-                                    aria-label="Nächste Spalte"
+                                    disabled={mobilePage === 3}
+                                    className="absolute right-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                    title="Nächste Spalten"
+                                    aria-label="Nächste Spalten"
                                 >
                                     <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
@@ -887,42 +831,28 @@ function WatchlistTable({
                         {/* 5. EX-Tag */}
                         <th
                             className={cn(
-                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card xl:w-[10%] align-middle",
-                                mobileColIndex === 4 ? "table-cell" : "hidden xl:table-cell"
+                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-[10%] align-middle",
+                                mobilePage === 2 ? "table-cell" : "hidden xl:table-cell"
                             )}
                         >
-                            <div className="flex xl:hidden items-center justify-center gap-1.5 sm:gap-2 w-full h-12 px-2">
+                            <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
                                 <button
                                     type="button"
                                     onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        setMobileColIndex((i) => Math.max(0, i - 1));
+                                        setMobilePage((p) => Math.max(0, p - 1));
                                     }}
-                                    disabled={mobileColIndex === 0}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
-                                    title="Vorherige Spalte"
-                                    aria-label="Vorherige Spalte"
+                                    disabled={mobilePage === 0}
+                                    className="absolute left-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                    title="Vorherige Spalten"
+                                    aria-label="Vorherige Spalten"
                                 >
                                     <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
-                                <span className="whitespace-nowrap text-center px-1.5 select-none font-semibold text-[13px] text-foreground">
+                                <span className="whitespace-nowrap text-center px-1.5 select-none font-semibold text-xs sm:text-[13px] text-foreground truncate">
                                     EX-Tag
                                 </span>
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        setMobileColIndex((i) => Math.min(6, i + 1));
-                                    }}
-                                    disabled={mobileColIndex === 6}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
-                                    title="Nächste Spalte"
-                                    aria-label="Nächste Spalte"
-                                >
-                                    <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
-                                </button>
                             </div>
                             <span className="hidden xl:inline">EX-Tag</span>
                         </th>
@@ -930,26 +860,12 @@ function WatchlistTable({
                         {/* 6. Zahl-Tag */}
                         <th
                             className={cn(
-                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card xl:w-[10%] align-middle",
-                                mobileColIndex === 5 ? "table-cell" : "hidden xl:table-cell"
+                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-[10%] align-middle",
+                                mobilePage === 2 ? "table-cell" : "hidden xl:table-cell"
                             )}
                         >
-                            <div className="flex xl:hidden items-center justify-center gap-1.5 sm:gap-2 w-full h-12 px-2">
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        setMobileColIndex((i) => Math.max(0, i - 1));
-                                    }}
-                                    disabled={mobileColIndex === 0}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
-                                    title="Vorherige Spalte"
-                                    aria-label="Vorherige Spalte"
-                                >
-                                    <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
-                                </button>
-                                <span className="whitespace-nowrap text-center px-1.5 select-none font-semibold text-[13px] text-foreground">
+                            <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
+                                <span className="whitespace-nowrap text-center px-1.5 select-none font-semibold text-xs sm:text-[13px] text-foreground truncate">
                                     Zahl-Tag
                                 </span>
                                 <button
@@ -957,12 +873,12 @@ function WatchlistTable({
                                     onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        setMobileColIndex((i) => Math.min(6, i + 1));
+                                        setMobilePage((p) => Math.min(3, p + 1));
                                     }}
-                                    disabled={mobileColIndex === 6}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
-                                    title="Nächste Spalte"
-                                    aria-label="Nächste Spalte"
+                                    disabled={mobilePage === 3}
+                                    className="absolute right-1 size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
+                                    title="Nächste Spalten"
+                                    aria-label="Nächste Spalten"
                                 >
                                     <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
@@ -973,39 +889,34 @@ function WatchlistTable({
                         {/* 7. Aktionen */}
                         <th
                             className={cn(
-                                "px-1 xl:px-4 xl:pl-12 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:w-[110px] sticky top-0 xl:sticky xl:-right-px xl:z-40 bg-card xl:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] z-30 align-middle",
-                                mobileColIndex === 6 ? "table-cell" : "hidden xl:table-cell"
+                                "px-1 xl:px-4 xl:pl-12 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center w-full xl:w-[110px] sticky top-0 xl:sticky xl:-right-px xl:z-40 bg-card xl:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] z-30 align-middle",
+                                mobilePage === 3 ? "table-cell" : "hidden xl:table-cell"
                             )}
                         >
-                            <div className="flex xl:hidden items-center justify-center gap-1.5 sm:gap-2 w-full h-12 px-2">
+                            <div className="flex xl:hidden items-center justify-center gap-3 w-full h-12 px-2">
                                 <button
                                     type="button"
                                     onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        setMobileColIndex((i) => Math.max(0, i - 1));
+                                        setMobilePage((p) => Math.max(0, p - 1));
                                     }}
-                                    disabled={mobileColIndex === 0}
+                                    disabled={mobilePage === 0}
                                     className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
-                                    title="Vorherige Spalte"
-                                    aria-label="Vorherige Spalte"
+                                    title="Vorherige Spalten"
+                                    aria-label="Vorherige Spalten"
                                 >
                                     <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
-                                <span className="whitespace-nowrap text-center px-1.5 select-none font-semibold text-[13px] text-foreground">
+                                <span className="whitespace-nowrap text-center px-2 select-none font-semibold text-xs sm:text-[13px] text-foreground">
                                     Aktionen
                                 </span>
                                 <button
                                     type="button"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        setMobileColIndex((i) => Math.min(6, i + 1));
-                                    }}
-                                    disabled={mobileColIndex === 6}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
-                                    title="Nächste Spalte"
-                                    aria-label="Nächste Spalte"
+                                    disabled={true}
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 text-muted-foreground opacity-20 shrink-0 cursor-not-allowed"
+                                    title="Nächste Spalten"
+                                    aria-label="Nächste Spalten"
                                 >
                                     <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
@@ -1026,7 +937,7 @@ function WatchlistTable({
 
                         return (
                             <tr key={stock.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors group snap-start snap-always h-[60px] xl:h-auto">
-                                <td className="px-3 py-1.5 xl:p-4 h-[60px] xl:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] overflow-hidden w-[170px] sm:w-[240px] md:w-[260px] min-w-[170px] sm:min-w-[240px] md:min-w-[260px] max-w-[170px] sm:max-w-[240px] md:max-w-[260px] xl:w-[200px] xl:min-w-[200px] xl:max-w-[200px] touch-pan-y align-middle">
+                                <td className="px-3 py-1.5 xl:p-4 h-[60px] xl:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] overflow-hidden w-[160px] sm:w-[220px] md:w-[250px] min-w-[160px] sm:min-w-[220px] md:min-w-[250px] max-w-[160px] sm:max-w-[220px] md:max-w-[250px] xl:w-[200px] xl:min-w-[200px] xl:max-w-[200px] touch-pan-y align-middle">
                                     <div className="absolute inset-0 bg-card -z-10" />
                                     <div className="flex items-center gap-2 xl:gap-3 relative">
                                         <Logo
@@ -1054,7 +965,7 @@ function WatchlistTable({
                                         </div>
                                     </div>
                                 </td>
-                                <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobileColIndex === 0 ? "table-cell" : "hidden xl:table-cell")}>
+                                <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 0 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="flex flex-col items-center xl:items-end justify-center gap-0.5">
                                         <span className="font-bold text-sm xl:text-sm text-green-600 dark:text-green-400 leading-tight">
                                             {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
@@ -1064,7 +975,7 @@ function WatchlistTable({
                                         </span>
                                     </div>
                                 </td>
-                                <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobileColIndex === 1 ? "table-cell" : "hidden xl:table-cell")}>
+                                <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 0 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="flex flex-col items-center xl:items-end justify-center gap-0.5">
                                         <span className="font-bold text-[15px] xl:text-sm text-foreground whitespace-nowrap leading-tight">
                                             {formatCurrency(stock.currentPrice, stock.currency, false)}
@@ -1081,7 +992,7 @@ function WatchlistTable({
                                         )}
                                     </div>
                                 </td>
-                                <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobileColIndex === 2 ? "table-cell" : "hidden xl:table-cell")}>
+                                <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 1 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="flex flex-col items-center xl:items-end justify-center gap-0.5">
                                         <div className="flex items-center gap-1.5">
                                             {isUnderTarget && (
@@ -1108,7 +1019,7 @@ function WatchlistTable({
                                         })() : null}
                                     </div>
                                 </td>
-                                <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobileColIndex === 3 ? "table-cell" : "hidden xl:table-cell")}>
+                                <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 1 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="flex flex-col items-center xl:items-end justify-center gap-0.5">
                                         <div className="flex items-center gap-1.5">
                                             {isOverSell && (
@@ -1135,7 +1046,7 @@ function WatchlistTable({
                                         })() : null}
                                     </div>
                                 </td>
-                                <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobileColIndex === 4 ? "table-cell" : "hidden xl:table-cell")}>
+                                <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 2 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="flex flex-col items-center xl:items-end justify-center gap-0.5">
                                         <span className={cn(
                                             "font-bold text-[15px] xl:text-sm whitespace-nowrap leading-tight",
@@ -1158,7 +1069,7 @@ function WatchlistTable({
                                         )}
                                     </div>
                                 </td>
-                                <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobileColIndex === 5 ? "table-cell" : "hidden xl:table-cell")}>
+                                <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 2 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="flex flex-col items-center xl:items-end justify-center gap-0.5">
                                         <span className={cn(
                                             "font-bold text-[15px] xl:text-sm whitespace-nowrap leading-tight",
@@ -1182,7 +1093,7 @@ function WatchlistTable({
                                         )}
                                     </div>
                                 </td>
-                                <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:pl-12 xl:sticky xl:-right-px z-10 group-hover:bg-muted/30 transition-colors xl:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle", mobileColIndex === 6 ? "table-cell" : "hidden xl:table-cell")}>
+                                <td className={cn("px-2 xl:p-4 h-[60px] xl:h-auto text-center xl:pl-12 xl:sticky xl:-right-px z-10 group-hover:bg-muted/30 transition-colors xl:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle", mobilePage === 3 ? "table-cell" : "hidden xl:table-cell")}>
                                     <div className="absolute inset-0 bg-card -z-10" />
                                     <div className="flex items-center justify-center gap-1.5 relative">
                                         <button
