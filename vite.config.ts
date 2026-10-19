@@ -350,6 +350,54 @@ export default defineConfig({
           res.end(JSON.stringify({ error: error.message }));
         }
       });
+
+      // Finance / Chart Middleware for Seasonality & History
+      server.middlewares.use('/api/yahoo-finance', async (req, res, _next) => {
+        try {
+          const url = new URL(req.url!, `http://${req.headers.host}`);
+          const symbol = url.searchParams.get('symbol');
+          const range = url.searchParams.get('range') || url.searchParams.get('period') || '10y';
+          const interval = url.searchParams.get('interval') || '1mo';
+          const events = url.searchParams.get('events') || 'div';
+
+          if (!symbol) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Symbol required' }));
+            return;
+          }
+
+          const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${range}&interval=${interval}&events=${events}`;
+          let response = await fetch(yahooUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              'Accept': 'application/json'
+            }
+          });
+
+          if (!response.ok) {
+            const yahooUrl2 = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?range=${range}&interval=${interval}&events=${events}`;
+            response = await fetch(yahooUrl2, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json'
+              }
+            });
+          }
+
+          if (!response.ok) {
+            res.statusCode = response.status;
+            res.end(JSON.stringify({ error: `Yahoo API error: ${response.status}` }));
+            return;
+          }
+
+          const data = await response.json();
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(data));
+        } catch (error: any) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: error.message }));
+        }
+      });
     }
   }],
   base: './',

@@ -313,8 +313,20 @@ export function SeasonalityPage() {
                     )}
 
                     {error && !loading && (
-                        <div className="bg-card border border-border rounded-xl p-6 text-center">
+                        <div className="bg-card border border-border rounded-xl p-6 text-center space-y-3">
                             <p className="text-red-500 font-medium">{error}</p>
+                            {error.includes('404') && (
+                                <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                                    Die Live-Daten-Schnittstelle ist auf rein statischen Seiten (z.&nbsp;B. GitHub Pages) nicht direkt erreichbar. Bitte öffnen Sie die App auf dem iPad über die lokale Netzwerkadresse (z.&nbsp;B. <code className="bg-muted px-1.5 py-0.5 rounded text-[11px]">http://192.168.0.27:5173</code>).
+                                </p>
+                            )}
+                            <button
+                                onClick={() => loadData(activeSymbol, years)}
+                                className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-xs font-semibold transition-colors inline-flex items-center gap-1.5"
+                            >
+                                <RefreshCw className="size-3.5" />
+                                <span>Erneut versuchen</span>
+                            </button>
                         </div>
                     )}
 
