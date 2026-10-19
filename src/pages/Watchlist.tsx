@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -492,6 +492,61 @@ function WatchlistTable({
     const [mobileColIndex, setMobileColIndex] = useState(1);
     const touchStartRef = useRef<{ x: number; y: number; time: number; isStockCol: boolean } | null>(null);
 
+    const handleSort = (key: string) => {
+        setSortConfig((prev: any) => {
+            const isSameKey = prev.key === key;
+            const defaultDir = (key === 'gap' || key === 'sellGap') ? 'asc' : 'desc';
+            let newDir: 'asc' | 'desc';
+            if (!isSameKey) {
+                newDir = defaultDir;
+            } else {
+                newDir = prev.direction === 'desc' ? 'asc' : 'desc';
+            }
+            return { key, direction: newDir };
+        });
+    };
+
+    const sortedStocks = useMemo(() => {
+        return [...stocks].sort((a, b) => {
+            if (sortConfig.key === 'name') {
+                return sortConfig.direction === 'asc'
+                    ? a.name.localeCompare(b.name)
+                    : b.name.localeCompare(a.name);
+            }
+            if (sortConfig.key === 'yield') {
+                const yieldA = (a.dividendYield !== undefined && a.dividendYield !== null) ? a.dividendYield : -999999;
+                const yieldB = (b.dividendYield !== undefined && b.dividendYield !== null) ? b.dividendYield : -999999;
+                return sortConfig.direction === 'asc' ? yieldA - yieldB : yieldB - yieldA;
+            }
+            if (sortConfig.key === 'price') {
+                const priceA = a.currentPrice || 0;
+                const priceB = b.currentPrice || 0;
+                return sortConfig.direction === 'asc' ? priceA - priceB : priceB - priceA;
+            }
+            if (sortConfig.key === 'gap') {
+                const targetA = a.targetPrice || 0;
+                const targetB = b.targetPrice || 0;
+                if (!targetA && !targetB) return 0;
+                if (!targetA) return 1;
+                if (!targetB) return -1;
+                const gapA = (a.currentPrice - targetA) / targetA;
+                const gapB = (b.currentPrice - targetB) / targetB;
+                return sortConfig.direction === 'asc' ? gapA - gapB : gapB - gapA;
+            }
+            if (sortConfig.key === 'sellGap') {
+                const sellA = a.sellLimit || 0;
+                const sellB = b.sellLimit || 0;
+                if (!sellA && !sellB) return 0;
+                if (!sellA) return 1;
+                if (!sellB) return -1;
+                const gapA = (a.currentPrice - sellA) / sellA;
+                const gapB = (b.currentPrice - sellB) / sellB;
+                return sortConfig.direction === 'asc' ? gapA - gapB : gapB - gapA;
+            }
+            return 0;
+        });
+    }, [stocks, sortConfig]);
+
     if (stocks.length === 0) {
         return (
             <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
@@ -547,22 +602,26 @@ function WatchlistTable({
                     <tr className="border-b bg-muted/20">
                         {/* 0. Aktie */}
                         <th className="px-3 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[15px] xl:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] sm:w-[240px] md:w-[260px] min-w-[170px] sm:min-w-[240px] md:min-w-[260px] max-w-[170px] sm:max-w-[240px] md:max-w-[260px] xl:w-[200px] xl:min-w-[200px] xl:max-w-[200px] touch-pan-y align-middle">
-                            Aktie
+                            <button
+                                type="button"
+                                onClick={() => handleSort('name')}
+                                className="flex items-center gap-1 hover:text-foreground text-inherit cursor-pointer select-none text-left"
+                            >
+                                <span>Aktie</span>
+                                {sortConfig.key === 'name' && (
+                                    <span className="font-bold text-sm">
+                                        {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                                    </span>
+                                )}
+                            </button>
                         </th>
 
                         {/* 1. Div. Rendite */}
                         <th
                             className={cn(
-                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card xl:w-[10%] align-middle",
+                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card xl:w-[10%] align-middle",
                                 mobileColIndex === 0 ? "table-cell" : "hidden xl:table-cell"
                             )}
-                            onClick={(e) => {
-                                if ((e.target as HTMLElement).closest('button')) return;
-                                setSortConfig({
-                                    key: 'yield',
-                                    direction: sortConfig.key === 'yield' && sortConfig.direction === 'desc' ? 'asc' : 'desc'
-                                });
-                            }}
                         >
                             <div className="flex xl:hidden items-center justify-end gap-1.5 sm:gap-2 w-full h-12 pr-4 sm:pr-8 md:pr-12">
                                 <button
@@ -573,24 +632,28 @@ function WatchlistTable({
                                         setMobileColIndex((i) => Math.max(0, i - 1));
                                     }}
                                     disabled={mobileColIndex === 0}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
                                     title="Vorherige Spalte"
                                     aria-label="Vorherige Spalte"
                                 >
-                                    <ChevronLeft className="size-4 pointer-events-none" />
+                                    <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
-                                <span
+                                <button
+                                    type="button"
                                     onClick={(e) => {
+                                        e.preventDefault();
                                         e.stopPropagation();
-                                        setSortConfig({
-                                            key: 'yield',
-                                            direction: sortConfig.key === 'yield' && sortConfig.direction === 'desc' ? 'asc' : 'desc'
-                                        });
+                                        handleSort('yield');
                                     }}
-                                    className="whitespace-nowrap text-center px-1.5 cursor-pointer select-none hover:text-primary active:opacity-70 transition-opacity"
+                                    className="flex items-center justify-center gap-1 px-2 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-[13px]"
                                 >
-                                    Div. Rendite {sortConfig.key === 'yield' && (sortConfig.direction === 'desc' ? '↓' : '↑')}
-                                </span>
+                                    <span>Div. Rendite</span>
+                                    {sortConfig.key === 'yield' && (
+                                        <span className="font-bold text-sm">
+                                            {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                        </span>
+                                    )}
+                                </button>
                                 <button
                                     type="button"
                                     onClick={(e) => {
@@ -599,31 +662,33 @@ function WatchlistTable({
                                         setMobileColIndex((i) => Math.min(6, i + 1));
                                     }}
                                     disabled={mobileColIndex === 6}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
                                     title="Nächste Spalte"
                                     aria-label="Nächste Spalte"
                                 >
-                                    <ChevronRight className="size-4 pointer-events-none" />
+                                    <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
                             </div>
-                            <span className="hidden xl:inline">
-                                Div. Rendite {sortConfig.key === 'yield' && (sortConfig.direction === 'desc' ? '↓' : '↑')}
-                            </span>
+                            <button
+                                type="button"
+                                onClick={() => handleSort('yield')}
+                                className="hidden xl:inline-flex items-center gap-1 hover:text-foreground cursor-pointer select-none text-inherit uppercase"
+                            >
+                                <span>Div. Rendite</span>
+                                {sortConfig.key === 'yield' && (
+                                    <span className="font-bold text-xs">
+                                        {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                    </span>
+                                )}
+                            </button>
                         </th>
 
                         {/* 2. Aktueller Kurs */}
                         <th
                             className={cn(
-                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card xl:w-[15%] align-middle",
+                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card xl:w-[15%] align-middle",
                                 mobileColIndex === 1 ? "table-cell" : "hidden xl:table-cell"
                             )}
-                            onClick={(e) => {
-                                if ((e.target as HTMLElement).closest('button')) return;
-                                setSortConfig({
-                                    key: 'price',
-                                    direction: sortConfig.key === 'price' && sortConfig.direction === 'desc' ? 'asc' : 'desc'
-                                });
-                            }}
                         >
                             <div className="flex xl:hidden items-center justify-end gap-1.5 sm:gap-2 w-full h-12 pr-4 sm:pr-8 md:pr-12">
                                 <button
@@ -634,24 +699,28 @@ function WatchlistTable({
                                         setMobileColIndex((i) => Math.max(0, i - 1));
                                     }}
                                     disabled={mobileColIndex === 0}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
                                     title="Vorherige Spalte"
                                     aria-label="Vorherige Spalte"
                                 >
-                                    <ChevronLeft className="size-4 pointer-events-none" />
+                                    <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
-                                <span
+                                <button
+                                    type="button"
                                     onClick={(e) => {
+                                        e.preventDefault();
                                         e.stopPropagation();
-                                        setSortConfig({
-                                            key: 'price',
-                                            direction: sortConfig.key === 'price' && sortConfig.direction === 'desc' ? 'asc' : 'desc'
-                                        });
+                                        handleSort('price');
                                     }}
-                                    className="whitespace-nowrap text-center px-1.5 cursor-pointer select-none hover:text-primary active:opacity-70 transition-opacity"
+                                    className="flex items-center justify-center gap-1 px-2 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-[13px]"
                                 >
-                                    Aktueller Kurs {sortConfig.key === 'price' && (sortConfig.direction === 'desc' ? '↓' : '↑')}
-                                </span>
+                                    <span>Aktueller Kurs</span>
+                                    {sortConfig.key === 'price' && (
+                                        <span className="font-bold text-sm">
+                                            {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                        </span>
+                                    )}
+                                </button>
                                 <button
                                     type="button"
                                     onClick={(e) => {
@@ -660,31 +729,33 @@ function WatchlistTable({
                                         setMobileColIndex((i) => Math.min(6, i + 1));
                                     }}
                                     disabled={mobileColIndex === 6}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
                                     title="Nächste Spalte"
                                     aria-label="Nächste Spalte"
                                 >
-                                    <ChevronRight className="size-4 pointer-events-none" />
+                                    <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
                             </div>
-                            <span className="hidden xl:inline">
-                                Aktueller Kurs {sortConfig.key === 'price' && (sortConfig.direction === 'desc' ? '↓' : '↑')}
-                            </span>
+                            <button
+                                type="button"
+                                onClick={() => handleSort('price')}
+                                className="hidden xl:inline-flex items-center gap-1 hover:text-foreground cursor-pointer select-none text-inherit uppercase"
+                            >
+                                <span>Aktueller Kurs</span>
+                                {sortConfig.key === 'price' && (
+                                    <span className="font-bold text-xs">
+                                        {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                    </span>
+                                )}
+                            </button>
                         </th>
 
                         {/* 3. Kauflimit */}
                         <th
                             className={cn(
-                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card xl:w-[15%] align-middle",
+                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card xl:w-[15%] align-middle",
                                 mobileColIndex === 2 ? "table-cell" : "hidden xl:table-cell"
                             )}
-                            onClick={(e) => {
-                                if ((e.target as HTMLElement).closest('button')) return;
-                                setSortConfig({
-                                    key: 'gap',
-                                    direction: sortConfig.key === 'gap' && sortConfig.direction === 'asc' ? 'desc' : 'asc'
-                                });
-                            }}
                         >
                             <div className="flex xl:hidden items-center justify-end gap-1.5 sm:gap-2 w-full h-12 pr-4 sm:pr-8 md:pr-12">
                                 <button
@@ -695,24 +766,28 @@ function WatchlistTable({
                                         setMobileColIndex((i) => Math.max(0, i - 1));
                                     }}
                                     disabled={mobileColIndex === 0}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
                                     title="Vorherige Spalte"
                                     aria-label="Vorherige Spalte"
                                 >
-                                    <ChevronLeft className="size-4 pointer-events-none" />
+                                    <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
-                                <span
+                                <button
+                                    type="button"
                                     onClick={(e) => {
+                                        e.preventDefault();
                                         e.stopPropagation();
-                                        setSortConfig({
-                                            key: 'gap',
-                                            direction: sortConfig.key === 'gap' && sortConfig.direction === 'asc' ? 'desc' : 'asc'
-                                        });
+                                        handleSort('gap');
                                     }}
-                                    className="whitespace-nowrap text-center px-1.5 cursor-pointer select-none hover:text-primary active:opacity-70 transition-opacity"
+                                    className="flex items-center justify-center gap-1 px-2 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-[13px]"
                                 >
-                                    Kauflimit {sortConfig.key === 'gap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
-                                </span>
+                                    <span>Kauflimit</span>
+                                    {sortConfig.key === 'gap' && (
+                                        <span className="font-bold text-sm">
+                                            {sortConfig.direction === 'asc' ? '↓' : '↑'}
+                                        </span>
+                                    )}
+                                </button>
                                 <button
                                     type="button"
                                     onClick={(e) => {
@@ -721,31 +796,33 @@ function WatchlistTable({
                                         setMobileColIndex((i) => Math.min(6, i + 1));
                                     }}
                                     disabled={mobileColIndex === 6}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
                                     title="Nächste Spalte"
                                     aria-label="Nächste Spalte"
                                 >
-                                    <ChevronRight className="size-4 pointer-events-none" />
+                                    <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
                             </div>
-                            <span className="hidden xl:inline">
-                                Kauflimit {sortConfig.key === 'gap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
-                            </span>
+                            <button
+                                type="button"
+                                onClick={() => handleSort('gap')}
+                                className="hidden xl:inline-flex items-center gap-1 hover:text-foreground cursor-pointer select-none text-inherit uppercase"
+                            >
+                                <span>Kauflimit</span>
+                                {sortConfig.key === 'gap' && (
+                                    <span className="font-bold text-xs">
+                                        {sortConfig.direction === 'asc' ? '↓' : '↑'}
+                                    </span>
+                                )}
+                            </button>
                         </th>
 
                         {/* 4. Verkaufslimit */}
                         <th
                             className={cn(
-                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-card xl:w-[10%] align-middle",
+                                "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card xl:w-[10%] align-middle",
                                 mobileColIndex === 3 ? "table-cell" : "hidden xl:table-cell"
                             )}
-                            onClick={(e) => {
-                                if ((e.target as HTMLElement).closest('button')) return;
-                                setSortConfig({
-                                    key: 'sellGap',
-                                    direction: sortConfig.key === 'sellGap' && sortConfig.direction === 'asc' ? 'desc' : 'asc'
-                                });
-                            }}
                         >
                             <div className="flex xl:hidden items-center justify-end gap-1.5 sm:gap-2 w-full h-12 pr-4 sm:pr-8 md:pr-12">
                                 <button
@@ -756,24 +833,28 @@ function WatchlistTable({
                                         setMobileColIndex((i) => Math.max(0, i - 1));
                                     }}
                                     disabled={mobileColIndex === 0}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
                                     title="Vorherige Spalte"
                                     aria-label="Vorherige Spalte"
                                 >
-                                    <ChevronLeft className="size-4 pointer-events-none" />
+                                    <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
-                                <span
+                                <button
+                                    type="button"
                                     onClick={(e) => {
+                                        e.preventDefault();
                                         e.stopPropagation();
-                                        setSortConfig({
-                                            key: 'sellGap',
-                                            direction: sortConfig.key === 'sellGap' && sortConfig.direction === 'asc' ? 'desc' : 'asc'
-                                        });
+                                        handleSort('sellGap');
                                     }}
-                                    className="whitespace-nowrap text-center px-1.5 cursor-pointer select-none hover:text-primary active:opacity-70 transition-opacity"
+                                    className="flex items-center justify-center gap-1 px-2 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-[13px]"
                                 >
-                                    Verkaufslimit {sortConfig.key === 'sellGap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
-                                </span>
+                                    <span>Verkaufslimit</span>
+                                    {sortConfig.key === 'sellGap' && (
+                                        <span className="font-bold text-sm">
+                                            {sortConfig.direction === 'asc' ? '↓' : '↑'}
+                                        </span>
+                                    )}
+                                </button>
                                 <button
                                     type="button"
                                     onClick={(e) => {
@@ -782,16 +863,25 @@ function WatchlistTable({
                                         setMobileColIndex((i) => Math.min(6, i + 1));
                                     }}
                                     disabled={mobileColIndex === 6}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
                                     title="Nächste Spalte"
                                     aria-label="Nächste Spalte"
                                 >
-                                    <ChevronRight className="size-4 pointer-events-none" />
+                                    <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
                             </div>
-                            <span className="hidden xl:inline">
-                                Verkaufslimit {sortConfig.key === 'sellGap' && (sortConfig.direction === 'asc' ? '↓' : '↑')}
-                            </span>
+                            <button
+                                type="button"
+                                onClick={() => handleSort('sellGap')}
+                                className="hidden xl:inline-flex items-center gap-1 hover:text-foreground cursor-pointer select-none text-inherit uppercase"
+                            >
+                                <span>Verkaufslimit</span>
+                                {sortConfig.key === 'sellGap' && (
+                                    <span className="font-bold text-xs">
+                                        {sortConfig.direction === 'asc' ? '↓' : '↑'}
+                                    </span>
+                                )}
+                            </button>
                         </th>
 
                         {/* 5. EX-Tag */}
@@ -810,13 +900,13 @@ function WatchlistTable({
                                         setMobileColIndex((i) => Math.max(0, i - 1));
                                     }}
                                     disabled={mobileColIndex === 0}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
                                     title="Vorherige Spalte"
                                     aria-label="Vorherige Spalte"
                                 >
-                                    <ChevronLeft className="size-4 pointer-events-none" />
+                                    <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
-                                <span className="whitespace-nowrap text-center px-1.5 select-none">
+                                <span className="whitespace-nowrap text-center px-1.5 select-none font-semibold text-[13px] text-foreground">
                                     EX-Tag
                                 </span>
                                 <button
@@ -827,11 +917,11 @@ function WatchlistTable({
                                         setMobileColIndex((i) => Math.min(6, i + 1));
                                     }}
                                     disabled={mobileColIndex === 6}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
                                     title="Nächste Spalte"
                                     aria-label="Nächste Spalte"
                                 >
-                                    <ChevronRight className="size-4 pointer-events-none" />
+                                    <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
                             </div>
                             <span className="hidden xl:inline">EX-Tag</span>
@@ -853,13 +943,13 @@ function WatchlistTable({
                                         setMobileColIndex((i) => Math.max(0, i - 1));
                                     }}
                                     disabled={mobileColIndex === 0}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
                                     title="Vorherige Spalte"
                                     aria-label="Vorherige Spalte"
                                 >
-                                    <ChevronLeft className="size-4 pointer-events-none" />
+                                    <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
-                                <span className="whitespace-nowrap text-center px-1.5 select-none">
+                                <span className="whitespace-nowrap text-center px-1.5 select-none font-semibold text-[13px] text-foreground">
                                     Zahl-Tag
                                 </span>
                                 <button
@@ -870,11 +960,11 @@ function WatchlistTable({
                                         setMobileColIndex((i) => Math.min(6, i + 1));
                                     }}
                                     disabled={mobileColIndex === 6}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
                                     title="Nächste Spalte"
                                     aria-label="Nächste Spalte"
                                 >
-                                    <ChevronRight className="size-4 pointer-events-none" />
+                                    <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
                             </div>
                             <span className="hidden xl:inline">Zahl-Tag</span>
@@ -896,13 +986,13 @@ function WatchlistTable({
                                         setMobileColIndex((i) => Math.max(0, i - 1));
                                     }}
                                     disabled={mobileColIndex === 0}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
                                     title="Vorherige Spalte"
                                     aria-label="Vorherige Spalte"
                                 >
-                                    <ChevronLeft className="size-4 pointer-events-none" />
+                                    <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
-                                <span className="whitespace-nowrap text-center px-1.5 select-none">
+                                <span className="whitespace-nowrap text-center px-1.5 select-none font-semibold text-[13px] text-foreground">
                                     Aktionen
                                 </span>
                                 <button
@@ -913,11 +1003,11 @@ function WatchlistTable({
                                         setMobileColIndex((i) => Math.min(6, i + 1));
                                     }}
                                     disabled={mobileColIndex === 6}
-                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-accent disabled:opacity-20 transition-all shrink-0 active:scale-90 cursor-pointer"
+                                    className="size-8 sm:size-9 flex items-center justify-center rounded-lg bg-muted/40 hover:bg-muted active:bg-muted/70 text-muted-foreground hover:text-foreground active:text-foreground disabled:opacity-20 transition-colors shrink-0 cursor-pointer"
                                     title="Nächste Spalte"
                                     aria-label="Nächste Spalte"
                                 >
-                                    <ChevronRight className="size-4 pointer-events-none" />
+                                    <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                 </button>
                             </div>
                             <span className="hidden xl:inline">Aktionen</span>
@@ -925,7 +1015,7 @@ function WatchlistTable({
                     </tr>
                 </thead>
                 <tbody className="divide-y">
-                    {stocks.map((stock) => {
+                    {sortedStocks.map((stock) => {
                         const currentDiv = getCurrentDividendPeriod(stock);
 
                         const isUnderTarget = stock.targetPrice && stock.currentPrice <= stock.targetPrice;
