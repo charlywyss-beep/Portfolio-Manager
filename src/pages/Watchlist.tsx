@@ -160,30 +160,53 @@ export function Watchlist() {
         navigate(`/calculator?stock=${stock.id}&mode=buy&from=watchlist`);
     };
 
+    const isEtfList = activeWatchlist?.name?.toLowerCase().includes('etf') ?? false;
+
     const subTabs: Array<{ id: string; label: string; count: number; icon: any; stocks: Stock[] }> = activeWatchlistId === 'owned'
         ? [
             { id: 'owned-stocks', label: 'Aktien', count: ownedStocks.length, icon: ShoppingBag, stocks: ownedStocks },
             { id: 'owned-etfs', label: 'ETFs', count: ownedEtfs.length, icon: PieChart, stocks: ownedEtfs }
         ]
-        : [
-            ...(potentialStocks.length > 0 || (ownedStocks.length === 0 && potentialEtfs.length === 0 && ownedEtfs.length === 0)
-                ? [{ id: 'pot-stocks', label: ownedStocks.length > 0 ? 'Watchlist Aktien' : 'Aktien', count: potentialStocks.length, icon: ShoppingBag, stocks: potentialStocks }]
-                : []),
-            ...(potentialEtfs.length > 0 || (ownedEtfs.length === 0 && potentialStocks.length === 0 && ownedStocks.length === 0)
-                ? [{ id: 'pot-etfs', label: ownedEtfs.length > 0 ? 'Watchlist ETFs' : 'ETFs', count: potentialEtfs.length, icon: PieChart, stocks: potentialEtfs }]
-                : []),
-            ...(ownedStocks.length > 0
-                ? [{ id: 'owned-stocks', label: 'Bestand Aktien', count: ownedStocks.length, icon: ShoppingBag, stocks: ownedStocks }]
-                : []),
-            ...(ownedEtfs.length > 0
-                ? [{ id: 'owned-etfs', label: 'Bestand ETFs', count: ownedEtfs.length, icon: PieChart, stocks: ownedEtfs }]
-                : [])
-        ];
+        : isEtfList
+            ? [
+                ...(ownedEtfs.length > 0
+                    ? [{ id: 'owned-etfs', label: 'Bestand ETFs', count: ownedEtfs.length, icon: PieChart, stocks: ownedEtfs }]
+                    : []),
+                ...(ownedStocks.length > 0
+                    ? [{ id: 'owned-stocks', label: 'Bestand Aktien', count: ownedStocks.length, icon: ShoppingBag, stocks: ownedStocks }]
+                    : []),
+                ...(potentialEtfs.length > 0 || (ownedEtfs.length === 0 && potentialStocks.length === 0 && ownedStocks.length === 0)
+                    ? [{ id: 'pot-etfs', label: (ownedEtfs.length > 0 || ownedStocks.length > 0) ? 'Watchlist ETFs' : 'ETFs', count: potentialEtfs.length, icon: PieChart, stocks: potentialEtfs }]
+                    : []),
+                ...(potentialStocks.length > 0
+                    ? [{ id: 'pot-stocks', label: (ownedStocks.length > 0 || ownedEtfs.length > 0) ? 'Watchlist Aktien' : 'Aktien', count: potentialStocks.length, icon: ShoppingBag, stocks: potentialStocks }]
+                    : [])
+            ]
+            : [
+                ...(ownedStocks.length > 0
+                    ? [{ id: 'owned-stocks', label: 'Bestand Aktien', count: ownedStocks.length, icon: ShoppingBag, stocks: ownedStocks }]
+                    : []),
+                ...(ownedEtfs.length > 0
+                    ? [{ id: 'owned-etfs', label: 'Bestand ETFs', count: ownedEtfs.length, icon: PieChart, stocks: ownedEtfs }]
+                    : []),
+                ...(potentialStocks.length > 0 || (ownedStocks.length === 0 && potentialEtfs.length === 0 && ownedEtfs.length === 0)
+                    ? [{ id: 'pot-stocks', label: (ownedStocks.length > 0 || ownedEtfs.length > 0) ? 'Watchlist Aktien' : 'Aktien', count: potentialStocks.length, icon: ShoppingBag, stocks: potentialStocks }]
+                    : []),
+                ...(potentialEtfs.length > 0
+                    ? [{ id: 'pot-etfs', label: (ownedStocks.length > 0 || ownedEtfs.length > 0) ? 'Watchlist ETFs' : 'ETFs', count: potentialEtfs.length, icon: PieChart, stocks: potentialEtfs }]
+                    : [])
+            ];
 
     const [activeSubTab, setActiveSubTab] = useState<string>('owned-stocks');
+    const prevWatchlistIdRef = useRef(activeWatchlistId);
 
     useEffect(() => {
-        if (!subTabs.some(t => t.id === activeSubTab) && subTabs.length > 0) {
+        if (prevWatchlistIdRef.current !== activeWatchlistId) {
+            prevWatchlistIdRef.current = activeWatchlistId;
+            if (subTabs.length > 0) {
+                setActiveSubTab(subTabs[0].id);
+            }
+        } else if (!subTabs.some(t => t.id === activeSubTab) && subTabs.length > 0) {
             setActiveSubTab(subTabs[0].id);
         }
     }, [activeWatchlistId, subTabs, activeSubTab]);
