@@ -827,6 +827,55 @@ export function FairValueCalculator() {
         };
     }, [eps, growthRate, pe, discountRate, mos, dividendYield, quote?.price, valuationProfile, selectedSymbol]);
 
+    // Fundamentale Risikoprofil- / Abwärtsabsicherungs-Einschätzung (Downside Protection)
+    const downsideProtection = useMemo(() => {
+        const numDiv = typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : Number(dividendYield) || 0;
+        const numEps = typeof eps === 'string' ? parseFloat(eps) || 0 : Number(eps) || 0;
+        const curP = quote?.price || 0;
+        const curPe = (curP > 0 && numEps > 0) ? (curP / numEps) : (quote?.trailingPE || 15);
+        const exitPe = typeof pe === 'string' ? parseFloat(pe) || 15 : Number(pe) || 15;
+        const targetYield = typeof discountRate === 'string' ? parseFloat(discountRate) || 8 : Number(discountRate) || 8;
+        const growth = typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : Number(growthRate) || 0;
+        const divShare = targetYield > 0 ? Math.round((numDiv / targetYield) * 100) : 0;
+
+        // 1. High Downside Protection: Fat dividend (>= 4.5%) OR low valuation with solid yield
+        if (numDiv >= 5.0 || (numDiv >= 3.5 && curPe <= 14)) {
+            return {
+                level: 'high' as const,
+                icon: '🛡️',
+                title: 'Hohe fundamentale Abwärtsabsicherung',
+                text: `Die Dividende von ${numDiv.toFixed(1)} % liefert bereits ${divShare}% deiner Zielrendite (${targetYield} % MARR). In Kombination mit dem niedrigen KGV (${curPe.toFixed(1)} aktuell / ${exitPe.toFixed(1)} im Modell) sind Abwärtsrisiken fundamental exzellent abgefedert.`
+            };
+        }
+
+        if (curPe <= 11.5 && exitPe <= 12.5) {
+            return {
+                level: 'high' as const,
+                icon: '🛡️',
+                title: 'Starke Bewertungsabsicherung',
+                text: `Das tiefe KGV (${curPe.toFixed(1)} aktuell / ${exitPe.toFixed(1)} im Modell) preist bereits viel Pessimismus ein. Geringe Gefahr weiterer Multiple-Kompression.`
+            };
+        }
+
+        // 2. Low Protection / High Valuation Risk: High PE and little/no dividend
+        if (curPe >= 32 || (curPe >= 24 && numDiv < 1.0)) {
+            return {
+                level: 'low' as const,
+                icon: '⚠️',
+                title: 'Geringe fundamentale Abwärtsabsicherung',
+                text: `Hohes Bewertungsniveau (KGV ${curPe.toFixed(1)})${numDiv > 0 ? ` bei nur ${numDiv.toFixed(1)} % Dividende` : ' ohne Dividendenschutz'}. Die Rendite hängt fast vollständig davon ab, dass das Wachstum von ${growth.toFixed(1)} % fehlerfrei geliefert wird.`
+            };
+        }
+
+        // 3. Balanced Compounder
+        return {
+            level: 'balanced' as const,
+            icon: '⚖️',
+            title: 'Ausgewogenes Risikoprofil',
+            text: `Gesunder Mix aus laufendem Ertrag (${numDiv > 0 ? `${numDiv.toFixed(1)} % Dividende` : 'Reinvestition'}) und moderatem KGV von ${exitPe.toFixed(1)}. Typisches Marktrisiko.`
+        };
+    }, [dividendYield, eps, quote?.price, quote?.trailingPE, pe, discountRate, growthRate]);
+
     // 4. AUTO-SYNC: Save Fair Value AND Fair Value Parameters to Stock
     useEffect(() => {
         if (isRestoring.current || loadingData || !selectedSymbol || !calculation || !quote) return;
@@ -2113,6 +2162,22 @@ export function FairValueCalculator() {
                                                         <div className="mt-1 text-xs text-muted-foreground/90">Aktuell kein Neukauf.</div>
                                                     </>
                                                 )}
+                                            </div>
+
+                                            {/* Fundamentale Abwärtsabsicherung / Risikoprofil */}
+                                            <div className={cn(
+                                                "mt-2.5 pt-2 border-t text-xs text-left leading-relaxed flex items-start gap-2",
+                                                downsideProtection.level === 'high'
+                                                    ? "border-emerald-500/25 text-emerald-300/90"
+                                                    : downsideProtection.level === 'low'
+                                                        ? "border-amber-500/25 text-amber-300/90"
+                                                        : "border-border/40 text-muted-foreground"
+                                            )}>
+                                                <span className="text-sm shrink-0 select-none mt-0.5">{downsideProtection.icon}</span>
+                                                <div className="min-w-0 flex-1">
+                                                    <strong className="font-semibold text-foreground mr-1.5">{downsideProtection.title}:</strong>
+                                                    <span>{downsideProtection.text}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     );
