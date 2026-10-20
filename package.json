@@ -1,7 +1,7 @@
 {
   "name": "portfolio-manager",
   "private": true,
-  "version": "3.14.230",
+  "version": "3.14.231",
   "type": "module",
   "scripts": {
     "dev": "vite",

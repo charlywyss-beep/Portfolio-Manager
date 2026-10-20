@@ -26,7 +26,7 @@ interface PortfolioContextType {
     addHistoryEntry: (entry: Omit<import('../types').PortfolioHistoryEntry, 'id'>) => void;
     deleteHistoryEntry: (id: string) => void;
     updateHistoryEntry: (id: string, updates: Partial<import('../types').PortfolioHistoryEntry>) => void;
-    importData: (data: { positions?: Position[], stocks?: Stock[], fixedDeposits?: any[], history?: any[], watchlists?: import('../types').Watchlist[], watchlist?: string[], mortgageData?: import('../types').MortgageData, simulatorState?: any }) => boolean;
+    importData: (data: { positions?: Position[], stocks?: Stock[], fixedDeposits?: any[], history?: any[], watchlists?: import('../types').Watchlist[], watchlist?: string[], mortgageData?: import('../types').MortgageData, simulatorState?: any, marketOverviewItems?: any, marketOverviewQuotes?: any, [key: string]: any }) => boolean;
     exportCurrentData: () => any;
     watchlists: import('../types').Watchlist[];
     addToWatchlist: (stockId: string, watchlistId?: string) => void;
@@ -725,6 +725,9 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         watchlists?: import('../types').Watchlist[];
         mortgageData?: import('../types').MortgageData;
         simulatorState?: any;
+        marketOverviewItems?: any;
+        marketOverviewQuotes?: any;
+        [key: string]: any;
     }) => {
         try {
             if (data.positions) {
@@ -764,6 +767,12 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 setSimulatorState(data.simulatorState);
                 localStorage.setItem('portfolio_simulator_state', JSON.stringify(data.simulatorState));
             }
+            if (data.marketOverviewItems) {
+                localStorage.setItem('portfolio_market_overview_items', JSON.stringify(data.marketOverviewItems));
+            }
+            if (data.marketOverviewQuotes) {
+                localStorage.setItem('portfolio_market_overview_quotes', JSON.stringify(data.marketOverviewQuotes));
+            }
             return true;
         } catch (e) {
             console.error("Import failed", e);
@@ -798,7 +807,19 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
             history,
             watchlists,
             mortgageData,
-            simulatorState
+            simulatorState,
+            marketOverviewItems: (() => {
+                try {
+                    const raw = localStorage.getItem('portfolio_market_overview_items');
+                    return raw ? JSON.parse(raw) : null;
+                } catch { return null; }
+            })(),
+            marketOverviewQuotes: (() => {
+                try {
+                    const raw = localStorage.getItem('portfolio_market_overview_quotes');
+                    return raw ? JSON.parse(raw) : null;
+                } catch { return null; }
+            })()
         };
     }, [positions, stocks, fixedDeposits, history, watchlists, mortgageData, simulatorState]);
 
