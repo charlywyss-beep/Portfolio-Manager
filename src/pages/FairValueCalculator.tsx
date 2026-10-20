@@ -1466,9 +1466,10 @@ export function FairValueCalculator() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 animate-in slide-in-from-bottom-4 duration-500">
 
                         {/* INPUTS COLUMN */}
-                        <div className="space-y-4">
-                            <div className="bg-card border border-border rounded-xl p-3.5 sm:p-4.5 shadow-sm space-y-3.5">
-                                <div className="space-y-2 pb-2.5 border-b border-border">
+                        <div className="flex flex-col h-full">
+                            <div className="bg-card border border-border rounded-xl p-3.5 sm:p-4.5 shadow-sm h-full flex flex-col justify-between">
+                                <div className="space-y-3 sm:space-y-3.5 flex-1">
+                                    <div className="space-y-2 pb-2.5 border-b border-border">
                                     <div className="flex items-center justify-between gap-2">
                                         <div className="flex items-center gap-2 min-w-0">
                                             <h2 className="text-base font-semibold flex items-center gap-1.5 shrink-0">
@@ -1953,9 +1954,10 @@ export function FairValueCalculator() {
                                         </button>
                                     </div>
                                 </div>
+                                </div>
 
-                                {/* MARGIN OF SAFETY */}
-                                <div className="space-y-1.5 pt-1 border-t border-border/40">
+                                {/* MARGIN OF SAFETY (Anchored to bottom so left card ends exactly aligned with right card) */}
+                                <div className="space-y-1.5 pt-3 mt-auto border-t border-border/50">
                                     <label className="text-xs sm:text-sm font-medium flex justify-between items-center">
                                         <span>Sicherheitsmarge</span>
                                         <span className="text-[11px] text-muted-foreground font-light">
@@ -2002,8 +2004,8 @@ export function FairValueCalculator() {
                         </div>
 
                         {/* RESULTS COLUMN */}
-                        <div className="space-y-4">
-                            <div className="bg-card border border-border rounded-xl p-3.5 sm:p-4.5 shadow-sm h-full flex flex-col overflow-hidden">
+                        <div className="flex flex-col h-full">
+                            <div className="bg-card border border-border rounded-xl p-3.5 sm:p-4.5 shadow-sm h-full flex flex-col justify-between overflow-hidden">
                                 <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2 mb-3">
                                     <span className="size-2 rounded-full bg-purple-500" />
                                     Bewertung
