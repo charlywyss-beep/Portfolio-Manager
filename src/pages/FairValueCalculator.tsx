@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, ShieldCheck, Sparkles } from 'lucide-react';
+import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, ShieldCheck, Sparkles, Plus } from 'lucide-react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
@@ -56,7 +56,7 @@ const StockListItem = ({ stock, onClick, subtitle }: { stock: any; onClick: () =
 );
 
 export function FairValueCalculator() {
-    const { positions, stocks, watchlists, updateStock } = usePortfolio();
+    const { positions, stocks, watchlists, updateStock, addStock, addQuickLink, removeQuickLink } = usePortfolio();
     const [searchParams] = useSearchParams();
 
     // Search State
@@ -123,6 +123,24 @@ export function FairValueCalculator() {
     // Persistence Ref to avoid cycles
     const isRestoring = useRef(false);
     const [showGuide, setShowGuide] = useState(false);
+    const [showAddLinkModal, setShowAddLinkModal] = useState(false);
+    const [newLinkUrl, setNewLinkUrl] = useState('');
+    const [newLinkLabel, setNewLinkLabel] = useState('');
+
+    const openGuideSection = (sectionId?: string) => {
+        setShowGuide(true);
+        if (sectionId) {
+            setTimeout(() => {
+                const el = document.getElementById(sectionId);
+                el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 150);
+        }
+    };
+
+    const currentStock = useMemo(() => {
+        if (!selectedSymbol) return null;
+        return stocks.find(s => s.symbol.toLowerCase() === selectedSymbol.toLowerCase()) || null;
+    }, [stocks, selectedSymbol]);
 
     // Helper: Read/Write per-symbol parameters in localStorage
     const getSavedSymbolParams = (sym: string) => {
@@ -880,6 +898,103 @@ export function FairValueCalculator() {
 
     return (
         <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 md:p-8 space-y-6 sm:space-y-8 pb-32">
+            {/* Add Link Modal */}
+            {showAddLinkModal && (
+                <div className="fixed inset-0 z-[2100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full p-5 space-y-4 animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between border-b border-border pb-3">
+                            <h3 className="font-bold text-base flex items-center gap-2 text-foreground">
+                                <ExternalLink className="size-4 text-primary" />
+                                Link hinzufügen {selectedSymbol ? `(${selectedSymbol})` : ''}
+                            </h3>
+                            <button
+                                onClick={() => { setShowAddLinkModal(false); setNewLinkUrl(''); setNewLinkLabel(''); }}
+                                className="p-1.5 hover:bg-muted rounded-full transition-colors text-muted-foreground"
+                            >
+                                <X className="size-4" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="space-y-1">
+                                <label className="text-xs font-semibold text-muted-foreground">Web-Adresse (URL)*</label>
+                                <input
+                                    type="url"
+                                    placeholder="https://..."
+                                    value={newLinkUrl}
+                                    onChange={(e) => setNewLinkUrl(e.target.value)}
+                                    className="w-full p-2.5 rounded-lg border border-border bg-background text-sm focus:ring-1 focus:ring-primary"
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && newLinkUrl.trim()) {
+                                            e.preventDefault();
+                                            document.getElementById('btn-save-link')?.click();
+                                        }
+                                    }}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs font-semibold text-muted-foreground">Bezeichnung (optional)</label>
+                                <input
+                                    type="text"
+                                    placeholder="z.B. DeltaValue DCF, Morningstar, Notiz..."
+                                    value={newLinkLabel}
+                                    onChange={(e) => setNewLinkLabel(e.target.value)}
+                                    className="w-full p-2.5 rounded-lg border border-border bg-background text-sm focus:ring-1 focus:ring-primary"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && newLinkUrl.trim()) {
+                                            e.preventDefault();
+                                            document.getElementById('btn-save-link')?.click();
+                                        }
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2 border-t border-border">
+                            <button
+                                type="button"
+                                onClick={() => { setShowAddLinkModal(false); setNewLinkUrl(''); setNewLinkLabel(''); }}
+                                className="px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg transition-colors"
+                            >
+                                Abbrechen
+                            </button>
+                            <button
+                                id="btn-save-link"
+                                type="button"
+                                disabled={!newLinkUrl.trim()}
+                                onClick={() => {
+                                    let formattedUrl = newLinkUrl.trim();
+                                    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+                                        formattedUrl = `https://${formattedUrl}`;
+                                    }
+                                    let stockId = currentStock?.id;
+                                    if (!stockId && selectedSymbol) {
+                                        stockId = addStock({
+                                            symbol: selectedSymbol,
+                                            name: quote?.name || selectedSymbol,
+                                            currentPrice: quote?.price || 0,
+                                            previousClose: quote?.previousClose || 0,
+                                            currency: quote?.currency || 'USD',
+                                            sector: quote?.sector || 'Allgemein'
+                                        });
+                                    }
+                                    if (stockId) {
+                                        addQuickLink(stockId, formattedUrl, newLinkLabel.trim() || undefined);
+                                    }
+                                    setShowAddLinkModal(false);
+                                    setNewLinkUrl('');
+                                    setNewLinkLabel('');
+                                }}
+                                className="px-4 py-2 text-xs font-bold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors shadow-sm"
+                            >
+                                Link speichern
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Guide Modal */}
             {showGuide && (
                 <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
@@ -955,6 +1070,65 @@ export function FairValueCalculator() {
                                     <p className="text-xs text-muted-foreground leading-relaxed">
                                         Das Kurs-Gewinn-Verhältnis, zu dem du die Aktie in 5 Jahren theoretisch verkaufen würdest. <br />
                                         <span className="text-primary italic">Tipp: Nutze das historische Durchschnitts-KGV der Aktie als Anhaltspunkt.</span>
+                                    </p>
+                                </div>
+
+                                <div id="guide-terminal-growth" className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 space-y-3">
+                                    <h3 className="font-bold flex items-center gap-2 text-rose-400 text-sm">
+                                        <span className="text-base">⚠️</span>
+                                        Negatives Terminal Growth (Ewiges Schrumpfen im DCF)
+                                    </h3>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        <strong>Negatives Terminal Growth</strong> bedeutet, dass der langfristige Wert eines Unternehmens nach dem expliziten Prognosezeitraum mit einer <strong>negativen Wachstumsrate</strong> berechnet wird. Man unterstellt also, dass der nachhaltige Cashflow langfristig schrumpft &ndash; etwa wegen sinkender Nachfrage, erschöpfter Ressourcen oder dauerhaftem Wettbewerbsdruck.
+                                    </p>
+
+                                    <div className="p-3 rounded-lg bg-background/80 border border-border/60 space-y-2">
+                                        <div className="text-xs font-semibold text-foreground">
+                                            In einem DCF-Modell mit der Gordon-Growth-Formel lautet der Terminal Value:
+                                        </div>
+                                        <div className="py-2.5 flex items-center justify-center gap-3 text-sm font-mono font-bold text-foreground">
+                                            <span className="text-base text-primary">TV</span>
+                                            <span className="text-muted-foreground">=</span>
+                                            <div className="inline-flex flex-col items-center">
+                                                <span className="border-b-2 border-border/80 px-3 pb-1 text-foreground">
+                                                    FCF<span className="text-[10px] align-sub">n+1</span>
+                                                </span>
+                                                <span className="px-3 pt-1 text-foreground">
+                                                    WACC &minus; g
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground leading-relaxed">
+                                            Dabei ist <em>g</em> die Terminal-Wachstumsrate. Ist <em>g</em> negativ, wird der Terminal Value niedriger als bei einem Wachstum von null oder einer positiven Rate.
+                                        </div>
+                                    </div>
+
+                                    <div className="p-3 rounded-lg bg-background/60 border border-border/50 text-xs space-y-2">
+                                        <div className="font-bold text-foreground">
+                                            Beispiel:
+                                        </div>
+                                        <div className="text-muted-foreground leading-relaxed">
+                                            Bei einem erwarteten Cashflow von 100, einem WACC von 8 % und <em>g</em> = &minus;2 % ergibt sich:
+                                        </div>
+                                        <div className="py-2.5 flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm font-mono font-bold text-foreground">
+                                            <span className="text-primary font-bold">TV</span>
+                                            <span className="text-muted-foreground">=</span>
+                                            <div className="inline-flex flex-col items-center">
+                                                <span className="border-b-2 border-border/80 px-2 pb-0.5 text-foreground">100</span>
+                                                <span className="px-2 pt-0.5 text-foreground">0,08 &minus; (&minus;0,02)</span>
+                                            </div>
+                                            <span className="text-muted-foreground">=</span>
+                                            <div className="inline-flex flex-col items-center">
+                                                <span className="border-b-2 border-border/80 px-2 pb-0.5 text-foreground">100</span>
+                                                <span className="px-2 pt-0.5 text-foreground">0,10</span>
+                                            </div>
+                                            <span className="text-muted-foreground">=</span>
+                                            <span className="text-emerald-400 font-extrabold text-base">1.000</span>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        Die Annahme sollte eine <strong>dauerhafte Schrumpfung</strong> plausibel abbilden. Wichtig ist außerdem, dieselbe Bezugsbasis zu verwenden: nominale Cashflows mit nominalem WACC und realistischem nominalen <em>g</em>, oder reale Cashflows mit realen Größen.
                                     </p>
                                 </div>
 
@@ -1632,24 +1806,107 @@ export function FairValueCalculator() {
                                         )}
                                     </div>
                                     {calculation.equivalentTerminalGrowth !== null && (
-                                        <p className="text-[11px] text-muted-foreground/85 mt-1.5 leading-snug">
-                                            💡 <strong className={calculation.equivalentTerminalGrowth < 0 ? "text-rose-400" : calculation.equivalentTerminalGrowth <= 2.0 ? "text-emerald-400" : "text-purple-400"}>
-                                                Entspricht {calculation.equivalentTerminalGrowth > 0 ? '+' : ''}{calculation.equivalentTerminalGrowth.toFixed(1)} %
-                                            </strong> langfristigem Wachstum (Terminal Growth) in DCF-Tools wie DeltaValue.
+                                        <div className="text-[11px] text-muted-foreground/85 mt-2 space-y-1.5 leading-snug">
+                                            <div className="flex items-start gap-1.5">
+                                                <span className="shrink-0 select-none">💡</span>
+                                                <div className="flex-1">
+                                                    <strong className={calculation.equivalentTerminalGrowth < 0 ? "text-rose-400" : calculation.equivalentTerminalGrowth <= 2.0 ? "text-emerald-400" : "text-purple-400"}>
+                                                        Entspricht {calculation.equivalentTerminalGrowth > 0 ? '+' : ''}{calculation.equivalentTerminalGrowth.toFixed(1)} %
+                                                    </strong>{' '}
+                                                    langfristigem Wachstum (Terminal Growth) in DCF-Tools wie DeltaValue.
+                                                </div>
+                                            </div>
+
                                             {calculation.equivalentTerminalGrowth < 0 ? (
-                                                <span className="block text-rose-400/90 mt-0.5 font-medium">
-                                                    ⚠️ <em>Negatives Terminal Growth:</em> Ein KGV von {pe} impliziert rechnerisch schrumpfende Dauererträge (z.B. zyklische Talsohle oder Risikoabschlag).
-                                                </span>
+                                                <div className="flex items-start gap-1.5 text-rose-400/90 font-medium">
+                                                    <span className="shrink-0 select-none">⚠️</span>
+                                                    <div className="flex-1">
+                                                        <em>Negatives Terminal Growth:</em> Ein KGV von {pe} impliziert rechnerisch schrumpfende Dauererträge (z.B. zyklische Talsohle oder Risikoabschlag).
+                                                        <div className="mt-1">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openGuideSection('guide-terminal-growth')}
+                                                                className="inline-flex items-center gap-1 text-[11px] text-rose-400 hover:text-rose-300 underline underline-offset-2 font-semibold cursor-pointer transition-colors"
+                                                            >
+                                                                <span>👉 Was bedeutet das? Erklärung &amp; Formel in Anleitung öffnen</span>
+                                                                <ExternalLink className="size-3" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             ) : valuationProfile === 'conservative' ? (
-                                                <span className="block text-blue-400/90 mt-0.5 font-medium">
-                                                    🛡️ <em>Sichtweise A (Sicherheit):</em> KGV gedeckelt, damit ewiges Wachstum strikt &le; 2,0 % (BIP-Grenze) bleibt.
-                                                </span>
+                                                <div className="flex items-start gap-1.5 text-blue-400/90 font-medium">
+                                                    <span className="shrink-0 select-none">🛡️</span>
+                                                    <div className="flex-1">
+                                                        <em>Sichtweise A (Sicherheit):</em> KGV gedeckelt, damit ewiges Wachstum strikt &le; 2,0 % (BIP-Grenze) bleibt.
+                                                    </div>
+                                                </div>
                                             ) : (
-                                                <span className="block text-purple-400/90 mt-0.5 font-medium">
-                                                    ⭐ <em>Sichtweise B (Qualität):</em> Historischer Qualitätsaufschlag erlaubt (bis KGV 25 für Wide-Moat-Champions, KGV 48–50 für Hyper-Growth/Tech wie Tesla).
-                                                </span>
+                                                <div className="flex items-start gap-1.5 text-purple-400/90 font-medium">
+                                                    <span className="shrink-0 select-none">⭐</span>
+                                                    <div className="flex-1">
+                                                        <em>Sichtweise B (Qualität):</em> Historischer Qualitätsaufschlag erlaubt (bis KGV 25 für Wide-Moat-Champions, KGV 48–50 für Hyper-Growth/Tech wie Tesla).
+                                                    </div>
+                                                </div>
                                             )}
-                                        </p>
+                                        </div>
+                                    )}
+
+                                    {/* Quick links & Custom link for KGV / Valuation */}
+                                    <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 mt-2 pt-1 border-t border-border/40 text-xs">
+                                        <button
+                                            type="button"
+                                            onClick={() => openGuideSection('guide-terminal-growth')}
+                                            className="text-primary hover:text-primary/80 font-medium hover:underline flex items-center gap-1 cursor-pointer"
+                                            title="Erklärung und Formel zu negativem Terminal Growth in der Anleitung ansehen"
+                                        >
+                                            <BookOpen className="size-3" />
+                                            <span>Anleitung (Terminal Growth)</span>
+                                        </button>
+
+                                        {selectedSymbol && (
+                                            <a
+                                                href={`https://www.macrotrends.net/stocks/charts/${selectedSymbol.split('.')[0].toUpperCase()}/pe-ratio`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-primary hover:text-primary/80 font-medium hover:underline flex items-center gap-1"
+                                                title="Historische KGV-Entwicklung auf Macrotrends ansehen"
+                                            >
+                                                <ExternalLink className="size-3" />
+                                                <span>Macrotrends (KGV)</span>
+                                            </a>
+                                        )}
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAddLinkModal(true)}
+                                            className="text-muted-foreground hover:text-foreground font-medium hover:underline flex items-center gap-1 cursor-pointer ml-auto text-[11px]"
+                                            title="Eigenen Link für diese Aktie hinzufügen"
+                                        >
+                                            <Plus className="size-3" />
+                                            <span>Link hinzufügen</span>
+                                        </button>
+                                    </div>
+
+                                    {/* Display saved Custom Links for this Stock */}
+                                    {currentStock?.quickLinks && currentStock.quickLinks.length > 0 && (
+                                        <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                            {currentStock.quickLinks.map(link => (
+                                                <div key={link.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-muted/50 hover:bg-muted text-[11px] text-primary border border-border/60 group">
+                                                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="hover:underline truncate max-w-[150px]">
+                                                        {link.label || link.url.replace(/^https?:\/\/(www\.)?/, '')}
+                                                    </a>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => currentStock && removeQuickLink(currentStock.id, link.id)}
+                                                        className="text-muted-foreground hover:text-destructive opacity-50 group-hover:opacity-100 transition-opacity ml-0.5"
+                                                        title="Link entfernen"
+                                                    >
+                                                        <X className="size-3" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
                                     )}
                                 </div>
 
