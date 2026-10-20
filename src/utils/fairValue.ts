@@ -23,8 +23,8 @@ export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number
     'SHEL': { eps: 4.00, growth: 3.5, pe: 10.0, pe10: 9.0, div: 4.2, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
     'R6C0.DE': { eps: 3.80, growth: 3.5, pe: 10.0, pe10: 9.0, div: 4.2, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
     'TTE': { eps: 6.80, growth: 3.5, pe: 8.5, pe10: 8.0, div: 5.5, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
-    'NVO': { eps: 3.85, growth: 13.0, pe: 20.0, pe10: 18.0, div: 1.5, mos: 15, label: 'ADR USD (Bereinigt DKK/USD)' },
-    'NOVO-B.CO': { eps: 26.5, growth: 13.0, pe: 20.0, pe10: 18.0, div: 1.5, mos: 15, label: 'DKK (Kopenhagen)' },
+    'NVO': { eps: 3.85, growth: 13.0, pe: 20.0, pe10: 18.0, div: 4.5, mos: 15, label: 'ADR USD (Bereinigt DKK/USD)' },
+    'NOVO-B.CO': { eps: 26.5, growth: 13.0, pe: 20.0, pe10: 18.0, div: 4.5, mos: 15, label: 'DKK (Kopenhagen)' },
 };
 
 export const WIDE_MOAT_QUALITY = new Set([

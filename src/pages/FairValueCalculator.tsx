@@ -245,6 +245,7 @@ export function FairValueCalculator() {
         // (Must be checked BEFORE `params.isCustom` because clicking buttons like 5J/10J previously marked cached params as custom!)
         if ((symUpper === 'NVO' || symUpper === 'NOVO-B.CO' || symUpper === 'NOVO-B')) {
             if (Number(params.eps) > 10) return true;
+            if (Number(params.dividendYield) < 3.0) return true;
             if (Number(params.pe) === 20 && Number(params.growthRate) === 14 && Math.abs(Number(params.eps) - 3.85) < 0.1) return true;
         }
         if ((symUpper.startsWith('BRK-') || symUpper.startsWith('BRK.') || symUpper === 'BRK') && Number(params.eps) > 30) {
