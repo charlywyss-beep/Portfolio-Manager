@@ -25,29 +25,37 @@ export function StockDetail() {
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false); // Modal State
 
-    const [virtualStock, setVirtualStock] = useState<any>(null);
-
-    // Find stock by ID or Symbol (case-insensitive)
-    const stockFromContext = stocks.find(s =>
-        s.id.trim() === id?.trim() ||
-        s.symbol.toLowerCase() === id?.toLowerCase()
-    );
-
-    const stock = stockFromContext || virtualStock;
-
     // Initialize virtual stock if not found in context (v3.13.44)
+    const [virtualStock, setVirtualStock] = useState<any>(() => {
+        if (!stockFromContext && id) {
+            const paramName = searchParams.get('name');
+            const paramCurrency = searchParams.get('currency');
+            return {
+                id: id,
+                symbol: id.toUpperCase(),
+                name: paramName ? decodeURIComponent(paramName) : id.toUpperCase(),
+                currentPrice: 0,
+                currency: paramCurrency ? decodeURIComponent(paramCurrency) : 'USD',
+                type: 'stock'
+            };
+        }
+        return null;
+    });
+
     useEffect(() => {
         if (!stockFromContext && id && !virtualStock) {
+            const paramName = searchParams.get('name');
+            const paramCurrency = searchParams.get('currency');
             setVirtualStock({
                 id: id,
                 symbol: id.toUpperCase(),
-                name: id.toUpperCase(),
+                name: paramName ? decodeURIComponent(paramName) : id.toUpperCase(),
                 currentPrice: 0,
-                currency: 'USD',
+                currency: paramCurrency ? decodeURIComponent(paramCurrency) : 'USD',
                 type: 'stock'
             });
         }
-    }, [stockFromContext, id, !!virtualStock]);
+    }, [stockFromContext, id, !!virtualStock, searchParams]);
 
     const [notes, setNotes] = useState('');
     const [isSaving, setIsSaving] = useState(false);
@@ -341,15 +349,19 @@ export function StockDetail() {
                                 navigate('/watchlist');
                             } else if (from === 'portfolio') {
                                 navigate('/portfolio');
+                            } else if (from === 'market-overview') {
+                                navigate('/market-overview');
                             } else {
                                 navigate(-1);
                             }
                         }}
                         className="flex items-center justify-center bg-white text-blue-600 hover:bg-blue-50 transition-all font-medium rounded-xl shadow border-2 border-blue-100 p-2 md:px-3 md:py-1.5 group"
-                        title="Zurück"
+                        title={searchParams.get('from') === 'market-overview' ? "Zurück zur Marktübersicht" : "Zurück"}
                     >
                         <ArrowLeft className="size-5 md:size-4 md:mr-1.5 transition-transform group-hover:-translate-x-1" />
-                        <span className="hidden md:inline">Zurück</span>
+                        <span className="hidden md:inline">
+                            {searchParams.get('from') === 'market-overview' ? 'Marktübersicht' : 'Zurück'}
+                        </span>
                     </button>
 
                     {/* Saisonalität Button */}

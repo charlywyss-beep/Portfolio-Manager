@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
     Globe, 
     RefreshCw, 
@@ -108,6 +109,7 @@ export const PRESET_OPTIONS: Omit<MarketItem, 'id'>[] = [
 ];
 
 export function MarketOverviewPage() {
+    const navigate = useNavigate();
     const { stocks } = usePortfolio();
 
     // Stored items
@@ -613,12 +615,19 @@ export function MarketOverviewPage() {
                     return (
                         <div
                             key={item.id}
+                            onClick={() => {
+                                if (!isEditMode) {
+                                    navigate(`/stock/${encodeURIComponent(item.symbol)}?from=market-overview&name=${encodeURIComponent(item.name)}&currency=${encodeURIComponent(currency || 'USD')}`);
+                                }
+                            }}
                             className={cn(
                                 "relative rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[105px] sm:min-h-[140px]",
+                                !isEditMode && "cursor-pointer hover:shadow-lg hover:brightness-105 active:scale-[0.99]",
                                 isPositive
                                     ? "bg-[#3fb78f] text-slate-950 border border-emerald-600/30 shadow-emerald-950/10"
                                     : "bg-[#eb6a59] text-slate-950 border border-rose-600/30 shadow-rose-950/10"
                             )}
+                            title={isEditMode ? undefined : `${item.name} – Klick für interaktiven Chart`}
                         >
                             {/* Top: Name & Edit Controls (Inline flex: Never overlaps the title!) */}
                             <div className="flex items-center justify-between gap-1.5 min-w-0">

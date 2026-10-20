@@ -53,11 +53,32 @@ export async function fetchStockHistory(
         const url = `/api/yahoo-finance?symbol=${symbol}&period=${period}&interval=${interval}&_=${Date.now()}`;
 
         console.log('[Yahoo Finance Proxy] Fetching:', symbol, 'Period:', period, 'Interval:', interval);
-        const response = await fetch(url);
+        let data: any = null;
 
-        if (!response.ok) return { data: null, error: `API Fehler: ${response.status}` };
+        try {
+            const response = await fetch(url);
+            if (response.ok) {
+                data = await response.json();
+            }
+        } catch {
+            // Local proxy unavailable (e.g. GitHub Pages)
+        }
 
-        const data = await response.json();
+        // Fallback for GitHub Pages / static hosting:
+        if (!data || !data.chart?.result?.[0]) {
+            try {
+                const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period=${period}&interval=${interval}&_=${Date.now()}`;
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+                const fallbackRes = await fetch(proxyUrl);
+                if (fallbackRes.ok) {
+                    data = await fallbackRes.json();
+                }
+            } catch (fbErr) {
+                console.warn('[Yahoo Finance Fallback Proxy Error]:', fbErr);
+            }
+        }
+
+        if (!data) return { data: null, error: `Keine Daten verfügbar` };
         if (data.chart?.error) return { data: null, error: `Yahoo Finance: ${data.chart.error.description}` };
 
         const result = data.chart?.result?.[0];
