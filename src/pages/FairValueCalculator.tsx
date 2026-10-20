@@ -239,9 +239,19 @@ export function FairValueCalculator() {
         if (!params || Number(params.eps) <= 0) return true;
         // Clean up accidental cross-stock copy from async loading race condition
         if (isAccidentalCrossCopy(sym, params)) return true;
+        const symUpper = sym.toUpperCase();
+
+        // 1. Currency Mismatch & Extreme Distortion Auto-Heals
+        // (Must be checked BEFORE `params.isCustom` because clicking buttons like 5J/10J previously marked cached params as custom!)
+        if ((symUpper === 'NVO' || symUpper === 'NOVO-B.CO' || symUpper === 'NOVO-B') && Number(params.eps) > 10) {
+            return true;
+        }
+        if ((symUpper.startsWith('BRK-') || symUpper.startsWith('BRK.') || symUpper === 'BRK') && Number(params.eps) > 30) {
+            return true;
+        }
+
         // Never overwrite legitimate parameters that the user manually edited!
         if (params.isCustom) return false;
-        const symUpper = sym.toUpperCase();
         // Upgrade previously auto-populated Nestlé (3.51 / 6 / 15 or auto 20% MoS) to 15% MoS
         if (symUpper === 'NESN.SW' || symUpper === 'NESN') {
             if (Math.abs(Number(params.eps) - 3.51) < 0.05 && Number(params.pe) === 15) return true;
@@ -264,12 +274,6 @@ export function FairValueCalculator() {
         // Upgrade previously auto-populated Microsoft (PE > 20.5)
         if (symUpper === 'MSFT') {
             if (Number(params.pe) > 20.5) {
-                return true;
-            }
-        }
-        // Upgrade previously auto-populated Berkshire (GAAP EPS > 30 instead of operating earnings)
-        if (symUpper.startsWith('BRK-') || symUpper.startsWith('BRK.') || symUpper === 'BRK') {
-            if (Number(params.eps) > 30) {
                 return true;
             }
         }

@@ -50,12 +50,12 @@ export function computeSmartAutoParams(
 
     // 1. Dividend Yield (%)
     let autoDiv = 0;
-    if (qData?.dividendYield !== null && qData?.dividendYield !== undefined && qData.dividendYield >= 0) {
+    if (preset?.div !== undefined) {
+        autoDiv = preset.div;
+    } else if (qData?.dividendYield !== null && qData?.dividendYield !== undefined && qData.dividendYield >= 0) {
         autoDiv = Number(qData.dividendYield);
     } else if (stockObj?.dividendYield !== undefined && stockObj.dividendYield >= 0) {
         autoDiv = Number(stockObj.dividendYield);
-    } else if (preset?.div !== undefined) {
-        autoDiv = preset.div;
     }
     autoDiv = parseFloat(Math.min(Math.max(autoDiv, 0), 25).toFixed(2));
 
@@ -81,7 +81,7 @@ export function computeSmartAutoParams(
     if (symUpper.startsWith('BRK-') || symUpper.startsWith('BRK.') || symUpper === 'BRK') {
         autoEps = preset?.eps || 21.0;
         epsLabel = 'Operativer Gewinn (Buffett)';
-    } else if (preset && (!rawEps || rawEps <= 0 || rawEps < preset.eps * 0.85)) {
+    } else if (preset) {
         autoEps = preset.eps;
         epsLabel = preset.label;
     } else if (rawEps && rawEps > 0 && (!forwardEps || rawEps >= forwardEps * 0.88)) {
@@ -96,9 +96,6 @@ export function computeSmartAutoParams(
     } else if (price > 0 && kcv && kcv > 0) {
         autoEps = (price / kcv) * 0.75;
         epsLabel = 'Cashflow-Schätzung';
-    } else if (preset?.eps) {
-        autoEps = preset.eps;
-        epsLabel = preset.label;
     } else if (price > 0) {
         const estMultiple = autoDiv >= 4.5 ? 11 : autoDiv >= 2.5 ? 16 : 18;
         autoEps = price / estMultiple;
