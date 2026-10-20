@@ -20,9 +20,9 @@ export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number
     'TSLA': { eps: 3.50, growth: 22.0, pe: 38.0, div: 0, mos: 20, label: 'Konsens EPS (Forward 2025/26)' },
     'CVX': { eps: 13.0, growth: 4.5, pe: 13.0, div: 3.17, mos: 15, label: 'Mid-Cycle EPS (Normalisiert)' },
     'XOM': { eps: 8.50, growth: 4.5, pe: 13.0, div: 3.3, mos: 15, label: 'Mid-Cycle EPS (Normalisiert)' },
-    'SHEL': { eps: 4.80, growth: 4.0, pe: 11.5, div: 4.0, mos: 15, label: 'Mid-Cycle EPS (Normalisiert)' },
-    'R6C0.DE': { eps: 4.40, growth: 4.0, pe: 11.5, div: 4.0, mos: 15, label: 'Mid-Cycle EPS (Normalisiert)' },
-    'TTE': { eps: 7.50, growth: 4.0, pe: 9.5, div: 5.5, mos: 15, label: 'Mid-Cycle EPS (Normalisiert)' },
+    'SHEL': { eps: 4.00, growth: 3.5, pe: 10.0, div: 4.2, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
+    'R6C0.DE': { eps: 3.80, growth: 3.5, pe: 10.0, div: 4.2, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
+    'TTE': { eps: 6.80, growth: 3.5, pe: 8.5, div: 5.5, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
 };
 
 export const WIDE_MOAT_QUALITY = new Set([
