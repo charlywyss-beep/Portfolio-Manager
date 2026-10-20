@@ -1832,25 +1832,12 @@ export function FairValueCalculator() {
                                         </div>
                                     )}
 
-                                    {/* Quick links & Custom link for KGV / Valuation */}
-                                    <div className="flex flex-wrap items-center justify-between gap-x-3.5 gap-y-1.5 mt-2 pt-1 border-t border-border/40 text-xs">
-                                        {selectedSymbol ? (
-                                            <a
-                                                href={`https://www.macrotrends.net/stocks/charts/${selectedSymbol.split('.')[0].toUpperCase()}/pe-ratio`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-primary hover:text-primary/80 font-medium hover:underline flex items-center gap-1"
-                                                title="Historische KGV-Entwicklung auf Macrotrends ansehen"
-                                            >
-                                                <ExternalLink className="size-3" />
-                                                <span>Macrotrends (KGV)</span>
-                                            </a>
-                                        ) : <div />}
-
+                                    {/* Custom link for KGV / Valuation */}
+                                    <div className="flex items-center justify-end gap-2 mt-2 pt-1 border-t border-border/40 text-xs">
                                         <button
                                             type="button"
                                             onClick={() => setShowAddLinkModal(true)}
-                                            className="text-muted-foreground hover:text-foreground font-medium hover:underline flex items-center gap-1 cursor-pointer ml-auto text-[11px]"
+                                            className="text-muted-foreground hover:text-primary font-medium hover:underline flex items-center gap-1 cursor-pointer text-[11px]"
                                             title="Eigenen Link für diese Aktie hinzufügen"
                                         >
                                             <Plus className="size-3" />
