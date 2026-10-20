@@ -1766,36 +1766,32 @@ export function FairValueCalculator() {
                                                 onClick={() => {
                                                     setPe(pe5Year);
                                                     setSelectedPeHorizon('5Y');
-                                                    setIsSavedForStock(true);
                                                 }}
                                                 className={cn(
-                                                    "px-2 py-0.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1",
+                                                    "px-2.5 py-1 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1",
                                                     selectedPeHorizon === '5Y' && Math.abs(Number(pe) - pe5Year) < 0.01
                                                         ? "bg-blue-600 text-white shadow-xs"
                                                         : "text-muted-foreground hover:text-foreground hover:bg-card/80"
                                                 )}
-                                                title="Historischer 5-Jahres-KGV-Durchschnitt (aktuelleres Zins- & Marktumfeld)"
+                                                title={`Historischer 5-Jahres-KGV-Schnitt: ${pe5Year.toFixed(1)}`}
                                             >
                                                 <span>5J Ø</span>
-                                                <span className="font-mono text-[10px] opacity-80">({pe5Year.toFixed(1)})</span>
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => {
                                                     setPe(pe10Year);
                                                     setSelectedPeHorizon('10Y');
-                                                    setIsSavedForStock(true);
                                                 }}
                                                 className={cn(
-                                                    "px-2 py-0.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1",
+                                                    "px-2.5 py-1 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1",
                                                     selectedPeHorizon === '10Y' && Math.abs(Number(pe) - pe10Year) < 0.01
                                                         ? "bg-blue-600 text-white shadow-xs"
                                                         : "text-muted-foreground hover:text-foreground hover:bg-card/80"
                                                 )}
-                                                title="Historischer 10-Jahres-KGV-Durchschnitt (voller Wirtschaftszyklus / Langzeit-Mittelwert)"
+                                                title={`Historischer 10-Jahres-KGV-Schnitt: ${pe10Year.toFixed(1)}`}
                                             >
                                                 <span>10J Ø</span>
-                                                <span className="font-mono text-[10px] opacity-80">({pe10Year.toFixed(1)})</span>
                                             </button>
                                         </div>
                                     </div>
