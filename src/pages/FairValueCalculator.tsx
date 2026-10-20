@@ -112,6 +112,9 @@ export function FairValueCalculator() {
     const [eps, setEps] = useState<number | string>(0);
     const [growthRate, setGrowthRate] = useState<number | string>(6); // %
     const [pe, setPe] = useState<number | string>(15);
+    const [pe5Year, setPe5Year] = useState<number>(15);
+    const [pe10Year, setPe10Year] = useState<number>(13.5);
+    const [selectedPeHorizon, setSelectedPeHorizon] = useState<'5Y' | '10Y' | 'custom'>('5Y');
     const [dividendYield, setDividendYield] = useState<number | string>(0);
     const [discountRate, setDiscountRate] = useState<number | string>(8); // % (MARR)
     const [mos, setMos] = useState<number | string>(20); // % Margin of Safety
@@ -302,7 +305,11 @@ export function FairValueCalculator() {
         const smart = computeSmartAutoParams(quote, analysis, existingStock, selectedSymbol, mode);
         setEps(smart.eps);
         setGrowthRate(smart.growthRate);
-        setPe(smart.pe);
+        const pe5 = smart.pe;
+        const pe10 = (smart as any).pe10 || smart.pe;
+        setPe5Year(pe5);
+        setPe10Year(pe10);
+        setPe(selectedPeHorizon === '10Y' ? pe10 : pe5);
         setDividendYield(smart.dividendYield);
         setDiscountRate(smart.discountRate);
         setMos(smart.mos);
@@ -699,11 +706,14 @@ export function FairValueCalculator() {
             setQuote(finalQuote);
             setAnalysis(a || { growthRate: null });
 
+            const smart = computeSmartAutoParams(finalQuote, a, existingStock, symbol, valuationProfile);
+            setPe5Year(smart.pe);
+            setPe10Year((smart as any).pe10 || smart.pe);
+
             if (!preventReset && !savedStockParams) {
-                const smart = computeSmartAutoParams(finalQuote, a, existingStock, symbol, valuationProfile);
                 setEps(smart.eps);
                 setGrowthRate(smart.growthRate);
-                setPe(smart.pe);
+                setPe(selectedPeHorizon === '10Y' ? ((smart as any).pe10 || smart.pe) : smart.pe);
                 setDividendYield(smart.dividendYield);
                 setDiscountRate(smart.discountRate);
                 setMos(smart.mos);
@@ -1055,11 +1065,12 @@ export function FairValueCalculator() {
                                 <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
                                     <h3 className="font-bold flex items-center gap-2 mb-2">
                                         <div className="size-2 rounded-full bg-blue-500" />
-                                        Verkaufs-KGV (in 5 Jahren)
+                                        Verkaufs-KGV (5J vs. 10J Durchschnitt)
                                     </h3>
                                     <p className="text-xs text-muted-foreground leading-relaxed">
-                                        Das Kurs-Gewinn-Verhältnis, zu dem du die Aktie in 5 Jahren theoretisch verkaufen würdest. <br />
-                                        <span className="text-primary italic">Tipp: Nutze das historische Durchschnitts-KGV der Aktie als Anhaltspunkt.</span>
+                                        Das Kurs-Gewinn-Verhältnis, zu dem du die Aktie in 5 Jahren bewertest. Über die Umschalter wählst du direkt: <br />
+                                        &bull; <strong>5J Ø:</strong> Spiegelt das aktuelle Markt- und Zinsumfeld der letzten 5 Jahre wider. <br />
+                                        &bull; <strong>10J Ø:</strong> Glättet über einen vollen 10-Jahres-Wirtschaftszyklus (Mean Reversion, Buffett-Stil) – ideal für Zykliker &amp; als Stresstest gegen Hypes.
                                     </p>
                                 </div>
 
@@ -1745,10 +1756,49 @@ export function FairValueCalculator() {
 
                                 {/* PE RATIO */}
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium flex justify-between">
-                                        Verkaufs-KGV (in 5J)
-                                        <span className="text-xs text-muted-foreground font-light">Hist Ø oder Manuell</span>
-                                    </label>
+                                    <div className="flex items-center justify-between gap-1">
+                                        <label className="text-sm font-medium">
+                                            Verkaufs-KGV (in 5J)
+                                        </label>
+                                        <div className="inline-flex items-center rounded-lg border border-border/80 p-0.5 bg-muted/60 gap-1 shadow-2xs">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setPe(pe5Year);
+                                                    setSelectedPeHorizon('5Y');
+                                                    setIsSavedForStock(true);
+                                                }}
+                                                className={cn(
+                                                    "px-2 py-0.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1",
+                                                    selectedPeHorizon === '5Y' && Math.abs(Number(pe) - pe5Year) < 0.01
+                                                        ? "bg-blue-600 text-white shadow-xs"
+                                                        : "text-muted-foreground hover:text-foreground hover:bg-card/80"
+                                                )}
+                                                title="Historischer 5-Jahres-KGV-Durchschnitt (aktuelleres Zins- & Marktumfeld)"
+                                            >
+                                                <span>5J Ø</span>
+                                                <span className="font-mono text-[10px] opacity-80">({pe5Year.toFixed(1)})</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setPe(pe10Year);
+                                                    setSelectedPeHorizon('10Y');
+                                                    setIsSavedForStock(true);
+                                                }}
+                                                className={cn(
+                                                    "px-2 py-0.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1",
+                                                    selectedPeHorizon === '10Y' && Math.abs(Number(pe) - pe10Year) < 0.01
+                                                        ? "bg-blue-600 text-white shadow-xs"
+                                                        : "text-muted-foreground hover:text-foreground hover:bg-card/80"
+                                                )}
+                                                title="Historischer 10-Jahres-KGV-Durchschnitt (voller Wirtschaftszyklus / Langzeit-Mittelwert)"
+                                            >
+                                                <span>10J Ø</span>
+                                                <span className="font-mono text-[10px] opacity-80">({pe10Year.toFixed(1)})</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                     <div className="space-y-2 text-xs text-muted-foreground bg-muted/50 p-2 rounded-lg border border-border/50">
                                         <div className="flex justify-between">
                                             <span>Aktuelles KGV:</span>
@@ -1784,6 +1834,7 @@ export function FairValueCalculator() {
                                             value={pe}
                                             onChange={(e) => {
                                                 setPe(e.target.value);
+                                                setSelectedPeHorizon('custom');
                                                 setIsSavedForStock(true);
                                             }}
                                             className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"

@@ -1,28 +1,28 @@
 // Shared Fair Value calculation and Smart Auto-Parameter helpers
 
-export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number; pe: number; div?: number; mos?: number; label: string }> = {
-    'AMZN': { eps: 7.17, growth: 12.0, pe: 20.0, div: 0, mos: 15, label: 'TTM' },
-    'MSFT': { eps: 17.95, growth: 13.0, pe: 20.0, div: 0.79, mos: 15, label: 'TTM Bereinigt (Analysten)' },
-    'KHC': { eps: 2.60, growth: 2.0, pe: 11.5, div: 6.8, mos: 20, label: 'Operativ / Bereinigt' },
-    'BATS.L': { eps: 3.62, growth: 3.0, pe: 11.5, mos: 20, label: 'Bereinigt (Adj. EPS)' },
-    'BTI': { eps: 4.65, growth: 3.0, pe: 11.5, mos: 20, label: 'Bereinigt (Adj. EPS)' },
-    'NESN.SW': { eps: 4.60, growth: 5.0, pe: 17.0, mos: 15, label: 'Bereinigt (Underlying)' },
-    'NESN': { eps: 4.60, growth: 5.0, pe: 17.0, mos: 15, label: 'Bereinigt (Underlying)' },
-    'ROG.SW': { eps: 18.80, growth: 5.5, pe: 16.5, mos: 15, label: 'Core EPS (Bereinigt)' },
-    'NOVN.SW': { eps: 6.80, growth: 5.5, pe: 16.0, mos: 15, label: 'Core EPS (Bereinigt)' },
-    'O': { eps: 4.20, growth: 3.5, pe: 15.0, mos: 15, label: 'AFFO (Cashflow)' },
-    'SREN.SW': { eps: 16.42, growth: 2.5, pe: 9.5, div: 4.82, mos: 20, label: 'Konsens EPS' },
-    'SREN': { eps: 16.42, growth: 2.5, pe: 9.5, div: 4.82, mos: 20, label: 'Konsens EPS' },
-    'ZURN.SW': { eps: 35.0, growth: 4.0, pe: 11.5, div: 5.2, mos: 15, label: 'Konsens EPS' },
-    'ZURN': { eps: 35.0, growth: 4.0, pe: 11.5, div: 5.2, mos: 15, label: 'Konsens EPS' },
-    'BRK-B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, mos: 15, label: 'Operativer Gewinn' },
-    'BRK.B': { eps: 21.0, growth: 8.5, pe: 18.0, div: 0, mos: 15, label: 'Operativer Gewinn' },
-    'TSLA': { eps: 3.50, growth: 22.0, pe: 38.0, div: 0, mos: 20, label: 'Konsens EPS (Forward 2025/26)' },
-    'CVX': { eps: 13.0, growth: 4.5, pe: 13.0, div: 3.17, mos: 15, label: 'Mid-Cycle EPS (Normalisiert)' },
-    'XOM': { eps: 8.50, growth: 4.5, pe: 13.0, div: 3.3, mos: 15, label: 'Mid-Cycle EPS (Normalisiert)' },
-    'SHEL': { eps: 4.00, growth: 3.5, pe: 10.0, div: 4.2, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
-    'R6C0.DE': { eps: 3.80, growth: 3.5, pe: 10.0, div: 4.2, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
-    'TTE': { eps: 6.80, growth: 3.5, pe: 8.5, div: 5.5, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
+export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number; pe: number; pe10?: number; div?: number; mos?: number; label: string }> = {
+    'AMZN': { eps: 7.17, growth: 12.0, pe: 20.0, pe10: 18.0, div: 0, mos: 15, label: 'TTM' },
+    'MSFT': { eps: 17.95, growth: 13.0, pe: 20.0, pe10: 18.5, div: 0.79, mos: 15, label: 'TTM Bereinigt (Analysten)' },
+    'KHC': { eps: 2.60, growth: 2.0, pe: 11.5, pe10: 10.5, div: 6.8, mos: 20, label: 'Operativ / Bereinigt' },
+    'BATS.L': { eps: 3.62, growth: 3.0, pe: 11.5, pe10: 10.0, mos: 20, label: 'Bereinigt (Adj. EPS)' },
+    'BTI': { eps: 4.65, growth: 3.0, pe: 11.5, pe10: 10.0, mos: 20, label: 'Bereinigt (Adj. EPS)' },
+    'NESN.SW': { eps: 4.60, growth: 5.0, pe: 17.0, pe10: 16.5, mos: 15, label: 'Bereinigt (Underlying)' },
+    'NESN': { eps: 4.60, growth: 5.0, pe: 17.0, pe10: 16.5, mos: 15, label: 'Bereinigt (Underlying)' },
+    'ROG.SW': { eps: 18.80, growth: 5.5, pe: 16.5, pe10: 15.5, mos: 15, label: 'Core EPS (Bereinigt)' },
+    'NOVN.SW': { eps: 6.80, growth: 5.5, pe: 16.0, pe10: 15.0, mos: 15, label: 'Core EPS (Bereinigt)' },
+    'O': { eps: 4.20, growth: 3.5, pe: 15.0, pe10: 14.0, mos: 15, label: 'AFFO (Cashflow)' },
+    'SREN.SW': { eps: 16.42, growth: 2.5, pe: 9.5, pe10: 9.0, div: 4.82, mos: 20, label: 'Konsens EPS' },
+    'SREN': { eps: 16.42, growth: 2.5, pe: 9.5, pe10: 9.0, div: 4.82, mos: 20, label: 'Konsens EPS' },
+    'ZURN.SW': { eps: 35.0, growth: 4.0, pe: 11.5, pe10: 10.5, div: 5.2, mos: 15, label: 'Konsens EPS' },
+    'ZURN': { eps: 35.0, growth: 4.0, pe: 11.5, pe10: 10.5, div: 5.2, mos: 15, label: 'Konsens EPS' },
+    'BRK-B': { eps: 21.0, growth: 8.5, pe: 18.0, pe10: 16.5, div: 0, mos: 15, label: 'Operativer Gewinn' },
+    'BRK.B': { eps: 21.0, growth: 8.5, pe: 18.0, pe10: 16.5, div: 0, mos: 15, label: 'Operativer Gewinn' },
+    'TSLA': { eps: 3.50, growth: 22.0, pe: 38.0, pe10: 30.0, div: 0, mos: 20, label: 'Konsens EPS (Forward 2025/26)' },
+    'CVX': { eps: 13.0, growth: 4.5, pe: 13.0, pe10: 11.5, div: 3.17, mos: 15, label: 'Mid-Cycle EPS (Normalisiert)' },
+    'XOM': { eps: 8.50, growth: 4.5, pe: 13.0, pe10: 11.5, div: 3.3, mos: 15, label: 'Mid-Cycle EPS (Normalisiert)' },
+    'SHEL': { eps: 4.00, growth: 3.5, pe: 10.0, pe10: 9.0, div: 4.2, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
+    'R6C0.DE': { eps: 3.80, growth: 3.5, pe: 10.0, pe10: 9.0, div: 4.2, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
+    'TTE': { eps: 6.80, growth: 3.5, pe: 8.5, pe10: 8.0, div: 5.5, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
 };
 
 export const WIDE_MOAT_QUALITY = new Set([
@@ -239,6 +239,19 @@ export function computeSmartAutoParams(
 
     const autoPe = parseFloat((Math.round(Math.min(Math.max(rawExitPe, 8), maxSensibleExitPe) * 2) / 2).toFixed(1));
 
+    // Calculate 10-Year historical mean P/E (Long-term cycle mean):
+    let autoPe10 = autoPe;
+    if (preset?.pe10) {
+        autoPe10 = isQualityMode ? Math.min(preset.pe10 + (isWideMoat ? 1.5 : 0.5), maxSensibleExitPe) : preset.pe10;
+    } else if (autoPe >= 22) {
+        autoPe10 = parseFloat((Math.round(autoPe * 0.86 * 2) / 2).toFixed(1));
+    } else if (autoDiv >= 4.0 || isCyclicalSector) {
+        autoPe10 = parseFloat((Math.max(8.0, Math.round((autoPe - 1.0) * 2) / 2)).toFixed(1));
+    } else {
+        autoPe10 = parseFloat((Math.max(8.5, Math.round((autoPe - 1.5) * 2) / 2)).toFixed(1));
+    }
+    autoPe10 = parseFloat(Number(autoPe10).toFixed(1));
+
     // 5. Smart Margin of Safety (15% for Swiss / defensive / wide-moat quality blue-chips, 20% standard, 25% cyclicals)
     let autoMos = 20;
     if (preset?.mos !== undefined) {
@@ -260,6 +273,7 @@ export function computeSmartAutoParams(
         eps: autoEps,
         growthRate: autoGrowth,
         pe: autoPe,
+        pe10: autoPe10,
         dividendYield: autoDiv,
         discountRate: 8,
         mos: autoMos,
