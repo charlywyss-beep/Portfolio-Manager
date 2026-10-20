@@ -6,8 +6,8 @@ import {
     Check, 
     Plus, 
     X, 
-    MoveLeft, 
-    MoveRight, 
+    ChevronLeft, 
+    ChevronRight, 
     RotateCcw, 
     TrendingUp, 
     TrendingDown 
@@ -410,11 +410,13 @@ export function MarketOverviewPage() {
     };
 
     // Reorder items
-    const moveItem = (index: number, direction: 'left' | 'right') => {
-        const targetIndex = direction === 'left' ? index - 1 : index + 1;
+    const moveItem = (itemId: string, direction: 'left' | 'right') => {
+        const itemIndex = items.findIndex(i => i.id === itemId);
+        if (itemIndex === -1) return;
+        const targetIndex = direction === 'left' ? itemIndex - 1 : itemIndex + 1;
         if (targetIndex < 0 || targetIndex >= items.length) return;
         const newArr = [...items];
-        const [moved] = newArr.splice(index, 1);
+        const [moved] = newArr.splice(itemIndex, 1);
         newArr.splice(targetIndex, 0, moved);
         setItems(newArr);
     };
@@ -547,11 +549,14 @@ export function MarketOverviewPage() {
 
             {/* The Market Tiles Grid (Optimized for iPhone 2-col, iPad 3-col, Desktop 3-col) */}
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2.5 sm:gap-4 md:gap-5">
-                {filteredItems.map((item, index) => {
+                {filteredItems.map((item) => {
                     const q = quotes[item.symbol];
                     const changePct = q?.changePercent ?? 0;
                     const isPositive = changePct >= 0;
                     const decimals = item.decimals ?? (item.symbol.includes('=X') ? 4 : 2);
+                    const itemIndex = items.findIndex(i => i.id === item.id);
+                    const canMoveLeft = itemIndex > 0;
+                    const canMoveRight = itemIndex < items.length - 1;
 
                     return (
                         <div
@@ -563,48 +568,53 @@ export function MarketOverviewPage() {
                                     : "bg-[#eb6a59] text-slate-950 border border-rose-600/30 shadow-rose-950/10"
                             )}
                         >
-                            {/* Edit Overlay Controls */}
-                            {isEditMode && (
-                                <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 sm:gap-1 z-10 bg-black/50 backdrop-blur-md p-1 rounded-lg">
-                                    {index > 0 && (
-                                        <button
-                                            type="button"
-                                            onClick={(e) => { e.stopPropagation(); moveItem(index, 'left'); }}
-                                            className="p-1 hover:bg-white/20 rounded text-white transition-colors"
-                                            title="Nach links schieben"
-                                        >
-                                            <MoveLeft className="size-3 sm:size-3.5" />
-                                        </button>
-                                    )}
-                                    {index < items.length - 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={(e) => { e.stopPropagation(); moveItem(index, 'right'); }}
-                                            className="p-1 hover:bg-white/20 rounded text-white transition-colors"
-                                            title="Nach rechts schieben"
-                                        >
-                                            <MoveRight className="size-3 sm:size-3.5" />
-                                        </button>
-                                    )}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
-                                        className="p-1 hover:bg-rose-600/80 rounded text-white transition-colors"
-                                        title="Kachel entfernen"
+                            {/* Top: Name & Edit Controls (Inline flex: Never overlaps the title!) */}
+                            <div className="flex items-center justify-between gap-1.5 min-w-0">
+                                <div className="min-w-0 flex-1">
+                                    <h3 
+                                        className="font-extrabold text-xs sm:text-base md:text-lg tracking-tight truncate drop-shadow-xs text-slate-950" 
+                                        title={item.name}
                                     >
-                                        <X className="size-3 sm:size-3.5" />
-                                    </button>
+                                        {item.name}
+                                    </h3>
                                 </div>
-                            )}
 
-                            {/* Top: Name */}
-                            <div className="flex items-center justify-between gap-1">
-                                <h3 className="font-extrabold text-xs sm:text-base md:text-lg tracking-tight truncate drop-shadow-xs text-slate-950">
-                                    {item.name}
-                                </h3>
-                                <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider opacity-60 shrink-0 font-mono hidden xs:inline">
-                                    {item.symbol.split('.')[0].replace('=X', '')}
-                                </span>
+                                {isEditMode ? (
+                                    <div className="flex items-center gap-0.5 bg-black/65 backdrop-blur-md px-1 py-0.5 rounded-lg shrink-0 shadow-xs border border-white/10">
+                                        {canMoveLeft && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); moveItem(item.id, 'left'); }}
+                                                className="p-1 hover:bg-white/20 active:scale-95 rounded text-white transition-all"
+                                                title="Nach links schieben"
+                                            >
+                                                <ChevronLeft className="size-3 sm:size-3.5" />
+                                            </button>
+                                        )}
+                                        {canMoveRight && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); moveItem(item.id, 'right'); }}
+                                                className="p-1 hover:bg-white/20 active:scale-95 rounded text-white transition-all"
+                                                title="Nach rechts schieben"
+                                            >
+                                                <ChevronRight className="size-3 sm:size-3.5" />
+                                            </button>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
+                                            className="p-1 hover:bg-rose-600 active:scale-95 rounded text-rose-200 hover:text-white transition-all"
+                                            title="Kachel entfernen"
+                                        >
+                                            <X className="size-3 sm:size-3.5" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider opacity-60 shrink-0 font-mono hidden xs:inline">
+                                        {item.symbol.split('.')[0].replace('=X', '')}
+                                    </span>
+                                )}
                             </div>
 
                             {/* Center: Price */}
