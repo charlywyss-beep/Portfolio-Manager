@@ -1832,39 +1832,44 @@ export function FairValueCalculator() {
                                         </div>
                                     )}
 
-                                    {/* Custom link for KGV / Valuation */}
-                                    <div className="flex items-center justify-end gap-2 mt-2 pt-1 border-t border-border/40 text-xs">
+                                    {/* Custom links for KGV / Valuation */}
+                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2.5 pt-2 border-t border-border/40 text-xs">
+                                        {currentStock?.quickLinks && currentStock.quickLinks.map(link => {
+                                            const label = link.label?.trim() || link.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+                                            return (
+                                                <div key={link.id} className="inline-flex items-center gap-1.5 group">
+                                                    <a
+                                                        href={link.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-xs text-primary font-medium hover:underline flex items-center gap-1.5"
+                                                        title={link.url}
+                                                    >
+                                                        <ExternalLink className="size-3 shrink-0" />
+                                                        <span className="truncate max-w-[220px]">{label}</span>
+                                                    </a>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => currentStock && removeQuickLink(currentStock.id, link.id)}
+                                                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded p-0.5 transition-colors opacity-60 group-hover:opacity-100"
+                                                        title="Link entfernen"
+                                                    >
+                                                        <X className="size-3" />
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+
                                         <button
                                             type="button"
                                             onClick={() => setShowAddLinkModal(true)}
-                                            className="text-muted-foreground hover:text-primary font-medium hover:underline flex items-center gap-1 cursor-pointer text-[11px]"
+                                            className="text-xs text-muted-foreground hover:text-primary font-medium hover:underline flex items-center gap-1 cursor-pointer transition-colors"
                                             title="Eigenen Link für diese Aktie hinzufügen"
                                         >
                                             <Plus className="size-3" />
                                             <span>Link hinzufügen</span>
                                         </button>
                                     </div>
-
-                                    {/* Display saved Custom Links for this Stock */}
-                                    {currentStock?.quickLinks && currentStock.quickLinks.length > 0 && (
-                                        <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                                            {currentStock.quickLinks.map(link => (
-                                                <div key={link.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-muted/50 hover:bg-muted text-[11px] text-primary border border-border/60 group">
-                                                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="hover:underline truncate max-w-[150px]">
-                                                        {link.label || link.url.replace(/^https?:\/\/(www\.)?/, '')}
-                                                    </a>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => currentStock && removeQuickLink(currentStock.id, link.id)}
-                                                        className="text-muted-foreground hover:text-destructive opacity-50 group-hover:opacity-100 transition-opacity ml-0.5"
-                                                        title="Link entfernen"
-                                                    >
-                                                        <X className="size-3" />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
                                 </div>
 
                                 <div className="h-px bg-border my-4" />
