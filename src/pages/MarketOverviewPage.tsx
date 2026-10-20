@@ -63,6 +63,9 @@ const DEFAULT_FALLBACK_QUOTES: Record<string, MarketQuoteData> = {
     'BZ=F': { price: 109.23, previousClose: 109.72, changePercent: -0.45, changeAmount: -0.49, currency: 'USD' },
     'GC=F': { price: 4142.60, previousClose: 4131.45, changePercent: 0.27, changeAmount: 11.15, currency: 'USD' },
     'SI=F': { price: 57.42, previousClose: 56.88, changePercent: 0.95, changeAmount: 0.54, currency: 'USD' },
+    'CL=F': { price: 98.14, previousClose: 98.54, changePercent: -0.41, changeAmount: -0.40, currency: 'USD' },
+    'NG=F': { price: 2.97, previousClose: 3.06, changePercent: -2.94, changeAmount: -0.09, currency: 'USD' },
+    'HG=F': { price: 6.61, previousClose: 6.58, changePercent: 0.52, changeAmount: 0.03, currency: 'USD' },
     'CHFGBP=X': { price: 0.9088, previousClose: 0.9081, changePercent: 0.08, changeAmount: 0.0007, currency: 'GBP' },
     'GBPCHF=X': { price: 1.1003, previousClose: 1.0994, changePercent: 0.08, changeAmount: 0.0009, currency: 'CHF' },
     'CHFEUR=X': { price: 1.0789, previousClose: 1.0779, changePercent: 0.09, changeAmount: 0.0010, currency: 'EUR' },
@@ -599,6 +602,13 @@ export function MarketOverviewPage() {
                     const itemIndex = items.findIndex(i => i.id === item.id);
                     const canMoveLeft = itemIndex > 0;
                     const canMoveRight = itemIndex < items.length - 1;
+                    const currency = q?.currency || (
+                        item.symbol.endsWith('.SW') ? 'CHF' :
+                        item.symbol.endsWith('.DE') ? 'EUR' :
+                        item.symbol.includes('CHF') ? 'CHF' :
+                        item.category === 'commodities' ? 'USD' :
+                        (item.symbol.startsWith('^NDX') || item.symbol.startsWith('^GSPC') || item.symbol.startsWith('^DJI')) ? 'USD' : ''
+                    );
 
                     return (
                         <div
@@ -653,9 +663,11 @@ export function MarketOverviewPage() {
                                         </button>
                                     </div>
                                 ) : (
-                                    <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider opacity-60 shrink-0 font-mono hidden xs:inline">
-                                        {item.symbol.split('.')[0].replace('=X', '')}
-                                    </span>
+                                    currency ? (
+                                        <span className="text-[10px] sm:text-[11px] uppercase font-black tracking-wider px-1.5 py-0.5 rounded bg-black/15 text-slate-950 shrink-0 font-mono">
+                                            {currency}
+                                        </span>
+                                    ) : null
                                 )}
                             </div>
 
