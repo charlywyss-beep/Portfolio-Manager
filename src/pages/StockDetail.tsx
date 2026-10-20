@@ -25,6 +25,12 @@ export function StockDetail() {
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false); // Modal State
 
+    // Find stock by ID or Symbol (case-insensitive)
+    const stockFromContext = stocks.find(s =>
+        s.id.trim() === id?.trim() ||
+        s.symbol.toLowerCase() === id?.toLowerCase()
+    );
+
     // Initialize virtual stock if not found in context (v3.13.44)
     const [virtualStock, setVirtualStock] = useState<any>(() => {
         if (!stockFromContext && id) {
@@ -41,6 +47,8 @@ export function StockDetail() {
         }
         return null;
     });
+
+    const stock = stockFromContext || virtualStock;
 
     useEffect(() => {
         if (!stockFromContext && id && !virtualStock) {
