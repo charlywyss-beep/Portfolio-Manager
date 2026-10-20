@@ -49,6 +49,7 @@ export const DEFAULT_MARKET_ITEMS: MarketItem[] = [
     { id: '12', symbol: 'CHFUSD=X', name: 'CHF/USD', category: 'forex', decimals: 4 },
     { id: '13', symbol: 'BTC-CHF', name: 'Bitcoin (CHF)', category: 'crypto', decimals: 0 },
     { id: '14', symbol: 'ETH-CHF', name: 'Ethereum (CHF)', category: 'crypto', decimals: 2 },
+    { id: '15', symbol: 'GBPCHF=X', name: 'GBP/CHF', category: 'forex', decimals: 4 },
 ];
 
 // Fallback baseline prices matching Bild 2 for offline / GitHub Pages cold start
@@ -63,6 +64,7 @@ const DEFAULT_FALLBACK_QUOTES: Record<string, MarketQuoteData> = {
     'GC=F': { price: 4142.60, previousClose: 4131.45, changePercent: 0.27, changeAmount: 11.15, currency: 'USD' },
     'SI=F': { price: 57.42, previousClose: 56.88, changePercent: 0.95, changeAmount: 0.54, currency: 'USD' },
     'CHFGBP=X': { price: 0.9088, previousClose: 0.9081, changePercent: 0.08, changeAmount: 0.0007, currency: 'GBP' },
+    'GBPCHF=X': { price: 1.1003, previousClose: 1.0994, changePercent: 0.08, changeAmount: 0.0009, currency: 'CHF' },
     'CHFEUR=X': { price: 1.0789, previousClose: 1.0779, changePercent: 0.09, changeAmount: 0.0010, currency: 'EUR' },
     'CHFUSD=X': { price: 1.2119, previousClose: 1.2088, changePercent: 0.26, changeAmount: 0.0031, currency: 'USD' },
     'BTC-CHF': { price: 68150, previousClose: 67700, changePercent: 0.65, changeAmount: 450, currency: 'CHF' },
@@ -86,6 +88,7 @@ export const PRESET_OPTIONS: Omit<MarketItem, 'id'>[] = [
     { symbol: 'NG=F', name: 'Erdgas (Natural Gas)', category: 'commodities', decimals: 2 },
     { symbol: 'PL=F', name: 'Platin', category: 'commodities', decimals: 2 },
     // Währungen
+    { symbol: 'GBPCHF=X', name: 'GBP/CHF', category: 'forex', decimals: 4 },
     { symbol: 'CHFEUR=X', name: 'CHF/EUR', category: 'forex', decimals: 4 },
     { symbol: 'CHFUSD=X', name: 'CHF/USD', category: 'forex', decimals: 4 },
     { symbol: 'CHFGBP=X', name: 'CHF/GBP', category: 'forex', decimals: 4 },
@@ -212,6 +215,19 @@ export function MarketOverviewPage() {
                         currency: 'GBP',
                         lastUpdated: nowIso
                     };
+
+                    // Live GBP/CHF rate (1 GBP in CHF)
+                    const pGbpChf = Number((1 / p).toFixed(4));
+                    const prevGbpChf = quotes['GBPCHF=X']?.previousClose || Number((1 / prev).toFixed(4));
+                    const chgGbpChf = pGbpChf - prevGbpChf;
+                    newQuotes['GBPCHF=X'] = {
+                        price: pGbpChf,
+                        previousClose: prevGbpChf,
+                        changePercent: prevGbpChf > 0 ? (chgGbpChf / prevGbpChf) * 100 : -0.08,
+                        changeAmount: chgGbpChf,
+                        currency: 'CHF',
+                        lastUpdated: nowIso
+                    };
                 }
                 if (rates.EUR) {
                     const p = rates.EUR;
@@ -224,6 +240,19 @@ export function MarketOverviewPage() {
                         currency: 'EUR',
                         lastUpdated: nowIso
                     };
+
+                    // Live EUR/CHF rate (1 EUR in CHF)
+                    const pEurChf = Number((1 / p).toFixed(4));
+                    const prevEurChf = quotes['EURCHF=X']?.previousClose || Number((1 / prev).toFixed(4));
+                    const chgEurChf = pEurChf - prevEurChf;
+                    newQuotes['EURCHF=X'] = {
+                        price: pEurChf,
+                        previousClose: prevEurChf,
+                        changePercent: prevEurChf > 0 ? (chgEurChf / prevEurChf) * 100 : -0.09,
+                        changeAmount: chgEurChf,
+                        currency: 'CHF',
+                        lastUpdated: nowIso
+                    };
                 }
                 if (rates.USD) {
                     const p = rates.USD;
@@ -234,6 +263,19 @@ export function MarketOverviewPage() {
                         changePercent: prev > 0 ? ((p - prev) / prev) * 100 : 0.26,
                         changeAmount: p - prev,
                         currency: 'USD',
+                        lastUpdated: nowIso
+                    };
+
+                    // Live USD/CHF rate (1 USD in CHF)
+                    const pUsdChf = Number((1 / p).toFixed(4));
+                    const prevUsdChf = quotes['USDCHF=X']?.previousClose || Number((1 / prev).toFixed(4));
+                    const chgUsdChf = pUsdChf - prevUsdChf;
+                    newQuotes['USDCHF=X'] = {
+                        price: pUsdChf,
+                        previousClose: prevUsdChf,
+                        changePercent: prevUsdChf > 0 ? (chgUsdChf / prevUsdChf) * 100 : -0.26,
+                        changeAmount: chgUsdChf,
+                        currency: 'CHF',
                         lastUpdated: nowIso
                     };
                 }
@@ -821,6 +863,40 @@ export function MarketOverviewPage() {
                                             cat = 'crypto';
                                             dec = 2;
                                             if (!name) name = 'Solana (USD)';
+                                        }
+
+                                        // Auto-normalize forex pairs (e.g. GBP/CHF, EUR/CHF, etc.)
+                                        const cleanForex = sym.replace(/[\/\-\s]/g, '');
+                                        if (cleanForex === 'GBPCHF') {
+                                            sym = 'GBPCHF=X';
+                                            cat = 'forex';
+                                            dec = 4;
+                                            if (!name) name = 'GBP/CHF';
+                                        } else if (cleanForex === 'CHFGBP') {
+                                            sym = 'CHFGBP=X';
+                                            cat = 'forex';
+                                            dec = 4;
+                                            if (!name) name = 'CHF/GBP';
+                                        } else if (cleanForex === 'EURCHF') {
+                                            sym = 'EURCHF=X';
+                                            cat = 'forex';
+                                            dec = 4;
+                                            if (!name) name = 'EUR/CHF';
+                                        } else if (cleanForex === 'CHFEUR') {
+                                            sym = 'CHFEUR=X';
+                                            cat = 'forex';
+                                            dec = 4;
+                                            if (!name) name = 'CHF/EUR';
+                                        } else if (cleanForex === 'USDCHF') {
+                                            sym = 'USDCHF=X';
+                                            cat = 'forex';
+                                            dec = 4;
+                                            if (!name) name = 'USD/CHF';
+                                        } else if (cleanForex === 'CHFUSD') {
+                                            sym = 'CHFUSD=X';
+                                            cat = 'forex';
+                                            dec = 4;
+                                            if (!name) name = 'CHF/USD';
                                         }
 
                                         addItem({
