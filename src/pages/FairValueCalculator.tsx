@@ -1821,14 +1821,6 @@ export function FairValueCalculator() {
                                             >
                                                 <span>10J Ø</span>
                                             </button>
-                                            {Math.abs(Number(pe) - pe5Year) >= 0.01 && Math.abs(Number(pe) - pe10Year) >= 0.01 && (
-                                                <span
-                                                    className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 whitespace-nowrap"
-                                                    title="Eigener, frei eingegebener KGV-Wert"
-                                                >
-                                                    Individuell
-                                                </span>
-                                            )}
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-muted-foreground bg-muted/40 p-1.5 rounded-lg border border-border/50">
