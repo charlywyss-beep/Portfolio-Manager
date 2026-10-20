@@ -47,6 +47,8 @@ export const DEFAULT_MARKET_ITEMS: MarketItem[] = [
     { id: '10', symbol: 'CHFGBP=X', name: 'CHF/GBP', category: 'forex', decimals: 4 },
     { id: '11', symbol: 'CHFEUR=X', name: 'CHF/EUR', category: 'forex', decimals: 4 },
     { id: '12', symbol: 'CHFUSD=X', name: 'CHF/USD', category: 'forex', decimals: 4 },
+    { id: '13', symbol: 'BTC-CHF', name: 'Bitcoin (CHF)', category: 'crypto', decimals: 0 },
+    { id: '14', symbol: 'ETH-CHF', name: 'Ethereum (CHF)', category: 'crypto', decimals: 2 },
 ];
 
 // Fallback baseline prices matching Bild 2 for offline / GitHub Pages cold start
@@ -62,7 +64,9 @@ const DEFAULT_FALLBACK_QUOTES: Record<string, MarketQuoteData> = {
     'SI=F': { price: 57.42, previousClose: 56.88, changePercent: 0.95, changeAmount: 0.54, currency: 'USD' },
     'CHFGBP=X': { price: 0.9088, previousClose: 0.9081, changePercent: 0.08, changeAmount: 0.0007, currency: 'GBP' },
     'CHFEUR=X': { price: 1.0789, previousClose: 1.0779, changePercent: 0.09, changeAmount: 0.0010, currency: 'EUR' },
-    'CHFUSD=X': { price: 1.2119, previousClose: 1.2088, changePercent: 0.26, changeAmount: 0.0031, currency: 'USD' }
+    'CHFUSD=X': { price: 1.2119, previousClose: 1.2088, changePercent: 0.26, changeAmount: 0.0031, currency: 'USD' },
+    'BTC-CHF': { price: 68150, previousClose: 67700, changePercent: 0.65, changeAmount: 450, currency: 'CHF' },
+    'ETH-CHF': { price: 2018, previousClose: 1985, changePercent: 1.67, changeAmount: 33, currency: 'CHF' }
 };
 
 export const PRESET_OPTIONS: Omit<MarketItem, 'id'>[] = [
@@ -90,7 +94,9 @@ export const PRESET_OPTIONS: Omit<MarketItem, 'id'>[] = [
     { symbol: 'EURUSD=X', name: 'EUR/USD', category: 'forex', decimals: 4 },
     { symbol: 'GBPUSD=X', name: 'GBP/USD', category: 'forex', decimals: 4 },
     // Krypto
-    { symbol: 'BTC-USD', name: 'Bitcoin (USD)', category: 'crypto', decimals: 2 },
+    { symbol: 'BTC-CHF', name: 'Bitcoin (CHF)', category: 'crypto', decimals: 0 },
+    { symbol: 'ETH-CHF', name: 'Ethereum (CHF)', category: 'crypto', decimals: 2 },
+    { symbol: 'BTC-USD', name: 'Bitcoin (USD)', category: 'crypto', decimals: 0 },
     { symbol: 'ETH-USD', name: 'Ethereum (USD)', category: 'crypto', decimals: 2 },
     { symbol: 'SOL-USD', name: 'Solana (USD)', category: 'crypto', decimals: 2 },
 ];
@@ -234,6 +240,107 @@ export function MarketOverviewPage() {
             }
         } catch (e) {
             console.warn('Currency live fetch fallback skipped:', e);
+        }
+
+        // 2b. Fetch live Cryptos via CoinGecko public API (Supports CHF & USD natively without CORS block on GitHub Pages!)
+        try {
+            const hasCrypto = items.some(i => i.category === 'crypto' || i.symbol.startsWith('BTC') || i.symbol.startsWith('ETH') || i.symbol.startsWith('SOL'));
+            if (hasCrypto) {
+                const cgRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=chf,usd&include_24hr_change=true');
+                if (cgRes.ok) {
+                    const cg = await cgRes.json();
+                    const nowIso = new Date().toISOString();
+
+                    if (cg.bitcoin) {
+                        if (cg.bitcoin.chf !== undefined) {
+                            const price = cg.bitcoin.chf;
+                            const changePct = cg.bitcoin.chf_24h_change || 0;
+                            const prev = price / (1 + changePct / 100);
+                            newQuotes['BTC-CHF'] = {
+                                price,
+                                previousClose: prev,
+                                changePercent: changePct,
+                                changeAmount: price - prev,
+                                currency: 'CHF',
+                                lastUpdated: nowIso
+                            };
+                        }
+                        if (cg.bitcoin.usd !== undefined) {
+                            const price = cg.bitcoin.usd;
+                            const changePct = cg.bitcoin.usd_24h_change || 0;
+                            const prev = price / (1 + changePct / 100);
+                            newQuotes['BTC-USD'] = {
+                                price,
+                                previousClose: prev,
+                                changePercent: changePct,
+                                changeAmount: price - prev,
+                                currency: 'USD',
+                                lastUpdated: nowIso
+                            };
+                        }
+                    }
+
+                    if (cg.ethereum) {
+                        if (cg.ethereum.chf !== undefined) {
+                            const price = cg.ethereum.chf;
+                            const changePct = cg.ethereum.chf_24h_change || 0;
+                            const prev = price / (1 + changePct / 100);
+                            newQuotes['ETH-CHF'] = {
+                                price,
+                                previousClose: prev,
+                                changePercent: changePct,
+                                changeAmount: price - prev,
+                                currency: 'CHF',
+                                lastUpdated: nowIso
+                            };
+                        }
+                        if (cg.ethereum.usd !== undefined) {
+                            const price = cg.ethereum.usd;
+                            const changePct = cg.ethereum.usd_24h_change || 0;
+                            const prev = price / (1 + changePct / 100);
+                            newQuotes['ETH-USD'] = {
+                                price,
+                                previousClose: prev,
+                                changePercent: changePct,
+                                changeAmount: price - prev,
+                                currency: 'USD',
+                                lastUpdated: nowIso
+                            };
+                        }
+                    }
+
+                    if (cg.solana) {
+                        if (cg.solana.chf !== undefined) {
+                            const price = cg.solana.chf;
+                            const changePct = cg.solana.chf_24h_change || 0;
+                            const prev = price / (1 + changePct / 100);
+                            newQuotes['SOL-CHF'] = {
+                                price,
+                                previousClose: prev,
+                                changePercent: changePct,
+                                changeAmount: price - prev,
+                                currency: 'CHF',
+                                lastUpdated: nowIso
+                            };
+                        }
+                        if (cg.solana.usd !== undefined) {
+                            const price = cg.solana.usd;
+                            const changePct = cg.solana.usd_24h_change || 0;
+                            const prev = price / (1 + changePct / 100);
+                            newQuotes['SOL-USD'] = {
+                                price,
+                                previousClose: prev,
+                                changePercent: changePct,
+                                changeAmount: price - prev,
+                                currency: 'USD',
+                                lastUpdated: nowIso
+                            };
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('CoinGecko live fetch fallback skipped:', e);
         }
 
         // 3. Try batch query via local Yahoo API proxy (Works in local dev server / localhost / PC)
@@ -683,11 +790,34 @@ export function MarketOverviewPage() {
                                 disabled={!searchSymbol.trim()}
                                 onClick={() => {
                                     if (searchSymbol.trim()) {
+                                        let sym = searchSymbol.trim().toUpperCase();
+                                        let cat = customCategory;
+                                        let name = customName.trim();
+                                        let dec = cat === 'forex' || sym.includes('=X') ? 4 : 2;
+
+                                        // Auto-normalize crypto abbreviations to CHF
+                                        if (sym === 'BTC' || sym === 'BITCOIN') {
+                                            sym = 'BTC-CHF';
+                                            cat = 'crypto';
+                                            dec = 0;
+                                            if (!name) name = 'Bitcoin (CHF)';
+                                        } else if (sym === 'ETH' || sym === 'ETHEREUM' || sym === 'EUTERIUM' || sym === 'ETHERIUM') {
+                                            sym = 'ETH-CHF';
+                                            cat = 'crypto';
+                                            dec = 2;
+                                            if (!name) name = 'Ethereum (CHF)';
+                                        } else if (sym === 'SOL' || sym === 'SOLANA') {
+                                            sym = 'SOL-USD';
+                                            cat = 'crypto';
+                                            dec = 2;
+                                            if (!name) name = 'Solana (USD)';
+                                        }
+
                                         addItem({
-                                            symbol: searchSymbol.trim(),
-                                            name: customName.trim() || searchSymbol.trim(),
-                                            category: customCategory,
-                                            decimals: customCategory === 'forex' || searchSymbol.includes('=X') ? 4 : 2
+                                            symbol: sym,
+                                            name: name || sym,
+                                            category: cat,
+                                            decimals: dec
                                         });
                                     }
                                 }}
