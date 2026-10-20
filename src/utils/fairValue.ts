@@ -23,8 +23,8 @@ export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number
     'SHEL': { eps: 4.00, growth: 3.5, pe: 10.0, pe10: 9.0, div: 4.2, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
     'R6C0.DE': { eps: 3.80, growth: 3.5, pe: 10.0, pe10: 9.0, div: 4.2, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
     'TTE': { eps: 6.80, growth: 3.5, pe: 8.5, pe10: 8.0, div: 5.5, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
-    'NVO': { eps: 3.85, growth: 13.0, pe: 28.0, pe10: 25.0, div: 1.5, mos: 15, label: 'ADR USD (Bereinigt DKK/USD)' },
-    'NOVO-B.CO': { eps: 26.5, growth: 13.0, pe: 28.0, pe10: 25.0, div: 1.5, mos: 15, label: 'DKK (Kopenhagen)' },
+    'NVO': { eps: 3.85, growth: 13.0, pe: 20.0, pe10: 18.0, div: 1.5, mos: 15, label: 'ADR USD (Bereinigt DKK/USD)' },
+    'NOVO-B.CO': { eps: 26.5, growth: 13.0, pe: 20.0, pe10: 18.0, div: 1.5, mos: 15, label: 'DKK (Kopenhagen)' },
 };
 
 export const WIDE_MOAT_QUALITY = new Set([
@@ -187,6 +187,9 @@ export function computeSmartAutoParams(
     let maxSensibleExitPe = isQualityMode ? 25.0 : 20.0;
     if (symUpper === 'TSLA') {
         maxSensibleExitPe = isQualityMode ? 50.0 : 38.0;
+    } else if (isWideMoat) {
+        // Wide Moat Quality Champions (e.g. Apple, Microsoft, Novo Nordisk, Eli Lilly, Visa, Mastercard)
+        maxSensibleExitPe = isQualityMode ? 25.0 : 20.0;
     } else if (autoDiv >= 4.8) {
         // High dividend / mature value (e.g. Tobacco, Utilities, Kraft Heinz, Swiss Re)
         maxSensibleExitPe = isQualityMode ? 13.5 : Math.min(13.0, Math.max(10.0, effectivePe < 14 ? effectivePe : 12.0));
@@ -196,7 +199,7 @@ export function computeSmartAutoParams(
     } else if (autoDiv >= 1.5) {
         // Quality dividend compounder (e.g. Pepsi, P&G, McD)
         maxSensibleExitPe = isQualityMode ? 20.0 : Math.min(18.5, Math.max(15.0, effectivePe < 20 ? effectivePe : 18.0));
-    } else if (isWideMoat || (effectivePe > 24 && autoDiv < 1.5)) {
+    } else if (effectivePe > 24 && autoDiv < 1.5) {
         // Quality Tech / Growth (e.g. Microsoft, Amazon, Google, Apple)
         maxSensibleExitPe = isQualityMode ? 25.0 : 20.0;
     } else {
@@ -206,7 +209,7 @@ export function computeSmartAutoParams(
 
     if (isQualityMode) {
         if (preset) {
-            if (symUpper === 'AMZN' || symUpper === 'MSFT') {
+            if (symUpper === 'AMZN' || symUpper === 'MSFT' || symUpper === 'NVO' || symUpper === 'NOVO-B.CO') {
                 rawExitPe = 25.0;
             } else if (symUpper === 'TSLA') {
                 rawExitPe = 48.0;
@@ -241,13 +244,28 @@ export function computeSmartAutoParams(
     // Calculate 10-Year historical mean P/E (Long-term cycle mean):
     let autoPe10 = autoPe;
     if (preset?.pe10) {
-        autoPe10 = isQualityMode ? Math.min(preset.pe10 + (isWideMoat ? 1.5 : 0.5), maxSensibleExitPe) : preset.pe10;
+        if (isQualityMode) {
+            // Quality mode gets a moderate cycle premium over safety 10J, but stays disciplined below 5J
+            const cycle10 = preset.pe10 + (isWideMoat ? 3.0 : 1.0);
+            autoPe10 = Math.min(cycle10, autoPe - (autoPe >= 22 ? 3.0 : 1.5));
+        } else {
+            autoPe10 = Math.min(preset.pe10, maxSensibleExitPe);
+        }
     } else if (autoPe >= 22) {
         autoPe10 = parseFloat((Math.round(autoPe * 0.86 * 2) / 2).toFixed(1));
     } else if (autoDiv >= 4.0 || isCyclicalSector) {
         autoPe10 = parseFloat((Math.max(8.0, Math.round((autoPe - 1.0) * 2) / 2)).toFixed(1));
     } else {
         autoPe10 = parseFloat((Math.max(8.5, Math.round((autoPe - 1.5) * 2) / 2)).toFixed(1));
+    }
+
+    // Safety guarantee 1: 10-year mean reversion multiple should never exceed 5-year multiple
+    if (autoPe10 > autoPe) {
+        autoPe10 = parseFloat((Math.max(8.0, autoPe - 1.5)).toFixed(1));
+    }
+    // Safety guarantee 2: Ensure 10-year cycle multiple differs meaningfully from 5-year multiple (at least 1.0 to 3.0 points lower)
+    if (autoPe10 >= autoPe && autoPe >= 11) {
+        autoPe10 = parseFloat((autoPe - (autoPe >= 22 ? 3.0 : autoPe >= 16 ? 2.0 : 1.0)).toFixed(1));
     }
     autoPe10 = parseFloat(Number(autoPe10).toFixed(1));
 

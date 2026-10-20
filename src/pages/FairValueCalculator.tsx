@@ -243,8 +243,9 @@ export function FairValueCalculator() {
 
         // 1. Currency Mismatch & Extreme Distortion Auto-Heals
         // (Must be checked BEFORE `params.isCustom` because clicking buttons like 5J/10J previously marked cached params as custom!)
-        if ((symUpper === 'NVO' || symUpper === 'NOVO-B.CO' || symUpper === 'NOVO-B') && Number(params.eps) > 10) {
-            return true;
+        if ((symUpper === 'NVO' || symUpper === 'NOVO-B.CO' || symUpper === 'NOVO-B')) {
+            if (Number(params.eps) > 10) return true;
+            if (Number(params.pe) === 20 && Number(params.growthRate) === 14 && Math.abs(Number(params.eps) - 3.85) < 0.1) return true;
         }
         if ((symUpper.startsWith('BRK-') || symUpper.startsWith('BRK.') || symUpper === 'BRK') && Number(params.eps) > 30) {
             return true;
@@ -1803,8 +1804,16 @@ export function FairValueCalculator() {
                                         <div className="flex justify-between">
                                             <span>Aktuelles KGV:</span>
                                             <span className="font-mono">
-                                                {quote.trailingPE ? quote.trailingPE.toFixed(2) :
-                                                    (quote.price && eps ? (quote.price / (typeof eps === 'string' ? parseFloat(eps) || 1 : eps)).toFixed(2) : '-')}
+                                                {(() => {
+                                                    const numEps = typeof eps === 'string' ? parseFloat(eps) || 0 : Number(eps) || 0;
+                                                    if (quote.price && numEps > 0) {
+                                                        return (quote.price / numEps).toFixed(2);
+                                                    }
+                                                    if (quote.trailingPE && quote.trailingPE > 3 && quote.trailingPE < 200) {
+                                                        return quote.trailingPE.toFixed(2);
+                                                    }
+                                                    return '-';
+                                                })()}
                                             </span>
                                         </div>
                                         <div className="flex justify-between font-medium text-foreground">
