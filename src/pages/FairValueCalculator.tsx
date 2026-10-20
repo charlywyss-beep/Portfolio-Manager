@@ -1228,20 +1228,20 @@ export function FairValueCalculator() {
             )}
 
             {/* STICKY HEADER & ACTIVE STOCK / SEARCH BAR */}
-            <div className="sticky top-0 z-40 bg-background/95 backdrop-blur -mx-3 sm:-mx-4 md:-mx-6 px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 -mt-4 border-b border-border shadow-sm space-y-2.5">
+            <div className="sticky top-0 z-40 bg-background/95 backdrop-blur -mx-3 sm:-mx-4 md:-mx-6 px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 -mt-4 border-b border-border shadow-sm space-y-2">
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pl-11 xl:pl-0">
-                        <div className="size-8 sm:size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner shrink-0">
-                            <Telescope className="size-4 sm:size-6" />
+                        <div className="size-8 sm:size-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner shrink-0">
+                            <Telescope className="size-4 sm:size-5" />
                         </div>
                         <div className="min-w-0">
-                            <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight truncate">Fairer Wert</h1>
-                            <p className="text-[11px] sm:text-xs text-muted-foreground font-medium hidden sm:block">Ermittlung des fairen Werts nach Rule #1 & DCF Logik</p>
+                            <h1 className="text-base sm:text-lg md:text-xl font-bold tracking-tight truncate">Fairer Wert</h1>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium hidden sm:block">Ermittlung des fairen Werts nach Rule #1 & DCF Logik</p>
                         </div>
                     </div>
                     <button
                         onClick={() => setShowGuide(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary/60 hover:bg-secondary text-secondary-foreground rounded-lg transition-all border border-secondary text-xs font-medium shrink-0 group"
+                        className="flex items-center gap-1.5 px-2.5 py-1 bg-secondary/60 hover:bg-secondary text-secondary-foreground rounded-lg transition-all border border-secondary text-xs font-medium shrink-0 group"
                         title="Wie funktioniert das? (Anleitung)"
                     >
                         <BookOpen className="size-3.5 group-hover:scale-110 transition-transform" />
@@ -1463,19 +1463,29 @@ export function FairValueCalculator() {
 
             {
                 quote && !loadingData && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in slide-in-from-bottom-4 duration-500">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 animate-in slide-in-from-bottom-4 duration-500">
 
                         {/* INPUTS COLUMN */}
-                        <div className="space-y-6">
-                            <div className="bg-card border border-border rounded-xl p-4 sm:p-6 shadow-sm space-y-6">
-                                <div className="space-y-3 pb-4 border-b border-border">
+                        <div className="space-y-4">
+                            <div className="bg-card border border-border rounded-xl p-3.5 sm:p-4.5 shadow-sm space-y-3.5">
+                                <div className="space-y-2 pb-2.5 border-b border-border">
                                     <div className="flex items-center justify-between gap-2">
-                                        <h2 className="text-base sm:text-lg font-semibold flex items-center gap-1.5 shrink-0">
-                                            <span className="size-2 rounded-full bg-blue-500 shrink-0" />
-                                            Parameter
-                                        </h2>
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <h2 className="text-base font-semibold flex items-center gap-1.5 shrink-0">
+                                                <span className="size-2 rounded-full bg-blue-500 shrink-0" />
+                                                Parameter
+                                            </h2>
+                                            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-muted/70 border border-border/70 text-foreground truncate">
+                                                {formatCurrency(quote.price || 0, quote.currency || 'USD', false)}
+                                                {quote.currency && quote.currency !== 'CHF' && (
+                                                    <span className="text-muted-foreground font-normal ml-1 hidden sm:inline">
+                                                        ({formatCurrency(quote.price || 0, quote.currency || 'USD').split(' - ')[1]})
+                                                    </span>
+                                                )}
+                                            </span>
+                                        </div>
                                         {isSavedForStock ? (
-                                            <span className="inline-flex items-center gap-1 text-xs font-semibold pl-2 pr-1 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 whitespace-nowrap shrink-0">
+                                            <span className="inline-flex items-center gap-1 text-xs font-semibold pl-2 pr-1 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 whitespace-nowrap shrink-0">
                                                 <Check className="size-3 shrink-0" />
                                                 <span>Manuell</span>
                                                 <button
@@ -1493,7 +1503,7 @@ export function FairValueCalculator() {
                                                     <button
                                                         type="button"
                                                         onClick={restoreManualValues}
-                                                        className="flex items-center gap-1 text-xs font-semibold pl-2 pr-1.5 py-1 hover:bg-emerald-600/35 text-emerald-300 transition-colors"
+                                                        className="flex items-center gap-1 text-xs font-semibold pl-2 pr-1.5 py-0.5 hover:bg-emerald-600/35 text-emerald-300 transition-colors"
                                                         title="Deine zuvor manuell eingegebenen Werte für diese Aktie wiederherstellen"
                                                     >
                                                         <Check className="size-3 shrink-0" />
@@ -1502,7 +1512,7 @@ export function FairValueCalculator() {
                                                     <button
                                                         type="button"
                                                         onClick={clearManualValues}
-                                                        className="px-1.5 py-1 hover:bg-rose-500/30 text-emerald-300/80 hover:text-rose-200 border-l border-emerald-400/25 transition-colors"
+                                                        className="px-1.5 py-0.5 hover:bg-rose-500/30 text-emerald-300/80 hover:text-rose-200 border-l border-emerald-400/25 transition-colors"
                                                         title="Gespeicherte manuelle Eingabe löschen"
                                                     >
                                                         <X className="size-3 shrink-0" />
@@ -1511,7 +1521,7 @@ export function FairValueCalculator() {
                                             )
                                         )}
                                     </div>
-                                    <div className="grid grid-cols-2 rounded-xl border-2 border-border/80 p-1 bg-background/60 shadow-xs gap-1.5 w-full">
+                                    <div className="grid grid-cols-2 rounded-xl border border-border/80 p-0.5 bg-background/60 shadow-2xs gap-1 w-full">
                                         <button
                                             type="button"
                                             onClick={() => applyAutoValues('conservative')}
@@ -1541,24 +1551,11 @@ export function FairValueCalculator() {
                                             <span>Qualität (B)</span>
                                         </button>
                                     </div>
-                                    <div className="flex flex-col items-center justify-center text-center py-2 px-3 rounded-xl bg-muted/40 border border-border/60">
-                                        <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-0.5">
-                                            Aktueller Kurs
-                                        </div>
-                                        <div className="font-mono font-bold text-base sm:text-lg text-foreground whitespace-nowrap leading-tight">
-                                            {formatCurrency(quote.price || 0, quote.currency || 'USD', false)}
-                                        </div>
-                                        {quote.currency && quote.currency !== 'CHF' && (
-                                            <div className="font-mono text-xs sm:text-sm font-semibold text-muted-foreground mt-0.5 whitespace-nowrap leading-tight">
-                                                {formatCurrency(quote.price || 0, quote.currency || 'USD').split(' - ')[1]}
-                                            </div>
-                                        )}
-                                    </div>
                                 </div>
 
                                 {/* EPS */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium flex items-center justify-between gap-2">
+                                <div className="space-y-1">
+                                    <label className="text-xs sm:text-sm font-medium flex items-center justify-between gap-2">
                                         <span className="shrink-0 whitespace-nowrap">Gewinn pro Aktie (EPS)</span>
                                         <span className="text-xs text-muted-foreground font-light whitespace-nowrap truncate">{epsSourceLabel}</span>
                                     </label>
@@ -1572,42 +1569,42 @@ export function FairValueCalculator() {
                                                 setEpsSourceLabel('Manuell / Gespeichert');
                                                 setIsSavedForStock(true);
                                             }}
-                                            className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
+                                            className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-9 text-sm"
                                         />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{quote.currency || 'USD'}</span>
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">{quote.currency || 'USD'}</span>
                                     </div>
-                                    <div className="flex gap-4 mt-1.5">
+                                    <div className="flex gap-3 mt-1 text-[11px]">
                                         <a
                                             href={`https://finance.yahoo.com/quote/${selectedSymbol}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-xs text-primary font-medium hover:underline flex items-center gap-1.5"
+                                            className="text-primary font-medium hover:underline flex items-center gap-1"
                                         >
-                                            <ExternalLink className="size-3" />
+                                            <ExternalLink className="size-2.5" />
                                             Yahoo Summary
                                         </a>
                                         <a
                                             href={quote?.isin ? `https://www.finanzen.ch/suchergebnisse?_search=${quote.isin}` : `https://www.finanzen.ch/fundamentalanalyse/${getCleanSearchName(quote?.name || selectedSymbol).toLowerCase().replace(/\s+/g, '-')}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-xs text-primary font-medium hover:underline flex items-center gap-1.5"
+                                            className="text-primary font-medium hover:underline flex items-center gap-1"
                                             title={quote?.isin ? "Suche via ISIN" : "Direkt zur Fundamentalanalyse"}
                                         >
-                                            <ExternalLink className="size-3" />
+                                            <ExternalLink className="size-2.5" />
                                             finanzen.ch
                                         </a>
                                     </div>
                                 </div>
 
                                 {/* GROWTH */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium flex items-center justify-between gap-2">
+                                <div className="space-y-1">
+                                    <label className="text-xs sm:text-sm font-medium flex items-center justify-between gap-2">
                                         <span className="shrink-0 whitespace-nowrap">Wachstum pro Jahr (5J)</span>
                                         <span className={cn("text-xs font-light whitespace-nowrap truncate", growthSourceLabel.includes('Prognose') ? "text-green-500" : "text-muted-foreground")}>
                                             {growthSourceLabel}
                                         </span>
                                     </label>
-                                    <div className="space-y-3">
+                                    <div className="space-y-2">
                                         <div className="relative">
                                             <input
                                                 type="number"
@@ -1618,9 +1615,9 @@ export function FairValueCalculator() {
                                                     setGrowthSourceLabel('Manuell / Gespeichert');
                                                     setIsSavedForStock(true);
                                                 }}
-                                                className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
+                                                className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-9 text-sm"
                                             />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">%</span>
                                         </div>
 
                                         {/* GROWTH HELPER TOGGLE */}
@@ -1628,58 +1625,58 @@ export function FairValueCalculator() {
                                             type="button"
                                             onClick={() => setShowGrowthHelper(!showGrowthHelper)}
                                             className={cn(
-                                                "flex items-center gap-2 text-xs font-bold uppercase tracking-wider transition-colors",
+                                                "flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors",
                                                 showGrowthHelper ? "text-primary" : "text-muted-foreground hover:text-primary"
                                             )}
                                         >
-                                            <Calculator className="size-3.5" />
-                                            Wachstums-Rechner (Zinseszins)
-                                            {showGrowthHelper ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                                            <Calculator className="size-3" />
+                                            <span>Wachstums-Rechner (Zinseszins)</span>
+                                            {showGrowthHelper ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
                                         </button>
 
                                         {/* GROWTH HELPER PANEL */}
                                         {showGrowthHelper && (
-                                            <div className="p-4 bg-primary/5 rounded-xl border border-primary/20 space-y-4 animate-in slide-in-from-top-1 duration-200">
-                                                <div className="grid grid-cols-3 gap-3">
-                                                    <div className="space-y-1.5">
-                                                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Start EPS</label>
+                                            <div className="p-3 bg-primary/5 rounded-xl border border-primary/20 space-y-3 animate-in slide-in-from-top-1 duration-200">
+                                                <div className="grid grid-cols-3 gap-2.5">
+                                                    <div className="space-y-1">
+                                                        <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">Start EPS</label>
                                                         <input
                                                             type="number"
                                                             step="0.01"
                                                             value={startEps || ''}
                                                             onChange={(e) => setStartEps(e.target.value)}
                                                             placeholder="6.67"
-                                                            className="w-full p-2 text-sm rounded border border-border bg-background font-mono focus:ring-1 focus:ring-primary h-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            className="w-full p-1.5 text-xs rounded border border-border bg-background font-mono focus:ring-1 focus:ring-primary h-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                         />
                                                     </div>
-                                                    <div className="space-y-1.5">
-                                                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Ende EPS</label>
+                                                    <div className="space-y-1">
+                                                        <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">Ende EPS</label>
                                                         <input
                                                             type="number"
                                                             step="0.01"
                                                             value={endEps || ''}
                                                             onChange={(e) => setEndEps(e.target.value)}
                                                             placeholder="12.19"
-                                                            className="w-full p-2 text-sm rounded border border-border bg-background font-mono focus:ring-1 focus:ring-primary h-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            className="w-full p-1.5 text-xs rounded border border-border bg-background font-mono focus:ring-1 focus:ring-primary h-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                         />
                                                     </div>
-                                                    <div className="space-y-1.5">
-                                                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Jahre</label>
+                                                    <div className="space-y-1">
+                                                        <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight">Jahre</label>
                                                         <input
                                                             type="number"
                                                             step="1"
                                                             value={periodYears || ''}
                                                             onChange={(e) => setPeriodYears(e.target.value)}
-                                                            className="w-full p-2 text-sm rounded border border-border bg-background font-mono focus:ring-1 focus:ring-primary h-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            className="w-full p-1.5 text-xs rounded border border-border bg-background font-mono focus:ring-1 focus:ring-primary h-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                         />
                                                     </div>
                                                 </div>
 
                                                 <div className="flex items-center justify-between pt-2 border-t border-primary/10">
-                                                    <div className="text-sm">
+                                                    <div className="text-xs">
                                                         <span className="text-muted-foreground font-medium">Ergebnis: </span>
-                                                        <span className="font-bold text-primary font-mono text-base">{calculatedCagr}%</span>
-                                                        <span className="text-muted-foreground text-xs ml-1">/ Jahr</span>
+                                                        <span className="font-bold text-primary font-mono text-sm">{calculatedCagr}%</span>
+                                                        <span className="text-muted-foreground text-[10px] ml-1">/ Jahr</span>
                                                     </div>
                                                     <button
                                                         type="button"
@@ -1690,80 +1687,104 @@ export function FairValueCalculator() {
                                                             setShowGrowthHelper(false);
                                                         }}
                                                         disabled={calculatedCagr <= 0}
-                                                        className="flex items-center gap-2 px-4 py-1.5 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary/90 disabled:opacity-50 transition-all shadow-sm active:scale-95"
+                                                        className="flex items-center gap-1.5 px-3 py-1 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary/90 disabled:opacity-50 transition-all shadow-xs active:scale-95"
                                                     >
-                                                        <Check className="size-4" />
+                                                        <Check className="size-3.5" />
                                                         Übernehmen
                                                     </button>
                                                 </div>
                                             </div>
                                         )}
                                     </div>
-                                    <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-1.5">
+                                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-[11px]">
                                         <a
                                             href={`https://finance.yahoo.com/quote/${selectedSymbol}/analysis`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-xs text-primary font-medium hover:underline flex items-center gap-1.5"
+                                            className="text-primary font-medium hover:underline flex items-center gap-1"
                                         >
-                                            <ExternalLink className="size-3" />
+                                            <ExternalLink className="size-2.5" />
                                             Yahoo (Analysis)
                                         </a>
                                         <a
                                             href={`https://www.marketscreener.com/search/?q=${encodeURIComponent(quote?.isin || getCleanSearchName(quote?.name || ''))}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-xs text-primary font-medium hover:underline flex items-center gap-1.5"
+                                            className="text-primary font-medium hover:underline flex items-center gap-1"
                                         >
-                                            <ExternalLink className="size-3" />
+                                            <ExternalLink className="size-2.5" />
                                             MarketScreener
                                         </a>
                                         <a
                                             href={quote?.isin ? `https://www.onvista.de/aktien/isin/${quote.isin}` : `https://www.onvista.de/suche.html?searchText=${encodeURIComponent(getCleanSearchName(quote?.name || ''))}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-xs text-primary font-medium hover:underline flex items-center gap-1.5"
+                                            className="text-primary font-medium hover:underline flex items-center gap-1"
                                         >
-                                            <ExternalLink className="size-3" />
+                                            <ExternalLink className="size-2.5" />
                                             Onvista.de
                                         </a>
                                         <a
                                             href={quote?.isin ? `https://www.finanzen.net/suchergebnis.asp?key=${quote.isin}` : `https://www.finanzen.net/suchergebnisse?_search=${encodeURIComponent(getCleanSearchName(quote?.name || ''))}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-xs text-primary font-medium hover:underline flex items-center gap-1.5"
+                                            className="text-primary font-medium hover:underline flex items-center gap-1"
                                         >
-                                            <ExternalLink className="size-3" />
+                                            <ExternalLink className="size-2.5" />
                                             finanzen.net
                                         </a>
                                     </div>
                                 </div>
 
-                                {/* DIVIDEND YIELD */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium flex justify-between">
-                                        Dividendenrendite
-                                        <span className="text-xs text-muted-foreground font-light">Aktuell (Editierbar)</span>
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            value={dividendYield}
-                                            onChange={(e) => {
-                                                setDividendYield(e.target.value);
-                                                setIsSavedForStock(true);
-                                            }}
-                                            className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
-                                        />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+                                {/* 2-COLUMN ROW: DIVIDEND YIELD + DISCOUNT RATE */}
+                                <div className="grid grid-cols-2 gap-3 pt-0.5">
+                                    {/* DIVIDEND YIELD */}
+                                    <div className="space-y-1">
+                                        <label className="text-xs sm:text-sm font-medium flex justify-between">
+                                            <span>Dividende</span>
+                                            <span className="text-[11px] text-muted-foreground font-light">Aktuell</span>
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                value={dividendYield}
+                                                onChange={(e) => {
+                                                    setDividendYield(e.target.value);
+                                                    setIsSavedForStock(true);
+                                                }}
+                                                className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-9 text-sm"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">%</span>
+                                        </div>
+                                    </div>
+
+                                    {/* DISCOUNT RATE */}
+                                    <div className="space-y-1">
+                                        <label className="text-xs sm:text-sm font-medium flex justify-between">
+                                            <span>Zielrendite</span>
+                                            <span className="text-[11px] text-muted-foreground font-light">MARR (8%)</span>
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                step="0.5"
+                                                value={discountRate}
+                                                onChange={(e) => {
+                                                    setDiscountRate(e.target.value);
+                                                    setIsSavedForStock(true);
+                                                }}
+                                                className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-9 text-sm"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">%</span>
+                                        </div>
                                     </div>
                                 </div>
 
                                 {/* PE RATIO */}
-                                <div className="space-y-2">
+                                <div className="space-y-1">
                                     <div className="flex items-center justify-between gap-1">
-                                        <label className="text-sm font-medium">
+                                        <label className="text-xs sm:text-sm font-medium">
                                             Verkaufs-KGV (in 5J)
                                         </label>
                                         <div className="inline-flex items-center rounded-lg border border-border/80 p-0.5 bg-muted/60 gap-1 shadow-2xs">
@@ -1774,7 +1795,7 @@ export function FairValueCalculator() {
                                                     setSelectedPeHorizon('5Y');
                                                 }}
                                                 className={cn(
-                                                    "px-2.5 py-1 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1",
+                                                    "px-2 py-0.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1",
                                                     selectedPeHorizon === '5Y' && Math.abs(Number(pe) - pe5Year) < 0.01
                                                         ? "bg-blue-600 text-white shadow-xs"
                                                         : "text-muted-foreground hover:text-foreground hover:bg-card/80"
@@ -1790,7 +1811,7 @@ export function FairValueCalculator() {
                                                     setSelectedPeHorizon('10Y');
                                                 }}
                                                 className={cn(
-                                                    "px-2.5 py-1 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1",
+                                                    "px-2 py-0.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1",
                                                     selectedPeHorizon === '10Y' && Math.abs(Number(pe) - pe10Year) < 0.01
                                                         ? "bg-blue-600 text-white shadow-xs"
                                                         : "text-muted-foreground hover:text-foreground hover:bg-card/80"
@@ -1801,10 +1822,10 @@ export function FairValueCalculator() {
                                             </button>
                                         </div>
                                     </div>
-                                    <div className="space-y-2 text-xs text-muted-foreground bg-muted/50 p-2 rounded-lg border border-border/50">
-                                        <div className="flex justify-between">
-                                            <span>Aktuelles KGV:</span>
-                                            <span className="font-mono">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-muted-foreground bg-muted/40 p-1.5 rounded-lg border border-border/50">
+                                        <div>
+                                            <span className="block text-[10px] uppercase font-semibold text-muted-foreground/75">Aktuell:</span>
+                                            <span className="font-mono font-bold text-foreground">
                                                 {(() => {
                                                     const numEps = typeof eps === 'string' ? parseFloat(eps) || 0 : Number(eps) || 0;
                                                     if (quote.price && numEps > 0) {
@@ -1817,13 +1838,13 @@ export function FairValueCalculator() {
                                                 })()}
                                             </span>
                                         </div>
-                                        <div className="flex justify-between font-medium text-foreground">
-                                            <span>KGV-Obergrenze (Rule #1):</span>
-                                            <span className="font-mono">{calculation.ruleOneLimit.toFixed(2)}</span>
+                                        <div>
+                                            <span className="block text-[10px] uppercase font-semibold text-muted-foreground/75">Limit (R#1):</span>
+                                            <span className="font-mono font-bold text-foreground">{calculation.ruleOneLimit.toFixed(1)}</span>
                                         </div>
                                         {calculation.equivalentTerminalGrowth !== null && (
-                                            <div className="flex justify-between items-center pt-1.5 border-t border-border/40">
-                                                <span className="text-muted-foreground">Langfristiges Wachstum (DCF):</span>
+                                            <div className="col-span-2 sm:col-span-1">
+                                                <span className="block text-[10px] uppercase font-semibold text-muted-foreground/75">Terminal:</span>
                                                 <span className={cn(
                                                     "font-mono font-bold",
                                                     calculation.equivalentTerminalGrowth < 0
@@ -1847,46 +1868,46 @@ export function FairValueCalculator() {
                                                 setSelectedPeHorizon('custom');
                                                 setIsSavedForStock(true);
                                             }}
-                                            className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
+                                            className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-9 text-sm"
                                         />
                                         {calculation.isCorrectionNeeded && (
-                                            <div className="text-xs text-amber-600 mt-2 flex items-center gap-1.5 leading-tight font-medium">
+                                            <div className="text-xs text-amber-600 mt-1 flex items-center gap-1.5 leading-tight font-medium">
                                                 <TriangleAlert className="size-3.5 shrink-0" />
                                                 <span>KGV über gewähltem Limit (Ref: {calculation.ruleOneLimit.toFixed(1)})</span>
                                             </div>
                                         )}
                                     </div>
                                     {calculation.equivalentTerminalGrowth !== null && (
-                                        <div className="text-[11px] text-muted-foreground/85 mt-2 space-y-1.5 leading-snug">
-                                            <div className="flex items-start gap-1.5">
+                                        <div className="text-[10px] text-muted-foreground/85 mt-1 space-y-1 leading-snug">
+                                            <div className="flex items-start gap-1">
                                                 <span className="shrink-0 select-none">💡</span>
                                                 <div className="flex-1">
                                                     <strong className={calculation.equivalentTerminalGrowth < 0 ? "text-rose-400" : calculation.equivalentTerminalGrowth <= 2.0 ? "text-emerald-400" : "text-purple-400"}>
                                                         Entspricht {calculation.equivalentTerminalGrowth > 0 ? '+' : ''}{calculation.equivalentTerminalGrowth.toFixed(1)} %
                                                     </strong>{' '}
-                                                    langfristigem Wachstum (Terminal Growth) in DCF-Tools wie DeltaValue.
+                                                    langfristigem Wachstum (Terminal Growth).
                                                 </div>
                                             </div>
 
                                             {calculation.equivalentTerminalGrowth < 0 ? (
-                                                <div className="flex items-start gap-1.5 text-rose-400/90 font-medium">
+                                                <div className="flex items-start gap-1 text-rose-400/90 font-medium">
                                                     <span className="shrink-0 select-none">⚠️</span>
                                                     <div className="flex-1">
-                                                        <em>Negatives Terminal Growth:</em> Ein KGV von {pe} impliziert rechnerisch schrumpfende Dauererträge (z.B. zyklische Talsohle oder Risikoabschlag).
+                                                        <em>Negatives Terminal Growth:</em> Ein KGV von {pe} impliziert rechnerisch schrumpfende Dauererträge.
                                                     </div>
                                                 </div>
                                             ) : valuationProfile === 'conservative' ? (
-                                                <div className="flex items-start gap-1.5 text-blue-400/90 font-medium">
+                                                <div className="flex items-start gap-1 text-blue-400/90 font-medium">
                                                     <span className="shrink-0 select-none">🛡️</span>
                                                     <div className="flex-1">
                                                         <em>Sichtweise A (Sicherheit):</em> KGV gedeckelt, damit ewiges Wachstum strikt &le; 2,0 % (BIP-Grenze) bleibt.
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="flex items-start gap-1.5 text-purple-400/90 font-medium">
+                                                <div className="flex items-start gap-1 text-purple-400/90 font-medium">
                                                     <span className="shrink-0 select-none">⭐</span>
                                                     <div className="flex-1">
-                                                        <em>Sichtweise B (Qualität):</em> Historischer Qualitätsaufschlag erlaubt (bis KGV 25 für Wide-Moat-Champions, KGV 48–50 für Hyper-Growth/Tech wie Tesla).
+                                                        <em>Sichtweise B (Qualität):</em> Historischer Qualitätsaufschlag erlaubt (bis KGV 25 für Wide-Moat-Champions).
                                                     </div>
                                                 </div>
                                             )}
@@ -1894,20 +1915,20 @@ export function FairValueCalculator() {
                                     )}
 
                                     {/* Custom links for KGV / Valuation */}
-                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2.5 pt-2 border-t border-border/40 text-xs">
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 pt-1.5 border-t border-border/40 text-[11px]">
                                         {currentStock?.quickLinks && currentStock.quickLinks.map(link => {
                                             const label = link.label?.trim() || link.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
                                             return (
-                                                <div key={link.id} className="inline-flex items-center gap-1.5 group">
+                                                <div key={link.id} className="inline-flex items-center gap-1 group">
                                                     <a
                                                         href={link.url}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="text-xs text-primary font-medium hover:underline flex items-center gap-1.5"
+                                                        className="text-primary font-medium hover:underline flex items-center gap-1"
                                                         title={link.url}
                                                     >
-                                                        <ExternalLink className="size-3 shrink-0" />
-                                                        <span className="truncate max-w-[220px]">{label}</span>
+                                                        <ExternalLink className="size-2.5 shrink-0" />
+                                                        <span className="truncate max-w-[180px]">{label}</span>
                                                     </a>
                                                     <button
                                                         type="button"
@@ -1915,7 +1936,7 @@ export function FairValueCalculator() {
                                                         className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded p-0.5 transition-colors opacity-60 group-hover:opacity-100"
                                                         title="Link entfernen"
                                                     >
-                                                        <X className="size-3" />
+                                                        <X className="size-2.5" />
                                                     </button>
                                                 </div>
                                             );
@@ -1924,94 +1945,74 @@ export function FairValueCalculator() {
                                         <button
                                             type="button"
                                             onClick={() => setShowAddLinkModal(true)}
-                                            className="text-xs text-muted-foreground hover:text-primary font-medium hover:underline flex items-center gap-1 cursor-pointer transition-colors"
+                                            className="text-muted-foreground hover:text-primary font-medium hover:underline flex items-center gap-1 cursor-pointer transition-colors"
                                             title="Eigenen Link für diese Aktie hinzufügen"
                                         >
-                                            <Plus className="size-3" />
+                                            <Plus className="size-2.5" />
                                             <span>Link hinzufügen</span>
                                         </button>
                                     </div>
                                 </div>
 
-                                <div className="h-px bg-border my-4" />
-
-                                {/* DISCOUNT RATE */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium flex justify-between">
-                                        Zielrendite pro Jahr (Discount Rate)
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type="number"
-                                            step="0.5"
-                                            value={discountRate}
-                                            onChange={(e) => {
-                                                setDiscountRate(e.target.value);
-                                                setIsSavedForStock(true);
-                                            }}
-                                            className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
-                                        />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
-                                    </div>
-                                </div>
-
                                 {/* MARGIN OF SAFETY */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium flex justify-between items-center">
+                                <div className="space-y-1.5 pt-1 border-t border-border/40">
+                                    <label className="text-xs sm:text-sm font-medium flex justify-between items-center">
                                         <span>Sicherheitsmarge</span>
-                                        <span className="text-xs text-muted-foreground font-light">
+                                        <span className="text-[11px] text-muted-foreground font-light">
                                             {Number(mos) <= 15 ? 'Qualitätsführer / Defensiv' : Number(mos) <= 20 ? 'Standard / Tabak / REITs' : 'Zykliker / Risiko'}
                                         </span>
                                     </label>
-                                    <div className="relative">
-                                        <input
-                                            type="number"
-                                            step="5"
-                                            value={mos}
-                                            onChange={(e) => {
-                                                setMos(e.target.value);
-                                                setIsSavedForStock(true);
-                                            }}
-                                            className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-10"
-                                        />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 pt-1">
-                                        {[15, 20, 25, 30].map((val) => (
-                                            <button
-                                                key={val}
-                                                type="button"
-                                                onClick={() => {
-                                                    setMos(val);
+                                    <div className="flex items-center gap-2">
+                                        <div className="relative w-24 sm:w-28 shrink-0">
+                                            <input
+                                                type="number"
+                                                step="5"
+                                                value={mos}
+                                                onChange={(e) => {
+                                                    setMos(e.target.value);
                                                     setIsSavedForStock(true);
                                                 }}
-                                                className={cn(
-                                                    "px-2.5 py-1 text-xs rounded-md border font-mono transition-colors",
-                                                    Number(mos) === val
-                                                        ? "bg-primary text-primary-foreground border-primary font-bold"
-                                                        : "bg-muted/50 hover:bg-muted text-muted-foreground border-border/60"
-                                                )}
-                                            >
-                                                {val}%
-                                            </button>
-                                        ))}
+                                                className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-9 text-sm"
+                                            />
+                                            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">%</span>
+                                        </div>
+                                        <div className="grid grid-cols-4 gap-1.5 flex-1">
+                                            {[15, 20, 25, 30].map((val) => (
+                                                <button
+                                                    key={val}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setMos(val);
+                                                        setIsSavedForStock(true);
+                                                    }}
+                                                    className={cn(
+                                                        "py-1.5 text-xs rounded-md border font-mono transition-colors text-center font-medium",
+                                                        Number(mos) === val
+                                                            ? "bg-primary text-primary-foreground border-primary font-bold shadow-2xs"
+                                                            : "bg-muted/50 hover:bg-muted text-muted-foreground border-border/60"
+                                                    )}
+                                                >
+                                                    {val}%
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* RESULTS COLUMN */}
-                        <div className="space-y-6">
-                            <div className="bg-card border border-border rounded-xl p-4 sm:p-6 shadow-sm h-full flex flex-col overflow-hidden">
-                                <h2 className="text-lg font-semibold flex items-center gap-2 mb-6">
+                        <div className="space-y-4">
+                            <div className="bg-card border border-border rounded-xl p-3.5 sm:p-4.5 shadow-sm h-full flex flex-col overflow-hidden">
+                                <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2 mb-3">
                                     <span className="size-2 rounded-full bg-purple-500" />
                                     Bewertung
                                 </h2>
 
                                 {/* Traffic Light */}
-                                <div className="flex justify-center mb-6">
+                                <div className="flex justify-center mb-3 sm:mb-4">
                                     <div className={cn(
-                                        "relative size-40 rounded-full flex flex-col items-center justify-center border-4 shadow-xl transition-all duration-500 text-center px-2",
+                                        "relative size-32 sm:size-36 rounded-full flex flex-col items-center justify-center border-4 shadow-lg transition-all duration-500 text-center px-2",
                                         isUndervalued
                                             ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-emerald-500/20"
                                             : isFairHold
@@ -2020,21 +2021,21 @@ export function FairValueCalculator() {
                                                     ? "bg-amber-500/10 border-amber-500 text-amber-500 shadow-amber-500/20"
                                                     : "bg-red-500/10 border-red-500 text-red-500 shadow-red-500/20"
                                     )}>
-                                        <div className="text-xs uppercase font-black tracking-widest mb-0.5 opacity-90">
+                                        <div className="text-[11px] uppercase font-black tracking-widest mb-0.5 opacity-90">
                                             {isUndervalued ? 'KAUFEN' : (isFairHold || isRichHold) ? 'HOLD' : 'TEUER'}
                                         </div>
-                                        <div className="text-[10px] uppercase font-bold tracking-tight opacity-75 mb-1">
+                                        <div className="text-[9px] uppercase font-bold tracking-tight opacity-75 mb-0.5">
                                             {isUndervalued ? 'Sicherheitsmarge' : isFairHold ? 'Fairer Bereich' : isRichHold ? 'Gut bezahlt' : 'Überhitzt'}
                                         </div>
-                                        <div className="text-xl font-bold leading-tight break-words max-w-full">
+                                        <div className="text-lg sm:text-xl font-bold leading-tight break-words max-w-full">
                                             {formatCurrency(currentPrice, quote.currency, false)}
                                         </div>
                                         {quote.currency !== 'CHF' && (
-                                            <div className="text-xs font-bold mt-0.5 whitespace-nowrap">
+                                            <div className="text-[11px] font-bold mt-0.5 whitespace-nowrap">
                                                 {formatCurrency(currentPrice, quote.currency).split(' - ')[1]}
                                             </div>
                                         )}
-                                        <div className="text-[11px] mt-1.5 opacity-60 font-semibold">Aktueller Kurs</div>
+                                        <div className="text-[10px] mt-1 opacity-60 font-semibold">Aktueller Kurs</div>
                                     </div>
                                 </div>
 
