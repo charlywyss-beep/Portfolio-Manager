@@ -1494,33 +1494,33 @@ export function FairValueCalculator() {
                                             )
                                         )}
                                     </div>
-                                    <div className="grid grid-cols-2 rounded-lg border border-border/80 p-0.5 bg-muted/40 gap-1 w-full">
+                                    <div className="grid grid-cols-2 rounded-xl border-2 border-border/80 p-1 bg-background/60 shadow-xs gap-1.5 w-full">
                                         <button
                                             type="button"
                                             onClick={() => applyAutoValues('conservative')}
                                             className={cn(
-                                                "flex items-center justify-center gap-1 text-xs px-2.5 py-1.5 rounded-md transition-all whitespace-nowrap font-medium",
+                                                "flex items-center justify-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-all whitespace-nowrap font-semibold border cursor-pointer active:scale-[0.98]",
                                                 !isSavedForStock && valuationProfile === 'conservative'
-                                                    ? "bg-blue-600 text-white shadow-sm font-semibold"
-                                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                                                    ? "bg-blue-600 text-white border-blue-400 shadow-sm"
+                                                    : "bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-blue-400/60 shadow-2xs"
                                             )}
                                             title="Sichtweise A: Auto Sicherheit (KGV max. 20, Terminal Growth ≤ 2.0 %, Buffett-Baseline)"
                                         >
-                                            <ShieldCheck className="size-3.5 shrink-0" />
+                                            <ShieldCheck className={cn("size-3.5 shrink-0", !isSavedForStock && valuationProfile === 'conservative' ? "text-white" : "text-blue-400")} />
                                             <span>Sicherheit (A)</span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => applyAutoValues('quality')}
                                             className={cn(
-                                                "flex items-center justify-center gap-1 text-xs px-2.5 py-1.5 rounded-md transition-all whitespace-nowrap font-medium",
+                                                "flex items-center justify-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-all whitespace-nowrap font-semibold border cursor-pointer active:scale-[0.98]",
                                                 !isSavedForStock && valuationProfile === 'quality'
-                                                    ? "bg-purple-600 text-white shadow-sm font-semibold"
-                                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                                                    ? "bg-purple-600 text-white border-purple-400 shadow-sm"
+                                                    : "bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-purple-400/60 shadow-2xs"
                                             )}
                                             title="Sichtweise B: Auto Qualität (Historische Qualitätsbewertung KGV bis 25 für Wide-Moat Compounder)"
                                         >
-                                            <Sparkles className="size-3.5 shrink-0" />
+                                            <Sparkles className={cn("size-3.5 shrink-0", !isSavedForStock && valuationProfile === 'quality' ? "text-white" : "text-purple-400")} />
                                             <span>Qualität (B)</span>
                                         </button>
                                     </div>
