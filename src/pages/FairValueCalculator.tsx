@@ -127,16 +127,6 @@ export function FairValueCalculator() {
     const [newLinkUrl, setNewLinkUrl] = useState('');
     const [newLinkLabel, setNewLinkLabel] = useState('');
 
-    const openGuideSection = (sectionId?: string) => {
-        setShowGuide(true);
-        if (sectionId) {
-            setTimeout(() => {
-                const el = document.getElementById(sectionId);
-                el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 150);
-        }
-    };
-
     const currentStock = useMemo(() => {
         if (!selectedSymbol) return null;
         return stocks.find(s => s.symbol.toLowerCase() === selectedSymbol.toLowerCase()) || null;
@@ -1822,16 +1812,6 @@ export function FairValueCalculator() {
                                                     <span className="shrink-0 select-none">⚠️</span>
                                                     <div className="flex-1">
                                                         <em>Negatives Terminal Growth:</em> Ein KGV von {pe} impliziert rechnerisch schrumpfende Dauererträge (z.B. zyklische Talsohle oder Risikoabschlag).
-                                                        <div className="mt-1">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => openGuideSection('guide-terminal-growth')}
-                                                                className="inline-flex items-center gap-1 text-[11px] text-rose-400 hover:text-rose-300 underline underline-offset-2 font-semibold cursor-pointer transition-colors"
-                                                            >
-                                                                <span>👉 Was bedeutet das? Erklärung &amp; Formel in Anleitung öffnen</span>
-                                                                <ExternalLink className="size-3" />
-                                                            </button>
-                                                        </div>
                                                     </div>
                                                 </div>
                                             ) : valuationProfile === 'conservative' ? (
@@ -1853,18 +1833,8 @@ export function FairValueCalculator() {
                                     )}
 
                                     {/* Quick links & Custom link for KGV / Valuation */}
-                                    <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 mt-2 pt-1 border-t border-border/40 text-xs">
-                                        <button
-                                            type="button"
-                                            onClick={() => openGuideSection('guide-terminal-growth')}
-                                            className="text-primary hover:text-primary/80 font-medium hover:underline flex items-center gap-1 cursor-pointer"
-                                            title="Erklärung und Formel zu negativem Terminal Growth in der Anleitung ansehen"
-                                        >
-                                            <BookOpen className="size-3" />
-                                            <span>Anleitung (Terminal Growth)</span>
-                                        </button>
-
-                                        {selectedSymbol && (
+                                    <div className="flex flex-wrap items-center justify-between gap-x-3.5 gap-y-1.5 mt-2 pt-1 border-t border-border/40 text-xs">
+                                        {selectedSymbol ? (
                                             <a
                                                 href={`https://www.macrotrends.net/stocks/charts/${selectedSymbol.split('.')[0].toUpperCase()}/pe-ratio`}
                                                 target="_blank"
@@ -1875,7 +1845,7 @@ export function FairValueCalculator() {
                                                 <ExternalLink className="size-3" />
                                                 <span>Macrotrends (KGV)</span>
                                             </a>
-                                        )}
+                                        ) : <div />}
 
                                         <button
                                             type="button"
