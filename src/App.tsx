@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate, NavLink, Link } from 'react-router-dom';
 import { FairValueCalculator } from './pages/FairValueCalculator';
-import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, ArrowLeftRight, Landmark, Telescope, Menu, X, BarChart2, Cloud } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, Wallet, Calculator, TrendingUp, Settings as SettingsIcon, Eye, ArrowLeftRight, Landmark, Telescope, Menu, X, BarChart2, Cloud, Globe } from 'lucide-react';
 import { CloudSyncModal } from './components/CloudSyncModal';
 
 
@@ -21,6 +21,7 @@ import { StockDetail } from './pages/StockDetail';
 import { ExchangeRates } from './pages/ExchangeRates';
 import { MortgageCalculator } from './pages/MortgageCalculator';
 import { SeasonalityPage } from './pages/SeasonalityPage';
+import { MarketOverviewPage } from './pages/MarketOverviewPage';
 
 interface NavItemProps {
   to: string;
@@ -209,6 +210,7 @@ function App() {
               <NavItem to="/fair-value" icon={Telescope} label="Fairer Wert" onClick={closeSidebarOnMobile} />
               <NavItem to="/mortgage" icon={Landmark} label="Budget" onClick={closeSidebarOnMobile} />
               <NavItem to="/seasonality" icon={BarChart2} label="Saisonalität" onClick={closeSidebarOnMobile} />
+              <NavItem to="/market-overview" icon={Globe} label="Marktübersicht" onClick={closeSidebarOnMobile} />
 
               <div className="pt-4 mt-4 border-t border-border">
                 <NavItem to="/exchange-rates" icon={ArrowLeftRight} label="Finanz Rechner" onClick={closeSidebarOnMobile} />
@@ -242,6 +244,7 @@ function App() {
               <Route path="/mortgage" element={<MortgageCalculator />} />
               <Route path="/seasonality" element={<SeasonalityPage />} />
               <Route path="/seasonality/:symbol" element={<SeasonalityPage />} />
+              <Route path="/market-overview" element={<MarketOverviewPage />} />
               <Route path="/exchange-rates" element={<ExchangeRates />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BarChart2, Search, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Coins } from 'lucide-react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, BarChart2, Search, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Coins, Globe } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { fetchSeasonalityData } from '../services/yahoo-finance';
 import type { MonthlySeasonality } from '../services/yahoo-finance';
@@ -122,6 +122,14 @@ export function SeasonalityPage() {
                             </div>
                             {/* Modus + Eingabe rechts */}
                             <div className="flex items-center gap-3">
+                                <Link
+                                    to="/market-overview"
+                                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-xs font-semibold text-foreground transition-all shadow-xs"
+                                    title="Zur Marktübersicht (Rohstoffe, Währungen, Indizes)"
+                                >
+                                    <Globe className="size-3.5 text-primary" />
+                                    <span>Marktübersicht</span>
+                                </Link>
                                 <div className="flex bg-muted p-1 rounded-lg">
                                     <button
                                         onClick={() => setAnalysisMode('range')}
