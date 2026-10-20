@@ -1786,7 +1786,7 @@ export function FairValueCalculator() {
                                 <div className="space-y-1">
                                     <div className="flex items-center justify-between gap-1">
                                         <label className="text-xs sm:text-sm font-medium">
-                                            Verkaufs-KGV (in 5J)
+                                            Verkaufs-KGV
                                         </label>
                                         <div className="inline-flex items-center rounded-lg border border-border/80 p-0.5 bg-muted/60 gap-1 shadow-2xs">
                                             <button
