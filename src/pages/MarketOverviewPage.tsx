@@ -20,7 +20,7 @@ export interface MarketItem {
     id: string;
     symbol: string;
     name: string;
-    category: 'indices' | 'commodities' | 'forex' | 'stocks' | 'crypto';
+    category: 'indices' | 'commodities' | 'forex' | 'stocks' | 'crypto' | 'asia';
     decimals?: number;
 }
 
@@ -42,6 +42,9 @@ export const DEFAULT_MARKET_ITEMS: MarketItem[] = [
     { id: '4', symbol: '^SSMI', name: 'Swiss Market In...', category: 'indices', decimals: 2 },
     { id: '5', symbol: 'SREN.SW', name: 'Swiss Re', category: 'stocks', decimals: 2 },
     { id: '6', symbol: '^NDX', name: 'Nasdaq-100 Ind...', category: 'indices', decimals: 2 },
+    { id: 'asia-1', symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'asia', decimals: 2 },
+    { id: 'asia-2', symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'asia', decimals: 2 },
+    { id: 'asia-3', symbol: '000001.SS', name: 'Shanghai Composite', category: 'asia', decimals: 2 },
     { id: '7', symbol: 'BZ=F', name: 'L&S Brent Oil', category: 'commodities', decimals: 2 },
     { id: '8', symbol: 'GC=F', name: 'Goldpreis (Spot)', category: 'commodities', decimals: 2 },
     { id: '9', symbol: 'SI=F', name: 'Silberpreis (Spot)', category: 'commodities', decimals: 2 },
@@ -53,7 +56,7 @@ export const DEFAULT_MARKET_ITEMS: MarketItem[] = [
     { id: '15', symbol: 'GBPCHF=X', name: 'GBP/CHF', category: 'forex', decimals: 4 },
 ];
 
-// Fallback baseline prices matching Bild 2 for offline / GitHub Pages cold start
+// Fallback baseline prices for offline / GitHub Pages cold start
 const DEFAULT_FALLBACK_QUOTES: Record<string, MarketQuoteData> = {
     'ZURN.SW': { price: 664.20, previousClose: 655.40, changePercent: 1.34, changeAmount: 8.80, currency: 'CHF' },
     'R6C0.DE': { price: 46.85, previousClose: 47.41, changePercent: -1.18, changeAmount: -0.56, currency: 'EUR' },
@@ -61,6 +64,14 @@ const DEFAULT_FALLBACK_QUOTES: Record<string, MarketQuoteData> = {
     '^SSMI': { price: 14368.78, previousClose: 14391.77, changePercent: -0.16, changeAmount: -22.99, currency: 'CHF' },
     'SREN.SW': { price: 161.60, previousClose: 160.30, changePercent: 0.81, changeAmount: 1.30, currency: 'CHF' },
     '^NDX': { price: 29529.34, previousClose: 29187.84, changePercent: 1.17, changeAmount: 341.50, currency: 'USD' },
+    '^N225': { price: 39180.30, previousClose: 38950.00, changePercent: 0.59, changeAmount: 230.30, currency: 'JPY' },
+    '^HSI': { price: 20630.50, previousClose: 20490.20, changePercent: 0.68, changeAmount: 140.30, currency: 'HKD' },
+    '000001.SS': { price: 3368.80, previousClose: 3350.10, changePercent: 0.56, changeAmount: 18.70, currency: 'CNY' },
+    '000300.SS': { price: 3980.50, previousClose: 3960.20, changePercent: 0.51, changeAmount: 20.30, currency: 'CNY' },
+    '^KS11': { price: 2610.40, previousClose: 2605.10, changePercent: 0.20, changeAmount: 5.30, currency: 'KRW' },
+    '^TWII': { price: 23250.60, previousClose: 23110.00, changePercent: 0.61, changeAmount: 140.60, currency: 'TWD' },
+    '^NSEI': { price: 24860.20, previousClose: 24820.00, changePercent: 0.16, changeAmount: 40.20, currency: 'INR' },
+    '^AXJO': { price: 8280.40, previousClose: 8250.00, changePercent: 0.37, changeAmount: 30.40, currency: 'AUD' },
     'BZ=F': { price: 109.23, previousClose: 109.72, changePercent: -0.45, changeAmount: -0.49, currency: 'USD' },
     'GC=F': { price: 4142.60, previousClose: 4131.45, changePercent: 0.27, changeAmount: 11.15, currency: 'USD' },
     'SI=F': { price: 57.42, previousClose: 56.88, changePercent: 0.95, changeAmount: 0.54, currency: 'USD' },
@@ -76,7 +87,16 @@ const DEFAULT_FALLBACK_QUOTES: Record<string, MarketQuoteData> = {
 };
 
 export const PRESET_OPTIONS: Omit<MarketItem, 'id'>[] = [
-    // Indizes
+    // Asiatische Indizes (Morgen-Check)
+    { symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'asia', decimals: 2 },
+    { symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'asia', decimals: 2 },
+    { symbol: '000001.SS', name: 'Shanghai Composite (China)', category: 'asia', decimals: 2 },
+    { symbol: '000300.SS', name: 'CSI 300 (China)', category: 'asia', decimals: 2 },
+    { symbol: '^KS11', name: 'Kospi (Südkorea)', category: 'asia', decimals: 2 },
+    { symbol: '^TWII', name: 'Taiwan Weighted (Taiex)', category: 'asia', decimals: 2 },
+    { symbol: '^NSEI', name: 'Nifty 50 (Indien)', category: 'asia', decimals: 2 },
+    { symbol: '^AXJO', name: 'ASX 200 (Australien)', category: 'asia', decimals: 2 },
+    // Indizes (Westen)
     { symbol: '^SSMI', name: 'Swiss Market Index (SMI)', category: 'indices', decimals: 2 },
     { symbol: '^NDX', name: 'Nasdaq-100 Index', category: 'indices', decimals: 2 },
     { symbol: '^GSPC', name: 'S&P 500 Index', category: 'indices', decimals: 2 },
@@ -118,7 +138,21 @@ export function MarketOverviewPage() {
             const raw = localStorage.getItem('portfolio_market_overview_items');
             if (raw) {
                 const parsed = JSON.parse(raw);
-                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    // Automatically append major Asian indices if user hasn't added them yet
+                    const hasAsia = parsed.some((it: MarketItem) => it.symbol === '^N225' || it.symbol === '^HSI' || it.category === 'asia');
+                    if (!hasAsia) {
+                        const asianDefaults: MarketItem[] = [
+                            { id: 'asia-1', symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'asia', decimals: 2 },
+                            { id: 'asia-2', symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'asia', decimals: 2 },
+                            { id: 'asia-3', symbol: '000001.SS', name: 'Shanghai Composite', category: 'asia', decimals: 2 },
+                        ];
+                        const merged = [...parsed, ...asianDefaults];
+                        localStorage.setItem('portfolio_market_overview_items', JSON.stringify(merged));
+                        return merged;
+                    }
+                    return parsed;
+                }
             }
         } catch (e) {
             console.warn('Failed to load market items', e);
@@ -145,7 +179,7 @@ export function MarketOverviewPage() {
     const [loading, setLoading] = useState(false);
     const [lastRefresh, setLastRefresh] = useState<Date | null>(() => new Date());
     const [isEditMode, setIsEditMode] = useState(false);
-    const [activeFilter, setActiveFilter] = useState<'all' | 'indices' | 'commodities' | 'forex' | 'stocks' | 'crypto'>('all');
+    const [activeFilter, setActiveFilter] = useState<'all' | 'indices' | 'asia' | 'commodities' | 'forex' | 'stocks' | 'crypto'>('all');
 
     // Add modal state
     const [showAddModal, setShowAddModal] = useState(false);
@@ -450,6 +484,13 @@ export function MarketOverviewPage() {
     // Filter items
     const filteredItems = useMemo(() => {
         if (activeFilter === 'all') return items;
+        if (activeFilter === 'asia') {
+            const asianSymbols = ['^N225', '^HSI', '000001.SS', '000300.SS', '^KS11', '^TWII', '^NSEI', '^BSESN', '^AXJO'];
+            return items.filter(it => it.category === 'asia' || asianSymbols.includes(it.symbol) || it.name.toLowerCase().includes('japan') || it.name.toLowerCase().includes('china') || it.name.toLowerCase().includes('hongkong') || it.name.toLowerCase().includes('nikkei'));
+        }
+        if (activeFilter === 'indices') {
+            return items.filter(it => it.category === 'indices' || it.category === 'asia');
+        }
         return items.filter(it => it.category === activeFilter);
     }, [items, activeFilter]);
 
@@ -563,6 +604,7 @@ export function MarketOverviewPage() {
                             {[
                                 { id: 'all', label: 'Alle' },
                                 { id: 'indices', label: 'Indizes' },
+                                { id: 'asia', label: '🌏 Asien' },
                                 { id: 'commodities', label: 'Rohstoffe' },
                                 { id: 'forex', label: 'Währungen' },
                                 { id: 'stocks', label: 'Aktien / ETFs' },
@@ -622,6 +664,13 @@ export function MarketOverviewPage() {
                             item.symbol.endsWith('.SW') ? 'CHF' :
                             item.symbol.endsWith('.DE') ? 'EUR' :
                             item.symbol.includes('CHF') ? 'CHF' :
+                            item.symbol === '^N225' ? 'JPY' :
+                            item.symbol === '^HSI' ? 'HKD' :
+                            item.symbol.endsWith('.SS') || item.symbol.endsWith('.SZ') ? 'CNY' :
+                            item.symbol === '^KS11' ? 'KRW' :
+                            item.symbol === '^TWII' ? 'TWD' :
+                            item.symbol === '^NSEI' || item.symbol === '^BSESN' ? 'INR' :
+                            item.symbol === '^AXJO' ? 'AUD' :
                             item.category === 'commodities' ? 'USD' :
                             (item.symbol.startsWith('^NDX') || item.symbol.startsWith('^GSPC') || item.symbol.startsWith('^DJI')) ? 'USD' : ''
                         );
@@ -857,6 +906,7 @@ export function MarketOverviewPage() {
                                     className="w-full p-2 rounded-lg border border-border bg-background text-xs focus:ring-1 focus:ring-primary"
                                 >
                                     <option value="indices">Indizes</option>
+                                    <option value="asia">Asien (Asiatische Märkte)</option>
                                     <option value="commodities">Rohstoffe</option>
                                     <option value="forex">Währungen</option>
                                     <option value="stocks">Aktien / ETFs</option>
