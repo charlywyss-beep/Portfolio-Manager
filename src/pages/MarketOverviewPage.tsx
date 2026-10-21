@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
     Globe, 
     RefreshCw, 
@@ -130,7 +130,48 @@ export const PRESET_OPTIONS: Omit<MarketItem, 'id'>[] = [
 
 export function MarketOverviewPage() {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { stocks } = usePortfolio();
+
+    // Tab types
+    const VALID_TABS = useMemo(() => ['all', 'indices', 'asia', 'commodities', 'forex', 'stocks', 'crypto'] as const, []);
+    type TabType = typeof VALID_TABS[number];
+
+    // Read initial tab from URL param or sessionStorage so returning from detail keeps the exact tab
+    const [activeFilter, setActiveFilter] = useState<TabType>(() => {
+        const urlTab = searchParams.get('tab') as TabType | null;
+        if (urlTab && VALID_TABS.includes(urlTab)) return urlTab;
+        try {
+            const saved = sessionStorage.getItem('portfolio_market_overview_tab') as TabType | null;
+            if (saved && VALID_TABS.includes(saved)) return saved;
+        } catch {
+            // ignore
+        }
+        return 'all';
+    });
+
+    const handleTabChange = useCallback((newTab: TabType) => {
+        setActiveFilter(newTab);
+        try {
+            sessionStorage.setItem('portfolio_market_overview_tab', newTab);
+            setSearchParams(newTab !== 'all' ? { tab: newTab } : {}, { replace: true });
+        } catch {
+            // ignore
+        }
+    }, [setSearchParams]);
+
+    // Keep activeFilter in sync if URL search param changes (e.g. browser back/forward)
+    useEffect(() => {
+        const urlTab = searchParams.get('tab') as TabType | null;
+        if (urlTab && VALID_TABS.includes(urlTab)) {
+            if (urlTab !== activeFilter) setActiveFilter(urlTab);
+        } else if (!urlTab && activeFilter !== 'all') {
+            const saved = sessionStorage.getItem('portfolio_market_overview_tab') as TabType | null;
+            if (saved && VALID_TABS.includes(saved) && saved !== activeFilter) {
+                setActiveFilter(saved);
+            }
+        }
+    }, [searchParams, activeFilter, VALID_TABS]);
 
     // Stored items
     const [items, setItems] = useState<MarketItem[]>(() => {
@@ -179,7 +220,6 @@ export function MarketOverviewPage() {
     const [loading, setLoading] = useState(false);
     const [lastRefresh, setLastRefresh] = useState<Date | null>(() => new Date());
     const [isEditMode, setIsEditMode] = useState(false);
-    const [activeFilter, setActiveFilter] = useState<'all' | 'indices' | 'asia' | 'commodities' | 'forex' | 'stocks' | 'crypto'>('all');
 
     // Add modal state
     const [showAddModal, setShowAddModal] = useState(false);
@@ -612,7 +652,7 @@ export function MarketOverviewPage() {
                             ].map(tab => (
                                 <button
                                     key={tab.id}
-                                    onClick={() => setActiveFilter(tab.id as any)}
+                                    onClick={() => handleTabChange(tab.id as any)}
                                     className={cn(
                                         "px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap shrink-0",
                                         activeFilter === tab.id
@@ -680,7 +720,7 @@ export function MarketOverviewPage() {
                                 key={item.id}
                                 onClick={() => {
                                     if (!isEditMode) {
-                                        navigate(`/stock/${encodeURIComponent(item.symbol)}?from=market-overview&name=${encodeURIComponent(item.name)}&currency=${encodeURIComponent(currency || 'USD')}`);
+                                        navigate(`/stock/${encodeURIComponent(item.symbol)}?from=market-overview&tab=${encodeURIComponent(activeFilter)}&name=${encodeURIComponent(item.name)}&currency=${encodeURIComponent(currency || 'USD')}`);
                                     }
                                 }}
                                 className={cn(

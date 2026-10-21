@@ -358,7 +358,8 @@ export function StockDetail() {
                             } else if (from === 'portfolio') {
                                 navigate('/portfolio');
                             } else if (from === 'market-overview') {
-                                navigate('/market-overview');
+                                const tab = searchParams.get('tab') || sessionStorage.getItem('portfolio_market_overview_tab');
+                                navigate(tab && tab !== 'all' ? `/market-overview?tab=${encodeURIComponent(tab)}` : '/market-overview');
                             } else {
                                 navigate(-1);
                             }
