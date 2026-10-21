@@ -20,7 +20,7 @@ export interface MarketItem {
     id: string;
     symbol: string;
     name: string;
-    category: 'indices' | 'commodities' | 'forex' | 'stocks' | 'crypto' | 'asia';
+    category: 'indices' | 'commodities' | 'forex' | 'stocks' | 'crypto' | 'asia' | 'portfolio';
     decimals?: number;
 }
 
@@ -131,11 +131,47 @@ export const PRESET_OPTIONS: Omit<MarketItem, 'id'>[] = [
 export function MarketOverviewPage() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
-    const { stocks } = usePortfolio();
+    const { stocks, positions } = usePortfolio();
 
     // Tab types
-    const VALID_TABS = useMemo(() => ['all', 'indices', 'asia', 'commodities', 'forex', 'stocks', 'crypto'] as const, []);
+    const VALID_TABS = useMemo(() => ['all', 'portfolio', 'indices', 'asia', 'commodities', 'forex', 'stocks', 'crypto'] as const, []);
     type TabType = typeof VALID_TABS[number];
+
+    // Extract all owned stocks and ETFs from the portfolio holdings
+    const portfolioStocks = useMemo(() => {
+        const ownedMap = new Map<string, typeof stocks[0] & { shares: number; totalCost: number }>();
+        (positions || []).forEach(pos => {
+            if (pos.shares > 0) {
+                const stock = stocks.find(s => s.id === pos.stockId);
+                if (stock) {
+                    const key = stock.symbol.toUpperCase();
+                    const existing = ownedMap.get(key);
+                    if (existing) {
+                        existing.shares += pos.shares;
+                        existing.totalCost += pos.shares * (pos.buyPriceAvg || 0);
+                    } else {
+                        ownedMap.set(key, {
+                            ...stock,
+                            shares: pos.shares,
+                            totalCost: pos.shares * (pos.buyPriceAvg || 0)
+                        });
+                    }
+                }
+            }
+        });
+        return Array.from(ownedMap.values());
+    }, [positions, stocks]);
+
+    // Convert owned stocks/ETFs into MarketItems for the Bestand tile set
+    const portfolioMarketItems = useMemo<MarketItem[]>(() => {
+        return portfolioStocks.map(stock => ({
+            id: `portfolio-${stock.id || stock.symbol}`,
+            symbol: stock.symbol,
+            name: stock.name,
+            category: 'stocks',
+            decimals: 2
+        }));
+    }, [portfolioStocks]);
 
     // Read initial tab from URL param or sessionStorage so returning from detail keeps the exact tab
     const [activeFilter, setActiveFilter] = useState<TabType>(() => {
@@ -262,14 +298,13 @@ export function MarketOverviewPage() {
 
         // 1. Instantly use any quotes from stocks in Portfolio / Watchlist
         if (stocks && stocks.length > 0) {
-            items.forEach(it => {
-                const matchedStock = stocks.find(s => s.symbol.toUpperCase() === it.symbol.toUpperCase());
+            stocks.forEach(matchedStock => {
                 if (matchedStock && matchedStock.currentPrice > 0) {
                     const price = matchedStock.currentPrice;
                     const prev = matchedStock.previousClose || price;
                     const changeAmount = price - prev;
                     const changePercent = prev > 0 ? (changeAmount / prev) * 100 : 0;
-                    newQuotes[it.symbol] = {
+                    newQuotes[matchedStock.symbol] = {
                         price,
                         previousClose: prev,
                         changePercent,
@@ -472,7 +507,10 @@ export function MarketOverviewPage() {
 
         // 3. Try batch query via local Yahoo API proxy (Works in local dev server / localhost / PC)
         try {
-            const symList = items.map(i => i.symbol);
+            const symList = Array.from(new Set([
+                ...items.map(i => i.symbol),
+                ...stocks.map(s => s.symbol)
+            ]));
             const res = await fetch(`/api/yahoo-quote?symbol=${symList.join(',')}&_=${Date.now()}`);
             if (res.ok) {
                 const json = await res.json();
@@ -523,7 +561,14 @@ export function MarketOverviewPage() {
 
     // Filter items
     const filteredItems = useMemo(() => {
-        if (activeFilter === 'all') return items;
+        if (activeFilter === 'portfolio') {
+            return portfolioMarketItems;
+        }
+        if (activeFilter === 'all') {
+            const existingSymbols = new Set(items.map(i => i.symbol.toUpperCase()));
+            const missingPortfolioItems = portfolioMarketItems.filter(p => !existingSymbols.has(p.symbol.toUpperCase()));
+            return [...items, ...missingPortfolioItems];
+        }
         if (activeFilter === 'asia') {
             const asianSymbols = ['^N225', '^HSI', '000001.SS', '000300.SS', '^KS11', '^TWII', '^NSEI', '^BSESN', '^AXJO'];
             return items.filter(it => it.category === 'asia' || asianSymbols.includes(it.symbol) || it.name.toLowerCase().includes('japan') || it.name.toLowerCase().includes('china') || it.name.toLowerCase().includes('hongkong') || it.name.toLowerCase().includes('nikkei'));
@@ -531,8 +576,13 @@ export function MarketOverviewPage() {
         if (activeFilter === 'indices') {
             return items.filter(it => it.category === 'indices' || it.category === 'asia');
         }
+        if (activeFilter === 'stocks') {
+            const existingSymbols = new Set(items.map(i => i.symbol.toUpperCase()));
+            const missingPortfolioItems = portfolioMarketItems.filter(p => !existingSymbols.has(p.symbol.toUpperCase()));
+            return [...items.filter(it => it.category === 'stocks'), ...missingPortfolioItems];
+        }
         return items.filter(it => it.category === activeFilter);
-    }, [items, activeFilter]);
+    }, [items, activeFilter, portfolioMarketItems]);
 
     // Number format helper (German/Swiss style: 14.368,78)
     const formatNumber = (num: number | undefined, decimals = 2) => {
@@ -643,6 +693,7 @@ export function MarketOverviewPage() {
                         <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/50 w-fit">
                             {[
                                 { id: 'all', label: 'Alle' },
+                                { id: 'portfolio', label: `💼 Bestand (${portfolioStocks.length})` },
                                 { id: 'indices', label: 'Indizes' },
                                 { id: 'asia', label: '🌏 Asien' },
                                 { id: 'commodities', label: 'Rohstoffe' },
@@ -700,7 +751,9 @@ export function MarketOverviewPage() {
                         const itemIndex = items.findIndex(i => i.id === item.id);
                         const canMoveLeft = itemIndex > 0;
                         const canMoveRight = itemIndex < items.length - 1;
-                        const currency = q?.currency || (
+                        const matchedStock = portfolioStocks.find(s => s.symbol.toUpperCase() === item.symbol.toUpperCase()) ||
+                                             stocks.find(s => s.symbol.toUpperCase() === item.symbol.toUpperCase());
+                        const currency = q?.currency || matchedStock?.currency || (
                             item.symbol.endsWith('.SW') ? 'CHF' :
                             item.symbol.endsWith('.DE') ? 'EUR' :
                             item.symbol.includes('CHF') ? 'CHF' :
@@ -735,15 +788,22 @@ export function MarketOverviewPage() {
                                 {/* Top: Name & Badge or Edit Buttons */}
                                 <div className="flex items-start justify-between gap-1 min-w-0">
                                     <div className="min-w-0 flex-1">
-                                        <h3 
-                                            className="font-extrabold text-[11px] sm:text-base md:text-lg tracking-tight truncate drop-shadow-xs text-slate-950 leading-tight" 
-                                            title={item.name}
-                                        >
-                                            {item.name}
-                                        </h3>
+                                        <div className="flex items-center gap-1 min-w-0">
+                                            <h3 
+                                                className="font-extrabold text-[11px] sm:text-base md:text-lg tracking-tight truncate drop-shadow-xs text-slate-950 leading-tight" 
+                                                title={item.name}
+                                            >
+                                                {item.name}
+                                            </h3>
+                                            {matchedStock?.type === 'etf' && (
+                                                <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-1 py-0.5 rounded bg-black/20 text-slate-950 shrink-0 leading-tight">
+                                                    ETF
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
 
-                                    {isEditMode ? (
+                                    {isEditMode && activeFilter !== 'portfolio' ? (
                                         <div className="flex items-center gap-0.5 bg-black/65 backdrop-blur-md px-1 py-0.5 rounded-md shrink-0 shadow-xs border border-white/10">
                                             {canMoveLeft && (
                                                 <button
@@ -784,12 +844,17 @@ export function MarketOverviewPage() {
                                 </div>
 
                                 {/* Center: Price */}
-                                <div className="my-0.5 sm:my-2 text-center">
+                                <div className="my-0.5 sm:my-1 text-center">
                                     <div className="text-base sm:text-2xl md:text-3xl font-black tracking-tight drop-shadow-xs tabular-nums text-slate-950 leading-tight">
                                         {q ? formatNumber(q.price, decimals) : (
                                             <span className="opacity-40 animate-pulse text-xs sm:text-xl">Laden...</span>
                                         )}
                                     </div>
+                                    {matchedStock && (matchedStock as any).shares > 0 && (
+                                        <div className="text-[9px] sm:text-[11px] font-bold text-slate-950/80 truncate mt-0.5">
+                                            {(matchedStock as any).shares} Stk.{q ? ` • ${formatNumber((matchedStock as any).shares * q.price, 0)} ${currency}` : ''}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Bottom: Change % */}
@@ -815,13 +880,19 @@ export function MarketOverviewPage() {
                 {/* Empty State */}
                 {filteredItems.length === 0 && (
                     <div className="p-8 sm:p-12 text-center rounded-2xl border border-dashed border-border/80 bg-card/40 space-y-3">
-                        <p className="text-xs sm:text-sm text-muted-foreground">Keine Kacheln in dieser Kategorie vorhanden.</p>
-                        <button
-                            onClick={() => setShowAddModal(true)}
-                            className="px-4 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:bg-primary/90 transition-all"
-                        >
-                            + Kachel hinzufügen
-                        </button>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                            {activeFilter === 'portfolio'
+                                ? 'Noch keine Positionen im Bestand. Füge Aktien oder ETFs im Menü "Positionen" hinzu.'
+                                : 'Keine Kacheln in dieser Kategorie vorhanden.'}
+                        </p>
+                        {activeFilter !== 'portfolio' && (
+                            <button
+                                onClick={() => setShowAddModal(true)}
+                                className="px-4 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:bg-primary/90 transition-all"
+                            >
+                                + Kachel hinzufügen
+                            </button>
+                        )}
                     </div>
                 )}
 
