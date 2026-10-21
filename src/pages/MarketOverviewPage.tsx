@@ -500,17 +500,17 @@ export function MarketOverviewPage() {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 pb-32">
+        <div className="w-full max-w-7xl mx-auto pb-32">
             {/* Sticky Header Section: Title, Action Buttons & Category Filter Tabs */}
-            <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md -mx-2 sm:-mx-4 md:-mx-6 px-2 sm:px-4 md:px-6 pt-2.5 sm:pt-4 pb-2 sm:pb-3 border-b border-border shadow-xs space-y-2 sm:space-y-3 mb-3 sm:mb-5">
+            <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md px-3 sm:px-4 md:px-6 pt-2.5 sm:pt-4 pb-2 sm:pb-3 border-b border-border shadow-xs space-y-2 sm:space-y-3 mb-3 sm:mb-5 w-full">
                 {/* Top Row: Title + Action Buttons */}
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center justify-between gap-2 w-full">
                     <div className="flex items-center gap-2 pl-11 xl:pl-0 min-w-0">
                         <div className="size-8 sm:size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner shrink-0">
                             <Globe className="size-4 sm:size-6" />
                         </div>
                         <div className="min-w-0">
-                            <h1 className="text-lg sm:text-2xl md:text-3xl font-extrabold tracking-tight text-foreground truncate">
+                            <h1 className="text-base sm:text-2xl md:text-3xl font-extrabold tracking-tight text-foreground truncate">
                                 Marktübersicht
                             </h1>
                             <p className="text-[11px] sm:text-xs text-muted-foreground font-medium hidden md:block">
@@ -557,33 +557,35 @@ export function MarketOverviewPage() {
                 </div>
 
                 {/* Second Row: Category Filter Pills & Edit Actions (Sticky with header!) */}
-                <div className="flex items-center justify-between gap-2 overflow-x-auto scroller-none py-0.5">
-                    <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/50 shrink-0">
-                        {[
-                            { id: 'all', label: 'Alle' },
-                            { id: 'indices', label: 'Indizes' },
-                            { id: 'commodities', label: 'Rohstoffe' },
-                            { id: 'forex', label: 'Währungen' },
-                            { id: 'stocks', label: 'Aktien / ETFs' },
-                            { id: 'crypto', label: 'Krypto' },
-                        ].map(tab => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveFilter(tab.id as any)}
-                                className={cn(
-                                    "px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap shrink-0",
-                                    activeFilter === tab.id
-                                        ? "bg-background text-foreground shadow-xs font-bold"
-                                        : "text-muted-foreground hover:text-foreground hover:bg-background/40"
-                                )}
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
+                <div className="flex items-center justify-between gap-2 w-full min-w-0">
+                    <div className="w-full min-w-0 overflow-x-auto scroller-none py-0.5">
+                        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/50 w-fit">
+                            {[
+                                { id: 'all', label: 'Alle' },
+                                { id: 'indices', label: 'Indizes' },
+                                { id: 'commodities', label: 'Rohstoffe' },
+                                { id: 'forex', label: 'Währungen' },
+                                { id: 'stocks', label: 'Aktien / ETFs' },
+                                { id: 'crypto', label: 'Krypto' },
+                            ].map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveFilter(tab.id as any)}
+                                    className={cn(
+                                        "px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap shrink-0",
+                                        activeFilter === tab.id
+                                            ? "bg-background text-foreground shadow-xs font-bold"
+                                            : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+                                    )}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {isEditMode && (
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="flex items-center gap-1.5 shrink-0 pl-1">
                             <button
                                 onClick={resetToDefault}
                                 className="flex items-center gap-1 px-2 py-1 rounded-lg border border-border bg-card hover:bg-muted text-[11px] font-medium text-muted-foreground transition-colors shrink-0"
@@ -604,145 +606,148 @@ export function MarketOverviewPage() {
                 </div>
             </div>
 
-            {/* The Market Tiles Grid (Optimized 2 columns on iPhone & mobile, 3 columns on tablet/desktop) */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-4 md:gap-5">
-                {filteredItems.map((item) => {
-                    const q = quotes[item.symbol];
-                    const changePct = q?.changePercent ?? 0;
-                    const isPositive = changePct >= 0;
-                    const decimals = item.decimals ?? (item.symbol.includes('=X') ? 4 : 2);
-                    const itemIndex = items.findIndex(i => i.id === item.id);
-                    const canMoveLeft = itemIndex > 0;
-                    const canMoveRight = itemIndex < items.length - 1;
-                    const currency = q?.currency || (
-                        item.symbol.endsWith('.SW') ? 'CHF' :
-                        item.symbol.endsWith('.DE') ? 'EUR' :
-                        item.symbol.includes('CHF') ? 'CHF' :
-                        item.category === 'commodities' ? 'USD' :
-                        (item.symbol.startsWith('^NDX') || item.symbol.startsWith('^GSPC') || item.symbol.startsWith('^DJI')) ? 'USD' : ''
-                    );
+            {/* Padded Container for Grid and Content */}
+            <div className="px-3 sm:px-4 md:px-6 space-y-4">
+                {/* The Market Tiles Grid (Optimized 2 columns on iPhone & mobile, 3 columns on tablet/desktop) */}
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-4 md:gap-5 w-full">
+                    {filteredItems.map((item) => {
+                        const q = quotes[item.symbol];
+                        const changePct = q?.changePercent ?? 0;
+                        const isPositive = changePct >= 0;
+                        const decimals = item.decimals ?? (item.symbol.includes('=X') ? 4 : 2);
+                        const itemIndex = items.findIndex(i => i.id === item.id);
+                        const canMoveLeft = itemIndex > 0;
+                        const canMoveRight = itemIndex < items.length - 1;
+                        const currency = q?.currency || (
+                            item.symbol.endsWith('.SW') ? 'CHF' :
+                            item.symbol.endsWith('.DE') ? 'EUR' :
+                            item.symbol.includes('CHF') ? 'CHF' :
+                            item.category === 'commodities' ? 'USD' :
+                            (item.symbol.startsWith('^NDX') || item.symbol.startsWith('^GSPC') || item.symbol.startsWith('^DJI')) ? 'USD' : ''
+                        );
 
-                    return (
-                        <div
-                            key={item.id}
-                            onClick={() => {
-                                if (!isEditMode) {
-                                    navigate(`/stock/${encodeURIComponent(item.symbol)}?from=market-overview&name=${encodeURIComponent(item.name)}&currency=${encodeURIComponent(currency || 'USD')}`);
-                                }
-                            }}
-                            className={cn(
-                                "relative rounded-xl sm:rounded-2xl p-2 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[92px] sm:min-h-[135px]",
-                                !isEditMode && "cursor-pointer hover:shadow-lg hover:brightness-105 active:scale-[0.99]",
-                                isPositive
-                                    ? "bg-[#3fb78f] text-slate-950 border border-emerald-600/30 shadow-emerald-950/10"
-                                    : "bg-[#eb6a59] text-slate-950 border border-rose-600/30 shadow-rose-950/10"
-                            )}
-                            title={isEditMode ? undefined : `${item.name} – Klick für interaktiven Chart`}
-                        >
-                            {/* Top: Name & Badge or Edit Buttons */}
-                            <div className="flex items-start justify-between gap-1 min-w-0">
-                                <div className="min-w-0 flex-1">
-                                    <h3 
-                                        className="font-extrabold text-[11px] sm:text-base md:text-lg tracking-tight truncate drop-shadow-xs text-slate-950 leading-tight" 
-                                        title={item.name}
-                                    >
-                                        {item.name}
-                                    </h3>
+                        return (
+                            <div
+                                key={item.id}
+                                onClick={() => {
+                                    if (!isEditMode) {
+                                        navigate(`/stock/${encodeURIComponent(item.symbol)}?from=market-overview&name=${encodeURIComponent(item.name)}&currency=${encodeURIComponent(currency || 'USD')}`);
+                                    }
+                                }}
+                                className={cn(
+                                    "relative rounded-xl sm:rounded-2xl p-2 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[92px] sm:min-h-[135px] w-full min-w-0",
+                                    !isEditMode && "cursor-pointer hover:shadow-lg hover:brightness-105 active:scale-[0.99]",
+                                    isPositive
+                                        ? "bg-[#3fb78f] text-slate-950 border border-emerald-600/30 shadow-emerald-950/10"
+                                        : "bg-[#eb6a59] text-slate-950 border border-rose-600/30 shadow-rose-950/10"
+                                )}
+                                title={isEditMode ? undefined : `${item.name} – Klick für interaktiven Chart`}
+                            >
+                                {/* Top: Name & Badge or Edit Buttons */}
+                                <div className="flex items-start justify-between gap-1 min-w-0">
+                                    <div className="min-w-0 flex-1">
+                                        <h3 
+                                            className="font-extrabold text-[11px] sm:text-base md:text-lg tracking-tight truncate drop-shadow-xs text-slate-950 leading-tight" 
+                                            title={item.name}
+                                        >
+                                            {item.name}
+                                        </h3>
+                                    </div>
+
+                                    {isEditMode ? (
+                                        <div className="flex items-center gap-0.5 bg-black/65 backdrop-blur-md px-1 py-0.5 rounded-md shrink-0 shadow-xs border border-white/10">
+                                            {canMoveLeft && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); moveItem(item.id, 'left'); }}
+                                                    className="p-0.5 hover:bg-white/20 active:scale-95 rounded text-white transition-all"
+                                                    title="Nach links"
+                                                >
+                                                    <ChevronLeft className="size-3" />
+                                                </button>
+                                            )}
+                                            {canMoveRight && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); moveItem(item.id, 'right'); }}
+                                                    className="p-0.5 hover:bg-white/20 active:scale-95 rounded text-white transition-all"
+                                                    title="Nach rechts"
+                                                >
+                                                    <ChevronRight className="size-3" />
+                                                </button>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
+                                                className="p-0.5 hover:bg-rose-600 active:scale-95 rounded text-rose-200 hover:text-white transition-all"
+                                                title="Entfernen"
+                                            >
+                                                <X className="size-3" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        currency ? (
+                                            <span className="text-[9px] sm:text-[11px] uppercase font-black tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-black/15 text-slate-950 shrink-0 font-mono leading-none">
+                                                {currency}
+                                            </span>
+                                        ) : null
+                                    )}
                                 </div>
 
-                                {isEditMode ? (
-                                    <div className="flex items-center gap-0.5 bg-black/65 backdrop-blur-md px-1 py-0.5 rounded-md shrink-0 shadow-xs border border-white/10">
-                                        {canMoveLeft && (
-                                            <button
-                                                type="button"
-                                                onClick={(e) => { e.stopPropagation(); moveItem(item.id, 'left'); }}
-                                                className="p-0.5 hover:bg-white/20 active:scale-95 rounded text-white transition-all"
-                                                title="Nach links"
-                                            >
-                                                <ChevronLeft className="size-3" />
-                                            </button>
+                                {/* Center: Price */}
+                                <div className="my-0.5 sm:my-2 text-center">
+                                    <div className="text-base sm:text-2xl md:text-3xl font-black tracking-tight drop-shadow-xs tabular-nums text-slate-950 leading-tight">
+                                        {q ? formatNumber(q.price, decimals) : (
+                                            <span className="opacity-40 animate-pulse text-xs sm:text-xl">Laden...</span>
                                         )}
-                                        {canMoveRight && (
-                                            <button
-                                                type="button"
-                                                onClick={(e) => { e.stopPropagation(); moveItem(item.id, 'right'); }}
-                                                className="p-0.5 hover:bg-white/20 active:scale-95 rounded text-white transition-all"
-                                                title="Nach rechts"
-                                            >
-                                                <ChevronRight className="size-3" />
-                                            </button>
-                                        )}
-                                        <button
-                                            type="button"
-                                            onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
-                                            className="p-0.5 hover:bg-rose-600 active:scale-95 rounded text-rose-200 hover:text-white transition-all"
-                                            title="Entfernen"
-                                        >
-                                            <X className="size-3" />
-                                        </button>
                                     </div>
-                                ) : (
-                                    currency ? (
-                                        <span className="text-[9px] sm:text-[11px] uppercase font-black tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-black/15 text-slate-950 shrink-0 font-mono leading-none">
-                                            {currency}
-                                        </span>
-                                    ) : null
-                                )}
-                            </div>
+                                </div>
 
-                            {/* Center: Price */}
-                            <div className="my-0.5 sm:my-2 text-center">
-                                <div className="text-base sm:text-2xl md:text-3xl font-black tracking-tight drop-shadow-xs tabular-nums text-slate-950 leading-tight">
-                                    {q ? formatNumber(q.price, decimals) : (
-                                        <span className="opacity-40 animate-pulse text-xs sm:text-xl">Laden...</span>
+                                {/* Bottom: Change % */}
+                                <div className="flex items-center justify-center gap-0.5 sm:gap-1 font-black text-[11px] sm:text-base md:text-lg drop-shadow-xs tabular-nums text-slate-950 leading-tight">
+                                    {q && (
+                                        <>
+                                            {isPositive ? (
+                                                <TrendingUp className="size-3 sm:size-4 shrink-0" />
+                                            ) : (
+                                                <TrendingDown className="size-3 sm:size-4 shrink-0" />
+                                            )}
+                                            <span>
+                                                {isPositive ? '+' : ''}{changePct.toFixed(2)}%
+                                            </span>
+                                        </>
                                     )}
                                 </div>
                             </div>
-
-                            {/* Bottom: Change % */}
-                            <div className="flex items-center justify-center gap-0.5 sm:gap-1 font-black text-[11px] sm:text-base md:text-lg drop-shadow-xs tabular-nums text-slate-950 leading-tight">
-                                {q && (
-                                    <>
-                                        {isPositive ? (
-                                            <TrendingUp className="size-3 sm:size-4 shrink-0" />
-                                        ) : (
-                                            <TrendingDown className="size-3 sm:size-4 shrink-0" />
-                                        )}
-                                        <span>
-                                            {isPositive ? '+' : ''}{changePct.toFixed(2)}%
-                                        </span>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-
-            {/* Empty State */}
-            {filteredItems.length === 0 && (
-                <div className="p-8 sm:p-12 text-center rounded-2xl border border-dashed border-border/80 bg-card/40 space-y-3">
-                    <p className="text-xs sm:text-sm text-muted-foreground">Keine Kacheln in dieser Kategorie vorhanden.</p>
-                    <button
-                        onClick={() => setShowAddModal(true)}
-                        className="px-4 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:bg-primary/90 transition-all"
-                    >
-                        + Kachel hinzufügen
-                    </button>
+                        );
+                    })}
                 </div>
-            )}
 
-            {/* Last updated footer info */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] sm:text-xs text-muted-foreground pt-3 sm:pt-4 border-t border-border/40">
-                <span className="flex items-center gap-1.5">
-                    <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-                    Live &bull; Automatische Synchronisation aktiv
-                </span>
-                {lastRefresh && (
-                    <span>
-                        Zuletzt aktualisiert: {lastRefresh.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                    </span>
+                {/* Empty State */}
+                {filteredItems.length === 0 && (
+                    <div className="p-8 sm:p-12 text-center rounded-2xl border border-dashed border-border/80 bg-card/40 space-y-3">
+                        <p className="text-xs sm:text-sm text-muted-foreground">Keine Kacheln in dieser Kategorie vorhanden.</p>
+                        <button
+                            onClick={() => setShowAddModal(true)}
+                            className="px-4 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:bg-primary/90 transition-all"
+                        >
+                            + Kachel hinzufügen
+                        </button>
+                    </div>
                 )}
+
+                {/* Last updated footer info */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] sm:text-xs text-muted-foreground pt-3 sm:pt-4 border-t border-border/40">
+                    <span className="flex items-center gap-1.5">
+                        <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                        Live &bull; Automatische Synchronisation aktiv
+                    </span>
+                    {lastRefresh && (
+                        <span>
+                            Zuletzt aktualisiert: {lastRefresh.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        </span>
+                    )}
+                </div>
             </div>
 
             {/* Add Item Modal */}
