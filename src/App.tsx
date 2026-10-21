@@ -141,152 +141,157 @@ function App() {
   return (
     <ExchangeRateProvider>
       <PortfolioProvider>
-        <div className="flex h-screen h-[100dvh] bg-background text-foreground font-sans antialiased text-sm">
-          {/* Mobile Hamburger Menu Button (visible when sidebar is closed) */}
-          {!isSidebarOpen && (
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="fixed top-3 left-3 z-[1100] p-2 bg-card/90 backdrop-blur-sm border border-border rounded-lg shadow-lg xl:hidden hover:bg-accent transition-colors active:scale-95"
-              aria-label="Menü öffnen"
-            >
-              <Menu className="size-5" />
-            </button>
-          )}
+        <div className="flex h-screen h-[100dvh] bg-background text-foreground font-sans antialiased text-sm flex-col">
+          {/* Top Safe Area Bar for Apple Status Bar on Mobile / iPad */}
+          <div className="h-[max(env(safe-area-inset-top,0px),2.25rem)] bg-background shrink-0 xl:hidden" />
 
-          {/* Mobile Sidebar Overlay */}
-          {isSidebarOpen && (
-            <div
-              className="fixed inset-0 bg-black/50 z-[1000] xl:hidden backdrop-blur-[2px]"
-              onClick={() => setIsSidebarOpen(false)}
-            />
-          )}
-
-          {/* Sidebar */}
-          <aside className={cn(
-            "border-r border-border bg-card shadow-lg flex flex-col transition-all duration-300 ease-in-out",
-            "fixed xl:relative z-[1001] h-full max-h-[100dvh] w-64 xl:w-60 shrink-0",
-            isSidebarOpen
-              ? "translate-x-0"
-              : "-translate-x-full xl:translate-x-0"
-          )}>
-            {/* Header: Title + Close Button */}
-            <div className="pt-[max(env(safe-area-inset-top),0.75rem)] px-3.5 pb-2.5 border-b border-border shrink-0">
-              <div className="flex items-center justify-between">
-                <Link
-                  to="/portfolio"
-                  className="flex items-center gap-2.5 cursor-pointer group hover:opacity-85 transition-opacity"
-                  onClick={closeSidebarOnMobile}
-                >
-                  <div className="size-7 rounded-lg bg-primary flex items-center justify-center group-hover:scale-105 transition-transform shadow-sm shrink-0">
-                    <Wallet className="text-primary-foreground size-4" />
-                  </div>
-                  <h1 className="text-lg font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">Portfolio</h1>
-                </Link>
-
-                {/* Close Button (Mobile / Tablet) */}
-                <button
-                  type="button"
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="p-1.5 -mr-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors xl:hidden active:scale-95"
-                  aria-label="Menü schließen"
-                >
-                  <X className="size-5" />
-                </button>
-              </div>
-
-              {/* Version & Cloud Sync Badges */}
-              <div className="mt-2 flex items-center gap-2">
-                <span
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('v', Date.now().toString());
-                    window.location.href = url.toString();
-                  }}
-                  className="text-[11px] font-bold bg-blue-600/40 text-white px-2.5 py-0.5 rounded-full hover:bg-blue-600/60 transition-colors border border-blue-400/50 cursor-pointer shadow-sm"
-                  title="App neu laden (Cache leeren)"
-                >
-                  v{packageJson.version}
-                </span>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeSidebarOnMobile();
-                    setIsCloudSyncOpen(true);
-                  }}
-                  className="flex items-center gap-1.5 text-[11px] font-bold bg-blue-600/40 hover:bg-blue-600/60 text-white px-2.5 py-0.5 rounded-full transition-all border border-blue-400/50 shadow-sm"
-                  title="☁️ GitHub Cloud-Sync"
-                >
-                  <Cloud className="size-3 text-white" />
-                  <span>Cloud-Sync</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Navigation links: uniform spacing, perfectly sized, scrollable with touch momentum */}
-            <nav
-              className="flex-1 px-2.5 py-2 flex flex-col gap-1 overflow-y-auto overscroll-contain scroller-none touch-pan-y"
-              style={{ WebkitOverflowScrolling: 'touch' }}
-            >
-              <NavItem to="/" icon={LayoutDashboard} label="Übersicht" onClick={closeSidebarOnMobile} />
-              <NavItem to="/portfolio" icon={Wallet} label="Positionen" onClick={closeSidebarOnMobile} />
-              <NavItem to="/dividends" icon={TrendingUp} label="Dividenden" onClick={closeSidebarOnMobile} />
-              <NavItem to="/watchlist" icon={Eye} label="Watchlist" onClick={closeSidebarOnMobile} />
-              <NavItem to="/calculator" icon={Calculator} label="Kauf / Verkauf" onClick={closeSidebarOnMobile} />
-              <NavItem to="/fair-value" icon={Telescope} label="Fairer Wert" onClick={closeSidebarOnMobile} />
-              <NavItem to="/mortgage" icon={Landmark} label="Budget" onClick={closeSidebarOnMobile} />
-              <NavItem to="/seasonality" icon={BarChart2} label="Saisonalität" onClick={closeSidebarOnMobile} />
-              <NavItem to="/market-overview" icon={Globe} label="Marktübersicht" onClick={closeSidebarOnMobile} />
-
-              <div className="my-1 border-t border-border/80" />
-
-              <NavItem to="/exchange-rates" icon={ArrowLeftRight} label="Finanz Rechner" onClick={closeSidebarOnMobile} />
-              <NavItem to="/settings" icon={SettingsIcon} label="Einstellungen" onClick={closeSidebarOnMobile} />
-            </nav>
-
-            {/* Footer with Dark Mode Toggle */}
-            <div className="p-2 border-t border-border mt-auto shrink-0 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
+          <div className="flex flex-1 min-h-0 relative">
+            {/* Mobile Hamburger Menu Button (visible when sidebar is closed) */}
+            {!isSidebarOpen && (
               <button
-                onClick={toggleDarkMode}
-                className="flex items-center gap-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors w-full px-3 py-1.5 rounded-lg"
+                onClick={() => setIsSidebarOpen(true)}
+                className="fixed top-[calc(max(env(safe-area-inset-top,0px),2.25rem)+0.5rem)] left-3 z-[1100] p-2 bg-card/90 backdrop-blur-sm border border-border rounded-lg shadow-lg xl:hidden hover:bg-accent transition-colors active:scale-95"
+                aria-label="Menü öffnen"
               >
-                {isDarkMode ? <Sun className="size-4 shrink-0" /> : <Moon className="size-4 shrink-0" />}
-                <span>{isDarkMode ? "Light Mode" : "Dark Mode"}</span>
+                <Menu className="size-5" />
               </button>
-            </div>
-          </aside>
+            )}
 
-          {/* Main Content */}
-          <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-background transition-all duration-300 flex flex-col">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/portfolio" element={<Portfolio />} />
-              <Route path="/watchlist" element={<Watchlist />} />
-              <Route path="/calculator" element={<DividendCalculator />} />
-              <Route path="/fair-value" element={<FairValueCalculator />} />
-              <Route path="/dividends" element={<DividendPlanner />} />
-              <Route path="/dividends/add" element={<EditDividendPage />} />
-              <Route path="/dividends/edit/:stockId" element={<EditDividendPage />} />
-              <Route path="/stock/:id" element={<StockDetail />} />
-              <Route path="/mortgage" element={<MortgageCalculator />} />
-              <Route path="/seasonality" element={<SeasonalityPage />} />
-              <Route path="/seasonality/:symbol" element={<SeasonalityPage />} />
-              <Route path="/market-overview" element={<MarketOverviewPage />} />
-              <Route path="/exchange-rates" element={<ExchangeRates />} />
-              <Route path="/settings" element={<Settings />} />
-            </Routes>
-          </main>
+            {/* Mobile Sidebar Overlay */}
+            {isSidebarOpen && (
+              <div
+                className="fixed inset-0 bg-black/50 z-[1000] xl:hidden backdrop-blur-[2px]"
+                onClick={() => setIsSidebarOpen(false)}
+              />
+            )}
 
-          <CloudSyncModal
-            isOpen={isCloudSyncOpen}
-            onClose={() => setIsCloudSyncOpen(false)}
-            onOpenSettings={() => {
-              navigate('/settings');
-              closeSidebarOnMobile();
-            }}
-          />
+            {/* Sidebar */}
+            <aside className={cn(
+              "border-r border-border bg-card shadow-lg flex flex-col transition-all duration-300 ease-in-out",
+              "fixed xl:relative z-[1001] top-[max(env(safe-area-inset-top,0px),2.25rem)] xl:top-0 bottom-0 h-[calc(100dvh-max(env(safe-area-inset-top,0px),2.25rem))] xl:h-full w-64 xl:w-60 shrink-0",
+              isSidebarOpen
+                ? "translate-x-0"
+                : "-translate-x-full xl:translate-x-0"
+            )}>
+              {/* Header: Title + Close Button */}
+              <div className="px-3.5 py-2.5 border-b border-border shrink-0">
+                <div className="flex items-center justify-between">
+                  <Link
+                    to="/portfolio"
+                    className="flex items-center gap-2.5 cursor-pointer group hover:opacity-85 transition-opacity"
+                    onClick={closeSidebarOnMobile}
+                  >
+                    <div className="size-7 rounded-lg bg-primary flex items-center justify-center group-hover:scale-105 transition-transform shadow-sm shrink-0">
+                      <Wallet className="text-primary-foreground size-4" />
+                    </div>
+                    <h1 className="text-lg font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">Portfolio</h1>
+                  </Link>
+
+                  {/* Close Button (Mobile / Tablet) */}
+                  <button
+                    type="button"
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="p-1.5 -mr-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors xl:hidden active:scale-95"
+                    aria-label="Menü schließen"
+                  >
+                    <X className="size-5" />
+                  </button>
+                </div>
+
+                {/* Version & Cloud Sync Badges */}
+                <div className="mt-2 flex items-center gap-2">
+                  <span
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const url = new URL(window.location.href);
+                      url.searchParams.set('v', Date.now().toString());
+                      window.location.href = url.toString();
+                    }}
+                    className="text-[11px] font-bold bg-blue-600/40 text-white px-2.5 py-0.5 rounded-full hover:bg-blue-600/60 transition-colors border border-blue-400/50 cursor-pointer shadow-sm"
+                    title="App neu laden (Cache leeren)"
+                  >
+                    v{packageJson.version}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeSidebarOnMobile();
+                      setIsCloudSyncOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 text-[11px] font-bold bg-blue-600/40 hover:bg-blue-600/60 text-white px-2.5 py-0.5 rounded-full transition-all border border-blue-400/50 shadow-sm"
+                    title="☁️ GitHub Cloud-Sync"
+                  >
+                    <Cloud className="size-3 text-white" />
+                    <span>Cloud-Sync</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Navigation links: uniform spacing, perfectly sized, scrollable with touch momentum */}
+              <nav
+                className="flex-1 px-2.5 py-2 flex flex-col gap-1 overflow-y-auto overscroll-contain scroller-none touch-pan-y"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+              >
+                <NavItem to="/" icon={LayoutDashboard} label="Übersicht" onClick={closeSidebarOnMobile} />
+                <NavItem to="/portfolio" icon={Wallet} label="Positionen" onClick={closeSidebarOnMobile} />
+                <NavItem to="/dividends" icon={TrendingUp} label="Dividenden" onClick={closeSidebarOnMobile} />
+                <NavItem to="/watchlist" icon={Eye} label="Watchlist" onClick={closeSidebarOnMobile} />
+                <NavItem to="/calculator" icon={Calculator} label="Kauf / Verkauf" onClick={closeSidebarOnMobile} />
+                <NavItem to="/fair-value" icon={Telescope} label="Fairer Wert" onClick={closeSidebarOnMobile} />
+                <NavItem to="/mortgage" icon={Landmark} label="Budget" onClick={closeSidebarOnMobile} />
+                <NavItem to="/seasonality" icon={BarChart2} label="Saisonalität" onClick={closeSidebarOnMobile} />
+                <NavItem to="/market-overview" icon={Globe} label="Marktübersicht" onClick={closeSidebarOnMobile} />
+
+                <div className="my-1 border-t border-border/80" />
+
+                <NavItem to="/exchange-rates" icon={ArrowLeftRight} label="Finanz Rechner" onClick={closeSidebarOnMobile} />
+                <NavItem to="/settings" icon={SettingsIcon} label="Einstellungen" onClick={closeSidebarOnMobile} />
+              </nav>
+
+              {/* Footer with Dark Mode Toggle */}
+              <div className="p-2 border-t border-border mt-auto shrink-0 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
+                <button
+                  onClick={toggleDarkMode}
+                  className="flex items-center gap-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors w-full px-3 py-1.5 rounded-lg"
+                >
+                  {isDarkMode ? <Sun className="size-4 shrink-0" /> : <Moon className="size-4 shrink-0" />}
+                  <span>{isDarkMode ? "Light Mode" : "Dark Mode"}</span>
+                </button>
+              </div>
+            </aside>
+
+            {/* Main Content */}
+            <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-background transition-all duration-300 flex flex-col">
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/portfolio" element={<Portfolio />} />
+                <Route path="/watchlist" element={<Watchlist />} />
+                <Route path="/calculator" element={<DividendCalculator />} />
+                <Route path="/fair-value" element={<FairValueCalculator />} />
+                <Route path="/dividends" element={<DividendPlanner />} />
+                <Route path="/dividends/add" element={<EditDividendPage />} />
+                <Route path="/dividends/edit/:stockId" element={<EditDividendPage />} />
+                <Route path="/stock/:id" element={<StockDetail />} />
+                <Route path="/mortgage" element={<MortgageCalculator />} />
+                <Route path="/seasonality" element={<SeasonalityPage />} />
+                <Route path="/seasonality/:symbol" element={<SeasonalityPage />} />
+                <Route path="/market-overview" element={<MarketOverviewPage />} />
+                <Route path="/exchange-rates" element={<ExchangeRates />} />
+                <Route path="/settings" element={<Settings />} />
+              </Routes>
+            </main>
+
+            <CloudSyncModal
+              isOpen={isCloudSyncOpen}
+              onClose={() => setIsCloudSyncOpen(false)}
+              onOpenSettings={() => {
+                navigate('/settings');
+                closeSidebarOnMobile();
+              }}
+            />
+          </div>
         </div>
       </PortfolioProvider>
     </ExchangeRateProvider >
