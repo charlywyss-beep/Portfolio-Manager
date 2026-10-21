@@ -71,23 +71,20 @@ const NavItem = ({ to, icon: Icon, label, onClick }: NavItemProps) => {
         const searchParams = new URLSearchParams(location.search);
         const fromDividends = searchParams.get('from') === 'dividends';
 
-        if (to === '/dividends' && isOnDividendEdit && !fromDividends) {
-          return cn(
-            "flex items-center gap-6 px-4 py-2.5 rounded-md transition-all whitespace-nowrap mx-2 mb-1",
-            "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
-          );
-        }
+        const active = (to === '/dividends' && isOnDividendEdit && !fromDividends)
+          ? false
+          : (isActive || isCustomActive());
 
         return cn(
-          "flex items-center gap-6 px-4 py-2.5 rounded-md transition-all whitespace-nowrap mx-2 mb-1",
-          (isActive || isCustomActive())
+          "flex items-center gap-3 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap text-sm font-medium",
+          active
             ? "bg-primary text-primary-foreground shadow-sm"
             : "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
         );
       }}
     >
-      <Icon className="size-5 shrink-0" />
-      <span className="font-medium">{label}</span>
+      <Icon className="size-4 shrink-0" />
+      <span className="truncate">{label}</span>
     </NavLink>
   );
 };
@@ -112,6 +109,18 @@ function App() {
     localStorage.setItem('sidebar_open', String(isSidebarOpen));
   }, [isSidebarOpen]);
 
+  // Prevent body scroll on mobile/tablet when sidebar is open so drawer scrolling is smooth and uninterrupted
+  useEffect(() => {
+    if (isSidebarOpen && window.innerWidth < 1280) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isSidebarOpen]);
+
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
   };
@@ -125,8 +134,6 @@ function App() {
     }
   }, [isDarkMode]);
 
-
-
   const closeSidebarOnMobile = () => {
     if (window.innerWidth < 1280) setIsSidebarOpen(false);
   };
@@ -135,14 +142,16 @@ function App() {
     <ExchangeRateProvider>
       <PortfolioProvider>
         <div className="flex h-screen h-[100dvh] bg-background text-foreground font-sans antialiased text-sm">
-          {/* Mobile Hamburger Menu Button */}
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="fixed top-4 left-4 z-[1100] p-2 bg-card border border-border rounded-lg shadow-lg xl:hidden hover:bg-accent transition-colors"
-            aria-label="Toggle menu"
-          >
-            {isSidebarOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-          </button>
+          {/* Mobile Hamburger Menu Button (visible when sidebar is closed) */}
+          {!isSidebarOpen && (
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="fixed top-3 left-3 z-[1100] p-2 bg-card/90 backdrop-blur-sm border border-border rounded-lg shadow-lg xl:hidden hover:bg-accent transition-colors active:scale-95"
+              aria-label="Menü öffnen"
+            >
+              <Menu className="size-5" />
+            </button>
+          )}
 
           {/* Mobile Sidebar Overlay */}
           {isSidebarOpen && (
@@ -154,54 +163,73 @@ function App() {
 
           {/* Sidebar */}
           <aside className={cn(
-            "border-r border-border bg-card shadow-lg flex flex-col transition-all duration-300 ease-in-out overflow-hidden",
-            "fixed xl:relative z-[1001] h-full",
+            "border-r border-border bg-card shadow-lg flex flex-col transition-all duration-300 ease-in-out",
+            "fixed xl:relative z-[1001] h-full max-h-[100dvh] w-64 xl:w-60 shrink-0",
             isSidebarOpen
-              ? "translate-x-0 w-fit"
-              : "-translate-x-full w-fit xl:translate-x-0 xl:w-fit xl:border-r"
+              ? "translate-x-0"
+              : "-translate-x-full xl:translate-x-0"
           )}>
-            <Link
-              to="/portfolio"
-              className="flex flex-col cursor-pointer group px-6 pb-6 pt-24 xl:pt-6 border-b border-border hover:bg-muted/50 transition-colors"
-              onClick={closeSidebarOnMobile}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <div className="size-8 rounded-lg bg-primary flex items-center justify-center group-hover:scale-105 transition-transform shadow-sm">
-                  <Wallet className="text-primary-foreground size-5" />
-                </div>
-                <h1 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">Portfolio</h1>
-              </div>
-            </Link>
-            <div className="px-6 pb-4 flex items-center gap-2">
-              <span
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const url = new URL(window.location.href);
-                  url.searchParams.set('v', Date.now().toString());
-                  window.location.href = url.toString();
-                }}
-                className="text-xs font-bold bg-blue-600/40 text-white px-2.5 py-1 rounded-full hover:bg-blue-600/60 transition-colors border border-blue-400/50 cursor-pointer"
-                title="App neu laden (Cache leeren)"
-              >
-                v{packageJson.version}
-              </span>
+            {/* Header: Title + Close Button */}
+            <div className="pt-[max(env(safe-area-inset-top),0.75rem)] px-3.5 pb-2.5 border-b border-border shrink-0">
+              <div className="flex items-center justify-between">
+                <Link
+                  to="/portfolio"
+                  className="flex items-center gap-2.5 cursor-pointer group hover:opacity-85 transition-opacity"
+                  onClick={closeSidebarOnMobile}
+                >
+                  <div className="size-7 rounded-lg bg-primary flex items-center justify-center group-hover:scale-105 transition-transform shadow-sm shrink-0">
+                    <Wallet className="text-primary-foreground size-4" />
+                  </div>
+                  <h1 className="text-lg font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">Portfolio</h1>
+                </Link>
 
-              <button
-                type="button"
-                onClick={() => {
-                  closeSidebarOnMobile();
-                  setIsCloudSyncOpen(true);
-                }}
-                className="flex items-center gap-1.5 text-xs font-bold bg-blue-600/40 hover:bg-blue-600/60 text-white px-2.5 py-1 rounded-full transition-all border border-blue-400/50 shadow-sm"
-                title="☁️ GitHub Cloud-Sync"
-              >
-                <Cloud className="size-3.5 text-white" />
-                <span>Cloud-Sync</span>
-              </button>
+                {/* Close Button (Mobile / Tablet) */}
+                <button
+                  type="button"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="p-1.5 -mr-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors xl:hidden active:scale-95"
+                  aria-label="Menü schließen"
+                >
+                  <X className="size-5" />
+                </button>
+              </div>
+
+              {/* Version & Cloud Sync Badges */}
+              <div className="mt-2 flex items-center gap-2">
+                <span
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('v', Date.now().toString());
+                    window.location.href = url.toString();
+                  }}
+                  className="text-[11px] font-bold bg-blue-600/40 text-white px-2.5 py-0.5 rounded-full hover:bg-blue-600/60 transition-colors border border-blue-400/50 cursor-pointer shadow-sm"
+                  title="App neu laden (Cache leeren)"
+                >
+                  v{packageJson.version}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeSidebarOnMobile();
+                    setIsCloudSyncOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 text-[11px] font-bold bg-blue-600/40 hover:bg-blue-600/60 text-white px-2.5 py-0.5 rounded-full transition-all border border-blue-400/50 shadow-sm"
+                  title="☁️ GitHub Cloud-Sync"
+                >
+                  <Cloud className="size-3 text-white" />
+                  <span>Cloud-Sync</span>
+                </button>
+              </div>
             </div>
 
-            <nav className="flex-1 p-4 space-y-2 w-fit">
+            {/* Navigation links: uniform spacing, perfectly sized, scrollable with touch momentum */}
+            <nav
+              className="flex-1 px-2.5 py-2 flex flex-col gap-1 overflow-y-auto overscroll-contain scroller-none touch-pan-y"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
               <NavItem to="/" icon={LayoutDashboard} label="Übersicht" onClick={closeSidebarOnMobile} />
               <NavItem to="/portfolio" icon={Wallet} label="Positionen" onClick={closeSidebarOnMobile} />
               <NavItem to="/dividends" icon={TrendingUp} label="Dividenden" onClick={closeSidebarOnMobile} />
@@ -212,18 +240,19 @@ function App() {
               <NavItem to="/seasonality" icon={BarChart2} label="Saisonalität" onClick={closeSidebarOnMobile} />
               <NavItem to="/market-overview" icon={Globe} label="Marktübersicht" onClick={closeSidebarOnMobile} />
 
-              <div className="pt-4 mt-4 border-t border-border">
-                <NavItem to="/exchange-rates" icon={ArrowLeftRight} label="Finanz Rechner" onClick={closeSidebarOnMobile} />
-                <NavItem to="/settings" icon={SettingsIcon} label="Einstellungen" onClick={closeSidebarOnMobile} />
-              </div>
+              <div className="my-1 border-t border-border/80" />
+
+              <NavItem to="/exchange-rates" icon={ArrowLeftRight} label="Finanz Rechner" onClick={closeSidebarOnMobile} />
+              <NavItem to="/settings" icon={SettingsIcon} label="Einstellungen" onClick={closeSidebarOnMobile} />
             </nav>
 
-            <div className="p-4 border-t border-border">
+            {/* Footer with Dark Mode Toggle */}
+            <div className="p-2 border-t border-border mt-auto shrink-0 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
               <button
                 onClick={toggleDarkMode}
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full px-4"
+                className="flex items-center gap-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors w-full px-3 py-1.5 rounded-lg"
               >
-                {isDarkMode ? <Sun className="size-4" /> : <Moon className="size-4" />}
+                {isDarkMode ? <Sun className="size-4 shrink-0" /> : <Moon className="size-4 shrink-0" />}
                 <span>{isDarkMode ? "Light Mode" : "Dark Mode"}</span>
               </button>
             </div>
