@@ -946,7 +946,7 @@ export function MarketOverviewPage() {
                                     )}
                                 </div>
 
-                                {/* Center: Price */}
+                                {/* Center: Price & Day Gain in CHF */}
                                 <div className="my-0.5 sm:my-1 text-center">
                                     <div className="text-base sm:text-2xl md:text-3xl font-black tracking-tight drop-shadow-xs tabular-nums text-slate-950 leading-tight">
                                         {q ? formatNumber(displayPrice, decimals) : (
@@ -954,15 +954,15 @@ export function MarketOverviewPage() {
                                         )}
                                     </div>
                                     {hasShares && (
-                                        <div className="text-xs sm:text-sm md:text-base font-bold text-slate-950/90 truncate mt-0.5 sm:mt-1">
-                                            {shares} Stk.{q ? ` • ${formatNumber(shares * displayPrice, 0)} ${currency}` : ''}
+                                        <div className="text-xs sm:text-sm md:text-base font-extrabold text-slate-950 truncate mt-0.5 sm:mt-1 drop-shadow-xs">
+                                            {shares} Stk.{q ? ` • ${totalDayChangeCHF >= 0 ? '+' : ''}${formatNumber(totalDayChangeCHF, 2)} CHF` : ''}
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Bottom: Change % & Daily Gain */}
+                                {/* Bottom: Change % & Native Currency Day Gain */}
                                 <div className="flex flex-col items-center justify-center gap-0.5 font-black text-slate-950 leading-tight">
-                                    <div className="flex items-center justify-center gap-0.5 sm:gap-1 text-sm sm:text-lg md:text-xl drop-shadow-xs tabular-nums">
+                                    <div className="flex items-center justify-center gap-1 text-sm sm:text-lg md:text-xl drop-shadow-xs tabular-nums">
                                         {q && (
                                             <>
                                                 {isPositive ? (
@@ -976,17 +976,9 @@ export function MarketOverviewPage() {
                                             </>
                                         )}
                                     </div>
-                                    {hasShares && q && (
-                                        <div className="text-[11px] sm:text-sm md:text-base font-black tracking-tight text-slate-950 truncate drop-shadow-2xs mt-0.5">
-                                            {currency === 'CHF' ? (
-                                                <span>{totalDayChangeNative >= 0 ? '+' : ''}{formatNumber(totalDayChangeNative, 2)} CHF</span>
-                                            ) : (
-                                                <span>
-                                                    {totalDayChangeNative >= 0 ? '+' : ''}{formatNumber(totalDayChangeNative, 2)} {currency}
-                                                    {' / '}
-                                                    {totalDayChangeCHF >= 0 ? '+' : ''}{formatNumber(totalDayChangeCHF, 2)} CHF
-                                                </span>
-                                            )}
+                                    {hasShares && q && currency !== 'CHF' && (
+                                        <div className="text-[11px] sm:text-xs md:text-sm font-bold tracking-tight text-slate-950/80 truncate">
+                                            {totalDayChangeNative >= 0 ? '+' : ''}{formatNumber(totalDayChangeNative, 2)} {currency}
                                         </div>
                                     )}
                                 </div>
