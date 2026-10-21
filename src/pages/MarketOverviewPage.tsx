@@ -760,7 +760,7 @@ export function MarketOverviewPage() {
                                 if (!isEditMode) navigate('/portfolio');
                             }}
                             className={cn(
-                                "relative rounded-xl sm:rounded-2xl p-2 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[92px] sm:min-h-[135px] w-full min-w-0 border-2",
+                                "relative rounded-xl sm:rounded-2xl p-2 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[105px] sm:min-h-[150px] md:min-h-[160px] w-full min-w-0 border-2",
                                 !isEditMode && "cursor-pointer hover:shadow-lg hover:brightness-105 active:scale-[0.99]",
                                 isPortfolioPositive
                                     ? "bg-[#3fb78f] text-slate-950 border-emerald-700/40 shadow-emerald-950/15"
@@ -788,17 +788,17 @@ export function MarketOverviewPage() {
                                 <div className="text-base sm:text-2xl md:text-3xl font-black tracking-tight drop-shadow-xs tabular-nums text-slate-950 leading-tight">
                                     {isPortfolioPositive ? '+' : ''}{formatNumber(portfolioDailyGain, 2)} CHF
                                 </div>
-                                <div className="text-[9px] sm:text-[11px] font-bold text-slate-950/80 truncate mt-0.5">
+                                <div className="text-xs sm:text-sm md:text-base font-bold text-slate-950/90 truncate mt-0.5 sm:mt-1">
                                     Bestand: {formatNumber(totals.totalValueStock || 0, 0)} CHF
                                 </div>
                             </div>
 
                             {/* Bottom: % performance */}
-                            <div className="flex items-center justify-center gap-0.5 sm:gap-1 font-black text-[11px] sm:text-base md:text-lg drop-shadow-xs tabular-nums text-slate-950 leading-tight">
+                            <div className="flex items-center justify-center gap-1 font-black text-sm sm:text-lg md:text-xl drop-shadow-xs tabular-nums text-slate-950 leading-tight">
                                 {isPortfolioPositive ? (
-                                    <TrendingUp className="size-3 sm:size-4 shrink-0" />
+                                    <TrendingUp className="size-3.5 sm:size-5 shrink-0" />
                                 ) : (
-                                    <TrendingDown className="size-3 sm:size-4 shrink-0" />
+                                    <TrendingDown className="size-3.5 sm:size-5 shrink-0" />
                                 )}
                                 <span>
                                     {isPortfolioPositive ? '+' : ''}{portfolioDailyGainPercent.toFixed(2)}%
@@ -846,7 +846,7 @@ export function MarketOverviewPage() {
                                     }
                                 }}
                                 className={cn(
-                                    "relative rounded-xl sm:rounded-2xl p-2 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[92px] sm:min-h-[135px] w-full min-w-0",
+                                    "relative rounded-xl sm:rounded-2xl p-2 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[105px] sm:min-h-[150px] md:min-h-[160px] w-full min-w-0",
                                     !isEditMode && "cursor-pointer hover:shadow-lg hover:brightness-105 active:scale-[0.99]",
                                     isPositive
                                         ? "bg-[#3fb78f] text-slate-950 border border-emerald-600/30 shadow-emerald-950/10"
@@ -920,7 +920,7 @@ export function MarketOverviewPage() {
                                         )}
                                     </div>
                                     {hasShares && (
-                                        <div className="text-[9px] sm:text-[11px] font-bold text-slate-950/80 truncate mt-0.5">
+                                        <div className="text-xs sm:text-sm md:text-base font-bold text-slate-950/90 truncate mt-0.5 sm:mt-1">
                                             {shares} Stk.{q ? ` • ${formatNumber(shares * q.price, 0)} ${currency}` : ''}
                                         </div>
                                     )}
@@ -928,13 +928,13 @@ export function MarketOverviewPage() {
 
                                 {/* Bottom: Change % & Daily Gain */}
                                 <div className="flex flex-col items-center justify-center gap-0.5 font-black text-slate-950 leading-tight">
-                                    <div className="flex items-center justify-center gap-0.5 sm:gap-1 text-[11px] sm:text-base md:text-lg drop-shadow-xs tabular-nums">
+                                    <div className="flex items-center justify-center gap-0.5 sm:gap-1 text-sm sm:text-lg md:text-xl drop-shadow-xs tabular-nums">
                                         {q && (
                                             <>
                                                 {isPositive ? (
-                                                    <TrendingUp className="size-3 sm:size-4 shrink-0" />
+                                                    <TrendingUp className="size-3.5 sm:size-5 shrink-0" />
                                                 ) : (
-                                                    <TrendingDown className="size-3 sm:size-4 shrink-0" />
+                                                    <TrendingDown className="size-3.5 sm:size-5 shrink-0" />
                                                 )}
                                                 <span>
                                                     {isPositive ? '+' : ''}{changePct.toFixed(2)}%
@@ -943,7 +943,7 @@ export function MarketOverviewPage() {
                                         )}
                                     </div>
                                     {hasShares && q && (
-                                        <div className="text-[9px] sm:text-[11px] font-extrabold tracking-tight text-slate-950/90 truncate drop-shadow-2xs">
+                                        <div className="text-[11px] sm:text-sm md:text-base font-black tracking-tight text-slate-950 truncate drop-shadow-2xs mt-0.5">
                                             {currency === 'CHF' ? (
                                                 <span>{totalDayChangeNative >= 0 ? '+' : ''}{formatNumber(totalDayChangeNative, 2)} CHF</span>
                                             ) : (
