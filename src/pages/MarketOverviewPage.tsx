@@ -62,6 +62,7 @@ export const DEFAULT_MARKET_ITEMS: MarketItem[] = [
 
 // Fallback baseline prices for offline / GitHub Pages cold start
 const DEFAULT_FALLBACK_QUOTES: Record<string, MarketQuoteData> = {
+    'BATS.L': { price: 43.87, previousClose: 44.19, changePercent: -0.72, changeAmount: -0.32, currency: 'GBP' },
     'ZURN.SW': { price: 664.20, previousClose: 655.40, changePercent: 1.34, changeAmount: 8.80, currency: 'CHF' },
     'R6C0.DE': { price: 46.85, previousClose: 47.41, changePercent: -1.18, changeAmount: -0.56, currency: 'EUR' },
     'VWCE.DE': { price: 170.88, previousClose: 170.44, changePercent: 0.26, changeAmount: 0.44, currency: 'EUR' },
@@ -310,8 +311,16 @@ export function MarketOverviewPage() {
         if (stocks && stocks.length > 0) {
             stocks.forEach(matchedStock => {
                 if (matchedStock && matchedStock.currentPrice > 0) {
-                    const price = matchedStock.currentPrice;
-                    const prev = matchedStock.previousClose || price;
+                    let price = matchedStock.currentPrice;
+                    let prev = matchedStock.previousClose || price;
+                    let curr = matchedStock.currency;
+                    if (curr === 'GBp' || (curr === 'GBP' && price > 200) || (matchedStock.symbol.toUpperCase().endsWith('.L') && price > 200)) {
+                        curr = 'GBP';
+                        if (price > 200) {
+                            price = price / 100;
+                            prev = prev / 100;
+                        }
+                    }
                     const changeAmount = price - prev;
                     const changePercent = prev > 0 ? (changeAmount / prev) * 100 : 0;
                     newQuotes[matchedStock.symbol] = {
@@ -319,7 +328,7 @@ export function MarketOverviewPage() {
                         previousClose: prev,
                         changePercent,
                         changeAmount,
-                        currency: matchedStock.currency,
+                        currency: curr,
                         lastUpdated: new Date().toISOString()
                     };
                 }
@@ -527,8 +536,17 @@ export function MarketOverviewPage() {
                 const results = json.quoteResponse?.result || [];
                 for (const r of results) {
                     if (r && r.symbol && r.regularMarketPrice !== undefined) {
-                        const price = r.regularMarketPrice;
-                        const previousClose = r.regularMarketPreviousClose || r.regularMarketOpen || price;
+                        let price = r.regularMarketPrice;
+                        let previousClose = r.regularMarketPreviousClose || r.regularMarketOpen || price;
+                        let currency = r.currency;
+
+                        // Normalize British Pence (GBp) to British Pounds (GBP)
+                        if (currency === 'GBp' || (r.symbol.toUpperCase().endsWith('.L') && price > 200)) {
+                            currency = 'GBP';
+                            price = price / 100;
+                            previousClose = previousClose / 100;
+                        }
+
                         const changeAmount = price - previousClose;
                         const changePercent = previousClose > 0 ? (changeAmount / previousClose) * 100 : (r.regularMarketChangePercent || 0);
 
@@ -537,9 +555,9 @@ export function MarketOverviewPage() {
                             previousClose,
                             changePercent,
                             changeAmount,
-                            currency: r.currency,
-                            high: r.regularMarketDayHigh,
-                            low: r.regularMarketDayLow,
+                            currency,
+                            high: r.regularMarketDayHigh ? (currency === 'GBP' && r.currency === 'GBp' ? r.regularMarketDayHigh / 100 : r.regularMarketDayHigh) : undefined,
+                            low: r.regularMarketDayLow ? (currency === 'GBP' && r.currency === 'GBp' ? r.regularMarketDayLow / 100 : r.regularMarketDayLow) : undefined,
                             lastUpdated: new Date().toISOString()
                         };
                     }
@@ -819,9 +837,8 @@ export function MarketOverviewPage() {
                                              stocks.find(s => s.symbol.toUpperCase() === item.symbol.toUpperCase());
                         const hasShares = matchedStock && (matchedStock as any).shares > 0;
                         const shares = hasShares ? (matchedStock as any).shares : 0;
-                        const changeAmountPerShare = q ? (q.changeAmount !== undefined ? q.changeAmount : (q.price - q.previousClose)) : 0;
-                        const totalDayChangeNative = shares * changeAmountPerShare;
-                        const currency = q?.currency || matchedStock?.currency || (
+
+                        let rawCurrency = q?.currency || matchedStock?.currency || (
                             item.symbol.endsWith('.SW') ? 'CHF' :
                             item.symbol.endsWith('.DE') ? 'EUR' :
                             item.symbol.includes('CHF') ? 'CHF' :
@@ -835,6 +852,23 @@ export function MarketOverviewPage() {
                             item.category === 'commodities' ? 'USD' :
                             (item.symbol.startsWith('^NDX') || item.symbol.startsWith('^GSPC') || item.symbol.startsWith('^DJI')) ? 'USD' : ''
                         );
+
+                        // Normalize London Stocks & GBp (Pence -> GBP Pounds)
+                        let displayPrice = q ? q.price : 0;
+                        let displayPrevClose = q ? (q.previousClose || displayPrice) : 0;
+                        let currency = rawCurrency;
+
+                        const isLondonPence = rawCurrency === 'GBp' || (rawCurrency === 'GBP' && displayPrice > 200) || (item.symbol.toUpperCase().endsWith('.L') && displayPrice > 200);
+                        if (isLondonPence) {
+                            currency = 'GBP';
+                            if (displayPrice > 200) {
+                                displayPrice = displayPrice / 100;
+                                displayPrevClose = displayPrevClose / 100;
+                            }
+                        }
+
+                        const changeAmountPerShare = q ? (q.changeAmount !== undefined ? (isLondonPence && Math.abs(q.changeAmount) > 5 ? q.changeAmount / 100 : q.changeAmount) : (displayPrice - displayPrevClose)) : 0;
+                        const totalDayChangeNative = shares * changeAmountPerShare;
                         const totalDayChangeCHF = convertToCHF(totalDayChangeNative, currency || 'USD', rates);
 
                         return (
@@ -915,13 +949,13 @@ export function MarketOverviewPage() {
                                 {/* Center: Price */}
                                 <div className="my-0.5 sm:my-1 text-center">
                                     <div className="text-base sm:text-2xl md:text-3xl font-black tracking-tight drop-shadow-xs tabular-nums text-slate-950 leading-tight">
-                                        {q ? formatNumber(q.price, decimals) : (
+                                        {q ? formatNumber(displayPrice, decimals) : (
                                             <span className="opacity-40 animate-pulse text-xs sm:text-xl">Laden...</span>
                                         )}
                                     </div>
                                     {hasShares && (
                                         <div className="text-xs sm:text-sm md:text-base font-bold text-slate-950/90 truncate mt-0.5 sm:mt-1">
-                                            {shares} Stk.{q ? ` • ${formatNumber(shares * q.price, 0)} ${currency}` : ''}
+                                            {shares} Stk.{q ? ` • ${formatNumber(shares * displayPrice, 0)} ${currency}` : ''}
                                         </div>
                                     )}
                                 </div>
