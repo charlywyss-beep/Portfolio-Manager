@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     Globe, 
@@ -173,6 +173,12 @@ export function MarketOverviewPage() {
         }
     }, [quotes]);
 
+    // Keep quotes in ref to avoid infinite re-render loops in fetchQuotes
+    const quotesRef = useRef(quotes);
+    useEffect(() => {
+        quotesRef.current = quotes;
+    }, [quotes]);
+
     // Fetch live quotes for all symbols
     const fetchQuotes = useCallback(async () => {
         if (items.length === 0) return;
@@ -211,7 +217,7 @@ export function MarketOverviewPage() {
 
                 if (rates.GBP) {
                     const p = rates.GBP;
-                    const prev = quotes['CHFGBP=X']?.previousClose || 0.9081;
+                    const prev = quotesRef.current['CHFGBP=X']?.previousClose || 0.9081;
                     newQuotes['CHFGBP=X'] = {
                         price: p,
                         previousClose: prev,
@@ -223,7 +229,7 @@ export function MarketOverviewPage() {
 
                     // Live GBP/CHF rate (1 GBP in CHF)
                     const pGbpChf = Number((1 / p).toFixed(4));
-                    const prevGbpChf = quotes['GBPCHF=X']?.previousClose || Number((1 / prev).toFixed(4));
+                    const prevGbpChf = quotesRef.current['GBPCHF=X']?.previousClose || Number((1 / prev).toFixed(4));
                     const chgGbpChf = pGbpChf - prevGbpChf;
                     newQuotes['GBPCHF=X'] = {
                         price: pGbpChf,
@@ -236,7 +242,7 @@ export function MarketOverviewPage() {
                 }
                 if (rates.EUR) {
                     const p = rates.EUR;
-                    const prev = quotes['CHFEUR=X']?.previousClose || 1.0779;
+                    const prev = quotesRef.current['CHFEUR=X']?.previousClose || 1.0779;
                     newQuotes['CHFEUR=X'] = {
                         price: p,
                         previousClose: prev,
@@ -248,7 +254,7 @@ export function MarketOverviewPage() {
 
                     // Live EUR/CHF rate (1 EUR in CHF)
                     const pEurChf = Number((1 / p).toFixed(4));
-                    const prevEurChf = quotes['EURCHF=X']?.previousClose || Number((1 / prev).toFixed(4));
+                    const prevEurChf = quotesRef.current['EURCHF=X']?.previousClose || Number((1 / prev).toFixed(4));
                     const chgEurChf = pEurChf - prevEurChf;
                     newQuotes['EURCHF=X'] = {
                         price: pEurChf,
@@ -261,7 +267,7 @@ export function MarketOverviewPage() {
                 }
                 if (rates.USD) {
                     const p = rates.USD;
-                    const prev = quotes['CHFUSD=X']?.previousClose || 1.2088;
+                    const prev = quotesRef.current['CHFUSD=X']?.previousClose || 1.2088;
                     newQuotes['CHFUSD=X'] = {
                         price: p,
                         previousClose: prev,
@@ -273,7 +279,7 @@ export function MarketOverviewPage() {
 
                     // Live USD/CHF rate (1 USD in CHF)
                     const pUsdChf = Number((1 / p).toFixed(4));
-                    const prevUsdChf = quotes['USDCHF=X']?.previousClose || Number((1 / prev).toFixed(4));
+                    const prevUsdChf = quotesRef.current['USDCHF=X']?.previousClose || Number((1 / prev).toFixed(4));
                     const chgUsdChf = pUsdChf - prevUsdChf;
                     newQuotes['USDCHF=X'] = {
                         price: pUsdChf,
@@ -430,7 +436,7 @@ export function MarketOverviewPage() {
 
         setLastRefresh(new Date());
         setLoading(false);
-    }, [items, stocks, quotes]);
+    }, [items, stocks]);
 
     // Initial and periodic fetch
     useEffect(() => {
@@ -494,108 +500,112 @@ export function MarketOverviewPage() {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-2.5 sm:px-4 md:px-6 py-3 sm:py-6 md:py-8 space-y-4 sm:space-y-6 pb-32">
-            {/* Header Section */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-3 sm:pb-4">
-                <div className="flex items-center gap-2.5 sm:gap-3 pl-10 xl:pl-0">
-                    <div className="size-9 sm:size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner shrink-0">
-                        <Globe className="size-5 sm:size-7" />
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 pb-32">
+            {/* Sticky Header Section: Title, Action Buttons & Category Filter Tabs */}
+            <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md -mx-2 sm:-mx-4 md:-mx-6 px-2 sm:px-4 md:px-6 pt-2.5 sm:pt-4 pb-2 sm:pb-3 border-b border-border shadow-xs space-y-2 sm:space-y-3 mb-3 sm:mb-5">
+                {/* Top Row: Title + Action Buttons */}
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 pl-11 xl:pl-0 min-w-0">
+                        <div className="size-8 sm:size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner shrink-0">
+                            <Globe className="size-4 sm:size-6" />
+                        </div>
+                        <div className="min-w-0">
+                            <h1 className="text-lg sm:text-2xl md:text-3xl font-extrabold tracking-tight text-foreground truncate">
+                                Marktübersicht
+                            </h1>
+                            <p className="text-[11px] sm:text-xs text-muted-foreground font-medium hidden md:block">
+                                Rohstoffe, Währungen, Indizes &amp; Top-Märkte auf einen Blick
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
-                            Marktübersicht
-                        </h1>
-                        <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground font-medium hidden xs:block">
-                            Rohstoffe, Währungen, Indizes &amp; Top-Märkte auf einen Blick
-                        </p>
-                    </div>
-                </div>
 
-                <div className="flex items-center gap-2 self-end sm:self-auto">
-                    {/* Refresh Button */}
-                    <button
-                        onClick={fetchQuotes}
-                        disabled={loading}
-                        className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-card hover:bg-muted border border-border text-xs font-semibold text-foreground transition-all shadow-xs"
-                        title="Kurse jetzt aktualisieren"
-                    >
-                        <RefreshCw className={cn("size-3.5", loading && "animate-spin text-primary")} />
-                        <span className="hidden sm:inline">Aktualisieren</span>
-                    </button>
-
-                    {/* Edit Mode Toggle Button */}
-                    <button
-                        onClick={() => setIsEditMode(!isEditMode)}
-                        className={cn(
-                            "flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-sm border",
-                            isEditMode
-                                ? "bg-primary text-primary-foreground border-primary"
-                                : "bg-card hover:bg-muted text-foreground border-border"
-                        )}
-                    >
-                        {isEditMode ? (
-                            <>
-                                <Check className="size-3.5" />
-                                <span>Fertig</span>
-                            </>
-                        ) : (
-                            <>
-                                <Edit3 className="size-3.5" />
-                                <span>Bearbeiten</span>
-                            </>
-                        )}
-                    </button>
-                </div>
-            </div>
-
-            {/* Filter Tabs & Edit Actions */}
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-1 overflow-x-auto scroller-none bg-muted/40 p-1 rounded-xl border border-border/50 max-w-full">
-                    {[
-                        { id: 'all', label: 'Alle' },
-                        { id: 'indices', label: 'Indizes' },
-                        { id: 'commodities', label: 'Rohstoffe' },
-                        { id: 'forex', label: 'Währungen' },
-                        { id: 'stocks', label: 'Aktien / ETFs' },
-                        { id: 'crypto', label: 'Krypto' },
-                    ].map(tab => (
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Refresh Button */}
                         <button
-                            key={tab.id}
-                            onClick={() => setActiveFilter(tab.id as any)}
+                            onClick={fetchQuotes}
+                            disabled={loading}
+                            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-card hover:bg-muted border border-border text-xs font-semibold text-foreground transition-all shadow-xs shrink-0"
+                            title="Kurse jetzt aktualisieren"
+                        >
+                            <RefreshCw className={cn("size-3.5 shrink-0", loading && "animate-spin text-primary")} />
+                            <span className="hidden sm:inline">Aktualisieren</span>
+                        </button>
+
+                        {/* Edit Mode Toggle Button */}
+                        <button
+                            onClick={() => setIsEditMode(!isEditMode)}
                             className={cn(
-                                "px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap",
-                                activeFilter === tab.id
-                                    ? "bg-background text-foreground shadow-xs font-bold"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+                                "flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-xs border shrink-0",
+                                isEditMode
+                                    ? "bg-primary text-primary-foreground border-primary"
+                                    : "bg-card hover:bg-muted text-foreground border-border"
                             )}
                         >
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
-
-                {isEditMode && (
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={resetToDefault}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-xs font-medium text-muted-foreground transition-colors"
-                        >
-                            <RotateCcw className="size-3" />
-                            <span>Standard</span>
-                        </button>
-                        <button
-                            onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition-all shadow-sm"
-                        >
-                            <Plus className="size-3.5" />
-                            <span>Kachel hinzufügen</span>
+                            {isEditMode ? (
+                                <>
+                                    <Check className="size-3.5 shrink-0" />
+                                    <span>Fertig</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Edit3 className="size-3.5 shrink-0" />
+                                    <span className="hidden xs:inline">Bearbeiten</span>
+                                </>
+                            )}
                         </button>
                     </div>
-                )}
+                </div>
+
+                {/* Second Row: Category Filter Pills & Edit Actions (Sticky with header!) */}
+                <div className="flex items-center justify-between gap-2 overflow-x-auto scroller-none py-0.5">
+                    <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/50 shrink-0">
+                        {[
+                            { id: 'all', label: 'Alle' },
+                            { id: 'indices', label: 'Indizes' },
+                            { id: 'commodities', label: 'Rohstoffe' },
+                            { id: 'forex', label: 'Währungen' },
+                            { id: 'stocks', label: 'Aktien / ETFs' },
+                            { id: 'crypto', label: 'Krypto' },
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveFilter(tab.id as any)}
+                                className={cn(
+                                    "px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap shrink-0",
+                                    activeFilter === tab.id
+                                        ? "bg-background text-foreground shadow-xs font-bold"
+                                        : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+                                )}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {isEditMode && (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                                onClick={resetToDefault}
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg border border-border bg-card hover:bg-muted text-[11px] font-medium text-muted-foreground transition-colors shrink-0"
+                                title="Standard-Kacheln wiederherstellen"
+                            >
+                                <RotateCcw className="size-3" />
+                                <span className="hidden sm:inline">Standard</span>
+                            </button>
+                            <button
+                                onClick={() => setShowAddModal(true)}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary text-primary-foreground text-[11px] font-bold hover:bg-primary/90 transition-all shadow-xs shrink-0"
+                            >
+                                <Plus className="size-3" />
+                                <span>Kachel hinzufügen</span>
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {/* The Market Tiles Grid (Optimized for iPhone 2-col, iPad 3-col, Desktop 3-col) */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2.5 sm:gap-4 md:gap-5">
+            {/* The Market Tiles Grid (Optimized 2 columns on iPhone & mobile, 3 columns on tablet/desktop) */}
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-4 md:gap-5">
                 {filteredItems.map((item) => {
                     const q = quotes[item.symbol];
                     const changePct = q?.changePercent ?? 0;
@@ -621,7 +631,7 @@ export function MarketOverviewPage() {
                                 }
                             }}
                             className={cn(
-                                "relative rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[105px] sm:min-h-[140px]",
+                                "relative rounded-xl sm:rounded-2xl p-2 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[92px] sm:min-h-[135px]",
                                 !isEditMode && "cursor-pointer hover:shadow-lg hover:brightness-105 active:scale-[0.99]",
                                 isPositive
                                     ? "bg-[#3fb78f] text-slate-950 border border-emerald-600/30 shadow-emerald-950/10"
@@ -629,11 +639,11 @@ export function MarketOverviewPage() {
                             )}
                             title={isEditMode ? undefined : `${item.name} – Klick für interaktiven Chart`}
                         >
-                            {/* Top: Name & Edit Controls (Inline flex: Never overlaps the title!) */}
-                            <div className="flex items-center justify-between gap-1.5 min-w-0">
+                            {/* Top: Name & Badge or Edit Buttons */}
+                            <div className="flex items-start justify-between gap-1 min-w-0">
                                 <div className="min-w-0 flex-1">
                                     <h3 
-                                        className="font-extrabold text-xs sm:text-base md:text-lg tracking-tight truncate drop-shadow-xs text-slate-950" 
+                                        className="font-extrabold text-[11px] sm:text-base md:text-lg tracking-tight truncate drop-shadow-xs text-slate-950 leading-tight" 
                                         title={item.name}
                                     >
                                         {item.name}
@@ -641,39 +651,39 @@ export function MarketOverviewPage() {
                                 </div>
 
                                 {isEditMode ? (
-                                    <div className="flex items-center gap-0.5 bg-black/65 backdrop-blur-md px-1 py-0.5 rounded-lg shrink-0 shadow-xs border border-white/10">
+                                    <div className="flex items-center gap-0.5 bg-black/65 backdrop-blur-md px-1 py-0.5 rounded-md shrink-0 shadow-xs border border-white/10">
                                         {canMoveLeft && (
                                             <button
                                                 type="button"
                                                 onClick={(e) => { e.stopPropagation(); moveItem(item.id, 'left'); }}
-                                                className="p-1 hover:bg-white/20 active:scale-95 rounded text-white transition-all"
-                                                title="Nach links schieben"
+                                                className="p-0.5 hover:bg-white/20 active:scale-95 rounded text-white transition-all"
+                                                title="Nach links"
                                             >
-                                                <ChevronLeft className="size-3 sm:size-3.5" />
+                                                <ChevronLeft className="size-3" />
                                             </button>
                                         )}
                                         {canMoveRight && (
                                             <button
                                                 type="button"
                                                 onClick={(e) => { e.stopPropagation(); moveItem(item.id, 'right'); }}
-                                                className="p-1 hover:bg-white/20 active:scale-95 rounded text-white transition-all"
-                                                title="Nach rechts schieben"
+                                                className="p-0.5 hover:bg-white/20 active:scale-95 rounded text-white transition-all"
+                                                title="Nach rechts"
                                             >
-                                                <ChevronRight className="size-3 sm:size-3.5" />
+                                                <ChevronRight className="size-3" />
                                             </button>
                                         )}
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
-                                            className="p-1 hover:bg-rose-600 active:scale-95 rounded text-rose-200 hover:text-white transition-all"
-                                            title="Kachel entfernen"
+                                            className="p-0.5 hover:bg-rose-600 active:scale-95 rounded text-rose-200 hover:text-white transition-all"
+                                            title="Entfernen"
                                         >
-                                            <X className="size-3 sm:size-3.5" />
+                                            <X className="size-3" />
                                         </button>
                                     </div>
                                 ) : (
                                     currency ? (
-                                        <span className="text-[10px] sm:text-[11px] uppercase font-black tracking-wider px-1.5 py-0.5 rounded bg-black/15 text-slate-950 shrink-0 font-mono">
+                                        <span className="text-[9px] sm:text-[11px] uppercase font-black tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-black/15 text-slate-950 shrink-0 font-mono leading-none">
                                             {currency}
                                         </span>
                                     ) : null
@@ -681,16 +691,16 @@ export function MarketOverviewPage() {
                             </div>
 
                             {/* Center: Price */}
-                            <div className="my-1 sm:my-2 text-center">
-                                <div className="text-lg sm:text-2xl md:text-3xl font-black tracking-tight drop-shadow-xs tabular-nums text-slate-950">
+                            <div className="my-0.5 sm:my-2 text-center">
+                                <div className="text-base sm:text-2xl md:text-3xl font-black tracking-tight drop-shadow-xs tabular-nums text-slate-950 leading-tight">
                                     {q ? formatNumber(q.price, decimals) : (
-                                        <span className="opacity-40 animate-pulse text-sm sm:text-xl">Laden...</span>
+                                        <span className="opacity-40 animate-pulse text-xs sm:text-xl">Laden...</span>
                                     )}
                                 </div>
                             </div>
 
                             {/* Bottom: Change % */}
-                            <div className="flex items-center justify-center gap-1 font-black text-xs sm:text-base md:text-lg drop-shadow-xs tabular-nums text-slate-950">
+                            <div className="flex items-center justify-center gap-0.5 sm:gap-1 font-black text-[11px] sm:text-base md:text-lg drop-shadow-xs tabular-nums text-slate-950 leading-tight">
                                 {q && (
                                     <>
                                         {isPositive ? (
