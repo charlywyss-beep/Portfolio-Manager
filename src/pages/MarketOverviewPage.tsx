@@ -43,16 +43,16 @@ export interface MarketQuoteData {
 export type SortOption = 'default' | 'name-asc' | 'name-desc' | 'gain-desc' | 'gain-asc' | 'type-stocks' | 'type-etfs' | 'value-desc';
 
 export const DEFAULT_MARKET_ITEMS: MarketItem[] = [
-    { id: '1', symbol: 'ZURN.SW', name: 'ZURICH INSURA...', category: 'stocks', decimals: 2 },
+    { id: '1', symbol: 'ZURN.SW', name: 'Zurich Insurance', category: 'stocks', decimals: 2 },
     { id: '2', symbol: 'R6C0.DE', name: 'Shell', category: 'stocks', decimals: 2 },
-    { id: '3', symbol: 'VWCE.DE', name: 'Vanguard FTSE...', category: 'stocks', decimals: 2 },
-    { id: '4', symbol: '^SSMI', name: 'Swiss Market In...', category: 'indices', decimals: 2 },
+    { id: '3', symbol: 'VWCE.DE', name: 'Vanguard FTSE All-World', category: 'stocks', decimals: 2 },
+    { id: '4', symbol: '^SSMI', name: 'Swiss Market Index', category: 'indices', decimals: 2 },
     { id: 'idx-dax', symbol: '^GDAXI', name: 'DAX (Deutschland)', category: 'indices', decimals: 2 },
     { id: 'idx-ftse', symbol: '^FTSE', name: 'FTSE 100 (London)', category: 'indices', decimals: 2 },
     { id: '5', symbol: 'SREN.SW', name: 'Swiss Re', category: 'stocks', decimals: 2 },
-    { id: '6', symbol: '^NDX', name: 'Nasdaq-100 Ind...', category: 'indices', decimals: 2 },
+    { id: '6', symbol: '^NDX', name: 'Nasdaq-100 Index', category: 'indices', decimals: 2 },
     { id: 'idx-spx', symbol: '^GSPC', name: 'S&P 500 Index', category: 'indices', decimals: 2 },
-    { id: 'idx-dji', symbol: '^DJI', name: 'Dow Jones Ind...', category: 'indices', decimals: 2 },
+    { id: 'idx-dji', symbol: '^DJI', name: 'Dow Jones Industrial', category: 'indices', decimals: 2 },
     { id: 'asia-1', symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'indices', decimals: 2 },
     { id: 'asia-2', symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'indices', decimals: 2 },
     { id: 'asia-3', symbol: '000001.SS', name: 'Shanghai Composite', category: 'indices', decimals: 2 },
@@ -239,12 +239,29 @@ export function MarketOverviewPage() {
             if (raw) {
                 const parsed = JSON.parse(raw);
                 if (Array.isArray(parsed) && parsed.length > 0) {
-                    // Automatically migrate Asian indices into 'indices' category
+                    // Automatically migrate Asian indices into 'indices' category & write out full names
                     let migrated: MarketItem[] = parsed.map((it: MarketItem) => {
-                        if (it.category === 'asia' || it.symbol === '^N225' || it.symbol === '^HSI' || it.symbol === '000001.SS') {
-                            return { ...it, category: 'indices' as const };
+                        let updated = { ...it };
+                        if (updated.category === 'asia' || updated.symbol === '^N225' || updated.symbol === '^HSI' || updated.symbol === '000001.SS') {
+                            updated.category = 'indices';
                         }
-                        return it;
+                        // Write out full names if previously truncated with "..."
+                        if (updated.symbol === '^SSMI' && (updated.name === 'Swiss Market In...' || updated.name.startsWith('Swiss Market In'))) {
+                            updated.name = 'Swiss Market Index';
+                        }
+                        if (updated.symbol === '^NDX' && (updated.name === 'Nasdaq-100 Ind...' || updated.name.startsWith('Nasdaq-100 Ind'))) {
+                            updated.name = 'Nasdaq-100 Index';
+                        }
+                        if (updated.symbol === '^DJI' && (updated.name === 'Dow Jones Ind...' || updated.name.startsWith('Dow Jones Ind'))) {
+                            updated.name = 'Dow Jones Industrial';
+                        }
+                        if (updated.symbol === 'ZURN.SW' && updated.name === 'ZURICH INSURA...') {
+                            updated.name = 'Zurich Insurance';
+                        }
+                        if (updated.symbol === 'VWCE.DE' && updated.name === 'Vanguard FTSE...') {
+                            updated.name = 'Vanguard FTSE All-World';
+                        }
+                        return updated;
                     });
                     const hasN225 = migrated.some((it: MarketItem) => it.symbol === '^N225');
                     const hasHSI = migrated.some((it: MarketItem) => it.symbol === '^HSI');
