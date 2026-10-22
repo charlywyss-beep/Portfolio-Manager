@@ -394,7 +394,7 @@ export function PriceHistoryChart({
 
                             let label = 'Schlusskurs';
                             if (isToday && isMarketOpen) {
-                                label = isDelayed ? 'Verzögerte Daten' : 'Aktuelle Daten';
+                                label = isDelayed ? 'Verzögerte Daten' : 'Live-Kurs';
                             } else if (isToday && !isMarketOpen) {
                                 label = 'Schlusskurs';
                             }

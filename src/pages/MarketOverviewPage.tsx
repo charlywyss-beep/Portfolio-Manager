@@ -18,6 +18,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
+import { estimateMarketState } from '../utils/market';
 import { cn } from '../utils';
 
 export interface MarketItem {
@@ -871,6 +872,9 @@ export function MarketOverviewPage() {
                         const totalDayChangeNative = shares * changeAmountPerShare;
                         const totalDayChangeCHF = convertToCHF(totalDayChangeNative, currency || 'USD', rates);
 
+                        const marketState = estimateMarketState(item.symbol, currency || 'USD');
+                        const isMarketOpen = marketState === 'REGULAR';
+
                         return (
                             <div
                                 key={item.id}
@@ -938,11 +942,34 @@ export function MarketOverviewPage() {
                                             </button>
                                         </div>
                                     ) : (
-                                        currency ? (
-                                            <span className="text-[9px] sm:text-[11px] uppercase font-black tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-black/15 text-slate-950 shrink-0 font-mono leading-none">
-                                                {currency}
+                                        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                                            {/* Status Dot & Label: Green for Open/Live, Red for Closed/Schlusskurs */}
+                                            <span
+                                                className={cn(
+                                                    "flex items-center gap-1 text-[8px] sm:text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded shadow-2xs leading-none",
+                                                    isMarketOpen
+                                                        ? "bg-emerald-950/20 text-slate-950 border border-emerald-900/20"
+                                                        : "bg-rose-950/20 text-slate-950 border border-rose-900/20"
+                                                )}
+                                                title={isMarketOpen ? `Markt geöffnet (${marketState}) – Live-Handel` : `Markt geschlossen (${marketState}) – Schlusskurs`}
+                                            >
+                                                <span
+                                                    className={cn(
+                                                        "size-1.5 sm:size-2 rounded-full shrink-0",
+                                                        isMarketOpen
+                                                            ? "bg-emerald-600 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.8)]"
+                                                            : "bg-rose-600"
+                                                    )}
+                                                />
+                                                <span>{isMarketOpen ? "Live" : "Schluss"}</span>
                                             </span>
-                                        ) : null
+
+                                            {currency ? (
+                                                <span className="text-[9px] sm:text-[11px] uppercase font-black tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-black/15 text-slate-950 shrink-0 font-mono leading-none">
+                                                    {currency}
+                                                </span>
+                                            ) : null}
+                                        </div>
                                     )}
                                 </div>
 
@@ -953,9 +980,13 @@ export function MarketOverviewPage() {
                                             <span className="opacity-40 animate-pulse text-xs sm:text-xl">Laden...</span>
                                         )}
                                     </div>
-                                    {hasShares && (
+                                    {hasShares ? (
                                         <div className="text-xs sm:text-sm md:text-base font-extrabold text-slate-950 truncate mt-0.5 sm:mt-1 drop-shadow-xs">
                                             {shares} Stk.{q ? ` • ${totalDayChangeCHF >= 0 ? '+' : ''}${formatNumber(totalDayChangeCHF, 2)} CHF` : ''}
+                                        </div>
+                                    ) : (
+                                        <div className="text-[10px] sm:text-xs font-bold text-slate-950/75 truncate mt-0.5 tracking-tight">
+                                            {isMarketOpen ? '🟢 Live-Handel' : '🔴 Schlusskurs'}
                                         </div>
                                     )}
                                 </div>
