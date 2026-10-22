@@ -805,7 +805,7 @@ export function MarketOverviewPage() {
                             {/* Center: CHF amount & total portfolio value */}
                             <div className="my-0.5 sm:my-1 text-center">
                                 <div className="text-base sm:text-2xl md:text-3xl font-black tracking-tight drop-shadow-xs tabular-nums text-slate-950 leading-tight">
-                                    {isPortfolioPositive ? '+' : ''}{formatNumber(portfolioDailyGain, 2)} CHF
+                                    {isPortfolioPositive ? '+' : ''}{formatNumber(portfolioDailyGain, 0)} CHF
                                 </div>
                                 <div className="text-xs sm:text-sm md:text-base font-bold text-slate-950/90 truncate mt-0.5 sm:mt-1">
                                     Bestand: {formatNumber(totals.totalValueStock || 0, 0)} CHF
@@ -1023,11 +1023,11 @@ export function MarketOverviewPage() {
                                             totalDayChangeCHF >= 0 ? "text-emerald-700" : "text-rose-600"
                                         )}>
                                             <span>
-                                                {totalDayChangeCHF >= 0 ? '+' : ''}{formatNumber(totalDayChangeCHF, 2)} CHF
+                                                {totalDayChangeCHF >= 0 ? '+' : ''}{formatNumber(totalDayChangeCHF, 0)} CHF
                                             </span>
                                             {q && currency !== 'CHF' && (
                                                 <span className="opacity-80 font-bold pl-0.5 truncate text-[9px] sm:text-xs">
-                                                    • {totalDayChangeNative >= 0 ? '+' : ''}{formatNumber(totalDayChangeNative, 2)} {currency}
+                                                    • {totalDayChangeNative >= 0 ? '+' : ''}{formatNumber(totalDayChangeNative, 0)} {currency}
                                                 </span>
                                             )}
                                         </div>
