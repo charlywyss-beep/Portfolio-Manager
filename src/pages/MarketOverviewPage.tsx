@@ -948,14 +948,9 @@ export function MarketOverviewPage() {
                                         </div>
                                     ) : (
                                         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-                                            {/* Status Dot & Label: Green for Open/Live, Red for Closed/Schlusskurs */}
+                                            {/* Status Dot & Label: Green for Open/Live, Red for Closed/Schlusskurs with White Background */}
                                             <span
-                                                className={cn(
-                                                    "flex items-center gap-1 text-[8px] sm:text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded shadow-2xs leading-none",
-                                                    isMarketOpen
-                                                        ? "bg-emerald-950/20 text-slate-950 border border-emerald-900/20"
-                                                        : "bg-rose-950/20 text-slate-950 border border-rose-900/20"
-                                                )}
+                                                className="flex items-center gap-1 text-[8px] sm:text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-white text-slate-950 shadow-xs border border-white/60 leading-none shrink-0"
                                                 title={isMarketOpen ? `Markt geöffnet (${marketState}) – Live-Handel` : `Markt geschlossen (${marketState}) – Schlusskurs`}
                                             >
                                                 <span
@@ -966,7 +961,9 @@ export function MarketOverviewPage() {
                                                             : "bg-rose-600"
                                                     )}
                                                 />
-                                                <span>{isMarketOpen ? "Live" : "Schluss"}</span>
+                                                <span className={isMarketOpen ? "text-emerald-950" : "text-rose-950"}>
+                                                    {isMarketOpen ? "Live" : "Schluss"}
+                                                </span>
                                             </span>
 
                                             {currency ? (
