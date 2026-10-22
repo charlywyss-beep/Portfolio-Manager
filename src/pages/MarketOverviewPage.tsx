@@ -50,9 +50,9 @@ export const DEFAULT_MARKET_ITEMS: MarketItem[] = [
     { id: 'idx-dax', symbol: '^GDAXI', name: 'DAX (Deutschland)', category: 'indices', decimals: 2 },
     { id: 'idx-ftse', symbol: '^FTSE', name: 'FTSE 100 (London)', category: 'indices', decimals: 2 },
     { id: '5', symbol: 'SREN.SW', name: 'Swiss Re', category: 'stocks', decimals: 2 },
-    { id: '6', symbol: '^NDX', name: 'Nasdaq-100 Index', category: 'indices', decimals: 2 },
     { id: 'idx-spx', symbol: '^GSPC', name: 'S&P 500 Index', category: 'indices', decimals: 2 },
     { id: 'idx-dji', symbol: '^DJI', name: 'Dow Jones Industrial', category: 'indices', decimals: 2 },
+    { id: '6', symbol: '^NDX', name: 'Nasdaq-100 Index', category: 'indices', decimals: 2 },
     { id: 'asia-1', symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'indices', decimals: 2 },
     { id: 'asia-2', symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'indices', decimals: 2 },
     { id: 'asia-3', symbol: '000001.SS', name: 'Shanghai Composite', category: 'indices', decimals: 2 },
@@ -940,7 +940,7 @@ export function MarketOverviewPage() {
                                 )}
                                 title="Kacheln sortieren (A-Z, Gewinn, Typ etc.)"
                             >
-                                <option value="default">Reihenfolge: Standard</option>
+                                <option value="default">Reihenfolge: Meine Anordnung (Standard)</option>
                                 <option value="name-asc">Sortierung: Name (A → Z)</option>
                                 <option value="name-desc">Sortierung: Name (Z → A)</option>
                                 <option value="gain-desc">Sortierung: Höchster Gewinn %</option>
