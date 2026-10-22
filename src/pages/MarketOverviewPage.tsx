@@ -779,7 +779,7 @@ export function MarketOverviewPage() {
                                 if (!isEditMode) navigate('/portfolio');
                             }}
                             className={cn(
-                                "relative rounded-xl sm:rounded-2xl p-2 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[105px] sm:min-h-[150px] md:min-h-[160px] w-full min-w-0 border-2",
+                                "relative rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[140px] sm:min-h-[175px] md:min-h-[190px] w-full min-w-0 border-2",
                                 !isEditMode && "cursor-pointer hover:shadow-lg hover:brightness-105 active:scale-[0.99]",
                                 isPortfolioPositive
                                     ? "bg-[#3fb78f] text-slate-950 border-emerald-700/40 shadow-emerald-950/15"
@@ -894,7 +894,7 @@ export function MarketOverviewPage() {
                                     }
                                 }}
                                 className={cn(
-                                    "relative rounded-xl sm:rounded-2xl p-2 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[105px] sm:min-h-[150px] md:min-h-[160px] w-full min-w-0",
+                                    "relative rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[140px] sm:min-h-[175px] md:min-h-[190px] w-full min-w-0",
                                     !isEditMode && "cursor-pointer hover:shadow-lg hover:brightness-105 active:scale-[0.99]",
                                     isTileGreen
                                         ? "bg-[#3fb78f] text-slate-950 border border-emerald-600/30 shadow-emerald-950/10"
@@ -902,7 +902,7 @@ export function MarketOverviewPage() {
                                 )}
                                 title={isEditMode ? undefined : `${item.name} – ${isMarketOpen ? 'Börse geöffnet (Live-Handel)' : 'Börse geschlossen (Schlusskurs)'} – Klick für interaktiven Chart`}
                             >
-                                {/* Top: Name & Badge or Edit Buttons */}
+                                {/* Top: Name, Stückzahl unter Name & Status Badges */}
                                 <div className="flex items-start justify-between gap-1 min-w-0">
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-1 min-w-0">
@@ -918,6 +918,12 @@ export function MarketOverviewPage() {
                                                 </span>
                                             )}
                                         </div>
+                                        {/* DIE STK ZAHL BITTE UNTER AKTIENNAME */}
+                                        {hasShares ? (
+                                            <div className="text-[10px] sm:text-xs md:text-sm font-bold text-slate-950/85 truncate leading-tight mt-0.5">
+                                                {shares} Stk.
+                                            </div>
+                                        ) : null}
                                     </div>
 
                                     <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
@@ -980,28 +986,20 @@ export function MarketOverviewPage() {
                                     </div>
                                 </div>
 
-                                {/* Center: Price & Day Gain in CHF */}
-                                <div className="my-0.5 sm:my-1 text-center">
-                                    <div className="text-base sm:text-2xl md:text-3xl font-black tracking-tight drop-shadow-xs tabular-nums text-slate-950 leading-tight">
+                                {/* Center: Kurs */}
+                                <div className="my-1 sm:my-2 text-center">
+                                    <div className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight drop-shadow-xs tabular-nums text-slate-950 leading-tight">
                                         {q ? formatNumber(displayPrice, decimals) : (
                                             <span className="opacity-40 animate-pulse text-xs sm:text-xl">Laden...</span>
                                         )}
                                     </div>
-                                    {hasShares ? (
-                                        <div className="text-xs sm:text-sm md:text-base font-extrabold text-slate-950 truncate mt-0.5 sm:mt-1 drop-shadow-xs">
-                                            {shares} Stk.{q ? ` • ${totalDayChangeCHF >= 0 ? '+' : ''}${formatNumber(totalDayChangeCHF, 2)} CHF` : ''}
-                                        </div>
-                                    ) : (
-                                        <div className="text-[10px] sm:text-xs font-bold text-slate-950/75 truncate mt-0.5 tracking-tight">
-                                            {isMarketOpen ? '🟢 Live-Handel' : '🔴 Schlusskurs'}
-                                        </div>
-                                    )}
                                 </div>
 
-                                {/* Bottom: Change % & Native Currency Day Gain (White Badge with Green/Red text) */}
-                                <div className="flex flex-col items-center justify-center w-full">
+                                {/* Bottom: Unter Kurs die Performance Pille, und darunter der Gewinn/Verlust in einer weissen Pille */}
+                                <div className="flex flex-col items-center justify-center gap-1 sm:gap-1.5 w-full">
+                                    {/* Pille 1: Performance */}
                                     <div className={cn(
-                                        "inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-white shadow-xs border border-white/60 font-black tabular-nums transition-all max-w-full",
+                                        "inline-flex items-center justify-center gap-1 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-white shadow-xs border border-white/60 font-black tabular-nums transition-all",
                                         isPositive ? "text-emerald-700" : "text-rose-600"
                                     )}>
                                         {q && (
@@ -1016,12 +1014,37 @@ export function MarketOverviewPage() {
                                                 </span>
                                             </>
                                         )}
-                                        {hasShares && q && currency !== 'CHF' && (
-                                            <span className="text-[9px] sm:text-xs font-bold opacity-90 truncate pl-0.5">
-                                                • {totalDayChangeNative >= 0 ? '+' : ''}{formatNumber(totalDayChangeNative, 2)} {currency}
-                                            </span>
-                                        )}
                                     </div>
+
+                                    {/* Pille 2: Gewinn oder Verlust in einer Pille weiss hinterlegt */}
+                                    {hasShares ? (
+                                        <div className={cn(
+                                            "inline-flex items-center justify-center gap-1 px-2.5 sm:px-3 py-0.5 sm:py-0.5 rounded-lg sm:rounded-xl bg-white shadow-xs border border-white/60 font-black tabular-nums transition-all text-[10px] sm:text-xs md:text-sm max-w-full truncate",
+                                            totalDayChangeCHF >= 0 ? "text-emerald-700" : "text-rose-600"
+                                        )}>
+                                            <span>
+                                                {totalDayChangeCHF >= 0 ? '+' : ''}{formatNumber(totalDayChangeCHF, 2)} CHF
+                                            </span>
+                                            {q && currency !== 'CHF' && (
+                                                <span className="opacity-80 font-bold pl-0.5 truncate text-[9px] sm:text-xs">
+                                                    • {totalDayChangeNative >= 0 ? '+' : ''}{formatNumber(totalDayChangeNative, 2)} {currency}
+                                                </span>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className={cn(
+                                            "inline-flex items-center justify-center gap-1 px-2.5 sm:px-3 py-0.5 sm:py-0.5 rounded-lg sm:rounded-xl bg-white shadow-xs border border-white/60 font-black tabular-nums transition-all text-[10px] sm:text-xs md:text-sm",
+                                            isPositive ? "text-emerald-700" : "text-rose-600"
+                                        )}>
+                                            <span>
+                                                {q?.changeAmount !== undefined ? (
+                                                    `${q.changeAmount >= 0 ? '+' : ''}${formatNumber(q.changeAmount, decimals)} ${currency || ''}`
+                                                ) : (
+                                                    isMarketOpen ? '🟢 Live-Handel' : '🔴 Schlusskurs'
+                                                )}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         );
