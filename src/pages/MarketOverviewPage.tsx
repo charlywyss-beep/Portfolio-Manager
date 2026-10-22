@@ -812,16 +812,21 @@ export function MarketOverviewPage() {
                                 </div>
                             </div>
 
-                            {/* Bottom: % performance */}
-                            <div className="flex items-center justify-center gap-1 font-black text-sm sm:text-lg md:text-xl drop-shadow-xs tabular-nums text-slate-950 leading-tight">
-                                {isPortfolioPositive ? (
-                                    <TrendingUp className="size-3.5 sm:size-5 shrink-0" />
-                                ) : (
-                                    <TrendingDown className="size-3.5 sm:size-5 shrink-0" />
-                                )}
-                                <span>
-                                    {isPortfolioPositive ? '+' : ''}{portfolioDailyGainPercent.toFixed(2)}%
-                                </span>
+                            {/* Bottom: % performance (White Badge with Green/Red text) */}
+                            <div className="flex items-center justify-center w-full">
+                                <div className={cn(
+                                    "inline-flex items-center justify-center gap-1 px-2.5 sm:px-3.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-white shadow-xs border border-white/60 font-black text-xs sm:text-sm md:text-base tabular-nums tracking-tight",
+                                    isPortfolioPositive ? "text-emerald-700" : "text-rose-600"
+                                )}>
+                                    {isPortfolioPositive ? (
+                                        <TrendingUp className="size-3.5 sm:size-4 shrink-0 stroke-[2.5]" />
+                                    ) : (
+                                        <TrendingDown className="size-3.5 sm:size-4 shrink-0 stroke-[2.5]" />
+                                    )}
+                                    <span>
+                                        {isPortfolioPositive ? '+' : ''}{portfolioDailyGainPercent.toFixed(2)}%
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -993,27 +998,30 @@ export function MarketOverviewPage() {
                                     )}
                                 </div>
 
-                                {/* Bottom: Change % & Native Currency Day Gain */}
-                                <div className="flex flex-col items-center justify-center gap-0.5 font-black text-slate-950 leading-tight">
-                                    <div className="flex items-center justify-center gap-1 text-sm sm:text-lg md:text-xl drop-shadow-xs tabular-nums">
+                                {/* Bottom: Change % & Native Currency Day Gain (White Badge with Green/Red text) */}
+                                <div className="flex flex-col items-center justify-center w-full">
+                                    <div className={cn(
+                                        "inline-flex items-center justify-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-white shadow-xs border border-white/60 font-black tabular-nums transition-all max-w-full",
+                                        isPositive ? "text-emerald-700" : "text-rose-600"
+                                    )}>
                                         {q && (
                                             <>
                                                 {isPositive ? (
-                                                    <TrendingUp className="size-3.5 sm:size-5 shrink-0" />
+                                                    <TrendingUp className="size-3 sm:size-4 shrink-0 stroke-[2.5]" />
                                                 ) : (
-                                                    <TrendingDown className="size-3.5 sm:size-5 shrink-0" />
+                                                    <TrendingDown className="size-3 sm:size-4 shrink-0 stroke-[2.5]" />
                                                 )}
-                                                <span>
+                                                <span className="text-[11px] sm:text-sm md:text-base tracking-tight shrink-0">
                                                     {isPositive ? '+' : ''}{changePct.toFixed(2)}%
                                                 </span>
                                             </>
                                         )}
+                                        {hasShares && q && currency !== 'CHF' && (
+                                            <span className="text-[9px] sm:text-xs font-bold opacity-90 truncate pl-0.5">
+                                                • {totalDayChangeNative >= 0 ? '+' : ''}{formatNumber(totalDayChangeNative, 2)} {currency}
+                                            </span>
+                                        )}
                                     </div>
-                                    {hasShares && q && currency !== 'CHF' && (
-                                        <div className="text-[11px] sm:text-xs md:text-sm font-bold tracking-tight text-slate-950/80 truncate">
-                                            {totalDayChangeNative >= 0 ? '+' : ''}{formatNumber(totalDayChangeNative, 2)} {currency}
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         );
