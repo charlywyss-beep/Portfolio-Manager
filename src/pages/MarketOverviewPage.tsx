@@ -790,7 +790,7 @@ export function MarketOverviewPage() {
                             {/* Top: Name & CHF badge */}
                             <div className="flex items-start justify-between gap-1 min-w-0">
                                 <div className="min-w-0 flex-1 flex items-center gap-1.5">
-                                    <div className="size-5 sm:size-6 rounded-md bg-black/15 flex items-center justify-center shrink-0">
+                                    <div className="size-5 sm:size-6 rounded-md bg-white text-slate-950 shadow-xs border border-white/60 flex items-center justify-center shrink-0">
                                         <Wallet className="size-3 sm:size-3.5 text-slate-950" />
                                     </div>
                                     <h3 className="font-black text-[11px] sm:text-base md:text-lg tracking-tight truncate drop-shadow-xs text-slate-950 leading-tight">
@@ -908,71 +908,71 @@ export function MarketOverviewPage() {
                                                 {item.name}
                                             </h3>
                                             {matchedStock?.type === 'etf' && (
-                                                <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-1 py-0.5 rounded bg-black/20 text-slate-950 shrink-0 leading-tight">
+                                                <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 leading-tight">
                                                     ETF
                                                 </span>
                                             )}
                                         </div>
                                     </div>
 
-                                    {isEditMode && activeFilter !== 'portfolio' ? (
-                                        <div className="flex items-center gap-0.5 bg-black/65 backdrop-blur-md px-1 py-0.5 rounded-md shrink-0 shadow-xs border border-white/10">
-                                            {canMoveLeft && (
+                                    <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                                        {isEditMode && activeFilter !== 'portfolio' && (
+                                            <div className="flex items-center gap-0.5 bg-white text-slate-950 px-1 py-0.5 rounded shadow-xs border border-white/60 shrink-0">
+                                                {canMoveLeft && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => { e.stopPropagation(); moveItem(item.id, 'left'); }}
+                                                        className="p-0.5 hover:bg-slate-200 active:scale-95 rounded text-slate-950 transition-all"
+                                                        title="Nach links"
+                                                    >
+                                                        <ChevronLeft className="size-3" />
+                                                    </button>
+                                                )}
+                                                {canMoveRight && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => { e.stopPropagation(); moveItem(item.id, 'right'); }}
+                                                        className="p-0.5 hover:bg-slate-200 active:scale-95 rounded text-slate-950 transition-all"
+                                                        title="Nach rechts"
+                                                    >
+                                                        <ChevronRight className="size-3" />
+                                                    </button>
+                                                )}
                                                 <button
                                                     type="button"
-                                                    onClick={(e) => { e.stopPropagation(); moveItem(item.id, 'left'); }}
-                                                    className="p-0.5 hover:bg-white/20 active:scale-95 rounded text-white transition-all"
-                                                    title="Nach links"
+                                                    onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
+                                                    className="p-0.5 hover:bg-rose-600 hover:text-white active:scale-95 rounded text-rose-600 transition-all"
+                                                    title="Entfernen"
                                                 >
-                                                    <ChevronLeft className="size-3" />
+                                                    <X className="size-3" />
                                                 </button>
-                                            )}
-                                            {canMoveRight && (
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => { e.stopPropagation(); moveItem(item.id, 'right'); }}
-                                                    className="p-0.5 hover:bg-white/20 active:scale-95 rounded text-white transition-all"
-                                                    title="Nach rechts"
-                                                >
-                                                    <ChevronRight className="size-3" />
-                                                </button>
-                                            )}
-                                            <button
-                                                type="button"
-                                                onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
-                                                className="p-0.5 hover:bg-rose-600 active:scale-95 rounded text-rose-200 hover:text-white transition-all"
-                                                title="Entfernen"
-                                            >
-                                                <X className="size-3" />
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-                                            {/* Status Dot & Label: Green for Open/Live, Red for Closed/Schlusskurs with White Background */}
-                                            <span
-                                                className="flex items-center gap-1 text-[8px] sm:text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-white text-slate-950 shadow-xs border border-white/60 leading-none shrink-0"
-                                                title={isMarketOpen ? `Markt geöffnet (${marketState}) – Live-Handel` : `Markt geschlossen (${marketState}) – Schlusskurs`}
-                                            >
-                                                <span
-                                                    className={cn(
-                                                        "size-1.5 sm:size-2 rounded-full shrink-0",
-                                                        isMarketOpen
-                                                            ? "bg-emerald-600 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.8)]"
-                                                            : "bg-rose-600"
-                                                    )}
-                                                />
-                                                <span className={isMarketOpen ? "text-emerald-950" : "text-rose-950"}>
-                                                    {isMarketOpen ? "Live" : "Schluss"}
-                                                </span>
-                                            </span>
+                                            </div>
+                                        )}
 
-                                            {currency ? (
-                                                <span className="text-[9px] sm:text-[11px] uppercase font-black tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 font-mono leading-none">
-                                                    {currency}
-                                                </span>
-                                            ) : null}
-                                        </div>
-                                    )}
+                                        {/* Status Dot & Label: Green for Open/Live, Red for Closed/Schlusskurs with White Background */}
+                                        <span
+                                            className="flex items-center gap-1 text-[8px] sm:text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-white text-slate-950 shadow-xs border border-white/60 leading-none shrink-0"
+                                            title={isMarketOpen ? `Markt geöffnet (${marketState}) – Live-Handel` : `Markt geschlossen (${marketState}) – Schlusskurs`}
+                                        >
+                                            <span
+                                                className={cn(
+                                                    "size-1.5 sm:size-2 rounded-full shrink-0",
+                                                    isMarketOpen
+                                                        ? "bg-emerald-600 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.8)]"
+                                                        : "bg-rose-600"
+                                                )}
+                                            />
+                                            <span className={isMarketOpen ? "text-emerald-950" : "text-rose-950"}>
+                                                {isMarketOpen ? "Live" : "Schluss"}
+                                            </span>
+                                        </span>
+
+                                        {currency ? (
+                                            <span className="text-[9px] sm:text-[11px] uppercase font-black tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 font-mono leading-none">
+                                                {currency}
+                                            </span>
+                                        ) : null}
+                                    </div>
                                 </div>
 
                                 {/* Center: Price & Day Gain in CHF */}
