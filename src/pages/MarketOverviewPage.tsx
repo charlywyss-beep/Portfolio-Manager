@@ -13,7 +13,8 @@ import {
     TrendingUp, 
     TrendingDown,
     Wallet,
-    ArrowUpDown
+    ArrowUpDown,
+    GripVertical
 } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { usePortfolioData } from '../hooks/usePortfolioData';
@@ -48,11 +49,12 @@ export const DEFAULT_MARKET_ITEMS: MarketItem[] = [
     { id: '2', symbol: 'R6C0.DE', name: 'Shell', category: 'stocks', decimals: 2 },
     { id: '3', symbol: 'VWCE.DE', name: 'Vanguard FTSE...', category: 'stocks', decimals: 2 },
     { id: '4', symbol: '^SSMI', name: 'Swiss Market In...', category: 'indices', decimals: 2 },
+    { id: 'idx-dax', symbol: '^GDAXI', name: 'DAX (Deutschland)', category: 'indices', decimals: 2 },
     { id: '5', symbol: 'SREN.SW', name: 'Swiss Re', category: 'stocks', decimals: 2 },
     { id: '6', symbol: '^NDX', name: 'Nasdaq-100 Ind...', category: 'indices', decimals: 2 },
-    { id: 'asia-1', symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'asia', decimals: 2 },
-    { id: 'asia-2', symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'asia', decimals: 2 },
-    { id: 'asia-3', symbol: '000001.SS', name: 'Shanghai Composite', category: 'asia', decimals: 2 },
+    { id: 'asia-1', symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'indices', decimals: 2 },
+    { id: 'asia-2', symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'indices', decimals: 2 },
+    { id: 'asia-3', symbol: '000001.SS', name: 'Shanghai Composite', category: 'indices', decimals: 2 },
     { id: '7', symbol: 'BZ=F', name: 'L&S Brent Oil', category: 'commodities', decimals: 2 },
     { id: '8', symbol: 'GC=F', name: 'Goldpreis (Spot)', category: 'commodities', decimals: 2 },
     { id: '9', symbol: 'SI=F', name: 'Silberpreis (Spot)', category: 'commodities', decimals: 2 },
@@ -149,7 +151,7 @@ export function MarketOverviewPage() {
     const isPortfolioPositive = portfolioDailyGain >= 0;
 
     // Tab types
-    const VALID_TABS = useMemo(() => ['all', 'portfolio', 'indices', 'asia', 'commodities', 'forex', 'stocks', 'crypto'] as const, []);
+    const VALID_TABS = useMemo(() => ['all', 'portfolio', 'indices', 'commodities', 'forex', 'stocks', 'crypto'] as const, []);
     type TabType = typeof VALID_TABS[number];
 
     // Extract all owned stocks and ETFs from the portfolio holdings
@@ -231,19 +233,27 @@ export function MarketOverviewPage() {
             if (raw) {
                 const parsed = JSON.parse(raw);
                 if (Array.isArray(parsed) && parsed.length > 0) {
-                    // Automatically append major Asian indices if user hasn't added them yet
-                    const hasAsia = parsed.some((it: MarketItem) => it.symbol === '^N225' || it.symbol === '^HSI' || it.category === 'asia');
-                    if (!hasAsia) {
-                        const asianDefaults: MarketItem[] = [
-                            { id: 'asia-1', symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'asia', decimals: 2 },
-                            { id: 'asia-2', symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'asia', decimals: 2 },
-                            { id: 'asia-3', symbol: '000001.SS', name: 'Shanghai Composite', category: 'asia', decimals: 2 },
-                        ];
-                        const merged = [...parsed, ...asianDefaults];
-                        localStorage.setItem('portfolio_market_overview_items', JSON.stringify(merged));
-                        return merged;
+                    // Automatically migrate Asian indices into 'indices' category
+                    let migrated: MarketItem[] = parsed.map((it: MarketItem) => {
+                        if (it.category === 'asia' || it.symbol === '^N225' || it.symbol === '^HSI' || it.symbol === '000001.SS') {
+                            return { ...it, category: 'indices' as const };
+                        }
+                        return it;
+                    });
+                    const hasN225 = migrated.some((it: MarketItem) => it.symbol === '^N225');
+                    const hasHSI = migrated.some((it: MarketItem) => it.symbol === '^HSI');
+                    const hasSSE = migrated.some((it: MarketItem) => it.symbol === '000001.SS');
+                    const hasDAX = migrated.some((it: MarketItem) => it.symbol === '^GDAXI');
+                    const toAdd: MarketItem[] = [];
+                    if (!hasN225) toAdd.push({ id: 'asia-1', symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'indices', decimals: 2 });
+                    if (!hasHSI) toAdd.push({ id: 'asia-2', symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'indices', decimals: 2 });
+                    if (!hasSSE) toAdd.push({ id: 'asia-3', symbol: '000001.SS', name: 'Shanghai Composite', category: 'indices', decimals: 2 });
+                    if (!hasDAX) toAdd.push({ id: 'idx-dax', symbol: '^GDAXI', name: 'DAX (Deutschland)', category: 'indices', decimals: 2 });
+                    if (toAdd.length > 0) {
+                        migrated = [...migrated, ...toAdd];
                     }
-                    return parsed;
+                    localStorage.setItem('portfolio_market_overview_items', JSON.stringify(migrated));
+                    return migrated;
                 }
             }
         } catch (e) {
@@ -280,6 +290,11 @@ export function MarketOverviewPage() {
         } catch {}
         return 'default';
     });
+
+    // Drag and Drop state
+    const [draggedId, setDraggedId] = useState<string | null>(null);
+    const [dragOverId, setDragOverId] = useState<string | null>(null);
+    const touchDragRef = useRef<{ id: string; startX: number; startY: number } | null>(null);
 
     // Add modal state
     const [showAddModal, setShowAddModal] = useState(false);
@@ -610,10 +625,6 @@ export function MarketOverviewPage() {
             const missingPortfolioItems = portfolioMarketItems.filter(p => !existingSymbols.has(p.symbol.toUpperCase()));
             return [...items, ...missingPortfolioItems];
         }
-        if (activeFilter === 'asia') {
-            const asianSymbols = ['^N225', '^HSI', '000001.SS', '000300.SS', '^KS11', '^TWII', '^NSEI', '^BSESN', '^AXJO'];
-            return items.filter(it => it.category === 'asia' || asianSymbols.includes(it.symbol) || it.name.toLowerCase().includes('japan') || it.name.toLowerCase().includes('china') || it.name.toLowerCase().includes('hongkong') || it.name.toLowerCase().includes('nikkei'));
-        }
         if (activeFilter === 'indices') {
             return items.filter(it => it.category === 'indices' || it.category === 'asia');
         }
@@ -682,8 +693,11 @@ export function MarketOverviewPage() {
         });
     };
 
-    // Reorder items
+    // Reorder items via buttons
     const moveItem = (itemId: string, direction: 'left' | 'right') => {
+        setSortBy('default');
+        try { localStorage.setItem('portfolio_market_overview_sort', 'default'); } catch {}
+
         const itemIndex = items.findIndex(i => i.id === itemId);
         if (itemIndex === -1) return;
         const targetIndex = direction === 'left' ? itemIndex - 1 : itemIndex + 1;
@@ -692,7 +706,30 @@ export function MarketOverviewPage() {
         const [moved] = newArr.splice(itemIndex, 1);
         newArr.splice(targetIndex, 0, moved);
         setItems(newArr);
+        try { localStorage.setItem('portfolio_market_overview_items', JSON.stringify(newArr)); } catch {}
     };
+
+    // Reorder items via Drag and Drop
+    const handleReorder = useCallback((fromId: string, toId: string) => {
+        if (!fromId || !toId || fromId === toId) return;
+
+        setSortBy('default');
+        try { localStorage.setItem('portfolio_market_overview_sort', 'default'); } catch {}
+
+        setItems(prevItems => {
+            const fromIndex = prevItems.findIndex(i => i.id === fromId);
+            const toIndex = prevItems.findIndex(i => i.id === toId);
+            if (fromIndex === -1 || toIndex === -1) return prevItems;
+
+            const updated = [...prevItems];
+            const [moved] = updated.splice(fromIndex, 1);
+            updated.splice(toIndex, 0, moved);
+            try {
+                localStorage.setItem('portfolio_market_overview_items', JSON.stringify(updated));
+            } catch {}
+            return updated;
+        });
+    }, []);
 
     // Remove item
     const removeItem = (id: string) => {
@@ -813,7 +850,6 @@ export function MarketOverviewPage() {
                                 { id: 'all', label: 'Alle' },
                                 { id: 'portfolio', label: `💼 Bestand (${portfolioStocks.length})` },
                                 { id: 'indices', label: 'Indizes' },
-                                { id: 'asia', label: '🌏 Asien' },
                                 { id: 'commodities', label: 'Rohstoffe' },
                                 { id: 'forex', label: 'Währungen' },
                                 { id: 'stocks', label: 'Aktien / ETFs' },
@@ -837,6 +873,10 @@ export function MarketOverviewPage() {
 
                     {isEditMode && (
                         <div className="flex items-center gap-1.5 shrink-0 pl-1">
+                            <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[11px] font-bold text-primary shrink-0 animate-in fade-in">
+                                <GripVertical className="size-3" />
+                                Kacheln ziehen zum Platzieren
+                            </span>
                             <button
                                 onClick={resetToDefault}
                                 className="flex items-center gap-1 px-2 py-1 rounded-lg border border-border bg-card hover:bg-muted text-[11px] font-medium text-muted-foreground transition-colors shrink-0"
@@ -977,6 +1017,67 @@ export function MarketOverviewPage() {
                         return (
                             <div
                                 key={item.id}
+                                draggable={isEditMode && activeFilter !== 'portfolio'}
+                                onDragStart={(e) => {
+                                    if (!isEditMode || activeFilter === 'portfolio') return;
+                                    setDraggedId(item.id);
+                                    e.dataTransfer.setData('text/plain', item.id);
+                                    e.dataTransfer.effectAllowed = 'move';
+                                }}
+                                onDragOver={(e) => {
+                                    if (!isEditMode || activeFilter === 'portfolio') return;
+                                    e.preventDefault();
+                                    e.dataTransfer.dropEffect = 'move';
+                                    if (dragOverId !== item.id) {
+                                        setDragOverId(item.id);
+                                    }
+                                }}
+                                onDragLeave={() => {
+                                    if (dragOverId === item.id) {
+                                        setDragOverId(null);
+                                    }
+                                }}
+                                onDrop={(e) => {
+                                    if (!isEditMode || activeFilter === 'portfolio') return;
+                                    e.preventDefault();
+                                    const fromId = e.dataTransfer.getData('text/plain') || draggedId;
+                                    if (fromId && fromId !== item.id) {
+                                        handleReorder(fromId, item.id);
+                                    }
+                                    setDraggedId(null);
+                                    setDragOverId(null);
+                                }}
+                                onDragEnd={() => {
+                                    setDraggedId(null);
+                                    setDragOverId(null);
+                                }}
+                                onTouchStart={(e) => {
+                                    if (!isEditMode || activeFilter === 'portfolio') return;
+                                    touchDragRef.current = {
+                                        id: item.id,
+                                        startX: e.touches[0].clientX,
+                                        startY: e.touches[0].clientY
+                                    };
+                                }}
+                                onTouchMove={(e) => {
+                                    if (!isEditMode || activeFilter === 'portfolio' || !touchDragRef.current) return;
+                                    const touch = e.touches[0];
+                                    const elem = document.elementFromPoint(touch.clientX, touch.clientY);
+                                    const targetCard = elem?.closest('[data-market-item-id]');
+                                    const targetId = targetCard?.getAttribute('data-market-item-id');
+                                    if (targetId && targetId !== touchDragRef.current.id) {
+                                        setDragOverId(targetId);
+                                    }
+                                }}
+                                onTouchEnd={() => {
+                                    if (isEditMode && activeFilter !== 'portfolio' && touchDragRef.current && dragOverId && touchDragRef.current.id !== dragOverId) {
+                                        handleReorder(touchDragRef.current.id, dragOverId);
+                                    }
+                                    touchDragRef.current = null;
+                                    setDragOverId(null);
+                                    setDraggedId(null);
+                                }}
+                                data-market-item-id={item.id}
                                 onClick={() => {
                                     if (!isEditMode) {
                                         navigate(`/stock/${encodeURIComponent(item.symbol)}?from=market-overview&tab=${encodeURIComponent(activeFilter)}&name=${encodeURIComponent(item.name)}&currency=${encodeURIComponent(currency || 'USD')}`);
@@ -985,11 +1086,14 @@ export function MarketOverviewPage() {
                                 className={cn(
                                     "relative rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[140px] sm:min-h-[175px] md:min-h-[190px] w-full min-w-0",
                                     !isEditMode && "cursor-pointer hover:shadow-lg hover:brightness-105 active:scale-[0.99]",
+                                    isEditMode && activeFilter !== 'portfolio' && "cursor-grab active:cursor-grabbing hover:border-primary/50",
+                                    draggedId === item.id && "opacity-30 scale-[0.96] ring-2 ring-primary ring-dashed",
+                                    dragOverId === item.id && "ring-4 ring-primary scale-[1.03] shadow-2xl z-20 brightness-110",
                                     isTileGreen
                                         ? "bg-[#3fb78f] text-slate-950 border border-emerald-600/30 shadow-emerald-950/10"
                                         : "bg-[#eb6a59] text-slate-950 border border-rose-600/30 shadow-rose-950/10"
                                 )}
-                                title={isEditMode ? undefined : `${item.name} – ${isMarketOpen ? 'Börse geöffnet (Live-Handel)' : 'Börse geschlossen (Schlusskurs)'} – Klick für interaktiven Chart`}
+                                title={isEditMode ? "Kachel anklicken & an die gewünschte Position ziehen" : `${item.name} – ${isMarketOpen ? 'Börse geöffnet (Live-Handel)' : 'Börse geschlossen (Schlusskurs)'} – Klick für interaktiven Chart`}
                             >
                                 {/* Top: Name, Stückzahl unter Name & Status Badges */}
                                 <div className="flex items-start justify-between gap-1 min-w-0">
@@ -1011,6 +1115,9 @@ export function MarketOverviewPage() {
                                     <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                                         {isEditMode && activeFilter !== 'portfolio' && (
                                             <div className="h-5 sm:h-6 px-1 inline-flex items-center justify-center gap-0.5 bg-white text-slate-950 rounded shadow-xs border border-white/60 shrink-0">
+                                                <span className="p-0.5 text-slate-400 cursor-grab active:cursor-grabbing hover:text-slate-700" title="Ziehen zum Neuanordnen">
+                                                    <GripVertical className="size-3" />
+                                                </span>
                                                 {canMoveLeft && (
                                                     <button
                                                         type="button"
