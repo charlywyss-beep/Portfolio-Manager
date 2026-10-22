@@ -994,19 +994,12 @@ export function MarketOverviewPage() {
                                 {/* Top: Name, Stückzahl unter Name & Status Badges */}
                                 <div className="flex items-start justify-between gap-1 min-w-0">
                                     <div className="min-w-0 flex-1">
-                                        <div className="flex items-center gap-1 min-w-0">
-                                            <h3 
-                                                className="font-extrabold text-[11px] sm:text-base md:text-lg tracking-tight truncate drop-shadow-xs text-slate-950 leading-tight" 
-                                                title={item.name}
-                                            >
-                                                {item.name}
-                                            </h3>
-                                            {matchedStock?.type === 'etf' && (
-                                                <span className="h-5 sm:h-6 px-1.5 sm:px-2 inline-flex items-center justify-center text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 leading-none">
-                                                    ETF
-                                                </span>
-                                            )}
-                                        </div>
+                                        <h3 
+                                            className="font-extrabold text-[11px] sm:text-base md:text-lg tracking-tight truncate drop-shadow-xs text-slate-950 leading-tight" 
+                                            title={item.name}
+                                        >
+                                            {item.name}
+                                        </h3>
                                         {/* DIE STK ZAHL BITTE UNTER AKTIENNAME */}
                                         {hasShares ? (
                                             <div className="text-[10px] sm:text-xs md:text-sm font-bold text-slate-950/85 truncate leading-tight mt-0.5">
@@ -1047,6 +1040,13 @@ export function MarketOverviewPage() {
                                                     <X className="size-3" />
                                                 </button>
                                             </div>
+                                        )}
+
+                                        {/* ETF Badge in derselben Zeile und Flexbox wie SCHLUSS und Währung */}
+                                        {matchedStock?.type === 'etf' && (
+                                            <span className="h-5 sm:h-6 px-1.5 sm:px-2 inline-flex items-center justify-center text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 leading-none">
+                                                ETF
+                                            </span>
                                         )}
 
                                         {/* Status Dot & Label: Green for Open/Live, Red for Closed/Schlusskurs with White Background */}
