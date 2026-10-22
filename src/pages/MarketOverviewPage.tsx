@@ -886,7 +886,7 @@ export function MarketOverviewPage() {
                                         Tagesperformance
                                     </h3>
                                 </div>
-                                <span className="text-[9px] sm:text-[11px] uppercase font-black tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 font-mono leading-none">
+                                <span className="h-5 sm:h-6 px-1.5 sm:px-2 inline-flex items-center justify-center text-[9px] sm:text-[10px] uppercase font-black tracking-wider rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 font-mono leading-none">
                                     CHF
                                 </span>
                             </div>
@@ -1002,7 +1002,7 @@ export function MarketOverviewPage() {
                                                 {item.name}
                                             </h3>
                                             {matchedStock?.type === 'etf' && (
-                                                <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 leading-tight">
+                                                <span className="h-5 sm:h-6 px-1.5 sm:px-2 inline-flex items-center justify-center text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 leading-none">
                                                     ETF
                                                 </span>
                                             )}
@@ -1017,7 +1017,7 @@ export function MarketOverviewPage() {
 
                                     <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                                         {isEditMode && activeFilter !== 'portfolio' && (
-                                            <div className="flex items-center gap-0.5 bg-white text-slate-950 px-1 py-0.5 rounded shadow-xs border border-white/60 shrink-0">
+                                            <div className="h-5 sm:h-6 px-1 inline-flex items-center justify-center gap-0.5 bg-white text-slate-950 rounded shadow-xs border border-white/60 shrink-0">
                                                 {canMoveLeft && (
                                                     <button
                                                         type="button"
@@ -1051,7 +1051,7 @@ export function MarketOverviewPage() {
 
                                         {/* Status Dot & Label: Green for Open/Live, Red for Closed/Schlusskurs with White Background */}
                                         <span
-                                            className="flex items-center gap-1 text-[8px] sm:text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-white text-slate-950 shadow-xs border border-white/60 leading-none shrink-0"
+                                            className="h-5 sm:h-6 px-1.5 sm:px-2 inline-flex items-center justify-center gap-1 text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded bg-white text-slate-950 shadow-xs border border-white/60 leading-none shrink-0"
                                             title={isMarketOpen ? `Markt geöffnet (${marketState}) – Live-Handel` : `Markt geschlossen (${marketState}) – Schlusskurs`}
                                         >
                                             <span
@@ -1068,7 +1068,7 @@ export function MarketOverviewPage() {
                                         </span>
 
                                         {currency ? (
-                                            <span className="text-[9px] sm:text-[11px] uppercase font-black tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 font-mono leading-none">
+                                            <span className="h-5 sm:h-6 px-1.5 sm:px-2 inline-flex items-center justify-center text-[9px] sm:text-[10px] uppercase font-black tracking-wider rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 font-mono leading-none">
                                                 {currency}
                                             </span>
                                         ) : null}
