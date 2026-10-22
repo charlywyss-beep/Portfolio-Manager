@@ -7,8 +7,6 @@ import {
     Check, 
     Plus, 
     X, 
-    ChevronLeft, 
-    ChevronRight, 
     RotateCcw, 
     TrendingUp, 
     TrendingDown,
@@ -52,6 +50,8 @@ export const DEFAULT_MARKET_ITEMS: MarketItem[] = [
     { id: 'idx-dax', symbol: '^GDAXI', name: 'DAX (Deutschland)', category: 'indices', decimals: 2 },
     { id: '5', symbol: 'SREN.SW', name: 'Swiss Re', category: 'stocks', decimals: 2 },
     { id: '6', symbol: '^NDX', name: 'Nasdaq-100 Ind...', category: 'indices', decimals: 2 },
+    { id: 'idx-spx', symbol: '^GSPC', name: 'S&P 500 Index', category: 'indices', decimals: 2 },
+    { id: 'idx-dji', symbol: '^DJI', name: 'Dow Jones Ind...', category: 'indices', decimals: 2 },
     { id: 'asia-1', symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'indices', decimals: 2 },
     { id: 'asia-2', symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'indices', decimals: 2 },
     { id: 'asia-3', symbol: '000001.SS', name: 'Shanghai Composite', category: 'indices', decimals: 2 },
@@ -75,6 +75,9 @@ const DEFAULT_FALLBACK_QUOTES: Record<string, MarketQuoteData> = {
     '^SSMI': { price: 14368.78, previousClose: 14391.77, changePercent: -0.16, changeAmount: -22.99, currency: 'CHF' },
     'SREN.SW': { price: 161.60, previousClose: 160.30, changePercent: 0.81, changeAmount: 1.30, currency: 'CHF' },
     '^NDX': { price: 29529.34, previousClose: 29187.84, changePercent: 1.17, changeAmount: 341.50, currency: 'USD' },
+    '^GSPC': { price: 5864.67, previousClose: 5851.20, changePercent: 0.23, changeAmount: 13.47, currency: 'USD' },
+    '^DJI': { price: 42863.86, previousClose: 42740.40, changePercent: 0.29, changeAmount: 123.46, currency: 'USD' },
+    '^GDAXI': { price: 19460.10, previousClose: 19410.20, changePercent: 0.26, changeAmount: 49.90, currency: 'EUR' },
     '^N225': { price: 39180.30, previousClose: 38950.00, changePercent: 0.59, changeAmount: 230.30, currency: 'JPY' },
     '^HSI': { price: 20630.50, previousClose: 20490.20, changePercent: 0.68, changeAmount: 140.30, currency: 'HKD' },
     '000001.SS': { price: 3368.80, previousClose: 3350.10, changePercent: 0.56, changeAmount: 18.70, currency: 'CNY' },
@@ -291,10 +294,22 @@ export function MarketOverviewPage() {
         return 'default';
     });
 
-    // Drag and Drop state
+    // Drag and Drop & Click-to-Move state
     const [draggedId, setDraggedId] = useState<string | null>(null);
     const [dragOverId, setDragOverId] = useState<string | null>(null);
-    const touchDragRef = useRef<{ id: string; startX: number; startY: number } | null>(null);
+    const [selectedMoveId, setSelectedMoveId] = useState<string | null>(null);
+    const draggedIdRef = useRef<string | null>(null);
+    const touchDragRef = useRef<{ id: string; startX: number; startY: number; isDragging: boolean } | null>(null);
+
+    // Reset move selection when exiting edit mode
+    useEffect(() => {
+        if (!isEditMode) {
+            setSelectedMoveId(null);
+            setDraggedId(null);
+            setDragOverId(null);
+            draggedIdRef.current = null;
+        }
+    }, [isEditMode]);
 
     // Add modal state
     const [showAddModal, setShowAddModal] = useState(false);
@@ -693,23 +708,7 @@ export function MarketOverviewPage() {
         });
     };
 
-    // Reorder items via buttons
-    const moveItem = (itemId: string, direction: 'left' | 'right') => {
-        setSortBy('default');
-        try { localStorage.setItem('portfolio_market_overview_sort', 'default'); } catch {}
-
-        const itemIndex = items.findIndex(i => i.id === itemId);
-        if (itemIndex === -1) return;
-        const targetIndex = direction === 'left' ? itemIndex - 1 : itemIndex + 1;
-        if (targetIndex < 0 || targetIndex >= items.length) return;
-        const newArr = [...items];
-        const [moved] = newArr.splice(itemIndex, 1);
-        newArr.splice(targetIndex, 0, moved);
-        setItems(newArr);
-        try { localStorage.setItem('portfolio_market_overview_items', JSON.stringify(newArr)); } catch {}
-    };
-
-    // Reorder items via Drag and Drop
+    // Reorder items via Drag and Drop or Click-to-Move across ANY row or column
     const handleReorder = useCallback((fromId: string, toId: string) => {
         if (!fromId || !toId || fromId === toId) return;
 
@@ -723,13 +722,138 @@ export function MarketOverviewPage() {
 
             const updated = [...prevItems];
             const [moved] = updated.splice(fromIndex, 1);
-            updated.splice(toIndex, 0, moved);
+
+            // Re-find toId index in array after removing moved item
+            const newTargetIndex = updated.findIndex(i => i.id === toId);
+            if (newTargetIndex === -1) {
+                updated.push(moved);
+            } else {
+                if (fromIndex < toIndex) {
+                    // Moving downward (e.g. Row 1 to Row 3): place after target
+                    updated.splice(newTargetIndex + 1, 0, moved);
+                } else {
+                    // Moving upward (e.g. Row 3 to Row 1): place before target
+                    updated.splice(newTargetIndex, 0, moved);
+                }
+            }
+
             try {
                 localStorage.setItem('portfolio_market_overview_items', JSON.stringify(updated));
             } catch {}
             return updated;
         });
     }, []);
+
+    // HTML5 Drag Handlers (Desktop Mouse)
+    const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
+        if (!isEditMode || activeFilter === 'portfolio') return;
+        draggedIdRef.current = id;
+        setDraggedId(id);
+        setSelectedMoveId(null);
+        e.dataTransfer.setData('text/plain', id);
+        e.dataTransfer.effectAllowed = 'move';
+    }, [isEditMode, activeFilter]);
+
+    const handleDragOver = useCallback((e: React.DragEvent, id: string) => {
+        if (!isEditMode || activeFilter === 'portfolio') return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'move';
+        if (dragOverId !== id) {
+            setDragOverId(id);
+        }
+    }, [isEditMode, activeFilter, dragOverId]);
+
+    const handleDrop = useCallback((e: React.DragEvent, targetId: string) => {
+        if (!isEditMode || activeFilter === 'portfolio') return;
+        e.preventDefault();
+        e.stopPropagation();
+        const fromId = draggedIdRef.current || e.dataTransfer.getData('text/plain') || draggedId;
+        if (fromId && fromId !== targetId) {
+            handleReorder(fromId, targetId);
+        }
+        draggedIdRef.current = null;
+        setDraggedId(null);
+        setDragOverId(null);
+    }, [isEditMode, activeFilter, draggedId, handleReorder]);
+
+    const handleDragEnd = useCallback(() => {
+        draggedIdRef.current = null;
+        setDraggedId(null);
+        setDragOverId(null);
+    }, []);
+
+    // Touch Drag Handlers (Tablet / iPad / Mobile Touchscreens)
+    const handleTouchMove = useCallback((e: React.TouchEvent, itemId: string) => {
+        if (!isEditMode || activeFilter === 'portfolio') return;
+        const touch = e.touches[0];
+        if (!touchDragRef.current) {
+            touchDragRef.current = {
+                id: itemId,
+                startX: touch.clientX,
+                startY: touch.clientY,
+                isDragging: false
+            };
+        }
+
+        const deltaX = Math.abs(touch.clientX - touchDragRef.current.startX);
+        const deltaY = Math.abs(touch.clientY - touchDragRef.current.startY);
+
+        if (!touchDragRef.current.isDragging && (deltaX > 8 || deltaY > 8)) {
+            touchDragRef.current.isDragging = true;
+            draggedIdRef.current = itemId;
+            setDraggedId(itemId);
+        }
+
+        if (!touchDragRef.current.isDragging) return;
+
+        if (e.cancelable) {
+            e.preventDefault();
+        }
+
+        // Check bounding rects of all visible cards across ANY row or column
+        const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-market-item-id]'));
+        let targetId: string | null = null;
+        let minDistance = Infinity;
+
+        for (const card of cards) {
+            const cid = card.getAttribute('data-market-item-id');
+            if (!cid || cid === itemId) continue;
+            const rect = card.getBoundingClientRect();
+
+            if (
+                touch.clientX >= rect.left &&
+                touch.clientX <= rect.right &&
+                touch.clientY >= rect.top &&
+                touch.clientY <= rect.bottom
+            ) {
+                targetId = cid;
+                break;
+            }
+
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const dist = Math.hypot(touch.clientX - centerX, touch.clientY - centerY);
+            if (dist < minDistance && dist < 350) {
+                minDistance = dist;
+                targetId = cid;
+            }
+        }
+
+        if (targetId && targetId !== dragOverId) {
+            setDragOverId(targetId);
+        }
+    }, [isEditMode, activeFilter, dragOverId]);
+
+    const handleTouchEnd = useCallback(() => {
+        if (isEditMode && activeFilter !== 'portfolio' && touchDragRef.current?.isDragging && dragOverId && touchDragRef.current.id !== dragOverId) {
+            handleReorder(touchDragRef.current.id, dragOverId);
+        }
+        touchDragRef.current = null;
+        draggedIdRef.current = null;
+        setDraggedId(null);
+        setDragOverId(null);
+    }, [isEditMode, activeFilter, dragOverId, handleReorder]);
 
     // Remove item
     const removeItem = (id: string) => {
@@ -873,10 +997,21 @@ export function MarketOverviewPage() {
 
                     {isEditMode && (
                         <div className="flex items-center gap-1.5 shrink-0 pl-1">
-                            <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[11px] font-bold text-primary shrink-0 animate-in fade-in">
-                                <GripVertical className="size-3" />
-                                Kacheln ziehen zum Platzieren
-                            </span>
+                            {selectedMoveId ? (
+                                <button
+                                    onClick={() => setSelectedMoveId(null)}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500 text-white font-bold text-[11px] shadow-xs animate-pulse hover:bg-amber-600 transition-all shrink-0"
+                                    title="Klick zum Abbrechen"
+                                >
+                                    <Check className="size-3" />
+                                    <span>Zielkachel jetzt anklicken</span>
+                                </button>
+                            ) : (
+                                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[11px] font-bold text-primary shrink-0 animate-in fade-in">
+                                    <GripVertical className="size-3" />
+                                    Ziehen oder antippen zum Platzieren
+                                </span>
+                            )}
                             <button
                                 onClick={resetToDefault}
                                 className="flex items-center gap-1 px-2 py-1 rounded-lg border border-border bg-card hover:bg-muted text-[11px] font-medium text-muted-foreground transition-colors shrink-0"
@@ -900,7 +1035,14 @@ export function MarketOverviewPage() {
             {/* Padded Container for Grid and Content */}
             <div className="px-3 sm:px-4 md:px-6 space-y-4">
                 {/* The Market Tiles Grid (Optimized 2 columns on iPhone & mobile, 3 columns on tablet/desktop) */}
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-4 md:gap-5 w-full">
+                <div 
+                    onDragOver={(e) => {
+                        if (isEditMode && activeFilter !== 'portfolio') {
+                            e.preventDefault();
+                        }
+                    }}
+                    className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-4 md:gap-5 w-full"
+                >
                     {/* Headline-Kachel: Gesamte Tagesperformance Portfolio in CHF */}
                     {(activeFilter === 'portfolio' || activeFilter === 'all') && portfolioStocks.length > 0 && (
                         <div
@@ -965,13 +1107,12 @@ export function MarketOverviewPage() {
                         const changePct = q?.changePercent ?? 0;
                         const isPositive = changePct >= 0;
                         const decimals = item.decimals ?? (item.symbol.includes('=X') ? 4 : 2);
-                        const itemIndex = items.findIndex(i => i.id === item.id);
-                        const canMoveLeft = itemIndex > 0;
-                        const canMoveRight = itemIndex < items.length - 1;
                         const matchedStock = portfolioStocks.find(s => s.symbol.toUpperCase() === item.symbol.toUpperCase()) ||
                                              stocks.find(s => s.symbol.toUpperCase() === item.symbol.toUpperCase());
                         const hasShares = matchedStock && (matchedStock as any).shares > 0;
                         const shares = hasShares ? (matchedStock as any).shares : 0;
+                        const isSelectedForMove = selectedMoveId === item.id;
+                        const isPotentialMoveTarget = selectedMoveId !== null && selectedMoveId !== item.id;
 
                         let rawCurrency = q?.currency || matchedStock?.currency || (
                             item.symbol.endsWith('.SW') ? 'CHF' :
@@ -1018,85 +1159,65 @@ export function MarketOverviewPage() {
                             <div
                                 key={item.id}
                                 draggable={isEditMode && activeFilter !== 'portfolio'}
-                                onDragStart={(e) => {
-                                    if (!isEditMode || activeFilter === 'portfolio') return;
-                                    setDraggedId(item.id);
-                                    e.dataTransfer.setData('text/plain', item.id);
-                                    e.dataTransfer.effectAllowed = 'move';
-                                }}
-                                onDragOver={(e) => {
-                                    if (!isEditMode || activeFilter === 'portfolio') return;
-                                    e.preventDefault();
-                                    e.dataTransfer.dropEffect = 'move';
-                                    if (dragOverId !== item.id) {
-                                        setDragOverId(item.id);
-                                    }
-                                }}
-                                onDragLeave={() => {
-                                    if (dragOverId === item.id) {
-                                        setDragOverId(null);
-                                    }
-                                }}
-                                onDrop={(e) => {
-                                    if (!isEditMode || activeFilter === 'portfolio') return;
-                                    e.preventDefault();
-                                    const fromId = e.dataTransfer.getData('text/plain') || draggedId;
-                                    if (fromId && fromId !== item.id) {
-                                        handleReorder(fromId, item.id);
-                                    }
-                                    setDraggedId(null);
-                                    setDragOverId(null);
-                                }}
-                                onDragEnd={() => {
-                                    setDraggedId(null);
-                                    setDragOverId(null);
-                                }}
+                                onDragStart={(e) => handleDragStart(e, item.id)}
+                                onDragOver={(e) => handleDragOver(e, item.id)}
+                                onDragEnter={(e) => handleDragOver(e, item.id)}
+                                onDrop={(e) => handleDrop(e, item.id)}
+                                onDragEnd={handleDragEnd}
                                 onTouchStart={(e) => {
                                     if (!isEditMode || activeFilter === 'portfolio') return;
                                     touchDragRef.current = {
                                         id: item.id,
                                         startX: e.touches[0].clientX,
-                                        startY: e.touches[0].clientY
+                                        startY: e.touches[0].clientY,
+                                        isDragging: false
                                     };
+                                    draggedIdRef.current = item.id;
                                 }}
-                                onTouchMove={(e) => {
-                                    if (!isEditMode || activeFilter === 'portfolio' || !touchDragRef.current) return;
-                                    const touch = e.touches[0];
-                                    const elem = document.elementFromPoint(touch.clientX, touch.clientY);
-                                    const targetCard = elem?.closest('[data-market-item-id]');
-                                    const targetId = targetCard?.getAttribute('data-market-item-id');
-                                    if (targetId && targetId !== touchDragRef.current.id) {
-                                        setDragOverId(targetId);
-                                    }
-                                }}
-                                onTouchEnd={() => {
-                                    if (isEditMode && activeFilter !== 'portfolio' && touchDragRef.current && dragOverId && touchDragRef.current.id !== dragOverId) {
-                                        handleReorder(touchDragRef.current.id, dragOverId);
-                                    }
-                                    touchDragRef.current = null;
-                                    setDragOverId(null);
-                                    setDraggedId(null);
-                                }}
+                                onTouchMove={(e) => handleTouchMove(e, item.id)}
+                                onTouchEnd={handleTouchEnd}
+                                onTouchCancel={handleTouchEnd}
                                 data-market-item-id={item.id}
                                 onClick={() => {
                                     if (!isEditMode) {
                                         navigate(`/stock/${encodeURIComponent(item.symbol)}?from=market-overview&tab=${encodeURIComponent(activeFilter)}&name=${encodeURIComponent(item.name)}&currency=${encodeURIComponent(currency || 'USD')}`);
+                                        return;
+                                    }
+                                    if (activeFilter === 'portfolio') return;
+
+                                    if (!selectedMoveId) {
+                                        setSelectedMoveId(item.id);
+                                    } else if (selectedMoveId === item.id) {
+                                        setSelectedMoveId(null);
+                                    } else {
+                                        handleReorder(selectedMoveId, item.id);
+                                        setSelectedMoveId(null);
                                     }
                                 }}
                                 className={cn(
                                     "relative rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[140px] sm:min-h-[175px] md:min-h-[190px] w-full min-w-0",
                                     !isEditMode && "cursor-pointer hover:shadow-lg hover:brightness-105 active:scale-[0.99]",
-                                    isEditMode && activeFilter !== 'portfolio' && "cursor-grab active:cursor-grabbing hover:border-primary/50",
-                                    draggedId === item.id && "opacity-30 scale-[0.96] ring-2 ring-primary ring-dashed",
-                                    dragOverId === item.id && "ring-4 ring-primary scale-[1.03] shadow-2xl z-20 brightness-110",
+                                    isEditMode && activeFilter !== 'portfolio' && "cursor-pointer touch-none",
+                                    draggedId === item.id && "opacity-35 scale-[0.96] ring-2 ring-primary ring-dashed",
+                                    dragOverId === item.id && "ring-4 ring-primary ring-offset-2 ring-offset-background scale-[1.03] shadow-2xl z-30 brightness-110",
+                                    isSelectedForMove && "ring-4 ring-amber-500 scale-[1.02] shadow-xl z-20 animate-pulse",
+                                    isPotentialMoveTarget && "hover:ring-2 hover:ring-amber-400 hover:scale-[1.01]",
                                     isTileGreen
                                         ? "bg-[#3fb78f] text-slate-950 border border-emerald-600/30 shadow-emerald-950/10"
                                         : "bg-[#eb6a59] text-slate-950 border border-rose-600/30 shadow-rose-950/10"
                                 )}
-                                title={isEditMode ? "Kachel anklicken & an die gewünschte Position ziehen" : `${item.name} – ${isMarketOpen ? 'Börse geöffnet (Live-Handel)' : 'Börse geschlossen (Schlusskurs)'} – Klick für interaktiven Chart`}
+                                title={
+                                    isEditMode
+                                        ? isSelectedForMove
+                                            ? "Ausgewählt: Klicke jetzt auf die gewünschte Zielkachel"
+                                            : selectedMoveId
+                                                ? `Hierher verschieben: Klicke um ${item.name} an diese Position zu setzen`
+                                                : "Ziehen oder anklicken zum Verschieben"
+                                        : `${item.name} – ${isMarketOpen ? 'Börse geöffnet (Live-Handel)' : 'Börse geschlossen (Schlusskurs)'} – Klick für interaktiven Chart`
+                                }
                             >
                                 {/* Top: Name, Stückzahl unter Name & Status Badges */}
-                                <div className="flex items-start justify-between gap-1 min-w-0">
+                                <div className={cn("flex items-start justify-between gap-1 min-w-0", draggedId !== null && "pointer-events-none")}>
                                     <div className="min-w-0 flex-1">
                                         <h3 
                                             className="font-extrabold text-[11px] sm:text-base md:text-lg tracking-tight truncate drop-shadow-xs text-slate-950 leading-tight" 
@@ -1114,37 +1235,26 @@ export function MarketOverviewPage() {
 
                                     <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                                         {isEditMode && activeFilter !== 'portfolio' && (
-                                            <div className="h-5 sm:h-6 px-1 inline-flex items-center justify-center gap-0.5 bg-white text-slate-950 rounded shadow-xs border border-white/60 shrink-0">
-                                                <span className="p-0.5 text-slate-400 cursor-grab active:cursor-grabbing hover:text-slate-700" title="Ziehen zum Neuanordnen">
-                                                    <GripVertical className="size-3" />
-                                                </span>
-                                                {canMoveLeft && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => { e.stopPropagation(); moveItem(item.id, 'left'); }}
-                                                        className="p-0.5 hover:bg-slate-200 active:scale-95 rounded text-slate-950 transition-all"
-                                                        title="Nach links"
+                                            <div className="h-5 sm:h-6 px-1.5 inline-flex items-center justify-center gap-1 bg-white text-slate-950 rounded shadow-xs border border-white/60 shrink-0">
+                                                {isSelectedForMove ? (
+                                                    <span className="text-[9px] font-black text-amber-600 px-1 uppercase tracking-wider animate-pulse">
+                                                        Ziel wählen
+                                                    </span>
+                                                ) : (
+                                                    <span 
+                                                        className="p-0.5 text-slate-500 cursor-grab active:cursor-grabbing hover:text-slate-900 transition-colors" 
+                                                        title="Kachel ziehen (nach links/rechts oder in jede Zeile)"
                                                     >
-                                                        <ChevronLeft className="size-3" />
-                                                    </button>
-                                                )}
-                                                {canMoveRight && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => { e.stopPropagation(); moveItem(item.id, 'right'); }}
-                                                        className="p-0.5 hover:bg-slate-200 active:scale-95 rounded text-slate-950 transition-all"
-                                                        title="Nach rechts"
-                                                    >
-                                                        <ChevronRight className="size-3" />
-                                                    </button>
+                                                        <GripVertical className="size-3.5" />
+                                                    </span>
                                                 )}
                                                 <button
                                                     type="button"
                                                     onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
-                                                    className="p-0.5 hover:bg-rose-600 hover:text-white active:scale-95 rounded text-rose-600 transition-all"
-                                                    title="Entfernen"
+                                                    className="p-0.5 hover:bg-rose-600 hover:text-white active:scale-95 rounded text-rose-600 transition-all ml-0.5"
+                                                    title="Kachel entfernen"
                                                 >
-                                                    <X className="size-3" />
+                                                    <X className="size-3.5" />
                                                 </button>
                                             </div>
                                         )}
@@ -1183,7 +1293,7 @@ export function MarketOverviewPage() {
                                 </div>
 
                                 {/* Center: Kurs */}
-                                <div className="my-1 sm:my-2 text-center">
+                                <div className={cn("my-1 sm:my-2 text-center", draggedId !== null && "pointer-events-none")}>
                                     <div className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight drop-shadow-xs tabular-nums text-slate-950 leading-tight">
                                         {q ? formatNumber(displayPrice, decimals) : (
                                             <span className="opacity-40 animate-pulse text-xs sm:text-xl">Laden...</span>
@@ -1192,7 +1302,7 @@ export function MarketOverviewPage() {
                                 </div>
 
                                 {/* Bottom: Unter Kurs die Performance Pille, und darunter der Gewinn/Verlust in einer weissen Pille */}
-                                <div className="flex flex-col items-center justify-center gap-1 sm:gap-1.5 w-full">
+                                <div className={cn("flex flex-col items-center justify-center gap-1 sm:gap-1.5 w-full", draggedId !== null && "pointer-events-none")}>
                                     {/* Pille 1: Performance */}
                                     <div className={cn(
                                         "inline-flex items-center justify-center gap-1 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-white shadow-xs border border-white/60 font-black tabular-nums transition-all",
