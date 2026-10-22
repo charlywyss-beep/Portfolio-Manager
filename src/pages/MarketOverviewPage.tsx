@@ -348,6 +348,21 @@ export function MarketOverviewPage() {
         }
     }, [items]);
 
+    // Automatically synchronize any missing portfolio stocks into items so they can be reordered and moved freely
+    useEffect(() => {
+        if (portfolioMarketItems.length === 0) return;
+        setItems(prevItems => {
+            const existingSymbols = new Set(prevItems.map(i => i.symbol.toUpperCase()));
+            const missing = portfolioMarketItems.filter(p => !existingSymbols.has(p.symbol.toUpperCase()));
+            if (missing.length === 0) return prevItems;
+            const updated = [...prevItems, ...missing];
+            try {
+                localStorage.setItem('portfolio_market_overview_items', JSON.stringify(updated));
+            } catch {}
+            return updated;
+        });
+    }, [portfolioMarketItems]);
+
     // Save quotes to localStorage
     useEffect(() => {
         try {
@@ -738,11 +753,22 @@ export function MarketOverviewPage() {
         try { localStorage.setItem('portfolio_market_overview_sort', 'default'); } catch {}
 
         setItems(prevItems => {
-            const fromIndex = prevItems.findIndex(i => i.id === fromId);
-            const toIndex = prevItems.findIndex(i => i.id === toId);
+            // Collect any items from filteredItems that might not yet be in prevItems
+            let baseList = [...prevItems];
+            for (const id of [fromId, toId]) {
+                if (!baseList.some(i => i.id === id)) {
+                    const found = filteredItems.find(i => i.id === id);
+                    if (found) {
+                        baseList.push(found);
+                    }
+                }
+            }
+
+            const fromIndex = baseList.findIndex(i => i.id === fromId);
+            const toIndex = baseList.findIndex(i => i.id === toId);
             if (fromIndex === -1 || toIndex === -1) return prevItems;
 
-            const updated = [...prevItems];
+            const updated = [...baseList];
             const [moved] = updated.splice(fromIndex, 1);
 
             // Re-find toId index in array after removing moved item
@@ -764,7 +790,7 @@ export function MarketOverviewPage() {
             } catch {}
             return updated;
         });
-    }, []);
+    }, [filteredItems]);
 
     // HTML5 Drag Handlers (Desktop Mouse)
     const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
