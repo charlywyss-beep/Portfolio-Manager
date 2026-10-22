@@ -797,7 +797,7 @@ export function MarketOverviewPage() {
                                         Tagesperformance
                                     </h3>
                                 </div>
-                                <span className="text-[9px] sm:text-[11px] uppercase font-black tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-black/15 text-slate-950 shrink-0 font-mono leading-none">
+                                <span className="text-[9px] sm:text-[11px] uppercase font-black tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 font-mono leading-none">
                                     CHF
                                 </span>
                             </div>
@@ -967,7 +967,7 @@ export function MarketOverviewPage() {
                                             </span>
 
                                             {currency ? (
-                                                <span className="text-[9px] sm:text-[11px] uppercase font-black tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-black/15 text-slate-950 shrink-0 font-mono leading-none">
+                                                <span className="text-[9px] sm:text-[11px] uppercase font-black tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 font-mono leading-none">
                                                     {currency}
                                                 </span>
                                             ) : null}
