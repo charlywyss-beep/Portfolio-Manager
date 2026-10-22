@@ -12,7 +12,8 @@ import {
     RotateCcw, 
     TrendingUp, 
     TrendingDown,
-    Wallet
+    Wallet,
+    ArrowUpDown
 } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { usePortfolioData } from '../hooks/usePortfolioData';
@@ -39,6 +40,8 @@ export interface MarketQuoteData {
     low?: number;
     lastUpdated?: string;
 }
+
+export type SortOption = 'default' | 'name-asc' | 'name-desc' | 'gain-desc' | 'gain-asc' | 'type-stocks' | 'type-etfs' | 'value-desc';
 
 export const DEFAULT_MARKET_ITEMS: MarketItem[] = [
     { id: '1', symbol: 'ZURN.SW', name: 'ZURICH INSURA...', category: 'stocks', decimals: 2 },
@@ -268,6 +271,15 @@ export function MarketOverviewPage() {
     const [loading, setLoading] = useState(false);
     const [lastRefresh, setLastRefresh] = useState<Date | null>(() => new Date());
     const [isEditMode, setIsEditMode] = useState(false);
+    const [sortBy, setSortBy] = useState<SortOption>(() => {
+        try {
+            const saved = localStorage.getItem('portfolio_market_overview_sort') as SortOption | null;
+            if (saved && ['default', 'name-asc', 'name-desc', 'gain-desc', 'gain-asc', 'type-stocks', 'type-etfs', 'value-desc'].includes(saved)) {
+                return saved;
+            }
+        } catch {}
+        return 'default';
+    });
 
     // Add modal state
     const [showAddModal, setShowAddModal] = useState(false);
@@ -613,6 +625,54 @@ export function MarketOverviewPage() {
         return items.filter(it => it.category === activeFilter);
     }, [items, activeFilter, portfolioMarketItems]);
 
+    // Sort items based on selected sort option
+    const sortedItems = useMemo(() => {
+        const list = [...filteredItems];
+        if (sortBy === 'default') return list;
+
+        return list.sort((a, b) => {
+            const qa = quotes[a.symbol];
+            const qb = quotes[b.symbol];
+            const stockA = stocks.find(s => s.symbol.toUpperCase() === a.symbol.toUpperCase());
+            const stockB = stocks.find(s => s.symbol.toUpperCase() === b.symbol.toUpperCase());
+            const isEtfA = stockA?.type === 'etf';
+            const isEtfB = stockB?.type === 'etf';
+
+            if (sortBy === 'name-asc') {
+                return a.name.localeCompare(b.name, 'de', { sensitivity: 'base' });
+            }
+            if (sortBy === 'name-desc') {
+                return b.name.localeCompare(a.name, 'de', { sensitivity: 'base' });
+            }
+            if (sortBy === 'gain-desc') {
+                const chgA = qa?.changePercent ?? -9999;
+                const chgB = qb?.changePercent ?? -9999;
+                return chgB - chgA;
+            }
+            if (sortBy === 'gain-asc') {
+                const chgA = qa?.changePercent ?? 9999;
+                const chgB = qb?.changePercent ?? 9999;
+                return chgA - chgB;
+            }
+            if (sortBy === 'type-stocks') {
+                if (isEtfA !== isEtfB) return isEtfA ? 1 : -1;
+                return a.name.localeCompare(b.name, 'de');
+            }
+            if (sortBy === 'type-etfs') {
+                if (isEtfA !== isEtfB) return isEtfB ? 1 : -1;
+                return a.name.localeCompare(b.name, 'de');
+            }
+            if (sortBy === 'value-desc') {
+                const sharesA = portfolioStocks.find(s => s.symbol.toUpperCase() === a.symbol.toUpperCase())?.shares || 0;
+                const sharesB = portfolioStocks.find(s => s.symbol.toUpperCase() === b.symbol.toUpperCase())?.shares || 0;
+                const valA = sharesA * (qa?.price || 0);
+                const valB = sharesB * (qb?.price || 0);
+                return valB - valA;
+            }
+            return 0;
+        });
+    }, [filteredItems, sortBy, quotes, stocks, portfolioStocks]);
+
     // Number format helper (German/Swiss style: 14.368,78)
     const formatNumber = (num: number | undefined, decimals = 2) => {
         if (num === undefined || isNaN(num)) return '-';
@@ -680,6 +740,35 @@ export function MarketOverviewPage() {
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Sort Dropdown */}
+                        <div className="relative">
+                            <select
+                                value={sortBy}
+                                onChange={(e) => {
+                                    const val = e.target.value as SortOption;
+                                    setSortBy(val);
+                                    try { localStorage.setItem('portfolio_market_overview_sort', val); } catch {}
+                                }}
+                                className={cn(
+                                    "appearance-none flex items-center pl-7 pr-7 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-xs border cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary max-w-[130px] sm:max-w-none truncate",
+                                    sortBy !== 'default'
+                                        ? "bg-primary/10 text-primary border-primary/30"
+                                        : "bg-card hover:bg-muted text-foreground border-border"
+                                )}
+                                title="Kacheln sortieren (A-Z, Gewinn, Typ etc.)"
+                            >
+                                <option value="default">Reihenfolge: Standard</option>
+                                <option value="name-asc">Sortierung: Name (A → Z)</option>
+                                <option value="name-desc">Sortierung: Name (Z → A)</option>
+                                <option value="gain-desc">Sortierung: Höchster Gewinn %</option>
+                                <option value="gain-asc">Sortierung: Grösster Verlust %</option>
+                                <option value="type-stocks">Sortierung: Aktien zuerst</option>
+                                <option value="type-etfs">Sortierung: ETFs zuerst</option>
+                                <option value="value-desc">Sortierung: Höchster Depotwert</option>
+                            </select>
+                            <ArrowUpDown className="size-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                        </div>
+
                         {/* Refresh Button */}
                         <button
                             onClick={fetchQuotes}
@@ -831,7 +920,7 @@ export function MarketOverviewPage() {
                         </div>
                     )}
 
-                    {filteredItems.map((item) => {
+                    {sortedItems.map((item) => {
                         const q = quotes[item.symbol];
                         const changePct = q?.changePercent ?? 0;
                         const isPositive = changePct >= 0;
@@ -1052,7 +1141,7 @@ export function MarketOverviewPage() {
                 </div>
 
                 {/* Empty State */}
-                {filteredItems.length === 0 && (
+                {sortedItems.length === 0 && (
                     <div className="p-8 sm:p-12 text-center rounded-2xl border border-dashed border-border/80 bg-card/40 space-y-3">
                         <p className="text-xs sm:text-sm text-muted-foreground">
                             {activeFilter === 'portfolio'
