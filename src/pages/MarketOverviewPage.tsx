@@ -874,6 +874,14 @@ export function MarketOverviewPage() {
 
                         const marketState = estimateMarketState(item.symbol, currency || 'USD');
                         const isMarketOpen = marketState === 'REGULAR';
+                        const isHolding = hasShares || activeFilter === 'portfolio';
+
+                        // Option 3:
+                        // Im Bestand zeigt die Kachelfarbe weiterhin den Tagesgewinn (Grün) / Tagesverlust (Rot).
+                        // Bei Markt-Kacheln (Indizes, Rohstoffe, Devisen etc.) zeigt die Kachelfarbe direkt den Marktstatus:
+                        // GRÜN = Markt handelt aktuell live (Live-Handel)
+                        // ROT = Markt ist geschlossen (Schlusskurs)
+                        const isTileGreen = isHolding ? isPositive : isMarketOpen;
 
                         return (
                             <div
@@ -886,11 +894,11 @@ export function MarketOverviewPage() {
                                 className={cn(
                                     "relative rounded-xl sm:rounded-2xl p-2 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[105px] sm:min-h-[150px] md:min-h-[160px] w-full min-w-0",
                                     !isEditMode && "cursor-pointer hover:shadow-lg hover:brightness-105 active:scale-[0.99]",
-                                    isPositive
+                                    isTileGreen
                                         ? "bg-[#3fb78f] text-slate-950 border border-emerald-600/30 shadow-emerald-950/10"
                                         : "bg-[#eb6a59] text-slate-950 border border-rose-600/30 shadow-rose-950/10"
                                 )}
-                                title={isEditMode ? undefined : `${item.name} – Klick für interaktiven Chart`}
+                                title={isEditMode ? undefined : `${item.name} – ${isHolding ? (isPositive ? 'Tagesgewinn' : 'Tagesverlust') : (isMarketOpen ? 'Börse geöffnet (Live-Handel)' : 'Börse geschlossen (Schlusskurs)')} – Klick für interaktiven Chart`}
                             >
                                 {/* Top: Name & Badge or Edit Buttons */}
                                 <div className="flex items-start justify-between gap-1 min-w-0">

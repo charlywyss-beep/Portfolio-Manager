@@ -109,38 +109,32 @@ export function estimateMarketState(symbol: string, currency: string): MarketSta
 
     // 4. Asiatische Indizes & Märkte
     // Japan (TSE): Nikkei 225 (^N225), .T, JPY
-    // Handelszeiten JST (UTC+9): 09:00 - 11:30 & 12:30 - 15:30
+    // Handelszeiten JST (UTC+9): 09:00 - 15:30 (aktiver Handelstag)
     if (sym === '^N225' || suffix === 'T' || curr === 'JPY') {
         const { day, timeInMinutes } = getLocalTimeInZone('Asia/Tokyo', now);
         if (day === 0 || day === 6) return 'CLOSED';
         if (timeInMinutes < 9 * 60) return 'PRE';
-        if (timeInMinutes >= 9 * 60 && timeInMinutes < 11 * 60 + 30) return 'REGULAR';
-        if (timeInMinutes >= 11 * 60 + 30 && timeInMinutes < 12 * 60 + 30) return 'PRE'; // Mittagspause
-        if (timeInMinutes >= 12 * 60 + 30 && timeInMinutes < 15 * 60 + 30) return 'REGULAR';
+        if (timeInMinutes >= 9 * 60 && timeInMinutes < 15 * 60 + 30) return 'REGULAR';
         return 'POST';
     }
 
     // Hongkong (HKEX): Hang Seng (^HSI), .HK, HKD
-    // Handelszeiten HKT (UTC+8): 09:30 - 12:00 & 13:00 - 16:00
+    // Handelszeiten HKT (UTC+8): 09:30 - 16:00 (aktiver Handelstag)
     if (sym === '^HSI' || suffix === 'HK' || curr === 'HKD') {
         const { day, timeInMinutes } = getLocalTimeInZone('Asia/Hong_Kong', now);
         if (day === 0 || day === 6) return 'CLOSED';
         if (timeInMinutes < 9 * 60 + 30) return 'PRE';
-        if (timeInMinutes >= 9 * 60 + 30 && timeInMinutes < 12 * 60) return 'REGULAR';
-        if (timeInMinutes >= 12 * 60 && timeInMinutes < 13 * 60) return 'PRE'; // Mittagspause
-        if (timeInMinutes >= 13 * 60 && timeInMinutes < 16 * 60) return 'REGULAR';
+        if (timeInMinutes >= 9 * 60 + 30 && timeInMinutes < 16 * 60) return 'REGULAR';
         return 'POST';
     }
 
     // China (SSE / SZSE): Shanghai Composite (000001.SS), CSI 300 (000300.SS), .SS, .SZ, CNY
-    // Handelszeiten CST (UTC+8): 09:30 - 11:30 & 13:00 - 15:00
+    // Handelszeiten CST (UTC+8): 09:30 - 15:00 (aktiver Handelstag)
     if (sym.startsWith('000') || suffix === 'SS' || suffix === 'SZ' || curr === 'CNY') {
         const { day, timeInMinutes } = getLocalTimeInZone('Asia/Shanghai', now);
         if (day === 0 || day === 6) return 'CLOSED';
         if (timeInMinutes < 9 * 60 + 30) return 'PRE';
-        if (timeInMinutes >= 9 * 60 + 30 && timeInMinutes < 11 * 60 + 30) return 'REGULAR';
-        if (timeInMinutes >= 11 * 60 + 30 && timeInMinutes < 13 * 60) return 'PRE'; // Mittagspause
-        if (timeInMinutes >= 13 * 60 && timeInMinutes < 15 * 60) return 'REGULAR';
+        if (timeInMinutes >= 9 * 60 + 30 && timeInMinutes < 15 * 60) return 'REGULAR';
         return 'POST';
     }
 
