@@ -48,6 +48,7 @@ export const DEFAULT_MARKET_ITEMS: MarketItem[] = [
     { id: '3', symbol: 'VWCE.DE', name: 'Vanguard FTSE...', category: 'stocks', decimals: 2 },
     { id: '4', symbol: '^SSMI', name: 'Swiss Market In...', category: 'indices', decimals: 2 },
     { id: 'idx-dax', symbol: '^GDAXI', name: 'DAX (Deutschland)', category: 'indices', decimals: 2 },
+    { id: 'idx-ftse', symbol: '^FTSE', name: 'FTSE 100 (London)', category: 'indices', decimals: 2 },
     { id: '5', symbol: 'SREN.SW', name: 'Swiss Re', category: 'stocks', decimals: 2 },
     { id: '6', symbol: '^NDX', name: 'Nasdaq-100 Ind...', category: 'indices', decimals: 2 },
     { id: 'idx-spx', symbol: '^GSPC', name: 'S&P 500 Index', category: 'indices', decimals: 2 },
@@ -78,6 +79,7 @@ const DEFAULT_FALLBACK_QUOTES: Record<string, MarketQuoteData> = {
     '^GSPC': { price: 5864.67, previousClose: 5851.20, changePercent: 0.23, changeAmount: 13.47, currency: 'USD' },
     '^DJI': { price: 42863.86, previousClose: 42740.40, changePercent: 0.29, changeAmount: 123.46, currency: 'USD' },
     '^GDAXI': { price: 19460.10, previousClose: 19410.20, changePercent: 0.26, changeAmount: 49.90, currency: 'EUR' },
+    '^FTSE': { price: 8245.50, previousClose: 8228.30, changePercent: 0.21, changeAmount: 17.20, currency: 'GBP' },
     '^N225': { price: 39180.30, previousClose: 38950.00, changePercent: 0.59, changeAmount: 230.30, currency: 'JPY' },
     '^HSI': { price: 20630.50, previousClose: 20490.20, changePercent: 0.68, changeAmount: 140.30, currency: 'HKD' },
     '000001.SS': { price: 3368.80, previousClose: 3350.10, changePercent: 0.56, changeAmount: 18.70, currency: 'CNY' },
@@ -112,9 +114,10 @@ export const PRESET_OPTIONS: Omit<MarketItem, 'id'>[] = [
     { symbol: '^AXJO', name: 'ASX 200 (Australien)', category: 'asia', decimals: 2 },
     // Indizes (Westen)
     { symbol: '^SSMI', name: 'Swiss Market Index (SMI)', category: 'indices', decimals: 2 },
+    { symbol: '^GDAXI', name: 'DAX (Deutschland)', category: 'indices', decimals: 2 },
+    { symbol: '^FTSE', name: 'FTSE 100 (London / UK)', category: 'indices', decimals: 2 },
     { symbol: '^NDX', name: 'Nasdaq-100 Index', category: 'indices', decimals: 2 },
     { symbol: '^GSPC', name: 'S&P 500 Index', category: 'indices', decimals: 2 },
-    { symbol: '^GDAXI', name: 'DAX (Deutschland)', category: 'indices', decimals: 2 },
     { symbol: '^DJI', name: 'Dow Jones Industrial', category: 'indices', decimals: 2 },
     { symbol: '^STOXX50E', name: 'Euro Stoxx 50', category: 'indices', decimals: 2 },
     // Rohstoffe
@@ -247,11 +250,13 @@ export function MarketOverviewPage() {
                     const hasHSI = migrated.some((it: MarketItem) => it.symbol === '^HSI');
                     const hasSSE = migrated.some((it: MarketItem) => it.symbol === '000001.SS');
                     const hasDAX = migrated.some((it: MarketItem) => it.symbol === '^GDAXI');
+                    const hasFTSE = migrated.some((it: MarketItem) => it.symbol === '^FTSE');
                     const toAdd: MarketItem[] = [];
                     if (!hasN225) toAdd.push({ id: 'asia-1', symbol: '^N225', name: 'Nikkei 225 (Japan)', category: 'indices', decimals: 2 });
                     if (!hasHSI) toAdd.push({ id: 'asia-2', symbol: '^HSI', name: 'Hang Seng (Hongkong)', category: 'indices', decimals: 2 });
                     if (!hasSSE) toAdd.push({ id: 'asia-3', symbol: '000001.SS', name: 'Shanghai Composite', category: 'indices', decimals: 2 });
                     if (!hasDAX) toAdd.push({ id: 'idx-dax', symbol: '^GDAXI', name: 'DAX (Deutschland)', category: 'indices', decimals: 2 });
+                    if (!hasFTSE) toAdd.push({ id: 'idx-ftse', symbol: '^FTSE', name: 'FTSE 100 (London)', category: 'indices', decimals: 2 });
                     if (toAdd.length > 0) {
                         migrated = [...migrated, ...toAdd];
                     }
@@ -1120,6 +1125,7 @@ export function MarketOverviewPage() {
                             item.symbol.includes('CHF') ? 'CHF' :
                             item.symbol === '^N225' ? 'JPY' :
                             item.symbol === '^HSI' ? 'HKD' :
+                            item.symbol === '^FTSE' ? 'GBP' :
                             item.symbol.endsWith('.SS') || item.symbol.endsWith('.SZ') ? 'CNY' :
                             item.symbol === '^KS11' ? 'KRW' :
                             item.symbol === '^TWII' ? 'TWD' :

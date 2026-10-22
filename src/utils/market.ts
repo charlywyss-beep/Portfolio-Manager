@@ -219,9 +219,9 @@ export function estimateMarketState(symbol: string, currency: string): MarketSta
     }
 
     // 7. Grossbritannien (London Stock Exchange LSE)
-    // .L, GBP, GBp
+    // .L, GBP, GBp, FTSE 100 (^FTSE)
     // Handelszeiten London (GMT/BST): 08:00 - 16:30
-    if (suffix === 'L' || curr === 'GBP' || curr === 'GBp') {
+    if (suffix === 'L' || curr === 'GBP' || curr === 'GBp' || symbol === '^FTSE') {
         const { day, timeInMinutes } = getLocalTimeInZone('Europe/London', now);
         if (day === 0 || day === 6) return 'CLOSED';
         if (timeInMinutes < 8 * 60) return 'PRE';
