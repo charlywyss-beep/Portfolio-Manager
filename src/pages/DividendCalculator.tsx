@@ -2051,7 +2051,7 @@ export function DividendCalculator() {
                                             <span>
                                                 {mode === 'buy' ? 'Investition Total' : 'Netto Erlös'} {simCurrency && simCurrency !== 'CHF' ? `(${displayNativeCurrency})` : '(CHF)'}:
                                             </span>
-                                            <span className={mode === 'buy' ? 'text-green-500 dark:text-green-400' : 'text-foreground font-medium font-mono'}>
+                                            <span className={mode === 'buy' ? 'text-green-500 dark:text-green-400' : 'text-foreground'}>
                                                 {(simCurrency && simCurrency !== 'CHF'
                                                     ? (mode === 'buy' ? totalInvestNative : totalProceedsNative).toLocaleString('de-CH', { style: 'currency', currency: displayNativeCurrency })
                                                     : (mode === 'buy' ? totalInvestCHF : totalProceedsCHF).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })
@@ -2061,7 +2061,7 @@ export function DividendCalculator() {
                                         {simCurrency && simCurrency !== 'CHF' && (
                                             <div className="flex justify-between items-center text-sm text-muted-foreground mt-0.5">
                                                 <span>Entspricht in CHF:</span>
-                                                <span className="font-mono">
+                                                <span className="font-medium text-foreground">
                                                     {(mode === 'buy' ? totalInvestCHF : totalProceedsCHF).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                                                 </span>
                                             </div>
@@ -2086,7 +2086,7 @@ export function DividendCalculator() {
                                             {frequency !== 'annually' && dividend > 0 && shares > 0 && (
                                                 <div className="flex justify-between items-center w-full text-xs text-primary-foreground/80 pt-1 border-t border-primary-foreground/20">
                                                     <span className="opacity-90">Auszahlung pro {frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'}:</span>
-                                                    <span className="font-mono font-bold text-primary-foreground">
+                                                    <span className="font-bold text-primary-foreground">
                                                         {(() => {
                                                             const payoutNative = (shares * dividend) / freqFactor;
                                                             if (simCurrency === 'GBp') {
