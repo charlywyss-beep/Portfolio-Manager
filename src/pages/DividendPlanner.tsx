@@ -214,12 +214,24 @@ export function DividendPlanner() {
     }, [lastGlobalRefresh, isGlobalRefreshing, refreshAllPrices]);
 
     // Sorting
-    const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'yield' | 'amount' | 'date', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
+    type DividendSortKey =
+        | 'name'
+        | 'yield'
+        | 'shares'
+        | 'dividendPerShare'
+        | 'frequency'
+        | 'periodAmount'
+        | 'amount'
+        | 'exDate'
+        | 'payDate'
+        | 'date';
 
-    const handleSort = (key: 'name' | 'yield' | 'amount' | 'date') => {
+    const [sortConfig, setSortConfig] = useState<{ key: DividendSortKey, direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
+
+    const handleSort = (key: DividendSortKey) => {
         setSortConfig((prev) => {
-            const isSameKey = prev.key === key;
-            const defaultDir = key === 'name' ? 'asc' : 'desc';
+            const isSameKey = prev.key === key || (prev.key === 'date' && key === 'exDate') || (prev.key === 'exDate' && key === 'date');
+            const defaultDir = (key === 'name' || key === 'frequency' || key === 'exDate' || key === 'payDate' || key === 'date') ? 'asc' : 'desc';
             let newDir: 'asc' | 'desc';
             if (!isSameKey) {
                 newDir = defaultDir;
@@ -228,6 +240,11 @@ export function DividendPlanner() {
             }
             return { key, direction: newDir };
         });
+    };
+
+    const handleDropdownSort = (key: DividendSortKey) => {
+        const defaultDir = (key === 'name' || key === 'frequency' || key === 'exDate' || key === 'payDate' || key === 'date') ? 'asc' : 'desc';
+        setSortConfig({ key, direction: defaultDir });
     };
 
     // Persistent Tab State
@@ -249,22 +266,83 @@ export function DividendPlanner() {
                 : b.stock.name.localeCompare(a.stock.name);
         }
         if (sortConfig.key === 'yield') {
-            const yieldA = a.stock.dividendYield || 0;
-            const yieldB = b.stock.dividendYield || 0;
+            const getYield = (item: typeof a) => {
+                const s = item.stock;
+                const f = s.dividendFrequency === 'quarterly' ? 4 : s.dividendFrequency === 'semi-annually' ? 2 : s.dividendFrequency === 'monthly' ? 12 : 1;
+                const annualPayout = (s.dividendAmount && s.dividendAmount > 0) ? s.dividendAmount * f : 0;
+                const yieldCost = (annualPayout > 0 && item.position && item.position.buyPriceAvg > 0)
+                    ? (annualPayout / item.position.buyPriceAvg) * 100
+                    : null;
+                const marketYield = (annualPayout > 0 && s.currentPrice > 0)
+                    ? (annualPayout / s.currentPrice) * 100
+                    : (s.dividendYield || 0);
+                return yieldCost !== null ? yieldCost : marketYield;
+            };
+            const yieldA = getYield(a);
+            const yieldB = getYield(b);
             return sortConfig.direction === 'asc' ? yieldA - yieldB : yieldB - yieldA;
+        }
+        if (sortConfig.key === 'shares') {
+            const sharesA = a.position.shares || 0;
+            const sharesB = b.position.shares || 0;
+            return sortConfig.direction === 'asc' ? sharesA - sharesB : sharesB - sharesA;
+        }
+        if (sortConfig.key === 'dividendPerShare') {
+            const divA = a.stock.dividendAmount || 0;
+            const divB = b.stock.dividendAmount || 0;
+            return sortConfig.direction === 'asc' ? divA - divB : divB - divA;
+        }
+        if (sortConfig.key === 'frequency') {
+            const getFreqLabel = (f?: string) => {
+                if (f === 'annually') return 'Jährlich';
+                if (f === 'semi-annually') return 'Halbjährlich';
+                if (f === 'quarterly') return 'Quartalsweise';
+                if (f === 'monthly') return 'Monatlich';
+                return '-';
+            };
+            const labelA = getFreqLabel(a.stock.dividendFrequency);
+            const labelB = getFreqLabel(b.stock.dividendFrequency);
+            return sortConfig.direction === 'asc'
+                ? labelA.localeCompare(labelB)
+                : labelB.localeCompare(labelA);
+        }
+        if (sortConfig.key === 'periodAmount') {
+            const getPeriodCHF = (item: typeof a) => {
+                const f = item.stock.dividendFrequency === 'quarterly' ? 4 : item.stock.dividendFrequency === 'semi-annually' ? 2 : item.stock.dividendFrequency === 'monthly' ? 12 : 1;
+                return item.annualDividendCHF / f;
+            };
+            const amtA = getPeriodCHF(a);
+            const amtB = getPeriodCHF(b);
+            return sortConfig.direction === 'asc' ? amtA - amtB : amtB - amtA;
         }
         if (sortConfig.key === 'amount') {
             return sortConfig.direction === 'asc'
                 ? a.annualDividendCHF - b.annualDividendCHF
                 : b.annualDividendCHF - a.annualDividendCHF;
         }
-        if (sortConfig.key === 'date') {
-            // Sort by next Ex-Date or Pay-Date
-            const dateA = a.stock.dividendExDate || '9999-12-31';
-            const dateB = b.stock.dividendExDate || '9999-12-31';
-            return sortConfig.direction === 'asc'
-                ? dateA.localeCompare(dateB)
-                : dateB.localeCompare(dateA);
+        if (sortConfig.key === 'exDate' || sortConfig.key === 'date') {
+            const divA = getCurrentDividendPeriod(a.stock);
+            const divB = getCurrentDividendPeriod(b.stock);
+            const dateA = divA.exDate;
+            const dateB = divB.exDate;
+            if (!dateA && !dateB) return 0;
+            if (!dateA) return 1;
+            if (!dateB) return -1;
+            const timeA = new Date(dateA).getTime();
+            const timeB = new Date(dateB).getTime();
+            return sortConfig.direction === 'asc' ? timeA - timeB : timeB - timeA;
+        }
+        if (sortConfig.key === 'payDate') {
+            const divA = getCurrentDividendPeriod(a.stock);
+            const divB = getCurrentDividendPeriod(b.stock);
+            const dateA = divA.payDate;
+            const dateB = divB.payDate;
+            if (!dateA && !dateB) return 0;
+            if (!dateA) return 1;
+            if (!dateB) return -1;
+            const timeA = new Date(dateA).getTime();
+            const timeB = new Date(dateB).getTime();
+            return sortConfig.direction === 'asc' ? timeA - timeB : timeB - timeA;
         }
         return 0;
     });
@@ -416,14 +494,19 @@ export function DividendPlanner() {
 
                         <div className="flex items-center gap-3">
                             <select
-                                className="pl-3 pr-8 py-1.5 rounded-lg border border-border bg-card text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer"
-                                value={sortConfig.key}
-                                onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
+                                className="pl-3 pr-8 py-1.5 rounded-lg border border-border bg-card text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm cursor-pointer"
+                                value={sortConfig.key === 'date' ? 'exDate' : sortConfig.key}
+                                onChange={(e) => handleDropdownSort(e.target.value as DividendSortKey)}
                             >
-                                <option value="name">Name (A-Z)</option>
+                                <option value="name">Aktie (A-Z)</option>
                                 <option value="yield">Rendite % (Hoch)</option>
-                                <option value="amount">Betrag (Hoch)</option>
-                                <option value="date">Datum (Nächstes)</option>
+                                <option value="shares">Anteile (Viel)</option>
+                                <option value="dividendPerShare">Div./Akt. (Hoch)</option>
+                                <option value="frequency">Frequenz</option>
+                                <option value="periodAmount">Frequenzweise (Hoch)</option>
+                                <option value="amount">Jährlich (CHF) (Hoch)</option>
+                                <option value="exDate">EX-Tag (Datum)</option>
+                                <option value="payDate">Zahl-Tag (Datum)</option>
                             </select>
                         </div>
                     </div>
@@ -513,9 +596,22 @@ export function DividendPlanner() {
                                     )}
                                 >
                                     <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
-                                        <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
-                                            Anteile
-                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleSort('shares');
+                                            }}
+                                            className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-xs sm:text-[13px] truncate"
+                                        >
+                                            <span className="truncate">Anteile</span>
+                                            {sortConfig.key === 'shares' && (
+                                                <span className="font-bold text-sm text-primary shrink-0">
+                                                    {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                                </span>
+                                            )}
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={(e) => {
@@ -531,7 +627,18 @@ export function DividendPlanner() {
                                             <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                         </button>
                                     </div>
-                                    <span className="hidden xl:inline">Anteile</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSort('shares')}
+                                        className="hidden xl:inline-flex items-center gap-1 hover:text-foreground cursor-pointer select-none text-inherit uppercase"
+                                    >
+                                        <span>Anteile</span>
+                                        {sortConfig.key === 'shares' && (
+                                            <span className="font-bold text-xs">
+                                                {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                            </span>
+                                        )}
+                                    </button>
                                 </th>
 
                                 {/* 3. Div./Akt. */}
@@ -556,11 +663,35 @@ export function DividendPlanner() {
                                         >
                                             <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                         </button>
-                                        <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
-                                            Div./Akt.
-                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleSort('dividendPerShare');
+                                            }}
+                                            className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-xs sm:text-[13px] truncate"
+                                        >
+                                            <span className="truncate">Div./Akt.</span>
+                                            {sortConfig.key === 'dividendPerShare' && (
+                                                <span className="font-bold text-sm text-primary shrink-0">
+                                                    {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                                </span>
+                                            )}
+                                        </button>
                                     </div>
-                                    <span className="hidden xl:inline">Div./Akt.</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSort('dividendPerShare')}
+                                        className="hidden xl:inline-flex items-center gap-1 hover:text-foreground cursor-pointer select-none text-inherit uppercase"
+                                    >
+                                        <span>Div./Akt.</span>
+                                        {sortConfig.key === 'dividendPerShare' && (
+                                            <span className="font-bold text-xs">
+                                                {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                            </span>
+                                        )}
+                                    </button>
                                 </th>
 
                                 {/* 4. Frequenz */}
@@ -571,9 +702,22 @@ export function DividendPlanner() {
                                     )}
                                 >
                                     <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
-                                        <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
-                                            Frequenz
-                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleSort('frequency');
+                                            }}
+                                            className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-xs sm:text-[13px] truncate"
+                                        >
+                                            <span className="truncate">Frequenz</span>
+                                            {sortConfig.key === 'frequency' && (
+                                                <span className="font-bold text-sm text-primary shrink-0">
+                                                    {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                                </span>
+                                            )}
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={(e) => {
@@ -589,7 +733,18 @@ export function DividendPlanner() {
                                             <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                         </button>
                                     </div>
-                                    <span className="hidden xl:inline">Frequenz</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSort('frequency')}
+                                        className="hidden xl:inline-flex items-center gap-1 hover:text-foreground cursor-pointer select-none text-inherit uppercase"
+                                    >
+                                        <span>Frequenz</span>
+                                        {sortConfig.key === 'frequency' && (
+                                            <span className="font-bold text-xs">
+                                                {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                            </span>
+                                        )}
+                                    </button>
                                 </th>
 
                                 {/* 5. Frequenzweise */}
@@ -614,11 +769,35 @@ export function DividendPlanner() {
                                         >
                                             <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                         </button>
-                                        <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
-                                            Frequenzweise
-                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleSort('periodAmount');
+                                            }}
+                                            className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-xs sm:text-[13px] truncate"
+                                        >
+                                            <span className="truncate">Frequenzweise</span>
+                                            {sortConfig.key === 'periodAmount' && (
+                                                <span className="font-bold text-sm text-primary shrink-0">
+                                                    {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                                </span>
+                                            )}
+                                        </button>
                                     </div>
-                                    <span className="hidden xl:inline">Frequenzweise</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSort('periodAmount')}
+                                        className="hidden xl:inline-flex items-center gap-1 hover:text-foreground cursor-pointer select-none text-inherit uppercase"
+                                    >
+                                        <span>Frequenzweise</span>
+                                        {sortConfig.key === 'periodAmount' && (
+                                            <span className="font-bold text-xs">
+                                                {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                            </span>
+                                        )}
+                                    </button>
                                 </th>
 
                                 {/* 6. Jährlich */}
@@ -701,12 +880,12 @@ export function DividendPlanner() {
                                             onClick={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
-                                                handleSort('date');
+                                                handleSort('exDate');
                                             }}
                                             className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-xs sm:text-[13px] truncate"
                                         >
                                             <span className="truncate">EX-Tag</span>
-                                            {sortConfig.key === 'date' && (
+                                            {(sortConfig.key === 'exDate' || sortConfig.key === 'date') && (
                                                 <span className="font-bold text-sm text-primary shrink-0">
                                                     {sortConfig.direction === 'desc' ? '↓' : '↑'}
                                                 </span>
@@ -715,11 +894,11 @@ export function DividendPlanner() {
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={() => handleSort('date')}
+                                        onClick={() => handleSort('exDate')}
                                         className="hidden xl:inline-flex items-center gap-1 hover:text-foreground cursor-pointer select-none text-inherit uppercase"
                                     >
                                         <span>EX-Tag</span>
-                                        {sortConfig.key === 'date' && (
+                                        {(sortConfig.key === 'exDate' || sortConfig.key === 'date') && (
                                             <span className="font-bold text-xs">
                                                 {sortConfig.direction === 'desc' ? '↓' : '↑'}
                                             </span>
@@ -735,9 +914,22 @@ export function DividendPlanner() {
                                     )}
                                 >
                                     <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
-                                        <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
-                                            Zahl-Tag
-                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleSort('payDate');
+                                            }}
+                                            className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-md text-foreground hover:bg-muted active:bg-muted/70 transition-colors cursor-pointer select-none font-semibold text-xs sm:text-[13px] truncate"
+                                        >
+                                            <span className="truncate">Zahl-Tag</span>
+                                            {sortConfig.key === 'payDate' && (
+                                                <span className="font-bold text-sm text-primary shrink-0">
+                                                    {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                                </span>
+                                            )}
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={(e) => {
@@ -753,7 +945,18 @@ export function DividendPlanner() {
                                             <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                         </button>
                                     </div>
-                                    <span className="hidden xl:inline">Zahl-Tag</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSort('payDate')}
+                                        className="hidden xl:inline-flex items-center gap-1 hover:text-foreground cursor-pointer select-none text-inherit uppercase"
+                                    >
+                                        <span>Zahl-Tag</span>
+                                        {sortConfig.key === 'payDate' && (
+                                            <span className="font-bold text-xs">
+                                                {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                            </span>
+                                        )}
+                                    </button>
                                 </th>
 
                                 {/* 9. Aktion */}
