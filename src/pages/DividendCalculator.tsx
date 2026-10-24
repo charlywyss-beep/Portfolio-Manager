@@ -2134,18 +2134,13 @@ export function DividendCalculator() {
                                         </div>
                                         <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1.5 border-t border-white/20">
                                             <span>
-                                                {simCurrency && simCurrency !== 'CHF' ? 'Gegenwert & Gebühren:' : 'Gebühren:'}
+                                                inkl. {totalFees.toFixed(0)} CHF Geb.
                                             </span>
                                             <span className="font-bold text-sm text-white">
                                                 {simCurrency && simCurrency !== 'CHF' ? (
-                                                    <>
-                                                        {(mode === 'buy' ? totalInvestNative : totalProceedsNative).toLocaleString('de-CH', { style: 'currency', currency: displayNativeCurrency, maximumFractionDigits: 0 })}
-                                                        {' • inkl. '}{totalFees.toFixed(0)} CHF Geb.
-                                                    </>
+                                                    (mode === 'buy' ? totalInvestNative : totalProceedsNative).toLocaleString('de-CH', { style: 'currency', currency: displayNativeCurrency, maximumFractionDigits: 0 })
                                                 ) : (
-                                                    <>
-                                                        {mode === 'buy' ? '+' : '-'}{totalFees.toFixed(0)} CHF Geb.
-                                                    </>
+                                                    ''
                                                 )}
                                             </span>
                                         </div>
