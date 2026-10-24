@@ -341,7 +341,12 @@ export function DividendPlanner() {
                         Ø Rendite
                     </span>
                     <div className="text-base sm:text-lg md:text-xl font-bold text-foreground">
-                        {(projectedDividends.reduce((acc, curr) => acc + (curr?.stock.dividendYield || 0), 0) / (projectedDividends.length || 1)).toFixed(2)}%
+                        {(projectedDividends.reduce((acc, curr) => {
+                            const s = curr?.stock;
+                            const f = s?.dividendFrequency === 'quarterly' ? 4 : s?.dividendFrequency === 'semi-annually' ? 2 : s?.dividendFrequency === 'monthly' ? 12 : 1;
+                            const y = (s?.dividendAmount && s?.currentPrice > 0) ? ((s.dividendAmount * f) / s.currentPrice) * 100 : (s?.dividendYield || 0);
+                            return acc + y;
+                        }, 0) / (projectedDividends.length || 1)).toFixed(2)}%
                     </div>
                 </div>
 
@@ -909,8 +914,23 @@ export function DividendPlanner() {
                                             <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 0 ? "table-cell" : "hidden xl:table-cell")}>
                                                 <div className="flex flex-col items-center xl:items-end justify-center">
                                                     <span className="text-sm font-bold text-green-600 dark:text-green-400 tabular-nums whitespace-nowrap">
-                                                        {stock.dividendYield?.toFixed(2)}%
+                                                        {(() => {
+                                                            const fFactor = stock.dividendFrequency === 'quarterly' ? 4 : stock.dividendFrequency === 'semi-annually' ? 2 : stock.dividendFrequency === 'monthly' ? 12 : 1;
+                                                            const effYield = (stock.dividendAmount && stock.currentPrice > 0)
+                                                                ? ((stock.dividendAmount * fFactor) / stock.currentPrice) * 100
+                                                                : (stock.dividendYield || 0);
+                                                            return `${effYield.toFixed(2)}%`;
+                                                        })()}
                                                     </span>
+                                                    {position.buyPriceAvg > 0 && stock.dividendAmount && (
+                                                        <span className="text-[10px] text-muted-foreground whitespace-nowrap font-medium" title="Dividendenrendite auf deinen Kaufpreis (Yield on Cost)">
+                                                            {(() => {
+                                                                const fFactor = stock.dividendFrequency === 'quarterly' ? 4 : stock.dividendFrequency === 'semi-annually' ? 2 : stock.dividendFrequency === 'monthly' ? 12 : 1;
+                                                                const yoc = ((stock.dividendAmount * fFactor) / position.buyPriceAvg) * 100;
+                                                                return `YoC ${yoc.toFixed(2)}%`;
+                                                            })()}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
 
