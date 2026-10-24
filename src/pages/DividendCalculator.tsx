@@ -1524,24 +1524,26 @@ export function DividendCalculator() {
                                 {/* Transaction details below selector always visible */}
 
                                 {/* Core Inputs - Compact Grid */}
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-start">
                                     <div className="space-y-1">
-                                        <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap">
-                                            Anzahl Anteile
-                                        </label>
+                                        <div className="h-5 flex items-center justify-between">
+                                            <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap">
+                                                Anzahl Anteile
+                                            </label>
+                                        </div>
                                         <LocalNumberInput
                                             value={shares}
                                             onChange={(val) => updateSimulatorState({ shares: val })}
                                             className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                         />
-                                        <div className="text-[10px] text-muted-foreground text-right mt-1">
-                                            {shares > 0 ? `${shares.toLocaleString('de-CH')} Stk.` : 'Stückzahl'}
+                                        <div className="text-[10px] text-muted-foreground text-right mt-1 h-4">
+                                            {shares > 0 ? `${shares.toLocaleString('de-CH')} Stk.` : ''}
                                         </div>
                                     </div>
 
                                     <div className="space-y-1">
-                                        <div className="flex justify-between items-center">
-                                            <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap">
+                                        <div className="h-5 flex items-center justify-between gap-1 overflow-hidden">
+                                            <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap truncate">
                                                 {mode === 'buy' ? 'Kaufpreis' : 'Verkaufspreis'} ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
                                             </label>
                                             {(stocks.find(s => s.id === selectedStockId)?.symbol) && (
@@ -1556,7 +1558,7 @@ export function DividendCalculator() {
                                                             updateSimulatorState({ price: val });
                                                         }
                                                     }}
-                                                    className="text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-1.5 py-0.5 rounded transition-colors -mr-1"
+                                                    className="text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-1.5 py-0.5 rounded transition-colors whitespace-nowrap shrink-0 leading-none -mr-1"
                                                     title="Aktuellen Kurs laden"
                                                 >
                                                     <RefreshCw className="size-3" /> Kurs laden
@@ -1569,16 +1571,18 @@ export function DividendCalculator() {
                                             onChange={(val) => updateSimulatorState({ price: val })}
                                             className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                         />
-                                        <div className="text-[10px] text-muted-foreground text-right mt-1">
-                                            Kurs pro Anteil
+                                        <div className="text-[10px] text-muted-foreground text-right mt-1 h-4">
+                                            pro Anteil
                                         </div>
                                     </div>
 
                                     <div className="space-y-1">
-                                        <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap flex items-center justify-between">
-                                            <span>Dividende ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})</span>
+                                        <div className="h-5 flex items-center justify-between">
+                                            <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap">
+                                                Dividende ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
+                                            </label>
                                             <span className="text-[9px] text-primary/70 font-normal">pro Jahr</span>
-                                        </label>
+                                        </div>
                                         <LocalNumberInput
                                             step="0.001"
                                             value={dividend && dividend > 0 ? parseFloat(dividend.toFixed(4)) : undefined}
@@ -1586,18 +1590,22 @@ export function DividendCalculator() {
                                             placeholder="0.00"
                                             className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                         />
-                                        <div className="text-[10px] text-muted-foreground text-right mt-1">
+                                        <div className="text-[10px] text-muted-foreground text-right mt-1 h-4 truncate">
                                             {dividend && dividend > 0 && frequency !== 'annually'
                                                 ? `↳ ${(dividend / freqFactor).toFixed(3)} ${simCurrency || 'CHF'} (${frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'})`
-                                                : (dividend && dividend > 0 ? `${dividend.toFixed(3)} ${simCurrency || 'CHF'} / Jahr` : 'Jahresausschüttung')}
+                                                : (dividend && dividend > 0 ? `${dividend.toFixed(3)} ${simCurrency || 'CHF'} / Jahr` : '')}
                                         </div>
                                     </div>
 
                                     <div className="space-y-1">
-                                        <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap flex items-center justify-between">
-                                            <span>Rendite (%)</span>
-                                            <span className="text-[9px] text-green-600 dark:text-green-400 font-normal">Brutto</span>
-                                        </label>
+                                        <div className="h-5 flex items-center justify-between">
+                                            <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap">
+                                                Rendite (% p.a.)
+                                            </label>
+                                            <span className="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase tracking-wider">
+                                                BRUTTO
+                                            </span>
+                                        </div>
                                         <div className="relative">
                                             <LocalNumberInput
                                                 step="0.01"
@@ -1615,8 +1623,8 @@ export function DividendCalculator() {
                                                 %
                                             </span>
                                         </div>
-                                        <div className="text-[10px] text-green-600 dark:text-green-400 font-medium text-right mt-1">
-                                            {price > 0 && dividend > 0 ? `${((dividend / price) * 100).toFixed(2)}% p.a.` : 'Brutto-Rendite'}
+                                        <div className="text-[10px] text-muted-foreground text-right mt-1 h-4">
+                                            Brutto p.a.
                                         </div>
                                     </div>
                                 </div>
