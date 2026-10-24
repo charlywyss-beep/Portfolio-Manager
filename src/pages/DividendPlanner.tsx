@@ -293,18 +293,23 @@ export function DividendPlanner() {
             return sortConfig.direction === 'asc' ? divA - divB : divB - divA;
         }
         if (sortConfig.key === 'frequency') {
-            const getFreqLabel = (f?: string) => {
-                if (f === 'annually') return 'Jährlich';
-                if (f === 'semi-annually') return 'Halbjährlich';
-                if (f === 'quarterly') return 'Quartalsweise';
-                if (f === 'monthly') return 'Monatlich';
-                return '-';
+            const freqOrder: Record<string, number> = {
+                'monthly': 1,
+                'quarterly': 2,
+                'semi-annually': 3,
+                'annually': 4,
             };
-            const labelA = getFreqLabel(a.stock.dividendFrequency);
-            const labelB = getFreqLabel(b.stock.dividendFrequency);
-            return sortConfig.direction === 'asc'
-                ? labelA.localeCompare(labelB)
-                : labelB.localeCompare(labelA);
+            const rankA = freqOrder[a.stock.dividendFrequency || ''] ?? 99;
+            const rankB = freqOrder[b.stock.dividendFrequency || ''] ?? 99;
+            if (rankA === 99 && rankB === 99) {
+                return a.stock.name.localeCompare(b.stock.name);
+            }
+            if (rankA === 99) return 1;
+            if (rankB === 99) return -1;
+            if (rankA !== rankB) {
+                return sortConfig.direction === 'asc' ? rankA - rankB : rankB - rankA;
+            }
+            return a.stock.name.localeCompare(b.stock.name);
         }
         if (sortConfig.key === 'periodAmount') {
             const getPeriodCHF = (item: typeof a) => {
