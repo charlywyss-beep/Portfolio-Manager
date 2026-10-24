@@ -28,6 +28,9 @@ const LocalNumberInput = ({ value, onChange, className, step = "any", title, pla
         if (value !== undefined && value !== lastEmitted.current) {
             setLocalValue(value.toString());
             lastEmitted.current = value;
+        } else if (value === undefined && lastEmitted.current !== undefined) {
+            setLocalValue('');
+            lastEmitted.current = undefined;
         }
     }, [value]);
 
@@ -550,8 +553,17 @@ export function DividendCalculator() {
     }, [searchParams]);
 
     // Reactive synchronization when stock ID changes
+    const lastSyncedStockIdRef = useRef<string | null>(null);
     useEffect(() => {
-        if (!selectedStockId || selectedStockId === 'new') return;
+        if (!selectedStockId || selectedStockId === 'new') {
+            lastSyncedStockIdRef.current = null;
+            return;
+        }
+
+        // Only run when selectedStockId genuinely changes to a different stock
+        // Prevents overwriting manual edits (dividend, yield, frequency) by the user
+        if (selectedStockId === lastSyncedStockIdRef.current) return;
+        lastSyncedStockIdRef.current = selectedStockId;
 
         const stock = stocks.find(s => s.id === selectedStockId);
         if (stock) {
@@ -566,23 +578,18 @@ export function DividendCalculator() {
             else if (stockFreq === 'monthly') annualDiv *= 12;
             else if (stockFreq === 'semi-annually') annualDiv *= 2;
 
-            // Update state ONLY if it's different to prevent loops
-            const isDivDiff = Math.abs(dividend - annualDiv) > 0.001;
-
-            if (stock.currency !== simCurrency || stock.symbol !== simSymbol || isDivDiff || (stock.dividendFrequency && stock.dividendFrequency !== simFrequency)) {
-                updateSimulatorState({
-                    simName: stock.name,
-                    simSymbol: stock.symbol,
-                    simIsin: stock.isin || '',
-                    simCurrency: stock.currency,
-                    simFrequency: stockFreq,
-                    price: stock.currentPrice,
-                    dividend: annualDiv,
-                    fees: { ...fees, stampDutyPercent: newStamp },
-                });
-            }
+            updateSimulatorState({
+                simName: stock.name,
+                simSymbol: stock.symbol,
+                simIsin: stock.isin || '',
+                simCurrency: stock.currency,
+                simFrequency: stockFreq,
+                price: stock.currentPrice,
+                dividend: (stock.distributionPolicy === 'accumulating') ? 0 : annualDiv,
+                fees: { ...fees, stampDutyPercent: newStamp },
+            });
         }
-    }, [selectedStockId, stocks, simCurrency, simSymbol, dividend]);
+    }, [selectedStockId, stocks, updateSimulatorState]);
 
     // Derived Logic & Currency Conversion for TOTALS only
     // 1. Calculate Volume in Native Currency
@@ -1995,7 +2002,7 @@ export function DividendCalculator() {
 
                                     {/* Yield Info (Buy Mode) */}
                                     {mode === 'buy' && (
-                                        <div className="p-3 bg-primary text-primary-foreground rounded-lg space-y-2 text-sm shadow-sm flex items-center justify-between">
+                                        <div className="p-3 bg-primary text-primary-foreground rounded-lg space-y-1.5 text-sm shadow-sm">
                                             <div className="flex justify-between items-center w-full">
                                                 <span className="opacity-90 font-medium">Erw. Jährliche Dividende:</span>
                                                 <span className="text-xl font-bold text-primary-foreground">
@@ -2008,6 +2015,20 @@ export function DividendCalculator() {
                                                     })()}
                                                 </span>
                                             </div>
+                                            {frequency !== 'annually' && dividend > 0 && shares > 0 && (
+                                                <div className="flex justify-between items-center w-full text-xs text-primary-foreground/80 pt-1 border-t border-primary-foreground/20">
+                                                    <span className="opacity-90">Auszahlung pro {frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'}:</span>
+                                                    <span className="font-mono font-bold text-primary-foreground">
+                                                        {(() => {
+                                                            const payoutNative = (shares * dividend) / freqFactor;
+                                                            if (simCurrency === 'GBp') {
+                                                                return (payoutNative / 100).toLocaleString('de-CH', { style: 'currency', currency: 'GBP' });
+                                                            }
+                                                            return payoutNative.toLocaleString('de-CH', { style: 'currency', currency: simCurrency || 'CHF' });
+                                                        })()}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -2046,7 +2067,13 @@ export function DividendCalculator() {
                                             <span className="text-xl font-bold text-foreground leading-none">
                                                 {annualDividendCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                                             </span>
-                                            {mode === 'sell' && <span className="text-[10px] text-red-500 font-medium">Verlust an Div.</span>}
+                                            {frequency !== 'annually' && annualDividendCHF > 0 ? (
+                                                <span className="text-[10px] text-muted-foreground mt-0.5 font-medium">
+                                                    ≈ {(annualDividendCHF / freqFactor).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })} / {frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'}
+                                                </span>
+                                            ) : (
+                                                mode === 'sell' && <span className="text-[10px] text-red-500 font-medium">Verlust an Div.</span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
