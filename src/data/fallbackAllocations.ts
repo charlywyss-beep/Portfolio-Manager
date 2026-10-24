@@ -1,11 +1,10 @@
-
 export interface AllocationData {
     sectorWeights: Record<string, number>;
     countryWeights: Record<string, number>;
 }
 
 export const FALLBACK_ALLOCATIONS: Record<string, AllocationData> = {
-    // Vanguard FTSE All-World UCITS ETF (USD) Accumulating
+    // Vanguard FTSE All-World UCITS ETF (USD) Accumulating / Distributing
     // Tickers: VWRA.L, VWRP.L, VWRL.AS, etc.
     'VWRA.L': {
         sectorWeights: {
@@ -41,7 +40,6 @@ export const FALLBACK_ALLOCATIONS: Record<string, AllocationData> = {
             other: 4.7
         }
     },
-    // Adding VWRL.AS and others just in case
     'VWRL.AS': {
         sectorWeights: {
             technology: 31.6,
@@ -74,6 +72,124 @@ export const FALLBACK_ALLOCATIONS: Record<string, AllocationData> = {
             denmark: 0.8,
             italy: 0.6,
             other: 4.7
+        }
+    },
+    // Vanguard FTSE All-World High Dividend Yield UCITS ETF (USD) Distributing / Accumulating
+    // Tickers: VHYL.AS, VHYL.L, VHYD.SW, VHYL
+    'VHYL.AS': {
+        sectorWeights: {
+            financial_services: 26.2,
+            industrials: 11.4,
+            consumer_defensive: 10.3,
+            healthcare: 9.8,
+            technology: 9.1,
+            energy: 8.7,
+            utilities: 6.2,
+            basic_materials: 5.8,
+            consumer_cyclical: 5.6,
+            communication_services: 4.8,
+            realestate: 2.1
+        },
+        countryWeights: {
+            us: 42.5,
+            japan: 7.8,
+            uk: 7.4,
+            switzerland: 6.5,
+            australia: 4.2,
+            germany: 4.1,
+            france: 3.8,
+            canada: 3.4,
+            taiwan: 2.8,
+            china: 2.5,
+            netherlands: 1.8,
+            other: 13.2
+        }
+    },
+    'VHYL.L': {
+        sectorWeights: {
+            financial_services: 26.2,
+            industrials: 11.4,
+            consumer_defensive: 10.3,
+            healthcare: 9.8,
+            technology: 9.1,
+            energy: 8.7,
+            utilities: 6.2,
+            basic_materials: 5.8,
+            consumer_cyclical: 5.6,
+            communication_services: 4.8,
+            realestate: 2.1
+        },
+        countryWeights: {
+            us: 42.5,
+            japan: 7.8,
+            uk: 7.4,
+            switzerland: 6.5,
+            australia: 4.2,
+            germany: 4.1,
+            france: 3.8,
+            canada: 3.4,
+            taiwan: 2.8,
+            china: 2.5,
+            netherlands: 1.8,
+            other: 13.2
+        }
+    },
+    'VHYD.SW': {
+        sectorWeights: {
+            financial_services: 26.2,
+            industrials: 11.4,
+            consumer_defensive: 10.3,
+            healthcare: 9.8,
+            technology: 9.1,
+            energy: 8.7,
+            utilities: 6.2,
+            basic_materials: 5.8,
+            consumer_cyclical: 5.6,
+            communication_services: 4.8,
+            realestate: 2.1
+        },
+        countryWeights: {
+            us: 42.5,
+            japan: 7.8,
+            uk: 7.4,
+            switzerland: 6.5,
+            australia: 4.2,
+            germany: 4.1,
+            france: 3.8,
+            canada: 3.4,
+            taiwan: 2.8,
+            china: 2.5,
+            netherlands: 1.8,
+            other: 13.2
+        }
+    },
+    'VHYL': {
+        sectorWeights: {
+            financial_services: 26.2,
+            industrials: 11.4,
+            consumer_defensive: 10.3,
+            healthcare: 9.8,
+            technology: 9.1,
+            energy: 8.7,
+            utilities: 6.2,
+            basic_materials: 5.8,
+            consumer_cyclical: 5.6,
+            communication_services: 4.8,
+            realestate: 2.1
+        },
+        countryWeights: {
+            us: 42.5,
+            japan: 7.8,
+            uk: 7.4,
+            switzerland: 6.5,
+            australia: 4.2,
+            germany: 4.1,
+            france: 3.8,
+            canada: 3.4,
+            taiwan: 2.8,
+            china: 2.5,
+            netherlands: 1.8,
+            other: 13.2
         }
     }
 };

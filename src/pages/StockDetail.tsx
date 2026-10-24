@@ -1080,9 +1080,9 @@ export function StockDetail() {
                 return (
                     <div className="space-y-6">
                         {(!effectiveSectorWeights && !effectiveCountryWeights) && (
-                            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 text-xs text-yellow-500 flex items-center gap-2">
-                                <span className="animate-pulse">●</span>
-                                <span>Lade Allokationsdaten von Yahoo... (Versuche ggf. Refresh oder einen US-Ticker wie VOO)</span>
+                            <div className="bg-muted/40 border border-border/60 rounded-xl p-4 text-xs text-muted-foreground flex items-center gap-2.5">
+                                <span className="text-amber-500 text-sm font-bold">ℹ</span>
+                                <span>Für diesen ETF stellt Yahoo Finance keine automatischen Allokationsdaten (Branchen- / Länderaufteilung) bereit.</span>
                             </div>
                         )}
 
