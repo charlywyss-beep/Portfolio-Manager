@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
-import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, ArrowLeft, HelpCircle, BookOpen } from 'lucide-react';
+import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, ArrowLeft, HelpCircle, BookOpen, AlertTriangle } from 'lucide-react';
 import { fetchStockHistory, searchStocks, fetchStockQuote } from '../services/yahoo-finance';
 
 import { jsPDF } from 'jspdf';
@@ -2082,10 +2082,55 @@ export function DividendCalculator() {
                                 </div>
                             </div>
 
+                            {/* Problemstaaten: Dänemark, Frankreich, Italien */}
+                            <div>
+                                <h3 className="font-semibold text-amber-500 flex items-center gap-2 mb-2">
+                                    <span className="flex items-center justify-center size-5 rounded-full bg-amber-500/20 text-amber-500 text-xs font-bold">4</span>
+                                    <AlertTriangle className="size-4 text-amber-500 inline" />
+                                    Problemstaaten für Dividenden (Dänemark, Frankreich, Italien)
+                                </h3>
+                                <div className="space-y-2.5">
+                                    <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/5 space-y-2 text-xs">
+                                        <div className="font-bold text-foreground flex items-center gap-2">
+                                            <span>🇩🇰</span> Dänemark (z. B. Novo Nordisk):
+                                        </div>
+                                        <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+                                            <li><strong className="text-foreground">Kauf:</strong> Stempelsteuer <strong className="text-foreground">Ausland 0.15%</strong> (Währung DKK).</li>
+                                            <li><strong className="text-red-400 font-semibold">Dividendenfalle:</strong> Dänemark zieht <strong className="text-foreground">27%</strong> Quellensteuer ab. Die Schweiz rechnet im DA-1-Steuerformular maximal <strong className="text-foreground">15%</strong> an.</li>
+                                            <li><strong className="text-foreground">Konsequenz:</strong> Die verbleibenden <strong className="text-amber-400">12%</strong> müssen in Kopenhagen beim <em>Skattestyrelsen</em> mühsam und mit hohen Bankspesen zurückgefordert werden – für Kleinanleger oft ein De-Facto-Verlust.</li>
+                                        </ul>
+                                    </div>
+
+                                    <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/5 space-y-2 text-xs">
+                                        <div className="font-bold text-foreground flex items-center gap-2">
+                                            <span>🇫🇷</span> Frankreich (z. B. TotalEnergies, LVMH, Sanofi):
+                                        </div>
+                                        <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+                                            <li><strong className="text-foreground">Kauf & Transaktionssteuer:</strong> Neben der Schweizer Stempelsteuer (0.15%) erhebt Frankreich eine eigene <strong className="text-foreground">Finanztransaktionssteuer (FTT) von 0.30%</strong> auf Käufe französischer Grosskonzerne.</li>
+                                            <li><strong className="text-red-400 font-semibold">Dividendenfalle:</strong> Frankreich zieht <strong className="text-foreground">25%</strong> Quellensteuer ab (DA-1 erstattet nur 15%). Ohne teure Vorab-Befreiung durch die Bank gehen 10% verloren.</li>
+                                        </ul>
+                                    </div>
+
+                                    <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/5 space-y-2 text-xs">
+                                        <div className="font-bold text-foreground flex items-center gap-2">
+                                            <span>🇮🇹</span> Italien (z. B. Enel, Eni, Intesa Sanpaolo):
+                                        </div>
+                                        <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+                                            <li><strong className="text-foreground">Kauf & Transaktionssteuer:</strong> Italien verlangt zusätzlich eine <strong className="text-foreground">Tobin Tax (FTT) von 0.10%</strong> auf den Kaufwert.</li>
+                                            <li><strong className="text-red-400 font-semibold">Dividendenfalle:</strong> <strong className="text-foreground">26%</strong> Quellensteuer. Eine Rückforderung der verbleibenden 11% in Italien gilt wegen jahrelanger Verfahren in Rom als praktisch aussichtslos.</li>
+                                        </ul>
+                                    </div>
+
+                                    <div className="p-2.5 rounded-lg bg-green-500/10 border border-green-500/20 text-[11px] text-muted-foreground">
+                                        <span className="font-semibold text-green-500">✅ Dividenden-freundliche Alternativen:</span> <strong>Schweiz</strong> (100% Rückerstattung über Steuererklärung), <strong>USA</strong> (15% dank W-8BEN zu 100% über DA-1 anrechenbar) und <strong>Grossbritannien</strong> (0% Quellensteuer auf Dividenden!).
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Rendite */}
                             <div>
                                 <h3 className="font-semibold text-primary flex items-center gap-2 mb-2">
-                                    <span className="flex items-center justify-center size-5 rounded-full bg-primary/20 text-primary text-xs font-bold">4</span>
+                                    <span className="flex items-center justify-center size-5 rounded-full bg-primary/20 text-primary text-xs font-bold">5</span>
                                     Brutto- vs. Netto-Rendite
                                 </h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
