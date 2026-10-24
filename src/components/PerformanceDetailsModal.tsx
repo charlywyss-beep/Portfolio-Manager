@@ -124,13 +124,15 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     const todayDateLabel = new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-            <div className="absolute bg-black/50 rounded-xl" style={{
-                width: 'min(calc(100vw - 2rem), calc(56rem + 300px))',
-                height: 'min(calc(100vh - 2rem), calc(85vh + 240px))'
-            }}></div>
-            <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-[95vw] md:max-w-4xl max-h-[85vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10">
-                <div className="flex items-center justify-between p-4 border-b border-border">
+        <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 md:py-3"
+            onClick={onClose}
+        >
+            <div
+                className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-[95vw] md:max-w-4xl max-h-[96vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10 overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                     <h2 className="text-lg font-bold flex items-center gap-2">
                         <TrendingUp className="size-5 text-blue-500" />
                         Performance Details
@@ -163,8 +165,8 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                 </div>
 
                 {/* Summary Totals */}
-                <div className="grid grid-cols-2 gap-4 p-4 bg-muted/20 border-b border-border shrink-0">
-                    <div className="bg-card p-3 rounded-lg border border-border shadow-sm flex flex-col justify-between">
+                <div className="grid grid-cols-2 gap-3 p-3 bg-muted/20 border-b border-border shrink-0">
+                    <div className="bg-card p-2.5 px-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between">
                         <span className="text-xs text-muted-foreground font-medium mb-1 truncate">Tages-Performance</span>
                         <span className={cn(
                             "text-base sm:text-lg md:text-xl font-bold tracking-tight",
@@ -173,7 +175,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                             {totalDailyGain >= 0 ? '+' : ''}{formatCurrency(totalDailyGain, 'CHF')}
                         </span>
                     </div>
-                    <div className="bg-card p-3 rounded-lg border border-border shadow-sm flex flex-col justify-between">
+                    <div className="bg-card p-2.5 px-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between">
                         <span className="text-xs text-muted-foreground font-medium mb-1 truncate">Gesamt-Performance</span>
                         <span className={cn(
                             "text-base sm:text-lg md:text-xl font-bold tracking-tight",
@@ -387,7 +389,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         className="hover:bg-muted/30 transition-colors cursor-pointer group border-b border-border/50 snap-start snap-always h-[60px] md:h-auto"
                                     >
                                         {/* 0. Aktie / ETF */}
-                                        <td className="px-3 py-1.5 md:py-3 md:px-4 h-[60px] md:h-auto font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] overflow-hidden touch-pan-y align-middle">
+                                        <td className="px-3 py-1.5 md:py-2.5 md:px-4 h-[60px] md:h-auto font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] overflow-hidden touch-pan-y align-middle">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="flex items-center gap-2 md:gap-3 relative">
                                                 <Logo
@@ -418,7 +420,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 1. Current Price (Original currency only) */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-right font-medium whitespace-nowrap align-middle md:w-[80px]",
+                                                "px-3 py-1.5 md:py-2.5 md:px-1 h-[60px] md:h-auto text-right font-medium whitespace-nowrap align-middle md:w-[80px]",
                                                 mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
                                             )}
                                         >
@@ -430,7 +432,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 2. Daily Performance % */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle md:w-[70px]",
+                                                "px-3 py-1.5 md:py-2.5 md:px-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle md:w-[70px]",
                                                 mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell",
                                                 isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                             )}
@@ -441,7 +443,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 3. Daily Performance CHF */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-3 md:pr-4 md:pl-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle md:w-[90px]",
+                                                "px-3 py-1.5 md:py-2.5 md:pr-4 md:pl-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle md:w-[90px]",
                                                 mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell",
                                                 isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                             )}
@@ -455,7 +457,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 4. Total Performance % */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-3 md:px-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle md:w-[60px]",
+                                                "px-3 py-1.5 md:py-2.5 md:px-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle md:w-[60px]",
                                                 mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell",
                                                 isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                             )}
@@ -466,7 +468,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 5. Total Performance CHF */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-3 md:pr-4 md:pl-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle md:w-[150px]",
+                                                "px-3 py-1.5 md:py-2.5 md:pr-4 md:pl-1 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle md:w-[150px]",
                                                 mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell",
                                                 isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                             )}
