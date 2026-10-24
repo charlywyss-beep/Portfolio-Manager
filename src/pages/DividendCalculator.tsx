@@ -2048,7 +2048,49 @@ export function DividendCalculator() {
                                         </div>
                                     </div>
 
-                                    {/* Field 1: Native Foreign Currency Dividend (e.g. EUR) */}
+                                    {/* Field 1: Investition Total */}
+                                    <div className="p-2 px-3 bg-blue-600 text-white rounded-lg space-y-1 text-xs shadow-sm">
+                                        <div className="flex justify-between items-center w-full">
+                                            <span className="font-semibold text-white">
+                                                {mode === 'buy' ? 'Investition Total:' : 'Netto Erlös:'}
+                                            </span>
+                                            <span className="text-lg font-bold text-white leading-tight">
+                                                {(mode === 'buy' ? totalInvestCHF : totalProceedsCHF).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1 border-t border-white/20">
+                                            <span>
+                                                inkl. {totalFees.toFixed(0)} CHF Geb.
+                                            </span>
+                                            <span className="font-bold text-xs text-white">
+                                                {simCurrency && simCurrency !== 'CHF' ? (
+                                                    (mode === 'buy' ? totalInvestNative : totalProceedsNative).toLocaleString('de-CH', { style: 'currency', currency: displayNativeCurrency, maximumFractionDigits: 0 })
+                                                ) : (
+                                                    ''
+                                                )}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Field 2: Brutto & Netto Rendite */}
+                                    {mode === 'buy' && (
+                                        <div className="p-2 px-3 bg-blue-600 text-white rounded-lg space-y-1 text-xs shadow-sm">
+                                            <div className="flex justify-between items-center w-full">
+                                                <span className="font-semibold text-white">Brutto-Rendite:</span>
+                                                <span className="text-lg font-bold text-white leading-tight">
+                                                    {grossYield.toFixed(2)}%
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1 border-t border-white/20">
+                                                <span>Netto-Rendite:</span>
+                                                <span className="font-bold text-xs text-white">
+                                                    {netYield.toFixed(2)}%
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Field 3: Native Foreign Currency Dividend (e.g. EUR) */}
                                     {mode === 'buy' && simCurrency && simCurrency !== 'CHF' && (
                                         <div className="p-2 px-3 bg-blue-600 text-white rounded-lg space-y-1 text-xs shadow-sm">
                                             <div className="flex justify-between items-center w-full">
@@ -2080,7 +2122,7 @@ export function DividendCalculator() {
                                         </div>
                                     )}
 
-                                    {/* Field 2: CHF Dividend */}
+                                    {/* Field 4: CHF Dividend */}
                                     {mode === 'buy' && (
                                         <div className="p-2 px-3 bg-blue-600 text-white rounded-lg space-y-1 text-xs shadow-sm">
                                             <div className="flex justify-between items-center w-full">
@@ -2097,48 +2139,6 @@ export function DividendCalculator() {
                                                     {frequency !== 'annually' && annualDividendCHF > 0
                                                         ? (annualDividendCHF / freqFactor).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })
                                                         : '1x im Jahr'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Field 3: Investition Total */}
-                                    <div className="p-2 px-3 bg-blue-600 text-white rounded-lg space-y-1 text-xs shadow-sm">
-                                        <div className="flex justify-between items-center w-full">
-                                            <span className="font-semibold text-white">
-                                                {mode === 'buy' ? 'Investition Total:' : 'Netto Erlös:'}
-                                            </span>
-                                            <span className="text-lg font-bold text-white leading-tight">
-                                                {(mode === 'buy' ? totalInvestCHF : totalProceedsCHF).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1 border-t border-white/20">
-                                            <span>
-                                                inkl. {totalFees.toFixed(0)} CHF Geb.
-                                            </span>
-                                            <span className="font-bold text-xs text-white">
-                                                {simCurrency && simCurrency !== 'CHF' ? (
-                                                    (mode === 'buy' ? totalInvestNative : totalProceedsNative).toLocaleString('de-CH', { style: 'currency', currency: displayNativeCurrency, maximumFractionDigits: 0 })
-                                                ) : (
-                                                    ''
-                                                )}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Field 4: Brutto & Netto Rendite */}
-                                    {mode === 'buy' && (
-                                        <div className="p-2 px-3 bg-blue-600 text-white rounded-lg space-y-1 text-xs shadow-sm">
-                                            <div className="flex justify-between items-center w-full">
-                                                <span className="font-semibold text-white">Brutto-Rendite:</span>
-                                                <span className="text-lg font-bold text-white leading-tight">
-                                                    {grossYield.toFixed(2)}%
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1 border-t border-white/20">
-                                                <span>Netto-Rendite:</span>
-                                                <span className="font-bold text-xs text-white">
-                                                    {netYield.toFixed(2)}%
                                                 </span>
                                             </div>
                                         </div>
