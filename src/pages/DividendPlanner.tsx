@@ -913,24 +913,32 @@ export function DividendPlanner() {
                                             {/* 2. Rendite % */}
                                             <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 0 ? "table-cell" : "hidden xl:table-cell")}>
                                                 <div className="flex flex-col items-center xl:items-end justify-center">
-                                                    <span className="text-sm font-bold text-green-600 dark:text-green-400 tabular-nums whitespace-nowrap">
-                                                        {(() => {
-                                                            const fFactor = stock.dividendFrequency === 'quarterly' ? 4 : stock.dividendFrequency === 'semi-annually' ? 2 : stock.dividendFrequency === 'monthly' ? 12 : 1;
-                                                            const effYield = (stock.dividendAmount && stock.currentPrice > 0)
-                                                                ? ((stock.dividendAmount * fFactor) / stock.currentPrice) * 100
-                                                                : (stock.dividendYield || 0);
-                                                            return `${effYield.toFixed(2)}%`;
-                                                        })()}
-                                                    </span>
-                                                    {position.buyPriceAvg > 0 && stock.dividendAmount && (
-                                                        <span className="text-[10px] text-muted-foreground whitespace-nowrap font-medium" title="Dividendenrendite auf deinen Kaufpreis (Yield on Cost)">
-                                                            {(() => {
-                                                                const fFactor = stock.dividendFrequency === 'quarterly' ? 4 : stock.dividendFrequency === 'semi-annually' ? 2 : stock.dividendFrequency === 'monthly' ? 12 : 1;
-                                                                const yoc = ((stock.dividendAmount * fFactor) / position.buyPriceAvg) * 100;
-                                                                return `YoC ${yoc.toFixed(2)}%`;
-                                                            })()}
-                                                        </span>
-                                                    )}
+                                                    {(() => {
+                                                        const fFactor = stock.dividendFrequency === 'quarterly' ? 4 : stock.dividendFrequency === 'semi-annually' ? 2 : stock.dividendFrequency === 'monthly' ? 12 : 1;
+                                                        const annualPayout = (stock.dividendAmount && stock.dividendAmount > 0) ? stock.dividendAmount * fFactor : 0;
+                                                        const yieldCost = (annualPayout > 0 && position && position.buyPriceAvg > 0)
+                                                            ? (annualPayout / position.buyPriceAvg) * 100
+                                                            : null;
+                                                        const marketYield = (annualPayout > 0 && stock.currentPrice > 0)
+                                                            ? (annualPayout / stock.currentPrice) * 100
+                                                            : (stock.dividendYield || 0);
+
+                                                        const topYield = yieldCost !== null ? yieldCost : marketYield;
+                                                        const hasBoth = yieldCost !== null && Math.abs(yieldCost - marketYield) > 0.01;
+
+                                                        return (
+                                                            <>
+                                                                <span className="text-sm font-bold text-green-600 dark:text-green-400 tabular-nums whitespace-nowrap">
+                                                                    {topYield.toFixed(2)}%
+                                                                </span>
+                                                                {hasBoth && (
+                                                                    <span className="text-[10px] text-muted-foreground whitespace-nowrap font-medium" title="Rendite beim aktuellen Börsenkurs">
+                                                                        Kurs: {marketYield.toFixed(2)}%
+                                                                    </span>
+                                                                )}
+                                                            </>
+                                                        );
+                                                    })()}
                                                 </div>
                                             </td>
 

@@ -489,11 +489,28 @@ export function StockDetail() {
                                 <p className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 font-medium sm:mt-0.5 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded inline-block">
                                     Thesaurierend
                                 </p>
-                            ) : stock.dividendYield && (
-                                <p className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-medium sm:mt-0.5">
-                                    {stock.dividendYield.toFixed(2)}% Div.Rendite
-                                </p>
-                            )}
+                            ) : (() => {
+                                const pos = positions.find(p => p.stockId === stock.id);
+                                const freqFactor = stock.dividendFrequency === 'quarterly' ? 4 : stock.dividendFrequency === 'semi-annually' ? 2 : stock.dividendFrequency === 'monthly' ? 12 : 1;
+                                const annualPayout = (stock.dividendAmount && stock.dividendAmount > 0) ? stock.dividendAmount * freqFactor : 0;
+                                const yieldCost = (annualPayout > 0 && pos && pos.buyPriceAvg > 0) ? (annualPayout / pos.buyPriceAvg) * 100 : null;
+                                const marketYield = (annualPayout > 0 && stock.currentPrice > 0) ? (annualPayout / stock.currentPrice) * 100 : (stock.dividendYield || null);
+
+                                if (!marketYield && !yieldCost) return null;
+
+                                return (
+                                    <div className="flex flex-col items-end sm:mt-0.5 leading-tight">
+                                        <p className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-bold whitespace-nowrap">
+                                            {yieldCost !== null ? `${yieldCost.toFixed(2)}% Rendite (Käufe)` : `${marketYield?.toFixed(2)}% Div.Rendite`}
+                                        </p>
+                                        {yieldCost !== null && marketYield !== null && Math.abs(yieldCost - marketYield) > 0.01 && (
+                                            <p className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                Aktueller Kurs: {marketYield.toFixed(2)}%
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            })()}
 
                             {/* Dynamic Position Performance based on Chart Range */}
                             {(() => {
@@ -1015,8 +1032,26 @@ export function StockDetail() {
                         </div>
                         <div className="flex justify-between py-1.5 border-b border-border/50">
                             <span className="text-muted-foreground text-sm">Div. Rendite</span>
-                            <span className="font-medium text-sm">
-                                {stock.dividendYield ? `${stock.dividendYield.toFixed(2)}%` : '-'}
+                            <span className="font-medium text-sm text-right">
+                                {(() => {
+                                    const pos = positions.find(p => p.stockId === stock.id);
+                                    const freqFactor = stock.dividendFrequency === 'quarterly' ? 4 : stock.dividendFrequency === 'semi-annually' ? 2 : stock.dividendFrequency === 'monthly' ? 12 : 1;
+                                    const annualPayout = (stock.dividendAmount && stock.dividendAmount > 0) ? stock.dividendAmount * freqFactor : 0;
+                                    const yieldCost = (annualPayout > 0 && pos && pos.buyPriceAvg > 0) ? (annualPayout / pos.buyPriceAvg) * 100 : null;
+                                    const marketYield = (annualPayout > 0 && stock.currentPrice > 0) ? (annualPayout / stock.currentPrice) * 100 : (stock.dividendYield || null);
+
+                                    if (!marketYield && !yieldCost) return '-';
+
+                                    if (yieldCost !== null && marketYield !== null && Math.abs(yieldCost - marketYield) > 0.01) {
+                                        return (
+                                            <div className="flex flex-col items-end leading-tight">
+                                                <span className="font-bold text-green-600 dark:text-green-400">{yieldCost.toFixed(2)}% (Käufe)</span>
+                                                <span className="text-[11px] text-muted-foreground">Kurs: {marketYield.toFixed(2)}%</span>
+                                            </div>
+                                        );
+                                    }
+                                    return `${(yieldCost ?? marketYield)?.toFixed(2)}%`;
+                                })()}
                             </span>
                         </div>
                     </div>
