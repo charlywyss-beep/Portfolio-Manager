@@ -485,6 +485,7 @@ export function DividendCalculator() {
     // Watchlist Feedback
     const [showSuccess, setShowSuccess] = useState(false);
     const [showGuide, setShowGuide] = useState(false);
+    const [dividendInputMode, setDividendInputMode] = useState<'annual' | 'periodic'>('annual');
 
     // Price Editing State
     const [activeTab, setActiveTab] = useState<'search' | 'manual'>(selectedStockId === 'new' ? 'manual' : 'search');
@@ -1543,8 +1544,8 @@ export function DividendCalculator() {
                                             onChange={(val) => updateSimulatorState({ shares: val })}
                                             className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                         />
-                                        <div className="text-[10px] text-muted-foreground text-right mt-1 h-4">
-                                            {shares > 0 ? `${shares.toLocaleString('de-CH')} Stk.` : ''}
+                                        <div className="text-xs text-muted-foreground text-right mt-1.5 h-5 font-medium">
+                                            Stück
                                         </div>
                                     </div>
 
@@ -1578,7 +1579,7 @@ export function DividendCalculator() {
                                             onChange={(val) => updateSimulatorState({ price: val })}
                                             className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                         />
-                                        <div className="text-[10px] text-muted-foreground text-right mt-1 h-4">
+                                        <div className="text-xs text-muted-foreground text-right mt-1.5 h-5 font-medium">
                                             pro Anteil
                                         </div>
                                     </div>
@@ -1588,28 +1589,61 @@ export function DividendCalculator() {
                                             <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap truncate min-w-0">
                                                 Dividende ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
                                             </label>
-                                            <span className="text-[10px] text-blue-500 font-bold uppercase tracking-wider whitespace-nowrap shrink-0">
-                                                PRO JAHR
-                                            </span>
+                                            {frequency !== 'annually' ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setDividendInputMode(m => m === 'annual' ? 'periodic' : 'annual')}
+                                                    className="text-[10px] text-blue-500 hover:text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider whitespace-nowrap shrink-0 hover:underline cursor-pointer transition-colors"
+                                                    title="Klicken zum Umschalten zwischen Dividende im Jahr und Dividende pro Ausschüttung"
+                                                >
+                                                    {dividendInputMode === 'annual' ? 'PRO JAHR ⇄' : `PRO ${frequency === 'semi-annually' ? 'HALBJAHR' : frequency === 'quarterly' ? 'QUARTAL' : 'MONAT'} ⇄`}
+                                                </button>
+                                            ) : (
+                                                <span className="text-[10px] text-blue-500 font-bold uppercase tracking-wider whitespace-nowrap shrink-0">
+                                                    PRO JAHR
+                                                </span>
+                                            )}
                                         </div>
                                         <LocalNumberInput
                                             step="0.001"
-                                            value={dividend && dividend > 0 ? parseFloat(dividend.toFixed(4)) : undefined}
-                                            onChange={(val) => updateSimulatorState({ dividend: val })}
+                                            value={
+                                                dividend && dividend > 0
+                                                    ? (dividendInputMode === 'periodic' && frequency !== 'annually'
+                                                        ? parseFloat((dividend / freqFactor).toFixed(4))
+                                                        : parseFloat(dividend.toFixed(4)))
+                                                    : undefined
+                                            }
+                                            onChange={(val) => {
+                                                const annualVal = (dividendInputMode === 'periodic' && frequency !== 'annually')
+                                                    ? val * freqFactor
+                                                    : val;
+                                                updateSimulatorState({ dividend: parseFloat(annualVal.toFixed(4)) });
+                                            }}
                                             placeholder="0.00"
                                             className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                         />
-                                        <div className="text-[10px] text-muted-foreground text-right mt-1 h-4 truncate">
-                                            {dividend && dividend > 0 && frequency !== 'annually'
-                                                ? `↳ ${(dividend / freqFactor).toFixed(3)} ${simCurrency || 'CHF'} (${frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'})`
-                                                : (dividend && dividend > 0 ? `${dividend.toFixed(3)} ${simCurrency || 'CHF'} / Jahr` : '')}
+                                        <div
+                                            onClick={() => frequency !== 'annually' && setDividendInputMode(m => m === 'annual' ? 'periodic' : 'annual')}
+                                            className={cn(
+                                                "text-xs text-muted-foreground text-right mt-1.5 h-5 font-medium truncate",
+                                                frequency !== 'annually' && "cursor-pointer hover:text-blue-500 transition-colors"
+                                            )}
+                                            title={frequency !== 'annually' ? "Klicken zum Umschalten (im Jahr / pro Ausschüttung)" : undefined}
+                                        >
+                                            {dividend && dividend > 0 && frequency !== 'annually' ? (
+                                                dividendInputMode === 'annual'
+                                                    ? `≈ ${(dividend / freqFactor).toFixed(3)} ${simCurrency || 'CHF'} (${frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'})`
+                                                    : `≈ ${dividend.toFixed(3)} ${simCurrency || 'CHF'} im Jahr`
+                                            ) : (
+                                                'im Jahr'
+                                            )}
                                         </div>
                                     </div>
 
                                     <div className="space-y-1">
                                         <div className="h-5 flex items-center justify-between gap-1 overflow-hidden">
                                             <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap truncate min-w-0">
-                                                Rendite (% p.a.)
+                                                Rendite (%)
                                             </label>
                                             <span className="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase tracking-wider whitespace-nowrap shrink-0">
                                                 BRUTTO
@@ -1632,8 +1666,8 @@ export function DividendCalculator() {
                                                 %
                                             </span>
                                         </div>
-                                        <div className="text-[10px] text-muted-foreground text-right mt-1 h-4">
-                                            Brutto p.a.
+                                        <div className="text-xs text-muted-foreground text-right mt-1.5 h-5 font-medium">
+                                            im Jahr
                                         </div>
                                     </div>
                                 </div>
