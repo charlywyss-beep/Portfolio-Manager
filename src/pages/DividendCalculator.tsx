@@ -1581,7 +1581,9 @@ export function DividendCalculator() {
                                             <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap">
                                                 Dividende ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
                                             </label>
-                                            <span className="text-[9px] text-primary/70 font-normal">pro Jahr</span>
+                                            <span className="text-[10px] text-blue-500 font-bold uppercase tracking-wider">
+                                                PRO JAHR
+                                            </span>
                                         </div>
                                         <LocalNumberInput
                                             step="0.001"
