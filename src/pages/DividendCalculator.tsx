@@ -1507,20 +1507,21 @@ export function DividendCalculator() {
                                 {/* Transaction details below selector always visible */}
 
                                 {/* Core Inputs - Compact Grid */}
-                                <div className="grid grid-cols-3 gap-3">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                     <div className="space-y-1">
-                                        <label className="text-[10px] uppercase font-medium text-muted-foreground">Anzahl Anteile</label>
+                                        <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap">
+                                            Anzahl Anteile
+                                        </label>
                                         <LocalNumberInput
                                             value={shares}
                                             onChange={(val) => updateSimulatorState({ shares: val })}
                                             className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                         />
-                                        {price > 0 && dividend > 0 && (
-                                            <div className="text-sm text-green-600 font-medium text-right mt-1">
-                                                {((dividend / price) * 100).toFixed(2)}% Brutto
-                                            </div>
-                                        )}
+                                        <div className="text-[10px] text-muted-foreground text-right mt-1">
+                                            {shares > 0 ? `${shares.toLocaleString('de-CH')} Stk.` : 'Stückzahl'}
+                                        </div>
                                     </div>
+
                                     <div className="space-y-1">
                                         <div className="flex justify-between items-center">
                                             <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap">
@@ -1551,21 +1552,52 @@ export function DividendCalculator() {
                                             onChange={(val) => updateSimulatorState({ price: val })}
                                             className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                         />
+                                        <div className="text-[10px] text-muted-foreground text-right mt-1">
+                                            Kurs pro Anteil
+                                        </div>
                                     </div>
+
                                     <div className="space-y-1">
-                                        <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap">
-                                            Dividende ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
+                                        <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap flex items-center justify-between">
+                                            <span>Dividende ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})</span>
+                                            <span className="text-[9px] text-primary/70 font-normal">pro Anteil</span>
                                         </label>
-                                        <div className="space-y-2">
+                                        <LocalNumberInput
+                                            step="0.001"
+                                            value={dividend !== undefined && dividend !== null ? (dividend === 0 ? 0 : parseFloat(dividend.toFixed(4))) : undefined}
+                                            onChange={(val) => updateSimulatorState({ dividend: val })}
+                                            placeholder="0.00"
+                                            className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
+                                        />
+                                        <div className="text-[10px] text-muted-foreground text-right mt-1">
+                                            Ausschüttung
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap flex items-center justify-between">
+                                            <span>Rendite (%)</span>
+                                            <span className="text-[9px] text-green-600 dark:text-green-400 font-normal">Brutto</span>
+                                        </label>
+                                        <div className="relative">
                                             <LocalNumberInput
                                                 step="0.01"
-                                                value={dividend}
-                                                onChange={(val) => updateSimulatorState({ dividend: val })}
-                                                className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
+                                                value={price > 0 && dividend > 0 ? parseFloat(((dividend / price) * 100).toFixed(2)) : undefined}
+                                                onChange={(val) => {
+                                                    if (price > 0) {
+                                                        const newDiv = (val / 100) * price;
+                                                        updateSimulatorState({ dividend: parseFloat(newDiv.toFixed(4)) });
+                                                    }
+                                                }}
+                                                placeholder={price > 0 ? "z. B. 3.80" : "Erst Preis"}
+                                                className="w-full pl-2 pr-6 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                             />
-                                            {price > 0 && dividend > 0 && (
-                                                <div className="hidden"></div>
-                                            )}
+                                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none font-bold">
+                                                %
+                                            </span>
+                                        </div>
+                                        <div className="text-[10px] text-green-600 dark:text-green-400 font-medium text-right mt-1">
+                                            {price > 0 && dividend > 0 ? `${((dividend / price) * 100).toFixed(2)}% p.a.` : '⇄ Synchron'}
                                         </div>
                                     </div>
                                 </div>
