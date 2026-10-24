@@ -5,7 +5,7 @@ import { useCurrencyFormatter } from '../utils/currency';
 import { Logo } from './Logo';
 import { estimateMarketState } from '../utils/market';
 import { translateSector } from '../utils/sectorTranslation';
-import { Edit, Trash2, ArrowUpRight, ArrowDownRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit, Trash2, ArrowUpRight, ArrowDownRight, ChevronLeft, ChevronRight, Landmark } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 import { useState, useRef } from 'react';
 
@@ -372,6 +372,15 @@ export function PositionTable({
                                                             <>
                                                                 <span className="text-muted-foreground/40 text-[10px]">•</span>
                                                                 <span className="text-[10px] sm:text-xs text-muted-foreground truncate">{translateSector(pos.stock.sector)}</span>
+                                                            </>
+                                                        )}
+                                                        {pos.broker && (
+                                                            <>
+                                                                <span className="text-muted-foreground/40 text-[10px]">•</span>
+                                                                <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-medium text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20" title={`Depot: ${pos.broker}`}>
+                                                                    <Landmark className="size-2.5 shrink-0" />
+                                                                    <span className="truncate max-w-[85px]">{pos.broker}</span>
+                                                                </span>
                                                             </>
                                                         )}
                                                         {(() => {

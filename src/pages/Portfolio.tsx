@@ -133,7 +133,7 @@ export function Portfolio() {
     }).filter(Boolean) as any[];
 
     // Sorting
-    const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'currency' | 'value' | 'performance', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
+    const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'currency' | 'value' | 'performance' | 'broker', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
 
     const getSortedPositions = (posList: any[]) => {
         return [...posList].sort((a, b) => {
@@ -162,7 +162,7 @@ export function Portfolio() {
     const vorsorgeDeposits = fixedDeposits?.filter(fd => fd.accountType === 'vorsorge') || [];
     const filteredFixedDeposits = fixedDeposits?.filter(fd => fd.accountType !== 'vorsorge') || [];
 
-    const handleUpdate = (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number, newPurchases?: any[]) => {
+    const handleUpdate = (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number, newPurchases?: any[], newBroker?: string) => {
         const updates: any = { shares: newShares };
         if (newAvgPrice !== undefined) {
             updates.buyPriceAvg = newAvgPrice;
@@ -175,6 +175,9 @@ export function Portfolio() {
         }
         if (newPurchases !== undefined) {
             updates.purchases = newPurchases;
+        }
+        if (newBroker !== undefined) {
+            updates.broker = newBroker;
         }
         updatePosition(id, updates);
     };

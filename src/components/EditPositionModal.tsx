@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { X, Save, Trash2, Plus, Pencil } from 'lucide-react';
+import { X, Save, Trash2, Plus, Pencil, Landmark } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { cn } from '../utils'; // Added import
 import type { Stock, Purchase } from '../types';
@@ -20,19 +20,21 @@ interface EditPositionModalProps {
         buyDate?: string;
         averageEntryFxRate?: number;
         purchases?: Purchase[];
+        broker?: string;
     };
-    onUpdate: (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number, newPurchases?: Purchase[]) => void;
+    onUpdate: (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number, newPurchases?: Purchase[], newBroker?: string) => void;
     onDelete: (id: string) => void;
 }
 
 export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelete }: EditPositionModalProps) {
-    const { updateStock } = usePortfolio();
+    const { updateStock, positions, fixedDeposits } = usePortfolio();
     const { rates } = useCurrencyFormatter();
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
     // State for individual purchases
     const [purchases, setPurchases] = useState<Purchase[]>([]);
     const [inputInCHF, setInputInCHF] = useState(false); // NEW State
+    const [broker, setBroker] = useState(position.broker || '');
 
     // Editable Stock Name
     const [stockName, setStockName] = useState(position.stock.name);
@@ -52,6 +54,23 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     const fixFx = (num: number) => parseFloat(num.toFixed(6));
     const fixShares = (num: number) => parseFloat(num.toFixed(6));
 
+        const brokerSuggestions = useMemo(() => {
+        const set = new Set<string>([
+            'Swissquote',
+            'Saxo Bank',
+            'Interactive Brokers',
+            'UBS',
+            'PostFinance',
+            'Raiffeisen',
+            'Zürcher Kantonalbank',
+            'Trade Republic',
+            'DEGIRO'
+        ]);
+        (positions || []).forEach(p => { if (p.broker) set.add(p.broker); });
+        (fixedDeposits || []).forEach(fd => { if (fd.bankName) set.add(fd.bankName); });
+        return Array.from(set);
+    }, [positions, fixedDeposits]);
+
     const isGBX = position.stock.currency === 'GBp';
 
     // Scale Helpers: Storage (Pence) <-> UI (Pounds)
@@ -63,6 +82,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     useEffect(() => {
         if (isOpen) {
             setStockName(position.stock.name); // Sync Name
+            setBroker(position.broker || "");
 
             if (position.purchases && position.purchases.length > 0) {
                 // Sanitize loaded purchases
@@ -180,7 +200,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
             const newFx = parseFloat(manualFx);
             const isoDate = manualDate ? new Date(manualDate).toISOString() : undefined;
 
-            onUpdate(position.id, newShares, toStorage(newPriceUI), isoDate, newFx, []);
+            onUpdate(position.id, newShares, toStorage(newPriceUI), isoDate, newFx, [], broker.trim() || undefined);
         }
         onClose();
     };
@@ -284,6 +304,37 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Bank / Broker Row */}
+                        <div className="px-6 py-3 bg-muted/20 border-b border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5 flex-1 max-w-md">
+                                <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
+                                    <Landmark className="size-4" />
+                                </div>
+                                <label className="text-xs font-semibold text-foreground whitespace-nowrap">Bank / Broker:</label>
+                                <div className="relative flex-1">
+                                    <input
+                                        type="text"
+                                        list="broker-list-options"
+                                        value={broker}
+                                        onChange={(e) => setBroker(e.target.value)}
+                                        placeholder="z.B. Swissquote, Saxo, UBS, PostFinance..."
+                                        className="w-full px-3 py-1.5 text-xs rounded-lg bg-background border border-input focus:outline-none focus:ring-2 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/50 transition-all font-medium"
+                                    />
+                                    <datalist id="broker-list-options">
+                                        {brokerSuggestions.map((b) => (
+                                            <option key={b} value={b} />
+                                        ))}
+                                    </datalist>
+                                </div>
+                            </div>
+                            {broker && (
+                                <div className="text-xs text-muted-foreground hidden sm:flex items-center gap-1.5">
+                                    <span>Depot bei:</span>
+                                    <span className="font-semibold text-foreground px-2 py-0.5 rounded bg-muted/50 border border-border/50">{broker}</span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Purchases List */}

@@ -9,6 +9,7 @@ interface RateHistory {
 }
 
 type Currency = 'EUR' | 'USD' | 'GBP';
+type ChartTimeRange = '1W' | '1M' | '3M' | '6M' | '1Y' | '5Y';
 
 import { fetchStockHistory } from '../services/yahoo-finance';
 
@@ -20,7 +21,16 @@ interface Props {
 }
 
 export function CurrencyChart({ inverse = false }: Props) {
-    const [selectedCurrency, setSelectedCurrency] = useState<Currency>('EUR');
+    const storageKeyPrefix = inverse ? 'currency_chart_inverse' : 'currency_chart_direct';
+
+    const [selectedCurrency, setSelectedCurrency] = useState<Currency>(() => {
+        try {
+            const saved = localStorage.getItem(`${storageKeyPrefix}_currency`);
+            if (saved === 'EUR' || saved === 'USD' || saved === 'GBP') return saved as Currency;
+        } catch {}
+        return inverse ? 'GBP' : 'EUR';
+    });
+
     const [historyData, setHistoryData] = useState<RateHistory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [hasMounted, setHasMounted] = useState(false);
@@ -36,10 +46,29 @@ export function CurrencyChart({ inverse = false }: Props) {
     const baseCurrency = inverse ? selectedCurrency : 'CHF';
     const targetCurrency = inverse ? 'CHF' : selectedCurrency;
 
+    const [timeRange, setTimeRange] = useState<ChartTimeRange>(() => {
+        try {
+            const saved = localStorage.getItem(`${storageKeyPrefix}_range`);
+            if (saved && ['1W', '1M', '3M', '6M', '1Y', '5Y'].includes(saved)) {
+                return saved as ChartTimeRange;
+            }
+        } catch {}
+        return '1Y';
+    });
 
+    const handleSelectCurrency = (cur: Currency) => {
+        setSelectedCurrency(cur);
+        try {
+            localStorage.setItem(`${storageKeyPrefix}_currency`, cur);
+        } catch {}
+    };
 
-
-    const [timeRange, setTimeRange] = useState<'1W' | '1M' | '6M' | '1Y' | '5Y'>('1Y');
+    const handleSelectTimeRange = (range: ChartTimeRange) => {
+        setTimeRange(range);
+        try {
+            localStorage.setItem(`${storageKeyPrefix}_range`, range);
+        } catch {}
+    };
 
     useEffect(() => {
         const fetchHistory = async () => {
@@ -47,7 +76,7 @@ export function CurrencyChart({ inverse = false }: Props) {
             try {
                 // Use our existing Yahoo Finance integration that handles proxying/CORS properly
                 const symbol = `${baseCurrency}${targetCurrency}=X`;
-                const { data } = await fetchStockHistory(symbol, timeRange as '1W' | '1M' | '6M' | '1Y' | '5Y');
+                const { data } = await fetchStockHistory(symbol, timeRange as any);
                 
                 if (data && data.length > 0) {
                     const transformed = data.map((p: any) => {
@@ -148,7 +177,7 @@ export function CurrencyChart({ inverse = false }: Props) {
                     {(['EUR', 'USD', 'GBP'] as Currency[]).map((cur) => (
                         <button
                             key={cur}
-                            onClick={() => setSelectedCurrency(cur)}
+                            onClick={() => handleSelectCurrency(cur)}
                             className={cn(
                                 "px-3 py-1 text-xs font-medium rounded-md transition-all",
                                 selectedCurrency === cur
@@ -209,10 +238,10 @@ export function CurrencyChart({ inverse = false }: Props) {
 
                             {/* Timeframe Selector */}
                             <div className="flex bg-muted/50 p-1 rounded-lg">
-                                {(['1W', '1M', '6M', '1Y', '5Y'] as const).map((range) => (
+                                {(['1W', '1M', '3M', '6M', '1Y', '5Y'] as const).map((range) => (
                                     <button
                                         key={range}
-                                        onClick={() => setTimeRange(range)}
+                                        onClick={() => handleSelectTimeRange(range)}
                                         className={cn(
                                             "px-3 py-1 text-xs font-medium rounded-md transition-all",
                                             timeRange === range

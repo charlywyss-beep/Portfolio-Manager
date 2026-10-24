@@ -469,13 +469,14 @@ export function Watchlist() {
                         isOpen={!!editPosition}
                         onClose={() => setEditPosition(null)}
                         position={editPosition}
-                        onUpdate={(id, newShares, newAvgPrice, newBuyDate, newFxRate, newPurchases) => {
+                        onUpdate={(id, newShares, newAvgPrice, newBuyDate, newFxRate, newPurchases, newBroker) => {
                             updatePosition(id, {
                                 shares: newShares,
                                 buyPriceAvg: newAvgPrice,
                                 buyDate: newBuyDate,
                                 averageEntryFxRate: newFxRate,
-                                purchases: newPurchases
+                                purchases: newPurchases,
+                                broker: newBroker
                             });
                             setEditPosition(null);
                         }}

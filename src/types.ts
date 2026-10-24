@@ -106,6 +106,7 @@ export interface Position {
     buyDate?: string; // Date of first purchase (ISO format)
     averageEntryFxRate?: number; // NEW: Weighted Average Exchange Rate at time of purchase
     purchases?: Purchase[]; // NEW: History of individual purchases for this position
+    broker?: string; // NEW: Bank / Broker where the position is held
 }
 
 export interface Purchase {
