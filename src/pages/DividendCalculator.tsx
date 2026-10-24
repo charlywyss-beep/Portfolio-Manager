@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
-import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, ArrowLeft } from 'lucide-react';
+import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, ArrowLeft, HelpCircle, BookOpen } from 'lucide-react';
 import { fetchStockHistory, searchStocks, fetchStockQuote } from '../services/yahoo-finance';
 
 import { jsPDF } from 'jspdf';
@@ -477,6 +477,7 @@ export function DividendCalculator() {
 
     // Watchlist Feedback
     const [showSuccess, setShowSuccess] = useState(false);
+    const [showGuide, setShowGuide] = useState(false);
 
     // Price Editing State
     const [activeTab, setActiveTab] = useState<'search' | 'manual'>(selectedStockId === 'new' ? 'manual' : 'search');
@@ -1065,6 +1066,14 @@ export function DividendCalculator() {
                                 >
                                     <Settings2 size={14} />
                                     <span className="hidden sm:inline">Gebühren</span>
+                                </button>
+                                <button
+                                    onClick={() => setShowGuide(true)}
+                                    title="Praxis-Anleitung & Steuerregeln"
+                                    className="text-xs flex items-center gap-1.5 border border-border px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors font-medium bg-background shadow-xs active:scale-95"
+                                >
+                                    <HelpCircle size={14} className="text-blue-500" />
+                                    <span className="hidden sm:inline">Anleitung</span>
                                 </button>
                             </div>
                         </div>
@@ -1973,6 +1982,148 @@ export function DividendCalculator() {
                     <div className="hidden"></div>
                 </div>
             </div>
+
+            {/* Guide / Anleitung Modal */}
+            {showGuide && (
+                <div
+                    className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+                    onClick={() => setShowGuide(false)}
+                >
+                    <div
+                        className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-foreground"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-muted/30 shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500">
+                                    <BookOpen className="size-5" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-bold">Praxis-Anleitung & Steuerregeln</h2>
+                                    <p className="text-xs text-muted-foreground">Kauf / Verkauf & Gebühren-Simulator für Schweizer Anleger</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowGuide(false)}
+                                className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                <X className="size-5" />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-5 overflow-y-auto space-y-5 text-sm">
+                            {/* Step by step */}
+                            <div>
+                                <h3 className="font-semibold text-primary flex items-center gap-2 mb-2">
+                                    <span className="flex items-center justify-center size-5 rounded-full bg-primary/20 text-primary text-xs font-bold">1</span>
+                                    Schnelleinstieg & Ablauf
+                                </h3>
+                                <div className="bg-muted/40 rounded-xl p-3.5 space-y-2 text-xs text-muted-foreground border border-border/50">
+                                    <p><strong className="text-foreground">1. Titel wählen:</strong> Aktie/ETF aus der Suchliste wählen oder manuell Symbol (z. B. <code className="text-foreground bg-muted px-1 py-0.5 rounded">VHYL.AS</code>) eingeben und auf <span className="text-foreground font-semibold">«Aktie / ETF laden»</span> klicken.</p>
+                                    <p><strong className="text-foreground">2. Beträge eingeben:</strong> Anzahl Anteile und Kaufpreis festlegen. Der Simulator errechnet sofort das Volumen und die geschätzte Jahresdividende.</p>
+                                    <p><strong className="text-foreground">3. Übernehmen:</strong> Mit <span className="text-blue-500 font-semibold">«+ Kaufen & ins Depot übernehmen»</span> direkt ins Portfolio buchen oder mit <span className="text-blue-500 font-semibold">«In Watchlist speichern»</span> vormerken.</p>
+                                </div>
+                            </div>
+
+                            {/* Stempelsteuer */}
+                            <div>
+                                <h3 className="font-semibold text-primary flex items-center gap-2 mb-2">
+                                    <span className="flex items-center justify-center size-5 rounded-full bg-primary/20 text-primary text-xs font-bold">2</span>
+                                    Eidgenössische Stempelsteuer (Schweizer Banken z. B. Raiffeisen)
+                                </h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                    <div className="p-3 rounded-xl border border-border/60 bg-muted/20 space-y-1">
+                                        <div className="font-bold text-xs text-red-500 flex items-center gap-1.5">
+                                            <span>🇨🇭</span> Schweiz: 0.075%
+                                        </div>
+                                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                            Gilt für Schweizer Titel mit <strong className="text-foreground">CH-ISIN</strong> (z. B. Nestlé, Novartis, Roche, Swisscom).
+                                        </p>
+                                    </div>
+                                    <div className="p-3 rounded-xl border border-blue-500/30 bg-blue-500/5 space-y-1">
+                                        <div className="font-bold text-xs text-blue-500 flex items-center gap-1.5">
+                                            <span>🌍</span> Ausland: 0.15%
+                                        </div>
+                                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                            Gilt für <strong className="text-foreground">alle Auslandsmärkte</strong>! Z. B. <strong className="text-foreground">XETRA</strong> (ETFs wie Vanguard IE..., deutsche Aktien) & <strong className="text-foreground">USA</strong> (Apple, MSFT). USA verlangen beim Kauf keine eigene Stempelabgabe.
+                                        </p>
+                                    </div>
+                                    <div className="p-3 rounded-xl border border-indigo-500/30 bg-indigo-500/5 space-y-1">
+                                        <div className="font-bold text-xs text-indigo-500 flex items-center gap-1.5">
+                                            <span>🇬🇧</span> UK + CH: 0.65%
+                                        </div>
+                                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                            Für Käufe an der <strong className="text-foreground">London Stock Exchange (LSE)</strong>: England schlägt 0.50% Stamp Duty auf (0.50% UK + 0.15% CH = 0.65%).
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Währung & XETRA/USA Praxis */}
+                            <div>
+                                <h3 className="font-semibold text-primary flex items-center gap-2 mb-2">
+                                    <span className="flex items-center justify-center size-5 rounded-full bg-primary/20 text-primary text-xs font-bold">3</span>
+                                    Währung & Gebührenwährung
+                                </h3>
+                                <div className="bg-muted/40 rounded-xl p-3.5 space-y-2 text-xs text-muted-foreground border border-border/50">
+                                    <p>
+                                        Über den Umschalter <strong className="text-foreground">«GEBÜHREN IN: CHF / EUR / USD»</strong> legen Sie fest, in welcher Währung Ihre Bank die Spesen abrechnet:
+                                    </p>
+                                    <ul className="list-disc pl-4 space-y-1">
+                                        <li><strong className="text-foreground">XETRA (Deutschland / Europa):</strong> Gebühren in <strong className="text-foreground">EUR</strong> wählen. Courtage (z. B. 0.5%, Min 40 EUR) und Börsenspesen (3 EUR) werden in Euro berechnet.</li>
+                                        <li><strong className="text-foreground">USA (NYSE / NASDAQ):</strong> Gebühren in <strong className="text-foreground">USD</strong> wählen (und Stempelsteuer auf <em>Ausland 0.15%</em> belassen).</li>
+                                        <li><strong className="text-foreground">SIX Swiss Exchange:</strong> Gebühren in <strong className="text-foreground">CHF</strong> wählen.</li>
+                                    </ul>
+                                    <p className="pt-1 text-[11px] italic">
+                                        ↳ Der Simulator rechnet alle Beträge automatisch zum aktuellen FX-Kurs inkl. Bankmarge in Schweizer Franken (CHF) um.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Rendite */}
+                            <div>
+                                <h3 className="font-semibold text-primary flex items-center gap-2 mb-2">
+                                    <span className="flex items-center justify-center size-5 rounded-full bg-primary/20 text-primary text-xs font-bold">4</span>
+                                    Brutto- vs. Netto-Rendite
+                                </h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    <div className="p-3 rounded-xl border border-border/60 bg-muted/20">
+                                        <div className="font-semibold text-xs text-foreground mb-1">Brutto-Rendite</div>
+                                        <p className="text-[11px] text-muted-foreground">
+                                            Reine Dividendenrendite auf den reinen Aktienkurswert: <br />
+                                            <code className="text-foreground text-[10px]">Jährliche Dividende ÷ Kaufwert</code>
+                                        </p>
+                                    </div>
+                                    <div className="p-3 rounded-xl border border-primary/30 bg-primary/5">
+                                        <div className="font-semibold text-xs text-primary mb-1">Netto-Rendite (1. Jahr)</div>
+                                        <p className="text-[11px] text-muted-foreground">
+                                            Reale Dividendenrendite nach Abzug aller Kaufkosten (Courtage, Stempel, Börsenspesen, FX): <br />
+                                            <code className="text-foreground text-[10px]">Dividende ÷ (Kaufwert + Gesamtkosten)</code>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Speicherung */}
+                            <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-muted-foreground">
+                                <span className="font-semibold text-foreground">💾 Automatische Speicherung:</span> Alle eingestellten Gebührensätze (Courtage %, Min, Börsenspesen, Stempelsteuer) werden dauerhaft im Browser gespeichert und stehen automatisch als Ihr Standard bei jedem nächsten Titel bereit.
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-5 py-3 border-t border-border bg-muted/20 flex justify-end shrink-0">
+                            <button
+                                onClick={() => setShowGuide(false)}
+                                className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 font-medium text-xs rounded-xl shadow-xs transition-colors"
+                            >
+                                Schliessen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
 
     );
