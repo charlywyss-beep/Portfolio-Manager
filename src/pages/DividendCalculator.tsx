@@ -1524,10 +1524,10 @@ export function DividendCalculator() {
                                 {/* Transaction details below selector always visible */}
 
                                 {/* Core Inputs - Compact Grid */}
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-start">
+                                <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 items-start">
                                     <div className="space-y-1">
                                         <div className="h-5 flex items-center justify-between">
-                                            <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap">
+                                            <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap truncate min-w-0">
                                                 Anzahl Anteile
                                             </label>
                                         </div>
@@ -1542,8 +1542,8 @@ export function DividendCalculator() {
                                     </div>
 
                                     <div className="space-y-1">
-                                        <div className="h-5 flex items-center justify-between gap-1 overflow-hidden">
-                                            <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap truncate">
+                                        <div className="h-5 flex items-center justify-between gap-1.5 overflow-hidden">
+                                            <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap truncate min-w-0">
                                                 {mode === 'buy' ? 'Kaufpreis' : 'Verkaufspreis'} ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
                                             </label>
                                             {(stocks.find(s => s.id === selectedStockId)?.symbol) && (
@@ -1558,10 +1558,10 @@ export function DividendCalculator() {
                                                             updateSimulatorState({ price: val });
                                                         }
                                                     }}
-                                                    className="text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-1.5 py-0.5 rounded transition-colors whitespace-nowrap shrink-0 leading-none -mr-1"
+                                                    className="text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-0.5 rounded-md transition-colors whitespace-nowrap shrink-0 leading-none"
                                                     title="Aktuellen Kurs laden"
                                                 >
-                                                    <RefreshCw className="size-3" /> Kurs laden
+                                                    <RefreshCw className="size-3 shrink-0" /> Kurs laden
                                                 </button>
                                             )}
                                         </div>
@@ -1577,11 +1577,11 @@ export function DividendCalculator() {
                                     </div>
 
                                     <div className="space-y-1">
-                                        <div className="h-5 flex items-center justify-between">
-                                            <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap">
+                                        <div className="h-5 flex items-center justify-between gap-1 overflow-hidden">
+                                            <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap truncate min-w-0">
                                                 Dividende ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
                                             </label>
-                                            <span className="text-[10px] text-blue-500 font-bold uppercase tracking-wider">
+                                            <span className="text-[10px] text-blue-500 font-bold uppercase tracking-wider whitespace-nowrap shrink-0">
                                                 PRO JAHR
                                             </span>
                                         </div>
@@ -1600,11 +1600,11 @@ export function DividendCalculator() {
                                     </div>
 
                                     <div className="space-y-1">
-                                        <div className="h-5 flex items-center justify-between">
-                                            <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap">
+                                        <div className="h-5 flex items-center justify-between gap-1 overflow-hidden">
+                                            <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap truncate min-w-0">
                                                 Rendite (% p.a.)
                                             </label>
-                                            <span className="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase tracking-wider">
+                                            <span className="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase tracking-wider whitespace-nowrap shrink-0">
                                                 BRUTTO
                                             </span>
                                         </div>
