@@ -1595,7 +1595,7 @@ export function DividendCalculator() {
                                                     type="button"
                                                     onClick={() => setDividendInputMode(m => m === 'annual' ? 'periodic' : 'annual')}
                                                     className="text-[10px] text-blue-500 hover:text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider whitespace-nowrap shrink-0 hover:underline cursor-pointer transition-colors"
-                                                    title="Klicken zum Umschalten zwischen Dividende im Jahr und Dividende pro Ausschüttung"
+                                                    title="Klicken zum Umschalten zwischen Dividende pro Jahr und Dividende pro Ausschüttung"
                                                 >
                                                     {dividendInputMode === 'annual' ? 'PRO JAHR ⇄' : `PRO ${frequency === 'semi-annually' ? 'HALBJAHR' : frequency === 'quarterly' ? 'QUARTAL' : 'MONAT'} ⇄`}
                                                 </button>
@@ -1629,14 +1629,14 @@ export function DividendCalculator() {
                                                 "text-xs text-muted-foreground text-right mt-1.5 h-5 font-medium truncate",
                                                 frequency !== 'annually' && "cursor-pointer hover:text-blue-500 transition-colors"
                                             )}
-                                            title={frequency !== 'annually' ? "Klicken zum Umschalten (im Jahr / pro Ausschüttung)" : undefined}
+                                            title={frequency !== 'annually' ? "Klicken zum Umschalten (pro Jahr / pro Ausschüttung)" : undefined}
                                         >
                                             {dividend && dividend > 0 && frequency !== 'annually' ? (
                                                 dividendInputMode === 'annual'
                                                     ? `≈ ${(dividend / freqFactor).toFixed(3)} ${simCurrency || 'CHF'} (${frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'})`
-                                                    : `≈ ${dividend.toFixed(3)} ${simCurrency || 'CHF'} im Jahr`
+                                                    : `≈ ${dividend.toFixed(3)} ${simCurrency || 'CHF'} pro Jahr`
                                             ) : (
-                                                'im Jahr'
+                                                'pro Jahr'
                                             )}
                                         </div>
                                     </div>
@@ -1651,13 +1651,13 @@ export function DividendCalculator() {
                                                     type="button"
                                                     onClick={() => setYieldInputMode(m => m === 'annual' ? 'periodic' : 'annual')}
                                                     className="text-[10px] text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-bold uppercase tracking-wider whitespace-nowrap shrink-0 hover:underline cursor-pointer transition-colors"
-                                                    title="Klicken zum Umschalten zwischen Rendite im Jahr und Rendite pro Ausschüttung"
+                                                    title="Klicken zum Umschalten zwischen Rendite pro Jahr und Rendite pro Ausschüttung"
                                                 >
-                                                    {yieldInputMode === 'annual' ? 'IM JAHR ⇄' : `PRO ${frequency === 'semi-annually' ? 'HALBJAHR' : frequency === 'quarterly' ? 'QUARTAL' : 'MONAT'} ⇄`}
+                                                    {yieldInputMode === 'annual' ? 'PRO JAHR ⇄' : `PRO ${frequency === 'semi-annually' ? 'HALBJAHR' : frequency === 'quarterly' ? 'QUARTAL' : 'MONAT'} ⇄`}
                                                 </button>
                                             ) : (
                                                 <span className="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase tracking-wider whitespace-nowrap shrink-0">
-                                                    BRUTTO
+                                                    PRO JAHR
                                                 </span>
                                             )}
                                         </div>
@@ -1693,14 +1693,14 @@ export function DividendCalculator() {
                                                 "text-xs text-muted-foreground text-right mt-1.5 h-5 font-medium truncate",
                                                 frequency !== 'annually' && "cursor-pointer hover:text-green-600 transition-colors"
                                             )}
-                                            title={frequency !== 'annually' ? "Klicken zum Umschalten (im Jahr / pro Ausschüttung)" : undefined}
+                                            title={frequency !== 'annually' ? "Klicken zum Umschalten (pro Jahr / pro Ausschüttung)" : undefined}
                                         >
                                             {price > 0 && dividend > 0 && frequency !== 'annually' ? (
                                                 yieldInputMode === 'annual'
                                                     ? `≈ ${(((dividend / price) * 100) / freqFactor).toFixed(2)} % (${frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'})`
-                                                    : `≈ ${((dividend / price) * 100).toFixed(2)} % im Jahr`
+                                                    : `≈ ${((dividend / price) * 100).toFixed(2)} % pro Jahr`
                                             ) : (
-                                                'im Jahr'
+                                                'pro Jahr'
                                             )}
                                         </div>
                                     </div>
@@ -2116,7 +2116,7 @@ export function DividendCalculator() {
                                                             return (payoutNative / 100).toLocaleString('de-CH', { style: 'currency', currency: 'GBP' });
                                                         }
                                                         return payoutNative.toLocaleString('de-CH', { style: 'currency', currency: simCurrency });
-                                                    })() : '1x im Jahr'}
+                                                    })() : '1x pro Jahr'}
                                                 </span>
                                             </div>
                                         </div>
@@ -2138,7 +2138,7 @@ export function DividendCalculator() {
                                                 <span className="font-bold text-xs text-white">
                                                     {frequency !== 'annually' && annualDividendCHF > 0
                                                         ? (annualDividendCHF / freqFactor).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })
-                                                        : '1x im Jahr'}
+                                                        : '1x pro Jahr'}
                                                 </span>
                                             </div>
                                         </div>
