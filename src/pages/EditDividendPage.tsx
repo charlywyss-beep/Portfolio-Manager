@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Trash2, Search, Pencil, Check, Calculator, ShieldCheck, Sparkles, Sliders, Save, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Trash2, Search, Pencil, Check, Calculator, ShieldCheck, Sparkles, Sliders, Save, AlertTriangle, Calendar } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
@@ -245,6 +245,74 @@ export function EditDividendPage() {
         }
 
         setQuarterlyDates(newDates);
+    };
+
+    const handleAutoFillExDates = () => {
+        if (frequency === 'quarterly' || frequency === 'semi-annually') {
+            const newDates = quarterlyDates.map(qd => {
+                if (qd.payDate && !qd.exDate) {
+                    const p = new Date(qd.payDate);
+                    if (!isNaN(p.getTime())) {
+                        p.setDate(p.getDate() - 14);
+                        return { ...qd, exDate: p.toISOString().split('T')[0] };
+                    }
+                } else if (qd.exDate && !qd.payDate) {
+                    const p = new Date(qd.exDate);
+                    if (!isNaN(p.getTime())) {
+                        p.setDate(p.getDate() + 14);
+                        return { ...qd, payDate: p.toISOString().split('T')[0] };
+                    }
+                } else if (qd.payDate) {
+                    const p = new Date(qd.payDate);
+                    if (!isNaN(p.getTime())) {
+                        p.setDate(p.getDate() - 14);
+                        return { ...qd, exDate: p.toISOString().split('T')[0] };
+                    }
+                }
+                return qd;
+            });
+            setQuarterlyDates(newDates);
+            setIsDirty(true);
+        } else {
+            if (payDate && !exDate) {
+                const p = new Date(payDate);
+                if (!isNaN(p.getTime())) {
+                    p.setDate(p.getDate() - 14);
+                    setExDate(p.toISOString().split('T')[0]);
+                    setIsDirty(true);
+                }
+            } else if (exDate && !payDate) {
+                const p = new Date(exDate);
+                if (!isNaN(p.getTime())) {
+                    p.setDate(p.getDate() + 14);
+                    setPayDate(p.toISOString().split('T')[0]);
+                    setIsDirty(true);
+                }
+            }
+        }
+    };
+
+    const handleSetVanguardSchedule = () => {
+        let year = new Date().getFullYear();
+        for (const q of quarterlyDates) {
+            const d = q.payDate || q.exDate;
+            if (d && d.length >= 4) {
+                const y = parseInt(d.substring(0, 4));
+                if (!isNaN(y) && y >= 2020 && y <= 2035) {
+                    year = y;
+                    break;
+                }
+            }
+        }
+
+        const newDates = [
+            { exDate: `${year}-03-12`, payDate: `${year}-03-26` },
+            { exDate: `${year}-06-11`, payDate: `${year}-06-25` },
+            { exDate: `${year}-09-10`, payDate: `${year}-09-24` },
+            { exDate: `${year}-12-10`, payDate: `${year}-12-23` }
+        ];
+        setQuarterlyDates(newDates);
+        setIsDirty(true);
     };
 
 
@@ -1270,22 +1338,44 @@ export function EditDividendPage() {
                             {/* Dates Section - Only show if frequency is not 'none' */}
                             {frequency !== 'none' && (
                                 <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4">
-                                    <div className="flex justify-between items-center">
+                                    <div className="flex flex-wrap justify-between items-center gap-2">
                                         <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Termine</h3>
-                                        {symbol && (
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {frequency === 'quarterly' && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleSetVanguardSchedule}
+                                                    className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors font-medium border border-blue-200 dark:border-blue-800/50"
+                                                    title="Vanguard Standard-Quartale (März, Juni, Sept, Dez) eintragen"
+                                                >
+                                                    <Calendar className="size-3.5" />
+                                                    <span>Vanguard-Quartale</span>
+                                                </button>
+                                            )}
                                             <button
                                                 type="button"
-                                                onClick={() => {
-                                                    const year = new Date().getFullYear();
-                                                    window.open(`https://www.google.com/search?q=${symbol}+dividend+dates+${year}+${year + 1}`, '_blank');
-                                                }}
-                                                className="text-xs text-primary hover:text-primary/80 flex items-center gap-1.5 px-2 py-1 bg-primary/10 rounded-md transition-colors"
-                                                title="Auf Google nach Dividenden-Terminen suchen"
+                                                onClick={handleAutoFillExDates}
+                                                className="text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors font-medium border border-emerald-200 dark:border-emerald-800/50"
+                                                title="Ex-Tage automatisch 14 Tage vor den eingetragenen Zahltagen berechnen"
                                             >
-                                                <Search className="size-3.5" />
-                                                <span className="font-medium">Termine suchen</span>
+                                                <Sparkles className="size-3.5" />
+                                                <span>Ex-Tage auto (14 Tage vor Zahltag)</span>
                                             </button>
-                                        )}
+                                            {symbol && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const year = new Date().getFullYear();
+                                                        window.open(`https://www.google.com/search?q=${symbol}+dividend+dates+${year}+${year + 1}`, '_blank');
+                                                    }}
+                                                    className="text-xs text-primary hover:text-primary/80 flex items-center gap-1.5 px-2 py-1 bg-primary/10 rounded-md transition-colors"
+                                                    title="Auf Google nach Dividenden-Terminen suchen"
+                                                >
+                                                    <Search className="size-3.5" />
+                                                    <span className="font-medium">Termine suchen</span>
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {(frequency === 'quarterly' || frequency === 'semi-annually') ? (
