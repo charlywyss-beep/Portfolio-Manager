@@ -2068,108 +2068,107 @@ export function DividendCalculator() {
                                         )}
                                     </div>
 
-                                    {/* Yield Info (Buy Mode) - Full Width Blue Card */}
-                                    {mode === 'buy' && (
+                                    {/* Field 1: Native Foreign Currency Dividend (e.g. EUR) */}
+                                    {mode === 'buy' && simCurrency && simCurrency !== 'CHF' && (
                                         <div className="p-3 bg-blue-600 text-white rounded-lg space-y-1.5 text-sm shadow-sm">
-                                            {/* Native Currency Dividend (e.g. EUR) */}
                                             <div className="flex justify-between items-center w-full">
-                                                <span className="font-semibold text-white">Erw. Jährliche Dividende{simCurrency && simCurrency !== 'CHF' ? ` (${displayNativeCurrency})` : ''}:</span>
-                                                <span className="text-xl font-bold text-white">
+                                                <span className="font-semibold text-white">Erw. Jährliche Dividende:</span>
+                                                <span className="text-xl font-bold text-white leading-none">
                                                     {(() => {
                                                         const annualDivNative = shares * dividend;
                                                         if (simCurrency === 'GBp') {
                                                             return (annualDivNative / 100).toLocaleString('de-CH', { style: 'currency', currency: 'GBP' });
                                                         }
-                                                        return annualDivNative.toLocaleString('de-CH', { style: 'currency', currency: simCurrency || 'CHF' });
+                                                        return annualDivNative.toLocaleString('de-CH', { style: 'currency', currency: simCurrency });
                                                     })()}
                                                 </span>
                                             </div>
-                                            {frequency !== 'annually' && dividend > 0 && shares > 0 && (
-                                                <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1.5 border-t border-white/20">
-                                                    <span>
-                                                        Auszahlung pro {frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'}:
-                                                    </span>
-                                                    <span className="font-bold text-sm text-white">
-                                                        {(() => {
-                                                            const payoutNative = (shares * dividend) / freqFactor;
-                                                            if (simCurrency === 'GBp') {
-                                                                return (payoutNative / 100).toLocaleString('de-CH', { style: 'currency', currency: 'GBP' });
-                                                            }
-                                                            return payoutNative.toLocaleString('de-CH', { style: 'currency', currency: simCurrency || 'CHF' });
-                                                        })()}
-                                                    </span>
-                                                </div>
-                                            )}
+                                            <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1.5 border-t border-white/20">
+                                                <span>
+                                                    {frequency !== 'annually' ? `Auszahlung pro ${frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'}:` : 'Ausschüttung:'}
+                                                </span>
+                                                <span className="font-bold text-sm text-white">
+                                                    {frequency !== 'annually' && dividend > 0 && shares > 0 ? (() => {
+                                                        const payoutNative = (shares * dividend) / freqFactor;
+                                                        if (simCurrency === 'GBp') {
+                                                            return (payoutNative / 100).toLocaleString('de-CH', { style: 'currency', currency: 'GBP' });
+                                                        }
+                                                        return payoutNative.toLocaleString('de-CH', { style: 'currency', currency: simCurrency });
+                                                    })() : '1x im Jahr'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
 
-                                            {/* CHF Gegenwert when Foreign Currency */}
-                                            {simCurrency && simCurrency !== 'CHF' && (
-                                                <div className="pt-2 border-t border-white/25 space-y-1">
-                                                    <div className="flex justify-between items-center w-full">
-                                                        <span className="font-semibold text-white">Erw. Jährliche Dividende (CHF):</span>
-                                                        <span className="text-xl font-bold text-white">
-                                                            {annualDividendCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
-                                                        </span>
-                                                    </div>
-                                                    {frequency !== 'annually' && annualDividendCHF > 0 && (
-                                                        <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1 border-t border-white/15">
-                                                            <span>
-                                                                Auszahlung pro {frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'} (CHF):
-                                                            </span>
-                                                            <span className="font-bold text-sm text-white">
-                                                                {(annualDividendCHF / freqFactor).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
+                                    {/* Field 2: CHF Dividend */}
+                                    {mode === 'buy' && (
+                                        <div className="p-3 bg-blue-600 text-white rounded-lg space-y-1.5 text-sm shadow-sm">
+                                            <div className="flex justify-between items-center w-full">
+                                                <span className="font-semibold text-white">Erw. Jährliche Dividende:</span>
+                                                <span className="text-xl font-bold text-white leading-none">
+                                                    {annualDividendCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1.5 border-t border-white/20">
+                                                <span>
+                                                    {frequency !== 'annually' ? `Auszahlung pro ${frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'}:` : 'Ausschüttung:'}
+                                                </span>
+                                                <span className="font-bold text-sm text-white">
+                                                    {frequency !== 'annually' && annualDividendCHF > 0
+                                                        ? (annualDividendCHF / freqFactor).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })
+                                                        : '1x im Jahr'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Field 3: Investition Total */}
+                                    <div className="p-3 bg-blue-600 text-white rounded-lg space-y-1.5 text-sm shadow-sm">
+                                        <div className="flex justify-between items-center w-full">
+                                            <span className="font-semibold text-white">
+                                                {mode === 'buy' ? 'Investition Total:' : 'Netto Erlös:'}
+                                            </span>
+                                            <span className="text-xl font-bold text-white leading-none">
+                                                {(mode === 'buy' ? totalInvestCHF : totalProceedsCHF).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1.5 border-t border-white/20">
+                                            <span>
+                                                {simCurrency && simCurrency !== 'CHF' ? 'Gegenwert & Gebühren:' : 'Gebühren:'}
+                                            </span>
+                                            <span className="font-bold text-sm text-white">
+                                                {simCurrency && simCurrency !== 'CHF' ? (
+                                                    <>
+                                                        {(mode === 'buy' ? totalInvestNative : totalProceedsNative).toLocaleString('de-CH', { style: 'currency', currency: displayNativeCurrency, maximumFractionDigits: 0 })}
+                                                        {' • inkl. '}{totalFees.toFixed(0)} CHF Geb.
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        {mode === 'buy' ? '+' : '-'}{totalFees.toFixed(0)} CHF Geb.
+                                                    </>
+                                                )}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Field 4: Brutto & Netto Rendite */}
+                                    {mode === 'buy' && (
+                                        <div className="p-3 bg-blue-600 text-white rounded-lg space-y-1.5 text-sm shadow-sm">
+                                            <div className="flex justify-between items-center w-full">
+                                                <span className="font-semibold text-white">Brutto-Rendite:</span>
+                                                <span className="text-xl font-bold text-white leading-none">
+                                                    {grossYield.toFixed(2)}%
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1.5 border-t border-white/20">
+                                                <span>Netto-Rendite:</span>
+                                                <span className="font-bold text-sm text-white">
+                                                    {netYield.toFixed(2)}%
+                                                </span>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
-
-                                {/* Investition Total - Full Width Card styled like upper field */}
-                                <div className="p-3 rounded-lg bg-muted/40 border border-border/50 space-y-1.5 text-sm shadow-sm pt-2">
-                                    <div className="flex justify-between items-center w-full">
-                                        <span className="font-semibold text-foreground">
-                                            {mode === 'buy' ? 'Investition Total' : 'Netto Erlös'} (CHF):
-                                        </span>
-                                        <span className={`text-xl font-bold ${mode === 'sell' ? 'text-green-600' : 'text-foreground'}`}>
-                                            {(mode === 'buy' ? totalInvestCHF : totalProceedsCHF).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between items-center w-full text-xs text-muted-foreground pt-1.5 border-t border-border/40">
-                                        <span>
-                                            {simCurrency && simCurrency !== 'CHF' ? `Gegenwert (${displayNativeCurrency}) & Gebühren:` : 'Gebühren & Volumen:'}
-                                        </span>
-                                        <span className="font-medium text-foreground">
-                                            {simCurrency && simCurrency !== 'CHF' ? (
-                                                <>
-                                                    {(mode === 'buy' ? totalInvestNative : totalProceedsNative).toLocaleString('de-CH', { style: 'currency', currency: displayNativeCurrency, maximumFractionDigits: 0 })}
-                                                    {' • inkl. '}{totalFees.toFixed(0)} CHF Geb.
-                                                </>
-                                            ) : (
-                                                <>
-                                                    {volumeCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
-                                                    {mode === 'buy' ? ' + ' : ' - '}{totalFees.toFixed(0)} Geb.
-                                                </>
-                                            )}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Net Yield Highlight with Gross (Only for Buy) */}
-                                {mode === 'buy' && (
-                                    <div className={`p-3 rounded-lg border flex items-center justify-between gap-4 ${netYield > 0 ? 'bg-primary text-primary-foreground border-primary shadow-md' : 'bg-muted text-muted-foreground border-transparent'}`}>
-                                        <div className="flex flex-col items-start">
-                                            <span className="text-xs font-bold uppercase opacity-90">Brutto-Rendite</span>
-                                            <span className="text-xl font-bold tracking-tight text-primary-foreground">{grossYield.toFixed(2)}%</span>
-                                        </div>
-                                        <div className="h-8 w-px bg-current opacity-20"></div>
-                                        <div className="flex flex-col items-end">
-                                            <span className="text-xs font-bold uppercase opacity-90">Netto-Rendite</span>
-                                            <span className="text-xl font-bold tracking-tight text-primary-foreground">{netYield.toFixed(2)}%</span>
-                                        </div>
-                                    </div>
-                                )}
 
 
                             </div>
