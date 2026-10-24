@@ -1629,10 +1629,10 @@ export function DividendCalculator() {
                                     <div className="flex items-center gap-1 bg-muted p-1 rounded-lg border border-border/50">
                                         {(['annually', 'semi-annually', 'quarterly', 'monthly'] as const).map((freq) => {
                                             const labels: Record<string, string> = {
-                                                'annually': 'Jährlich (1x)',
-                                                'semi-annually': 'Halbjährlich (2x)',
-                                                'quarterly': 'Quartalsweise (4x)',
-                                                'monthly': 'Monatlich (12x)'
+                                                'annually': 'Jährlich',
+                                                'semi-annually': 'Halbjährlich',
+                                                'quarterly': 'Quartalsweise',
+                                                'monthly': 'Monatlich'
                                             };
                                             const isSelected = frequency === freq;
                                             return (
