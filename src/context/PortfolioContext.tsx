@@ -605,12 +605,16 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 return;
             }
 
-            // STRATEGY (v3.12.70):
-            // If it's a manual/forced refresh, use "Deep Sync" (individual Chart API calls) for 100% precision.
-            // For background metadata fixes, use the Batch Quote API (faster, less precise).
+            // 1. Instant Batch Quotes for all portfolio symbols (1 single fast network call)
+            console.log(`[Global Refresh] Batch Quotes fetching for ${symbols.length} assets...`);
+            const updates = await fetchStockQuotes(symbols);
+            if (updates && Object.keys(updates).length > 0) {
+                updateStockPricesBatch(updates);
+            }
+
+            // 2. If manual/forced refresh, also perform Deep Chart Sync (with 1W weekend/holiday fallback)
             if (force) {
                 console.log(`[Global Refresh] Multi-Price Deep Sync starting for ${symbols.length} assets...`);
-                // Process in parallel chunks to avoid hitting rate limits too aggressively
                 const chunkSize = 5;
                 const results: Record<string, any> = {};
 
@@ -627,17 +631,12 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                                 price: res.data.price,
                                 previousClose: res.data.previousClose,
                                 marketTime: res.data.marketTime,
-                                // marketState remains as is or estimated in batch update
                             };
                         }
                     });
                 }
-                updateStockPricesBatch(results);
-            } else {
-                // Background/Auto Refresh: Use Batch API for efficiency
-                const updates = await fetchStockQuotes(symbols);
-                if (Object.keys(updates).length > 0) {
-                    updateStockPricesBatch(updates);
+                if (Object.keys(results).length > 0) {
+                    updateStockPricesBatch(results);
                 }
             }
 

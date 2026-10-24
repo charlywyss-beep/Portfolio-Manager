@@ -241,7 +241,12 @@ export async function fetchStockPricePrecise(symbol: string): Promise<{
     error?: string
 }> {
     try {
-        const history = await fetchStockHistory(symbol, '1D');
+        let history = await fetchStockHistory(symbol, '1D');
+        // Robust Fallback (Same as StockDetail): If 1D has no points (weekend, market closed, holiday), fall back to 1W
+        if (history.error || !history.data || history.data.length === 0) {
+            history = await fetchStockHistory(symbol, '1W');
+        }
+
         if (history.error) return { price: null, previousClose: null, open: null, marketTime: null, currency: null, error: history.error };
 
         if (history.data && history.data.length > 0) {
@@ -313,15 +318,32 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
     try {
         const symbolStr = symbols.join(',');
         const url = `/api/yahoo-quote?symbol=${symbolStr}&_=${Date.now()}`;
-        const response = await fetch(url);
+        let data: any = null;
 
-        if (!response.ok) {
-            console.error(`API Error: ${response.status}`);
-            return {};
+        try {
+            const response = await fetch(url);
+            if (response.ok) {
+                data = await response.json();
+            }
+        } catch {
+            // Local proxy unavailable
         }
 
-        const data = await response.json();
-        const results = data.quoteResponse?.result || [];
+        // GitHub Pages / Static Hosting CORS fallback:
+        if (!data || !data.quoteResponse?.result) {
+            try {
+                const targetUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbolStr)}&_=${Date.now()}`;
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+                const fallbackRes = await fetch(proxyUrl);
+                if (fallbackRes.ok) {
+                    data = await fallbackRes.json();
+                }
+            } catch (fbErr) {
+                console.warn('[Batch Quote Fallback Error]:', fbErr);
+            }
+        }
+
+        const results = data?.quoteResponse?.result || [];
 
         const updateMap: Record<string, {
             price: number,
