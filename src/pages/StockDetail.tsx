@@ -1155,7 +1155,15 @@ export function StockDetail() {
                                                         'france': 'Frankreich',
                                                         'germany': 'Deutschland',
                                                         'switzerland': 'Schweiz',
-                                                        'australia': 'Australien'
+                                                        'australia': 'Australien',
+                                                        'italy': 'Italien',
+                                                        'spain': 'Spanien',
+                                                        'finland': 'Finnland',
+                                                        'netherlands': 'Niederlande',
+                                                        'belgium': 'Belgien',
+                                                        'austria': 'Österreich',
+                                                        'portugal': 'Portugal',
+                                                        'other': 'Andere'
                                                     };
                                                     const name = country.toLowerCase().replace(/\s/g, '_');
                                                     const displayName = normalizeCountry(displayNames[name] || country);

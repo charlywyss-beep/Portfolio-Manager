@@ -191,5 +191,79 @@ export const FALLBACK_ALLOCATIONS: Record<string, AllocationData> = {
             netherlands: 1.8,
             other: 13.2
         }
+    },
+    // State Street SPDR S&P Euro Dividend Aristocrats UCITS ETF (EUR)
+    // Tickers: SPYW.DE, EUDV.DE, SPYW
+    'SPYW.DE': {
+        sectorWeights: {
+            utilities: 20.5,
+            financial_services: 18.2,
+            industrials: 17.5,
+            consumer_defensive: 13.8,
+            basic_materials: 10.4,
+            realestate: 7.6,
+            healthcare: 4.5,
+            consumer_cyclical: 3.8,
+            communication_services: 3.7
+        },
+        countryWeights: {
+            germany: 28.5,
+            france: 21.2,
+            italy: 14.8,
+            spain: 12.3,
+            finland: 9.4,
+            netherlands: 5.8,
+            belgium: 4.2,
+            austria: 2.6,
+            portugal: 1.2
+        }
+    },
+    'EUDV.DE': {
+        sectorWeights: {
+            utilities: 20.5,
+            financial_services: 18.2,
+            industrials: 17.5,
+            consumer_defensive: 13.8,
+            basic_materials: 10.4,
+            realestate: 7.6,
+            healthcare: 4.5,
+            consumer_cyclical: 3.8,
+            communication_services: 3.7
+        },
+        countryWeights: {
+            germany: 28.5,
+            france: 21.2,
+            italy: 14.8,
+            spain: 12.3,
+            finland: 9.4,
+            netherlands: 5.8,
+            belgium: 4.2,
+            austria: 2.6,
+            portugal: 1.2
+        }
+    },
+    'SPYW': {
+        sectorWeights: {
+            utilities: 20.5,
+            financial_services: 18.2,
+            industrials: 17.5,
+            consumer_defensive: 13.8,
+            basic_materials: 10.4,
+            realestate: 7.6,
+            healthcare: 4.5,
+            consumer_cyclical: 3.8,
+            communication_services: 3.7
+        },
+        countryWeights: {
+            germany: 28.5,
+            france: 21.2,
+            italy: 14.8,
+            spain: 12.3,
+            finland: 9.4,
+            netherlands: 5.8,
+            belgium: 4.2,
+            austria: 2.6,
+            portugal: 1.2
+        }
     }
 };
