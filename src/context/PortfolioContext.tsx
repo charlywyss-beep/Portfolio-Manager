@@ -36,6 +36,8 @@ interface PortfolioContextType {
     renameWatchlist: (id: string, name: string) => void;
     addQuickLink: (stockId: string, url: string, label?: string) => void;
     removeQuickLink: (stockId: string, linkId: string) => void;
+    addFairValueQuickLink: (stockId: string, url: string, label?: string) => void;
+    removeFairValueQuickLink: (stockId: string, linkId: string) => void;
 
 
     // Simulator Persistence
@@ -473,6 +475,36 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         }));
     };
 
+    const addFairValueQuickLink = (stockId: string, url: string, label?: string) => {
+        setStocks(prev => prev.map(stock => {
+            if (stock.id === stockId) {
+                const newLink: import('../types').QuickLink = {
+                    id: crypto.randomUUID(),
+                    url,
+                    label,
+                    createdAt: new Date().toISOString()
+                };
+                return {
+                    ...stock,
+                    fairValueQuickLinks: [...(stock.fairValueQuickLinks || []), newLink]
+                };
+            }
+            return stock;
+        }));
+    };
+
+    const removeFairValueQuickLink = (stockId: string, linkId: string) => {
+        setStocks(prev => prev.map(stock => {
+            if (stock.id === stockId && stock.fairValueQuickLinks) {
+                return {
+                    ...stock,
+                    fairValueQuickLinks: stock.fairValueQuickLinks.filter(link => link.id !== linkId)
+                };
+            }
+            return stock;
+        }));
+    };
+
     const updateStock = (id: string, updates: Partial<Stock>) => {
         setStocks(prev => {
             const index = prev.findIndex(s => s.id === id);
@@ -855,6 +887,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 renameWatchlist,
                 addQuickLink,
                 removeQuickLink,
+                addFairValueQuickLink,
+                removeFairValueQuickLink,
                 finnhubApiKey,
                 setFinnhubApiKey,
                 simulatorState,

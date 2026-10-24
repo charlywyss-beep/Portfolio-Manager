@@ -56,7 +56,7 @@ const StockListItem = ({ stock, onClick, subtitle }: { stock: any; onClick: () =
 );
 
 export function FairValueCalculator() {
-    const { positions, stocks, watchlists, updateStock, addStock, addQuickLink, removeQuickLink } = usePortfolio();
+    const { positions, stocks, watchlists, updateStock, addStock, addFairValueQuickLink, removeFairValueQuickLink } = usePortfolio();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
 
@@ -1001,7 +1001,7 @@ export function FairValueCalculator() {
                         <div className="flex items-center justify-between border-b border-border pb-3">
                             <h3 className="font-bold text-base flex items-center gap-2 text-foreground">
                                 <ExternalLink className="size-4 text-primary" />
-                                Link hinzufügen {selectedSymbol ? `(${selectedSymbol})` : ''}
+                                Link für Fairen Wert hinzufügen {selectedSymbol ? `(${selectedSymbol})` : ''}
                             </h3>
                             <button
                                 onClick={() => { setShowAddLinkModal(false); setNewLinkUrl(''); setNewLinkLabel(''); }}
@@ -1076,7 +1076,31 @@ export function FairValueCalculator() {
                                         });
                                     }
                                     if (stockId) {
-                                        addQuickLink(stockId, formattedUrl, newLinkLabel.trim() || undefined);
+                                        addFairValueQuickLink(stockId, formattedUrl, newLinkLabel.trim() || undefined);
+                                    }
+                                    if (selectedSymbol) {
+                                        try {
+                                            const key = selectedSymbol.toUpperCase();
+                                            const mapRaw = localStorage.getItem('fair_value_params_map');
+                                            const map = mapRaw ? JSON.parse(mapRaw) : {};
+                                            const existing = map[key] || {};
+                                            const currentLinks = existing.fairValueQuickLinks || [];
+                                            map[key] = {
+                                                ...existing,
+                                                fairValueQuickLinks: [
+                                                    ...currentLinks,
+                                                    {
+                                                        id: crypto.randomUUID(),
+                                                        url: formattedUrl,
+                                                        label: newLinkLabel.trim() || undefined,
+                                                        createdAt: new Date().toISOString()
+                                                    }
+                                                ]
+                                            };
+                                            localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                                        } catch (e) {
+                                            console.warn('Failed saving fv link', e);
+                                        }
                                     }
                                     setShowAddLinkModal(false);
                                     setNewLinkUrl('');
@@ -2023,39 +2047,65 @@ export function FairValueCalculator() {
                                         </div>
                                     )}
 
-                                    {/* Custom links for KGV / Valuation */}
+                                    {/* Custom links for Fair Value / Valuation */}
                                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 pt-1.5 border-t border-border/40 text-[11px]">
-                                        {currentStock?.quickLinks && currentStock.quickLinks.map(link => {
-                                            const label = link.label?.trim() || link.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
-                                            return (
-                                                <div key={link.id} className="inline-flex items-center gap-1 group">
-                                                    <a
-                                                        href={link.url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-primary font-medium hover:underline flex items-center gap-1"
-                                                        title={link.url}
-                                                    >
-                                                        <ExternalLink className="size-2.5 shrink-0" />
-                                                        <span className="truncate max-w-[180px]">{label}</span>
-                                                    </a>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => currentStock && removeQuickLink(currentStock.id, link.id)}
-                                                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded p-0.5 transition-colors opacity-60 group-hover:opacity-100"
-                                                        title="Link entfernen"
-                                                    >
-                                                        <X className="size-2.5" />
-                                                    </button>
-                                                </div>
-                                            );
-                                        })}
+                                        {(() => {
+                                            const savedMap = selectedSymbol ? getSavedSymbolParams(selectedSymbol) : null;
+                                            const fvLinks: any[] = currentStock?.fairValueQuickLinks && currentStock.fairValueQuickLinks.length > 0
+                                                ? currentStock.fairValueQuickLinks
+                                                : (savedMap?.fairValueQuickLinks || []);
+
+                                            return fvLinks.map((link: any) => {
+                                                const label = link.label?.trim() || link.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+                                                return (
+                                                    <div key={link.id} className="inline-flex items-center gap-1 group">
+                                                        <a
+                                                            href={link.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-primary font-medium hover:underline flex items-center gap-1"
+                                                            title={link.url}
+                                                        >
+                                                            <ExternalLink className="size-2.5 shrink-0" />
+                                                            <span className="truncate max-w-[180px]">{label}</span>
+                                                        </a>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (currentStock) {
+                                                                    removeFairValueQuickLink(currentStock.id, link.id);
+                                                                }
+                                                                if (selectedSymbol) {
+                                                                    try {
+                                                                        const key = selectedSymbol.toUpperCase();
+                                                                        const mapRaw = localStorage.getItem('fair_value_params_map');
+                                                                        if (mapRaw) {
+                                                                            const map = JSON.parse(mapRaw);
+                                                                            if (map[key] && map[key].fairValueQuickLinks) {
+                                                                                map[key].fairValueQuickLinks = map[key].fairValueQuickLinks.filter((l: any) => l.id !== link.id);
+                                                                                localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+                                                                            }
+                                                                        }
+                                                                    } catch (e) {
+                                                                        console.warn('Failed removing fv link', e);
+                                                                    }
+                                                                }
+                                                            }}
+                                                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded p-0.5 transition-colors opacity-60 group-hover:opacity-100"
+                                                            title="Link entfernen"
+                                                        >
+                                                            <X className="size-2.5" />
+                                                        </button>
+                                                    </div>
+                                                );
+                                            });
+                                        })()}
 
                                         <button
                                             type="button"
                                             onClick={() => setShowAddLinkModal(true)}
                                             className="text-muted-foreground hover:text-primary font-medium hover:underline flex items-center gap-1 cursor-pointer transition-colors"
-                                            title="Eigenen Link für diese Aktie hinzufügen"
+                                            title="Eigenen Recherche-Link für den Fairen Wert hinzufügen"
                                         >
                                             <Plus className="size-2.5" />
                                             <span>Link hinzufügen</span>
