@@ -73,22 +73,32 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
     if (!isOpen) return null;
 
-    // Sort positions: Stocks first (A-Z), then ETFs (A-Z)
+    // Sort positions:
+    // 1. Priorität: Geöffnete Börsen zuerst (Live-Handel), danach geschlossene Börsen
+    // 2. Priorität: Alphabetisch A - Z wie bisher (Aktien vor ETFs)
     const sortedPositions = [...positions].sort((a, b) => {
-        // 1. Sort by Type (Stock before ETF)
+        const stateA = estimateMarketState(a.stock.symbol, a.stock.currency);
+        const stateB = estimateMarketState(b.stock.symbol, b.stock.currency);
+        const isOpenA = stateA === 'REGULAR';
+        const isOpenB = stateB === 'REGULAR';
+
+        // 1. Regel: Zuerst geöffnete Börsen (Live), dann geschlossene Börsen
+        if (isOpenA !== isOpenB) {
+            return isOpenA ? -1 : 1;
+        }
+
+        // 2. Regel: Typ (Aktien vor ETFs wie bisher)
         const typeA = a.stock.type?.toLowerCase() || 'stock';
         const typeB = b.stock.type?.toLowerCase() || 'stock';
-
-        // Custom order: stock comes before etf
         const isEtfA = typeA === 'etf';
         const isEtfB = typeB === 'etf';
 
         if (isEtfA !== isEtfB) {
-            return isEtfA ? 1 : -1; // Stocks first
+            return isEtfA ? 1 : -1;
         }
 
-        // 2. Sort by Name (A-Z)
-        return a.stock.name.localeCompare(b.stock.name);
+        // 3. Regel: Alphabetisch von A bis Z wie bisher
+        return a.stock.name.localeCompare(b.stock.name, 'de', { sensitivity: 'base' });
     });
 
     const totalDailyGain = sortedPositions.reduce((sum, p) => sum + convertToCHF(p.dailyGain, p.stock.currency), 0);

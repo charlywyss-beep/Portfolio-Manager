@@ -40,7 +40,7 @@ export interface MarketQuoteData {
     lastUpdated?: string;
 }
 
-export type SortOption = 'default' | 'name-asc' | 'name-desc' | 'gain-desc' | 'gain-asc' | 'type-stocks' | 'type-etfs' | 'value-desc';
+export type SortOption = 'default' | 'name-asc' | 'name-desc' | 'gain-desc' | 'gain-asc' | 'type-stocks' | 'type-etfs' | 'value-desc' | 'open-first';
 
 export const DEFAULT_MARKET_ITEMS: MarketItem[] = [
     { id: '1', symbol: 'ZURN.SW', name: 'Zurich Insurance', category: 'stocks', decimals: 2 },
@@ -309,7 +309,7 @@ export function MarketOverviewPage() {
     const [sortBy, setSortBy] = useState<SortOption>(() => {
         try {
             const saved = localStorage.getItem('portfolio_market_overview_sort') as SortOption | null;
-            if (saved && ['default', 'name-asc', 'name-desc', 'gain-desc', 'gain-asc', 'type-stocks', 'type-etfs', 'value-desc'].includes(saved)) {
+            if (saved && ['default', 'name-asc', 'name-desc', 'gain-desc', 'gain-asc', 'type-stocks', 'type-etfs', 'value-desc', 'open-first'].includes(saved)) {
                 return saved;
             }
         } catch {}
@@ -701,7 +701,12 @@ export function MarketOverviewPage() {
             const isEtfA = stockA?.type === 'etf';
             const isEtfB = stockB?.type === 'etf';
 
-            if (sortBy === 'name-asc') {
+            if (sortBy === 'name-asc' || sortBy === 'open-first') {
+                const stateA = estimateMarketState(a.symbol, qa?.currency || stockA?.currency || 'USD');
+                const stateB = estimateMarketState(b.symbol, qb?.currency || stockB?.currency || 'USD');
+                const isOpenA = stateA === 'REGULAR';
+                const isOpenB = stateB === 'REGULAR';
+                if (isOpenA !== isOpenB) return isOpenA ? -1 : 1;
                 return a.name.localeCompare(b.name, 'de', { sensitivity: 'base' });
             }
             if (sortBy === 'name-desc') {
@@ -967,7 +972,7 @@ export function MarketOverviewPage() {
                                 title="Kacheln sortieren (A-Z, Gewinn, Typ etc.)"
                             >
                                 <option value="default">Reihenfolge: Meine Anordnung (Standard)</option>
-                                <option value="name-asc">Sortierung: Name (A → Z)</option>
+                                <option value="name-asc">Sortierung: Geöffnete zuerst (A → Z)</option>
                                 <option value="name-desc">Sortierung: Name (Z → A)</option>
                                 <option value="gain-desc">Sortierung: Höchster Gewinn %</option>
                                 <option value="gain-asc">Sortierung: Grösster Verlust %</option>
