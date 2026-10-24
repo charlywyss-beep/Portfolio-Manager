@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Calendar, TrendingUp, Edit, Trash2, RefreshCw, ChevronLeft, ChevronRight, Landmark } from 'lucide-react';
+import { Calendar, TrendingUp, Edit, Trash2, RefreshCw, ChevronLeft, ChevronRight, Landmark, Percent, Building2 } from 'lucide-react';
 import { Logo } from '../components/Logo';
 import { cn } from '../utils';
 import { useState, useEffect, useRef } from 'react';
@@ -397,33 +397,41 @@ export function DividendPlanner() {
             </div>
 
             {/* Summary Cards - Fixed Height */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 shrink-0">
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl p-2.5 md:p-3 border border-green-200 dark:border-green-800 shadow-sm flex flex-col justify-between">
-                    <span className="text-xs font-medium text-green-900 dark:text-green-100 flex items-center gap-1.5 mb-0.5">
-                        <TrendingUp className="size-3" />
-                        Jährlich
-                    </span>
-                    <div className="text-base sm:text-lg md:text-xl font-bold text-green-600 dark:text-green-400">
-                        {totalAnnualNet.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-xs font-normal opacity-80">CHF</span>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 shrink-0">
+                <div className="bg-card rounded-xl p-3 sm:p-4 border border-border shadow-sm flex flex-col items-center justify-center text-center transition-colors">
+                    <div className="flex items-center justify-center gap-2 mb-1.5">
+                        <div className="size-6 sm:size-7 rounded-lg bg-green-500/10 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
+                            <TrendingUp className="size-3.5 sm:size-4" />
+                        </div>
+                        <span className="text-xs sm:text-sm font-medium text-muted-foreground">Jährlich</span>
+                    </div>
+                    <div className="text-xl sm:text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400 tabular-nums tracking-tight">
+                        {totalAnnualNet.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+                        <span className="text-xs sm:text-sm font-normal text-muted-foreground">CHF</span>
                     </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-xl p-2.5 md:p-3 border border-blue-200 dark:border-blue-800 shadow-sm flex flex-col justify-between">
-                    <span className="text-xs font-medium text-blue-900 dark:text-blue-100 flex items-center gap-1.5 mb-0.5">
-                        <Calendar className="size-3" />
-                        Ø Monatlich
-                    </span>
-                    <div className="text-base sm:text-lg md:text-xl font-bold text-blue-800 dark:text-blue-400">
-                        {totalMonthly.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-xs font-normal opacity-80">CHF</span>
+                <div className="bg-card rounded-xl p-3 sm:p-4 border border-border shadow-sm flex flex-col items-center justify-center text-center transition-colors">
+                    <div className="flex items-center justify-center gap-2 mb-1.5">
+                        <div className="size-6 sm:size-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                            <Calendar className="size-3.5 sm:size-4" />
+                        </div>
+                        <span className="text-xs sm:text-sm font-medium text-muted-foreground">Ø Monatlich</span>
+                    </div>
+                    <div className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight">
+                        {totalMonthly.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+                        <span className="text-xs sm:text-sm font-normal text-muted-foreground">CHF</span>
                     </div>
                 </div>
 
-                <div className="bg-card rounded-xl p-2.5 md:p-3 border border-border shadow-sm flex flex-col justify-between">
-                    <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 mb-0.5">
-                        <TrendingUp className="size-3" />
-                        Ø Rendite
-                    </span>
-                    <div className="text-base sm:text-lg md:text-xl font-bold text-foreground">
+                <div className="bg-card rounded-xl p-3 sm:p-4 border border-border shadow-sm flex flex-col items-center justify-center text-center transition-colors">
+                    <div className="flex items-center justify-center gap-2 mb-1.5">
+                        <div className="size-6 sm:size-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                            <Percent className="size-3.5 sm:size-4" />
+                        </div>
+                        <span className="text-xs sm:text-sm font-medium text-muted-foreground">Ø Rendite</span>
+                    </div>
+                    <div className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground tabular-nums tracking-tight">
                         {(projectedDividends.reduce((acc, curr) => {
                             const s = curr?.stock;
                             const f = s?.dividendFrequency === 'quarterly' ? 4 : s?.dividendFrequency === 'semi-annually' ? 2 : s?.dividendFrequency === 'monthly' ? 12 : 1;
@@ -433,13 +441,16 @@ export function DividendPlanner() {
                     </div>
                 </div>
 
-                <div className="bg-card rounded-xl p-2.5 md:p-3 border border-border shadow-sm flex flex-col justify-between">
-                    <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 mb-0.5">
-                        <Calendar className="size-3" />
-                        Zahler
-                    </span>
-                    <div className="text-base sm:text-lg md:text-xl font-bold text-foreground">
-                        {projectedDividends.length} <span className="text-xs font-normal text-muted-foreground">Aktien</span>
+                <div className="bg-card rounded-xl p-3 sm:p-4 border border-border shadow-sm flex flex-col items-center justify-center text-center transition-colors">
+                    <div className="flex items-center justify-center gap-2 mb-1.5">
+                        <div className="size-6 sm:size-7 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                            <Building2 className="size-3.5 sm:size-4" />
+                        </div>
+                        <span className="text-xs sm:text-sm font-medium text-muted-foreground">Zahler</span>
+                    </div>
+                    <div className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground tabular-nums tracking-tight">
+                        {projectedDividends.length}{' '}
+                        <span className="text-xs sm:text-sm font-normal text-muted-foreground">Aktien</span>
                     </div>
                 </div>
             </div>
