@@ -147,9 +147,10 @@ export function DividendCalculator() {
                     // Load stock selection without planned data
                     // Calculate Annual Dividend
                     let annualDiv = stock.dividendAmount || 0;
-                    if (stock.dividendFrequency === 'quarterly') annualDiv *= 4;
-                    else if (stock.dividendFrequency === 'monthly') annualDiv *= 12;
-                    else if (stock.dividendFrequency === 'semi-annually') annualDiv *= 2;
+                    const stockFreq = stock.dividendFrequency && stock.dividendFrequency !== 'none' ? stock.dividendFrequency : 'annually';
+                    if (stockFreq === 'quarterly') annualDiv *= 4;
+                    else if (stockFreq === 'monthly') annualDiv *= 12;
+                    else if (stockFreq === 'semi-annually') annualDiv *= 2;
 
                     updateSimulatorState({
                         selectedStockId: stock.id,
@@ -159,6 +160,7 @@ export function DividendCalculator() {
                         simIsin: stock.isin || '',
                         simCurrency: stock.currency,
                         simType: stock.type,
+                        simFrequency: stockFreq,
                         price: stock.currentPrice,
                         dividend: annualDiv
                     });
@@ -473,7 +475,9 @@ export function DividendCalculator() {
     };
 
     // Destructure Simulator State
-    const { shares, price, dividend, selectedStockId, simName, simSymbol, simIsin, simCurrency, fees, mode } = simulatorState;
+    const { shares, price, dividend, selectedStockId, simName, simSymbol, simIsin, simCurrency, simFrequency, fees, mode } = simulatorState;
+    const frequency = simFrequency || 'annually';
+    const freqFactor = frequency === 'quarterly' ? 4 : frequency === 'semi-annually' ? 2 : frequency === 'monthly' ? 12 : 1;
 
     // Watchlist Feedback
     const [showSuccess, setShowSuccess] = useState(false);
@@ -557,19 +561,21 @@ export function DividendCalculator() {
 
             // Calculate Annual Dividend
             let annualDiv = stock.dividendAmount || 0;
-            if (stock.dividendFrequency === 'quarterly') annualDiv *= 4;
-            else if (stock.dividendFrequency === 'monthly') annualDiv *= 12;
-            else if (stock.dividendFrequency === 'semi-annually') annualDiv *= 2;
+            const stockFreq = stock.dividendFrequency && stock.dividendFrequency !== 'none' ? stock.dividendFrequency : 'annually';
+            if (stockFreq === 'quarterly') annualDiv *= 4;
+            else if (stockFreq === 'monthly') annualDiv *= 12;
+            else if (stockFreq === 'semi-annually') annualDiv *= 2;
 
             // Update state ONLY if it's different to prevent loops
             const isDivDiff = Math.abs(dividend - annualDiv) > 0.001;
 
-            if (stock.currency !== simCurrency || stock.symbol !== simSymbol || isDivDiff) {
+            if (stock.currency !== simCurrency || stock.symbol !== simSymbol || isDivDiff || (stock.dividendFrequency && stock.dividendFrequency !== simFrequency)) {
                 updateSimulatorState({
                     simName: stock.name,
                     simSymbol: stock.symbol,
                     simIsin: stock.isin || '',
                     simCurrency: stock.currency,
+                    simFrequency: stockFreq,
                     price: stock.currentPrice,
                     dividend: annualDiv,
                     fees: { ...fees, stampDutyPercent: newStamp },
@@ -754,9 +760,9 @@ export function DividendCalculator() {
                     currentPrice: price,
                     previousClose: price,
                     sector: simulatorState.simSector || '',
-                    dividendAmount: dividend,
+                    dividendAmount: dividend > 0 ? dividend / freqFactor : 0,
                     dividendYield: price > 0 ? (dividend / price) * 100 : 0,
-                    dividendFrequency: 'annually'
+                    dividendFrequency: frequency
                 });
                 addToWatchlist(targetStockId);
                 updateSimulatorState({ selectedStockId: targetStockId });
@@ -881,9 +887,9 @@ export function DividendCalculator() {
                 currentPrice: price,
                 previousClose: price,
                 sector: simulatorState.simSector || '',
-                dividendAmount: dividend,
+                dividendAmount: dividend > 0 ? dividend / freqFactor : 0,
                 dividendYield: price > 0 ? (dividend / price) * 100 : 0,
-                dividendFrequency: 'annually',
+                dividendFrequency: frequency,
                 plannedPurchase
             });
             addToWatchlist(newId, watchlistId);
@@ -1571,7 +1577,7 @@ export function DividendCalculator() {
                                     <div className="space-y-1">
                                         <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap flex items-center justify-between">
                                             <span>Dividende ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})</span>
-                                            <span className="text-[9px] text-primary/70 font-normal">pro Anteil</span>
+                                            <span className="text-[9px] text-primary/70 font-normal">pro Jahr</span>
                                         </label>
                                         <LocalNumberInput
                                             step="0.001"
@@ -1581,7 +1587,9 @@ export function DividendCalculator() {
                                             className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                         />
                                         <div className="text-[10px] text-muted-foreground text-right mt-1">
-                                            {dividend && dividend > 0 ? `${dividend.toFixed(3)} ${simCurrency || 'CHF'} / Stk.` : 'Ausschüttung'}
+                                            {dividend && dividend > 0 && frequency !== 'annually'
+                                                ? `↳ ${(dividend / freqFactor).toFixed(3)} ${simCurrency || 'CHF'} (${frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'})`
+                                                : (dividend && dividend > 0 ? `${dividend.toFixed(3)} ${simCurrency || 'CHF'} / Jahr` : 'Jahresausschüttung')}
                                         </div>
                                     </div>
 
@@ -1607,27 +1615,42 @@ export function DividendCalculator() {
                                                 %
                                             </span>
                                         </div>
-                                        <div className="flex items-center justify-between text-[10px] mt-1">
-                                            <span className="text-muted-foreground italic">Schnellwahl:</span>
-                                            <div className="flex gap-1">
-                                                {[3.5, 3.8, 4.0, 4.2].map((pct) => (
-                                                    <button
-                                                        key={pct}
-                                                        type="button"
-                                                        onClick={() => {
-                                                            if (price > 0) {
-                                                                const newDiv = (pct / 100) * price;
-                                                                updateSimulatorState({ dividend: parseFloat(newDiv.toFixed(4)) });
-                                                            }
-                                                        }}
-                                                        className="px-1.5 py-0.5 rounded bg-muted hover:bg-primary/20 hover:text-primary transition-colors text-[10px] font-mono text-muted-foreground active:scale-95"
-                                                        title={`${pct}% Rendite berechnen`}
-                                                    >
-                                                        {pct}%
-                                                    </button>
-                                                ))}
-                                            </div>
+                                        <div className="text-[10px] text-green-600 dark:text-green-400 font-medium text-right mt-1">
+                                            {price > 0 && dividend > 0 ? `${((dividend / price) * 100).toFixed(2)}% p.a.` : 'Brutto-Rendite'}
                                         </div>
+                                    </div>
+                                </div>
+
+                                {/* Ausschüttungs-Frequenz Selector */}
+                                <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-muted/30 border border-border/50 rounded-xl">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-xs font-semibold text-foreground">Ausschüttungs-Frequenz:</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 bg-muted p-1 rounded-lg border border-border/50">
+                                        {(['annually', 'semi-annually', 'quarterly', 'monthly'] as const).map((freq) => {
+                                            const labels: Record<string, string> = {
+                                                'annually': 'Jährlich (1x)',
+                                                'semi-annually': 'Halbjährlich (2x)',
+                                                'quarterly': 'Quartalsweise (4x)',
+                                                'monthly': 'Monatlich (12x)'
+                                            };
+                                            const isSelected = frequency === freq;
+                                            return (
+                                                <button
+                                                    key={freq}
+                                                    type="button"
+                                                    onClick={() => updateSimulatorState({ simFrequency: freq })}
+                                                    className={cn(
+                                                        "px-2.5 py-1 text-xs rounded-md transition-all font-medium",
+                                                        isSelected
+                                                            ? "bg-primary text-primary-foreground shadow-xs font-bold"
+                                                            : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                                                    )}
+                                                >
+                                                    {labels[freq]}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 

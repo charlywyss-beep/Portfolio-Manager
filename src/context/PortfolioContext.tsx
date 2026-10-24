@@ -51,6 +51,7 @@ interface PortfolioContextType {
         simType: 'stock' | 'etf';
         simSector: string;
         simValor: string;
+        simFrequency?: 'annually' | 'semi-annually' | 'quarterly' | 'monthly';
         mode: 'buy' | 'sell';
         fees: {
             courtagePercent: number;
@@ -88,6 +89,7 @@ const defaultSimulatorState = {
     simType: 'stock',
     simSector: '',
     simValor: '',
+    simFrequency: 'annually' as const,
     mode: 'buy',
     fees: {
         courtagePercent: 0.5,
