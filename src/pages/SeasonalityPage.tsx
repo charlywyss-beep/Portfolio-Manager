@@ -554,14 +554,33 @@ export function SeasonalityPage() {
                                                             {(d.positiveRate * 100).toFixed(0)}%
                                                         </span>
                                                     </td>
-                                                    <td className="text-right py-2 px-4 tabular-nums">
-                                                        {d.divEvents.length > 0 && (
-                                                            <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium" title={analysisMode === 'single' ? `Ex-Tag: ${new Date(d.divEvents[0].date).toLocaleDateString()}` : `${d.divEvents.length} Ex-Tage historisch`}>
-                                                                <Coins className="size-3.5" />
-                                                                {analysisMode === 'single' && <span className="text-[10px]">{new Date(d.divEvents[0].date).getDate()}.</span>}
-                                                            </span>
-                                                        )}
-                                                    </td>
+                                                    {(() => {
+                                                        const hasDiv = d.divEvents.length > 0;
+                                                        const exTooltip = hasDiv
+                                                            ? (analysisMode === 'single'
+                                                                ? `Ex-Tag: ${new Date(d.divEvents[0].date).toLocaleDateString('de-CH')}`
+                                                                : `${d.divEvents.length} Ex-Tage historisch in diesem Monat`)
+                                                            : undefined;
+                                                        return (
+                                                            <td
+                                                                className={cn("text-right py-2 px-4 tabular-nums", hasDiv && "cursor-pointer")}
+                                                                title={exTooltip}
+                                                            >
+                                                                {hasDiv ? (
+                                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium text-xs border border-amber-500/25 hover:bg-amber-500/20 transition-all shadow-sm">
+                                                                        <Coins className="size-3.5 shrink-0" />
+                                                                        <span>
+                                                                            {analysisMode === 'single'
+                                                                                ? new Date(d.divEvents[0].date).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })
+                                                                                : `${d.divEvents.length} Ex-Tage`}
+                                                                        </span>
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-muted-foreground/30">-</span>
+                                                                )}
+                                                            </td>
+                                                        );
+                                                    })()}
                                                     <td className="text-right py-2 px-4 text-muted-foreground">{d.count}</td>
                                                 </tr>
                                             ))}
