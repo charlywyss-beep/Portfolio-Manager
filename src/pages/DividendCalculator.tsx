@@ -2070,10 +2070,10 @@ export function DividendCalculator() {
 
                                     {/* Yield Info (Buy Mode) */}
                                     {mode === 'buy' && (
-                                        <div className="p-3 bg-primary text-slate-950 rounded-lg space-y-1.5 text-sm shadow-sm">
+                                        <div className="p-3 bg-blue-600 text-white rounded-lg space-y-1.5 text-sm shadow-sm">
                                             <div className="flex justify-between items-center w-full">
-                                                <span className="font-semibold text-slate-950">Erw. Jährliche Dividende:</span>
-                                                <span className="text-xl font-bold text-slate-950">
+                                                <span className="font-semibold text-white">Erw. Jährliche Dividende{simCurrency && simCurrency !== 'CHF' ? ` (${displayNativeCurrency})` : ''}:</span>
+                                                <span className="text-xl font-bold text-white">
                                                     {(() => {
                                                         const annualDivNative = shares * dividend;
                                                         if (simCurrency === 'GBp') {
@@ -2084,11 +2084,11 @@ export function DividendCalculator() {
                                                 </span>
                                             </div>
                                             {frequency !== 'annually' && dividend > 0 && shares > 0 && (
-                                                <div className="flex justify-between items-center w-full text-sm text-slate-950 pt-1.5 border-t border-slate-950/20">
-                                                    <span className="font-semibold text-slate-950">
+                                                <div className="flex justify-between items-center w-full text-sm text-white pt-1.5 border-t border-white/20">
+                                                    <span className="font-semibold text-white">
                                                         Auszahlung pro {frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'}:
                                                     </span>
-                                                    <span className="font-bold text-base text-slate-950">
+                                                    <span className="font-bold text-base text-white">
                                                         {(() => {
                                                             const payoutNative = (shares * dividend) / freqFactor;
                                                             if (simCurrency === 'GBp') {
@@ -2106,7 +2106,7 @@ export function DividendCalculator() {
                                 {/* Results Grid - Compact 2x2 */}
                                 <div className="grid grid-cols-2 gap-3 pt-2">
                                     {/* Total Invest / Proceeds */}
-                                    <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 flex flex-col gap-1">
+                                    <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 flex flex-col gap-1 justify-between">
                                         <span className="text-sm font-bold text-foreground">
                                             {mode === 'buy' ? 'Investition Total' : 'Netto Erlös'} (CHF):
                                         </span>
@@ -2130,19 +2130,19 @@ export function DividendCalculator() {
                                         </div>
                                     </div>
 
-                                    {/* Annual Payout */}
-                                    <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 flex flex-col gap-1">
-                                        <span className="text-sm font-bold text-foreground">Jährl. Ausschüttung (CHF):</span>
+                                    {/* Annual Payout (CHF) styled as blue card with white text */}
+                                    <div className="p-2.5 rounded-lg bg-blue-600 text-white border border-blue-500 shadow-sm flex flex-col gap-1 justify-between">
+                                        <span className="text-sm font-bold text-white">Erw. Dividende (CHF):</span>
                                         <div className="flex flex-col items-end">
-                                            <span className="text-xl font-bold text-foreground leading-none">
+                                            <span className="text-xl font-bold text-white leading-none">
                                                 {annualDividendCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                                             </span>
                                             {frequency !== 'annually' && annualDividendCHF > 0 ? (
-                                                <span className="text-[10px] text-muted-foreground mt-0.5 font-medium">
+                                                <span className="text-xs text-white/95 mt-1 font-semibold">
                                                     ≈ {(annualDividendCHF / freqFactor).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })} / {frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'}
                                                 </span>
                                             ) : (
-                                                mode === 'sell' && <span className="text-[10px] text-red-500 font-medium">Verlust an Div.</span>
+                                                mode === 'sell' && <span className="text-[10px] text-white/90 font-medium">Verlust an Div.</span>
                                             )}
                                         </div>
                                     </div>
