@@ -55,9 +55,11 @@ const NavItem = ({ to, icon: Icon, label, onClick }: NavItemProps) => {
     const searchParams = new URLSearchParams(location.search);
     const fromWatchlist = searchParams.get('from') === 'watchlist';
     const fromPortfolio = searchParams.get('from') === 'portfolio';
+    const fromDividends = searchParams.get('from') === 'dividends';
 
     if (to === '/watchlist' && fromWatchlist) return true;
     if (to === '/portfolio' && fromPortfolio) return true;
+    if (to === '/dividends' && (fromDividends || (!fromWatchlist && !fromPortfolio))) return true;
 
     return false;
   };

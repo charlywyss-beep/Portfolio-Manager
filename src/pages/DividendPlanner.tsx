@@ -850,7 +850,7 @@ export function DividendPlanner() {
                                                         className="cursor-pointer hover:scale-110 transition-transform p-0.5 shrink-0"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            navigate(`/stock/${stock.id}`);
+                                                            navigate(`/stock/${stock.id}?from=dividends`);
                                                         }}
                                                     >
                                                         {stock.logoUrl ? (
@@ -876,7 +876,7 @@ export function DividendPlanner() {
                                                         <div
                                                             className="font-bold text-[13px] xl:text-sm text-foreground truncate block leading-tight cursor-pointer hover:text-primary transition-colors"
                                                             title={stock.name}
-                                                            onClick={() => navigate(`/stock/${stock.id}`)}
+                                                            onClick={() => navigate(`/stock/${stock.id}?from=dividends`)}
                                                         >
                                                             {stock.name}
                                                         </div>
@@ -1016,7 +1016,7 @@ export function DividendPlanner() {
                                                 <div className="absolute inset-0 bg-card -z-10" />
                                                 <div className="relative flex items-center justify-center">
                                                     <button
-                                                        onClick={() => navigate(`/dividends/edit/${stock.id}`)}
+                                                        onClick={() => navigate(`/dividends/edit/${stock.id}?from=dividends`)}
                                                         className="p-1.5 hover:bg-primary/10 text-primary rounded-lg transition-colors"
                                                         title="Bearbeiten"
                                                     >

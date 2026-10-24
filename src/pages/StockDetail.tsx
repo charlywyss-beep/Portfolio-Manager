@@ -432,9 +432,10 @@ export function StockDetail() {
                                     </button>
                                     <button
                                         onClick={() => {
-                                            const from = searchParams.get('from');
+                                            const from = searchParams.get('from') || 'dividends';
                                             const query = from ? `?from=${from}` : '';
-                                            navigate(`/dividends/edit/${stock.id}${query}`);
+                                            const targetId = stockFromContext?.id || stock?.id || stock?.symbol || id;
+                                            navigate(`/dividends/edit/${encodeURIComponent(String(targetId))}${query}`);
                                         }}
                                         className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                                         title="Daten bearbeiten"
@@ -601,9 +602,10 @@ export function StockDetail() {
                 {/* Kursdaten */}
                 <div
                     onClick={() => {
-                        const from = searchParams.get('from');
+                        const from = searchParams.get('from') || 'dividends';
                         const query = from ? `?from=${from}` : '';
-                        navigate(`/dividends/edit/${stock.id}${query}`);
+                        const targetId = stockFromContext?.id || stock?.id || stock?.symbol || id;
+                        navigate(`/dividends/edit/${encodeURIComponent(String(targetId))}${query}`);
                     }}
                     className="bg-card border border-border hover:border-primary/50 rounded-xl p-6 shadow-sm cursor-pointer transition-colors group flex flex-col"
                     title="Daten bearbeiten"

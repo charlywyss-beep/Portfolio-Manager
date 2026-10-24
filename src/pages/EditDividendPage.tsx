@@ -79,8 +79,18 @@ export function EditDividendPage() {
     const [showUnsavedModal, setShowUnsavedModal] = useState(false);
 
     // Derived state
-    const currentStockId = stockId || selectedStockId;
-    const stock = stocks.find(s => s.id === currentStockId);
+    const rawId = decodeURIComponent((stockId || selectedStockId || '').trim());
+    const stock = stocks.find(s =>
+        s.id.trim() === rawId ||
+        s.id.toLowerCase() === rawId.toLowerCase() ||
+        s.symbol.toLowerCase() === rawId.toLowerCase() ||
+        s.isin?.toLowerCase() === rawId.toLowerCase()
+    ) || (() => {
+        const foundPos = positions.find(p => p.id === rawId || p.stockId === rawId);
+        return foundPos ? stocks.find(s => s.id === foundPos.stockId) : undefined;
+    })();
+
+    const currentStockId = stock?.id || rawId;
 
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -135,7 +145,7 @@ export function EditDividendPage() {
 
             if (stock.dividendDates && stock.dividendDates.length > 0) {
                 // Sanitize dates when loading to fix corrupted years
-                const dates = stock.dividendDates.map(d => ({
+                const dates = stock.dividendDates.map((d: any) => ({
                     exDate: sanitizeDateYear(d.exDate || ''),
                     payDate: sanitizeDateYear(d.payDate || '', d.exDate)
                 }));
@@ -157,7 +167,7 @@ export function EditDividendPage() {
             setIsDirty(false);
             setStockNameOverride(undefined);
         }
-    }, [stock?.id]);
+    }, [stock?.id, stock?.symbol]);
 
 
     // Handlers
@@ -242,7 +252,7 @@ export function EditDividendPage() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        const targetId = currentStockId;
+        const targetId = stock?.id || currentStockId;
         if (!targetId) return;
 
         // Update Price
@@ -728,12 +738,12 @@ export function EditDividendPage() {
                                 </div>
 
                                 {/* Kaufpreis Average Display */}
-                                {stocks.find(s => String(s.id) === String(currentStockId)) && positions.find(p => String(p.stockId) === String(currentStockId)) && (
+                                {stocks.find(s => String(s.id) === String(currentStockId) || (stock && s.symbol.toLowerCase() === stock.symbol.toLowerCase())) && positions.find(p => String(p.stockId) === String(currentStockId) || (stock && p.stockId === stock.id)) && (
                                     <div className="flex justify-between items-center py-2 px-3 bg-muted/30 rounded-lg border border-border/50 mb-2">
                                         <label className="text-sm font-medium text-muted-foreground">Kaufpreis Ø</label>
                                         <span className="font-mono font-medium">
                                             {formatCurrency(
-                                                positions.find(p => String(p.stockId) === String(currentStockId))?.buyPriceAvg || 0,
+                                                positions.find(p => String(p.stockId) === String(currentStockId) || (stock && p.stockId === stock.id))?.buyPriceAvg || 0,
                                                 stocks.find(s => String(s.id) === String(currentStockId))?.currency || 'CHF'
                                             )}
                                         </span>
@@ -1136,7 +1146,7 @@ export function EditDividendPage() {
                                                         className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg"
                                                     />
                                                     {(() => {
-                                                        const currentPos = positions.find(p => String(p.stockId) === String(currentStockId));
+                                                        const currentPos = positions.find(p => String(p.stockId) === String(currentStockId) || (stock && p.stockId === stock.id));
                                                         const buyPriceAvg = currentPos?.buyPriceAvg;
                                                         const am = parseFloat(amount.replace(',', '.'));
                                                         const factor = getFrequencyFactor(frequency);
