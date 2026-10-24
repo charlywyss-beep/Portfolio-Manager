@@ -191,7 +191,7 @@ export function FairValueCalculator() {
         return null;
     };
 
-    const saveSymbolParamsToLocal = (sym: string, params: { eps: number; growthRate: number; pe: number; dividendYield: number; discountRate: number; mos: number; isCustom?: boolean; customBackup?: any; clearCustomBackup?: boolean; valuationMode?: 'conservative' | 'quality' }) => {
+    const saveSymbolParamsToLocal = (sym: string, params: { eps: number; growthRate: number; pe: number; dividendYield: number; discountRate: number; mos: number; isCustom?: boolean; customBackup?: any; clearCustomBackup?: boolean; valuationMode?: 'conservative' | 'quality'; peHorizon?: '5Y' | '10Y' | 'custom' }) => {
         try {
             const key = sym.toUpperCase();
             const mapRaw = localStorage.getItem('fair_value_params_map');
@@ -206,6 +206,7 @@ export function FairValueCalculator() {
                 dividendYield: prevEntry.dividendYield,
                 discountRate: prevEntry.discountRate,
                 mos: prevEntry.mos,
+                peHorizon: prevEntry.peHorizon || prevEntry.customBackup?.peHorizon,
                 updatedAt: prevEntry.updatedAt || now
             } : undefined;
 
@@ -219,6 +220,7 @@ export function FairValueCalculator() {
                         dividendYield: params.dividendYield,
                         discountRate: params.discountRate,
                         mos: params.mos,
+                        peHorizon: params.peHorizon || prevEntry.customBackup?.peHorizon,
                         updatedAt: now
                     }
                     : (params.customBackup || validPrevBackup || validPrevAsBackup);
@@ -304,7 +306,8 @@ export function FairValueCalculator() {
                     discountRate: numDisc,
                     mos: numMos,
                     isCustom: true,
-                    valuationMode: mode
+                    valuationMode: mode,
+                    peHorizon: selectedPeHorizon
                 });
             }
         }
@@ -330,15 +333,24 @@ export function FairValueCalculator() {
         if (!selectedSymbol) return;
         const backup = getCustomBackupForSymbol(selectedSymbol);
         if (!backup) return;
+        const restoredPe = parseFloat(Number(backup.pe).toFixed(2));
         setEps(parseFloat(Number(backup.eps).toFixed(2)));
         setGrowthRate(parseFloat(Number(backup.growthRate).toFixed(2)));
-        setPe(parseFloat(Number(backup.pe).toFixed(2)));
+        setPe(restoredPe);
         setDividendYield(parseFloat(Number(backup.dividendYield || 0).toFixed(2)));
         setDiscountRate(backup.discountRate || 8);
         setMos(backup.mos || 20);
         setEpsSourceLabel('Manuell / Gespeichert');
         setGrowthSourceLabel('Manuell / Gespeichert');
         setIsSavedForStock(true);
+
+        if (backup.peHorizon === '10Y' || Math.abs(restoredPe - pe10Year) < 0.01) {
+            setSelectedPeHorizon('10Y');
+        } else if (backup.peHorizon === '5Y' || Math.abs(restoredPe - pe5Year) < 0.01) {
+            setSelectedPeHorizon('5Y');
+        } else {
+            setSelectedPeHorizon('custom');
+        }
     };
 
     // Handler: Delete manual values / backup for the current stock and reset to Auto
@@ -499,11 +511,12 @@ export function FairValueCalculator() {
                     dividendYield: numDiv,
                     discountRate: numDisc,
                     mos: numMos,
-                    isCustom: isSavedForStock
+                    isCustom: isSavedForStock,
+                    peHorizon: selectedPeHorizon
                 });
             }
         }
-    }, [selectedSymbol, eps, growthRate, pe, dividendYield, discountRate, mos, isSavedForStock, quote, loadingData]);
+    }, [selectedSymbol, eps, growthRate, pe, dividendYield, discountRate, mos, isSavedForStock, selectedPeHorizon, quote, loadingData]);
 
     // Categorized Suggestions (Holdings & Watchlist)
     const localMatches = useMemo(() => {
@@ -601,6 +614,9 @@ export function FairValueCalculator() {
             setDividendYield(parseFloat(Number(savedStockParams.dividendYield || 0).toFixed(2)));
             setDiscountRate(savedStockParams.discountRate || 8);
             setMos(savedStockParams.mos || 20);
+            if (savedStockParams.peHorizon) {
+                setSelectedPeHorizon(savedStockParams.peHorizon);
+            }
             if (savedStockParams.valuationMode) {
                 setValuationProfile(savedStockParams.valuationMode);
             }
@@ -1845,39 +1861,47 @@ export function FairValueCalculator() {
                                             Verkaufs-KGV
                                         </label>
                                         <div className="inline-flex items-center rounded-lg border border-border/80 p-0.5 bg-muted/60 gap-1 shadow-2xs">
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setPe(pe5Year);
-                                                    setSelectedPeHorizon('5Y');
-                                                }}
-                                                className={cn(
-                                                    "px-2 py-0.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1",
-                                                    selectedPeHorizon === '5Y' && Math.abs(Number(pe) - pe5Year) < 0.01
-                                                        ? "bg-blue-600 text-white shadow-xs"
-                                                        : "text-muted-foreground hover:text-foreground hover:bg-card/80"
-                                                )}
-                                                title={`Historischer 5-Jahres-KGV-Schnitt: ${pe5Year.toFixed(1)}`}
-                                            >
-                                                <span>5J Ø</span>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setPe(pe10Year);
-                                                    setSelectedPeHorizon('10Y');
-                                                    setIsSavedForStock(true);
-                                                }}
-                                                className={cn(
-                                                    "px-2 py-0.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1",
-                                                    selectedPeHorizon === '10Y' && Math.abs(Number(pe) - pe10Year) < 0.01
-                                                        ? "bg-blue-600 text-white shadow-xs"
-                                                        : "text-muted-foreground hover:text-foreground hover:bg-card/80"
-                                                )}
-                                                title={`Historischer 10-Jahres-KGV-Schnitt: ${pe10Year.toFixed(1)}`}
-                                            >
-                                                <span>10J Ø</span>
-                                            </button>
+                                            {(() => {
+                                                const is10Y = (selectedPeHorizon === '10Y' && Math.abs(Number(pe) - pe10Year) < 0.01) || (Math.abs(Number(pe) - pe10Year) < 0.01 && Math.abs(Number(pe) - pe5Year) > 0.01);
+                                                const is5Y = (selectedPeHorizon === '5Y' && Math.abs(Number(pe) - pe5Year) < 0.01) || (Math.abs(Number(pe) - pe5Year) < 0.01 && Math.abs(Number(pe) - pe10Year) > 0.01 && selectedPeHorizon !== '10Y');
+                                                return (
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setPe(pe5Year);
+                                                                setSelectedPeHorizon('5Y');
+                                                            }}
+                                                            className={cn(
+                                                                "px-2 py-0.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1",
+                                                                is5Y
+                                                                    ? "bg-blue-600 text-white shadow-xs"
+                                                                    : "text-muted-foreground hover:text-foreground hover:bg-card/80"
+                                                            )}
+                                                            title={`Historischer 5-Jahres-KGV-Schnitt: ${pe5Year.toFixed(1)}`}
+                                                        >
+                                                            <span>5J Ø</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setPe(pe10Year);
+                                                                setSelectedPeHorizon('10Y');
+                                                                setIsSavedForStock(true);
+                                                            }}
+                                                            className={cn(
+                                                                "px-2 py-0.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1",
+                                                                is10Y
+                                                                    ? "bg-blue-600 text-white shadow-xs"
+                                                                    : "text-muted-foreground hover:text-foreground hover:bg-card/80"
+                                                            )}
+                                                            title={`Historischer 10-Jahres-KGV-Schnitt: ${pe10Year.toFixed(1)}`}
+                                                        >
+                                                            <span>10J Ø</span>
+                                                        </button>
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-muted-foreground bg-muted/40 p-1.5 rounded-lg border border-border/50">
