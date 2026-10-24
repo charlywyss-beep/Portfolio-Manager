@@ -794,6 +794,8 @@ export function DividendCalculator() {
     };
 
 
+    const [isLoadingStockData, setIsLoadingStockData] = useState(false);
+
     // Watchlist Picker State
     const [showWatchlistPicker, setShowWatchlistPicker] = useState(false);
 
@@ -881,6 +883,84 @@ export function DividendCalculator() {
                 setShowSuccess(false);
                 if (fromWatchlist) navigate('/watchlist');
             }, 1000);
+        }
+    };
+
+    const handleLoadStockData = async () => {
+        const s = simSymbol || simName;
+        if (!s) return;
+
+        setIsLoadingStockData(true);
+        try {
+            // Run Price Fetch, Direct Quote & Search in Parallel
+            const [res, quoteDetails, searchRes] = await Promise.all([
+                fetchStockHistory(s, '1D'),
+                fetchStockQuote(s),
+                searchStocks(s)
+            ]);
+
+            // 1. Update Price & Currency (Primary Source: History Chart)
+            if (res.data && res.data.length > 0) {
+                let val = res.data[res.data.length - 1].value;
+                const fetchedCurrency = res.currency;
+
+                // Update Currency if available
+                const nextCurrency = fetchedCurrency || simCurrency;
+
+                // Legacy Safety: Ensure GBP/GBp logic is consistent
+                if (nextCurrency === 'GBP' || nextCurrency === 'GBp') {
+                    const isLSE = s.toUpperCase().endsWith('.L') || (simIsin && simIsin.startsWith('GB'));
+                    if (isLSE && val > 500) val /= 100;
+                }
+
+                updateSimulatorState({
+                    price: val,
+                    simCurrency: nextCurrency === 'GBp' ? 'GBP' : (nextCurrency || 'CHF')
+                });
+            }
+
+            // 2. Update Metadata (Name, ISIN)
+            if (quoteDetails && !quoteDetails.error && (quoteDetails.name || quoteDetails.price)) {
+                const newName = quoteDetails.name || (quoteDetails.country ? (simName || s) : s);
+                let newIsin = simIsin;
+                if (searchRes && searchRes.length > 0) {
+                    const match = searchRes.find((q: any) => q.symbol.toUpperCase() === s.toUpperCase()) || searchRes[0];
+                    if (match && match.isin) newIsin = match.isin;
+                }
+
+                updateSimulatorState({
+                    simName: newName,
+                    simSymbol: s,
+                    simIsin: newIsin
+                });
+            }
+            else if (searchRes && searchRes.length > 0) {
+                const searchUpper = s.toUpperCase();
+                let match = searchRes.find((q: any) => q.symbol.toUpperCase() === searchUpper);
+
+                if (!match) {
+                    match = searchRes.find((q: any) => q.symbol.toUpperCase().startsWith(searchUpper));
+                }
+
+                if (!match) {
+                    match = searchRes[0];
+                }
+
+                if (match) {
+                    const newName = match.shortname || match.longname || match.symbol;
+                    const newIsin = match.isin || simIsin;
+
+                    updateSimulatorState({
+                        simName: newName,
+                        simSymbol: match.symbol,
+                        simIsin: newIsin
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Error loading stock/ETF data:", err);
+        } finally {
+            setIsLoadingStockData(false);
         }
     };
 
@@ -1157,9 +1237,34 @@ export function DividendCalculator() {
                                                     value={simName} onChange={e => updateSimulatorState({ simName: e.target.value })} />
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-sm font-medium">Symbol</label>
-                                                <input required placeholder="z.B. NESN" className="w-full px-3 py-2 border rounded-md uppercase bg-background text-foreground"
-                                                    value={simSymbol} onChange={e => updateSimulatorState({ simSymbol: e.target.value.toUpperCase() })} />
+                                                <div className="flex justify-between items-center">
+                                                    <label className="text-sm font-medium">Symbol</label>
+                                                    {(simSymbol || simName) && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleLoadStockData}
+                                                            disabled={isLoadingStockData}
+                                                            className="text-[10px] flex items-center gap-1.5 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 px-2 py-0.5 rounded transition-all font-semibold shadow-xs disabled:opacity-50"
+                                                            title="Aktie / ETF Daten laden"
+                                                        >
+                                                            <RefreshCw className={cn("size-3", isLoadingStockData && "animate-spin")} />
+                                                            <span>{isLoadingStockData ? 'Lade Daten...' : 'Aktie / ETF laden'}</span>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <input
+                                                    required
+                                                    placeholder="z.B. NESN.SW oder VHYL.AS"
+                                                    className="w-full px-3 py-2 border rounded-md uppercase bg-background text-foreground font-mono"
+                                                    value={simSymbol}
+                                                    onChange={e => updateSimulatorState({ simSymbol: e.target.value.toUpperCase() })}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            e.preventDefault();
+                                                            handleLoadStockData();
+                                                        }
+                                                    }}
+                                                />
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm font-medium">Sektor (Optional)</label>
@@ -1238,89 +1343,11 @@ export function DividendCalculator() {
                                                     {(simSymbol || simName) && (
                                                         <button
                                                             type="button"
-                                                            onClick={async () => {
-                                                                const s = simSymbol || simName;
-                                                                if (!s) return;
-
-                                                                // Run Price Fetch, Direct Quote & Search in Parallel
-                                                                const [res, quoteDetails, searchRes] = await Promise.all([
-                                                                    fetchStockHistory(s, '1D'),
-                                                                    fetchStockQuote(s),
-                                                                    searchStocks(s)
-                                                                ]);
-
-
-
-                                                                // 1. Update Price & Currency (Primary Source: History Chart)
-                                                                if (res.data && res.data.length > 0) {
-                                                                    let val = res.data[res.data.length - 1].value;
-                                                                    const fetchedCurrency = res.currency;
-
-                                                                    // Update Currency if available
-                                                                    const nextCurrency = fetchedCurrency || simCurrency;
-
-                                                                    // Legacy Safety: Ensure GBP/GBp logic is consistent
-                                                                    if (nextCurrency === 'GBP' || nextCurrency === 'GBp') {
-                                                                        const isLSE = s.toUpperCase().endsWith('.L') || (simIsin && simIsin.startsWith('GB'));
-                                                                        if (isLSE && val > 500) val /= 100;
-                                                                    }
-
-                                                                    updateSimulatorState({
-                                                                        price: val,
-                                                                        simCurrency: nextCurrency === 'GBp' ? 'GBP' : (nextCurrency || 'CHF')
-                                                                    });
-                                                                }
-
-                                                                // 2. Update Metadata (Name, ISIN)
-                                                                // PRIORITY 1: Direct Quote Details (Best for valid symbols like 'ASML.AS')
-                                                                if (quoteDetails && !quoteDetails.error && (quoteDetails.name || quoteDetails.price)) {
-                                                                    // If we have a direct quote, it's usually the best source.
-                                                                    // Even if name is null, the fact that we got a result means the symbol is valid.
-                                                                    const newName = quoteDetails.name || (quoteDetails.country ? (simName || s) : s);
-
-                                                                    // Note: fetchStockQuote doesn't return ISIN usually (Yahoo Quote API limit), but Search DOES.
-                                                                    // So we might still want to grab ISIN from Search if available.
-                                                                    let newIsin = simIsin;
-                                                                    if (searchRes && searchRes.length > 0) {
-                                                                        const match = searchRes.find((q: any) => q.symbol.toUpperCase() === s.toUpperCase()) || searchRes[0];
-                                                                        if (match && match.isin) newIsin = match.isin;
-                                                                    }
-
-                                                                    updateSimulatorState({
-                                                                        simName: newName,
-                                                                        simSymbol: s, // We confirmed this symbol works
-                                                                        simIsin: newIsin
-                                                                    });
-                                                                }
-                                                                // PRIORITY 2: Search API Result (Best for queries like 'ASML')
-                                                                else if (searchRes && searchRes.length > 0) {
-                                                                    // ... (Existing Search Logic)
-                                                                    const searchUpper = s.toUpperCase();
-                                                                    let match = searchRes.find((q: any) => q.symbol.toUpperCase() === searchUpper);
-
-                                                                    if (!match) {
-                                                                        match = searchRes.find((q: any) => q.symbol.toUpperCase().startsWith(searchUpper));
-                                                                    }
-
-                                                                    if (!match) {
-                                                                        match = searchRes[0];
-                                                                    }
-
-                                                                    if (match) {
-                                                                        const newName = match.shortname || match.longname || match.symbol;
-                                                                        const newIsin = match.isin || simIsin;
-
-                                                                        updateSimulatorState({
-                                                                            simName: newName,
-                                                                            simSymbol: match.symbol,
-                                                                            simIsin: newIsin
-                                                                        });
-                                                                    }
-                                                                }
-                                                            }}
-                                                            className="text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-0.5 rounded transition-colors"
+                                                            onClick={handleLoadStockData}
+                                                            disabled={isLoadingStockData}
+                                                            className="text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-0.5 rounded transition-colors disabled:opacity-50"
                                                         >
-                                                            <RefreshCw className="size-3" /> Kurs laden
+                                                            <RefreshCw className={cn("size-3", isLoadingStockData && "animate-spin")} /> {isLoadingStockData ? 'Lade...' : 'Kurs laden'}
                                                         </button>
                                                     )}
                                                 </div>
