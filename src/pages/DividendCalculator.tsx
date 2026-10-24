@@ -923,9 +923,17 @@ export function DividendCalculator() {
                     if (isLSE && val > 500) val /= 100;
                 }
 
+                const isForeign = nextCurrency && nextCurrency !== 'CHF';
+                const isUK = s.toUpperCase().endsWith('.L') || (simIsin && simIsin.startsWith('GB'));
+                const autoStamp = isUK ? 0.65 : (isForeign ? 0.15 : 0.075);
+
                 updateSimulatorState({
                     price: val,
-                    simCurrency: nextCurrency === 'GBp' ? 'GBP' : (nextCurrency || 'CHF')
+                    simCurrency: nextCurrency === 'GBp' ? 'GBP' : (nextCurrency || 'CHF'),
+                    fees: {
+                        ...fees,
+                        stampDutyPercent: autoStamp
+                    }
                 });
             }
 
