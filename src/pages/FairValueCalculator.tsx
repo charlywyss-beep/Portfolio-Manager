@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, ShieldCheck, Sparkles, Plus } from 'lucide-react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, ShieldCheck, Sparkles, Plus, ArrowLeft } from 'lucide-react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
@@ -58,6 +58,24 @@ const StockListItem = ({ stock, onClick, subtitle }: { stock: any; onClick: () =
 export function FairValueCalculator() {
     const { positions, stocks, watchlists, updateStock, addStock, addQuickLink, removeQuickLink } = usePortfolio();
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+
+    const handleBack = () => {
+        const from = searchParams.get('from');
+        if (from === 'watchlist') {
+            navigate('/watchlist');
+        } else if (from === 'portfolio') {
+            navigate('/portfolio');
+        } else if (from === 'calculator') {
+            navigate('/calculator');
+        } else if (from === 'dividends') {
+            navigate('/dividends');
+        } else if (window.history.length > 1) {
+            navigate(-1);
+        } else {
+            navigate('/portfolio');
+        }
+    };
 
     // Search State
     const [searchTerm, setSearchTerm] = useState('');
@@ -1303,6 +1321,15 @@ export function FairValueCalculator() {
             <div className="sticky top-0 z-40 bg-background/95 backdrop-blur -mx-3 sm:-mx-4 md:-mx-6 px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 -mt-4 border-b border-border shadow-sm space-y-2">
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pl-11 xl:pl-0">
+                        <button
+                            onClick={handleBack}
+                            type="button"
+                            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-all font-medium text-xs sm:text-sm shadow-xs group shrink-0 active:scale-95"
+                            title="Zurück"
+                        >
+                            <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />
+                            <span>Zurück</span>
+                        </button>
                         <div className="size-8 sm:size-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner shrink-0">
                             <Telescope className="size-4 sm:size-5" />
                         </div>
