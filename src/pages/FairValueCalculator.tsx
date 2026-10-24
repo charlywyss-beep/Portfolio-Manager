@@ -315,7 +315,8 @@ export function FairValueCalculator() {
         const pe10 = (smart as any).pe10 || smart.pe;
         setPe5Year(pe5);
         setPe10Year(pe10);
-        setPe(selectedPeHorizon === '10Y' ? pe10 : pe5);
+        setSelectedPeHorizon('5Y');
+        setPe(pe5);
         setDividendYield(smart.dividendYield);
         setDiscountRate(smart.discountRate);
         setMos(smart.mos);
@@ -375,7 +376,12 @@ export function FairValueCalculator() {
 
         setEps(smart.eps);
         setGrowthRate(smart.growthRate);
-        setPe(smart.pe);
+        const pe5 = smart.pe;
+        const pe10 = (smart as any).pe10 || smart.pe;
+        setPe5Year(pe5);
+        setPe10Year(pe10);
+        setSelectedPeHorizon('5Y');
+        setPe(pe5);
         setDividendYield(smart.dividendYield);
         setDiscountRate(smart.discountRate);
         setMos(smart.mos);
@@ -719,7 +725,8 @@ export function FairValueCalculator() {
             if (!preventReset && !savedStockParams) {
                 setEps(smart.eps);
                 setGrowthRate(smart.growthRate);
-                setPe(selectedPeHorizon === '10Y' ? ((smart as any).pe10 || smart.pe) : smart.pe);
+                setSelectedPeHorizon('5Y');
+                setPe(smart.pe);
                 setDividendYield(smart.dividendYield);
                 setDiscountRate(smart.discountRate);
                 setMos(smart.mos);
@@ -1859,6 +1866,7 @@ export function FairValueCalculator() {
                                                 onClick={() => {
                                                     setPe(pe10Year);
                                                     setSelectedPeHorizon('10Y');
+                                                    setIsSavedForStock(true);
                                                 }}
                                                 className={cn(
                                                     "px-2 py-0.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1",
