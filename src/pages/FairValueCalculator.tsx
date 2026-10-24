@@ -1322,7 +1322,7 @@ export function FairValueCalculator() {
                             )}
 
                             {showStockList && (
-                                <div className="absolute left-0 right-0 top-full max-h-80 overflow-y-auto border border-border rounded-xl divide-y divide-border bg-card shadow-2xl z-50 mt-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="absolute left-0 right-0 top-full max-h-[calc(100vh-180px)] overflow-y-auto border border-border rounded-xl divide-y divide-border bg-card shadow-2xl z-50 mt-2 animate-in fade-in slide-in-from-top-2 duration-200">
                                     {searchTerm ? (
                                         // SEARCH RESULTS (Local + Global)
                                         <>
