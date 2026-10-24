@@ -4,7 +4,8 @@ To ensure a high-quality and accessible user experience, follow these rules for 
 
 ## Typography & Contrast
 1. **Proper White**: Never use muted colors (`text-muted-foreground`) or low opacity (`opacity-60/70/80`) for critical data labels against dark or colored backgrounds (e.g., blue banners, dark mode cards). Always use full-brightness white (`text-white` or `text-foreground`).
-2. **Mobile Readability**: Ensure font sizes for secondary data (dates, times) are at least `11px` (`text-[11px]`) to remain legible on mobile devices like iPhone.
+2. **High Contrast on Blue Banners**: Never use gray, muted colors (`text-muted-foreground`) or low opacity on blue cards/banners (poor readability). Labels and values on blue background must always be solid black (`text-slate-950` / `text-black`), clear and high-contrast.
+3. **Mobile Readability**: Ensure font sizes for secondary data (dates, times) are at least `11px` (`text-[11px]`) to remain legible on mobile devices like iPhone.
 
 ## Formatting
 1. **No Parentheses**: Avoid using parentheses `(...)` around dates and times in the UI. Use spacing or dividers instead.

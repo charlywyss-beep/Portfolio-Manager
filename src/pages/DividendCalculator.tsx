@@ -2070,10 +2070,10 @@ export function DividendCalculator() {
 
                                     {/* Yield Info (Buy Mode) */}
                                     {mode === 'buy' && (
-                                        <div className="p-3 bg-primary text-primary-foreground rounded-lg space-y-1.5 text-sm shadow-sm">
+                                        <div className="p-3 bg-primary text-slate-950 rounded-lg space-y-1.5 text-sm shadow-sm">
                                             <div className="flex justify-between items-center w-full">
-                                                <span className="opacity-90 font-medium">Erw. Jährliche Dividende:</span>
-                                                <span className="text-xl font-bold text-primary-foreground">
+                                                <span className="font-semibold text-slate-950">Erw. Jährliche Dividende:</span>
+                                                <span className="text-xl font-bold text-slate-950">
                                                     {(() => {
                                                         const annualDivNative = shares * dividend;
                                                         if (simCurrency === 'GBp') {
@@ -2084,9 +2084,11 @@ export function DividendCalculator() {
                                                 </span>
                                             </div>
                                             {frequency !== 'annually' && dividend > 0 && shares > 0 && (
-                                                <div className="flex justify-between items-center w-full text-xs text-primary-foreground/80 pt-1 border-t border-primary-foreground/20">
-                                                    <span className="opacity-90">Auszahlung pro {frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'}:</span>
-                                                    <span className="font-bold text-primary-foreground">
+                                                <div className="flex justify-between items-center w-full text-sm text-slate-950 pt-1.5 border-t border-slate-950/20">
+                                                    <span className="font-semibold text-slate-950">
+                                                        Auszahlung pro {frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'}:
+                                                    </span>
+                                                    <span className="font-bold text-base text-slate-950">
                                                         {(() => {
                                                             const payoutNative = (shares * dividend) / freqFactor;
                                                             if (simCurrency === 'GBp') {
