@@ -486,6 +486,7 @@ export function DividendCalculator() {
     const [showSuccess, setShowSuccess] = useState(false);
     const [showGuide, setShowGuide] = useState(false);
     const [dividendInputMode, setDividendInputMode] = useState<'annual' | 'periodic'>('annual');
+    const [yieldInputMode, setYieldInputMode] = useState<'annual' | 'periodic'>('annual');
 
     // Price Editing State
     const [activeTab, setActiveTab] = useState<'search' | 'manual'>(selectedStockId === 'new' ? 'manual' : 'search');
@@ -1645,17 +1646,37 @@ export function DividendCalculator() {
                                             <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap truncate min-w-0">
                                                 Rendite (%)
                                             </label>
-                                            <span className="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase tracking-wider whitespace-nowrap shrink-0">
-                                                BRUTTO
-                                            </span>
+                                            {frequency !== 'annually' ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setYieldInputMode(m => m === 'annual' ? 'periodic' : 'annual')}
+                                                    className="text-[10px] text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-bold uppercase tracking-wider whitespace-nowrap shrink-0 hover:underline cursor-pointer transition-colors"
+                                                    title="Klicken zum Umschalten zwischen Rendite im Jahr und Rendite pro Ausschüttung"
+                                                >
+                                                    {yieldInputMode === 'annual' ? 'IM JAHR ⇄' : `PRO ${frequency === 'semi-annually' ? 'HALBJAHR' : frequency === 'quarterly' ? 'QUARTAL' : 'MONAT'} ⇄`}
+                                                </button>
+                                            ) : (
+                                                <span className="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase tracking-wider whitespace-nowrap shrink-0">
+                                                    BRUTTO
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="relative">
                                             <LocalNumberInput
                                                 step="0.01"
-                                                value={price > 0 && dividend > 0 ? parseFloat(((dividend / price) * 100).toFixed(2)) : undefined}
+                                                value={
+                                                    price > 0 && dividend > 0
+                                                        ? (yieldInputMode === 'periodic' && frequency !== 'annually'
+                                                            ? parseFloat((((dividend / price) * 100) / freqFactor).toFixed(2))
+                                                            : parseFloat(((dividend / price) * 100).toFixed(2)))
+                                                        : undefined
+                                                }
                                                 onChange={(val) => {
                                                     if (price > 0) {
-                                                        const newDiv = (val / 100) * price;
+                                                        const annualPercent = (yieldInputMode === 'periodic' && frequency !== 'annually')
+                                                            ? val * freqFactor
+                                                            : val;
+                                                        const newDiv = (annualPercent / 100) * price;
                                                         updateSimulatorState({ dividend: parseFloat(newDiv.toFixed(4)) });
                                                     }
                                                 }}
@@ -1666,8 +1687,21 @@ export function DividendCalculator() {
                                                 %
                                             </span>
                                         </div>
-                                        <div className="text-xs text-muted-foreground text-right mt-1.5 h-5 font-medium">
-                                            im Jahr
+                                        <div
+                                            onClick={() => frequency !== 'annually' && setYieldInputMode(m => m === 'annual' ? 'periodic' : 'annual')}
+                                            className={cn(
+                                                "text-xs text-muted-foreground text-right mt-1.5 h-5 font-medium truncate",
+                                                frequency !== 'annually' && "cursor-pointer hover:text-green-600 transition-colors"
+                                            )}
+                                            title={frequency !== 'annually' ? "Klicken zum Umschalten (im Jahr / pro Ausschüttung)" : undefined}
+                                        >
+                                            {price > 0 && dividend > 0 && frequency !== 'annually' ? (
+                                                yieldInputMode === 'annual'
+                                                    ? `≈ ${(((dividend / price) * 100) / freqFactor).toFixed(2)} % (${frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'})`
+                                                    : `≈ ${((dividend / price) * 100).toFixed(2)} % im Jahr`
+                                            ) : (
+                                                'im Jahr'
+                                            )}
                                         </div>
                                     </div>
                                 </div>
