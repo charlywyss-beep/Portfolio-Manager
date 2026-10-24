@@ -928,9 +928,20 @@ export function DividendCalculator() {
                 const isUK = s.toUpperCase().endsWith('.L') || (simIsin && simIsin.startsWith('GB'));
                 const autoStamp = isUK ? 0.65 : (isForeign ? 0.15 : 0.075);
 
+                let autoDiv: number | undefined = undefined;
+                if (quoteDetails && !quoteDetails.error) {
+                    if ((quoteDetails as any).dividendRate && (quoteDetails as any).dividendRate > 0) {
+                        autoDiv = (quoteDetails as any).dividendRate;
+                    } else if (quoteDetails.dividendYield && quoteDetails.dividendYield > 0 && val > 0) {
+                        const y = quoteDetails.dividendYield > 1 ? quoteDetails.dividendYield / 100 : quoteDetails.dividendYield;
+                        autoDiv = parseFloat((val * y).toFixed(4));
+                    }
+                }
+
                 updateSimulatorState({
                     price: val,
                     simCurrency: nextCurrency === 'GBp' ? 'GBP' : (nextCurrency || 'CHF'),
+                    ...(autoDiv !== undefined && autoDiv > 0 ? { dividend: autoDiv } : {}),
                     fees: {
                         ...fees,
                         stampDutyPercent: autoStamp
@@ -1564,13 +1575,13 @@ export function DividendCalculator() {
                                         </label>
                                         <LocalNumberInput
                                             step="0.001"
-                                            value={dividend !== undefined && dividend !== null ? (dividend === 0 ? 0 : parseFloat(dividend.toFixed(4))) : undefined}
+                                            value={dividend && dividend > 0 ? parseFloat(dividend.toFixed(4)) : undefined}
                                             onChange={(val) => updateSimulatorState({ dividend: val })}
                                             placeholder="0.00"
                                             className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                         />
                                         <div className="text-[10px] text-muted-foreground text-right mt-1">
-                                            Ausschüttung
+                                            {dividend && dividend > 0 ? `${dividend.toFixed(3)} ${simCurrency || 'CHF'} / Stk.` : 'Ausschüttung'}
                                         </div>
                                     </div>
 
@@ -1589,15 +1600,33 @@ export function DividendCalculator() {
                                                         updateSimulatorState({ dividend: parseFloat(newDiv.toFixed(4)) });
                                                     }
                                                 }}
-                                                placeholder={price > 0 ? "z. B. 3.80" : "Erst Preis"}
+                                                placeholder="0.00"
                                                 className="w-full pl-2 pr-6 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                             />
                                             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none font-bold">
                                                 %
                                             </span>
                                         </div>
-                                        <div className="text-[10px] text-green-600 dark:text-green-400 font-medium text-right mt-1">
-                                            {price > 0 && dividend > 0 ? `${((dividend / price) * 100).toFixed(2)}% p.a.` : '⇄ Synchron'}
+                                        <div className="flex items-center justify-between text-[10px] mt-1">
+                                            <span className="text-muted-foreground italic">Schnellwahl:</span>
+                                            <div className="flex gap-1">
+                                                {[3.5, 3.8, 4.0, 4.2].map((pct) => (
+                                                    <button
+                                                        key={pct}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (price > 0) {
+                                                                const newDiv = (pct / 100) * price;
+                                                                updateSimulatorState({ dividend: parseFloat(newDiv.toFixed(4)) });
+                                                            }
+                                                        }}
+                                                        className="px-1.5 py-0.5 rounded bg-muted hover:bg-primary/20 hover:text-primary transition-colors text-[10px] font-mono text-muted-foreground active:scale-95"
+                                                        title={`${pct}% Rendite berechnen`}
+                                                    >
+                                                        {pct}%
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
