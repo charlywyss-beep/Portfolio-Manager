@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
-import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw } from 'lucide-react';
+import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, ArrowLeft } from 'lucide-react';
 import { fetchStockHistory, searchStocks, fetchStockQuote } from '../services/yahoo-finance';
 
 import { jsPDF } from 'jspdf';
@@ -976,6 +976,22 @@ export function DividendCalculator() {
 
     // Calculation    // Projection logic moved to CompoundInterestProjection.tsx
 
+    const handleBack = () => {
+        const from = searchParams.get('from');
+        if (from === 'watchlist') {
+            navigate('/watchlist');
+        } else if (from === 'portfolio') {
+            navigate('/portfolio');
+        } else if (from === 'market-overview') {
+            const tab = searchParams.get('tab') || sessionStorage.getItem('portfolio_market_overview_tab');
+            navigate(tab && tab !== 'all' ? `/market-overview?tab=${encodeURIComponent(tab)}` : '/market-overview');
+        } else if (window.history.length > 1) {
+            navigate(-1);
+        } else {
+            navigate('/portfolio');
+        }
+    };
+
     return (
         <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20 animate-in fade-in duration-500">
             {/* Sticky Header - Consistent Design */}
@@ -984,6 +1000,15 @@ export function DividendCalculator() {
                     <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 xl:pl-6">
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-3 w-full sm:w-auto">
+                                <button
+                                    onClick={handleBack}
+                                    type="button"
+                                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-all font-medium text-xs sm:text-sm shadow-xs group shrink-0 active:scale-95"
+                                    title="Zurück"
+                                >
+                                    <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />
+                                    <span>Zurück</span>
+                                </button>
                                 <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400">
                                     <Coins className="size-6" />
                                 </div>
