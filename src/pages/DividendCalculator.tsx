@@ -668,6 +668,16 @@ export function DividendCalculator() {
     const totalInvestCHF = mode === 'buy' ? volumeCHF + totalFees : 0;
     const totalProceedsCHF = mode === 'sell' ? volumeCHF - totalFees : 0;
 
+    // Totals in Native Currency (e.g. EUR, USD, GBP)
+    const displayNativeCurrency = isGBp ? 'GBP' : (simCurrency || 'CHF');
+    let totalFeesNative = totalFeesInFeeCurrency;
+    if (!isNativeFees && simCurrency && simCurrency !== 'CHF') {
+        const chfRate = convertToCHF(1, displayNativeCurrency, rates);
+        totalFeesNative = chfRate > 0 ? totalFees / chfRate : totalFees;
+    }
+    const totalInvestNative = mode === 'buy' ? volumeNative + totalFeesNative : 0;
+    const totalProceedsNative = mode === 'sell' ? volumeNative - totalFeesNative : 0;
+
     const grossYield = price > 0 ? (dividend / price) * 100 : 0;
     // Net yield: (Annual Dividend * Shares) / Total Invested (CHF)
     // Annual Dividend in CHF
@@ -1827,11 +1837,24 @@ export function DividendCalculator() {
                                         </div>
                                         <div className="h-px bg-border my-2" />
                                         <div className="flex justify-between items-center font-bold">
-                                            <span>{mode === 'buy' ? 'Investition Total' : 'Netto Erlös'} (CHF):</span>
+                                            <span>
+                                                {mode === 'buy' ? 'Investition Total' : 'Netto Erlös'} {simCurrency && simCurrency !== 'CHF' ? `(${displayNativeCurrency})` : '(CHF)'}:
+                                            </span>
                                             <span className={mode === 'buy' ? 'text-green-500 dark:text-green-400' : 'text-foreground font-medium font-mono'}>
-                                                {mode === 'buy' ? totalInvestCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' }) : totalProceedsCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
+                                                {(simCurrency && simCurrency !== 'CHF'
+                                                    ? (mode === 'buy' ? totalInvestNative : totalProceedsNative).toLocaleString('de-CH', { style: 'currency', currency: displayNativeCurrency })
+                                                    : (mode === 'buy' ? totalInvestCHF : totalProceedsCHF).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })
+                                                )}
                                             </span>
                                         </div>
+                                        {simCurrency && simCurrency !== 'CHF' && (
+                                            <div className="flex justify-between items-center text-xs text-muted-foreground mt-0.5">
+                                                <span>Entspricht in CHF:</span>
+                                                <span className="font-mono">
+                                                    {(mode === 'buy' ? totalInvestCHF : totalProceedsCHF).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Yield Info (Buy Mode) */}
@@ -1867,8 +1890,17 @@ export function DividendCalculator() {
                                                 {(mode === 'buy' ? totalInvestCHF : totalProceedsCHF).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                                             </span>
                                             <span className="text-[10px] text-muted-foreground mt-0.5">
-                                                {volumeCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
-                                                {mode === 'buy' ? ' + ' : ' - '}{totalFees.toFixed(0)} Geb.
+                                                {simCurrency && simCurrency !== 'CHF' ? (
+                                                    <>
+                                                        {(mode === 'buy' ? totalInvestNative : totalProceedsNative).toLocaleString('de-CH', { style: 'currency', currency: displayNativeCurrency, maximumFractionDigits: 0 })}
+                                                        {' • inkl. '}{totalFees.toFixed(0)} CHF Geb.
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        {volumeCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 })}
+                                                        {mode === 'buy' ? ' + ' : ' - '}{totalFees.toFixed(0)} Geb.
+                                                    </>
+                                                )}
                                             </span>
                                         </div>
                                     </div>
