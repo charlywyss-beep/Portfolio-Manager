@@ -452,7 +452,7 @@ export function DividendPlanner() {
                                     </button>
                                 </th>
 
-                                {/* 1. Anteile */}
+                                {/* 1. Rendite % */}
                                 <th
                                     className={cn(
                                         "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-auto align-middle",
@@ -474,21 +474,6 @@ export function DividendPlanner() {
                                         >
                                             <ChevronLeft className="size-4 pointer-events-none text-muted-foreground" />
                                         </button>
-                                        <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
-                                            Anteile
-                                        </span>
-                                    </div>
-                                    <span className="hidden xl:inline">Anteile</span>
-                                </th>
-
-                                {/* 2. Rendite % */}
-                                <th
-                                    className={cn(
-                                        "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-auto align-middle",
-                                        mobilePage === 0 ? "table-cell" : "hidden xl:table-cell"
-                                    )}
-                                >
-                                    <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
                                         <button
                                             type="button"
                                             onClick={(e) => {
@@ -505,6 +490,32 @@ export function DividendPlanner() {
                                                 </span>
                                             )}
                                         </button>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSort('yield')}
+                                        className="hidden xl:inline-flex items-center gap-1 hover:text-foreground cursor-pointer select-none text-inherit uppercase"
+                                    >
+                                        <span>Rendite %</span>
+                                        {sortConfig.key === 'yield' && (
+                                            <span className="font-bold text-xs">
+                                                {sortConfig.direction === 'desc' ? '↓' : '↑'}
+                                            </span>
+                                        )}
+                                    </button>
+                                </th>
+
+                                {/* 2. Anteile */}
+                                <th
+                                    className={cn(
+                                        "px-1 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[13px] xl:text-xs uppercase tracking-wider text-center xl:text-right sticky top-0 z-30 bg-card w-1/2 xl:w-auto align-middle",
+                                        mobilePage === 0 ? "table-cell" : "hidden xl:table-cell"
+                                    )}
+                                >
+                                    <div className="flex xl:hidden items-center justify-center w-full h-12 px-1 relative">
+                                        <span className="truncate select-none font-semibold text-xs sm:text-[13px] text-foreground">
+                                            Anteile
+                                        </span>
                                         <button
                                             type="button"
                                             onClick={(e) => {
@@ -520,18 +531,7 @@ export function DividendPlanner() {
                                             <ChevronRight className="size-4 pointer-events-none text-muted-foreground" />
                                         </button>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSort('yield')}
-                                        className="hidden xl:inline-flex items-center gap-1 hover:text-foreground cursor-pointer select-none text-inherit uppercase"
-                                    >
-                                        <span>Rendite %</span>
-                                        {sortConfig.key === 'yield' && (
-                                            <span className="font-bold text-xs">
-                                                {sortConfig.direction === 'desc' ? '↓' : '↑'}
-                                            </span>
-                                        )}
-                                    </button>
+                                    <span className="hidden xl:inline">Anteile</span>
                                 </th>
 
                                 {/* 3. Div./Akt. */}
@@ -903,14 +903,7 @@ export function DividendPlanner() {
                                                 )}
                                             </td>
 
-                                            {/* 1. Anteile */}
-                                            <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right font-medium align-middle", mobilePage === 0 ? "table-cell" : "hidden xl:table-cell")}>
-                                                <div className="flex flex-col items-center xl:items-end justify-center">
-                                                    <span className="font-bold text-sm tabular-nums whitespace-nowrap">{position.shares}</span>
-                                                </div>
-                                            </td>
-
-                                            {/* 2. Rendite % */}
+                                            {/* 1. Rendite % */}
                                             <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right align-middle", mobilePage === 0 ? "table-cell" : "hidden xl:table-cell")}>
                                                 <div className="flex flex-col items-center xl:items-end justify-center">
                                                     {(() => {
@@ -939,6 +932,13 @@ export function DividendPlanner() {
                                                             </>
                                                         );
                                                     })()}
+                                                </div>
+                                            </td>
+
+                                            {/* 2. Anteile */}
+                                            <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right font-medium align-middle", mobilePage === 0 ? "table-cell" : "hidden xl:table-cell")}>
+                                                <div className="flex flex-col items-center xl:items-end justify-center">
+                                                    <span className="font-bold text-sm tabular-nums whitespace-nowrap">{position.shares}</span>
                                                 </div>
                                             </td>
 
