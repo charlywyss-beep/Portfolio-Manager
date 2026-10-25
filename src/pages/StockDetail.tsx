@@ -347,9 +347,9 @@ export function StockDetail() {
 
     return (
         <div className="p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16">
-            {/* Sticky Header / Navigation */}
-            <div className="sticky top-0 -mx-2 md:-mx-8 px-3 py-2 md:px-8 md:py-4 landscape:py-1.5 landscape:px-3 landscape:mx-0 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-3 md:mb-6 landscape:mb-2">
-                <div className="flex items-center gap-2 mb-2 md:mb-4 landscape:mb-1 pl-12 xl:pl-0 landscape:pl-10">
+            {/* Sticky Header in Portrait, Normal Scrollable (not sticky) in Landscape */}
+            <div className="sticky top-0 landscape:static landscape:top-auto -mx-2 md:-mx-8 landscape:mx-0 px-3 py-2 md:px-8 md:py-4 landscape:py-1.5 landscape:px-3 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-3 md:mb-6 landscape:mb-2">
+                <div className="flex items-center gap-2 mb-2 md:mb-4 landscape:mb-1 pl-10 xl:pl-0">
                     <button
                         onClick={() => {
                             const from = searchParams.get('from');
@@ -364,11 +364,11 @@ export function StockDetail() {
                                 navigate(-1);
                             }
                         }}
-                        className="flex items-center justify-center bg-white text-blue-600 hover:bg-blue-50 transition-all font-medium rounded-xl shadow border-2 border-blue-100 p-1.5 md:px-3 md:py-1.5 landscape:py-1 landscape:px-2 group"
+                        className="flex items-center justify-center gap-1 bg-white text-blue-600 hover:bg-blue-50 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 py-1 px-2.5 text-xs group active:scale-95"
                         title={searchParams.get('from') === 'market-overview' ? "Zurück zur Marktübersicht" : "Zurück"}
                     >
-                        <ArrowLeft className="size-4 md:mr-1.5 transition-transform group-hover:-translate-x-1" />
-                        <span className="hidden md:inline">
+                        <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
+                        <span>
                             {searchParams.get('from') === 'market-overview' ? 'Marktübersicht' : 'Zurück'}
                         </span>
                     </button>
@@ -376,10 +376,10 @@ export function StockDetail() {
                     {/* Saisonalität Button */}
                     <button
                         onClick={() => navigate(`/seasonality/${stock.symbol}`)}
-                        className="flex items-center gap-1.5 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors font-medium bg-violet-50 dark:bg-violet-900/10 px-2.5 py-1.5 md:py-1.5 landscape:py-1 landscape:px-2 rounded-xl md:rounded-md shadow-sm border border-violet-100 dark:border-violet-900/30 whitespace-nowrap"
+                        className="flex items-center justify-center gap-1.5 bg-white dark:bg-card text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-all font-semibold rounded-lg shadow-sm border border-violet-200 dark:border-violet-800 py-1 px-2.5 text-xs group active:scale-95 whitespace-nowrap"
                         title="Saisonalitätsanalyse"
                     >
-                        <BarChart2 className="size-4 md:size-3.5" />
+                        <BarChart2 className="size-3.5" />
                         <span>Saisonalität</span>
                     </button>
                 </div>
