@@ -140,4 +140,116 @@
   .iphone-landscape-header {
     scroll-snap-align: start;
   }
+
+  /* Portfolio / Positionen Seite im iPhone Querformat */
+  .iphone-landscape-portfolio-page {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    gap: 0.35rem !important;
+    row-gap: 0.35rem !important;
+  }
+
+  .iphone-landscape-portfolio-header-wrap {
+    margin-top: -0.25rem !important;
+    margin-left: -0.5rem !important;
+    margin-right: -0.5rem !important;
+    padding-bottom: 0 !important;
+  }
+
+  .iphone-landscape-portfolio-header-content {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  .iphone-landscape-portfolio-header-row {
+    gap: 0.35rem !important;
+  }
+
+  .iphone-landscape-portfolio-title-group {
+    min-height: 28px !important;
+    gap: 0.5rem !important;
+  }
+
+  .iphone-landscape-portfolio-icon {
+    padding: 0.25rem !important;
+    border-radius: 0.5rem !important;
+  }
+
+  .iphone-landscape-portfolio-icon svg {
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+
+  .iphone-landscape-portfolio-title {
+    font-size: 1.15rem !important;
+    line-height: 1.25rem !important;
+  }
+
+  .iphone-landscape-portfolio-subtitle {
+    display: none !important;
+  }
+
+  .iphone-landscape-portfolio-actions .iphone-landscape-btn,
+  .iphone-landscape-portfolio-actions .iphone-landscape-select {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    font-size: 0.75rem !important;
+    height: 1.85rem !important;
+  }
+
+  .iphone-landscape-portfolio-subtabs {
+    padding-bottom: 0 !important;
+    gap: 0.35rem !important;
+  }
+
+  .iphone-landscape-portfolio-subtabs button {
+    padding-top: 0.2rem !important;
+    padding-bottom: 0.2rem !important;
+    padding-left: 0.6rem !important;
+    padding-right: 0.6rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  .iphone-landscape-table-wrapper {
+    gap: 0 !important;
+    row-gap: 0 !important;
+  }
+
+  .iphone-landscape-table-card {
+    border-radius: 0.75rem !important;
+  }
+
+  .iphone-landscape-table-scroll {
+    scroll-padding-top: 1.85rem !important;
+  }
+
+  .iphone-landscape-table-header-row th {
+    height: 1.85rem !important;
+    min-height: 1.85rem !important;
+    padding-top: 0.15rem !important;
+    padding-bottom: 0.15rem !important;
+    font-size: 0.7rem !important;
+  }
+
+  .iphone-landscape-table-row {
+    height: 3.25rem !important;
+    min-height: 3.25rem !important;
+  }
+
+  .iphone-landscape-table-row td {
+    padding-top: 0.2rem !important;
+    padding-bottom: 0.2rem !important;
+    height: 3.25rem !important;
+  }
+
+  .iphone-landscape-table-row .size-8 {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+  }
 }

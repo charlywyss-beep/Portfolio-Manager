@@ -74,7 +74,7 @@ export function PositionTable({
     };
 
     return (
-        <div className="flex-1 min-h-0 flex flex-col space-y-3 overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col space-y-3 overflow-hidden iphone-landscape-table-wrapper">
             {!hideHeader && (
                 <div className="flex items-center gap-2 shrink-0">
                     <Icon className="size-6 text-primary" />
@@ -83,15 +83,15 @@ export function PositionTable({
                     {headerAction && <div className="ml-auto">{headerAction}</div>}
                 </div>
             )}
-            <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+            <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border bg-card shadow-sm overflow-hidden iphone-landscape-table-card">
                 <div
                     onTouchStart={handleTouchStart}
                     onTouchEnd={handleTouchEnd}
-                    className="overflow-y-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
+                    className="overflow-y-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0 iphone-landscape-table-scroll"
                 >
                     <table className="w-full text-xs md:text-sm border-collapse table-fixed md:table-auto">
                         <thead>
-                            <tr className="border-b border-border bg-muted/20">
+                            <tr className="border-b border-border bg-muted/20 iphone-landscape-table-header-row">
                                 {/* 0. Aktie */}
                                 <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle">
                                     Aktie
@@ -349,7 +349,7 @@ export function PositionTable({
                         <tbody className="divide-y divide-border">
                             {data.map((pos) => {
                                 return (
-                                    <tr key={pos.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors group snap-start snap-always h-[60px] md:h-auto">
+                                    <tr key={pos.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors group snap-start snap-always h-[60px] md:h-auto iphone-landscape-table-row">
                                         {/* 0. Aktie */}
                                         <td className="px-3 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle">
                                             <div className="absolute inset-0 bg-card -z-10" />

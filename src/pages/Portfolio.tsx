@@ -183,23 +183,23 @@ export function Portfolio() {
     };
 
     return (
-        <div className="h-full flex flex-col p-4 md:p-6 space-y-3 bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden">
+        <div className="h-full flex flex-col p-4 md:p-6 space-y-3 bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden iphone-landscape-portfolio-page">
             {/* Header - Fixed Height */}
-            <div className="shrink-0 bg-background pb-2 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+            <div className="shrink-0 bg-background pb-2 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6 iphone-landscape-portfolio-header-wrap">
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
-                    <div className="w-full px-3 sm:px-4 py-3 sm:py-3.5 md:px-6 lg:px-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div className="flex items-center gap-3 pl-12 xl:pl-0 min-h-[38px]">
-                                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
+                    <div className="w-full px-3 sm:px-4 py-3 sm:py-3.5 md:px-6 lg:px-6 iphone-landscape-portfolio-header-content">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 iphone-landscape-portfolio-header-row">
+                            <div className="flex items-center gap-3 pl-12 xl:pl-0 min-h-[38px] iphone-landscape-portfolio-title-group">
+                                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 text-emerald-600 dark:text-emerald-400 shrink-0 iphone-landscape-portfolio-icon">
                                     <BarChart3 className="size-5 sm:size-6" />
                                 </div>
                                 <div>
-                                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Positionen</h1>
-                                    <p className="text-muted-foreground hidden md:block">Aktien, ETFs und Festgeld verwalten</p>
+                                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight iphone-landscape-portfolio-title">Positionen</h1>
+                                    <p className="text-muted-foreground hidden md:block iphone-landscape-portfolio-subtitle">Aktien, ETFs und Festgeld verwalten</p>
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto sm:ml-auto">
+                            <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto sm:ml-auto iphone-landscape-portfolio-actions">
                                 <button
                                     onClick={() => setIsAddFixedDepositModalOpen(true)}
                                     className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-3.5 sm:px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors font-medium border border-border shadow-sm shrink-0"
@@ -251,7 +251,7 @@ export function Portfolio() {
             </div>
 
             {/* Sub-Tabs: Aktien | ETFs | Vorsorge | Bank */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 shrink-0">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 shrink-0 iphone-landscape-portfolio-subtabs">
                 <button
                     onClick={() => setActiveTab('stocks')}
                     className={cn(
