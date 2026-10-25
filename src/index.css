@@ -157,25 +157,60 @@
   }
 
   .iphone-landscape-portfolio-header-wrap {
-    margin-top: -0.25rem !important;
+    margin-top: 0 !important;
     margin-left: -0.5rem !important;
     margin-right: -0.5rem !important;
     padding-bottom: 0 !important;
   }
 
-  .iphone-landscape-portfolio-header-content {
-    padding-top: 0.25rem !important;
-    padding-bottom: 0.25rem !important;
+  /* Alle Page Headers im iPhone Querformat universell kompakt, zentriert und einheitlich halten */
+  .sticky.top-0.bg-background,
+  .shrink-0.bg-background {
+    margin-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .iphone-landscape-portfolio-header-wrap .border-b.bg-card,
+  .sticky.top-0.bg-background .border-b.bg-card,
+  .shrink-0.bg-background .border-b.bg-card {
+    height: 2.25rem !important;
+    min-height: 2.25rem !important;
+    max-height: 2.25rem !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .iphone-landscape-portfolio-header-content,
+  .sticky.top-0.bg-background .border-b.bg-card > div,
+  .shrink-0.bg-background .border-b.bg-card > div {
+    height: 100% !important;
+    min-height: 100% !important;
+    max-height: 100% !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
     padding-left: 0.5rem !important;
     padding-right: 0.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
   }
 
   .iphone-landscape-portfolio-header-row {
+    height: 100% !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
     gap: 0.35rem !important;
+    box-sizing: border-box !important;
   }
 
   .app-hamburger-btn {
-    top: 0.25rem !important;
+    top: 0.55rem !important;
     left: max(calc(env(safe-area-inset-left, 0px) - 1.25rem), 0.5rem) !important;
     height: 1.65rem !important;
     width: 1.65rem !important;
@@ -192,9 +227,26 @@
   }
 
   .iphone-landscape-portfolio-title-group {
-    min-height: 28px !important;
-    padding-left: 2.25rem !important;
+    height: 100% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    min-height: 0 !important;
+    padding-left: 3.85rem !important;
     gap: 0.5rem !important;
+  }
+
+  .iphone-landscape-portfolio-title-group > div {
+    display: flex !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .iphone-landscape-portfolio-actions {
+    height: 100% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
   }
 
   .iphone-landscape-portfolio-icon {
@@ -218,34 +270,18 @@
     height: 0.95rem !important;
   }
 
-  .iphone-landscape-portfolio-title {
-    font-size: 1.15rem !important;
-    line-height: 1.25rem !important;
-  }
-
-  .iphone-landscape-portfolio-subtitle {
-    display: none !important;
-  }
-
-  /* Alle Page Headers im iPhone Querformat universell kompakt halten */
-  .sticky.top-0.bg-background,
-  .shrink-0.bg-background {
-    margin-top: -0.25rem !important;
-    padding-bottom: 0 !important;
-  }
-
-  .sticky.top-0.bg-background .border-b.bg-card > div,
-  .shrink-0.bg-background .border-b.bg-card > div {
-    padding-top: 0.25rem !important;
-    padding-bottom: 0.25rem !important;
-  }
-
+  .iphone-landscape-portfolio-title,
   .sticky.top-0.bg-background h1,
   .shrink-0.bg-background h1 {
-    font-size: 1.15rem !important;
+    font-size: 1.1rem !important;
     line-height: 1.25rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
   }
 
+  .iphone-landscape-portfolio-subtitle,
   .sticky.top-0.bg-background p.text-muted-foreground,
   .shrink-0.bg-background p.text-muted-foreground {
     display: none !important;
