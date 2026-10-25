@@ -349,7 +349,7 @@ export function StockDetail() {
         <div className="p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16">
             {/* Sticky Header in Portrait, Normal Scrollable (not sticky) in Landscape */}
             <div className="sticky top-0 landscape:static landscape:top-auto -mx-2 md:-mx-8 landscape:mx-0 px-3 py-2 md:px-8 md:py-4 landscape:py-1.5 landscape:px-3 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-3 md:mb-6 landscape:mb-2">
-                <div className="flex items-center gap-2 mb-2 md:mb-4 landscape:mb-1 pl-10 xl:pl-0">
+                <div className="flex items-center gap-2 mb-2 md:mb-4 landscape:mb-1 pl-10 xl:pl-0 landscape:pl-0">
                     <button
                         onClick={() => {
                             const from = searchParams.get('from');

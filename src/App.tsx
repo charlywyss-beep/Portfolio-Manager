@@ -267,7 +267,7 @@ function App() {
 
             {/* Main Content */}
             <main
-              className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-background transition-all duration-300 flex flex-col"
+              className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-background transition-all duration-300 flex flex-col app-main-landscape-safe"
               style={{
                 paddingLeft: 'max(calc(env(safe-area-inset-left, 0px) - 1.25rem), 0.5rem)',
                 paddingRight: 'max(calc(env(safe-area-inset-right, 0px) - 1.25rem), 0.5rem)',

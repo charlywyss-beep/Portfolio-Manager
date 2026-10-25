@@ -110,3 +110,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media (orientation: landscape) and (max-width: 1024px) {
+  .app-main-landscape-safe {
+    padding-left: calc(max(calc(env(safe-area-inset-left, 0px) - 1.25rem), 0.5rem) + 2.75rem) !important;
+    padding-right: max(calc(env(safe-area-inset-right, 0px) - 1.25rem), 0.75rem) !important;
+  }
+}
