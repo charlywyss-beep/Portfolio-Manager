@@ -348,8 +348,8 @@ export function StockDetail() {
     return (
         <div className="p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16">
             {/* Sticky Header / Navigation */}
-            <div className="sticky top-0 -mx-2 md:-mx-8 px-3 py-2.5 md:px-8 md:py-4 z-50 bg-background/95 backdrop-blur border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-4 md:mb-6">
-                <div className="flex items-center gap-2.5 mb-2.5 md:mb-4 pl-12 xl:pl-0">
+            <div className="sticky top-0 -mx-2 md:-mx-8 px-3 py-2 md:px-8 md:py-4 landscape:py-1.5 landscape:px-3 z-50 bg-background/95 backdrop-blur border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-3 md:mb-6 landscape:mb-2">
+                <div className="flex items-center gap-2 mb-2 md:mb-4 landscape:mb-1 pl-12 xl:pl-0 landscape:pl-10">
                     <button
                         onClick={() => {
                             const from = searchParams.get('from');
@@ -364,10 +364,10 @@ export function StockDetail() {
                                 navigate(-1);
                             }
                         }}
-                        className="flex items-center justify-center bg-white text-blue-600 hover:bg-blue-50 transition-all font-medium rounded-xl shadow border-2 border-blue-100 p-2 md:px-3 md:py-1.5 group"
+                        className="flex items-center justify-center bg-white text-blue-600 hover:bg-blue-50 transition-all font-medium rounded-xl shadow border-2 border-blue-100 p-1.5 md:px-3 md:py-1.5 landscape:py-1 landscape:px-2 group"
                         title={searchParams.get('from') === 'market-overview' ? "Zurück zur Marktübersicht" : "Zurück"}
                     >
-                        <ArrowLeft className="size-5 md:size-4 md:mr-1.5 transition-transform group-hover:-translate-x-1" />
+                        <ArrowLeft className="size-4 md:mr-1.5 transition-transform group-hover:-translate-x-1" />
                         <span className="hidden md:inline">
                             {searchParams.get('from') === 'market-overview' ? 'Marktübersicht' : 'Zurück'}
                         </span>
@@ -376,7 +376,7 @@ export function StockDetail() {
                     {/* Saisonalität Button */}
                     <button
                         onClick={() => navigate(`/seasonality/${stock.symbol}`)}
-                        className="flex items-center gap-1.5 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors font-medium bg-violet-50 dark:bg-violet-900/10 px-2.5 py-2 md:py-1.5 rounded-xl md:rounded-md shadow-sm border border-violet-100 dark:border-violet-900/30 whitespace-nowrap"
+                        className="flex items-center gap-1.5 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors font-medium bg-violet-50 dark:bg-violet-900/10 px-2.5 py-1.5 md:py-1.5 landscape:py-1 landscape:px-2 rounded-xl md:rounded-md shadow-sm border border-violet-100 dark:border-violet-900/30 whitespace-nowrap"
                         title="Saisonalitätsanalyse"
                     >
                         <BarChart2 className="size-4 md:size-3.5" />
@@ -384,8 +384,8 @@ export function StockDetail() {
                     </button>
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5 md:gap-4">
-                    <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 md:gap-4 landscape:flex-row landscape:items-center landscape:gap-3">
+                    <div className="flex items-center gap-2.5 md:gap-4 min-w-0">
                         <div
                             className={cn(
                                 "bg-card rounded-xl shrink-0",
@@ -401,34 +401,34 @@ export function StockDetail() {
                             <Logo
                                 url={stock.logoUrl}
                                 alt={stock.name}
-                                size="size-11 md:size-16"
+                                size="size-10 md:size-16 landscape:size-8"
                                 fallback={
-                                    <span className="text-xl md:text-2xl">{stock.symbol.slice(0, 2)}</span>
+                                    <span className="text-lg md:text-2xl landscape:text-sm">{stock.symbol.slice(0, 2)}</span>
                                 }
                                 className="text-xl"
                             />
                         </div>
                         <div className="min-w-0 flex-1">
                             <div className="flex items-center flex-wrap gap-1.5 md:gap-2.5">
-                                <h1 className="text-lg md:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-tight">{stock.name}</h1>
+                                <h1 className="text-base md:text-2xl landscape:text-sm font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-tight truncate max-w-[200px] sm:max-w-md">{stock.name}</h1>
                                 {(() => {
                                     const calculatedState = estimateMarketState(stock.symbol, stock.currency);
                                     const isMarketOpen = calculatedState === 'REGULAR';
                                     const displayLabel = calculatedState;
 
                                     return isMarketOpen ? (
-                                        <div className="size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] cursor-help border border-background shrink-0" title={`Markt geöffnet (${displayLabel})`} />
+                                        <div className="size-2 md:size-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] cursor-help border border-background shrink-0" title={`Markt geöffnet (${displayLabel})`} />
                                     ) : (
-                                        <div className="size-2.5 rounded-full bg-red-500 cursor-help border border-background shrink-0" title={`Markt geschlossen (${displayLabel})`} />
+                                        <div className="size-2 md:size-2.5 rounded-full bg-red-500 cursor-help border border-background shrink-0" title={`Markt geschlossen (${displayLabel})`} />
                                     );
                                 })()}
                                 <div className="flex items-center gap-1 ml-auto sm:ml-0">
                                     <button
                                         onClick={() => navigate(`/calculator?stock=${stock.id}&mode=buy`)}
-                                        className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                        className="p-1 md:p-1.5 landscape:p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                                         title="Aktie handeln (Kaufen / Verkaufen)"
                                     >
-                                        <Calculator className="size-4" />
+                                        <Calculator className="size-3.5 md:size-4" />
                                     </button>
                                     <button
                                         onClick={() => {
@@ -437,17 +437,17 @@ export function StockDetail() {
                                             const targetId = stockFromContext?.id || stock?.id || stock?.symbol || id;
                                             navigate(`/dividends/edit/${encodeURIComponent(String(targetId))}${query}`);
                                         }}
-                                        className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                        className="p-1 md:p-1.5 landscape:p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                                         title="Daten bearbeiten"
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
                                     </button>
 
                                     {/* Watchlist Button */}
                                     <button
                                         onClick={() => setIsWatchlistModalOpen(true)}
                                         className={cn(
-                                            "p-1.5 rounded-lg transition-colors",
+                                            "p-1 md:p-1.5 landscape:p-1 rounded-lg transition-colors",
                                             watchlists.some(wl => wl.stockIds.includes(stock.id))
                                                 ? "text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
                                                 : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -456,20 +456,20 @@ export function StockDetail() {
                                     >
                                         {watchlists.some(wl => wl.stockIds.includes(stock.id)) ? (
                                             <div className="relative">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
                                             </div>
                                         ) : (
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
                                         )}
                                     </button>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 text-muted-foreground mt-0.5 text-xs md:text-sm">
+                            <div className="flex items-center gap-2 text-muted-foreground mt-0.5 landscape:mt-0 text-xs md:text-sm landscape:text-[11px]">
                                 <span className="font-bold text-foreground">{stock.symbol}</span>
                                 {stock.sector && stock.sector !== 'Simuliert' && (
                                     <>
                                         <span>•</span>
-                                        <span>{translateSector(stock.sector)}</span>
+                                        <span className="truncate max-w-[120px] sm:max-w-none">{translateSector(stock.sector)}</span>
                                     </>
                                 )}
                             </div>
@@ -477,16 +477,16 @@ export function StockDetail() {
                     </div>
 
                     {/* Price Card */}
-                    <div className="w-full sm:w-auto pt-2 sm:pt-0 border-t border-border/50 sm:border-none flex flex-wrap items-end justify-between sm:block sm:text-right gap-x-4 gap-y-1">
+                    <div className="w-full sm:w-auto pt-1 sm:pt-0 landscape:pt-0 border-t border-border/50 sm:border-none landscape:border-none flex flex-wrap items-end justify-between sm:block sm:text-right landscape:flex landscape:items-center landscape:gap-3 gap-x-4 gap-y-1">
                         <div>
-                            <p className="text-[10px] md:text-xs text-muted-foreground font-medium uppercase tracking-wider">Aktueller Kurs</p>
-                            <h2 className="text-xl md:text-3xl font-bold tabular-nums tracking-tight whitespace-nowrap">
+                            <p className="text-[10px] md:text-xs text-muted-foreground font-medium uppercase tracking-wider landscape:hidden">Aktueller Kurs</p>
+                            <h2 className="text-lg md:text-3xl landscape:text-base font-bold tabular-nums tracking-tight whitespace-nowrap">
                                 {formatCurrency(stock.currentPrice, stock.currency)}
                             </h2>
                         </div>
-                        <div className="text-right ml-auto">
+                        <div className="text-right ml-auto landscape:ml-0">
                             {stock.distributionPolicy === 'accumulating' ? (
-                                <p className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 font-medium sm:mt-0.5 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded inline-block">
+                                <p className="text-xs sm:text-sm landscape:text-xs text-blue-600 dark:text-blue-400 font-medium sm:mt-0.5 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded inline-block">
                                     Thesaurierend
                                 </p>
                             ) : (() => {
@@ -500,11 +500,11 @@ export function StockDetail() {
 
                                 return (
                                     <div className="flex flex-col items-end sm:mt-0.5 leading-tight">
-                                        <p className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-bold whitespace-nowrap">
+                                        <p className="text-xs sm:text-sm landscape:text-xs text-green-600 dark:text-green-400 font-bold whitespace-nowrap">
                                             {yieldCost !== null ? `${yieldCost.toFixed(2)}% Rendite (Käufe)` : `${marketYield?.toFixed(2)}% Div.Rendite`}
                                         </p>
                                         {yieldCost !== null && marketYield !== null && Math.abs(yieldCost - marketYield) > 0.01 && (
-                                            <p className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                            <p className="text-[10px] text-muted-foreground whitespace-nowrap landscape:hidden sm:landscape:block">
                                                 Aktueller Kurs: {marketYield.toFixed(2)}%
                                             </p>
                                         )}
@@ -537,10 +537,10 @@ export function StockDetail() {
                                 return (
                                     <div className="mt-0.5 sm:mt-1 text-right">
                                         <p className={cn(
-                                            "text-xs sm:text-sm font-bold flex items-center justify-end gap-1.5 tabular-nums whitespace-nowrap",
+                                            "text-xs sm:text-sm landscape:text-xs font-bold flex items-center justify-end gap-1.5 tabular-nums whitespace-nowrap",
                                             isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                         )}>
-                                            <span className="text-muted-foreground font-medium">
+                                            <span className="text-muted-foreground font-medium landscape:hidden sm:landscape:inline">
                                                 {timeRange === '1D' ? 'Tages Performance:' : `Performance (${timeRange}):`}
                                             </span>
                                             <span>
@@ -556,8 +556,8 @@ export function StockDetail() {
             </div>
 
             {/* Price Chart (Kursverlauf) - Über ganze Breite */}
-            <div className="bg-card border border-border rounded-xl pl-1 pr-1 py-6 shadow-sm min-h-[450px] flex flex-col w-full">
-                <div className="flex items-center justify-between gap-2 mb-4 shrink-0">
+            <div className="bg-card border border-border rounded-xl pl-1 pr-1 py-4 md:py-6 landscape:py-2.5 shadow-sm min-h-[360px] h-auto flex flex-col w-full mb-6">
+                <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 landscape:mb-1.5 shrink-0 px-2 md:px-4">
                     {/* Left: Title */}
                     <div className="flex items-center gap-2">
                         <TrendingUp className="size-5 text-blue-500" />

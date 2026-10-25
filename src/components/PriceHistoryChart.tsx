@@ -287,14 +287,14 @@ export function PriceHistoryChart({
     const chartContent = (
         <div className={cn(
             "w-full flex flex-col relative transition-all duration-300",
-            isMaximized ? "h-full" : "h-[450px]"
+            isMaximized ? "h-full" : "min-h-[360px] h-auto flex-1 pb-2"
         )}>
-            <div className="flex flex-wrap items-center justify-between mb-4 gap-2 relative">
+            <div className="flex flex-wrap items-center justify-between mb-2 md:mb-4 landscape:mb-1.5 gap-2 relative">
                 <div className="flex flex-col gap-1 w-full sm:w-auto">
                     <div>
                         {stockName && (
-                            <div className="flex items-baseline gap-2 mb-1">
-                                <h4 className="text-xl md:text-2xl font-black tracking-tighter text-foreground drop-shadow-sm">
+                            <div className="flex items-baseline gap-2 mb-1 landscape:mb-0.5">
+                                <h4 className="text-xl md:text-2xl landscape:text-lg font-black tracking-tighter text-foreground drop-shadow-sm">
                                     {stockName}
                                 </h4>
                                 {stockSymbol && (
@@ -304,11 +304,11 @@ export function PriceHistoryChart({
                                 )}
                             </div>
                         )}
-                        <p className="text-sm text-muted-foreground">Performance ({selectedRange})</p>
+                        <p className="text-sm landscape:text-xs text-muted-foreground">Performance ({selectedRange})</p>
                         <div className={cn("font-bold flex items-center gap-1", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
-                            <span className="text-xl">
+                            <span className="text-xl landscape:text-base">
                                 {performance > 0 ? '+' : ''}{performance.toFixed(2)}%
-                                <span className="ml-2 opacity-80 text-lg">{diffNativeFormatted}</span>
+                                <span className="ml-2 opacity-80 text-lg landscape:text-sm">{diffNativeFormatted}</span>
                             </span>
                         </div>
                     </div>
@@ -432,7 +432,7 @@ export function PriceHistoryChart({
                 )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 sm:gap-6 mb-4">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-6 mb-2 md:mb-4 landscape:mb-1.5">
                 <div className="flex bg-muted/50 p-0.5 rounded-lg items-center overflow-x-auto scroller-none max-w-full sm:max-w-fit">
                     <div className="flex flex-1">
                         {(['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
@@ -609,7 +609,10 @@ export function PriceHistoryChart({
                 </div>
             )}
 
-            <div className="h-[300px] w-full min-h-[300px] min-w-0">
+            <div className={cn(
+                "w-full min-w-0 transition-all",
+                isMaximized ? "flex-1 min-h-[300px]" : "h-[280px] sm:h-[300px] landscape:h-[200px] min-h-[180px]"
+            )}>
                 {hasMounted && (
                     <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
                         <AreaChart
