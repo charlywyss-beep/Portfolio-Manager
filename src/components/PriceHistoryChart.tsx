@@ -294,7 +294,7 @@ export function PriceHistoryChart({
                     <div>
                         {stockName && (
                             <div className="flex items-baseline gap-2 mb-1 landscape:mb-0.5">
-                                <h4 className="text-xl md:text-2xl landscape:text-lg font-black tracking-tighter text-foreground drop-shadow-sm">
+                                <h4 className="text-base sm:text-2xl landscape:text-lg font-black tracking-tighter text-foreground drop-shadow-sm">
                                     {stockName}
                                 </h4>
                                 {stockSymbol && (
@@ -617,7 +617,7 @@ export function PriceHistoryChart({
                     <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
                         <AreaChart
                             data={displayData}
-                            margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
+                            margin={{ top: 5, right: 5, left: 0, bottom: 15 }}
                             onMouseMove={(data: any) => {
                                 if (data?.activePayload?.[0]?.payload) {
                                     setHoveredData(data.activePayload[0].payload);

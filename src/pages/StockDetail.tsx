@@ -348,7 +348,7 @@ export function StockDetail() {
     return (
         <div className="p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16">
             {/* Sticky Header / Navigation */}
-            <div className="sticky top-0 -mx-2 md:-mx-8 px-3 py-2 md:px-8 md:py-4 landscape:py-1.5 landscape:px-3 z-50 bg-background/95 backdrop-blur border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-3 md:mb-6 landscape:mb-2">
+            <div className="sticky top-0 -mx-2 md:-mx-8 px-3 py-2 md:px-8 md:py-4 landscape:py-1.5 landscape:px-3 landscape:mx-0 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-3 md:mb-6 landscape:mb-2">
                 <div className="flex items-center gap-2 mb-2 md:mb-4 landscape:mb-1 pl-12 xl:pl-0 landscape:pl-10">
                     <button
                         onClick={() => {
@@ -477,14 +477,14 @@ export function StockDetail() {
                     </div>
 
                     {/* Price Card */}
-                    <div className="w-full sm:w-auto pt-1 sm:pt-0 landscape:pt-0 border-t border-border/50 sm:border-none landscape:border-none flex flex-wrap items-end justify-between sm:block sm:text-right landscape:flex landscape:items-center landscape:gap-3 gap-x-4 gap-y-1">
-                        <div>
-                            <p className="text-[10px] md:text-xs text-muted-foreground font-medium uppercase tracking-wider landscape:hidden">Aktueller Kurs</p>
-                            <h2 className="text-lg md:text-3xl landscape:text-base font-bold tabular-nums tracking-tight whitespace-nowrap">
+                    <div className="w-full sm:w-auto pt-1 sm:pt-0 landscape:pt-0 border-t border-border/50 sm:border-none landscape:border-none flex items-center justify-between sm:block sm:text-right landscape:flex landscape:items-center landscape:gap-3 gap-x-4">
+                        <div className="flex items-baseline gap-1.5 sm:block">
+                            <span className="text-[10px] md:text-xs text-muted-foreground font-medium uppercase tracking-wider landscape:hidden sm:block">Kurs:</span>
+                            <h2 className="text-base sm:text-3xl landscape:text-base font-bold tabular-nums tracking-tight whitespace-nowrap">
                                 {formatCurrency(stock.currentPrice, stock.currency)}
                             </h2>
                         </div>
-                        <div className="text-right ml-auto landscape:ml-0">
+                        <div className="text-right ml-auto landscape:ml-0 flex flex-col items-end sm:block">
                             {stock.distributionPolicy === 'accumulating' ? (
                                 <p className="text-xs sm:text-sm landscape:text-xs text-blue-600 dark:text-blue-400 font-medium sm:mt-0.5 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded inline-block">
                                     Thesaurierend
@@ -556,7 +556,7 @@ export function StockDetail() {
             </div>
 
             {/* Price Chart (Kursverlauf) - Über ganze Breite */}
-            <div className="bg-card border border-border rounded-xl pl-1 pr-1 py-4 md:py-6 landscape:py-2.5 shadow-sm min-h-[360px] h-auto flex flex-col w-full mb-6">
+            <div className="bg-card border border-border rounded-xl pl-1 pr-1 py-4 md:py-6 landscape:py-2.5 shadow-sm min-h-[360px] h-auto flex flex-col w-full mb-6 overflow-hidden">
                 <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 landscape:mb-1.5 shrink-0 px-2 md:px-4">
                     {/* Left: Title */}
                     <div className="flex items-center gap-2">
