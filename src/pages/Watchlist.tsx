@@ -274,7 +274,7 @@ export function Watchlist() {
                 </div>
 
                 {/* Watchlist Tabs */}
-                <div className="-mx-4 md:-mx-6 px-4 md:px-6 pb-2 mt-2 overflow-x-auto bg-background shrink-0 iphone-landscape-portfolio-subtabs">
+                <div className="-mx-4 md:-mx-6 px-4 md:px-6 pt-1.5 pb-2 mt-2 overflow-x-auto bg-background shrink-0 iphone-landscape-portfolio-subtabs">
                     <div className="flex items-center gap-2 min-w-max">
                         {/* 1. Bestand (Always first) */}
                         <button
@@ -312,7 +312,7 @@ export function Watchlist() {
                                                 setActiveWatchlistId('owned');
                                             }
                                         }}
-                                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                                        className="absolute top-0.5 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10 flex items-center justify-center"
                                         title="Liste löschen"
                                     >
                                         <Trash2 className="size-3" />
