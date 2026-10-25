@@ -1,4 +1,4 @@
-import { X, TrendingUp, RefreshCw, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, TrendingUp, RefreshCw, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useCurrencyFormatter } from '../utils/currency';
@@ -182,30 +182,42 @@ export function WatchlistPerformanceModal({ isOpen, onClose, activeWatchlistId }
     };
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-[110] p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
-            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-[95vw] md:max-w-6xl max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10">
-                <div className="flex items-center justify-between p-4 border-b border-border">
-                    <div className="flex flex-col">
-                        <h2 className="text-lg font-bold flex items-center gap-2">
-                            <TrendingUp className="size-5 text-blue-500" />
-                            Watchlist Performance
-                        </h2>
-                        <p className="text-xs text-muted-foreground">Detailansicht deiner beobachteten Aktien — <span className="font-semibold text-foreground">{activeTabName}</span></p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4 iphone-modal-overlay" onClick={onClose}>
+            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-[95vw] md:max-w-6xl max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10 overflow-hidden iphone-modal-shell" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between p-4 border-b border-border bg-card z-10 iphone-modal-header-card">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="iphone-landscape-back-btn inline-flex items-center justify-center size-8 rounded-lg bg-secondary/90 hover:bg-secondary text-foreground border border-border shadow-sm shrink-0 transition-all active:scale-95"
+                            title="Zurück"
+                            aria-label="Zurück"
+                        >
+                            <ArrowLeft className="size-4" />
+                        </button>
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 shrink-0 iphone-landscape-portfolio-icon">
+                            <TrendingUp className="size-5" />
+                        </div>
+                        <div className="min-w-0">
+                            <h2 className="text-lg font-bold truncate iphone-landscape-portfolio-title">
+                                Watchlist Performance
+                            </h2>
+                            <p className="text-xs text-muted-foreground hidden md:block">Detailansicht deiner beobachteten Aktien — <span className="font-semibold text-foreground">{activeTabName}</span></p>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                         <button
                             onClick={() => refreshAllPrices(true)}
                             disabled={isGlobalRefreshing}
                             className={cn(
-                                "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
+                                "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm shrink-0 whitespace-nowrap iphone-landscape-btn",
                                 "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
                                 "active:scale-95",
                                 isGlobalRefreshing && "opacity-50 cursor-not-allowed"
                             )}
                         >
                             <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
-                            <span>
+                            <span className="hidden sm:inline">
                                 {isGlobalRefreshing
                                     ? '...'
                                     : lastGlobalRefresh
@@ -213,12 +225,10 @@ export function WatchlistPerformanceModal({ isOpen, onClose, activeWatchlistId }
                                         : 'Update'}
                             </span>
                         </button>
-                        <button onClick={onClose} className="p-2 hover:bg-secondary rounded-full transition-colors ml-2">
-                            <X className="size-5" />
-                        </button>
                     </div>
                 </div>
 
+                <div className="flex flex-col flex-1 min-h-0 overflow-hidden iphone-modal-body-card iphone-modal-body-flush">
                 <div className="overflow-auto p-0 flex-1">
                     <table className="w-full text-xs md:text-sm border-collapse">
                         <thead>
@@ -267,6 +277,7 @@ export function WatchlistPerformanceModal({ isOpen, onClose, activeWatchlistId }
                         <div className="size-1.5 rounded-full bg-blue-500" />
                         <span>CHF Werte basieren auf aktuellem Wechselkurs</span>
                     </div>
+                </div>
                 </div>
             </div>
         </div>

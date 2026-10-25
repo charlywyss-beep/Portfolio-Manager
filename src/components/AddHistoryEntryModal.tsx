@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { ArrowLeft, TrendingUp } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { DecimalInput } from './DecimalInput';
 import type { PortfolioHistoryEntry } from '../types';
@@ -82,34 +82,44 @@ export function AddHistoryEntryModal({ isOpen, onClose, editingEntry, currentTot
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200">
-                <div className="flex items-center justify-between p-6 border-b border-border">
-                    <h2 className="text-xl font-bold">
-                        {editingEntry ? 'Eintrag bearbeiten' : 'Historischen Wert erfassen'}
-                    </h2>
-                    <div className="flex gap-2">
-                        {!editingEntry && currentTotals && (
-                            <button
-                                onClick={() => {
-                                    setDate(new Date().toISOString().split('T')[0]);
-                                    setStockValue((currentTotals.stockValue || 0).toFixed(2));
-                                    setEtfValue((currentTotals.etfValue || 0).toFixed(2));
-                                    setCashValue((currentTotals.cashValue || 0).toFixed(2));
-                                    setNotes('Automatischer Eintrag');
-                                }}
-                                className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors"
-                            >
-                                Aktuelle Werte übernehmen
-                            </button>
-                        )}
-                        <button onClick={onClose} className="p-2 hover:bg-secondary rounded-full transition-colors">
-                            <X className="size-5" />
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 iphone-modal-overlay">
+            <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto iphone-modal-shell">
+                <div className="flex items-center justify-between p-4 border-b border-border bg-card z-10 iphone-modal-header-card">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="iphone-landscape-back-btn inline-flex items-center justify-center size-8 rounded-lg bg-secondary/90 hover:bg-secondary text-foreground border border-border shadow-sm shrink-0 transition-all active:scale-95"
+                            title="Zurück"
+                            aria-label="Zurück"
+                        >
+                            <ArrowLeft className="size-4" />
                         </button>
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 shrink-0 iphone-landscape-portfolio-icon">
+                            <TrendingUp className="size-5" />
+                        </div>
+                        <h2 className="text-xl font-bold truncate iphone-landscape-portfolio-title">
+                            {editingEntry ? 'Eintrag bearbeiten' : 'Historischer Wert'}
+                        </h2>
                     </div>
+                    {!editingEntry && currentTotals && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setDate(new Date().toISOString().split('T')[0]);
+                                setStockValue((currentTotals.stockValue || 0).toFixed(2));
+                                setEtfValue((currentTotals.etfValue || 0).toFixed(2));
+                                setCashValue((currentTotals.cashValue || 0).toFixed(2));
+                                setNotes('Automatischer Eintrag');
+                            }}
+                            className="px-2.5 py-1 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shrink-0 whitespace-nowrap iphone-landscape-btn"
+                        >
+                            Aktuell
+                        </button>
+                    )}
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <form onSubmit={handleSubmit} className="p-5 space-y-4 iphone-modal-body-card">
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Datum</label>
                         <input

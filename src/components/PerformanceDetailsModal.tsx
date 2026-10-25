@@ -1,4 +1,4 @@
-import { X, TrendingUp, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, TrendingUp, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
 import { useCurrencyFormatter } from '../utils/currency';
@@ -125,24 +125,37 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
     return (
         <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 md:py-3"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 md:py-3 iphone-modal-overlay"
             onClick={onClose}
         >
             <div
-                className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-[95vw] md:max-w-4xl max-h-[96vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10 overflow-hidden"
+                className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-[95vw] md:max-w-4xl max-h-[96vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10 overflow-hidden iphone-modal-shell"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-                    <h2 className="text-lg font-bold flex items-center gap-2">
-                        <TrendingUp className="size-5 text-blue-500" />
-                        Performance Details
-                    </h2>
-                    <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card z-10 iphone-modal-header-card">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="iphone-landscape-back-btn inline-flex items-center justify-center size-8 rounded-lg bg-secondary/90 hover:bg-secondary text-foreground border border-border shadow-sm shrink-0 transition-all active:scale-95"
+                            title="Zurück"
+                            aria-label="Zurück"
+                        >
+                            <ArrowLeft className="size-4" />
+                        </button>
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 shrink-0 iphone-landscape-portfolio-icon">
+                            <TrendingUp className="size-5" />
+                        </div>
+                        <h2 className="text-lg font-bold truncate iphone-landscape-portfolio-title">
+                            Performance Details
+                        </h2>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
                         <button
                             onClick={() => refreshAllPrices(true)}
                             disabled={isGlobalRefreshing}
                             className={cn(
-                                "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm",
+                                "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm shrink-0 whitespace-nowrap iphone-landscape-btn",
                                 "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
                                 "active:scale-95",
                                 isGlobalRefreshing && "opacity-50 cursor-not-allowed"
@@ -150,7 +163,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                             title="Alle Aktienpreise aktualisieren"
                         >
                             <RefreshCw className={cn("size-3.5", isGlobalRefreshing && "animate-spin")} />
-                            <span>
+                            <span className="hidden sm:inline">
                                 {isGlobalRefreshing
                                     ? 'Aktualisiere...'
                                     : lastGlobalRefresh
@@ -158,12 +171,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         : 'Jetzt aktualisieren'}
                             </span>
                         </button>
-                        <button onClick={onClose} className="p-2 hover:bg-secondary rounded-full transition-colors">
-                            <X className="size-5" />
-                        </button>
                     </div>
                 </div>
 
+                <div className="flex flex-col flex-1 min-h-0 overflow-hidden iphone-modal-body-card iphone-modal-body-flush">
                 {/* Summary Totals */}
                 <div className="grid grid-cols-2 gap-3 p-3 bg-muted/20 border-b border-border shrink-0">
                     <div className="bg-card p-2.5 px-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between">
@@ -480,6 +491,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                             })}
                         </tbody>
                     </table>
+                </div>
                 </div>
             </div>
         </div>

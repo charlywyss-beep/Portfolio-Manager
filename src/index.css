@@ -720,6 +720,19 @@
     margin: 0 !important;
   }
 
+  .iphone-modal-header-card .iphone-landscape-btn {
+    height: 1.65rem !important;
+    min-height: 1.65rem !important;
+    max-height: 1.65rem !important;
+    padding: 0 0.65rem !important;
+    font-size: 0.75rem !important;
+    border-radius: 0.45rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.35rem !important;
+  }
+
   .iphone-modal-body-card {
     background-color: hsl(var(--card)) !important;
     border: 1px solid hsl(var(--border)) !important;
@@ -728,6 +741,13 @@
     flex: 1 1 auto !important;
     min-height: 0 !important;
     overflow-y: auto !important;
+  }
+
+  .iphone-modal-body-flush {
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
   }
 
   .iphone-choice-modal-body {
@@ -1297,6 +1317,21 @@
     margin: 0 !important;
   }
 
+  .iphone-modal-header-card .iphone-landscape-btn {
+    height: 1.75rem !important;
+    min-height: 1.75rem !important;
+    max-height: 1.75rem !important;
+    width: auto !important;
+    min-width: 1.75rem !important;
+    padding: 0 0.5rem !important;
+    font-size: 0.72rem !important;
+    border-radius: 0.5rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.25rem !important;
+  }
+
   .iphone-modal-body-card {
     background-color: hsl(var(--card)) !important;
     border: 1px solid hsl(var(--border)) !important;
@@ -1305,6 +1340,13 @@
     flex: 1 1 auto !important;
     min-height: 0 !important;
     overflow-y: auto !important;
+  }
+
+  .iphone-modal-body-flush {
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
   }
 
   .iphone-choice-modal-body {
