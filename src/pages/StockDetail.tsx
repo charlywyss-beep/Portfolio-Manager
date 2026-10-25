@@ -348,7 +348,7 @@ export function StockDetail() {
     return (
         <div className="p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16">
             {/* Sticky Header in Portrait, Normal Scrollable (not sticky) in Landscape */}
-            <div className="sticky top-0 landscape:static landscape:top-auto -mx-2 md:-mx-8 landscape:mx-0 px-3 py-2 md:px-8 md:py-4 landscape:py-1.5 landscape:px-3 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-3 md:mb-6 landscape:mb-2">
+            <div className="sticky top-0 landscape:static landscape:top-auto -mx-2 md:-mx-8 landscape:mx-0 px-3 py-2 md:px-8 md:py-4 landscape:py-1.5 landscape:px-3 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-3 md:mb-6 landscape:mb-2 iphone-landscape-header">
                 <div className="flex items-center gap-2 mb-2 md:mb-4 landscape:mb-1 pl-10 xl:pl-0 landscape:pl-0">
                     <button
                         onClick={() => {
@@ -556,7 +556,7 @@ export function StockDetail() {
             </div>
 
             {/* Price Chart (Kursverlauf) - Über ganze Breite */}
-            <div className="bg-card border border-border rounded-xl pl-1 pr-1 py-4 md:py-6 landscape:py-1.5 shadow-sm min-h-[360px] landscape:min-h-0 h-auto flex flex-col w-full mb-6 overflow-hidden">
+            <div className="bg-card border border-border rounded-xl pl-1 pr-1 py-4 md:py-6 landscape:py-1.5 shadow-sm min-h-[360px] landscape:min-h-0 h-auto iphone-landscape-section flex flex-col w-full mb-6 landscape:mb-3 overflow-hidden">
                 <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 landscape:mb-1.5 shrink-0 px-2 md:px-4">
                     {/* Left: Title */}
                     <div className="flex items-center gap-2">
@@ -615,7 +615,7 @@ export function StockDetail() {
             </div>
 
             {/* Kursdaten & Stammdaten - Darunter nebeneinander */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 landscape:gap-3 items-stretch">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 landscape:gap-3 items-stretch iphone-landscape-section">
                 {/* Kursdaten */}
                 <div
                     onClick={() => {
@@ -624,7 +624,7 @@ export function StockDetail() {
                         const targetId = stockFromContext?.id || stock?.id || stock?.symbol || id;
                         navigate(`/dividends/edit/${encodeURIComponent(String(targetId))}${query}`);
                     }}
-                    className="bg-card border border-border hover:border-primary/50 rounded-xl p-4 md:p-6 landscape:p-2.5 landscape:py-2 shadow-sm cursor-pointer transition-colors group flex flex-col justify-between landscape:h-[280px] overflow-hidden"
+                    className="bg-card border border-border hover:border-primary/50 rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm cursor-pointer transition-colors group flex flex-col justify-between h-full overflow-hidden"
                     title="Daten bearbeiten"
                 >
                     <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 landscape:mb-1">
@@ -980,7 +980,7 @@ export function StockDetail() {
                 </div>
 
                 {/* Stammdaten */}
-                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-2.5 landscape:py-2 shadow-sm flex flex-col justify-between landscape:h-[280px] overflow-hidden">
+                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm flex flex-col justify-between h-full overflow-hidden">
                     <h3 className="font-bold text-base md:text-lg landscape:text-xs mb-2 md:mb-4 landscape:mb-1 flex items-center gap-1.5 md:gap-2">
                         <TrendingUp className="size-4 md:size-5 text-blue-500" />
                         Stammdaten
@@ -1087,15 +1087,15 @@ export function StockDetail() {
                         )}
 
                         {(effectiveSectorWeights || effectiveCountryWeights) && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 landscape:gap-3 items-stretch iphone-landscape-section">
                                 {/* Sector Allocation */}
                                 {effectiveSectorWeights && Object.keys(effectiveSectorWeights).length > 0 && (
-                                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                            <TrendingUp className="size-5 text-purple-500" />
+                                    <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm flex flex-col justify-between h-full overflow-hidden">
+                                        <h3 className="font-bold text-base md:text-lg landscape:text-xs mb-2 md:mb-4 landscape:mb-1 flex items-center gap-1.5 md:gap-2">
+                                            <TrendingUp className="size-4 md:size-5 text-purple-500" />
                                             Branchen Allokation
                                         </h3>
-                                        <div className="space-y-3">
+                                        <div className="space-y-1.5 md:space-y-3 landscape:space-y-0 flex-1 flex flex-col justify-between">
                                             {(Object.entries(effectiveSectorWeights || {}) as [string, number][])
                                                 .sort(([, a]: [string, number], [, b]: [string, number]) => b - a)
                                                 .slice(0, 8)
@@ -1118,7 +1118,7 @@ export function StockDetail() {
                                                     const displayName = displayNames[name] || sector.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
                                                     return (
-                                                        <div key={sector} className="flex items-center justify-between text-sm">
+                                                        <div key={sector} className="flex items-center justify-between text-xs sm:text-sm landscape:text-[11px] py-0.5 border-b border-border/40">
                                                             <span className="text-muted-foreground">{displayName}</span>
                                                             <div className="flex items-center gap-2">
                                                                 <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -1135,12 +1135,12 @@ export function StockDetail() {
 
                                 {/* Country Allocation */}
                                 {effectiveCountryWeights && Object.keys(effectiveCountryWeights).length > 0 && (
-                                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                            <MapIcon className="size-5 text-blue-500" />
+                                    <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm flex flex-col justify-between h-full overflow-hidden">
+                                        <h3 className="font-bold text-base md:text-lg landscape:text-xs mb-2 md:mb-4 landscape:mb-1 flex items-center gap-1.5 md:gap-2">
+                                            <MapIcon className="size-4 md:size-5 text-blue-500" />
                                             Länder Allokation
                                         </h3>
-                                        <div className="space-y-3">
+                                        <div className="space-y-1.5 md:space-y-3 landscape:space-y-0 flex-1 flex flex-col justify-between">
                                             {(Object.entries(effectiveCountryWeights || {}) as [string, number][])
                                                 .sort(([, a]: [string, number], [, b]: [string, number]) => b - a)
                                                 .slice(0, 8)
@@ -1169,7 +1169,7 @@ export function StockDetail() {
                                                     const displayName = normalizeCountry(displayNames[name] || country);
 
                                                     return (
-                                                        <div key={country} className="flex items-center justify-between text-sm">
+                                                        <div key={country} className="flex items-center justify-between text-xs sm:text-sm landscape:text-[11px] py-0.5 border-b border-border/40">
                                                             <span className="text-muted-foreground">{displayName}</span>
                                                             <div className="flex items-center gap-2">
                                                                 <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -1190,7 +1190,7 @@ export function StockDetail() {
             })()}
 
             {/* Quick Links & Notes (Vertical Stack) */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-6 landscape:gap-3 iphone-landscape-snap">
                 {/* Quick Links Card */}
                 <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
                     <h3 className="font-bold text-lg mb-4">Quick Links</h3>

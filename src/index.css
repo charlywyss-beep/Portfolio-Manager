@@ -117,3 +117,22 @@
     padding-right: max(calc(env(safe-area-inset-right, 0px) - 1.25rem), 0.75rem) !important;
   }
 }
+
+/* Exklusiv für iPhone / Smartphone im Querformat (Höhe <= 500px): exakt eine Feldhöhe pro Bildschirm */
+@media (orientation: landscape) and (max-height: 500px) {
+  .app-main-landscape-safe {
+    scroll-snap-type: y mandatory;
+    scroll-padding-top: 0.5rem;
+  }
+
+  .iphone-landscape-section {
+    height: calc(100dvh - 1rem) !important;
+    min-height: calc(100dvh - 1rem) !important;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  .iphone-landscape-header {
+    scroll-snap-align: start;
+  }
+}
