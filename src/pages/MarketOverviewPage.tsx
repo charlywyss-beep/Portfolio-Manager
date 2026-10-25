@@ -1088,7 +1088,7 @@ export function MarketOverviewPage() {
             </div>
 
             {/* Padded Container for Grid and Content */}
-            <div className="px-3 sm:px-4 md:px-6 space-y-4 iphone-landscape-no-px">
+            <div className="px-3 sm:px-4 md:px-6 space-y-4 iphone-landscape-no-px market-content-wrap">
                 {/* The Market Tiles Grid (Optimized 2 columns on iPhone & mobile, 3 columns on tablet/desktop) */}
                 <div 
                     onDragOver={(e) => {
@@ -1096,7 +1096,7 @@ export function MarketOverviewPage() {
                             e.preventDefault();
                         }
                     }}
-                    className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-4 md:gap-5 w-full"
+                    className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-4 md:gap-5 w-full market-tiles-grid"
                 >
                     {/* Headline-Kachel: Gesamte Tagesperformance Portfolio in CHF */}
                     {(activeFilter === 'portfolio' || activeFilter === 'all') && portfolioStocks.length > 0 && (
@@ -1105,7 +1105,7 @@ export function MarketOverviewPage() {
                                 if (!isEditMode) navigate('/portfolio');
                             }}
                             className={cn(
-                                "relative rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[140px] sm:min-h-[175px] md:min-h-[190px] w-full min-w-0 border-2",
+                                "market-tile-card relative rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[140px] sm:min-h-[175px] md:min-h-[190px] w-full min-w-0 border-2",
                                 !isEditMode && "cursor-pointer hover:shadow-lg hover:brightness-105 active:scale-[0.99]",
                                 isPortfolioPositive
                                     ? "bg-[#3fb78f] text-slate-950 border-emerald-700/40 shadow-emerald-950/15"
@@ -1119,35 +1119,35 @@ export function MarketOverviewPage() {
                                     <div className="size-5 sm:size-6 rounded-md bg-white text-slate-950 shadow-xs border border-white/60 flex items-center justify-center shrink-0">
                                         <Wallet className="size-3 sm:size-3.5 text-slate-950" />
                                     </div>
-                                    <h3 className="font-black text-[11px] sm:text-base md:text-lg tracking-tight truncate drop-shadow-xs text-slate-950 leading-tight">
+                                    <h3 className="market-tile-title font-black text-[13px] sm:text-base md:text-lg tracking-tight truncate drop-shadow-xs text-slate-950 leading-tight">
                                         Tagesperformance
                                     </h3>
                                 </div>
-                                <span className="h-5 sm:h-6 px-1.5 sm:px-2 inline-flex items-center justify-center text-[9px] sm:text-[10px] uppercase font-black tracking-wider rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 font-mono leading-none">
+                                <span className="market-tile-badge h-6 px-2 inline-flex items-center justify-center text-[11px] sm:text-[10px] uppercase font-black tracking-wider rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 font-mono leading-none">
                                     CHF
                                 </span>
                             </div>
 
                             {/* Center: CHF amount & total portfolio value */}
-                            <div className="my-0.5 sm:my-1 text-center">
-                                <div className="text-base sm:text-2xl md:text-3xl font-black tracking-tight drop-shadow-xs tabular-nums text-slate-950 leading-tight">
+                            <div className="market-tile-price-wrap my-0.5 sm:my-1 text-center">
+                                <div className="market-tile-price text-lg sm:text-2xl md:text-3xl font-black tracking-tight drop-shadow-xs tabular-nums text-slate-950 leading-tight">
                                     {isPortfolioPositive ? '+' : ''}{formatNumber(portfolioDailyGain, 0)} CHF
                                 </div>
-                                <div className="text-xs sm:text-sm md:text-base font-bold text-slate-950/90 truncate mt-0.5 sm:mt-1">
+                                <div className="market-tile-shares text-xs sm:text-sm md:text-base font-bold text-slate-950/90 truncate mt-0.5 sm:mt-1">
                                     Bestand: {formatNumber(totals.totalValueStock || 0, 0)} CHF
                                 </div>
                             </div>
 
                             {/* Bottom: % performance (White Badge with Green/Red text) */}
-                            <div className="flex items-center justify-center w-full">
+                            <div className="market-tile-pills-wrap flex items-center justify-center w-full">
                                 <div className={cn(
-                                    "inline-flex items-center justify-center gap-1 px-2.5 sm:px-3.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-white shadow-xs border border-white/60 font-black text-xs sm:text-sm md:text-base tabular-nums tracking-tight",
+                                    "market-tile-pill-1 inline-flex items-center justify-center gap-1 px-3.5 py-1 rounded-xl bg-white shadow-xs border border-white/60 font-black text-sm sm:text-sm md:text-base tabular-nums tracking-tight",
                                     isPortfolioPositive ? "text-emerald-700" : "text-rose-600"
                                 )}>
                                     {isPortfolioPositive ? (
-                                        <TrendingUp className="size-3.5 sm:size-4 shrink-0 stroke-[2.5]" />
+                                        <TrendingUp className="size-4 shrink-0 stroke-[2.5]" />
                                     ) : (
-                                        <TrendingDown className="size-3.5 sm:size-4 shrink-0 stroke-[2.5]" />
+                                        <TrendingDown className="size-4 shrink-0 stroke-[2.5]" />
                                     )}
                                     <span>
                                         {isPortfolioPositive ? '+' : ''}{portfolioDailyGainPercent.toFixed(2)}%
@@ -1251,7 +1251,7 @@ export function MarketOverviewPage() {
                                     }
                                 }}
                                 className={cn(
-                                    "relative rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[140px] sm:min-h-[175px] md:min-h-[190px] w-full min-w-0",
+                                    "market-tile-card relative rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[140px] sm:min-h-[175px] md:min-h-[190px] w-full min-w-0",
                                     !isEditMode && "cursor-pointer hover:shadow-lg hover:brightness-105 active:scale-[0.99]",
                                     isEditMode && activeFilter !== 'portfolio' && "cursor-pointer touch-none",
                                     draggedId === item.id && "opacity-35 scale-[0.96] ring-2 ring-primary ring-dashed",
@@ -1276,14 +1276,14 @@ export function MarketOverviewPage() {
                                 <div className={cn("flex items-start justify-between gap-1 min-w-0", draggedId !== null && "pointer-events-none")}>
                                     <div className="min-w-0 flex-1">
                                         <h3 
-                                            className="font-extrabold text-[11px] sm:text-base md:text-lg tracking-tight truncate drop-shadow-xs text-slate-950 leading-tight" 
+                                            className="market-tile-title font-extrabold text-[13px] sm:text-base md:text-lg tracking-tight truncate drop-shadow-xs text-slate-950 leading-tight" 
                                             title={item.name}
                                         >
                                             {item.name}
                                         </h3>
                                         {/* DIE STK ZAHL BITTE UNTER AKTIENNAME */}
                                         {hasShares ? (
-                                            <div className="text-[10px] sm:text-xs md:text-sm font-bold text-slate-950/85 truncate leading-tight mt-0.5">
+                                            <div className="market-tile-shares text-xs sm:text-xs md:text-sm font-bold text-slate-950/85 truncate leading-tight mt-0.5">
                                                 {shares} Stk.
                                             </div>
                                         ) : null}
@@ -1317,13 +1317,13 @@ export function MarketOverviewPage() {
 
                                         {/* ETF Badge in derselben Zeile und Flexbox wie Währung */}
                                         {matchedStock?.type === 'etf' && (
-                                            <span className="h-5 sm:h-6 px-1.5 sm:px-2 inline-flex items-center justify-center text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 leading-none">
+                                            <span className="market-tile-badge h-6 px-2 inline-flex items-center justify-center text-[11px] sm:text-[10px] font-black uppercase tracking-wider rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 leading-none">
                                                 ETF
                                             </span>
                                         )}
 
                                         {currency ? (
-                                            <span className="h-5 sm:h-6 px-1.5 sm:px-2 inline-flex items-center justify-center text-[9px] sm:text-[10px] uppercase font-black tracking-wider rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 font-mono leading-none">
+                                            <span className="market-tile-badge h-6 px-2 inline-flex items-center justify-center text-[11px] sm:text-[10px] uppercase font-black tracking-wider rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 font-mono leading-none">
                                                 {currency}
                                             </span>
                                         ) : null}
@@ -1331,8 +1331,8 @@ export function MarketOverviewPage() {
                                 </div>
 
                                 {/* Center: Kurs */}
-                                <div className={cn("my-1 sm:my-2 text-center", draggedId !== null && "pointer-events-none")}>
-                                    <div className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight drop-shadow-xs tabular-nums text-slate-950 leading-tight">
+                                <div className={cn("market-tile-price-wrap my-1 sm:my-2 text-center", draggedId !== null && "pointer-events-none")}>
+                                    <div className="market-tile-price text-2xl sm:text-2xl md:text-3xl font-black tracking-tight drop-shadow-xs tabular-nums text-slate-950 leading-tight">
                                         {q ? formatNumber(displayPrice, decimals) : (
                                             <span className="opacity-40 animate-pulse text-xs sm:text-xl">Laden...</span>
                                         )}
@@ -1340,20 +1340,20 @@ export function MarketOverviewPage() {
                                 </div>
 
                                 {/* Bottom: Unter Kurs die Performance Pille, und darunter der Gewinn/Verlust in einer weissen Pille */}
-                                <div className={cn("flex flex-col items-center justify-center gap-1 sm:gap-1.5 w-full", draggedId !== null && "pointer-events-none")}>
+                                <div className={cn("market-tile-pills-wrap flex flex-col items-center justify-center gap-1.5 w-full", draggedId !== null && "pointer-events-none")}>
                                     {/* Pille 1: Performance */}
                                     <div className={cn(
-                                        "inline-flex items-center justify-center gap-1 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-white shadow-xs border border-white/60 font-black tabular-nums transition-all",
+                                        "market-tile-pill-1 inline-flex items-center justify-center gap-1 px-3.5 sm:px-3 py-1 sm:py-1 rounded-xl bg-white shadow-xs border border-white/60 font-black tabular-nums transition-all",
                                         isPositive ? "text-emerald-700" : "text-rose-600"
                                     )}>
                                         {q && (
                                             <>
                                                 {isPositive ? (
-                                                    <TrendingUp className="size-3 sm:size-4 shrink-0 stroke-[2.5]" />
+                                                    <TrendingUp className="size-4 shrink-0 stroke-[2.5]" />
                                                 ) : (
-                                                    <TrendingDown className="size-3 sm:size-4 shrink-0 stroke-[2.5]" />
+                                                    <TrendingDown className="size-4 shrink-0 stroke-[2.5]" />
                                                 )}
-                                                <span className="text-[11px] sm:text-sm md:text-base tracking-tight shrink-0">
+                                                <span className="text-sm sm:text-sm md:text-base tracking-tight shrink-0">
                                                     {isPositive ? '+' : ''}{changePct.toFixed(2)}%
                                                 </span>
                                             </>
@@ -1363,21 +1363,21 @@ export function MarketOverviewPage() {
                                     {/* Pille 2: Gewinn oder Verlust in einer Pille weiss hinterlegt */}
                                     {hasShares ? (
                                         <div className={cn(
-                                            "inline-flex items-center justify-center gap-1 px-2.5 sm:px-3 py-0.5 sm:py-0.5 rounded-lg sm:rounded-xl bg-white shadow-xs border border-white/60 font-black tabular-nums transition-all text-[10px] sm:text-xs md:text-sm max-w-full truncate",
+                                            "market-tile-pill-2 inline-flex items-center justify-center gap-1 px-3 sm:px-3 py-1 sm:py-0.5 rounded-xl bg-white shadow-xs border border-white/60 font-black tabular-nums transition-all text-xs sm:text-xs md:text-sm max-w-full truncate",
                                             totalDayChangeCHF >= 0 ? "text-emerald-700" : "text-rose-600"
                                         )}>
                                             <span>
                                                 {totalDayChangeCHF >= 0 ? '+' : ''}{formatNumber(totalDayChangeCHF, 0)} CHF
                                             </span>
                                             {q && currency !== 'CHF' && (
-                                                <span className="opacity-80 font-bold pl-0.5 truncate text-[9px] sm:text-xs">
+                                                <span className="opacity-80 font-bold pl-0.5 truncate text-[11px] sm:text-xs">
                                                     • {totalDayChangeNative >= 0 ? '+' : ''}{formatNumber(totalDayChangeNative, 0)} {currency}
                                                 </span>
                                             )}
                                         </div>
                                     ) : (
                                         <div className={cn(
-                                            "inline-flex items-center justify-center gap-1 px-2.5 sm:px-3 py-0.5 sm:py-0.5 rounded-lg sm:rounded-xl bg-white shadow-xs border border-white/60 font-black tabular-nums transition-all text-[10px] sm:text-xs md:text-sm",
+                                            "market-tile-pill-2 inline-flex items-center justify-center gap-1 px-3 sm:px-3 py-1 sm:py-0.5 rounded-xl bg-white shadow-xs border border-white/60 font-black tabular-nums transition-all text-xs sm:text-xs md:text-sm",
                                             isPositive ? "text-emerald-700" : "text-rose-600"
                                         )}>
                                             <span>
