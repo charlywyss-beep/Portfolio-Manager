@@ -287,7 +287,7 @@ export function PriceHistoryChart({
     const chartContent = (
         <div className={cn(
             "w-full flex flex-col relative transition-all duration-300",
-            isMaximized ? "h-full" : "min-h-[360px] landscape:min-h-0 h-auto landscape:h-full flex-1 pb-2 landscape:pb-0 justify-between"
+            isMaximized ? "h-full" : "min-h-[360px] landscape:min-h-0 h-auto flex-1 pb-2 landscape:pb-0"
         )}>
             <div className="flex flex-wrap items-center justify-between mb-2 md:mb-4 landscape:mb-1.5 gap-2 relative">
                 <div className="flex flex-col gap-1 w-full sm:w-auto">
@@ -611,7 +611,7 @@ export function PriceHistoryChart({
 
             <div className={cn(
                 "w-full min-w-0 transition-all",
-                isMaximized ? "flex-1 min-h-[300px]" : "h-[280px] sm:h-[300px] landscape:flex-1 landscape:min-h-[160px] min-h-[160px]"
+                isMaximized ? "flex-1 min-h-[300px]" : "h-[280px] sm:h-[300px] landscape:h-[180px] min-h-[160px]"
             )}>
                 {hasMounted && (
                     <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
