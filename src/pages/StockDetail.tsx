@@ -615,7 +615,7 @@ export function StockDetail() {
             </div>
 
             {/* Kursdaten & Stammdaten - Darunter nebeneinander */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 landscape:gap-3 items-stretch">
                 {/* Kursdaten */}
                 <div
                     onClick={() => {
@@ -624,13 +624,13 @@ export function StockDetail() {
                         const targetId = stockFromContext?.id || stock?.id || stock?.symbol || id;
                         navigate(`/dividends/edit/${encodeURIComponent(String(targetId))}${query}`);
                     }}
-                    className="bg-card border border-border hover:border-primary/50 rounded-xl p-6 shadow-sm cursor-pointer transition-colors group flex flex-col"
+                    className="bg-card border border-border hover:border-primary/50 rounded-xl p-4 md:p-6 landscape:p-2.5 landscape:py-2 shadow-sm cursor-pointer transition-colors group flex flex-col justify-between"
                     title="Daten bearbeiten"
                 >
-                    <div className="flex items-center justify-between gap-2 mb-4">
-                        <div className="flex items-center gap-2 group-hover:text-primary transition-colors">
-                            <h3 className="font-bold text-lg">Kursdaten</h3>
-                            <Pencil className="size-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 landscape:mb-1">
+                        <div className="flex items-center gap-1.5 md:gap-2 group-hover:text-primary transition-colors">
+                            <h3 className="font-bold text-base md:text-lg landscape:text-xs">Kursdaten</h3>
+                            <Pencil className="size-3 md:size-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                         </div>
                         <button
                             type="button"
@@ -638,10 +638,10 @@ export function StockDetail() {
                                 e.stopPropagation();
                                 navigate(`/calculator?stock=${encodeURIComponent(String(stock.id))}`);
                             }}
-                            className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-colors shadow-sm"
+                            className="flex items-center gap-1 text-xs landscape:text-[10px] font-semibold px-2.5 py-1 landscape:py-0.5 landscape:px-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-colors shadow-sm"
                             title="Aktie direkt in Kauf / Verkauf öffnen"
                         >
-                            <Calculator className="size-3.5" />
+                            <Calculator className="size-3.5 landscape:size-3" />
                             <span>Kauf / Verkauf</span>
                         </button>
                     </div>
@@ -668,10 +668,10 @@ export function StockDetail() {
 
                         return (
                             <>
-                                <div className="flex justify-between py-1.5 border-b border-border/50">
-                                    <span className="text-muted-foreground text-sm">Kaufpreis Ø</span>
+                                <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                                    <span className="text-muted-foreground">Kaufpreis Ø</span>
                                     <div className="text-right flex flex-col items-end">
-                                        <span className="font-medium text-sm tabular-nums">
+                                        <span className="font-medium tabular-nums">
                                             {formatCurrency(pos.buyPriceAvg, stock.currency, false)}
                                         </span>
                                         {isForeign && (
@@ -681,12 +681,12 @@ export function StockDetail() {
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex justify-between py-1.5 border-b border-border/50">
-                                    <span className="text-muted-foreground text-sm">Gewinn/Verlust</span>
+                                <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                                    <span className="text-muted-foreground">Gewinn/Verlust</span>
                                     <div className="text-right flex flex-col items-end">
                                         {/* Native Gain */}
                                         <span className={cn(
-                                            "font-bold text-sm tabular-nums",
+                                            "font-bold tabular-nums",
                                             isPositiveNative ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                         )}>
                                             {isPositiveNative ? '+' : ''}{percentChangeNative.toFixed(2)}% ({formatCurrency(totalDiffNative, stock.currency, false)})
@@ -707,28 +707,28 @@ export function StockDetail() {
                         );
                     })()}
 
-                    <div className="flex justify-between py-1.5 border-b border-border/50">
-                        <span className="text-muted-foreground text-sm">Aktueller Kurs</span>
-                        <span className="font-medium text-sm">{formatCurrency(stock.currentPrice, stock.currency, false)}</span>
+                    <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                        <span className="text-muted-foreground">Aktueller Kurs</span>
+                        <span className="font-medium tabular-nums">{formatCurrency(stock.currentPrice, stock.currency, false)}</span>
                     </div>
 
                     {/* Added Open and Previous Close in one line */}
-                    <div className="flex justify-between py-1.5 border-b border-border/50">
-                        <span className="text-muted-foreground text-sm">Eröffnung / Vortag</span>
-                        <span className="font-medium text-sm text-right">
+                    <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                        <span className="text-muted-foreground">Eröffnung / Vortag</span>
+                        <span className="font-medium tabular-nums text-right">
                             {stock.open ? formatCurrency(stock.open, stock.currency, false) : '-'} / {formatCurrency(safePreviousClose || 0, stock.currency, false)}
                         </span>
                     </div>
 
-                    <div className="flex justify-between py-1.5 border-b border-border/50">
-                        <span className="text-muted-foreground text-sm">Kauflimit</span>
-                        <span className="font-medium text-sm">
+                    <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                        <span className="text-muted-foreground">Kauflimit</span>
+                        <span className="font-medium tabular-nums">
                             {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
                         </span>
                     </div>
-                    <div className="flex justify-between py-1.5 border-b border-border/50">
-                        <span className="text-muted-foreground text-sm">Verkaufslimit</span>
-                        <span className="font-medium text-sm">
+                    <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                        <span className="text-muted-foreground">Verkaufslimit</span>
+                        <span className="font-medium tabular-nums">
                             {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency, false) : '-'}
                         </span>
                     </div>
@@ -915,12 +915,12 @@ export function StockDetail() {
 
                         return (
                             <>
-                                <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                                <div className="flex items-center justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                     <button
                                         type="button"
                                         onClick={handleToggleFvMode}
                                         className={cn(
-                                            "flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded border transition-colors cursor-pointer",
+                                            "flex items-center gap-1 text-[11px] sm:text-xs landscape:text-[10px] font-semibold px-1.5 py-0.5 landscape:py-0 landscape:px-1 rounded border transition-colors cursor-pointer",
                                             currentMode === 'manual'
                                                 ? "text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40"
                                                 : currentMode === 'quality'
@@ -947,7 +947,7 @@ export function StockDetail() {
                                         </span>
                                     </button>
                                     <span className={cn(
-                                        "font-medium text-sm tabular-nums",
+                                        "font-medium tabular-nums",
                                         calcBuyPrice !== null
                                             ? currentMode === 'manual'
                                                 ? "text-emerald-400"
@@ -959,10 +959,10 @@ export function StockDetail() {
                                         {calcBuyPrice !== null ? formatCurrency(calcBuyPrice, stock.currency, false) : '-'}
                                     </span>
                                 </div>
-                                <div className="flex justify-between py-1.5 border-b border-border/50">
-                                    <span className="text-muted-foreground text-sm">Fairer Wert</span>
+                                <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                                    <span className="text-muted-foreground">Fairer Wert</span>
                                     <span className={cn(
-                                        "font-medium text-sm tabular-nums",
+                                        "font-medium tabular-nums",
                                         effectiveFairValue > 0
                                             ? currentMode === 'manual'
                                                 ? "text-emerald-400"
@@ -980,49 +980,49 @@ export function StockDetail() {
                 </div>
 
                 {/* Stammdaten */}
-                <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
-                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                        <TrendingUp className="size-5 text-blue-500" />
+                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-2.5 landscape:py-2 shadow-sm flex flex-col justify-between">
+                    <h3 className="font-bold text-base md:text-lg landscape:text-xs mb-2 md:mb-4 landscape:mb-1 flex items-center gap-1.5 md:gap-2">
+                        <TrendingUp className="size-4 md:size-5 text-blue-500" />
                         Stammdaten
                     </h3>
-                    <div className="space-y-3">
-                        <div className="flex justify-between py-1.5 border-b border-border/50">
-                            <span className="text-muted-foreground text-sm">Name</span>
-                            <span className="font-medium text-sm text-right">{stock.name}</span>
+                    <div className="space-y-1.5 md:space-y-3 landscape:space-y-0">
+                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <span className="text-muted-foreground">Name</span>
+                            <span className="font-medium text-right truncate max-w-[180px] sm:max-w-[240px]">{stock.name}</span>
                         </div>
-                        <div className="flex justify-between py-1.5 border-b border-border/50">
-                            <span className="text-muted-foreground text-sm">Symbol</span>
-                            <span className="font-medium text-sm font-mono">{stock.symbol}</span>
+                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <span className="text-muted-foreground">Symbol</span>
+                            <span className="font-medium font-mono">{stock.symbol}</span>
                         </div>
-                        <div className="flex justify-between py-1.5 border-b border-border/50">
-                            <span className="text-muted-foreground text-sm">ISIN</span>
-                            <span className="font-medium text-sm font-mono">{stock.isin || '-'}</span>
+                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <span className="text-muted-foreground">ISIN</span>
+                            <span className="font-medium font-mono">{stock.isin || '-'}</span>
                         </div>
-                        <div className="flex justify-between py-1.5 border-b border-border/50">
-                            <span className="text-muted-foreground text-sm">Typ</span>
-                            <span className="font-medium text-sm capitalize">{stock.type || 'Aktie'}</span>
+                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <span className="text-muted-foreground">Typ</span>
+                            <span className="font-medium capitalize">{stock.type || 'Aktie'}</span>
                         </div>
-                        <div className="flex justify-between py-1.5 border-b border-border/50">
-                            <span className="text-muted-foreground text-sm">Währung</span>
-                            <span className="font-medium text-sm">{stock.currency}</span>
+                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <span className="text-muted-foreground">Währung</span>
+                            <span className="font-medium">{stock.currency}</span>
                         </div>
-                        <div className="flex justify-between py-1.5 border-b border-border/50">
-                            <span className="text-muted-foreground text-sm">KGV (P/E)</span>
-                            <span className="font-medium text-sm">
+                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <span className="text-muted-foreground">KGV (P/E)</span>
+                            <span className="font-medium">
                                 {stock.trailingPE
                                     ? stock.trailingPE.toFixed(2)
                                     : (stock.forwardPE ? `${stock.forwardPE.toFixed(2)} (Fwd)` : (stock.eps && stock.eps > 0 ? (stock.currentPrice / stock.eps).toFixed(2) : '-'))}
                             </span>
                         </div>
-                        <div className="flex justify-between py-1.5 border-b border-border/50">
-                            <span className="text-muted-foreground text-sm">KCV (P/CF)</span>
-                            <span className={`font-medium text-sm ${kcvColorClass}`}>
+                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <span className="text-muted-foreground">KCV (P/CF)</span>
+                            <span className={`font-medium ${kcvColorClass}`}>
                                 {stock.kcv ? stock.kcv.toFixed(2) : '-'}
                             </span>
                         </div>
-                        <div className="flex justify-between py-1.5 border-b border-border/50">
-                            <span className="text-muted-foreground text-sm">Div. Frequenz</span>
-                            <span className="font-medium text-sm capitalize">
+                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <span className="text-muted-foreground">Div. Frequenz</span>
+                            <span className="font-medium capitalize">
                                 {stock.dividendFrequency ? (
                                     stock.dividendFrequency === 'quarterly' ? 'Quartalsweise' :
                                         stock.dividendFrequency === 'monthly' ? 'Monatlich' :
@@ -1030,9 +1030,9 @@ export function StockDetail() {
                                 ) : '-'}
                             </span>
                         </div>
-                        <div className="flex justify-between py-1.5 border-b border-border/50">
-                            <span className="text-muted-foreground text-sm">Div. Rendite</span>
-                            <span className="font-medium text-sm text-right">
+                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                            <span className="text-muted-foreground">Div. Rendite</span>
+                            <span className="font-medium text-right">
                                 {(() => {
                                     const pos = positions.find(p => p.stockId === stock.id);
                                     const freqFactor = stock.dividendFrequency === 'quarterly' ? 4 : stock.dividendFrequency === 'semi-annually' ? 2 : stock.dividendFrequency === 'monthly' ? 12 : 1;
@@ -1046,7 +1046,7 @@ export function StockDetail() {
                                         return (
                                             <div className="flex flex-col items-end leading-tight">
                                                 <span className="font-bold text-green-600 dark:text-green-400">{yieldCost.toFixed(2)}% (Käufe)</span>
-                                                <span className="text-[11px] text-muted-foreground">Kurs: {marketYield.toFixed(2)}%</span>
+                                                <span className="text-[10px] text-muted-foreground">Kurs: {marketYield.toFixed(2)}%</span>
                                             </div>
                                         );
                                     }
