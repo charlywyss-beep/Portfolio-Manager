@@ -60,7 +60,7 @@
     --popover-foreground: 210 40% 98%;
 
     --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -153,15 +153,28 @@
      ========================================================================== */
 
   /* Seiten-Container: gleicher Innenabstand auf JEDER Seite
-     links 0.75rem (Luft zum Hamburger-Button), rechts 0.5rem, oben 0 */
+     links 1.35rem (Luft zum 2.25rem breiten Hamburger-Button), rechts 0.5rem, oben 0 */
   .iphone-landscape-page-root,
   .iphone-landscape-portfolio-page {
     padding-top: 0 !important;
-    padding-left: 0.75rem !important;
+    padding-left: 1.35rem !important;
     padding-right: 0.5rem !important;
     max-width: none !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
+  }
+
+  /* Blaue Pillen (bg-primary): immer weisse Schrift + weisse Icons fuer beste Lesbarkeit */
+  .bg-primary,
+  .text-primary-foreground,
+  .bg-primary > span,
+  .bg-primary > svg {
+    color: #ffffff !important;
+  }
+
+  .bg-primary span.font-mono {
+    background-color: rgba(255, 255, 255, 0.22) !important;
+    color: #ffffff !important;
   }
 
   .iphone-landscape-no-px {
@@ -280,23 +293,33 @@
     margin: 0 !important;
   }
 
-  /* Hamburger-Button: gleiche Groesse und exakt auf Hoehe von Icon/Titel
-     (Karte: 0.25rem Abstand + (2.25rem - 1.65rem) / 2 = 0.55rem) */
+  /* Hamburger-Button: exakt gleiche Hoehe (2.25rem) und Rundung (0.75rem) wie die Header-Karte,
+     deutlich vom Hintergrund abgehoben */
   .app-hamburger-btn {
-    top: 0.55rem !important;
+    top: 0.25rem !important;
     left: max(calc(env(safe-area-inset-left, 0px) - 1.25rem), 0.5rem) !important;
-    height: 1.65rem !important;
-    width: 1.65rem !important;
+    height: 2.25rem !important;
+    width: 2.25rem !important;
+    min-height: 2.25rem !important;
+    min-width: 2.25rem !important;
+    max-height: 2.25rem !important;
+    max-width: 2.25rem !important;
     padding: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    border-radius: 0.5rem !important;
+    border-radius: 0.75rem !important;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.32), rgba(30, 58, 138, 0.55)) !important;
+    border: 1.5px solid rgba(96, 165, 250, 0.7) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
   }
 
   .app-hamburger-btn svg {
-    width: 0.95rem !important;
-    height: 0.95rem !important;
+    width: 1.15rem !important;
+    height: 1.15rem !important;
+    color: #ffffff !important;
+    stroke-width: 2.25 !important;
   }
 
   /* Titelgruppe (Zurueck + Icon + Titel) */
@@ -661,30 +684,54 @@
     margin-top: 0 !important;
   }
 
-  /* Hamburger-Button: links ausserhalb der Header-Karte, exakt auf gleicher Hoehe */
+  /* Hamburger-Button: links ausserhalb der Header-Karte, exakt gleiche Hoehe (2.35rem)
+     und Rundung (0.75rem) wie die Header-Karte, deutlich vom Hintergrund abgehoben */
   .app-hamburger-btn {
-    top: calc(max(env(safe-area-inset-top, 0px), 2.25rem) + 0.55rem) !important;
+    top: calc(max(env(safe-area-inset-top, 0px), 2.25rem) + 0.25rem) !important;
     left: 0.75rem !important;
-    width: 1.75rem !important;
-    height: 1.75rem !important;
+    width: 2.35rem !important;
+    height: 2.35rem !important;
+    min-width: 2.35rem !important;
+    min-height: 2.35rem !important;
+    max-width: 2.35rem !important;
+    max-height: 2.35rem !important;
     padding: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    border-radius: 0.5rem !important;
+    border-radius: 0.75rem !important;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.32), rgba(30, 58, 138, 0.55)) !important;
+    border: 1.5px solid rgba(96, 165, 250, 0.7) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
   }
 
   .app-hamburger-btn svg {
-    width: 1rem !important;
-    height: 1rem !important;
+    width: 1.2rem !important;
+    height: 1.2rem !important;
+    color: #ffffff !important;
+    stroke-width: 2.25 !important;
+  }
+
+  /* Blaue Pillen (bg-primary): immer weisse Schrift + weisse Icons fuer beste Lesbarkeit */
+  .bg-primary,
+  .text-primary-foreground,
+  .bg-primary > span,
+  .bg-primary > svg {
+    color: #ffffff !important;
+  }
+
+  .bg-primary span.font-mono {
+    background-color: rgba(255, 255, 255, 0.22) !important;
+    color: #ffffff !important;
   }
 
   /* 1) Seiten mit 0 oder 1 Aktion rechts (Uebersicht, Dividenden, Fairer Wert, Budget, Finanz Rechner, Einstellungen):
         Die Karte selbst ist die 2.35rem hohe Header-Karte rechts neben dem Hamburger-Button */
   .iphone-landscape-portfolio-header-wrap:not(:has(.iphone-landscape-portfolio-actions > :nth-child(2))) .border-b.bg-card,
   .iphone-landscape-portfolio-header-wrap:not(:has(.iphone-landscape-portfolio-actions > :nth-child(2))) .iphone-landscape-header-card {
-    margin: 0 0 0 2.2rem !important;
-    width: calc(100% - 2.2rem) !important;
+    margin: 0 0 0 2.8rem !important;
+    width: calc(100% - 2.8rem) !important;
     padding: 0 !important;
     height: 2.35rem !important;
     min-height: 2.35rem !important;
@@ -778,8 +825,8 @@
   }
 
   .iphone-landscape-portfolio-header-wrap:has(.iphone-landscape-portfolio-actions > :nth-child(2)) .iphone-landscape-portfolio-title-group {
-    margin: 0 0 0 2.2rem !important;
-    width: calc(100% - 2.2rem) !important;
+    margin: 0 0 0 2.8rem !important;
+    width: calc(100% - 2.8rem) !important;
     padding: 0 0.5rem !important;
     height: 2.35rem !important;
     min-height: 2.35rem !important;
