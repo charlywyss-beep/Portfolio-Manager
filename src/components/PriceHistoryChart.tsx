@@ -287,7 +287,7 @@ export function PriceHistoryChart({
     const chartContent = (
         <div className={cn(
             "w-full flex flex-col relative transition-all duration-300",
-            isMaximized ? "h-full" : "min-h-[360px] h-auto flex-1 pb-2"
+            isMaximized ? "h-full" : "min-h-[360px] landscape:min-h-0 h-auto flex-1 pb-2 landscape:pb-0"
         )}>
             <div className="flex flex-wrap items-center justify-between mb-2 md:mb-4 landscape:mb-1.5 gap-2 relative">
                 <div className="flex flex-col gap-1 w-full sm:w-auto">
@@ -611,13 +611,13 @@ export function PriceHistoryChart({
 
             <div className={cn(
                 "w-full min-w-0 transition-all",
-                isMaximized ? "flex-1 min-h-[300px]" : "h-[280px] sm:h-[300px] landscape:h-[200px] min-h-[180px]"
+                isMaximized ? "flex-1 min-h-[300px]" : "h-[280px] sm:h-[300px] landscape:h-[180px] min-h-[160px]"
             )}>
                 {hasMounted && (
                     <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
                         <AreaChart
                             data={displayData}
-                            margin={{ top: 5, right: 5, left: 0, bottom: 15 }}
+                            margin={{ top: 5, right: 5, left: 0, bottom: 8 }}
                             onMouseMove={(data: any) => {
                                 if (data?.activePayload?.[0]?.payload) {
                                     setHoveredData(data.activePayload[0].payload);
@@ -881,7 +881,7 @@ export function PriceHistoryChart({
                     </ResponsiveContainer>
                 )}
             </div>
-            <p className="text-[10px] text-muted-foreground text-center mt-2 italic">
+            <p className="text-[10px] text-muted-foreground text-center mt-1 landscape:mt-0 italic leading-tight">
                 {historyData && historyData.length > 0 ? '* Reale Marktdaten von Yahoo Finance' : '* Simulierter Chartverlauf (Demo-Modus)'}
             </p>
         </div>
