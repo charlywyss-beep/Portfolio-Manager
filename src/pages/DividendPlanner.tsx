@@ -353,7 +353,7 @@ export function DividendPlanner() {
     });
 
     return (
-        <div className="h-full flex flex-col p-4 md:p-6 space-y-3 bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden">
+        <div className="h-full flex flex-col p-4 md:p-6 space-y-3 bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden iphone-landscape-page-root">
             {/* Header - Fixed Height */}
             <div className="shrink-0 bg-background pb-2 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6 iphone-landscape-portfolio-header-wrap">
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
@@ -369,7 +369,7 @@ export function DividendPlanner() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2 ml-auto">
+                            <div className="flex items-center gap-2 ml-auto iphone-landscape-portfolio-actions">
                                 <button
                                     onClick={() => refreshAllPrices(true)}
                                     disabled={isGlobalRefreshing}

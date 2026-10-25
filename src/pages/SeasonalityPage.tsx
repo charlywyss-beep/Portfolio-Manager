@@ -98,7 +98,7 @@ export function SeasonalityPage() {
     const tooltipData = tooltip !== null && data ? data[tooltip.month] : null;
 
     return (
-        <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20 min-h-screen">
+        <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20 min-h-screen iphone-landscape-page-root">
             {/* Header */}
             <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6 iphone-landscape-portfolio-header-wrap">
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
@@ -121,7 +121,7 @@ export function SeasonalityPage() {
                                 </div>
                             </div>
                             {/* Modus + Eingabe rechts */}
-                            <div className="flex items-center gap-3 iphone-landscape-portfolio-title-group">
+                            <div className="flex items-center gap-3 iphone-landscape-portfolio-actions">
                                 <Link
                                     to="/market-overview"
                                     className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-xs font-semibold text-foreground transition-all shadow-xs"
@@ -130,7 +130,7 @@ export function SeasonalityPage() {
                                     <Globe className="size-3.5 text-primary" />
                                     <span>Marktübersicht</span>
                                 </Link>
-                                <div className="flex bg-muted p-1 rounded-lg">
+                                <div className="flex bg-muted p-1 rounded-lg iphone-landscape-segmented">
                                     <button
                                         onClick={() => setAnalysisMode('range')}
                                         className={cn(
@@ -151,7 +151,7 @@ export function SeasonalityPage() {
                                     </button>
                                 </div>
 
-                                <div className="flex items-center gap-2 bg-muted rounded-xl px-4 py-2">
+                                <div className="flex items-center gap-2 bg-muted rounded-xl px-4 py-2 iphone-landscape-field">
                                     <label className="text-sm text-muted-foreground whitespace-nowrap font-medium">
                                         {analysisMode === 'range' ? 'Jahre:' : 'Jahr:'}
                                     </label>

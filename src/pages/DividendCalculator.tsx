@@ -1028,7 +1028,7 @@ export function DividendCalculator() {
     };
 
     return (
-        <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20 animate-in fade-in duration-500">
+        <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20 animate-in fade-in duration-500 iphone-landscape-page-root">
             {/* Sticky Header - Consistent Design */}
             <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6 iphone-landscape-portfolio-header-wrap">
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
@@ -1053,9 +1053,9 @@ export function DividendCalculator() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2 ml-auto w-full sm:w-auto justify-end">
+                            <div className="flex items-center gap-2 ml-auto w-full sm:w-auto justify-end iphone-landscape-portfolio-actions">
                                 {/* Buy/Sell Switch */}
-                                <div className="flex bg-muted rounded-lg p-1 border border-border/50">
+                                <div className="flex bg-muted rounded-lg p-1 border border-border/50 iphone-landscape-segmented">
                                     <button
                                         onClick={() => updateSimulatorState({ mode: 'buy' })}
                                         className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${mode === 'buy'

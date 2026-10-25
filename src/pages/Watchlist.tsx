@@ -215,7 +215,7 @@ export function Watchlist() {
     const currentTabStocks = currentTab?.stocks || [];
 
     return (
-        <div className="h-full flex flex-col p-4 md:p-6 space-y-3 bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden">
+        <div className="h-full flex flex-col p-4 md:p-6 space-y-3 bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden iphone-landscape-page-root">
             {/* Header + Tabs Container - Fixed Height */}
             <div className="shrink-0 bg-background pb-1 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6 iphone-landscape-portfolio-header-wrap">
                 {/* Header */}
@@ -240,7 +240,7 @@ export function Watchlist() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto sm:ml-auto">
+                            <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto sm:ml-auto iphone-landscape-portfolio-actions">
                                 <button
                                     onClick={() => setIsPerformanceModalOpen(true)}
                                     className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-3.5 sm:px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors font-medium border border-border shadow-sm whitespace-nowrap"
@@ -283,7 +283,7 @@ export function Watchlist() {
                 </div>
 
                 {/* Watchlist Tabs */}
-                <div className="-mx-4 md:-mx-6 px-4 md:px-6 pb-2 mt-2 overflow-x-auto bg-background shrink-0">
+                <div className="-mx-4 md:-mx-6 px-4 md:px-6 pb-2 mt-2 overflow-x-auto bg-background shrink-0 iphone-landscape-portfolio-subtabs">
                     <div className="flex items-center gap-2 min-w-max">
                         {/* 1. Bestand (Always first) */}
                         <button
@@ -352,7 +352,7 @@ export function Watchlist() {
                                 const name = window.prompt("Name der neuen Liste:");
                                 if (name) createWatchlist(name);
                             }}
-                            className="p-2 rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors border border-border"
+                            className="p-2 iphone-landscape-pill-icon rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors border border-border"
                             title="Neue Liste erstellen"
                         >
                             <Plus className="size-4" />
@@ -364,7 +364,7 @@ export function Watchlist() {
                                     const newName = window.prompt("Neuer Name:", activeWatchlist.name);
                                     if (newName) renameWatchlist(activeWatchlist.id, newName);
                                 }}
-                                className="p-2 ml-2 rounded-full text-muted-foreground hover:bg-accent transition-colors"
+                                className="p-2 ml-2 iphone-landscape-pill-icon rounded-full text-muted-foreground hover:bg-accent transition-colors"
                                 title="Liste umbenennen"
                             >
                                 <Edit className="size-4" />
@@ -375,7 +375,7 @@ export function Watchlist() {
             </div>
 
             {/* Sub-Tabs: Switches between the active sections of this list */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 shrink-0">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 shrink-0 iphone-landscape-portfolio-subtabs">
                 {subTabs.map((tab) => {
                     const Icon = tab.icon;
                     const isActive = activeSubTab === tab.id;
