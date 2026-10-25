@@ -248,15 +248,6 @@ export function Watchlist() {
                                     <TrendingUp className="size-4 text-blue-500 shrink-0" />
                                     <span>Details</span>
                                 </button>
-                                <button
-                                    onClick={() => {
-                                        navigate('/calculator?mode=new&from=watchlist');
-                                    }}
-                                    className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-3.5 sm:px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm whitespace-nowrap"
-                                >
-                                    <Plus className="size-4 shrink-0" />
-                                    <span>Hinzufügen</span>
-                                </button>
                                 {/* Global Refresh Button */}
                                 <button
                                     onClick={() => refreshAllPrices(true)}
@@ -401,6 +392,15 @@ export function Watchlist() {
                         </button>
                     );
                 })}
+                <button
+                    onClick={() => {
+                        navigate('/calculator?mode=new&from=watchlist');
+                    }}
+                    className="ml-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-3.5 py-1.5 rounded-lg text-xs md:text-sm hover:bg-primary/90 transition-colors font-semibold border border-primary shadow-sm whitespace-nowrap shrink-0 iphone-subtab-right"
+                >
+                    <Plus className="size-4 shrink-0" />
+                    <span>Hinzufügen</span>
+                </button>
             </div>
 
             {/* Table card fills flex-1 min-h-0 */}
