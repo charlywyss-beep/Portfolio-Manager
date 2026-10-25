@@ -176,9 +176,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
                 <div className="flex flex-col flex-1 min-h-0 overflow-hidden iphone-modal-body-card iphone-modal-body-flush">
                 {/* Summary Totals */}
-                <div className="grid grid-cols-2 gap-3 p-3 bg-muted/20 border-b border-border shrink-0">
-                    <div className="bg-card p-3 px-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between">
-                        <span className="text-sm sm:text-base text-white font-semibold mb-1 truncate">Tages-Performance</span>
+                <div className="grid grid-cols-2 gap-2 p-2.5 sm:gap-3 sm:p-3 bg-muted/20 border-b border-border shrink-0">
+                    <div className="bg-card py-2.5 px-2.5 sm:p-3 sm:px-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between">
+                        <span className="text-[13px] sm:text-base text-white font-semibold tracking-tight whitespace-nowrap mb-1">Tages-Performance</span>
                         <span className={cn(
                             "text-[18px] sm:text-xl md:text-2xl font-bold font-sans tabular-nums tracking-tight whitespace-nowrap",
                             totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
@@ -186,8 +186,8 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                             {totalDailyGain >= 0 ? '+' : ''}{formatCurrency(totalDailyGain, 'CHF')}
                         </span>
                     </div>
-                    <div className="bg-card p-3 px-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between">
-                        <span className="text-sm sm:text-base text-white font-semibold mb-1 truncate">Gesamt-Performance</span>
+                    <div className="bg-card py-2.5 px-2.5 sm:p-3 sm:px-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between">
+                        <span className="text-[13px] sm:text-base text-white font-semibold tracking-tight whitespace-nowrap mb-1">Gesamt-Performance</span>
                         <span className={cn(
                             "text-[18px] sm:text-xl md:text-2xl font-bold font-sans tabular-nums tracking-tight whitespace-nowrap",
                             totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
