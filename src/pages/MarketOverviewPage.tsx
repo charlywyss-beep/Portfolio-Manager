@@ -1315,30 +1315,12 @@ export function MarketOverviewPage() {
                                             </div>
                                         )}
 
-                                        {/* ETF Badge in derselben Zeile und Flexbox wie SCHLUSS und Währung */}
+                                        {/* ETF Badge in derselben Zeile und Flexbox wie Währung */}
                                         {matchedStock?.type === 'etf' && (
                                             <span className="h-5 sm:h-6 px-1.5 sm:px-2 inline-flex items-center justify-center text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 leading-none">
                                                 ETF
                                             </span>
                                         )}
-
-                                        {/* Status Dot & Label: Green for Open/Live, Red for Closed/Schlusskurs with White Background */}
-                                        <span
-                                            className="h-5 sm:h-6 px-1.5 sm:px-2 inline-flex items-center justify-center gap-1 text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded bg-white text-slate-950 shadow-xs border border-white/60 leading-none shrink-0"
-                                            title={isMarketOpen ? `Markt geöffnet (${marketState}) – Live-Handel` : `Markt geschlossen (${marketState}) – Schlusskurs`}
-                                        >
-                                            <span
-                                                className={cn(
-                                                    "size-1.5 sm:size-2 rounded-full shrink-0",
-                                                    isMarketOpen
-                                                        ? "bg-emerald-600 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.8)]"
-                                                        : "bg-rose-600"
-                                                )}
-                                            />
-                                            <span className={isMarketOpen ? "text-emerald-950" : "text-rose-950"}>
-                                                {isMarketOpen ? "Live" : "Schluss"}
-                                            </span>
-                                        </span>
 
                                         {currency ? (
                                             <span className="h-5 sm:h-6 px-1.5 sm:px-2 inline-flex items-center justify-center text-[9px] sm:text-[10px] uppercase font-black tracking-wider rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 font-mono leading-none">
