@@ -262,6 +262,19 @@
     display: none !important;
   }
 
+  .iphone-landscape-col-stock {
+    width: 220px !important;
+    min-width: 220px !important;
+    max-width: 240px !important;
+  }
+
+  .iphone-landscape-stock-name {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 170px !important;
+  }
+
   .iphone-landscape-table-header-row th {
     height: 1.85rem !important;
     min-height: 1.85rem !important;
