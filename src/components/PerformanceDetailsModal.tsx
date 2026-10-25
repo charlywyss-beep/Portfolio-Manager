@@ -20,6 +20,23 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
     // 0: Kurs, 1: % am DD.MM., 2: CHF am DD.MM., 3: Performance %, 4: Performance CHF
     const [mobileColIndex, setMobileColIndex] = useState(0);
+    const [sortConfig, setSortConfig] = useState<{
+        key: 'default' | 'dailyPct' | 'dailyChf' | 'totalPct' | 'totalChf';
+        direction: 'desc' | 'asc';
+    }>({ key: 'default', direction: 'desc' });
+
+    const toggleSort = (key: 'dailyPct' | 'dailyChf' | 'totalPct' | 'totalChf') => {
+        setSortConfig((prev) => {
+            if (prev.key !== key) {
+                return { key, direction: 'desc' };
+            }
+            if (prev.direction === 'desc') {
+                return { key, direction: 'asc' };
+            }
+            return { key: 'default', direction: 'desc' };
+        });
+    };
+
     const touchStartRef = useRef<{ x: number; y: number; time: number; isStockCol: boolean } | null>(null);
 
     const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
@@ -73,10 +90,50 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
     if (!isOpen) return null;
 
+    const getPositionMetrics = (p: any) => {
+        const dailyGainCHF = convertToCHF(p.dailyGain, p.stock.currency);
+        const currentValue = p.shares * p.stock.currentPrice;
+        const purchaseValue = (p.purchases || []).reduce((pSum: number, purchase: any) =>
+            pSum + (purchase.shares * purchase.price), 0);
+        const currentValueCHF = convertToCHF(currentValue, p.stock.currency);
+        const entryFxRate = p.averageEntryFxRate || 1;
+        const purchaseValueCHF = p.stock.currency !== 'CHF'
+            ? purchaseValue * entryFxRate
+            : purchaseValue;
+        const totalGainCHF = currentValueCHF - purchaseValueCHF;
+        const totalGainPercent = purchaseValueCHF > 0 ? (totalGainCHF / purchaseValueCHF) * 100 : 0;
+        return { dailyGainCHF, totalGainCHF, totalGainPercent };
+    };
+
     // Sort positions:
+    // Standard ('default'):
     // 1. Priorität: Geöffnete Börsen zuerst (Live-Handel), danach geschlossene Börsen
-    // 2. Priorität: Alphabetisch A - Z wie bisher (Aktien vor ETFs)
+    // 2. Priorität: Aktien vor ETFs
+    // 3. Priorität: Alphabetisch A - Z
     const sortedPositions = [...positions].sort((a, b) => {
+        if (sortConfig.key !== 'default') {
+            const mA = getPositionMetrics(a);
+            const mB = getPositionMetrics(b);
+            let valA = 0;
+            let valB = 0;
+            if (sortConfig.key === 'dailyPct') {
+                valA = a.dailyGainPercent || 0;
+                valB = b.dailyGainPercent || 0;
+            } else if (sortConfig.key === 'dailyChf') {
+                valA = mA.dailyGainCHF;
+                valB = mB.dailyGainCHF;
+            } else if (sortConfig.key === 'totalPct') {
+                valA = mA.totalGainPercent;
+                valB = mB.totalGainPercent;
+            } else if (sortConfig.key === 'totalChf') {
+                valA = mA.totalGainCHF;
+                valB = mB.totalGainCHF;
+            }
+            if (valA !== valB) {
+                return sortConfig.direction === 'desc' ? valB - valA : valA - valB;
+            }
+        }
+
         const stateA = estimateMarketState(a.stock.symbol, a.stock.currency);
         const stateB = estimateMarketState(b.stock.symbol, b.stock.currency);
         const isOpenA = stateA === 'REGULAR';
@@ -206,7 +263,11 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         <thead>
                             <tr className="border-b border-border bg-muted/20">
                                 {/* 0. Aktie / ETF */}
-                                <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] touch-pan-y align-middle">
+                                <th
+                                    onClick={() => setSortConfig({ key: 'default', direction: 'desc' })}
+                                    className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[200px] md:min-w-[200px] md:max-w-[200px] touch-pan-y align-middle cursor-pointer select-none"
+                                    title="Standard-Sortierung (Offene Börsen zuerst, A-Z)"
+                                >
                                     Aktie / ETF
                                 </th>
 
@@ -257,9 +318,16 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
-                                            % am {todayDateLabel}
-                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); toggleSort('dailyPct'); }}
+                                            className={cn(
+                                                "whitespace-nowrap text-center flex-1 px-1 py-1 rounded hover:bg-muted/50 transition-colors uppercase font-semibold",
+                                                sortConfig.key === 'dailyPct' && "text-blue-400"
+                                            )}
+                                        >
+                                            % am {todayDateLabel}{sortConfig.key === 'dailyPct' ? (sortConfig.direction === 'desc' ? ' ↓' : ' ↑') : ''}
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(4, i + 1)); }}
@@ -269,7 +337,16 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                             <ChevronRight className="size-4" />
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline whitespace-nowrap">% am {todayDateLabel}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleSort('dailyPct')}
+                                        className={cn(
+                                            "hidden md:inline-flex items-center justify-end gap-1 whitespace-nowrap uppercase font-semibold hover:text-foreground transition-colors",
+                                            sortConfig.key === 'dailyPct' && "text-blue-400"
+                                        )}
+                                    >
+                                        % am {todayDateLabel}{sortConfig.key === 'dailyPct' ? (sortConfig.direction === 'desc' ? ' ↓' : ' ↑') : ''}
+                                    </button>
                                 </th>
 
                                 {/* 3. CHF am Datum */}
@@ -288,9 +365,16 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
-                                            CHF am {todayDateLabel}
-                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); toggleSort('dailyChf'); }}
+                                            className={cn(
+                                                "whitespace-nowrap text-center flex-1 px-1 py-1 rounded hover:bg-muted/50 transition-colors uppercase font-semibold",
+                                                sortConfig.key === 'dailyChf' && "text-blue-400"
+                                            )}
+                                        >
+                                            CHF am {todayDateLabel}{sortConfig.key === 'dailyChf' ? (sortConfig.direction === 'desc' ? ' ↓' : ' ↑') : ''}
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(4, i + 1)); }}
@@ -300,7 +384,16 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                             <ChevronRight className="size-4" />
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline whitespace-nowrap">CHF am {todayDateLabel}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleSort('dailyChf')}
+                                        className={cn(
+                                            "hidden md:inline-flex items-center justify-end gap-1 whitespace-nowrap uppercase font-semibold hover:text-foreground transition-colors",
+                                            sortConfig.key === 'dailyChf' && "text-blue-400"
+                                        )}
+                                    >
+                                        CHF am {todayDateLabel}{sortConfig.key === 'dailyChf' ? (sortConfig.direction === 'desc' ? ' ↓' : ' ↑') : ''}
+                                    </button>
                                 </th>
 
                                 {/* Spacer (Desktop only) */}
@@ -322,9 +415,16 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
-                                            Performance %
-                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); toggleSort('totalPct'); }}
+                                            className={cn(
+                                                "whitespace-nowrap text-center flex-1 px-1 py-1 rounded hover:bg-muted/50 transition-colors uppercase font-semibold",
+                                                sortConfig.key === 'totalPct' && "text-blue-400"
+                                            )}
+                                        >
+                                            Performance %{sortConfig.key === 'totalPct' ? (sortConfig.direction === 'desc' ? ' ↓' : ' ↑') : ''}
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(4, i + 1)); }}
@@ -334,7 +434,16 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                             <ChevronRight className="size-4" />
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline whitespace-nowrap">Performance %</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleSort('totalPct')}
+                                        className={cn(
+                                            "hidden md:inline-flex items-center justify-end gap-1 whitespace-nowrap uppercase font-semibold hover:text-foreground transition-colors",
+                                            sortConfig.key === 'totalPct' && "text-blue-400"
+                                        )}
+                                    >
+                                        Performance %{sortConfig.key === 'totalPct' ? (sortConfig.direction === 'desc' ? ' ↓' : ' ↑') : ''}
+                                    </button>
                                 </th>
 
                                 {/* 5. Performance CHF */}
@@ -353,9 +462,16 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
-                                            Performance CHF
-                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); toggleSort('totalChf'); }}
+                                            className={cn(
+                                                "whitespace-nowrap text-center flex-1 px-1 py-1 rounded hover:bg-muted/50 transition-colors uppercase font-semibold",
+                                                sortConfig.key === 'totalChf' && "text-blue-400"
+                                            )}
+                                        >
+                                            Performance CHF{sortConfig.key === 'totalChf' ? (sortConfig.direction === 'desc' ? ' ↓' : ' ↑') : ''}
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(4, i + 1)); }}
@@ -365,7 +481,16 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                             <ChevronRight className="size-4" />
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline whitespace-nowrap">Performance CHF</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleSort('totalChf')}
+                                        className={cn(
+                                            "hidden md:inline-flex items-center justify-end gap-1 whitespace-nowrap uppercase font-semibold hover:text-foreground transition-colors",
+                                            sortConfig.key === 'totalChf' && "text-blue-400"
+                                        )}
+                                    >
+                                        Performance CHF{sortConfig.key === 'totalChf' ? (sortConfig.direction === 'desc' ? ' ↓' : ' ↑') : ''}
+                                    </button>
                                 </th>
                             </tr>
                         </thead>
