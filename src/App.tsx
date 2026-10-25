@@ -78,10 +78,10 @@ const NavItem = ({ to, icon: Icon, label, onClick }: NavItemProps) => {
           : (isActive || isCustomActive());
 
         return cn(
-          "flex items-center gap-2.5 md:gap-3 px-2.5 md:px-3 py-1 landscape:py-1 md:py-1.5 rounded-lg transition-colors whitespace-nowrap text-xs md:text-sm font-medium",
+          "flex items-center gap-2.5 md:gap-3 px-2.5 md:px-3 py-1.5 landscape:py-1 md:py-1.5 rounded-lg transition-colors whitespace-nowrap text-sm font-medium",
           active
-            ? "bg-primary text-primary-foreground shadow-sm"
-            : "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
+            ? "bg-primary text-white shadow-sm font-semibold"
+            : "text-foreground hover:bg-accent dark:text-white dark:hover:text-white dark:hover:bg-white/10"
         );
       }}
     >
@@ -187,14 +187,14 @@ function App() {
                     <div className="size-7 rounded-lg bg-primary flex items-center justify-center group-hover:scale-105 transition-transform shadow-sm shrink-0">
                       <Wallet className="text-primary-foreground size-4" />
                     </div>
-                    <h1 className="text-lg font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">Portfolio</h1>
+                    <h1 className="text-lg font-bold tracking-tight text-foreground dark:text-white group-hover:text-primary transition-colors">Portfolio</h1>
                   </Link>
 
                   {/* Close Button (Mobile / Tablet) */}
                   <button
                     type="button"
                     onClick={() => setIsSidebarOpen(false)}
-                    className="p-1.5 -mr-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors xl:hidden active:scale-95"
+                    className="p-1.5 -mr-1 text-muted-foreground hover:text-foreground dark:text-white/80 dark:hover:text-white hover:bg-accent dark:hover:bg-white/10 rounded-lg transition-colors xl:hidden active:scale-95"
                     aria-label="Menü schließen"
                   >
                     <X className="size-5" />
@@ -257,7 +257,7 @@ function App() {
               <div className="p-2 landscape:py-1 border-t border-border mt-auto shrink-0 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
                 <button
                   onClick={toggleDarkMode}
-                  className="flex items-center gap-2.5 md:gap-3 text-xs md:text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors w-full px-2.5 md:px-3 py-1 landscape:py-1 md:py-1.5 rounded-lg"
+                  className="flex items-center gap-2.5 md:gap-3 text-sm font-medium text-foreground hover:bg-accent/60 dark:text-white dark:hover:text-white dark:hover:bg-white/10 transition-colors w-full px-2.5 md:px-3 py-1.5 landscape:py-1 md:py-1.5 rounded-lg"
                 >
                   {isDarkMode ? <Sun className="size-4 shrink-0" /> : <Moon className="size-4 shrink-0" />}
                   <span>{isDarkMode ? "Light Mode" : "Dark Mode"}</span>
