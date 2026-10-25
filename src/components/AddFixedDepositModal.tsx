@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { ArrowLeft, Landmark } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import type { FixedDeposit, Currency, BankAccountType } from '../types';
 
@@ -95,23 +95,29 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
 
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-                <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card z-10">
-                    <h2 className="text-xl font-bold">
-                        {editingDeposit ? 'Konto bearbeiten' : 'Neues Bankkonto'}
-                    </h2>
-                    <button
-                        onClick={onClose}
-                        className="p-1 hover:bg-muted rounded-md transition-colors"
-                        title="Schließen"
-                        aria-label="Schließen"
-                    >
-                        <X className="size-5" />
-                    </button>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 iphone-modal-overlay">
+            <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto iphone-modal-shell">
+                <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-card z-10 iphone-modal-header-card">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="iphone-landscape-back-btn inline-flex items-center justify-center size-8 rounded-lg bg-secondary/90 hover:bg-secondary text-foreground border border-border shadow-sm shrink-0 transition-all active:scale-95"
+                            title="Zurück"
+                            aria-label="Zurück"
+                        >
+                            <ArrowLeft className="size-4" />
+                        </button>
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 text-emerald-600 dark:text-emerald-400 shrink-0 iphone-landscape-portfolio-icon">
+                            <Landmark className="size-5" />
+                        </div>
+                        <h2 className="text-xl font-bold truncate iphone-landscape-portfolio-title">
+                            {editingDeposit ? 'Konto bearbeiten' : 'Neues Bankkonto'}
+                        </h2>
+                    </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-5 space-y-4">
+                <form onSubmit={handleSubmit} className="p-5 space-y-4 iphone-modal-body-card">
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Konto-Typ</label>
                         <div className="flex gap-4">

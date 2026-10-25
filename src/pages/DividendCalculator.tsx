@@ -540,6 +540,7 @@ export function DividendCalculator() {
         if (isInitialized.current) return;
 
         const queryMode = searchParams.get('mode');
+        const queryType = searchParams.get('type') as 'stock' | 'etf' | null;
         if (queryMode === 'new') {
             updateSimulatorState({
                 selectedStockId: 'new',
@@ -548,7 +549,13 @@ export function DividendCalculator() {
                 simCurrency: 'CHF',
                 price: 0,
                 dividend: 0,
-                mode: 'buy'
+                mode: 'buy',
+                ...(queryType === 'stock' || queryType === 'etf' ? { simType: queryType } : {})
+            });
+        } else if (queryMode === 'buy' && (queryType === 'stock' || queryType === 'etf')) {
+            updateSimulatorState({
+                mode: 'buy',
+                simType: queryType
             });
         }
         isInitialized.current = true;

@@ -2,7 +2,7 @@ import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Plus, PieChart, BarChart3, Landmark, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Plus, PieChart, BarChart3, Landmark, RefreshCw, ShieldCheck, ArrowLeft, ChevronRight } from 'lucide-react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils'; // Import cn
 import { EditPositionModal } from '../components/EditPositionModal';
@@ -12,8 +12,9 @@ import { VorsorgeSection } from '../components/VorsorgeSection';
 import { FixedDepositTable } from '../components/FixedDepositTable';
 
 export function Portfolio() {
-    const { positions: rawPositions, stocks, fixedDeposits, deletePosition, updatePosition, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh } = usePortfolio();
+    const { positions: rawPositions, stocks, fixedDeposits, deletePosition, updatePosition, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh, updateSimulatorState } = usePortfolio();
     const navigate = useNavigate();
+    const [isAddChoiceModalOpen, setIsAddChoiceModalOpen] = useState(false);
     const [isAddFixedDepositModalOpen, setIsAddFixedDepositModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedPosition, setSelectedPosition] = useState<any>(null);
@@ -203,15 +204,7 @@ export function Portfolio() {
 
                             <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto sm:ml-auto iphone-landscape-portfolio-actions">
                                 <button
-                                    onClick={() => setIsAddFixedDepositModalOpen(true)}
-                                    className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-3.5 sm:px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors font-medium border border-border shadow-sm shrink-0 iphone-landscape-btn"
-                                    title="Bank / Vorsorge"
-                                >
-                                    <Landmark className="size-4" />
-                                    <span className="hidden md:inline">Bank / Vorsorge</span>
-                                </button>
-                                <button
-                                    onClick={() => navigate('/calculator?mode=buy&from=portfolio')}
+                                    onClick={() => setIsAddChoiceModalOpen(true)}
                                     className="flex items-center justify-center gap-1.5 sm:gap-2 bg-primary text-primary-foreground px-3.5 sm:px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm shrink-0 whitespace-nowrap iphone-landscape-btn"
                                 >
                                     <Plus className="size-4" />
@@ -370,6 +363,97 @@ export function Portfolio() {
                     setIsAddFixedDepositModalOpen={setIsAddFixedDepositModalOpen}
                     setEditingFixedDeposit={setEditingFixedDeposit}
                 />
+            )}
+
+            {isAddChoiceModalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 iphone-modal-overlay">
+                    <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200 overflow-hidden iphone-modal-shell iphone-choice-modal-shell">
+                        <div className="flex items-center justify-between p-4 border-b border-border bg-card z-10 iphone-modal-header-card">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsAddChoiceModalOpen(false)}
+                                    title="Zurück"
+                                    aria-label="Zurück"
+                                    className="iphone-landscape-back-btn inline-flex items-center justify-center size-8 rounded-lg bg-secondary/90 hover:bg-secondary text-foreground border border-border shadow-sm shrink-0 transition-all active:scale-95"
+                                >
+                                    <ArrowLeft className="size-4" />
+                                </button>
+                                <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 shrink-0 iphone-landscape-portfolio-icon">
+                                    <Plus className="size-5" />
+                                </div>
+                                <h2 className="text-xl font-bold truncate iphone-landscape-portfolio-title">
+                                    Auswahl Hinzufügen
+                                </h2>
+                            </div>
+                        </div>
+
+                        <div className="p-4 space-y-2.5 iphone-modal-body-card iphone-choice-modal-body">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsAddChoiceModalOpen(false);
+                                    setEditingFixedDeposit(null);
+                                    setIsAddFixedDepositModalOpen(true);
+                                }}
+                                className="w-full flex items-center justify-between gap-3 p-3.5 rounded-xl border border-border bg-secondary/40 hover:bg-secondary/80 transition-all text-left group active:scale-[0.99]"
+                            >
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 shrink-0">
+                                        <Landmark className="size-5" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="font-bold text-sm sm:text-base text-foreground">Bankkonto / Vorsorgekonto</div>
+                                        <div className="text-xs text-muted-foreground truncate">Sparkonto, Privatkonto oder Vorsorge 3a</div>
+                                    </div>
+                                </div>
+                                <ChevronRight className="size-5 text-muted-foreground group-hover:text-foreground shrink-0 transition-transform group-hover:translate-x-0.5" />
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsAddChoiceModalOpen(false);
+                                    updateSimulatorState({ mode: 'buy', simType: 'stock' });
+                                    navigate('/calculator?mode=buy&type=stock&from=portfolio');
+                                }}
+                                className="w-full flex items-center justify-between gap-3 p-3.5 rounded-xl border border-border bg-secondary/40 hover:bg-secondary/80 transition-all text-left group active:scale-[0.99]"
+                            >
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="p-2.5 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 shrink-0">
+                                        <BarChart3 className="size-5" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="font-bold text-sm sm:text-base text-foreground">Aktie</div>
+                                        <div className="text-xs text-muted-foreground truncate">Einzelaktie kaufen oder im Depot erfassen</div>
+                                    </div>
+                                </div>
+                                <ChevronRight className="size-5 text-muted-foreground group-hover:text-foreground shrink-0 transition-transform group-hover:translate-x-0.5" />
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsAddChoiceModalOpen(false);
+                                    updateSimulatorState({ mode: 'buy', simType: 'etf' });
+                                    navigate('/calculator?mode=buy&type=etf&from=portfolio');
+                                }}
+                                className="w-full flex items-center justify-between gap-3 p-3.5 rounded-xl border border-border bg-secondary/40 hover:bg-secondary/80 transition-all text-left group active:scale-[0.99]"
+                            >
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="p-2.5 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 shrink-0">
+                                        <PieChart className="size-5" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="font-bold text-sm sm:text-base text-foreground">ETF</div>
+                                        <div className="text-xs text-muted-foreground truncate">ETF kaufen oder im Depot erfassen</div>
+                                    </div>
+                                </div>
+                                <ChevronRight className="size-5 text-muted-foreground group-hover:text-foreground shrink-0 transition-transform group-hover:translate-x-0.5" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             <AddFixedDepositModal

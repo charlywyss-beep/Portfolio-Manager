@@ -634,6 +634,105 @@
     width: 1.75rem !important;
     height: 1.75rem !important;
   }
+
+  /* Modals (Neues Bankkonto, Auswahl Hinzufuegen) im iPhone Querformat:
+     Einheitliche Header-Kachel mit Zurueck-Pfeil rechts neben dem Hamburger-Button */
+  .iphone-modal-overlay {
+    margin: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background-color: hsl(var(--background)) !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    padding-top: 0.25rem !important;
+    padding-left: calc(max(calc(env(safe-area-inset-left, 0px) - 1.25rem), 0.5rem) + 2.7rem) !important;
+    padding-right: calc(max(calc(env(safe-area-inset-right, 0px) - 1.25rem), 0.75rem) + 0.5rem) !important;
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.35rem) !important;
+  }
+
+  .iphone-modal-shell {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.35rem !important;
+    overflow: hidden !important;
+  }
+
+  .iphone-modal-header-card {
+    position: relative !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: 2.25rem !important;
+    min-height: 2.25rem !important;
+    max-height: 2.25rem !important;
+    padding: 0 0.75rem !important;
+    border: 1px solid hsl(var(--border)) !important;
+    border-radius: 0.75rem !important;
+    background-color: hsl(var(--card)) !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  .iphone-modal-header-card .iphone-landscape-back-btn {
+    width: 1.65rem !important;
+    height: 1.65rem !important;
+    min-width: 1.65rem !important;
+    min-height: 1.65rem !important;
+    max-width: 1.65rem !important;
+    max-height: 1.65rem !important;
+    padding: 0 !important;
+    border-radius: 0.45rem !important;
+  }
+
+  .iphone-modal-header-card .iphone-landscape-portfolio-icon {
+    width: 1.65rem !important;
+    height: 1.65rem !important;
+    min-width: 1.65rem !important;
+    min-height: 1.65rem !important;
+    max-width: 1.65rem !important;
+    max-height: 1.65rem !important;
+    padding: 0 !important;
+    border-radius: 0.45rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .iphone-modal-header-card .iphone-landscape-portfolio-icon svg {
+    width: 0.95rem !important;
+    height: 0.95rem !important;
+  }
+
+  .iphone-modal-header-card .iphone-landscape-portfolio-title {
+    font-size: 0.95rem !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+  }
+
+  .iphone-modal-body-card {
+    background-color: hsl(var(--card)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    border-radius: 0.75rem !important;
+    padding: 0.75rem !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+  }
+
+  .iphone-choice-modal-body {
+    flex: 0 1 auto !important;
+  }
 }
 
 /* ==========================================================================
@@ -1026,7 +1125,13 @@
 
   .iphone-landscape-portfolio-subtabs:not(:has(.iphone-subtab-right)):not(:has(> div)) {
     justify-content: center !important;
-    gap: 0.2rem !important;
+    gap: 0.18rem !important;
+    overflow: hidden !important;
+    touch-action: none !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 
   .iphone-landscape-portfolio-subtabs > div {
@@ -1058,14 +1163,24 @@
   }
 
   .iphone-landscape-portfolio-subtabs:not(:has(.iphone-subtab-right)):not(:has(> div)) button:not(.absolute) {
-    padding: 0 0.35rem !important;
-    font-size: 0.68rem !important;
-    gap: 0.2rem !important;
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    padding: 0 0.25rem !important;
+    font-size: 0.62rem !important;
+    gap: 0.14rem !important;
   }
 
   .iphone-landscape-portfolio-subtabs:not(:has(.iphone-subtab-right)):not(:has(> div)) button:not(.absolute) svg {
-    width: 0.75rem !important;
-    height: 0.75rem !important;
+    width: 0.65rem !important;
+    height: 0.65rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .iphone-landscape-portfolio-subtabs:not(:has(.iphone-subtab-right)):not(:has(> div)) button:not(.absolute) span.font-mono {
+    font-size: 0.56rem !important;
+    line-height: 1 !important;
+    padding: 0.06rem 0.2rem !important;
+    flex-shrink: 0 !important;
   }
 
   .iphone-landscape-portfolio-subtabs button:not(.absolute) span.font-mono {
@@ -1095,5 +1210,104 @@
     padding-bottom: 0 !important;
     font-size: 0.825rem !important;
     border-radius: 0.6rem !important;
+  }
+
+  /* Modals (Neues Bankkonto, Auswahl Hinzufuegen) im iPhone Hochformat:
+     Einheitliche Header-Kachel mit Zurueck-Pfeil rechts neben dem Hamburger-Button */
+  .iphone-modal-overlay {
+    margin: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background-color: hsl(var(--background)) !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    padding-top: calc(max(env(safe-area-inset-top, 0px), 2.25rem) + 0.25rem) !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.75rem) !important;
+  }
+
+  .iphone-modal-shell {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    overflow: hidden !important;
+  }
+
+  .iphone-modal-header-card {
+    position: relative !important;
+    margin: 0 0 0 2.8rem !important;
+    width: calc(100% - 2.8rem) !important;
+    height: 2.35rem !important;
+    min-height: 2.35rem !important;
+    max-height: 2.35rem !important;
+    padding: 0 0.5rem !important;
+    border: 1px solid hsl(var(--border)) !important;
+    border-radius: 0.75rem !important;
+    background-color: hsl(var(--card)) !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  .iphone-modal-header-card .iphone-landscape-back-btn {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+    min-width: 1.75rem !important;
+    min-height: 1.75rem !important;
+    max-width: 1.75rem !important;
+    max-height: 1.75rem !important;
+    padding: 0 !important;
+    border-radius: 0.5rem !important;
+  }
+
+  .iphone-modal-header-card .iphone-landscape-portfolio-icon {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+    min-width: 1.75rem !important;
+    min-height: 1.75rem !important;
+    max-width: 1.75rem !important;
+    max-height: 1.75rem !important;
+    padding: 0 !important;
+    border-radius: 0.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .iphone-modal-header-card .iphone-landscape-portfolio-icon svg {
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+
+  .iphone-modal-header-card .iphone-landscape-portfolio-title {
+    font-size: 1.05rem !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+  }
+
+  .iphone-modal-body-card {
+    background-color: hsl(var(--card)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    border-radius: 0.75rem !important;
+    padding: 0.85rem !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+  }
+
+  .iphone-choice-modal-body {
+    flex: 0 1 auto !important;
   }
 }
