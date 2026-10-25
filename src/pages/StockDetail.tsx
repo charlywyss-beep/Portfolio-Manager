@@ -556,7 +556,7 @@ export function StockDetail() {
             </div>
 
             {/* Price Chart (Kursverlauf) - Über ganze Breite */}
-            <div className="bg-card border border-border rounded-xl pl-1 pr-1 py-4 md:py-6 landscape:py-1.5 shadow-sm min-h-[360px] landscape:min-h-0 h-auto flex flex-col w-full mb-6 overflow-hidden">
+            <div className="bg-card border border-border rounded-xl pl-1 pr-1 py-4 md:py-6 landscape:py-1.5 shadow-sm min-h-[360px] landscape:min-h-0 landscape:h-[295px] flex flex-col w-full mb-6 overflow-hidden">
                 <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 landscape:mb-1.5 shrink-0 px-2 md:px-4">
                     {/* Left: Title */}
                     <div className="flex items-center gap-2">
@@ -624,7 +624,7 @@ export function StockDetail() {
                         const targetId = stockFromContext?.id || stock?.id || stock?.symbol || id;
                         navigate(`/dividends/edit/${encodeURIComponent(String(targetId))}${query}`);
                     }}
-                    className="bg-card border border-border hover:border-primary/50 rounded-xl p-4 md:p-6 landscape:p-2.5 landscape:py-2 shadow-sm cursor-pointer transition-colors group flex flex-col justify-between"
+                    className="bg-card border border-border hover:border-primary/50 rounded-xl p-4 md:p-6 landscape:p-2.5 landscape:py-2 shadow-sm cursor-pointer transition-colors group flex flex-col justify-between landscape:h-[295px] overflow-hidden"
                     title="Daten bearbeiten"
                 >
                     <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 landscape:mb-1">
@@ -670,20 +670,20 @@ export function StockDetail() {
                             <>
                                 <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                     <span className="text-muted-foreground">Kaufpreis Ø</span>
-                                    <div className="text-right flex flex-col items-end">
+                                    <div className="text-right flex flex-col items-end landscape:flex-row landscape:items-baseline landscape:gap-1.5">
                                         <span className="font-medium tabular-nums">
                                             {formatCurrency(pos.buyPriceAvg, stock.currency, false)}
                                         </span>
                                         {isForeign && (
                                             <span className="text-[10px] text-muted-foreground tabular-nums">
-                                                Ø {formatCurrency(totalCostCHF / pos.shares, 'CHF', false)}
+                                                (Ø {formatCurrency(totalCostCHF / pos.shares, 'CHF', false)})
                                             </span>
                                         )}
                                     </div>
                                 </div>
                                 <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                     <span className="text-muted-foreground">Gewinn/Verlust</span>
-                                    <div className="text-right flex flex-col items-end">
+                                    <div className="text-right flex flex-col items-end landscape:flex-row landscape:items-baseline landscape:gap-1.5">
                                         {/* Native Gain */}
                                         <span className={cn(
                                             "font-bold tabular-nums",
@@ -695,10 +695,10 @@ export function StockDetail() {
                                         {/* CHF Gain (only if foreign) */}
                                         {isForeign && (
                                             <span className={cn(
-                                                "text-[10px] font-medium tabular-nums mt-0.5",
+                                                "text-[10px] font-medium tabular-nums mt-0.5 landscape:mt-0",
                                                 isPositiveCHF ? "text-emerald-600/80 dark:text-emerald-400/80" : "text-rose-600/80 dark:text-rose-400/80"
                                             )}>
-                                                in CHF: {isPositiveCHF ? '+' : ''}{percentChangeCHF.toFixed(2)}% ({formatCurrency(totalDiffCHF, 'CHF', false)})
+                                                (CHF: {isPositiveCHF ? '+' : ''}{percentChangeCHF.toFixed(2)}%)
                                             </span>
                                         )}
                                     </div>
@@ -980,7 +980,7 @@ export function StockDetail() {
                 </div>
 
                 {/* Stammdaten */}
-                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-2.5 landscape:py-2 shadow-sm flex flex-col justify-between">
+                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-2.5 landscape:py-2 shadow-sm flex flex-col justify-between landscape:h-[295px] overflow-hidden">
                     <h3 className="font-bold text-base md:text-lg landscape:text-xs mb-2 md:mb-4 landscape:mb-1 flex items-center gap-1.5 md:gap-2">
                         <TrendingUp className="size-4 md:size-5 text-blue-500" />
                         Stammdaten
