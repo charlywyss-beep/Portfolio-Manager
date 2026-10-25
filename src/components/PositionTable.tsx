@@ -40,6 +40,7 @@ export function PositionTable({
     const touchStartRef = useRef<{ x: number; y: number; time: number; isStockCol: boolean } | null>(null);
 
     const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+        if (typeof window !== 'undefined' && window.innerWidth >= 600 && window.innerHeight <= 500) return;
         const touch = e.touches[0];
         const isStockCol = !!(e.target as HTMLElement)?.closest('th:first-child, td:first-child');
         touchStartRef.current = {
@@ -51,6 +52,10 @@ export function PositionTable({
     };
 
     const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+        if (typeof window !== 'undefined' && window.innerWidth >= 600 && window.innerHeight <= 500) {
+            touchStartRef.current = null;
+            return;
+        }
         if (!touchStartRef.current || touchStartRef.current.isStockCol) {
             touchStartRef.current = null;
             return;
@@ -225,7 +230,7 @@ export function PositionTable({
                                 <th
                                     className={cn(
                                         "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
-                                        mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell"
+                                        mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell iphone-landscape-col-desktop-only"
                                     )}
                                 >
                                     <div className="flex md:hidden items-center justify-between w-full h-12">
@@ -256,7 +261,7 @@ export function PositionTable({
                                 <th
                                     className={cn(
                                         "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
-                                        mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell"
+                                        mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell iphone-landscape-col-desktop-only"
                                     )}
                                 >
                                     <div className="flex md:hidden items-center justify-between w-full h-12">
@@ -287,7 +292,7 @@ export function PositionTable({
                                 <th
                                     className={cn(
                                         "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
-                                        mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell"
+                                        mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell iphone-landscape-col-desktop-only"
                                     )}
                                 >
                                     <div className="flex md:hidden items-center justify-between w-full h-12">
@@ -440,7 +445,7 @@ export function PositionTable({
                                         </td>
 
                                         {/* 5. Aktueller Wert */}
-                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right font-bold align-middle", mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell")}>
+                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right font-bold align-middle", mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell iphone-landscape-col-desktop-only")}>
                                             <div className="flex flex-col items-end">
                                                 <span className="font-medium whitespace-nowrap">{formatCurrency(pos.currentValue, pos.stock.currency, false)}</span>
                                                 {pos.stock.currency !== 'CHF' && (
@@ -452,7 +457,7 @@ export function PositionTable({
                                         </td>
 
                                         {/* 6. % */}
-                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell")}>
+                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell iphone-landscape-col-desktop-only")}>
                                             <div className={cn(
                                                 "flex items-center justify-end gap-1 font-medium",
                                                 pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
@@ -463,7 +468,7 @@ export function PositionTable({
                                         </td>
 
                                         {/* 7. Gesamt +/- */}
-                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell")}>
+                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell iphone-landscape-col-desktop-only")}>
                                             <div className="flex flex-col items-end gap-0.5">
                                                 {(() => {
                                                     const nativeGain = pos.gainLossTotal;

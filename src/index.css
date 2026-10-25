@@ -143,6 +143,11 @@
 
   /* Portfolio / Positionen Seite im iPhone Querformat */
   .iphone-landscape-portfolio-page {
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+    touch-action: pan-y !important;
+    overscroll-behavior: none !important;
     padding-top: 0.25rem !important;
     padding-bottom: 0.25rem !important;
     padding-left: 0.5rem !important;
@@ -223,10 +228,38 @@
 
   .iphone-landscape-table-card {
     border-radius: 0.75rem !important;
+    overflow: hidden !important;
+    touch-action: pan-y !important;
+    overscroll-behavior: none !important;
   }
 
   .iphone-landscape-table-scroll {
+    scroll-snap-type: y mandatory !important;
     scroll-padding-top: 1.85rem !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    touch-action: pan-y !important;
+    overscroll-behavior-y: contain !important;
+    overscroll-behavior-x: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .iphone-landscape-table {
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+  }
+
+  .iphone-landscape-table img {
+    -webkit-user-drag: none !important;
+    user-drag: none !important;
+    pointer-events: none !important;
+  }
+
+  .iphone-landscape-col-desktop-only {
+    display: none !important;
   }
 
   .iphone-landscape-table-header-row th {
@@ -240,12 +273,15 @@
   .iphone-landscape-table-row {
     height: 3.25rem !important;
     min-height: 3.25rem !important;
+    scroll-snap-align: start !important;
+    scroll-snap-stop: always !important;
   }
 
   .iphone-landscape-table-row td {
     padding-top: 0.2rem !important;
     padding-bottom: 0.2rem !important;
     height: 3.25rem !important;
+    vertical-align: middle !important;
   }
 
   .iphone-landscape-table-row .size-8 {
