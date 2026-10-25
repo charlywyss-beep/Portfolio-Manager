@@ -100,20 +100,20 @@ export function SeasonalityPage() {
     return (
         <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20 min-h-screen">
             {/* Header */}
-            <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+            <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6 iphone-landscape-portfolio-header-wrap">
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
-                    <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 xl:pl-6">
-                        <div className="flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-3">
+                    <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
+                        <div className="flex items-center justify-between gap-3 iphone-landscape-portfolio-header-row">
+                            <div className="flex items-center gap-3 iphone-landscape-portfolio-title-group">
                                 <button onClick={() => navigate(-1)} className="p-2 hover:bg-accent rounded-lg transition-colors text-muted-foreground">
                                     <ArrowLeft className="size-5" />
                                 </button>
-                                <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 text-violet-600 dark:text-violet-400">
+                                <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 text-violet-600 dark:text-violet-400 iphone-landscape-portfolio-icon">
                                     <BarChart2 className="size-6" />
                                 </div>
                                 <div>
-                                    <h1 className="text-3xl font-bold tracking-tight">Saisonalität</h1>
-                                    <p className="text-muted-foreground hidden md:block">
+                                    <h1 className="text-3xl font-bold tracking-tight iphone-landscape-portfolio-title">Saisonalität</h1>
+                                    <p className="text-muted-foreground hidden md:block iphone-landscape-portfolio-subtitle">
                                         {rangeYears
                                             ? (rangeYears.start === rangeYears.end ? `${rangeYears.start}` : `${rangeYears.start} – ${rangeYears.end}`)
                                             : (loading ? 'Lädt...' : (analysisMode === 'range' ? `${new Date().getFullYear() - (years - 1)} – ${new Date().getFullYear()}` : `${targetYear}`))}
@@ -121,7 +121,7 @@ export function SeasonalityPage() {
                                 </div>
                             </div>
                             {/* Modus + Eingabe rechts */}
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 iphone-landscape-portfolio-title-group">
                                 <Link
                                     to="/market-overview"
                                     className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-xs font-semibold text-foreground transition-all shadow-xs"

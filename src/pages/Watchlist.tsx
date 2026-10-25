@@ -217,12 +217,12 @@ export function Watchlist() {
     return (
         <div className="h-full flex flex-col p-4 md:p-6 space-y-3 bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden">
             {/* Header + Tabs Container - Fixed Height */}
-            <div className="shrink-0 bg-background pb-1 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+            <div className="shrink-0 bg-background pb-1 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6 iphone-landscape-portfolio-header-wrap">
                 {/* Header */}
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
-                    <div className="w-full px-3 sm:px-4 py-3 sm:py-3.5 md:px-6 lg:px-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div className="flex items-center gap-2.5 sm:gap-3 pl-12 xl:pl-0 min-h-[38px]">
+                    <div className="w-full px-3 sm:px-4 py-3 sm:py-3.5 md:px-6 lg:px-6 iphone-landscape-portfolio-header-content">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 iphone-landscape-portfolio-header-row">
+                            <div className="flex items-center gap-2.5 sm:gap-3 pl-12 xl:pl-0 min-h-[38px] iphone-landscape-portfolio-title-group">
                                 <button
                                     onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')}
                                     className="flex items-center justify-center p-2 rounded-xl bg-card border border-border text-foreground hover:bg-accent transition-all shadow-sm active:scale-95 shrink-0 group"
@@ -231,12 +231,12 @@ export function Watchlist() {
                                 >
                                     <ArrowLeft className="size-5 transition-transform group-hover:-translate-x-0.5" />
                                 </button>
-                                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-blue-600 dark:text-blue-400 shrink-0">
+                                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-blue-600 dark:text-blue-400 shrink-0 iphone-landscape-portfolio-icon">
                                     <Eye className="size-5 sm:size-6" />
                                 </div>
                                 <div>
-                                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Watchlist</h1>
-                                    <p className="text-muted-foreground hidden md:block">Aktien beobachten und Dividenden prüfen</p>
+                                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight iphone-landscape-portfolio-title">Watchlist</h1>
+                                    <p className="text-muted-foreground hidden md:block iphone-landscape-portfolio-subtitle">Aktien beobachten und Dividenden prüfen</p>
                                 </div>
                             </div>
 

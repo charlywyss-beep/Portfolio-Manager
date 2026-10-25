@@ -1030,11 +1030,11 @@ export function DividendCalculator() {
     return (
         <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-background via-background to-muted/20 animate-in fade-in duration-500">
             {/* Sticky Header - Consistent Design */}
-            <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6">
+            <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6 iphone-landscape-portfolio-header-wrap">
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
-                    <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 xl:pl-6">
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 iphone-landscape-portfolio-header-row">
+                            <div className="flex items-center gap-3 w-full sm:w-auto iphone-landscape-portfolio-title-group">
                                 <button
                                     onClick={handleBack}
                                     type="button"
@@ -1044,12 +1044,12 @@ export function DividendCalculator() {
                                     <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />
                                     <span>Zurück</span>
                                 </button>
-                                <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400">
+                                <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 iphone-landscape-portfolio-icon">
                                     <Coins className="size-6" />
                                 </div>
                                 <div>
-                                    <h1 className="text-3xl font-bold tracking-tight whitespace-nowrap">Kauf / Verkauf</h1>
-                                    <p className="text-muted-foreground hidden md:block">Investment Simulator</p>
+                                    <h1 className="text-3xl font-bold tracking-tight whitespace-nowrap iphone-landscape-portfolio-title">Kauf / Verkauf</h1>
+                                    <p className="text-muted-foreground hidden md:block iphone-landscape-portfolio-subtitle">Investment Simulator</p>
                                 </div>
                             </div>
 
