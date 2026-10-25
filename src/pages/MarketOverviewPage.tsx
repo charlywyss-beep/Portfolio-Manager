@@ -935,7 +935,7 @@ export function MarketOverviewPage() {
     };
 
     return (
-        <div className="w-full max-w-7xl mx-auto pb-32 iphone-landscape-page-root">
+        <div className="w-full max-w-7xl mx-auto pb-32 iphone-landscape-page-root market-overview-page">
             {/* Sticky Header Section: Title, Action Buttons & Category Filter Tabs */}
             <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md px-3 sm:px-4 md:px-6 pt-2.5 sm:pt-4 pb-2 sm:pb-3 border-b border-border shadow-xs space-y-2 sm:space-y-3 mb-3 sm:mb-5 w-full iphone-landscape-portfolio-header-wrap">
                 {/* Top Row: Title + Action Buttons */}
@@ -1113,7 +1113,7 @@ export function MarketOverviewPage() {
                             )}
                             title="Portfolio Tagesperformance – Klick für Positionsübersicht"
                         >
-                            {/* Top: Name & CHF badge */}
+                            {/* Top: Name */}
                             <div className="flex items-start justify-between gap-1 min-w-0">
                                 <div className="min-w-0 flex-1 flex items-center gap-1.5">
                                     <div className="size-5 sm:size-6 rounded-md bg-white text-slate-950 shadow-xs border border-white/60 flex items-center justify-center shrink-0">
@@ -1123,9 +1123,6 @@ export function MarketOverviewPage() {
                                         Tagesperformance
                                     </h3>
                                 </div>
-                                <span className="market-tile-badge h-6 px-2 inline-flex items-center justify-center text-[11px] sm:text-[10px] uppercase font-black tracking-wider rounded bg-white text-slate-950 shadow-xs border border-white/60 shrink-0 font-mono leading-none">
-                                    CHF
-                                </span>
                             </div>
 
                             {/* Center: CHF amount & total portfolio value */}
