@@ -177,20 +177,20 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                 <div className="flex flex-col flex-1 min-h-0 overflow-hidden iphone-modal-body-card iphone-modal-body-flush">
                 {/* Summary Totals */}
                 <div className="grid grid-cols-2 gap-3 p-3 bg-muted/20 border-b border-border shrink-0">
-                    <div className="bg-card p-2.5 px-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between">
-                        <span className="text-xs text-muted-foreground font-medium mb-1 truncate">Tages-Performance</span>
+                    <div className="bg-card p-3 px-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between">
+                        <span className="text-sm sm:text-base text-white font-semibold mb-1 truncate">Tages-Performance</span>
                         <span className={cn(
-                            "text-base sm:text-lg md:text-xl font-bold tracking-tight",
-                            totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                            "text-[18px] sm:text-xl md:text-2xl font-bold font-sans tabular-nums tracking-tight whitespace-nowrap",
+                            totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
                         )}>
                             {totalDailyGain >= 0 ? '+' : ''}{formatCurrency(totalDailyGain, 'CHF')}
                         </span>
                     </div>
-                    <div className="bg-card p-2.5 px-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between">
-                        <span className="text-xs text-muted-foreground font-medium mb-1 truncate">Gesamt-Performance</span>
+                    <div className="bg-card p-3 px-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between">
+                        <span className="text-sm sm:text-base text-white font-semibold mb-1 truncate">Gesamt-Performance</span>
                         <span className={cn(
-                            "text-base sm:text-lg md:text-xl font-bold tracking-tight",
-                            totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                            "text-[18px] sm:text-xl md:text-2xl font-bold font-sans tabular-nums tracking-tight whitespace-nowrap",
+                            totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
                         )}>
                             {totalPerformanceGain >= 0 ? '+' : ''}{formatCurrency(totalPerformanceGain, 'CHF')}
                         </span>
@@ -445,7 +445,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                             className={cn(
                                                 "px-3 py-1.5 md:py-2.5 md:px-2 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle md:w-[105px]",
                                                 mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell",
-                                                isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                                isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
                                             )}
                                         >
                                             <span className="tabular-nums">{isDailyPositive ? '+' : ''}{p.dailyGainPercent.toFixed(2)}%</span>
@@ -456,7 +456,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                             className={cn(
                                                 "px-3 py-1.5 md:py-2.5 md:px-2 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle md:w-[115px]",
                                                 mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell",
-                                                isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                                isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
                                             )}
                                         >
                                             <span className="tabular-nums">{isDailyPositive ? '+' : ''}{formatCurrency(dailyGainCHF, 'CHF').replace('CHF', '').trim()} CHF</span>
@@ -470,7 +470,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                             className={cn(
                                                 "px-3 py-1.5 md:py-2.5 md:px-2 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle md:w-[130px]",
                                                 mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell",
-                                                isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                                isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
                                             )}
                                         >
                                             <span className="tabular-nums">{isTotalPositive ? '+' : ''}{totalGainPercent.toFixed(2)}%</span>
@@ -481,7 +481,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                             className={cn(
                                                 "px-3 py-1.5 md:py-2.5 md:pr-4 md:pl-2 h-[60px] md:h-auto text-right font-bold text-sm whitespace-nowrap align-middle md:w-[145px]",
                                                 mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell",
-                                                isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                                isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
                                             )}
                                         >
                                             <span className="tabular-nums">{isTotalPositive ? '+' : ''}{formatCurrency(totalGainCHF, 'CHF').replace('CHF', '').trim()} CHF</span>
