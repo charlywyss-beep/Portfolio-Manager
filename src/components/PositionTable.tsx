@@ -98,7 +98,7 @@ export function PositionTable({
                         <thead>
                             <tr className="border-b border-border bg-muted/20 iphone-landscape-table-header-row">
                                 {/* 0. Aktie */}
-                                <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle iphone-landscape-col-stock">
+                                <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[230px] md:min-w-[230px] md:max-w-[250px] touch-pan-y align-middle iphone-landscape-col-stock">
                                     Aktie
                                 </th>
 
@@ -356,7 +356,7 @@ export function PositionTable({
                                 return (
                                     <tr key={pos.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors group snap-start snap-always h-[60px] md:h-auto iphone-landscape-table-row">
                                         {/* 0. Aktie */}
-                                        <td className="px-3 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[180px] md:min-w-[180px] md:max-w-[180px] touch-pan-y align-middle iphone-landscape-col-stock">
+                                        <td className="px-3 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[230px] md:min-w-[230px] md:max-w-[250px] touch-pan-y align-middle iphone-landscape-col-stock">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center gap-2.5 sm:gap-3">
                                                 <Logo
@@ -371,18 +371,18 @@ export function PositionTable({
                                                     >
                                                         {pos.stock.name}
                                                     </div>
-                                                    <div className="flex items-center gap-1.5 mt-0.5 whitespace-nowrap overflow-hidden">
+                                                    <div className="flex items-center gap-1.5 mt-0.5 whitespace-nowrap overflow-hidden max-w-full">
                                                         <div className="text-[10px] sm:text-xs font-mono font-semibold text-foreground/80 whitespace-nowrap shrink-0">{pos.stock.symbol}</div>
                                                         {pos.stock.sector && pos.stock.sector !== 'Simuliert' && (
                                                             <>
                                                                 <span className="text-muted-foreground/40 text-[10px] shrink-0">•</span>
-                                                                <span className="text-[10px] sm:text-xs text-muted-foreground truncate whitespace-nowrap">{translateSector(pos.stock.sector)}</span>
+                                                                <span className="text-[10px] sm:text-xs text-muted-foreground truncate min-w-0">{translateSector(pos.stock.sector)}</span>
                                                             </>
                                                         )}
                                                         {pos.broker && (
                                                             <>
-                                                                <span className="text-muted-foreground/40 text-[10px]">•</span>
-                                                                <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-medium text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20" title={`Depot: ${pos.broker}`}>
+                                                                <span className="text-muted-foreground/40 text-[10px] shrink-0">•</span>
+                                                                <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-medium text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20 shrink-0" title={`Depot: ${pos.broker}`}>
                                                                     <Landmark className="size-2.5 shrink-0" />
                                                                     <span className="truncate max-w-[85px]">{pos.broker}</span>
                                                                 </span>

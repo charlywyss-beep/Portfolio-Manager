@@ -191,7 +191,8 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                 finalAvgPrice,
                 calculatedTotals.earliestDate,
                 calculatedAvgFx,
-                purchasesToSave
+                purchasesToSave,
+                broker.trim()
             );
         } else {
             // Manual fallback
@@ -200,7 +201,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
             const newFx = parseFloat(manualFx);
             const isoDate = manualDate ? new Date(manualDate).toISOString() : undefined;
 
-            onUpdate(position.id, newShares, toStorage(newPriceUI), isoDate, newFx, [], broker.trim() || undefined);
+            onUpdate(position.id, newShares, toStorage(newPriceUI), isoDate, newFx, [], broker.trim());
         }
         onClose();
     };

@@ -153,7 +153,7 @@ export function Portfolio() {
             if (sortConfig.key === 'performance') {
                 return b.gainLossTotalPercent - a.gainLossTotalPercent;
             }
-            return 0;
+            if (sortConfig.key === 'broker') { const comp = (a.broker || 'ZZZ').localeCompare(b.broker || 'ZZZ'); if (comp !== 0) return comp; return a.stock.name.localeCompare(b.stock.name); } return 0;
         });
     };
 
