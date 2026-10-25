@@ -145,14 +145,14 @@ function App() {
       <PortfolioProvider>
         <div className="flex h-screen h-[100dvh] bg-background text-foreground font-sans antialiased text-sm flex-col">
           {/* Top Safe Area Bar for Apple Status Bar on Mobile / iPad */}
-          <div className="portrait:h-[max(env(safe-area-inset-top,0px),2.25rem)] landscape:h-0 bg-background shrink-0 xl:hidden" />
+          <div className="h-[max(env(safe-area-inset-top,0px),2.35rem)] bg-background shrink-0 xl:hidden app-top-safe-spacer" />
 
           <div className="flex flex-1 min-h-0 relative">
             {/* Mobile Hamburger Menu Button (visible when sidebar is closed) */}
             {!isSidebarOpen && (
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="fixed top-[calc(max(env(safe-area-inset-top,0px),2.25rem)+0.5rem)] landscape:top-2 z-[1100] p-1.5 md:p-2 bg-card/90 backdrop-blur-sm border border-border rounded-lg shadow-lg xl:hidden hover:bg-accent transition-colors active:scale-95 app-hamburger-btn"
+                className="fixed top-[calc(max(env(safe-area-inset-top,0px),2.35rem)+0.8rem)] z-[1100] p-1.5 md:p-2 bg-card/90 backdrop-blur-sm border border-border rounded-lg shadow-lg xl:hidden hover:bg-accent transition-colors active:scale-95 app-hamburger-btn"
                 style={{ left: 'max(calc(env(safe-area-inset-left, 0px) - 1.25rem), 0.5rem)' }}
                 aria-label="Menü öffnen"
               >
@@ -171,7 +171,7 @@ function App() {
             {/* Sidebar */}
             <aside className={cn(
               "border-r border-border bg-card shadow-lg flex flex-col transition-all duration-300 ease-in-out app-sidebar-landscape-safe",
-              "fixed xl:relative z-[1001] top-[max(env(safe-area-inset-top,0px),2.25rem)] landscape:top-0 xl:top-0 bottom-0 h-[calc(100dvh-max(env(safe-area-inset-top,0px),2.25rem))] landscape:h-full xl:h-full w-64 xl:w-60 shrink-0",
+              "fixed xl:relative z-[1001] top-[max(env(safe-area-inset-top,0px),2.35rem)] xl:top-0 bottom-0 h-[calc(100dvh-max(env(safe-area-inset-top,0px),2.35rem))] xl:h-full w-64 xl:w-60 shrink-0",
               isSidebarOpen
                 ? "translate-x-0"
                 : "-translate-x-full xl:translate-x-0"
