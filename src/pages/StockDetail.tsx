@@ -556,7 +556,7 @@ export function StockDetail() {
             </div>
 
             {/* Price Chart (Kursverlauf) - Über ganze Breite */}
-            <div className="bg-card border border-border rounded-xl pl-1 pr-1 py-4 md:py-6 landscape:py-1.5 shadow-sm min-h-[360px] landscape:min-h-0 landscape:h-[295px] flex flex-col w-full mb-6 overflow-hidden">
+            <div className="bg-card border border-border rounded-xl pl-1 pr-1 py-4 md:py-6 landscape:py-1.5 shadow-sm min-h-[360px] landscape:min-h-0 h-auto flex flex-col w-full mb-6 overflow-hidden">
                 <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 landscape:mb-1.5 shrink-0 px-2 md:px-4">
                     {/* Left: Title */}
                     <div className="flex items-center gap-2">
@@ -624,7 +624,7 @@ export function StockDetail() {
                         const targetId = stockFromContext?.id || stock?.id || stock?.symbol || id;
                         navigate(`/dividends/edit/${encodeURIComponent(String(targetId))}${query}`);
                     }}
-                    className="bg-card border border-border hover:border-primary/50 rounded-xl p-4 md:p-6 landscape:p-2.5 landscape:py-2 shadow-sm cursor-pointer transition-colors group flex flex-col justify-between landscape:h-[295px] overflow-hidden"
+                    className="bg-card border border-border hover:border-primary/50 rounded-xl p-4 md:p-6 landscape:p-2.5 landscape:py-2 shadow-sm cursor-pointer transition-colors group flex flex-col justify-between landscape:h-[280px] overflow-hidden"
                     title="Daten bearbeiten"
                 >
                     <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 landscape:mb-1">
@@ -980,12 +980,12 @@ export function StockDetail() {
                 </div>
 
                 {/* Stammdaten */}
-                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-2.5 landscape:py-2 shadow-sm flex flex-col justify-between landscape:h-[295px] overflow-hidden">
+                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-2.5 landscape:py-2 shadow-sm flex flex-col justify-between landscape:h-[280px] overflow-hidden">
                     <h3 className="font-bold text-base md:text-lg landscape:text-xs mb-2 md:mb-4 landscape:mb-1 flex items-center gap-1.5 md:gap-2">
                         <TrendingUp className="size-4 md:size-5 text-blue-500" />
                         Stammdaten
                     </h3>
-                    <div className="space-y-1.5 md:space-y-3 landscape:space-y-0">
+                    <div className="space-y-1.5 md:space-y-3 landscape:space-y-0 flex-1 flex flex-col justify-between">
                         <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                             <span className="text-muted-foreground">Name</span>
                             <span className="font-medium text-right truncate max-w-[180px] sm:max-w-[240px]">{stock.name}</span>
