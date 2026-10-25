@@ -78,7 +78,7 @@ const NavItem = ({ to, icon: Icon, label, onClick }: NavItemProps) => {
           : (isActive || isCustomActive());
 
         return cn(
-          "flex items-center gap-3 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap text-sm font-medium",
+          "flex items-center gap-2.5 md:gap-3 px-2.5 md:px-3 py-1 landscape:py-1 md:py-1.5 rounded-lg transition-colors whitespace-nowrap text-xs md:text-sm font-medium",
           active
             ? "bg-primary text-primary-foreground shadow-sm"
             : "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
@@ -170,14 +170,14 @@ function App() {
 
             {/* Sidebar */}
             <aside className={cn(
-              "border-r border-border bg-card shadow-lg flex flex-col transition-all duration-300 ease-in-out",
-              "fixed xl:relative z-[1001] top-[max(env(safe-area-inset-top,0px),2.25rem)] xl:top-0 bottom-0 h-[calc(100dvh-max(env(safe-area-inset-top,0px),2.25rem))] xl:h-full w-64 xl:w-60 shrink-0",
+              "border-r border-border bg-card shadow-lg flex flex-col transition-all duration-300 ease-in-out app-sidebar-landscape-safe",
+              "fixed xl:relative z-[1001] top-[max(env(safe-area-inset-top,0px),2.25rem)] landscape:top-0 xl:top-0 bottom-0 h-[calc(100dvh-max(env(safe-area-inset-top,0px),2.25rem))] landscape:h-full xl:h-full w-64 xl:w-60 shrink-0",
               isSidebarOpen
                 ? "translate-x-0"
                 : "-translate-x-full xl:translate-x-0"
             )}>
               {/* Header: Title + Close Button */}
-              <div className="px-3.5 py-2.5 border-b border-border shrink-0">
+              <div className="px-3.5 py-2.5 landscape:py-1.5 border-b border-border shrink-0">
                 <div className="flex items-center justify-between">
                   <Link
                     to="/portfolio"
@@ -254,10 +254,10 @@ function App() {
               </nav>
 
               {/* Footer with Dark Mode Toggle */}
-              <div className="p-2 border-t border-border mt-auto shrink-0 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
+              <div className="p-2 landscape:py-1 border-t border-border mt-auto shrink-0 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
                 <button
                   onClick={toggleDarkMode}
-                  className="flex items-center gap-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors w-full px-3 py-1.5 rounded-lg"
+                  className="flex items-center gap-2.5 md:gap-3 text-xs md:text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors w-full px-2.5 md:px-3 py-1 landscape:py-1 md:py-1.5 rounded-lg"
                 >
                   {isDarkMode ? <Sun className="size-4 shrink-0" /> : <Moon className="size-4 shrink-0" />}
                   <span>{isDarkMode ? "Light Mode" : "Dark Mode"}</span>

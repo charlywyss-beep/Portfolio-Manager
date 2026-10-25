@@ -126,6 +126,11 @@
     scroll-padding-bottom: 2rem;
   }
 
+  .app-sidebar-landscape-safe {
+    padding-left: max(calc(env(safe-area-inset-left, 0px) + 0.5rem), 3.75rem) !important;
+    width: calc(14rem + max(calc(env(safe-area-inset-left, 0px) + 0.5rem), 3.75rem)) !important;
+  }
+
   .iphone-landscape-section {
     height: calc(100dvh - 1rem) !important;
     min-height: calc(100dvh - 1rem) !important;
