@@ -174,19 +174,48 @@
     gap: 0.35rem !important;
   }
 
+  .app-hamburger-btn {
+    top: 0.25rem !important;
+    left: max(calc(env(safe-area-inset-left, 0px) - 1.25rem), 0.5rem) !important;
+    height: 1.65rem !important;
+    width: 1.65rem !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 0.5rem !important;
+  }
+
+  .app-hamburger-btn svg {
+    width: 0.95rem !important;
+    height: 0.95rem !important;
+  }
+
   .iphone-landscape-portfolio-title-group {
     min-height: 28px !important;
+    padding-left: 2.25rem !important;
     gap: 0.5rem !important;
   }
 
   .iphone-landscape-portfolio-icon {
-    padding: 0.25rem !important;
+    width: 1.65rem !important;
+    height: 1.65rem !important;
+    min-width: 1.65rem !important;
+    min-height: 1.65rem !important;
+    max-width: 1.65rem !important;
+    max-height: 1.65rem !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     border-radius: 0.5rem !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
   }
 
   .iphone-landscape-portfolio-icon svg {
-    width: 1rem !important;
-    height: 1rem !important;
+    width: 0.95rem !important;
+    height: 0.95rem !important;
   }
 
   .iphone-landscape-portfolio-title {
@@ -226,39 +255,79 @@
   .sticky.top-0.bg-background .p-2.rounded-xl,
   .shrink-0.bg-background .p-3.rounded-xl,
   .shrink-0.bg-background .p-2.rounded-xl {
-    padding: 0.25rem !important;
+    width: 1.65rem !important;
+    height: 1.65rem !important;
+    min-width: 1.65rem !important;
+    min-height: 1.65rem !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     border-radius: 0.5rem !important;
+    flex-shrink: 0 !important;
   }
 
   .sticky.top-0.bg-background .p-3.rounded-xl svg,
   .sticky.top-0.bg-background .p-2.rounded-xl svg,
   .shrink-0.bg-background .p-3.rounded-xl svg,
   .shrink-0.bg-background .p-2.rounded-xl svg {
-    width: 1rem !important;
-    height: 1rem !important;
+    width: 0.95rem !important;
+    height: 0.95rem !important;
   }
 
-  .iphone-landscape-portfolio-actions .iphone-landscape-btn,
-  .iphone-landscape-portfolio-actions .iphone-landscape-select {
+  /* Vereinheitlichte Höhe mit Symbol für Positionen: genau 1.65rem */
+  .iphone-landscape-portfolio-actions button,
+  .iphone-landscape-portfolio-actions select,
+  .iphone-landscape-btn,
+  .iphone-landscape-select {
+    height: 1.65rem !important;
+    min-height: 1.65rem !important;
+    max-height: 1.65rem !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0.55rem !important;
+    padding-right: 0.55rem !important;
+    font-size: 0.725rem !important;
+    line-height: 1.65rem !important;
+    border-radius: 0.5rem !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  .iphone-landscape-portfolio-actions button svg,
+  .iphone-landscape-btn svg {
+    width: 0.85rem !important;
+    height: 0.85rem !important;
+  }
+
+  /* Sub-Tabs: nach unten verschieben und oben komplett sichtbar */
+  .iphone-landscape-portfolio-subtabs {
+    margin-top: 0.45rem !important;
+    margin-bottom: 0.2rem !important;
     padding-top: 0.25rem !important;
     padding-bottom: 0.25rem !important;
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-    font-size: 0.75rem !important;
-    height: 1.85rem !important;
-  }
-
-  .iphone-landscape-portfolio-subtabs {
-    padding-bottom: 0 !important;
-    gap: 0.35rem !important;
+    padding-left: 0.25rem !important;
+    gap: 0.4rem !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    min-height: 2.25rem !important;
   }
 
   .iphone-landscape-portfolio-subtabs button {
-    padding-top: 0.2rem !important;
-    padding-bottom: 0.2rem !important;
-    padding-left: 0.6rem !important;
-    padding-right: 0.6rem !important;
-    font-size: 0.75rem !important;
+    height: 1.65rem !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0.65rem !important;
+    padding-right: 0.65rem !important;
+    font-size: 0.725rem !important;
+    line-height: 1.65rem !important;
+    border-radius: 0.5rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
   }
 
   .iphone-landscape-table-wrapper {

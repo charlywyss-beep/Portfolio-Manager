@@ -202,7 +202,7 @@ export function Portfolio() {
                             <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto sm:ml-auto iphone-landscape-portfolio-actions">
                                 <button
                                     onClick={() => setIsAddFixedDepositModalOpen(true)}
-                                    className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-3.5 sm:px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors font-medium border border-border shadow-sm shrink-0"
+                                    className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-3.5 sm:px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors font-medium border border-border shadow-sm shrink-0 iphone-landscape-btn"
                                     title="Bank / Vorsorge"
                                 >
                                     <Landmark className="size-4" />
@@ -210,13 +210,13 @@ export function Portfolio() {
                                 </button>
                                 <button
                                     onClick={() => navigate('/calculator?mode=buy&from=portfolio')}
-                                    className="flex items-center justify-center gap-1.5 sm:gap-2 bg-primary text-primary-foreground px-3.5 sm:px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm shrink-0 whitespace-nowrap"
+                                    className="flex items-center justify-center gap-1.5 sm:gap-2 bg-primary text-primary-foreground px-3.5 sm:px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm shrink-0 whitespace-nowrap iphone-landscape-btn"
                                 >
                                     <Plus className="size-4" />
                                     <span>Neu</span>
                                 </button>
                                 <select
-                                    className="w-auto min-w-0 px-3 py-2 rounded-lg border border-border bg-card text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer text-center"
+                                    className="w-auto min-w-0 px-3 py-2 rounded-lg border border-border bg-card text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer text-center iphone-landscape-select"
                                     value={sortConfig.key}
                                     onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
                                 >
@@ -229,7 +229,7 @@ export function Portfolio() {
                                     onClick={() => refreshAllPrices(true)}
                                     disabled={isGlobalRefreshing}
                                     className={cn(
-                                        "flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg border font-medium transition-all shadow-sm shrink-0",
+                                        "flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg border font-medium transition-all shadow-sm shrink-0 iphone-landscape-btn",
                                         "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
                                         "active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                                     )}

@@ -152,7 +152,7 @@ function App() {
             {!isSidebarOpen && (
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="fixed top-[calc(max(env(safe-area-inset-top,0px),2.25rem)+0.5rem)] landscape:top-2 z-[1100] p-1.5 md:p-2 bg-card/90 backdrop-blur-sm border border-border rounded-lg shadow-lg xl:hidden hover:bg-accent transition-colors active:scale-95"
+                className="fixed top-[calc(max(env(safe-area-inset-top,0px),2.25rem)+0.5rem)] landscape:top-2 z-[1100] p-1.5 md:p-2 bg-card/90 backdrop-blur-sm border border-border rounded-lg shadow-lg xl:hidden hover:bg-accent transition-colors active:scale-95 app-hamburger-btn"
                 style={{ left: 'max(calc(env(safe-area-inset-left, 0px) - 1.25rem), 0.5rem)' }}
                 aria-label="Menü öffnen"
               >
