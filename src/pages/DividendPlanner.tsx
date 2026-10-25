@@ -1,3 +1,4 @@
+import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 import { Calendar, TrendingUp, Edit, Trash2, RefreshCw, ChevronLeft, ChevronRight, Landmark, Percent, Building2 } from 'lucide-react';
@@ -360,6 +361,7 @@ export function DividendPlanner() {
                     <div className="w-full pl-14 pr-4 py-3 sm:py-3.5 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
                         <div className="flex items-center justify-between gap-3 iphone-landscape-portfolio-header-row">
                             <div className="flex items-center gap-3 iphone-landscape-portfolio-title-group">
+                                <LandscapeBackButton />
                                 <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600 dark:text-green-400 shrink-0 iphone-landscape-portfolio-icon">
                                     <TrendingUp className="size-5 sm:size-6" />
                                 </div>

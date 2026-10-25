@@ -1,3 +1,4 @@
+import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
@@ -934,26 +935,27 @@ export function MarketOverviewPage() {
     };
 
     return (
-        <div className="w-full max-w-7xl mx-auto pb-32">
+        <div className="w-full max-w-7xl mx-auto pb-32 iphone-landscape-page-root">
             {/* Sticky Header Section: Title, Action Buttons & Category Filter Tabs */}
-            <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md px-3 sm:px-4 md:px-6 pt-2.5 sm:pt-4 pb-2 sm:pb-3 border-b border-border shadow-xs space-y-2 sm:space-y-3 mb-3 sm:mb-5 w-full">
+            <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md px-3 sm:px-4 md:px-6 pt-2.5 sm:pt-4 pb-2 sm:pb-3 border-b border-border shadow-xs space-y-2 sm:space-y-3 mb-3 sm:mb-5 w-full iphone-landscape-portfolio-header-wrap">
                 {/* Top Row: Title + Action Buttons */}
-                <div className="flex items-center justify-between gap-2 w-full">
-                    <div className="flex items-center gap-2 pl-11 xl:pl-0 min-w-0">
-                        <div className="size-8 sm:size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner shrink-0">
+                <div className="flex items-center justify-between gap-2 w-full iphone-landscape-header-card">
+                    <div className="flex items-center gap-2 pl-11 xl:pl-0 min-w-0 iphone-landscape-portfolio-title-group">
+                        <LandscapeBackButton />
+                        <div className="size-8 sm:size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner shrink-0 iphone-landscape-portfolio-icon">
                             <Globe className="size-4 sm:size-6" />
                         </div>
                         <div className="min-w-0">
-                            <h1 className="text-base sm:text-2xl md:text-3xl font-extrabold tracking-tight text-foreground truncate">
+                            <h1 className="text-base sm:text-2xl md:text-3xl font-extrabold tracking-tight text-foreground truncate iphone-landscape-portfolio-title">
                                 Marktübersicht
                             </h1>
-                            <p className="text-[11px] sm:text-xs text-muted-foreground font-medium hidden md:block">
+                            <p className="iphone-landscape-portfolio-subtitle text-[11px] sm:text-xs text-muted-foreground font-medium hidden md:block">
                                 Rohstoffe, Währungen, Indizes &amp; Top-Märkte auf einen Blick
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0 iphone-landscape-portfolio-actions">
                         {/* Sort Dropdown */}
                         <div className="relative">
                             <select
@@ -1022,7 +1024,7 @@ export function MarketOverviewPage() {
                 {/* Second Row: Category Filter Pills & Edit Actions (Sticky with header!) */}
                 <div className="flex items-center justify-between gap-2 w-full min-w-0">
                     <div className="w-full min-w-0 overflow-x-auto scroller-none py-0.5">
-                        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/50 w-fit">
+                        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/50 w-fit iphone-landscape-segmented">
                             {[
                                 { id: 'all', label: 'Alle' },
                                 { id: 'portfolio', label: `💼 Bestand (${portfolioStocks.length})` },
@@ -1086,7 +1088,7 @@ export function MarketOverviewPage() {
             </div>
 
             {/* Padded Container for Grid and Content */}
-            <div className="px-3 sm:px-4 md:px-6 space-y-4">
+            <div className="px-3 sm:px-4 md:px-6 space-y-4 iphone-landscape-no-px">
                 {/* The Market Tiles Grid (Optimized 2 columns on iPhone & mobile, 3 columns on tablet/desktop) */}
                 <div 
                     onDragOver={(e) => {

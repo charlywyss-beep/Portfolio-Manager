@@ -1,3 +1,4 @@
+import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { CurrencyChart } from '../components/CurrencyChart';
 import { CurrencyGainCalculator } from '../components/CurrencyGainCalculator';
 import { ShareCalculator } from '../components/ShareCalculator';
@@ -14,6 +15,7 @@ export function ExchangeRates() {
                     <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
                         <div className="flex items-center justify-between gap-3 iphone-landscape-portfolio-header-row">
                             <div className="flex items-center gap-3 iphone-landscape-portfolio-title-group">
+                                <LandscapeBackButton />
                                 <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 text-violet-600 dark:text-violet-400 iphone-landscape-portfolio-icon">
                                     <ArrowLeftRight className="size-6" />
                                 </div>

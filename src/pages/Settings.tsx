@@ -1,9 +1,10 @@
+import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { useState, useRef, useMemo, useEffect } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import {
     Download, Upload, AlertTriangle, FileJson, CheckCircle, XCircle, RotateCcw,
-    Cloud, CloudUpload, CloudDownload, Key, Eye, EyeOff, RefreshCw, ExternalLink, Copy, Check, Loader2
+    Cloud, CloudUpload, CloudDownload, Key, Eye, EyeOff, RefreshCw, ExternalLink, Copy, Check, Loader2, Settings as SettingsIcon
 } from 'lucide-react';
 import { ConfirmModal } from '../components/ConfirmModal';
 import packageJson from '../../package.json';
@@ -256,10 +257,24 @@ export function Settings() {
     };
 
     return (
-        <div className="px-3 sm:px-6 py-4 sm:py-6 md:p-8 space-y-6 sm:space-y-8 animate-in fade-in duration-500 max-w-full overflow-hidden">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mb-6 sm:mb-8 pl-11 xl:pl-0">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Einstellungen</h1>
-                <p className="text-xs sm:text-sm text-muted-foreground">Verwalten Sie Ihre Daten-Backups und Systemeinstellungen.</p>
+        <div className="p-4 md:p-6 space-y-6 sm:space-y-8 animate-in fade-in duration-500 max-w-full bg-gradient-to-br from-background via-background to-muted/20 iphone-landscape-page-root">
+            <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6 iphone-landscape-portfolio-header-wrap">
+                <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
+                    <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
+                        <div className="flex items-center justify-between gap-3 iphone-landscape-portfolio-header-row">
+                            <div className="flex items-center gap-3 iphone-landscape-portfolio-title-group">
+                                <LandscapeBackButton />
+                                <div className="p-3 rounded-xl bg-gradient-to-br from-slate-500/20 to-zinc-500/20 text-slate-600 dark:text-slate-300 iphone-landscape-portfolio-icon">
+                                    <SettingsIcon className="size-6" />
+                                </div>
+                                <div>
+                                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight iphone-landscape-portfolio-title">Einstellungen</h1>
+                                    <p className="text-xs sm:text-sm text-muted-foreground hidden md:block iphone-landscape-portfolio-subtitle">Verwalten Sie Ihre Daten-Backups und Systemeinstellungen.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* GitHub Cloud-Sync Card */}

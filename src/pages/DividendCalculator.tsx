@@ -1038,11 +1038,11 @@ export function DividendCalculator() {
                                 <button
                                     onClick={handleBack}
                                     type="button"
-                                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-all font-medium text-xs sm:text-sm shadow-xs group shrink-0 active:scale-95"
+                                    className="flex items-center justify-center p-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-all font-medium text-xs sm:text-sm shadow-xs group shrink-0 active:scale-95"
                                     title="Zurück"
+                                    aria-label="Zurück"
                                 >
-                                    <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />
-                                    <span>Zurück</span>
+                                    <ArrowLeft className="size-5 transition-transform group-hover:-translate-x-0.5" />
                                 </button>
                                 <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 iphone-landscape-portfolio-icon">
                                     <Coins className="size-6" />

@@ -1,3 +1,4 @@
+import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
@@ -190,6 +191,7 @@ export function Portfolio() {
                     <div className="w-full px-3 sm:px-4 py-3 sm:py-3.5 md:px-6 lg:px-6 iphone-landscape-portfolio-header-content">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 iphone-landscape-portfolio-header-row">
                             <div className="flex items-center gap-3 pl-12 xl:pl-0 min-h-[38px] iphone-landscape-portfolio-title-group">
+                                <LandscapeBackButton />
                                 <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 text-emerald-600 dark:text-emerald-400 shrink-0 iphone-landscape-portfolio-icon">
                                     <BarChart3 className="size-5 sm:size-6" />
                                 </div>

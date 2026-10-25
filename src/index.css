@@ -159,6 +159,18 @@
     padding-top: 0 !important;
     padding-left: 0.75rem !important;
     padding-right: 0.5rem !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .iphone-landscape-no-px {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .iphone-landscape-hide {
+    display: none !important;
   }
 
   /* Portfolio / Positionen Seite im iPhone Querformat */
@@ -177,6 +189,9 @@
   .iphone-landscape-portfolio-header-wrap {
     margin: 0 !important;
     padding: 0.25rem 0 0.25rem 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background-color: hsl(var(--background)) !important;
   }
 
   /* Abstand zum nachfolgenden Inhalt auf allen Seiten gleich */
@@ -207,6 +222,38 @@
     display: flex !important;
     align-items: center !important;
     overflow: visible !important;
+  }
+
+  /* Direkte Header-Karte (z.B. Fairer Wert, Marktuebersicht mit 2. Zeile im Sticky-Header) */
+  .iphone-landscape-portfolio-header-wrap .iphone-landscape-header-card {
+    margin: 0 !important;
+    padding: 0 0.5rem !important;
+    height: 2.25rem !important;
+    min-height: 2.25rem !important;
+    max-height: 2.25rem !important;
+    border: 1px solid hsl(var(--border)) !important;
+    border-radius: 0.75rem !important;
+    background-color: hsl(var(--card)) !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.35rem !important;
+    overflow: visible !important;
+  }
+
+  .iphone-landscape-portfolio-header-wrap > .iphone-landscape-header-card + * {
+    margin-top: 0.25rem !important;
+  }
+
+  .iphone-landscape-portfolio-header-wrap > .relative input[type="text"] {
+    height: 1.9rem !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    font-size: 0.8rem !important;
+    border-radius: 0.6rem !important;
   }
 
   .iphone-landscape-portfolio-header-wrap .iphone-landscape-portfolio-header-content {
@@ -282,6 +329,9 @@
     max-width: 1.65rem !important;
     max-height: 1.65rem !important;
     padding: 0 !important;
+    border: 1px solid hsl(var(--border)) !important;
+    background-color: hsl(var(--card)) !important;
+    color: hsl(var(--foreground)) !important;
     border-radius: 0.5rem !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -367,6 +417,10 @@
     gap: 0.3rem !important;
     white-space: nowrap !important;
     flex-shrink: 0 !important;
+  }
+
+  .iphone-landscape-portfolio-header-wrap .iphone-landscape-portfolio-actions .relative > select {
+    padding-left: 1.5rem !important;
   }
 
   .iphone-landscape-portfolio-header-wrap .iphone-landscape-portfolio-actions button svg,

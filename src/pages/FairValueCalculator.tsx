@@ -993,7 +993,7 @@ export function FairValueCalculator() {
         && (actualCurrentPe > 0 && (typeof pe === 'string' ? parseFloat(pe) || 0 : pe) > actualCurrentPe + 0.5);
 
     return (
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 md:p-8 space-y-6 sm:space-y-8 pb-32">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 md:p-8 space-y-6 sm:space-y-8 pb-32 iphone-landscape-page-root">
             {/* Add Link Modal */}
             {showAddLinkModal && (
                 <div className="fixed inset-0 z-[2100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
@@ -1342,35 +1342,36 @@ export function FairValueCalculator() {
             )}
 
             {/* STICKY HEADER & ACTIVE STOCK / SEARCH BAR */}
-            <div className="sticky top-0 z-40 bg-background/95 backdrop-blur -mx-3 sm:-mx-4 md:-mx-6 px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 -mt-4 border-b border-border shadow-sm space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pl-11 xl:pl-0">
+            <div className="sticky top-0 z-40 bg-background/95 backdrop-blur -mx-3 sm:-mx-4 md:-mx-6 px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 -mt-4 border-b border-border shadow-sm space-y-2 iphone-landscape-portfolio-header-wrap">
+                <div className="flex items-center justify-between gap-2 iphone-landscape-header-card">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pl-11 xl:pl-0 iphone-landscape-portfolio-title-group">
                         <button
                             onClick={handleBack}
                             type="button"
-                            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-all font-medium text-xs sm:text-sm shadow-xs group shrink-0 active:scale-95"
+                            className="flex items-center justify-center p-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-all font-medium text-xs sm:text-sm shadow-xs group shrink-0 active:scale-95"
                             title="Zurück"
+                            aria-label="Zurück"
                         >
-                            <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />
-                            <span>Zurück</span>
+                            <ArrowLeft className="size-4 sm:size-5 transition-transform group-hover:-translate-x-0.5" />
                         </button>
-                        <div className="size-8 sm:size-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner shrink-0">
+                        <div className="size-8 sm:size-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner shrink-0 iphone-landscape-portfolio-icon">
                             <Telescope className="size-4 sm:size-5" />
                         </div>
                         <div className="min-w-0">
-                            <h1 className="text-base sm:text-lg md:text-xl font-bold tracking-tight truncate">Fairer Wert</h1>
-                            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium hidden sm:block">Ermittlung des fairen Werts nach Rule #1 & DCF Logik</p>
+                            <h1 className="text-base sm:text-lg md:text-xl font-bold tracking-tight truncate iphone-landscape-portfolio-title">Fairer Wert</h1>
                         </div>
                     </div>
-                    <button
-                        onClick={() => setShowGuide(true)}
-                        className="flex items-center gap-1.5 px-2.5 py-1 bg-secondary/60 hover:bg-secondary text-secondary-foreground rounded-lg transition-all border border-secondary text-xs font-medium shrink-0 group"
-                        title="Wie funktioniert das? (Anleitung)"
-                    >
-                        <BookOpen className="size-3.5 group-hover:scale-110 transition-transform" />
-                        <span className="hidden sm:inline">Wie funktioniert das? </span>
-                        <span>Anleitung</span>
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0 iphone-landscape-portfolio-actions">
+                        <button
+                            onClick={() => setShowGuide(true)}
+                            className="flex items-center gap-1.5 px-2.5 py-1 bg-secondary/60 hover:bg-secondary text-secondary-foreground rounded-lg transition-all border border-secondary text-xs font-medium shrink-0 group"
+                            title="Wie funktioniert das? (Anleitung)"
+                        >
+                            <BookOpen className="size-3.5 group-hover:scale-110 transition-transform" />
+                            <span className="hidden sm:inline iphone-landscape-hide">Wie funktioniert das? </span>
+                            <span>Anleitung</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Search Bar OR Selected Stock Card */}

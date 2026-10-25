@@ -1,3 +1,4 @@
+import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { useMemo, useState } from 'react';
 import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car, ChevronDown, ChevronUp, Fuel, Zap, User, FileText, Gauge, Droplets } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -505,6 +506,7 @@ export const MortgageCalculator = () => {
                     <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
                         <div className="flex items-center justify-between gap-3 iphone-landscape-portfolio-header-row">
                             <div className="flex items-center gap-3 iphone-landscape-portfolio-title-group">
+                                <LandscapeBackButton />
                                 <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-600 dark:text-amber-400 iphone-landscape-portfolio-icon">
                                     <Wallet className="size-6" />
                                 </div>
