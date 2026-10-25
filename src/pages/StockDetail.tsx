@@ -346,7 +346,7 @@ export function StockDetail() {
         : '';
 
     return (
-        <div className="p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16">
+        <div className="p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16 landscape:pb-10">
             {/* Sticky Header in Portrait, Normal Scrollable (not sticky) in Landscape */}
             <div className="sticky top-0 landscape:static landscape:top-auto -mx-2 md:-mx-8 landscape:mx-0 px-3 py-2 md:px-8 md:py-4 landscape:py-1.5 landscape:px-3 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-3 md:mb-6 landscape:mb-2 iphone-landscape-header">
                 <div className="flex items-center gap-2 mb-2 md:mb-4 landscape:mb-1 pl-10 xl:pl-0 landscape:pl-0">
@@ -1189,11 +1189,11 @@ export function StockDetail() {
                 );
             })()}
 
-            {/* Quick Links & Notes (Vertical Stack) */}
-            <div className="flex flex-col gap-6 landscape:gap-3 iphone-landscape-snap">
+            {/* Quick Links & Notes */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 landscape:gap-3 items-stretch iphone-landscape-section">
                 {/* Quick Links Card */}
-                <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
-                    <h3 className="font-bold text-lg mb-4">Quick Links</h3>
+                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm flex flex-col justify-between h-full overflow-hidden">
+                    <h3 className="font-bold text-base md:text-lg landscape:text-xs mb-2 md:mb-4 landscape:mb-1">Quick Links</h3>
                     <div className="space-y-3 flex-1">
                         {/* Input for adding new links */}
                         <div className="flex gap-2">
@@ -1264,16 +1264,16 @@ export function StockDetail() {
                 </div>
 
                 {/* Notes Card */}
-                <div className="bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-bold text-lg flex items-center gap-2">
-                            <Save className="size-5 text-purple-500" />
+                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm flex flex-col justify-between h-full overflow-hidden">
+                    <div className="flex items-center justify-between mb-2 md:mb-4 landscape:mb-1">
+                        <h3 className="font-bold text-base md:text-lg landscape:text-xs flex items-center gap-1.5 md:gap-2">
+                            <Save className="size-4 md:size-5 text-purple-500" />
                             Persönliche Notizen & Analyse
                         </h3>
                         <button
                             onClick={handleSaveNotes}
                             className={cn(
-                                'px-4 py-2 rounded-lg font-medium text-sm transition-all',
+                                'px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-medium text-xs sm:text-sm transition-all',
                                 isSaving
                                     ? 'bg-green-500 text-white'
                                     : 'bg-primary text-primary-foreground hover:bg-primary/90'
@@ -1286,9 +1286,9 @@ export function StockDetail() {
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         placeholder="Schreiben Sie hier Ihre Gedanken zur Aktie (z.B. Kaufgrund, Burggraben, Risiken)..."
-                        className="flex-1 min-h-[300px] w-full p-4 rounded-lg border border-border bg-background/50 resize-y focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="flex-1 min-h-[160px] md:min-h-[300px] landscape:min-h-0 w-full p-2.5 md:p-4 text-xs sm:text-sm rounded-lg border border-border bg-background/50 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="text-[10px] md:text-xs text-muted-foreground mt-1 landscape:mt-0.5">
                         * Notizen werden nur lokal gespeichert.
                     </p>
                 </div>

@@ -121,15 +121,15 @@
 /* Exklusiv für iPhone / Smartphone im Querformat (Höhe <= 500px): exakt eine Feldhöhe pro Bildschirm */
 @media (orientation: landscape) and (max-height: 500px) {
   .app-main-landscape-safe {
-    scroll-snap-type: y mandatory;
+    scroll-snap-type: y proximity;
     scroll-padding-top: 0.5rem;
+    scroll-padding-bottom: 2rem;
   }
 
   .iphone-landscape-section {
     height: calc(100dvh - 1rem) !important;
     min-height: calc(100dvh - 1rem) !important;
     scroll-snap-align: start;
-    scroll-snap-stop: always;
   }
 
   .iphone-landscape-header {
