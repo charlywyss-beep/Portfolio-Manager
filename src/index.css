@@ -145,6 +145,116 @@
     top: max(env(safe-area-inset-top, 0px), 2.35rem) !important;
     height: calc(100dvh - max(env(safe-area-inset-top, 0px), 2.35rem)) !important;
   }
+
+  /* Marktuebersicht auf dem iPad: immer exakt ganze Kacheln ohne Anschnitt oben oder unten */
+  .market-overview-page {
+    height: calc(100dvh - max(env(safe-area-inset-top, 0px), 2.35rem)) !important;
+    max-height: calc(100dvh - max(env(safe-area-inset-top, 0px), 2.35rem)) !important;
+    padding-bottom: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  .market-overview-page .iphone-landscape-portfolio-header-wrap {
+    flex-shrink: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0.65rem !important;
+    padding-bottom: 0.55rem !important;
+  }
+
+  .market-overview-page .market-content-wrap {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    container-type: size !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scroll-snap-type: y mandatory !important;
+    scroll-padding-top: 0.5rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    margin-top: 0 !important;
+  }
+
+  .market-overview-page .market-tile-card {
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 0.65rem 0.9rem !important;
+    scroll-snap-align: start !important;
+  }
+
+  .market-overview-page .market-tile-title {
+    font-size: 1.05rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .market-overview-page .market-tile-shares {
+    font-size: 0.8rem !important;
+    line-height: 1.15 !important;
+    margin-top: 0.1rem !important;
+  }
+
+  .market-overview-page .market-tile-price-wrap {
+    margin: 0.15rem 0 !important;
+  }
+
+  .market-overview-page .market-tile-price {
+    font-size: 1.65rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .market-overview-page .market-tile-pills-wrap {
+    gap: 0.25rem !important;
+  }
+
+  .market-overview-page .market-tile-pill-1 {
+    padding: 0.2rem 0.75rem !important;
+    border-radius: 0.6rem !important;
+  }
+
+  .market-overview-page .market-tile-pill-1 span {
+    font-size: 0.9rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .market-overview-page .market-tile-pill-2 {
+    padding: 0.16rem 0.65rem !important;
+    border-radius: 0.6rem !important;
+    font-size: 0.78rem !important;
+    line-height: 1.2 !important;
+  }
+}
+
+/* iPad Querformat: exakt 3 Spalten x 3 Reihen = 9 ganze Kacheln sichtbar */
+@media (orientation: landscape) and (min-width: 641px) and (min-height: 501px) and (max-width: 1279px),
+       (pointer: coarse) and (orientation: landscape) and (min-width: 641px) and (min-height: 501px) {
+  .market-overview-page .market-tiles-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-auto-rows: calc((100dvh - 11.2rem) / 3) !important;
+    grid-auto-rows: calc((100cqh - 1.5rem) / 3) !important;
+    gap: 0.75rem !important;
+  }
+
+  .market-overview-page .market-tile-card {
+    height: calc((100dvh - 11.2rem) / 3) !important;
+    height: calc((100cqh - 1.5rem) / 3) !important;
+  }
+}
+
+/* iPad Hochformat: exakt 2 Spalten x 5 Reihen = 10 ganze Kacheln sichtbar */
+@media (orientation: portrait) and (min-width: 641px) and (min-height: 501px) and (max-width: 1279px),
+       (pointer: coarse) and (orientation: portrait) and (min-width: 641px) and (min-height: 501px) {
+  .market-overview-page .market-tiles-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-auto-rows: calc((100dvh - 12.2rem) / 5) !important;
+    grid-auto-rows: calc((100cqh - 3rem) / 5) !important;
+    gap: 0.75rem !important;
+  }
+
+  .market-overview-page .market-tile-card {
+    height: calc((100dvh - 12.2rem) / 5) !important;
+    height: calc((100cqh - 3rem) / 5) !important;
+  }
 }
 
 /* Exklusiv für iPhone / Smartphone im Querformat (Höhe <= 500px): exakt eine Feldhöhe pro Bildschirm */

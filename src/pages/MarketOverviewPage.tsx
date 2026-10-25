@@ -946,10 +946,10 @@ export function MarketOverviewPage() {
                             <Globe className="size-4 sm:size-6" />
                         </div>
                         <div className="min-w-0">
-                            <h1 className="text-base sm:text-2xl md:text-3xl font-extrabold tracking-tight text-foreground truncate iphone-landscape-portfolio-title">
+                            <h1 className="text-base sm:text-xl lg:text-3xl font-extrabold tracking-tight text-foreground whitespace-nowrap iphone-landscape-portfolio-title">
                                 Marktübersicht
                             </h1>
-                            <p className="iphone-landscape-portfolio-subtitle text-[11px] sm:text-xs text-muted-foreground font-medium hidden md:block">
+                            <p className="iphone-landscape-portfolio-subtitle text-[11px] sm:text-xs text-muted-foreground font-medium hidden xl:block">
                                 Rohstoffe, Währungen, Indizes &amp; Top-Märkte auf einen Blick
                             </p>
                         </div>
@@ -966,7 +966,7 @@ export function MarketOverviewPage() {
                                     try { localStorage.setItem('portfolio_market_overview_sort', val); } catch {}
                                 }}
                                 className={cn(
-                                    "appearance-none flex items-center pl-7 pr-7 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-xs border cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary max-w-[130px] sm:max-w-none truncate",
+                                    "appearance-none flex items-center pl-7 pr-7 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-xs border cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary max-w-[130px] sm:max-w-[210px] lg:max-w-none truncate",
                                     sortBy !== 'default'
                                         ? "bg-primary/10 text-primary border-primary/30"
                                         : "bg-card hover:bg-muted text-foreground border-border"
