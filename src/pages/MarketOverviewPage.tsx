@@ -1027,7 +1027,7 @@ export function MarketOverviewPage() {
                         <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/50 w-fit iphone-landscape-segmented">
                             {[
                                 { id: 'all', label: 'Alle' },
-                                { id: 'portfolio', label: `💼 Bestand (${portfolioStocks.length})` },
+                                { id: 'portfolio', label: '💼 Bestand' },
                                 { id: 'indices', label: 'Indizes' },
                                 { id: 'commodities', label: 'Rohstoffe' },
                                 { id: 'forex', label: 'Währungen' },
@@ -1038,10 +1038,10 @@ export function MarketOverviewPage() {
                                     key={tab.id}
                                     onClick={() => handleTabChange(tab.id as any)}
                                     className={cn(
-                                        "px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap shrink-0",
+                                        "px-2.5 sm:px-3 py-1 sm:py-1.5 text-[13px] sm:text-xs font-semibold rounded-lg transition-all whitespace-nowrap shrink-0",
                                         activeFilter === tab.id
-                                            ? "bg-background text-foreground shadow-xs font-bold"
-                                            : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+                                            ? "bg-primary text-white shadow-xs font-bold"
+                                            : "text-foreground hover:text-foreground hover:bg-background/40"
                                     )}
                                 >
                                     {tab.label}

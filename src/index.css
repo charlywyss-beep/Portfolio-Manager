@@ -472,7 +472,8 @@
     max-height: none !important;
     padding: 0 0.6rem !important;
     border-radius: 0.375rem !important;
-    font-size: 0.725rem !important;
+    font-size: 0.78rem !important;
+    color: #ffffff !important;
   }
 
   /* Eingabefeld im Header (z.B. Jahre) */
@@ -521,7 +522,8 @@
     max-height: 1.65rem !important;
     margin: 0 !important;
     padding: 0 0.65rem !important;
-    font-size: 0.725rem !important;
+    font-size: 0.76rem !important;
+    color: #ffffff !important;
     line-height: 1 !important;
     border-radius: 0.5rem !important;
     display: inline-flex !important;
@@ -1083,9 +1085,9 @@
 
   /* Umschalter (Kaufen/Verkaufen, Bereich/Einzeljahr, Marktuebersicht-Tabs) */
   .iphone-landscape-portfolio-header-wrap .iphone-landscape-segmented {
-    height: 1.75rem !important;
-    min-height: 1.75rem !important;
-    max-height: 1.75rem !important;
+    height: 1.95rem !important;
+    min-height: 1.95rem !important;
+    max-height: 1.95rem !important;
     padding: 0.125rem !important;
     margin: 0 !important;
     border-radius: 0.5rem !important;
@@ -1099,9 +1101,10 @@
     height: 100% !important;
     min-height: 0 !important;
     max-height: none !important;
-    padding: 0 0.6rem !important;
+    padding: 0 0.55rem !important;
     border-radius: 0.375rem !important;
-    font-size: 0.75rem !important;
+    font-size: 0.82rem !important;
+    color: #ffffff !important;
   }
 
   /* Eingabefeld im Header (z.B. Saisonalitaet Jahre) */
@@ -1120,7 +1123,8 @@
   }
 
   .iphone-landscape-portfolio-header-wrap .iphone-landscape-field label {
-    font-size: 0.75rem !important;
+    font-size: 0.78rem !important;
+    color: #ffffff !important;
     line-height: 1 !important;
   }
 
@@ -1160,12 +1164,13 @@
   }
 
   .iphone-landscape-portfolio-subtabs button:not(.absolute) {
-    height: 1.75rem !important;
-    min-height: 1.75rem !important;
-    max-height: 1.75rem !important;
+    height: 1.85rem !important;
+    min-height: 1.85rem !important;
+    max-height: 1.85rem !important;
     margin: 0 !important;
-    padding: 0 0.6rem !important;
-    font-size: 0.74rem !important;
+    padding: 0 0.65rem !important;
+    font-size: 0.78rem !important;
+    color: #ffffff !important;
     line-height: 1 !important;
     border-radius: 0.5rem !important;
     display: inline-flex !important;
@@ -1186,7 +1191,8 @@
     flex: 0 1 auto !important;
     min-width: 0 !important;
     padding: 0 0.45rem !important;
-    font-size: 0.7rem !important;
+    font-size: 0.74rem !important;
+    color: #ffffff !important;
     gap: 0.22rem !important;
   }
 
