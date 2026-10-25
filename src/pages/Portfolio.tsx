@@ -12,7 +12,7 @@ import { VorsorgeSection } from '../components/VorsorgeSection';
 import { FixedDepositTable } from '../components/FixedDepositTable';
 
 export function Portfolio() {
-    const { positions: rawPositions, stocks, fixedDeposits, deletePosition, updatePosition, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh, updateSimulatorState } = usePortfolio();
+    const { positions: rawPositions, stocks, deletePosition, updatePosition, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh, updateSimulatorState } = usePortfolio();
     const navigate = useNavigate();
     const [isAddChoiceModalOpen, setIsAddChoiceModalOpen] = useState(false);
     const [isAddFixedDepositModalOpen, setIsAddFixedDepositModalOpen] = useState(false);
@@ -161,8 +161,6 @@ export function Portfolio() {
 
     const stockPositions = sortedPositions.filter(p => !p.stock.type || p.stock.type === 'stock');
     const etfPositions = sortedPositions.filter(p => p.stock.type === 'etf');
-    const vorsorgeDeposits = fixedDeposits?.filter(fd => fd.accountType === 'vorsorge') || [];
-    const filteredFixedDeposits = fixedDeposits?.filter(fd => fd.accountType !== 'vorsorge') || [];
 
     const handleUpdate = (id: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number, newPurchases?: any[], newBroker?: string) => {
         const updates: any = { shares: newShares };
@@ -204,23 +202,6 @@ export function Portfolio() {
 
                             <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto sm:ml-auto iphone-landscape-portfolio-actions">
                                 <button
-                                    onClick={() => setIsAddChoiceModalOpen(true)}
-                                    className="flex items-center justify-center gap-1.5 sm:gap-2 bg-primary text-primary-foreground px-3.5 sm:px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm shrink-0 whitespace-nowrap iphone-landscape-btn"
-                                >
-                                    <Plus className="size-4" />
-                                    <span>Neu</span>
-                                </button>
-                                <select
-                                    className="w-auto min-w-0 px-3 py-2 rounded-lg border border-border bg-card text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer text-center iphone-landscape-select"
-                                    value={sortConfig.key}
-                                    onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
-                                >
-                                    <option value="name">Name: A-Z</option>
-                                    <option value="currency">Währung</option>
-                                    <option value="value">Wert: Hoch-Tief</option>
-                                    <option value="performance">Performance: Beste</option>
-                                </select>
-                                <button
                                     onClick={() => refreshAllPrices(true)}
                                     disabled={isGlobalRefreshing}
                                     className={cn(
@@ -238,6 +219,23 @@ export function Portfolio() {
                                                 ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
                                                 : 'Aktualisieren'}
                                     </span>
+                                </button>
+                                <select
+                                    className="w-auto min-w-0 px-3 py-2 rounded-lg border border-border bg-card text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer text-center iphone-landscape-select"
+                                    value={sortConfig.key}
+                                    onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
+                                >
+                                    <option value="name">Name: A-Z</option>
+                                    <option value="currency">Währung</option>
+                                    <option value="value">Wert: Hoch-Tief</option>
+                                    <option value="performance">Performance: Beste</option>
+                                </select>
+                                <button
+                                    onClick={() => setIsAddChoiceModalOpen(true)}
+                                    className="flex items-center justify-center gap-1.5 sm:gap-2 bg-primary text-primary-foreground px-3.5 sm:px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm shrink-0 whitespace-nowrap iphone-landscape-btn"
+                                >
+                                    <Plus className="size-4" />
+                                    <span>Neu</span>
                                 </button>
                             </div>
                         </div>
@@ -258,12 +256,6 @@ export function Portfolio() {
                 >
                     <BarChart3 className="size-4" />
                     <span>Aktien</span>
-                    <span className={cn(
-                        "text-xs px-1.5 py-0.5 rounded-full font-mono",
-                        activeTab === 'stocks' ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
-                    )}>
-                        {stockPositions.length}
-                    </span>
                 </button>
 
                 <button
@@ -277,12 +269,6 @@ export function Portfolio() {
                 >
                     <PieChart className="size-4" />
                     <span>ETFs</span>
-                    <span className={cn(
-                        "text-xs px-1.5 py-0.5 rounded-full font-mono",
-                        activeTab === 'etfs' ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
-                    )}>
-                        {etfPositions.length}
-                    </span>
                 </button>
 
                 <button
@@ -296,12 +282,6 @@ export function Portfolio() {
                 >
                     <ShieldCheck className="size-4" />
                     <span>Vorsorge</span>
-                    <span className={cn(
-                        "text-xs px-1.5 py-0.5 rounded-full font-mono",
-                        activeTab === 'vorsorge' ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
-                    )}>
-                        {vorsorgeDeposits.length}
-                    </span>
                 </button>
 
                 <button
@@ -315,12 +295,6 @@ export function Portfolio() {
                 >
                     <Landmark className="size-4" />
                     <span>Bankguthaben</span>
-                    <span className={cn(
-                        "text-xs px-1.5 py-0.5 rounded-full font-mono",
-                        activeTab === 'bank' ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
-                    )}>
-                        {filteredFixedDeposits.length}
-                    </span>
                 </button>
             </div>
 
