@@ -154,33 +154,34 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         safeJSONParse('portfolio_fixed_deposits', [])
     );
 
-    // Watchlist State (Multi-List Support v3.13.0)
-    const [watchlists, setWatchlists] = useState<import('../types').Watchlist[]>([]);
-
-    // Initialize Watchlists (Migration from old string[] or creation of defaults)
-    useEffect(() => {
+    // Watchlist State (Multi-List Support v3.13.0) - Synchronous init so Watchlist sub-tabs never reset on mount
+    const [watchlists, setWatchlists] = useState<import('../types').Watchlist[]>(() => {
         const savedWatchlists = localStorage.getItem('portfolio_watchlists');
         if (savedWatchlists) {
             try {
-                setWatchlists(JSON.parse(savedWatchlists));
+                return JSON.parse(savedWatchlists);
             } catch (e) {
                 console.error("Failed to parse watchlists", e);
-                setWatchlists([]);
+                return [];
             }
-        } else {
-            // Migration: Check for old single watchlist
-            const oldWatchlist = localStorage.getItem('portfolio_watchlist');
-            const migratedIds = oldWatchlist ? JSON.parse(oldWatchlist) : [];
-
-            const initialLists: import('../types').Watchlist[] = [
-                { id: 'wl_default', name: 'Merkliste', stockIds: migratedIds, isDefault: true },
-                { id: 'wl_ch', name: 'Schweiz', stockIds: [], isDefault: false },
-                { id: 'wl_div', name: 'Dividenden', stockIds: [], isDefault: false },
-                { id: 'wl_growth', name: 'Wachstums Aktien', stockIds: [], isDefault: false },
-            ];
-            setWatchlists(initialLists);
         }
-    }, []);
+        // Migration: Check for old single watchlist
+        const oldWatchlist = localStorage.getItem('portfolio_watchlist');
+        let migratedIds: string[] = [];
+        if (oldWatchlist) {
+            try {
+                migratedIds = JSON.parse(oldWatchlist);
+            } catch {
+                migratedIds = [];
+            }
+        }
+        return [
+            { id: 'wl_default', name: 'Merkliste', stockIds: migratedIds, isDefault: true },
+            { id: 'wl_ch', name: 'Schweiz', stockIds: [], isDefault: false },
+            { id: 'wl_div', name: 'Dividenden', stockIds: [], isDefault: false },
+            { id: 'wl_growth', name: 'Wachstums Aktien', stockIds: [], isDefault: false },
+        ];
+    });
 
     const [finnhubApiKey, setFinnhubApiKey] = useState<string>(() => {
         const stored = localStorage.getItem('portfolio_finnhub_api_key');

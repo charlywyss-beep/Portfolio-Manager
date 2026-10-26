@@ -45,7 +45,7 @@ export function Watchlist() {
         if (activeWatchlistId === 'owned') return;
 
         // If current list was deleted, fallback to 'owned'
-        if (activeWatchlistId && !watchlists.find(w => w.id === activeWatchlistId)) {
+        if (watchlists.length > 0 && activeWatchlistId && !watchlists.find(w => w.id === activeWatchlistId)) {
             setActiveWatchlistId('owned');
         }
     }, [watchlists, activeWatchlistId]);
@@ -197,7 +197,14 @@ export function Watchlist() {
                     : [])
             ];
 
-    const [activeSubTab, setActiveSubTab] = useState<string>('owned-stocks');
+    const SUBTAB_STORAGE_KEY = 'watchlist_active_subtab';
+    const [activeSubTab, setActiveSubTab] = useState<string>(() => {
+        return localStorage.getItem(SUBTAB_STORAGE_KEY) || 'owned-stocks';
+    });
+
+    useEffect(() => {
+        localStorage.setItem(SUBTAB_STORAGE_KEY, activeSubTab);
+    }, [activeSubTab]);
     const prevWatchlistIdRef = useRef(activeWatchlistId);
 
     useEffect(() => {
