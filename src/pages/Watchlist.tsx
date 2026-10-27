@@ -83,8 +83,8 @@ export function Watchlist() {
                 return sortConfig.direction === 'asc' ? yieldA - yieldB : yieldB - yieldA;
             }
             if (sortConfig.key === 'price') {
-                const priceA = a.currentPrice || 0;
-                const priceB = b.currentPrice || 0;
+                const priceA = a.previousClose ? ((a.currentPrice - a.previousClose) / a.previousClose) * 100 : 0;
+                const priceB = b.previousClose ? ((b.currentPrice - b.previousClose) / b.previousClose) * 100 : 0;
                 return sortConfig.direction === 'asc' ? priceA - priceB : priceB - priceA;
             }
             if (sortConfig.key === 'gap') {
@@ -551,8 +551,8 @@ function WatchlistTable({
                 return sortConfig.direction === 'asc' ? yieldA - yieldB : yieldB - yieldA;
             }
             if (sortConfig.key === 'price') {
-                const priceA = a.currentPrice || 0;
-                const priceB = b.currentPrice || 0;
+                const priceA = a.previousClose ? ((a.currentPrice - a.previousClose) / a.previousClose) * 100 : 0;
+                const priceB = b.previousClose ? ((b.currentPrice - b.previousClose) / b.previousClose) * 100 : 0;
                 return sortConfig.direction === 'asc' ? priceA - priceB : priceB - priceA;
             }
             if (sortConfig.key === 'gap') {
