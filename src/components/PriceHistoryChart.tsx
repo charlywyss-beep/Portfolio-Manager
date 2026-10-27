@@ -994,8 +994,6 @@ export function PriceHistoryChart({
                                 : "bg-rose-500/15 border-rose-500/70"
                         )}>
                             <span className={cn("size-2.5 rounded-full shrink-0", selectedExtremum === 'high' ? "bg-emerald-500" : "bg-rose-500")} />
-                            <span>{formatCurrency(pt.value, displayCurrency, false)}</span>
-                            <span className="text-muted-foreground">•</span>
                             <span>{dateTimeStr}</span>
                         </div>
                     );
