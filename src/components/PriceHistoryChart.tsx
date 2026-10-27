@@ -47,6 +47,18 @@ export function PriceHistoryChart({
     const [hoveredData, setHoveredData] = useState<{ date: string; value: number; sma200?: number | null } | null>(null);
     const [selectedExtremum, setSelectedExtremum] = useState<'high' | 'low' | null>(null);
 
+    useEffect(() => {
+        if (!selectedExtremum) return;
+        const handleOutsidePointerDown = (e: PointerEvent) => {
+            const target = e.target as HTMLElement | null;
+            if (!target?.closest('[data-extremum-btn="true"]')) {
+                setSelectedExtremum(null);
+            }
+        };
+        document.addEventListener('pointerdown', handleOutsidePointerDown);
+        return () => document.removeEventListener('pointerdown', handleOutsidePointerDown);
+    }, [selectedExtremum]);
+
     // Currency Conversion State
     const { rates } = useExchangeRates();
     const [showInCHF, setShowInCHF] = useState(false);
@@ -277,25 +289,17 @@ export function PriceHistoryChart({
         return displayPoints;
     }, [data, selectedRange, sma200Data]);
 
-    const { minPoint, maxPoint, minIndex, maxIndex } = useMemo(() => {
+    const { minPoint, maxPoint } = useMemo(() => {
         if (!displayData || displayData.length === 0) {
-            return { minPoint: null, maxPoint: null, minIndex: 0, maxIndex: 0 };
+            return { minPoint: null, maxPoint: null };
         }
         let minP = displayData[0];
         let maxP = displayData[0];
-        let minIdx = 0;
-        let maxIdx = 0;
-        displayData.forEach((p, idx) => {
-            if (p.value < minP.value) {
-                minP = p;
-                minIdx = idx;
-            }
-            if (p.value > maxP.value) {
-                maxP = p;
-                maxIdx = idx;
-            }
+        displayData.forEach((p) => {
+            if (p.value < minP.value) minP = p;
+            if (p.value > maxP.value) maxP = p;
         });
-        return { minPoint: minP, maxPoint: maxP, minIndex: minIdx, maxIndex: maxIdx };
+        return { minPoint: minP, maxPoint: maxP };
     }, [displayData]);
 
     const measurement = useMemo(() => {
@@ -344,6 +348,7 @@ export function PriceHistoryChart({
 
                                 <button
                                     type="button"
+                                    data-extremum-btn="true"
                                     onClick={() => setSelectedExtremum(prev => prev === 'high' ? null : 'high')}
                                     className={cn(
                                         "inline-flex items-center gap-1.5 px-2 py-0.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-lg landscape:text-lg font-bold",
@@ -361,6 +366,7 @@ export function PriceHistoryChart({
 
                                 <button
                                     type="button"
+                                    data-extremum-btn="true"
                                     onClick={() => setSelectedExtremum(prev => prev === 'low' ? null : 'low')}
                                     className={cn(
                                         "inline-flex items-center gap-1.5 px-2 py-0.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-lg landscape:text-lg font-bold",
@@ -877,17 +883,8 @@ export function PriceHistoryChart({
                             {/* High / Low Extremum Marker (when H: or T: is clicked) */}
                             {selectedExtremum && (() => {
                                 const pt = selectedExtremum === 'high' ? maxPoint : minPoint;
-                                const ptIdx = selectedExtremum === 'high' ? maxIndex : minIndex;
                                 if (!pt) return null;
                                 const color = selectedExtremum === 'high' ? '#10b981' : '#f43f5e';
-                                const d = new Date(pt.date);
-                                const timeLabel = selectedRange === '1D'
-                                    ? `${d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`
-                                    : ['1W', '1M'].includes(selectedRange)
-                                        ? `${d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} ${d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`
-                                        : d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
-                                const badgeText = `${selectedExtremum === 'high' ? 'H' : 'T'}: ${formatCurrency(pt.value, displayCurrency, false)} • ${timeLabel}`;
-                                const ratio = displayData.length > 1 ? ptIdx / (displayData.length - 1) : 0.5;
 
                                 return (
                                     <>
@@ -912,42 +909,10 @@ export function PriceHistoryChart({
                                             shape={(props: any) => {
                                                 const { cx, cy } = props;
                                                 if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
-                                                const badgeW = Math.max(145, badgeText.length * 6.8 + 18);
-                                                const badgeH = 24;
-                                                let boxX = cx - badgeW / 2;
-                                                if (ratio < 0.28) boxX = cx + 10;
-                                                else if (ratio > 0.72) boxX = cx - badgeW - 10;
-
-                                                let boxY = selectedExtremum === 'high' ? cy + 12 : Math.max(4, cy - badgeH - 12);
-                                                if (ratio < 0.28 || ratio > 0.72) {
-                                                    boxY = Math.max(4, cy - badgeH / 2);
-                                                }
-
                                                 return (
                                                     <g>
                                                         <circle cx={cx} cy={cy} r={12} fill={color} fillOpacity={0.28} />
                                                         <circle cx={cx} cy={cy} r={6.5} fill={color} stroke="#ffffff" strokeWidth={2.5} />
-                                                        <rect
-                                                            x={boxX}
-                                                            y={boxY}
-                                                            width={badgeW}
-                                                            height={badgeH}
-                                                            rx={6}
-                                                            fill="#0f172a"
-                                                            fillOpacity={0.94}
-                                                            stroke={color}
-                                                            strokeWidth={1.5}
-                                                        />
-                                                        <text
-                                                            x={boxX + badgeW / 2}
-                                                            y={boxY + 15.5}
-                                                            textAnchor="middle"
-                                                            fill="#ffffff"
-                                                            fontSize={11.5}
-                                                            fontWeight="bold"
-                                                        >
-                                                            {badgeText}
-                                                        </text>
                                                     </g>
                                                 );
                                             }}
@@ -1011,9 +976,35 @@ export function PriceHistoryChart({
                     </ResponsiveContainer>
                 )}
             </div>
-            <p className="text-[10px] text-muted-foreground text-center mt-1 landscape:mt-0 italic leading-tight">
-                {historyData && historyData.length > 0 ? '* Reale Marktdaten von Yahoo Finance' : '* Simulierter Chartverlauf (Demo-Modus)'}
-            </p>
+
+            <div className="min-h-[28px] flex items-center justify-center mt-1.5 landscape:mt-0.5">
+                {selectedExtremum && (selectedExtremum === 'high' ? maxPoint : minPoint) ? (() => {
+                    const pt = (selectedExtremum === 'high' ? maxPoint : minPoint)!;
+                    const d = new Date(pt.date);
+                    const dateTimeStr = selectedRange === '1D'
+                        ? `${d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })} • ${d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`
+                        : ['1W', '1M', '3M', '6M'].includes(selectedRange)
+                            ? `${d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })} • ${d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`
+                            : d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+                    return (
+                        <div className={cn(
+                            "inline-flex items-center gap-2 px-3.5 py-1 rounded-lg border text-sm font-bold text-foreground shadow-sm animate-in fade-in duration-150",
+                            selectedExtremum === 'high'
+                                ? "bg-emerald-500/15 border-emerald-500/70"
+                                : "bg-rose-500/15 border-rose-500/70"
+                        )}>
+                            <span className={cn("size-2.5 rounded-full shrink-0", selectedExtremum === 'high' ? "bg-emerald-500" : "bg-rose-500")} />
+                            <span>{formatCurrency(pt.value, displayCurrency, false)}</span>
+                            <span className="text-muted-foreground">•</span>
+                            <span>{dateTimeStr}</span>
+                        </div>
+                    );
+                })() : (
+                    <p className="text-[10px] text-muted-foreground text-center italic leading-tight">
+                        {historyData && historyData.length > 0 ? '* Reale Marktdaten von Yahoo Finance' : '* Simulierter Chartverlauf (Demo-Modus)'}
+                    </p>
+                )}
+            </div>
         </div>
     );
 
