@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
 import { useCurrencyFormatter } from '../utils/currency';
 import { Ruler, X } from 'lucide-react';
 import { cn } from '../utils';
@@ -45,6 +45,7 @@ export function PriceHistoryChart({
     const [isMaximized, setIsMaximized] = useState(false);
     const [measurePoints, setMeasurePoints] = useState<{ date: string; value: number }[]>([]);
     const [hoveredData, setHoveredData] = useState<{ date: string; value: number; sma200?: number | null } | null>(null);
+    const [selectedExtremum, setSelectedExtremum] = useState<'high' | 'low' | null>(null);
 
     // Currency Conversion State
     const { rates } = useExchangeRates();
@@ -276,6 +277,27 @@ export function PriceHistoryChart({
         return displayPoints;
     }, [data, selectedRange, sma200Data]);
 
+    const { minPoint, maxPoint, minIndex, maxIndex } = useMemo(() => {
+        if (!displayData || displayData.length === 0) {
+            return { minPoint: null, maxPoint: null, minIndex: 0, maxIndex: 0 };
+        }
+        let minP = displayData[0];
+        let maxP = displayData[0];
+        let minIdx = 0;
+        let maxIdx = 0;
+        displayData.forEach((p, idx) => {
+            if (p.value < minP.value) {
+                minP = p;
+                minIdx = idx;
+            }
+            if (p.value > maxP.value) {
+                maxP = p;
+                maxIdx = idx;
+            }
+        });
+        return { minPoint: minP, maxPoint: maxP, minIndex: minIdx, maxIndex: maxIdx };
+    }, [displayData]);
+
     const measurement = useMemo(() => {
         if (measurePoints.length !== 2) return null;
         const [p1, p2] = [...measurePoints].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -286,7 +308,7 @@ export function PriceHistoryChart({
 
     const chartContent = (
         <div className={cn(
-            "w-full flex flex-col relative transition-all duration-300",
+            "w-full flex flex-col relative transition-all duration-300 select-none",
             isMaximized ? "h-full" : "min-h-[360px] landscape:min-h-0 h-auto flex-1 pb-2 landscape:pb-0"
         )}>
             <div className="flex flex-wrap items-center justify-between mb-2 md:mb-4 landscape:mb-1.5 gap-2 relative">
@@ -306,25 +328,51 @@ export function PriceHistoryChart({
                         )}
                         <p className="text-sm landscape:text-xs text-muted-foreground">Performance ({selectedRange})</p>
                         <div className={cn("font-bold flex items-center gap-1", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
-                            <span className="text-xl landscape:text-base">
+                            <span className="text-xl landscape:text-xl">
                                 {performance > 0 ? '+' : ''}{performance.toFixed(2)}%
-                                <span className="ml-2 opacity-80 text-lg landscape:text-sm">{diffNativeFormatted}</span>
+                                <span className="ml-2 opacity-90 text-lg landscape:text-lg">{diffNativeFormatted}</span>
                             </span>
                         </div>
                     </div>
                     {/* High/Low Indicators + Mobile Hover Overlay */}
                     <div className="relative mt-1 min-h-[38px] sm:min-h-0 flex items-center">
                         <div className={cn(
-                            "flex items-center gap-3 text-xs text-muted-foreground transition-opacity duration-150",
+                            "flex flex-wrap items-center gap-3 text-lg landscape:text-lg font-bold text-foreground transition-opacity duration-150 select-none",
                             hoveredData && "opacity-0 sm:opacity-100"
                         )}>
                             <div className="flex items-center gap-1">
-                                <span className="font-medium text-foreground">H:</span>
-                                <span>{formatCurrency(maxPrice, displayCurrency, false)}</span>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedExtremum(prev => prev === 'high' ? null : 'high')}
+                                    className={cn(
+                                        "inline-flex items-center gap-1.5 px-2 py-0.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-lg landscape:text-lg font-bold",
+                                        selectedExtremum === 'high'
+                                            ? "bg-emerald-500/20 border-emerald-500 text-foreground shadow-sm"
+                                            : "border-transparent hover:bg-muted/60 text-foreground"
+                                    )}
+                                    title="Klicken, um das Hoch im Chart zu markieren"
+                                >
+                                    <span className="font-extrabold text-emerald-500 dark:text-emerald-400">H:</span>
+                                    <span className="font-bold text-foreground">{formatCurrency(maxPrice, displayCurrency, false)}</span>
+                                </button>
                             </div>
                             <div className="flex items-center gap-1">
-                                <span className="font-medium text-foreground">T:</span>
-                                <span>{formatCurrency(minPrice, displayCurrency, false)}</span>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedExtremum(prev => prev === 'low' ? null : 'low')}
+                                    className={cn(
+                                        "inline-flex items-center gap-1.5 px-2 py-0.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-lg landscape:text-lg font-bold",
+                                        selectedExtremum === 'low'
+                                            ? "bg-rose-500/20 border-rose-500 text-foreground shadow-sm"
+                                            : "border-transparent hover:bg-muted/60 text-foreground"
+                                    )}
+                                    title="Klicken, um das Tief im Chart zu markieren"
+                                >
+                                    <span className="font-extrabold text-rose-500 dark:text-rose-400">T:</span>
+                                    <span className="font-bold text-foreground">{formatCurrency(minPrice, displayCurrency, false)}</span>
+                                </button>
                             </div>
                         </div>
 
@@ -825,6 +873,88 @@ export function PriceHistoryChart({
                                     }}
                                 />
                             )}
+
+                            {/* High / Low Extremum Marker (when H: or T: is clicked) */}
+                            {selectedExtremum && (() => {
+                                const pt = selectedExtremum === 'high' ? maxPoint : minPoint;
+                                const ptIdx = selectedExtremum === 'high' ? maxIndex : minIndex;
+                                if (!pt) return null;
+                                const color = selectedExtremum === 'high' ? '#10b981' : '#f43f5e';
+                                const d = new Date(pt.date);
+                                const timeLabel = selectedRange === '1D'
+                                    ? `${d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`
+                                    : ['1W', '1M'].includes(selectedRange)
+                                        ? `${d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} ${d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`
+                                        : d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+                                const badgeText = `${selectedExtremum === 'high' ? 'H' : 'T'}: ${formatCurrency(pt.value, displayCurrency, false)} • ${timeLabel}`;
+                                const ratio = displayData.length > 1 ? ptIdx / (displayData.length - 1) : 0.5;
+
+                                return (
+                                    <>
+                                        <ReferenceLine
+                                            y={pt.value}
+                                            stroke={color}
+                                            strokeWidth={1.5}
+                                            strokeDasharray="4 4"
+                                            strokeOpacity={0.85}
+                                        />
+                                        <ReferenceLine
+                                            x={pt.date}
+                                            stroke={color}
+                                            strokeWidth={1.5}
+                                            strokeDasharray="4 4"
+                                            strokeOpacity={0.85}
+                                        />
+                                        <ReferenceDot
+                                            x={pt.date}
+                                            y={pt.value}
+                                            isFront={true}
+                                            shape={(props: any) => {
+                                                const { cx, cy } = props;
+                                                if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
+                                                const badgeW = Math.max(145, badgeText.length * 6.8 + 18);
+                                                const badgeH = 24;
+                                                let boxX = cx - badgeW / 2;
+                                                if (ratio < 0.28) boxX = cx + 10;
+                                                else if (ratio > 0.72) boxX = cx - badgeW - 10;
+
+                                                let boxY = selectedExtremum === 'high' ? cy + 12 : Math.max(4, cy - badgeH - 12);
+                                                if (ratio < 0.28 || ratio > 0.72) {
+                                                    boxY = Math.max(4, cy - badgeH / 2);
+                                                }
+
+                                                return (
+                                                    <g>
+                                                        <circle cx={cx} cy={cy} r={12} fill={color} fillOpacity={0.28} />
+                                                        <circle cx={cx} cy={cy} r={6.5} fill={color} stroke="#ffffff" strokeWidth={2.5} />
+                                                        <rect
+                                                            x={boxX}
+                                                            y={boxY}
+                                                            width={badgeW}
+                                                            height={badgeH}
+                                                            rx={6}
+                                                            fill="#0f172a"
+                                                            fillOpacity={0.94}
+                                                            stroke={color}
+                                                            strokeWidth={1.5}
+                                                        />
+                                                        <text
+                                                            x={boxX + badgeW / 2}
+                                                            y={boxY + 15.5}
+                                                            textAnchor="middle"
+                                                            fill="#ffffff"
+                                                            fontSize={11.5}
+                                                            fontWeight="bold"
+                                                        >
+                                                            {badgeText}
+                                                        </text>
+                                                    </g>
+                                                );
+                                            }}
+                                        />
+                                    </>
+                                );
+                            })()}
 
                             {/* Measurement Reference Lines */}
                             {measurePoints.map((p, i) => (
