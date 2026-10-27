@@ -908,7 +908,7 @@ export function PriceHistoryChart({
                                         <ReferenceDot
                                             x={pt.date}
                                             y={pt.value}
-                                            isFront={true}
+                                            r={6}
                                             shape={(props: any) => {
                                                 const { cx, cy } = props;
                                                 if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
