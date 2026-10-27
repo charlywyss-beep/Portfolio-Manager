@@ -41,6 +41,17 @@ export function PriceHistoryChart({
     stockSymbol
 }: PriceHistoryChartProps) {
     const [hasMounted, setHasMounted] = useState(false);
+    const [isNarrowPortrait, setIsNarrowPortrait] = useState(() =>
+        typeof window !== 'undefined' ? (window.innerWidth < 520 && window.innerHeight > window.innerWidth) : false
+    );
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsNarrowPortrait(window.innerWidth < 520 && window.innerHeight > window.innerWidth);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     const [isMeasureMode, setIsMeasureMode] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
     const [measurePoints, setMeasurePoints] = useState<{ date: string; value: number }[]>([]);
@@ -746,6 +757,14 @@ export function PriceHistoryChart({
                                                 ticks.push(point.date);
                                             }
                                         }
+                                        if (isNarrowPortrait && ticks.length > 5) {
+                                            const step = Math.ceil(ticks.length / 4);
+                                            const filtered: string[] = [];
+                                            for (let i = ticks.length - 1; i >= 0; i -= step) {
+                                                filtered.unshift(ticks[i]);
+                                            }
+                                            return filtered;
+                                        }
                                         return ticks;
                                     }
 
@@ -763,6 +782,14 @@ export function PriceHistoryChart({
                                                 ticks.push(point.date);
                                             }
                                         }
+                                        if (isNarrowPortrait && ticks.length > 5) {
+                                            const step = Math.ceil(ticks.length / 4);
+                                            const filtered: string[] = [];
+                                            for (let i = ticks.length - 1; i >= 0; i -= step) {
+                                                filtered.unshift(ticks[i]);
+                                            }
+                                            return filtered;
+                                        }
                                         return ticks;
                                     }
 
@@ -778,6 +805,14 @@ export function PriceHistoryChart({
                                                 seenDays.add(dayKey);
                                                 ticks.push(point.date);
                                             }
+                                        }
+                                        if (isNarrowPortrait && ticks.length > 5) {
+                                            const step = Math.ceil(ticks.length / 4);
+                                            const filtered: string[] = [];
+                                            for (let i = ticks.length - 1; i >= 0; i -= step) {
+                                                filtered.unshift(ticks[i]);
+                                            }
+                                            return filtered;
                                         }
                                         return ticks;
                                     }
@@ -797,7 +832,7 @@ export function PriceHistoryChart({
                                             if (date.getDay() === 5 && !seenDays.has(dayKey)) {
                                                 seenDays.add(dayKey);
                                                 // Only take every 2nd Friday
-                                                if (fridayCount % 2 === 0) {
+                                                if (fridayCount % (isNarrowPortrait ? 5 : 2) === 0) {
                                                     ticks.unshift(point.date); // Add to front to keep order
                                                 }
                                                 fridayCount++;
@@ -819,11 +854,13 @@ export function PriceHistoryChart({
                                             }
                                         }
 
-                                        if (selectedRange === '1Y') return monthlyFirstPoints;
+                                        if (selectedRange === '1Y' && !isNarrowPortrait) return monthlyFirstPoints;
 
                                         // For 5Y/BUY: Every 3rd month, backtracking from the end
                                         const result: string[] = [];
-                                        const gap = 3;
+                                        const gap = isNarrowPortrait
+                                            ? Math.max(2, Math.ceil(monthlyFirstPoints.length / 5))
+                                            : 3;
                                         for (let i = monthlyFirstPoints.length - 1; i >= 0; i -= gap) {
                                             result.unshift(monthlyFirstPoints[i]);
                                         }
