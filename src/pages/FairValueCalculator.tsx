@@ -259,6 +259,9 @@ export function FairValueCalculator() {
         if (!params || Number(params.eps) <= 0) return true;
         // Clean up accidental cross-stock copy from async loading race condition
         if (isAccidentalCrossCopy(sym, params)) return true;
+        // Currency distortion: saved EPS in a different currency than the quote (e.g. TSM: 327 TWD vs. 439 USD => P/E 1.3)
+        const knownPriceForSym = stocks.find(s => s.symbol.toLowerCase() === sym.toLowerCase())?.currentPrice || 0;
+        if (knownPriceForSym > 0 && knownPriceForSym / Number(params.eps) < 2.5) return true;
         const symUpper = sym.toUpperCase();
 
         // 1. Currency Mismatch & Extreme Distortion Auto-Heals

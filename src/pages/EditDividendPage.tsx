@@ -896,6 +896,10 @@ export function EditDividendPage() {
                                         }
 
                                         const effectivePrice = parseFloat((price || '').toString().replace(',', '.')) || currentStockObj?.currentPrice || 0;
+                                        // Ignore saved params with currency-distorted EPS (implausible P/E < 2.5)
+                                        if (activeParams && effectivePrice > 0 && Number(activeParams.eps) > 0 && effectivePrice / Number(activeParams.eps) < 2.5) {
+                                            activeParams = null;
+                                        }
                                         const parsedYield = parseFloat((yieldPercent || '').toString().replace(',', '.'));
                                         const effectiveYield = !isNaN(parsedYield) && parsedYield >= 0 ? parsedYield : currentStockObj?.dividendYield;
                                         const smartAutoConservative = computeSmartAutoParams(
