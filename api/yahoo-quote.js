@@ -171,6 +171,42 @@ export default async function handler(req, res) {
             }
         }
 
+        // Currency fix: Yahoo reports EPS in the company's reporting currency (financialCurrency),
+        // which can differ from the trading currency (e.g. Logitech: EPS in USD, LOGN.SW quoted in CHF).
+        // Convert EPS into the quote currency so that price / EPS and the Fair Value are consistent.
+        let rawTrailingEpsOut = rawTrailingEps;
+        let rawForwardEpsOut = rawForwardEps;
+        let trailingPEOut = trailingPEVal;
+        let forwardPEOut = forwardPEVal;
+        try {
+            const normCur = (c) => {
+                const u = String(c || '').trim();
+                if (u === 'GBp' || u === 'GBX') return 'GBP';
+                if (u === 'ILA') return 'ILS';
+                return u.toUpperCase();
+            };
+            const quoteCur = quoteBasic?.currency || quoteSummary?.price?.currency;
+            const finCur = quoteBasic?.financialCurrency || quoteSummary?.financialData?.financialCurrency;
+            const qc = normCur(quoteCur);
+            const fc = normCur(finCur);
+            if (qc && fc && qc !== fc && bestEps && bestEps > 0) {
+                const fx = await yahooFinance.quote(`${fc}${qc}=X`).catch(() => null);
+                const rate = fx?.regularMarketPrice;
+                if (rate && rate > 0 && isFinite(rate)) {
+                    // Pence quotes: EPS must be expressed in pence as well (price is in GBp)
+                    const subunit = (quoteCur === 'GBp' || quoteCur === 'GBX' || quoteCur === 'ILA') ? 100 : 1;
+                    const factor = rate * subunit;
+                    bestEps = bestEps * factor;
+                    if (rawTrailingEpsOut) rawTrailingEpsOut = rawTrailingEpsOut * factor;
+                    if (rawForwardEpsOut) rawForwardEpsOut = rawForwardEpsOut * factor;
+                    // Yahoo's P/E can be a mixed-currency ratio; recompute from converted EPS
+                    if (finalMarketPrice && bestEps > 0) trailingPEOut = finalMarketPrice / bestEps;
+                    if (finalMarketPrice && rawForwardEpsOut && rawForwardEpsOut > 0) forwardPEOut = finalMarketPrice / rawForwardEpsOut;
+                    epsSource = `${epsSource} (${fc}→${qc})`;
+                }
+            }
+        } catch (_) {}
+
         let growthRate5Y = null;
         const trends = quoteSummary?.earningsTrend?.trend || [];
         const fiveYearTrend = trends.find((t) => t.period === '+5y' || t.period === '5y');
@@ -206,12 +242,12 @@ export default async function handler(req, res) {
             regularMarketTime: (quoteBasic?.regularMarketTime || quoteSummary?.price?.regularMarketTime) ?
                 new Date((quoteBasic?.regularMarketTime || quoteSummary?.price?.regularMarketTime)).getTime() / 1000 : null,
 
-            trailingPE: trailingPEVal,
-            forwardPE: forwardPEVal,
+            trailingPE: trailingPEOut,
+            forwardPE: forwardPEOut,
             eps: bestEps,
             epsTrailingTwelveMonths: bestEps,
-            rawTrailingEps,
-            forwardEps: rawForwardEps,
+            rawTrailingEps: rawTrailingEpsOut,
+            forwardEps: rawForwardEpsOut,
             epsSource,
             growthRate: growthRate5Y,
             dividendYield: (quoteSummary?.summaryDetail?.dividendYield) ? quoteSummary.summaryDetail.dividendYield * 100 : (quoteBasic?.dividendYield || null),
