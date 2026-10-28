@@ -6,7 +6,8 @@ import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { fetchStockQuote, fetchStockAnalysis, searchStocks } from '../services/yahoo-finance';
-import { computeSmartAutoParams, WIDE_MOAT_QUALITY } from '../utils/fairValue';
+import { computeSmartAutoParams, adjustForReportingCurrency, WIDE_MOAT_QUALITY } from '../utils/fairValue';
+import { useExchangeRates } from '../context/ExchangeRateContext';
 import { translateSector } from '../utils/sectorTranslation';
 
 // Helper Component for Stock Management List Items (Rich UI mimicking Kauf/Verkauf)
@@ -137,6 +138,12 @@ export function FairValueCalculator() {
     const [discountRate, setDiscountRate] = useState<number | string>(8); // % (MARR)
     const [mos, setMos] = useState<number | string>(20); // % Margin of Safety
     const [epsSourceLabel, setEpsSourceLabel] = useState<string>('TTM');
+    const { rates: fxRates } = useExchangeRates();
+    // Wraps computeSmartAutoParams: converts EPS from reporting currency (e.g. USD) into quote currency (e.g. CHF)
+    const computeSmartAutoParamsFx = (q: any, a: any, s: any, sym: string, m: any) => {
+        const adj = adjustForReportingCurrency(q, a, fxRates as any);
+        return computeSmartAutoParams(adj.quote, adj.analysis, s, sym, m);
+    };
     const [growthSourceLabel, setGrowthSourceLabel] = useState<string>('Auto-Schätzung');
     const [isSavedForStock, setIsSavedForStock] = useState<boolean>(false);
     const [valuationProfile, setValuationProfile] = useState<'conservative' | 'quality'>('conservative');
@@ -332,7 +339,7 @@ export function FairValueCalculator() {
                 });
             }
         }
-        const smart = computeSmartAutoParams(quote, analysis, existingStock, selectedSymbol, mode);
+        const smart = computeSmartAutoParamsFx(quote, analysis, existingStock, selectedSymbol, mode);
         setEps(smart.eps);
         setGrowthRate(smart.growthRate);
         const pe5 = smart.pe;
@@ -378,7 +385,7 @@ export function FairValueCalculator() {
     const clearManualValues = () => {
         if (!selectedSymbol) return;
         const existingStock = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol.toLowerCase());
-        const smart = computeSmartAutoParams(quote, analysis, existingStock, selectedSymbol, valuationProfile);
+        const smart = computeSmartAutoParamsFx(quote, analysis, existingStock, selectedSymbol, valuationProfile);
 
         saveSymbolParamsToLocal(selectedSymbol, {
             eps: smart.eps,
@@ -755,7 +762,7 @@ export function FairValueCalculator() {
             setQuote(finalQuote);
             setAnalysis(a || { growthRate: null });
 
-            const smart = computeSmartAutoParams(finalQuote, a, existingStock, symbol, valuationProfile);
+            const smart = computeSmartAutoParamsFx(finalQuote, a, existingStock, symbol, valuationProfile);
             setPe5Year(smart.pe);
             setPe10Year((smart as any).pe10 || smart.pe);
 

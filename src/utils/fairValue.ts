@@ -357,3 +357,47 @@ export function calculateDcfFairValue(
         mos: valMos
     };
 }
+
+/**
+ * Converts EPS values reported in the company's reporting currency (e.g. USD for Logitech/Alcon)
+ * into the quote currency (e.g. CHF), using CHF-based exchange rates (units of currency per 1 CHF).
+ * Returns the (possibly adjusted) quote/analysis copies; unchanged if no conversion is needed/possible.
+ */
+export function adjustForReportingCurrency(
+    quote: any,
+    analysis: any,
+    rates: Record<string, number> | undefined
+): { quote: any; analysis: any } {
+    try {
+        if (!quote || !analysis || !rates) return { quote, analysis };
+        const norm = (c: any) => {
+            const u = String(c || '').trim();
+            if (u === 'GBp' || u === 'GBX') return 'GBP';
+            return u.toUpperCase();
+        };
+        const quoteCurRaw = String(quote.currency || '');
+        if (quoteCurRaw === 'GBp' || quoteCurRaw === 'GBX') return { quote, analysis };
+        const qc = norm(quote.currency);
+        const fc = norm(analysis.currency);
+        if (!qc || !fc || qc === fc) return { quote, analysis };
+        if (String(quote.epsSource || '').includes('?')) return { quote, analysis }; // already converted by server
+        const rateQ = qc === 'CHF' ? 1 : rates[qc];
+        const rateF = fc === 'CHF' ? 1 : rates[fc];
+        if (!rateQ || !rateF || !isFinite(rateQ) || !isFinite(rateF)) return { quote, analysis };
+        const factor = rateQ / rateF;
+        const conv = (v: any) => (typeof v === 'number' && isFinite(v) && v > 0) ? v * factor : v;
+
+        const q2 = { ...quote };
+        const a2 = { ...analysis };
+        const price = Number(quote.price || analysis.price || 0);
+        if (q2.eps) q2.eps = conv(q2.eps);
+        if (q2.epsTrailingTwelveMonths) q2.epsTrailingTwelveMonths = conv(q2.epsTrailingTwelveMonths);
+        if (q2.forwardEps) q2.forwardEps = conv(q2.forwardEps);
+        if (a2.eps) a2.eps = conv(a2.eps);
+        if (price > 0 && q2.eps > 0) q2.trailingPE = price / q2.eps;
+        q2.epsSource = `${q2.epsSource || 'TTM'} (${fc}?${qc})`;
+        return { quote: q2, analysis: a2 };
+    } catch {
+        return { quote, analysis };
+    }
+}
