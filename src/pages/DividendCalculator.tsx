@@ -9,6 +9,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
 import { cn } from '../utils';
+import { computeSmartAutoParams, calculateDcfFairValue } from '../utils/fairValue';
 
 // Helper component for comma-friendly number input
 const LocalNumberInput = ({ value, onChange, className, step = "any", title, placeholder }: {
@@ -832,6 +833,52 @@ export function DividendCalculator() {
     // Watchlist Picker State
     const [showWatchlistPicker, setShowWatchlistPicker] = useState(false);
 
+    // Fair Value preview (Sicherheit A) - loaded before the stock is saved to the watchlist
+    const [isLoadingFv, setIsLoadingFv] = useState(false);
+    const [fvPreview, setFvPreview] = useState<{ symbol: string; fairValue: number; buyPrice: number; mos: number; params: any } | null>(null);
+
+    const handleLoadFairValue = async () => {
+        const s = (simSymbol || simName || '').trim().toUpperCase();
+        if (!s) return;
+        setIsLoadingFv(true);
+        try {
+            const q: any = await fetchStockQuote(s);
+            const priceNow = (q && q.price) || price;
+            if (!priceNow || priceNow <= 0) return;
+            const smart = computeSmartAutoParams({ ...(q || {}), price: priceNow }, null, null, s, 'conservative');
+            const dcf = calculateDcfFairValue(smart, priceNow);
+            const fv = parseFloat(dcf.fairValue.toFixed(2));
+            if (!(fv > 0)) return;
+            setFvPreview({
+                symbol: s,
+                fairValue: fv,
+                buyPrice: parseFloat(dcf.buyPrice.toFixed(2)),
+                mos: smart.mos,
+                params: { ...smart, isCustom: false, valuationMode: 'conservative' }
+            });
+        } catch (err) {
+            console.error('Fair value load failed', err);
+        } finally {
+            setIsLoadingFv(false);
+        }
+    };
+
+    // Fair Value data to store together with the stock (only if loaded for the same symbol)
+    const getFvExtra = (): { fairValue?: number; fairValueParams?: any } => {
+        const s = (simSymbol || '').trim().toUpperCase();
+        if (!fvPreview || !s || fvPreview.symbol !== s) return {};
+        const entry = { ...fvPreview.params, updatedAt: new Date().toISOString() };
+        try {
+            const raw = localStorage.getItem('fair_value_params_map');
+            const map = raw ? JSON.parse(raw) : {};
+            map[s] = entry;
+            localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+        } catch {
+            // ignore
+        }
+        return { fairValue: fvPreview.fairValue, fairValueParams: entry };
+    };
+
     const handleAddToWatchlist = (watchlistId?: string) => {
         const fromWatchlist = searchParams.get('from') === 'watchlist';
 
@@ -859,7 +906,7 @@ export function DividendCalculator() {
                 savedAt: new Date().toISOString()
             };
 
-            updateStock(selectedStockId, { plannedPurchase });
+            updateStock(selectedStockId, { plannedPurchase, ...getFvExtra() });
             addToWatchlist(selectedStockId, watchlistId);
             setShowWatchlistPicker(false);
             setShowSuccess(true);
@@ -906,6 +953,7 @@ export function DividendCalculator() {
                 dividendAmount: dividend > 0 ? dividend / freqFactor : 0,
                 dividendYield: price > 0 ? (dividend / price) * 100 : 0,
                 dividendFrequency: frequency,
+                ...getFvExtra(),
                 plannedPurchase
             });
             addToWatchlist(newId, watchlistId);
@@ -1439,6 +1487,26 @@ export function DividendCalculator() {
                                                 <input required type="number" step="0.01" placeholder="z.B. 98.50" className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                                     value={simCurrency === 'GBP' ? parseFloat(price.toFixed(4)) : parseFloat(price.toFixed(2))}
                                                     onChange={e => updateSimulatorState({ price: parseFloat(e.target.value) || 0 })} aria-label="Kaufpreis" />
+                                                {(simSymbol || simName) && (
+                                                    <div className="space-y-1.5 pt-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleLoadFairValue}
+                                                            disabled={isLoadingFv}
+                                                            className="w-full text-xs flex items-center justify-center gap-1.5 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-1.5 rounded-md transition-colors font-semibold disabled:opacity-50"
+                                                            title="Fairen Wert (Sicherheit A) berechnen"
+                                                        >
+                                                            <BarChart3 className={cn("size-3.5", isLoadingFv && "animate-pulse")} />
+                                                            {isLoadingFv ? 'Berechne...' : 'Fairer Wert (Sicherheit A)'}
+                                                        </button>
+                                                        {fvPreview && fvPreview.symbol === (simSymbol || '').trim().toUpperCase() && (
+                                                            <div className="text-xs rounded-md border border-blue-500/30 bg-blue-500/10 px-2 py-1.5 space-y-0.5">
+                                                                <div className="flex justify-between"><span className="text-muted-foreground">Fairer Wert</span><span className="font-mono font-semibold">{fvPreview.fairValue.toFixed(2)} {simCurrency === 'GBp' ? 'GBP' : simCurrency}</span></div>
+                                                                <div className="flex justify-between"><span className="text-muted-foreground">Kaufpreis (MoS {fvPreview.mos} %)</span><span className="font-mono font-semibold text-blue-500">{fvPreview.buyPrice.toFixed(2)} {simCurrency === 'GBp' ? 'GBP' : simCurrency}</span></div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
