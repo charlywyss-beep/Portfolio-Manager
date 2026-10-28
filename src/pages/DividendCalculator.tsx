@@ -837,36 +837,42 @@ export function DividendCalculator() {
     const [isLoadingFv, setIsLoadingFv] = useState(false);
     const [fvPreview, setFvPreview] = useState<{ symbol: string; fairValue: number; buyPrice: number; mos: number; params: any } | null>(null);
 
-    const handleLoadFairValue = async () => {
-        const s = (simSymbol || simName || '').trim().toUpperCase();
-        if (!s) return;
-        setIsLoadingFv(true);
+    const computeFairValuePreview = async (s: string) => {
         try {
             const q: any = await fetchStockQuote(s);
             const priceNow = (q && q.price) || price;
-            if (!priceNow || priceNow <= 0) return;
+            if (!priceNow || priceNow <= 0) return null;
             const smart = computeSmartAutoParams({ ...(q || {}), price: priceNow }, null, null, s, 'conservative');
             const dcf = calculateDcfFairValue(smart, priceNow);
             const fv = parseFloat(dcf.fairValue.toFixed(2));
-            if (!(fv > 0)) return;
-            setFvPreview({
+            if (!(fv > 0)) return null;
+            return {
                 symbol: s,
                 fairValue: fv,
                 buyPrice: parseFloat(dcf.buyPrice.toFixed(2)),
                 mos: smart.mos,
                 params: { ...smart, isCustom: false, valuationMode: 'conservative' }
-            });
+            };
         } catch (err) {
             console.error('Fair value load failed', err);
-        } finally {
-            setIsLoadingFv(false);
+            return null;
         }
     };
 
-    // Fair Value data to store together with the stock (only if loaded for the same symbol)
-    const getFvExtra = (): { fairValue?: number; fairValueParams?: any } => {
+    const handleLoadFairValue = async () => {
+        const s = (simSymbol || simName || '').trim().toUpperCase();
+        if (!s) return;
+        setIsLoadingFv(true);
+        const res = await computeFairValuePreview(s);
+        if (res) setFvPreview(res);
+        setIsLoadingFv(false);
+    };
+
+    // Fair Value data to store together with the stock (uses the given/loaded preview for the same symbol)
+    const getFvExtra = (preview: typeof fvPreview = fvPreview): { fairValue?: number; fairValueParams?: any } => {
         const s = (simSymbol || '').trim().toUpperCase();
-        if (!fvPreview || !s || fvPreview.symbol !== s) return {};
+        if (!preview || !s || preview.symbol !== s) return {};
+        const fvPreview = preview;
         const entry = { ...fvPreview.params, updatedAt: new Date().toISOString() };
         try {
             const raw = localStorage.getItem('fair_value_params_map');
@@ -879,7 +885,11 @@ export function DividendCalculator() {
         return { fairValue: fvPreview.fairValue, fairValueParams: entry };
     };
 
-    const handleAddToWatchlist = (watchlistId?: string) => {
+    const handleAddToWatchlist = async (watchlistId?: string) => {
+        // Make sure a Fair Value (Sicherheit A) is stored, even if the button was not clicked before
+        const symForFv = (simSymbol || '').trim().toUpperCase();
+        let fvData = (fvPreview && fvPreview.symbol === symForFv) ? fvPreview : null;
+        if (!fvData && symForFv) fvData = await computeFairValuePreview(symForFv);
         const fromWatchlist = searchParams.get('from') === 'watchlist';
 
         if (selectedStockId && selectedStockId !== 'new') {
@@ -906,7 +916,7 @@ export function DividendCalculator() {
                 savedAt: new Date().toISOString()
             };
 
-            updateStock(selectedStockId, { plannedPurchase, ...getFvExtra() });
+            updateStock(selectedStockId, { plannedPurchase, ...getFvExtra(fvData) });
             addToWatchlist(selectedStockId, watchlistId);
             setShowWatchlistPicker(false);
             setShowSuccess(true);
@@ -953,7 +963,7 @@ export function DividendCalculator() {
                 dividendAmount: dividend > 0 ? dividend / freqFactor : 0,
                 dividendYield: price > 0 ? (dividend / price) * 100 : 0,
                 dividendFrequency: frequency,
-                ...getFvExtra(),
+                ...getFvExtra(fvData),
                 plannedPurchase
             });
             addToWatchlist(newId, watchlistId);

@@ -178,6 +178,7 @@ export default async function handler(req, res) {
         let rawForwardEpsOut = rawForwardEps;
         let trailingPEOut = trailingPEVal;
         let forwardPEOut = forwardPEVal;
+        let epsConverted = false;
         try {
             const normCur = (c) => {
                 const u = String(c || '').trim();
@@ -203,6 +204,24 @@ export default async function handler(req, res) {
                     if (finalMarketPrice && bestEps > 0) trailingPEOut = finalMarketPrice / bestEps;
                     if (finalMarketPrice && rawForwardEpsOut && rawForwardEpsOut > 0) forwardPEOut = finalMarketPrice / rawForwardEpsOut;
                     epsSource = `${epsSource} (${fc}→${qc})`;
+                    epsConverted = true;
+                }
+            }
+        } catch (_) {}
+
+        // Safety net: if no FX conversion happened but EPS is wildly inconsistent with Yahoo's own
+        // trailing P/E (which is expressed in the trading currency), trust price / P/E instead.
+        // Catches ADRs such as TSM (EPS in TWD, price in USD) when financialCurrency/FX is unavailable.
+        try {
+            const symIsLondon = String(symbol || '').toUpperCase().endsWith('.L');
+            if (!epsConverted && !symIsLondon && epsSource === 'TTM' && finalMarketPrice && bestEps && bestEps > 0
+                && trailingPEVal && trailingPEVal > 0 && trailingPEVal < 200) {
+                const impliedEps = finalMarketPrice / trailingPEVal;
+                const ratio = bestEps / impliedEps;
+                if (ratio > 1.6 || ratio < 0.625) {
+                    bestEps = impliedEps;
+                    rawTrailingEpsOut = impliedEps;
+                    epsSource = 'TTM (aus KGV)';
                 }
             }
         } catch (_) {}
