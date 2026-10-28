@@ -114,7 +114,7 @@ export function computeSmartAutoParams(
     } else if (price > 0 && trailingPE && trailingPE > 0) {
         autoEps = price / trailingPE;
         epsLabel = 'Aus KGV berechnet';
-    } else if (price > 0 && kcv && kcv > 0) {
+    } else if (price > 0 && kcv && kcv > 0 && !epsCurrencySuspect) {
         autoEps = (price / kcv) * 0.75;
         epsLabel = 'Cashflow-Schätzung';
     } else if (price > 0) {
@@ -125,7 +125,7 @@ export function computeSmartAutoParams(
 
     autoEps = parseFloat(Number(autoEps).toFixed(2));
     if (epsCurrencySuspect && !preset) {
-        epsLabel = 'Währungs-korrigiert (aus KGV)';
+        epsLabel = rawEps ? 'Währungs-korrigiert (aus KGV)' : 'Grobe Schätzung (Yahoo-EPS fehlerhaft) – bitte EPS prüfen';
     }
 
     // Effective P/E for classification
