@@ -403,11 +403,6 @@ export function adjustForReportingCurrency(
     }
 }
 
-// Known reporting currencies that differ from the trading currency (Yahoo often omits inancialCurrency)
-export const REPORTING_CURRENCY_OVERRIDES: Record<string, string> = {
-    'ALC.SW': 'USD',
-    'LOGN.SW': 'USD',
-    'ABBN.SW': 'USD',
-    'UBSG.SW': 'USD',
-    'CFR.SW': 'EUR',
-};
+// Reporting-currency overrides for EPS conversion. Intentionally empty: Yahoo already delivers CHF-denominated
+// EPS for .SW listings (e.g. ALC.SW). Only add symbols here after verifying that Yahoo's EPS is in the reporting currency.
+export const REPORTING_CURRENCY_OVERRIDES: Record<string, string> = {};
