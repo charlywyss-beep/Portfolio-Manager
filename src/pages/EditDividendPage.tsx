@@ -122,7 +122,32 @@ export function EditDividendPage() {
             setPrice(stock.currentPrice ? stock.currentPrice.toFixed(2) : '');
             setTargetPrice(stock.targetPrice ? stock.targetPrice.toFixed(2) : '');
             setSellLimit(stock.sellLimit ? stock.sellLimit.toFixed(2) : '');
-            setFairValue(stock.fairValue ? stock.fairValue.toFixed(2) : '');
+
+            // Resolve Fair Value: from stock, from saved params map, or auto-calculated on the fly (matching StockDetail)
+            let resolvedFv = stock.fairValue ? stock.fairValue.toFixed(2) : '';
+            if (!resolvedFv) {
+                const symKey = (stock.symbol || '').toUpperCase();
+                let localParams: any = null;
+                try {
+                    const mapRaw = localStorage.getItem('fair_value_params_map');
+                    if (mapRaw) localParams = JSON.parse(mapRaw)[symKey];
+                } catch {}
+                const activeP = (localParams && Number(localParams.eps) > 0) ? localParams : stock.fairValueParams;
+                const effPrice = stock.currentPrice || 0;
+                if (activeP && Number(activeP.eps) > 0) {
+                    if (activeP.manualFairValue && Number(activeP.manualFairValue) > 0) {
+                        resolvedFv = Number(activeP.manualFairValue).toFixed(2);
+                    } else {
+                        const dcf = calculateDcfFairValue(activeP, effPrice);
+                        if (dcf.fairValue > 0) resolvedFv = dcf.fairValue.toFixed(2);
+                    }
+                } else if (effPrice > 0) {
+                    const autoP = computeSmartAutoParams({ price: effPrice, dividendYield: stock.dividendYield }, null, stock, symKey, 'conservative');
+                    const dcf = calculateDcfFairValue(autoP, effPrice);
+                    if (dcf.fairValue > 0) resolvedFv = dcf.fairValue.toFixed(2);
+                }
+            }
+            setFairValue(resolvedFv);
             setAmount(stock.dividendAmount?.toString() || '');
 
             // Recalculate yield on mount to ensure it matches current price/amount
