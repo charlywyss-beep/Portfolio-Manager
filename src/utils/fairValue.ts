@@ -366,10 +366,11 @@ export function calculateDcfFairValue(
 export function adjustForReportingCurrency(
     quote: any,
     analysis: any,
-    rates: Record<string, number> | undefined
+    rates: Record<string, number> | undefined,
+    symbol?: string
 ): { quote: any; analysis: any } {
     try {
-        if (!quote || !analysis || !rates) return { quote, analysis };
+        if (!quote || !rates) return { quote, analysis };
         const norm = (c: any) => {
             const u = String(c || '').trim();
             if (u === 'GBp' || u === 'GBX') return 'GBP';
@@ -378,7 +379,7 @@ export function adjustForReportingCurrency(
         const quoteCurRaw = String(quote.currency || '');
         if (quoteCurRaw === 'GBp' || quoteCurRaw === 'GBX') return { quote, analysis };
         const qc = norm(quote.currency);
-        const fc = norm(analysis.currency);
+        const fc = REPORTING_CURRENCY_OVERRIDES[String(symbol || quote.symbol || '').toUpperCase()] || norm(analysis?.currency);
         if (!qc || !fc || qc === fc) return { quote, analysis };
         if (String(quote.epsSource || '').includes('?')) return { quote, analysis }; // already converted by server
         const rateQ = qc === 'CHF' ? 1 : rates[qc];
@@ -388,8 +389,8 @@ export function adjustForReportingCurrency(
         const conv = (v: any) => (typeof v === 'number' && isFinite(v) && v > 0) ? v * factor : v;
 
         const q2 = { ...quote };
-        const a2 = { ...analysis };
-        const price = Number(quote.price || analysis.price || 0);
+        const a2 = { ...(analysis || {}) };
+        const price = Number(quote.price || analysis?.price || 0);
         if (q2.eps) q2.eps = conv(q2.eps);
         if (q2.epsTrailingTwelveMonths) q2.epsTrailingTwelveMonths = conv(q2.epsTrailingTwelveMonths);
         if (q2.forwardEps) q2.forwardEps = conv(q2.forwardEps);
@@ -401,3 +402,12 @@ export function adjustForReportingCurrency(
         return { quote, analysis };
     }
 }
+
+// Known reporting currencies that differ from the trading currency (Yahoo often omits inancialCurrency)
+export const REPORTING_CURRENCY_OVERRIDES: Record<string, string> = {
+    'ALC.SW': 'USD',
+    'LOGN.SW': 'USD',
+    'ABBN.SW': 'USD',
+    'UBSG.SW': 'USD',
+    'CFR.SW': 'EUR',
+};

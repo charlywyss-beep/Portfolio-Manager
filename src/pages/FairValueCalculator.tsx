@@ -141,7 +141,7 @@ export function FairValueCalculator() {
     const { rates: fxRates } = useExchangeRates();
     // Wraps computeSmartAutoParams: converts EPS from reporting currency (e.g. USD) into quote currency (e.g. CHF)
     const computeSmartAutoParamsFx = (q: any, a: any, s: any, sym: string, m: any) => {
-        const adj = adjustForReportingCurrency(q, a, fxRates as any);
+        const adj = adjustForReportingCurrency(q, a, fxRates as any, sym);
         return computeSmartAutoParams(adj.quote, adj.analysis, s, sym, m);
     };
     const [growthSourceLabel, setGrowthSourceLabel] = useState<string>('Auto-Schätzung');
