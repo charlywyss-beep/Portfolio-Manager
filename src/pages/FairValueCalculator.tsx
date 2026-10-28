@@ -6,7 +6,7 @@ import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { fetchStockQuote, fetchStockAnalysis, searchStocks } from '../services/yahoo-finance';
-import { computeSmartAutoParams, adjustForReportingCurrency, WIDE_MOAT_QUALITY } from '../utils/fairValue';
+import { computeSmartAutoParams, adjustForReportingCurrency, WIDE_MOAT_QUALITY, FUNDAMENTAL_FALLBACKS } from '../utils/fairValue';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { translateSector } from '../utils/sectorTranslation';
 
@@ -286,6 +286,14 @@ export function FairValueCalculator() {
 
         // Never overwrite legitimate parameters that the user manually edited!
         if (params.isCustom) return false;
+
+        // Auto-heal stale default params for stocks with curated fundamental fallbacks (e.g. old Yahoo raw EPS or 0% dividend)
+        const preset = FUNDAMENTAL_FALLBACKS[symUpper];
+        if (preset) {
+            if (Math.abs(Number(params.eps) - preset.eps) > 0.05 || (preset.div !== undefined && Math.abs(Number(params.dividendYield || 0) - preset.div) > 0.05)) {
+                return true;
+            }
+        }
         // Upgrade previously auto-populated Nestlé (3.51 / 6 / 15 or auto 20% MoS) to 15% MoS
         if (symUpper === 'NESN.SW' || symUpper === 'NESN') {
             if (Math.abs(Number(params.eps) - 3.51) < 0.05 && Number(params.pe) === 15) return true;
@@ -367,7 +375,10 @@ export function FairValueCalculator() {
         setEps(parseFloat(Number(backup.eps).toFixed(2)));
         setGrowthRate(parseFloat(Number(backup.growthRate).toFixed(2)));
         setPe(restoredPe);
-        setDividendYield(parseFloat(Number(backup.dividendYield || 0).toFixed(2)));
+        const backupDiv = Number(backup.dividendYield);
+        const preset = FUNDAMENTAL_FALLBACKS[selectedSymbol.toUpperCase()];
+        const effectiveDiv = backupDiv > 0 ? backupDiv : (preset?.div ?? (quote?.dividendYield || 0));
+        setDividendYield(parseFloat(Number(effectiveDiv).toFixed(2)));
         setDiscountRate(backup.discountRate || 8);
         setMos(backup.mos || 20);
         setEpsSourceLabel('Manuell / Gespeichert');

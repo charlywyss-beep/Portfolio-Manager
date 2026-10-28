@@ -269,7 +269,20 @@ export default async function handler(req, res) {
             forwardEps: rawForwardEpsOut,
             epsSource,
             growthRate: growthRate5Y,
-            dividendYield: (quoteSummary?.summaryDetail?.dividendYield) ? quoteSummary.summaryDetail.dividendYield * 100 : (quoteBasic?.dividendYield || null),
+            dividendYield: (() => {
+                const rawDiv = quoteSummary?.summaryDetail?.dividendYield
+                    ?? quoteSummary?.summaryDetail?.trailingAnnualDividendYield
+                    ?? quoteSummary?.defaultKeyStatistics?.trailingAnnualDividendYield
+                    ?? (quoteSummary?.summaryDetail?.dividendRate && finalMarketPrice > 0 ? (quoteSummary.summaryDetail.dividendRate / finalMarketPrice) : null);
+                if (rawDiv !== null && rawDiv !== undefined) {
+                    return rawDiv < 0.25 ? rawDiv * 100 : rawDiv;
+                }
+                const basicDiv = quoteBasic?.dividendYield;
+                if (basicDiv !== null && basicDiv !== undefined) {
+                    return basicDiv < 0.25 ? basicDiv * 100 : basicDiv;
+                }
+                return null;
+            })(),
             country: quoteSummary?.summaryProfile?.country || quoteSummary?.assetProfile?.country || null,
             sector: extractedSector,
             industry: extractedIndustry,
