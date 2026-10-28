@@ -1633,8 +1633,8 @@ export function FairValueCalculator() {
                                             </span>
                                         </div>
                                         {isSavedForStock ? (
-                                            <span className="inline-flex items-center gap-1 text-xs font-semibold pl-2 pr-1 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 whitespace-nowrap shrink-0">
-                                                <Check className="size-3 shrink-0" />
+                                            <span className="inline-flex items-center gap-1.5 text-xs font-bold pl-2.5 pr-1 py-0.5 rounded-lg bg-emerald-500/25 text-emerald-300 border border-emerald-500/50 whitespace-nowrap shrink-0 shadow-2xs">
+                                                <Check className="size-3.5 shrink-0 text-emerald-400" />
                                                 <span>Manuell</span>
                                                 <button
                                                     type="button"
@@ -1642,25 +1642,24 @@ export function FairValueCalculator() {
                                                     className="ml-0.5 p-0.5 rounded hover:bg-rose-500/30 text-emerald-300/80 hover:text-rose-200 transition-colors"
                                                     title="Manuelle Eingabe löschen und auf Auto-Werte zurücksetzen"
                                                 >
-                                                    <X className="size-3 shrink-0" />
+                                                    <X className="size-3.5 shrink-0" />
                                                 </button>
                                             </span>
                                         ) : (
                                             getCustomBackupForSymbol(selectedSymbol) && (
-                                                <div className="inline-flex items-center rounded-lg bg-emerald-600/20 border border-emerald-400/30 whitespace-nowrap shrink-0 overflow-hidden">
+                                                <div className="inline-flex items-center rounded-lg bg-card/80 hover:bg-card border border-border hover:border-muted-foreground/40 whitespace-nowrap shrink-0 overflow-hidden shadow-2xs transition-colors">
                                                     <button
                                                         type="button"
                                                         onClick={restoreManualValues}
-                                                        className="flex items-center gap-1 text-xs font-semibold pl-2 pr-1.5 py-0.5 hover:bg-emerald-600/35 text-emerald-300 transition-colors"
+                                                        className="flex items-center gap-1.5 text-xs font-medium pl-2.5 pr-1.5 py-0.5 text-muted-foreground hover:text-foreground transition-colors"
                                                         title="Deine zuvor manuell eingegebenen Werte für diese Aktie wiederherstellen"
                                                     >
-                                                        <Check className="size-3 shrink-0" />
                                                         <span>Manuell</span>
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={clearManualValues}
-                                                        className="px-1.5 py-0.5 hover:bg-rose-500/30 text-emerald-300/80 hover:text-rose-200 border-l border-emerald-400/25 transition-colors"
+                                                        className="px-1.5 py-0.5 hover:bg-rose-500/20 text-muted-foreground/70 hover:text-rose-400 border-l border-border transition-colors"
                                                         title="Gespeicherte manuelle Eingabe löschen"
                                                     >
                                                         <X className="size-3 shrink-0" />
