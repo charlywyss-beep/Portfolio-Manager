@@ -66,7 +66,8 @@ export function computeSmartAutoParams(
     let forwardPE = qData?.forwardPE || aData?.forwardPE || stockObj?.forwardPE || null;
     const kcv = qData?.kcv || aData?.kcv || stockObj?.kcv || null;
 
-    const rawEps = qData?.eps ?? aData?.eps ?? stockObj?.eps ?? null;
+    let rawEps = qData?.eps ?? aData?.eps ?? stockObj?.eps ?? null;
+    let epsCurrencySuspect = false;
     // Fix London Stock Exchange (GBp / Pence) 100x P/E distortion (e.g. 1276.71 -> 12.77)
     if (trailingPE && trailingPE > 150 && (symUpper.endsWith('.L') || (price > 0 && rawEps && rawEps > 0 && (price / rawEps) < 60))) {
         trailingPE = trailingPE / 100;
@@ -75,7 +76,25 @@ export function computeSmartAutoParams(
         forwardPE = forwardPE / 100;
     }
 
-    const forwardEps = qData?.forwardEps ?? stockObj?.forwardEps ?? (price > 0 && forwardPE && forwardPE > 0 ? price / forwardPE : null);
+    let forwardEps = qData?.forwardEps ?? stockObj?.forwardEps ?? (price > 0 && forwardPE && forwardPE > 0 ? price / forwardPE : null);
+
+    // Currency guard: EPS reported in a different currency than the quote (e.g. TSM: EPS in TWD, price in USD)
+    // yields absurd P/E values (< 4). In that case derive EPS from a plausible P/E in the quote currency.
+    if (!preset && price > 0) {
+        const plausiblePe = (pe: any) => (pe && isFinite(pe) && pe >= 4 && pe < 200) ? Number(pe) : null;
+        if (forwardEps && forwardEps > 0 && price / forwardEps < 4) {
+            forwardEps = null;
+        }
+        if (rawEps && rawEps > 0 && price / rawEps < 4) {
+            const peRef = plausiblePe(trailingPE) ?? plausiblePe(forwardPE);
+            rawEps = peRef ? price / peRef : null;
+            if (!peRef) {
+                trailingPE = null;
+                forwardPE = null;
+            }
+            epsCurrencySuspect = true;
+        }
+    }
 
     let autoEps = 0;
     let epsLabel = qData?.epsSource || 'TTM';
@@ -105,6 +124,9 @@ export function computeSmartAutoParams(
     }
 
     autoEps = parseFloat(Number(autoEps).toFixed(2));
+    if (epsCurrencySuspect && !preset) {
+        epsLabel = 'Währungs-korrigiert (aus KGV)';
+    }
 
     // Effective P/E for classification
     const effectivePe = (forwardPE && forwardPE > 0)
