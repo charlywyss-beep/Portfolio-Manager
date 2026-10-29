@@ -178,7 +178,16 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
         onClose();
     };
 
-    const todayDateLabel = new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
+    const isAnyMarketOpen = sortedPositions.some(p => estimateMarketState(p.stock.symbol, p.stock.currency) === 'REGULAR');
+    const validTimestamps = sortedPositions
+        .map(p => p.stock?.lastQuoteDate ? new Date(p.stock.lastQuoteDate).getTime() : 0)
+        .filter(t => t > 0);
+    const latestTimestamp = validTimestamps.length > 0 ? Math.max(...validTimestamps) : 0;
+    const effectiveDate = (!isAnyMarketOpen && latestTimestamp > 0)
+        ? new Date(latestTimestamp)
+        : new Date();
+    const todayDateLabel = effectiveDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
+    const fullDateLabel = effectiveDate.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
 
     return (
         <div
@@ -235,7 +244,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                 {/* Summary Totals */}
                 <div className="grid grid-cols-2 gap-2 p-2.5 sm:gap-3 sm:p-3 bg-muted/20 border-b border-border shrink-0">
                     <div className="bg-card py-2.5 px-2.5 sm:p-3 sm:px-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between">
-                        <span className="text-[13px] sm:text-base text-white font-semibold tracking-tight whitespace-nowrap mb-1">Tages-Performance</span>
+                        <div className="flex items-baseline justify-between mb-1 gap-1.5 flex-wrap">
+                            <span className="text-[13px] sm:text-base text-white font-semibold tracking-tight whitespace-nowrap">Tages-Performance</span>
+                            <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">{isAnyMarketOpen ? `Live (${todayDateLabel})` : `Schlusskurse (${fullDateLabel})`}</span>
+                        </div>
                         <span className={cn(
                             "text-[18px] sm:text-xl md:text-2xl font-bold font-sans tabular-nums tracking-tight whitespace-nowrap",
                             totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
