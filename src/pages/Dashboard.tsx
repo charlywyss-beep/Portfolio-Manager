@@ -21,6 +21,7 @@ import { ConfirmModal } from '../components/ConfirmModal';
 import { Logo } from '../components/Logo';
 import { PieChart as PieChartIcon } from 'lucide-react';
 import { fetchHistoricalClose } from '../services/yahoo-finance';
+import { estimateMarketState } from '../utils/market';
 
 // Helper to translate frequency to German
 const translateFrequency = (freq?: string) => {
@@ -484,10 +485,20 @@ export function Dashboard() {
                             let displayLabel = 'seit gestern';
                             let isLoading = false;
 
+                            const isAnyMarketOpen = positions.some(p => estimateMarketState(p.stock.symbol, p.stock.currency) === 'REGULAR');
+                            const validTimestamps = positions
+                                .map(p => p.stock?.lastQuoteDate ? new Date(p.stock.lastQuoteDate).getTime() : 0)
+                                .filter(t => t > 0);
+                            const latestTimestamp = validTimestamps.length > 0 ? Math.max(...validTimestamps) : 0;
+                            const effectiveDate = (!isAnyMarketOpen && latestTimestamp > 0)
+                                ? new Date(latestTimestamp)
+                                : new Date();
+                            const shortDateLabel = effectiveDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
+
                             if (performancePeriod === '1D') {
                                 displayValue = totals.dailyGain;
                                 displayPercent = totals.dailyGainPercent;
-                                displayLabel = 'seit gestern';
+                                displayLabel = isAnyMarketOpen ? `Live (${shortDateLabel})` : `Schlusskurse vom ${shortDateLabel}`;
                             } else {
                                 const perf = periodPerformance[performancePeriod];
                                 if (perf) {
