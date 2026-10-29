@@ -28,6 +28,7 @@ export interface MarketItem {
     name: string;
     category: 'indices' | 'commodities' | 'forex' | 'stocks' | 'crypto' | 'asia' | 'portfolio';
     decimals?: number;
+    currency?: string;
 }
 
 export interface MarketQuoteData {
@@ -193,7 +194,8 @@ export function MarketOverviewPage() {
             symbol: stock.symbol,
             name: stock.name,
             category: 'stocks',
-            decimals: 2
+            decimals: 2,
+            currency: stock.currency
         }));
     }, [portfolioStocks]);
 
@@ -628,6 +630,13 @@ export function MarketOverviewPage() {
                             previousClose = previousClose / 100;
                         }
 
+                        // Preserves user's configured stock/portfolio currency (e.g. TotalEnergies EUR over NYSE USD)
+                        const matched = portfolioStocks.find(s => s.symbol.toUpperCase() === r.symbol.toUpperCase()) ||
+                                        stocks.find(s => s.symbol.toUpperCase() === r.symbol.toUpperCase());
+                        if (matched?.currency) {
+                            currency = matched.currency;
+                        }
+
                         const changeAmount = price - previousClose;
                         const changePercent = previousClose > 0 ? (changeAmount / previousClose) * 100 : (r.regularMarketChangePercent || 0);
 
@@ -657,7 +666,7 @@ export function MarketOverviewPage() {
 
         setLastRefresh(new Date());
         setLoading(false);
-    }, [items, stocks]);
+    }, [items, stocks, portfolioStocks]);
 
     // Initial and periodic fetch
     useEffect(() => {
@@ -703,8 +712,8 @@ export function MarketOverviewPage() {
             const isEtfB = stockB?.type === 'etf';
 
             if (sortBy === 'name-asc' || sortBy === 'open-first') {
-                const stateA = estimateMarketState(a.symbol, qa?.currency || stockA?.currency || 'USD');
-                const stateB = estimateMarketState(b.symbol, qb?.currency || stockB?.currency || 'USD');
+                const stateA = estimateMarketState(a.symbol, stockA?.currency || a.currency || qa?.currency || 'USD');
+                const stateB = estimateMarketState(b.symbol, stockB?.currency || b.currency || qb?.currency || 'USD');
                 const isOpenA = stateA === 'REGULAR';
                 const isOpenB = stateB === 'REGULAR';
                 if (isOpenA !== isOpenB) return isOpenA ? -1 : 1;
@@ -1166,7 +1175,7 @@ export function MarketOverviewPage() {
                         const isSelectedForMove = selectedMoveId === item.id;
                         const isPotentialMoveTarget = selectedMoveId !== null && selectedMoveId !== item.id;
 
-                        let rawCurrency = q?.currency || matchedStock?.currency || (
+                        let rawCurrency = matchedStock?.currency || item.currency || q?.currency || (
                             item.symbol.endsWith('.SW') ? 'CHF' :
                             item.symbol.endsWith('.DE') ? 'EUR' :
                             item.symbol.includes('CHF') ? 'CHF' :
@@ -1481,7 +1490,8 @@ export function MarketOverviewPage() {
                                                 symbol: stock.symbol,
                                                 name: stock.name,
                                                 category: 'stocks',
-                                                decimals: 2
+                                                decimals: 2,
+                                                currency: stock.currency
                                             })}
                                             className="text-left p-2 rounded-lg bg-card hover:bg-primary/10 border border-border/60 hover:border-primary/40 transition-colors group flex flex-col"
                                         >
