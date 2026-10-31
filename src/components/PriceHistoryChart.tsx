@@ -70,6 +70,17 @@ export function PriceHistoryChart({
         return () => document.removeEventListener('pointerdown', handleOutsidePointerDown);
     }, [selectedExtremum]);
 
+    // Clear hoveredData immediately when scrolling so it never shows through headers
+    useEffect(() => {
+        const handleScroll = () => {
+            if (hoveredData) {
+                setHoveredData(null);
+            }
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [hoveredData]);
+
     // Currency Conversion State
     const { rates } = useExchangeRates();
     const [showInCHF, setShowInCHF] = useState(false);
@@ -395,7 +406,7 @@ export function PriceHistoryChart({
 
                         {/* Mobile-Only Hover Info (Directly over H/T, below Performance) */}
                         {hoveredData && (
-                            <div className="flex sm:hidden justify-between items-center gap-2 text-sm animate-in fade-in duration-150 z-[60] bg-card px-3 py-1.5 rounded-xl border border-border shadow-lg absolute inset-x-0 -top-0.5">
+                            <div className="flex sm:hidden justify-between items-center gap-2 text-sm animate-in fade-in duration-150 z-20 bg-card px-3 py-1.5 rounded-xl border border-border shadow-lg absolute inset-x-0 -top-0.5">
                                 <div className="flex flex-col items-start leading-snug">
                                     <span className="font-bold text-sm text-foreground whitespace-nowrap">
                                         {(() => {
@@ -563,7 +574,7 @@ export function PriceHistoryChart({
 
                 {/* Desktop Dynamic Header Info (Replaces Tooltip) */}
                 {hoveredData && (
-                    <div className="hidden sm:flex items-center gap-4 text-sm animate-in fade-in duration-150 z-[60] border-l border-border/50 pl-3 sm:pl-5">
+                    <div className="hidden sm:flex items-center gap-4 text-sm animate-in fade-in duration-150 z-10 border-l border-border/50 pl-3 sm:pl-5">
                         <div className="flex flex-col items-start leading-snug">
                             <span className="font-bold text-sm text-foreground whitespace-nowrap">
                                 {(() => {
@@ -617,7 +628,7 @@ export function PriceHistoryChart({
             </div>
 
             {isMeasureMode && measurePoints.length > 0 && (
-                <div className="absolute top-2 right-2 z-[100] animate-in fade-in slide-in-from-right-2">
+                <div className="absolute top-2 right-2 z-20 animate-in fade-in slide-in-from-right-2">
                     <div className="bg-blue-600 dark:bg-blue-500 text-white px-4 py-3 rounded-xl shadow-2xl border border-blue-400/30 flex items-center gap-4">
                         <div className="flex flex-col items-center leading-tight">
                             {measurement ? (

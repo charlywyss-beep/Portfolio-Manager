@@ -344,7 +344,7 @@ export function StockDetail() {
     return (
         <div className="p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16 landscape:pb-10">
             {/* Sticky Header on Desktop and Mobile */}
-            <div className="sticky top-0 -mx-2 lg:-mx-8 px-3 py-2 lg:px-8 lg:py-3.5 z-50 bg-background/95 backdrop-blur-md border-b border-border shadow-md transition-all -mt-2 lg:-mt-8 mb-3 md:mb-6">
+            <div className="sticky top-0 -mx-2 lg:-mx-8 px-3 py-2 lg:px-8 lg:py-3.5 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 lg:-mt-8 mb-3 md:mb-6">
                 <div className="flex items-center gap-2 mb-2 md:mb-4 landscape:mb-1 pl-10 xl:pl-0 landscape:pl-0">
                     <button
                         onClick={() => {
@@ -584,7 +584,7 @@ export function StockDetail() {
             </div>
 
             {/* Price Chart (Kursverlauf) - Über ganze Breite */}
-            <div className="bg-card border border-border rounded-xl pl-1 pr-1 py-4 md:py-6 landscape:py-1.5 shadow-sm min-h-[360px] landscape:min-h-0 h-auto flex flex-col w-full mb-6 overflow-hidden">
+            <div className="bg-card border border-border rounded-xl pl-1 pr-1 py-4 md:py-6 landscape:py-1.5 shadow-sm min-h-[360px] landscape:min-h-0 h-auto flex flex-col w-full mb-6 overflow-hidden isolate relative z-0">
                 <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 landscape:mb-1.5 shrink-0 px-2 md:px-4">
                     {/* Left: Title */}
                     <div className="flex items-center gap-2">
