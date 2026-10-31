@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom';
 import { X, Save, Trash2, Plus, Pencil, Landmark } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { cn } from '../utils'; // Added import
-import type { Stock, Purchase } from '../types';
+import type { Stock, Purchase, Currency } from '../types';
 
 import { DecimalInput } from './DecimalInput';
 import { Logo } from './Logo';
-import { useCurrencyFormatter } from '../utils/currency';
+import { useCurrencyFormatter, convertToCHF } from '../utils/currency';
 
 interface EditPositionModalProps {
     isOpen: boolean;
@@ -33,28 +33,33 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
     // State for individual purchases
     const [purchases, setPurchases] = useState<Purchase[]>([]);
-    const [inputInCHF, setInputInCHF] = useState(false); // NEW State
+    const [inputInCHF, setInputInCHF] = useState(false);
     const [broker, setBroker] = useState(position.broker || '');
 
-    // Editable Stock Name
+    // Editable Stock Name & Currency
     const [stockName, setStockName] = useState(position.stock.name);
+    const [selectedCurrency, setSelectedCurrency] = useState<Currency>(position.stock.currency || 'CHF');
+
+    // Helper to fix floating point dust
+    const isGBX = selectedCurrency === 'GBp';
+    const fixPrice = (num: number) => parseFloat(num.toFixed(isGBX ? 4 : 2));
+    const fixFx = (num: number) => parseFloat(num.toFixed(6));
+    const fixShares = (num: number) => parseFloat(num.toFixed(6));
+
+    // Live FX Rate for current selected currency (in CHF per foreign unit)
+    const liveFxRate = useMemo(() => {
+        if (selectedCurrency === 'CHF') return 1.0;
+        const currKey = isGBX ? 'GBP' : selectedCurrency;
+        return convertToCHF(1, currKey, rates);
+    }, [selectedCurrency, isGBX, rates]);
 
     // Fallback for "Manual Overrides" if user deletes all purchases but wants to set totals manually
-    // NOTE: Manual states are "UI Values" (Pounds), not Storage Values (Pence)
     const [manualShares, setManualShares] = useState(position.shares.toString());
     const [manualPrice, setManualPrice] = useState('0'); // Initialized in useEffect
     const [manualFx, setManualFx] = useState(position.averageEntryFxRate?.toString() || '1.0');
     const [manualDate, setManualDate] = useState(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
 
-    // Helper to fix floating point dust
-    // GBp: 4 decimals allowed. Others: 2 decimals.
-    // FX Rates: 6 decimals (default).
-    // Shares: 6 decimals (fractional shares).
-    const fixPrice = (num: number) => parseFloat(num.toFixed(isGBX ? 4 : 2));
-    const fixFx = (num: number) => parseFloat(num.toFixed(6));
-    const fixShares = (num: number) => parseFloat(num.toFixed(6));
-
-        const brokerSuggestions = useMemo(() => {
+    const brokerSuggestions = useMemo(() => {
         const set = new Set<string>([
             'Swissquote',
             'Saxo Bank',
@@ -71,44 +76,44 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
         return Array.from(set);
     }, [positions, fixedDeposits]);
 
-    const isGBX = position.stock.currency === 'GBp';
-
     // Scale Helpers: Storage (Pence) <-> UI (Pounds)
-    // If GBX: Storage 3282 (p) -> UI 32.82 (£)
     const toUI = (storageVal: number) => isGBX ? storageVal / 100 : storageVal;
     const toStorage = (uiVal: number) => isGBX ? uiVal * 100 : uiVal;
 
     // Reset state when modal opens
     useEffect(() => {
         if (isOpen) {
-            setStockName(position.stock.name); // Sync Name
+            const initialCurrency = position.stock.currency || 'CHF';
+            setStockName(position.stock.name);
             setBroker(position.broker || "");
+            setSelectedCurrency(initialCurrency);
+            setInputInCHF(false);
 
             if (position.purchases && position.purchases.length > 0) {
                 // Sanitize loaded purchases
                 const sanitizedPurchases = position.purchases.map(p => ({
                     ...p,
                     shares: fixShares(p.shares),
-                    price: fixPrice(toUI(p.price)), // Scale Price to UI and Fix Precision
-                    fxRate: fixFx(p.fxRate)
+                    price: fixPrice(toUI(p.price)),
+                    fxRate: initialCurrency === 'CHF' ? 1.0 : fixFx(p.fxRate || 1.0)
                 }));
                 setPurchases(sanitizedPurchases);
             } else {
-                // If no history exists, create one initial "Legacy" entry from current totals
+                // If no history exists, create one initial entry from current totals
                 const initialEntry: Purchase = {
                     id: crypto.randomUUID(),
                     date: position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
                     shares: fixShares(position.shares),
-                    price: fixPrice(toUI(position.buyPriceAvg)), // Scale Price to UI
-                    fxRate: fixFx(position.averageEntryFxRate || 1.0)
+                    price: fixPrice(toUI(position.buyPriceAvg)),
+                    fxRate: initialCurrency === 'CHF' ? 1.0 : fixFx(position.averageEntryFxRate || 1.0)
                 };
                 setPurchases([initialEntry]);
             }
 
             // Sync manuals
             setManualShares(fixShares(position.shares).toString());
-            setManualPrice(fixPrice(toUI(position.buyPriceAvg)).toString()); // Scale Price to UI
-            setManualFx(fixFx(position.averageEntryFxRate || 1.0).toString());
+            setManualPrice(fixPrice(toUI(position.buyPriceAvg)).toString());
+            setManualFx(initialCurrency === 'CHF' ? '1.0' : fixFx(position.averageEntryFxRate || 1.0).toString());
             setManualDate(position.buyDate ? new Date(position.buyDate).toISOString().split('T')[0] : '');
         }
     }, [isOpen, position]);
@@ -116,26 +121,44 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     // Auto-resize stock name textarea
     useEffect(() => {
         if (inputRef.current) {
-            // First reset height to 0 to get the correct scrollHeight (for shrinking)
             inputRef.current.style.height = '0px';
             const scrollHeight = inputRef.current.scrollHeight;
             inputRef.current.style.height = `${scrollHeight}px`;
-            // Prevent scrollbar flicker
             inputRef.current.style.overflow = 'hidden';
         }
     }, [stockName, isOpen]);
 
+    // Handle currency changes
+    const handleCurrencyChange = (newCurr: Currency) => {
+        setSelectedCurrency(newCurr);
+        // Persist immediately to context
+        updateStock(position.stock.id, { currency: newCurr });
+
+        if (newCurr === 'CHF') {
+            setInputInCHF(false);
+            // CHF has always fxRate = 1.0
+            setPurchases(prev => prev.map(p => ({
+                ...p,
+                fxRate: 1.0
+            })));
+        } else {
+            // For foreign currency: if fxRate was 1.0 or missing, auto-fill with current live rate
+            const targetRate = convertToCHF(1, newCurr === 'GBp' ? 'GBP' : newCurr, rates);
+            setPurchases(prev => prev.map(p => {
+                if (!p.fxRate || p.fxRate === 1.0) {
+                    return { ...p, fxRate: fixFx(targetRate) };
+                }
+                return p;
+            }));
+        }
+    };
+
     // Derived Totals from Purchases
-    // NOTE: `p.price` here is the UI VALUE (Pounds). 
-    // We need to convert back to Storage Value for correct "Average Price" calculation if we want the Result to be Storage Value?
-    // Wait, the Header Display wants "UI Value" (Pounds).
-    // The "onUpdate" wants "Storage Value" (Pence).
-    // Let's keep `purchases` state as UI Values.
     const calculatedTotals = (purchases || []).reduce((acc, p) => {
+        const effectiveFx = selectedCurrency === 'CHF' ? 1.0 : (p.fxRate || 1.0);
         acc.shares += p.shares;
-        acc.totalNativeCost += p.shares * p.price; // Cost in UI Units
-        acc.totalCHFCost += p.shares * p.price * p.fxRate;
-        // Find earliest date
+        acc.totalNativeCost += p.shares * p.price;
+        acc.totalCHFCost += p.shares * p.price * effectiveFx;
         if (!acc.earliestDate || new Date(p.date) < new Date(acc.earliestDate)) {
             acc.earliestDate = p.date;
         }
@@ -143,7 +166,9 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     }, { shares: 0, totalNativeCost: 0, totalCHFCost: 0, earliestDate: '' });
 
     const calculatedAvgPriceUI = calculatedTotals.shares > 0 ? calculatedTotals.totalNativeCost / calculatedTotals.shares : 0;
-    const calculatedAvgFx = calculatedTotals.totalNativeCost > 0 ? calculatedTotals.totalCHFCost / calculatedTotals.totalNativeCost : 1.0;
+    const calculatedAvgFx = selectedCurrency === 'CHF'
+        ? 1.0
+        : (calculatedTotals.totalNativeCost > 0 ? calculatedTotals.totalCHFCost / calculatedTotals.totalNativeCost : 1.0);
 
     const handleAddPurchase = () => {
         const newPurchase: Purchase = {
@@ -151,7 +176,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
             date: new Date().toISOString().split('T')[0],
             shares: 0,
             price: 0,
-            fxRate: 1.0
+            fxRate: selectedCurrency === 'CHF' ? 1.0 : fixFx(liveFxRate)
         };
         setPurchases([...purchases, newPurchase]);
     };
@@ -169,28 +194,29 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Update Stock Name
-        if (stockName.trim() !== position.stock.name) {
-            updateStock(position.stock.id, { name: stockName });
-        }
+        // Update Stock Name and Currency
+        updateStock(position.stock.id, {
+            name: stockName.trim(),
+            currency: selectedCurrency
+        });
 
         // If we have purchases, use the calculated values
         if (purchases.length > 0) {
-            // Must convert UI Prices back to Storage Prices for saving
-            // Deep copy and map
             const purchasesToSave = purchases.map(p => ({
                 ...p,
-                price: toStorage(p.price)
+                price: toStorage(p.price),
+                fxRate: selectedCurrency === 'CHF' ? 1.0 : (p.fxRate || 1.0)
             }));
 
             const finalAvgPrice = toStorage(calculatedAvgPriceUI);
+            const finalAvgFx = selectedCurrency === 'CHF' ? 1.0 : calculatedAvgFx;
 
             onUpdate(
                 position.id,
                 calculatedTotals.shares,
                 finalAvgPrice,
                 calculatedTotals.earliestDate,
-                calculatedAvgFx,
+                finalAvgFx,
                 purchasesToSave,
                 broker.trim()
             );
@@ -198,7 +224,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
             // Manual fallback
             const newShares = parseFloat(manualShares);
             const newPriceUI = parseFloat(manualPrice);
-            const newFx = parseFloat(manualFx);
+            const newFx = selectedCurrency === 'CHF' ? 1.0 : parseFloat(manualFx);
             const isoDate = manualDate ? new Date(manualDate).toISOString() : undefined;
 
             onUpdate(position.id, newShares, toStorage(newPriceUI), isoDate, newFx, [], broker.trim());
@@ -237,8 +263,6 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                     <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto flex flex-col">
 
                         {/* Stock Info Bar */}
-                        {/* Stock Info Bar */}
-                        {/* Stock Info Bar */}
                         <div className="p-4 bg-muted/30 border-b border-border grid grid-cols-3 items-center gap-4">
                             {/* Left Column: Logo & Name */}
                             <div className="flex items-center gap-3 overflow-hidden justify-start">
@@ -246,8 +270,6 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                     to={`/dividends/edit/${position.stock.id}?from=portfolio`}
                                     className="cursor-pointer hover:opacity-80 transition-opacity block"
                                     onClick={(e) => {
-                                        // Allow default navigation (Link) but also close modal
-                                        // We do NOT call preventDefault because we WANT the navigation.
                                         e.stopPropagation();
                                         onClose();
                                     }}
@@ -280,12 +302,9 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                         <span>•</span>
                                         <span>Aktuell: {position.stock.currentPrice.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                         <select
-                                            value={position.stock.currency}
-                                            onChange={(e) => {
-                                                const newCurr = e.target.value as any;
-                                                updateStock(position.stock.id, { currency: newCurr });
-                                            }}
-                                            className="bg-secondary/80 hover:bg-secondary text-foreground font-bold text-xs rounded px-1.5 py-0.5 border border-border cursor-pointer transition-colors outline-none"
+                                            value={selectedCurrency}
+                                            onChange={(e) => handleCurrencyChange(e.target.value as Currency)}
+                                            className="bg-secondary/80 hover:bg-secondary text-foreground font-bold text-xs rounded px-2 py-0.5 border border-border cursor-pointer transition-colors outline-none"
                                             title="Währung dieser Position ändern"
                                         >
                                             <option value="CHF">CHF</option>
@@ -300,11 +319,18 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
                             {/* Middle Column: FX Info */}
                             <div className="flex justify-center">
-                                {rates && position.stock.currency !== 'CHF' && rates[isGBX ? 'GBP' : position.stock.currency] && (
+                                {selectedCurrency !== 'CHF' ? (
                                     <div className="px-4 py-2 bg-background/50 rounded-lg border border-border/50 flex flex-col items-center justify-center min-w-[120px]">
-                                        <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">WECHSELKURS</div>
+                                        <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">LIVE WECHSELKURS</div>
                                         <div className="font-mono font-medium text-sm text-primary">
-                                            1 {isGBX ? 'GBP' : position.stock.currency} = {(1 / rates[isGBX ? 'GBP' : position.stock.currency]).toFixed(2)} CHF
+                                            1 {isGBX ? 'GBP' : selectedCurrency} = {liveFxRate.toFixed(4)} CHF
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="px-4 py-2 bg-background/50 rounded-lg border border-border/50 flex flex-col items-center justify-center min-w-[120px]">
+                                        <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">WÄHRUNG</div>
+                                        <div className="font-mono font-medium text-sm text-foreground">
+                                            CHF (Heimatwährung)
                                         </div>
                                     </div>
                                 )}
@@ -318,7 +344,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                         {calculatedTotals.shares.toLocaleString('de-CH')} Stk
                                     </div>
                                     <div className="text-[10px] text-muted-foreground">
-                                        Ø {calculatedAvgPriceUI.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {isGBX ? 'GBP' : position.stock.currency}
+                                        Ø {calculatedAvgPriceUI.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {isGBX ? 'GBP' : selectedCurrency}
                                     </div>
                                 </div>
                             </div>
@@ -357,10 +383,10 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
                         {/* Purchases List */}
                         <div className="p-6 space-y-4 flex-1">
-                            {/* NEW: Input Mode Toggle (CHF vs Native) */}
+                            {/* Input Mode Toggle (CHF vs Native) */}
                             <div className="flex items-center justify-between mb-4 px-1">
                                 <h3 className="text-sm font-semibold">Käufe</h3>
-                                {position.stock.currency !== 'CHF' && (
+                                {selectedCurrency !== 'CHF' && (
                                     <div className="flex items-center gap-2">
                                         <label className="text-xs text-muted-foreground cursor-pointer select-none flex items-center gap-2">
                                             <input
@@ -380,11 +406,13 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                 <div className="col-span-3">Datum</div>
                                 <div className="col-span-2 text-center">Stück</div>
                                 <div className="col-span-3 text-center">
-                                    Kaufpreis ({inputInCHF ? 'CHF' : (isGBX ? 'GBP' : position.stock.currency)})
+                                    Kaufpreis ({inputInCHF ? 'CHF' : (isGBX ? 'GBP' : selectedCurrency)})
                                 </div>
                                 <div className="col-span-3 text-center">
                                     <div>Wechselkurs</div>
-                                    <div className="font-normal normal-case text-[9px] opacity-70">CHF pro 1 {isGBX ? 'GBP' : position.stock.currency}</div>
+                                    <div className="font-normal normal-case text-[9px] opacity-70">
+                                        {selectedCurrency === 'CHF' ? '1.0 (CHF)' : `CHF pro 1 ${isGBX ? 'GBP' : selectedCurrency}`}
+                                    </div>
                                 </div>
                                 <div className="col-span-1"></div>
                             </div>
@@ -413,13 +441,11 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                         {/* Price */}
                                         <div className="col-span-3">
                                             <DecimalInput
-                                                value={inputInCHF ? purchase.price * purchase.fxRate : purchase.price}
+                                                value={inputInCHF && selectedCurrency !== 'CHF' ? purchase.price * (purchase.fxRate || 1) : purchase.price}
                                                 onChange={(val) => {
                                                     const numVal = parseFloat(val) || 0;
-                                                    if (inputInCHF) {
-                                                        // Update Native Price based on CHF Input and current FX Rate
-                                                        // Avoid division by zero
-                                                        const rate = purchase.fxRate || 1;
+                                                    if (inputInCHF && selectedCurrency !== 'CHF') {
+                                                        const rate = purchase.fxRate || liveFxRate || 1;
                                                         handleUpdatePurchase(purchase.id, 'price', numVal / rate);
                                                     } else {
                                                         handleUpdatePurchase(purchase.id, 'price', numVal);
@@ -429,20 +455,30 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                                 onFocus={(e) => e.target.select()}
                                                 className={cn(
                                                     "w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary text-center",
-                                                    inputInCHF && "bg-blue-50/50 border-blue-200 dark:border-blue-800 focus:bg-background"
+                                                    inputInCHF && selectedCurrency !== 'CHF' && "bg-blue-50/50 border-blue-200 dark:border-blue-800 focus:bg-background"
                                                 )}
                                             />
                                         </div>
                                         {/* FX Rate */}
-                                        <div className="col-span-3">
+                                        <div className="col-span-3 flex flex-col items-center gap-0.5">
                                             <DecimalInput
-                                                value={purchase.fxRate}
+                                                value={selectedCurrency === 'CHF' ? 1.0 : purchase.fxRate}
                                                 onChange={(val) => handleUpdatePurchase(purchase.id, 'fxRate', parseFloat(val) || 0)}
-                                                disabled={position.stock.currency === 'CHF'}
-                                                maxDecimals={6} // Allow higher precision for FX
+                                                disabled={selectedCurrency === 'CHF'}
+                                                maxDecimals={6}
                                                 onFocus={(e) => e.target.select()}
                                                 className="w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary disabled:opacity-50 text-center"
                                             />
+                                            {selectedCurrency !== 'CHF' && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleUpdatePurchase(purchase.id, 'fxRate', fixFx(liveFxRate))}
+                                                    className="text-[9px] text-blue-500 hover:text-blue-600 hover:underline transition-colors whitespace-nowrap"
+                                                    title="Aktuellen Live-Wechselkurs übernehmen"
+                                                >
+                                                    Live: {liveFxRate.toFixed(4)}
+                                                </button>
+                                            )}
                                         </div>
                                         {/* Delete Row */}
                                         <div className="col-span-1 flex justify-center">

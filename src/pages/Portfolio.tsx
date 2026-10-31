@@ -447,7 +447,7 @@ export function Portfolio() {
                             setIsEditModalOpen(false);
                             setSelectedPosition(null);
                         }}
-                        position={selectedPosition}
+                        position={positions.find(p => p.id === selectedPosition.id) || selectedPosition}
                         onUpdate={handleUpdate}
                         onDelete={deletePosition}
                     />

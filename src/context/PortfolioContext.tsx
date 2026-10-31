@@ -140,11 +140,12 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
     const [stocks, setStocks] = useState<Stock[]>(() => {
         const loaded = safeJSONParse('portfolio_stocks', MOCK_STOCKS);
-        // Data Sanitation: Remove 'Simuliert' from sector and translate English terms
+        // Data Sanitation: Remove 'Simuliert' from sector, translate English terms, and ensure Swiss (.SW) stocks default to CHF
         if (loaded && Array.isArray(loaded)) {
             return loaded.map((s: Stock) => ({
                 ...s,
-                sector: s.sector === 'Simuliert' ? '' : (s.sector ? translateSector(s.sector) : '')
+                sector: s.sector === 'Simuliert' ? '' : (s.sector ? translateSector(s.sector) : ''),
+                currency: (s.symbol?.toUpperCase().endsWith('.SW') && s.currency === 'EUR') ? 'CHF' : s.currency
             }));
         }
         return loaded;
@@ -191,6 +192,29 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         localStorage.setItem('portfolio_positions', JSON.stringify(positions));
     }, [positions]);
+
+    // Auto-heal positions where stock currency is CHF but FX rate was wrongly set to non-1.0
+    useEffect(() => {
+        setPositions(prev => {
+            let changed = false;
+            const updated = prev.map(pos => {
+                const stock = stocks.find(s => s.id === pos.stockId);
+                if (stock && stock.currency === 'CHF') {
+                    const hasNonOneFx = pos.averageEntryFxRate !== 1.0 || (pos.purchases && pos.purchases.some(p => p.fxRate !== 1.0));
+                    if (hasNonOneFx) {
+                        changed = true;
+                        return {
+                            ...pos,
+                            averageEntryFxRate: 1.0,
+                            purchases: pos.purchases?.map(p => ({ ...p, fxRate: 1.0 }))
+                        };
+                    }
+                }
+                return pos;
+            });
+            return changed ? updated : prev;
+        });
+    }, [stocks]);
 
     // Auto-process monthly Säule 3a contributions on app load
     useEffect(() => {
@@ -522,6 +546,19 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
             newStocks[index] = { ...stock, ...updates };
             return newStocks;
         });
+
+        if (updates.currency === 'CHF') {
+            setPositions(prev => prev.map(p => {
+                if (p.stockId === id) {
+                    return {
+                        ...p,
+                        averageEntryFxRate: 1.0,
+                        purchases: p.purchases?.map(purch => ({ ...purch, fxRate: 1.0 }))
+                    };
+                }
+                return p;
+            }));
+        }
     };
 
     const updateStockPrice = (id: string, newPrice: number, newPreviousClose?: number, lastQuoteDate?: string) => {
