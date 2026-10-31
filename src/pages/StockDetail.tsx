@@ -342,10 +342,10 @@ export function StockDetail() {
     }
 
     return (
-        <div className="p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16 landscape:pb-10">
+        <div className="stock-detail-page p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16 landscape:pb-10">
             {/* Sticky Header on Desktop and Mobile */}
-            <div className="sticky top-0 -mx-2 lg:-mx-8 px-3 py-2 lg:px-8 lg:py-3.5 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 lg:-mt-8 mb-3 md:mb-6">
-                <div className="flex items-center gap-2 mb-3.5 md:mb-4 landscape:mb-1 pl-11 xl:pl-0 landscape:pl-0">
+            <div className="stock-detail-sticky-header sticky top-0 -mx-2 lg:-mx-8 px-3 py-2 lg:px-8 lg:py-3.5 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 lg:-mt-8 mb-3 md:mb-6">
+                <div className="stock-detail-top-actions flex items-center gap-2 mb-3.5 md:mb-4 landscape:mb-1 pl-11 xl:pl-0 landscape:pl-0">
                     <button
                         onClick={() => {
                             const from = searchParams.get('from');
@@ -399,7 +399,7 @@ export function StockDetail() {
                     <div className="flex items-center gap-2.5 md:gap-4 min-w-0 md:flex-1">
                         <div
                             className={cn(
-                                "bg-card rounded-xl shrink-0",
+                                "stock-detail-logo-wrap bg-card rounded-xl shrink-0 flex items-center justify-center",
                                 positions.find(p => p.stockId === stock.id) && "cursor-pointer hover:scale-105 transition-transform"
                             )}
                             onClick={() => {

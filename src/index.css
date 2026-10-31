@@ -1075,6 +1075,30 @@
     stroke-width: 2.25 !important;
   }
 
+  /* StockDetail: Exakte vertikale Ausrichtung von Hamburger-Button und Aktien-Icon im iPhone-Hochformat */
+  .stock-detail-sticky-header {
+    margin-left: -1rem !important;
+    margin-right: -1rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    width: calc(100% + 2rem) !important;
+  }
+
+  .stock-detail-top-actions {
+    padding-left: calc(2.35rem + 0.5rem) !important;
+  }
+
+  .stock-detail-logo-wrap,
+  .stock-detail-logo-wrap > div {
+    width: 2.35rem !important;
+    height: 2.35rem !important;
+    min-width: 2.35rem !important;
+    min-height: 2.35rem !important;
+    max-width: 2.35rem !important;
+    max-height: 2.35rem !important;
+    border-radius: 0.75rem !important;
+  }
+
   /* Blaue Pillen (bg-primary): immer weisse Schrift + weisse Icons fuer beste Lesbarkeit */
   .bg-primary,
   .text-primary-foreground,
