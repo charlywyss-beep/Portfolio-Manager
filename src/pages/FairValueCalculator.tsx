@@ -2482,7 +2482,7 @@ export function FairValueCalculator() {
                                                         <Check className="size-3" />
                                                         <span>
                                                             Aktiv: {currentStock.targetPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency}
-                                                            {Math.abs(currentStock.targetPrice - calculation.buyPrice) < 0.01 ? " (Modell)" : " (Eigenes Limit)"}
+                                                            {Math.abs(currentStock.targetPrice - calculation.buyPrice) < 0.01 ? ` (${valuationProfile === 'quality' ? 'Qualität B' : valuationProfile === 'conservative' ? 'Sicherheit A' : 'Manuell'})` : " (Eigenes Limit)"}
                                                         </span>
                                                     </span>
                                                 ) : null}

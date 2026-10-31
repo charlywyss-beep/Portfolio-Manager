@@ -749,18 +749,6 @@ export function StockDetail() {
                         </span>
                     </div>
 
-                    <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                        <span className="text-muted-foreground">Kauflimit</span>
-                        <span className="font-medium tabular-nums">
-                            {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
-                        </span>
-                    </div>
-                    <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                        <span className="text-muted-foreground">Verkaufslimit</span>
-                        <span className="font-medium tabular-nums">
-                            {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency, false) : '-'}
-                        </span>
-                    </div>
                     {(() => {
                         void fvModeTick;
                         const symKey = (stock.symbol || '').toUpperCase();
@@ -830,6 +818,9 @@ export function StockDetail() {
                             calcBuyPrice = dcf.buyPrice;
                             mosPct = dcf.mos;
                         }
+
+                        const isCustomLimit = Boolean(stock.targetPrice && (calcBuyPrice === null || Math.abs(stock.targetPrice - calcBuyPrice) >= 0.01));
+                        const isModelLimit = Boolean(stock.targetPrice && calcBuyPrice !== null && Math.abs(stock.targetPrice - calcBuyPrice) < 0.01);
 
                         const handleToggleFvMode = (e: React.MouseEvent) => {
                             e.stopPropagation();
@@ -948,6 +939,48 @@ export function StockDetail() {
 
                         return (
                             <>
+                                <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-muted-foreground">Kauflimit</span>
+                                        {isCustomLimit && (
+                                            <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 rounded shadow-xs">
+                                                Eigenes Limit
+                                            </span>
+                                        )}
+                                        {isModelLimit && (
+                                            <span className={cn(
+                                                "text-[10px] font-semibold px-1.5 py-0.5 rounded border shadow-xs",
+                                                currentMode === 'quality'
+                                                    ? "text-purple-400 bg-purple-500/15 border-purple-500/30"
+                                                    : currentMode === 'conservative'
+                                                        ? "text-blue-400 bg-blue-500/15 border-blue-500/30"
+                                                        : "text-emerald-400 bg-emerald-500/15 border-emerald-500/30"
+                                            )}>
+                                                {currentMode === 'quality' ? 'Qualität B' : currentMode === 'conservative' ? 'Sicherheit A' : 'Manuell'}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className={cn(
+                                        "font-medium tabular-nums",
+                                        isCustomLimit
+                                            ? "text-amber-400 font-semibold"
+                                            : isModelLimit
+                                                ? currentMode === 'quality'
+                                                    ? "text-purple-400 font-semibold"
+                                                    : currentMode === 'conservative'
+                                                        ? "text-blue-400 font-semibold"
+                                                        : "text-emerald-400 font-semibold"
+                                                : ""
+                                    )}>
+                                        {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                                    <span className="text-muted-foreground">Verkaufslimit</span>
+                                    <span className="font-medium tabular-nums">
+                                        {stock.sellLimit ? formatCurrency(stock.sellLimit, stock.currency, false) : '-'}
+                                    </span>
+                                </div>
                                 <div className="flex items-center justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                     <button
                                         type="button"

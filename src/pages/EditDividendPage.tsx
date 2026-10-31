@@ -949,21 +949,42 @@ export function EditDividendPage() {
                                             'quality'
                                         );
 
-                                        const parsedFv = parseFloat((fairValue || '').toString().replace(',', '.'));
                                         const isManualFv = Boolean(activeParams?.isCustom);
                                         const currentValuationMode: 'conservative' | 'quality' = activeParams?.valuationMode === 'quality' ? 'quality' : 'conservative';
                                         const currentMode: 'conservative' | 'quality' | 'manual' = isManualFv ? 'manual' : currentValuationMode;
 
+                                        let effectiveFairValue = 0;
+                                        let calcBuyPrice: number | null = null;
                                         let mosPct = 20;
-                                        if (currentMode === 'manual') {
-                                             mosPct = activeParams?.mos ?? smartAutoConservative.mos ?? 20;
-                                        } else if (currentMode === 'quality') {
-                                             mosPct = (activeParams?.valuationMode === 'quality' && !activeParams?.isCustom && activeParams?.mos) ? activeParams.mos : smartAutoQuality.mos;
+
+                                        if (currentMode === 'quality') {
+                                            const qParams = (activeParams?.valuationMode === 'quality' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : smartAutoQuality;
+                                            const dcf = calculateDcfFairValue(qParams, effectivePrice);
+                                            effectiveFairValue = dcf.fairValue;
+                                            calcBuyPrice = dcf.buyPrice;
+                                            mosPct = dcf.mos;
+                                        } else if (currentMode === 'conservative') {
+                                            const cParams = (activeParams?.valuationMode === 'conservative' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : smartAutoConservative;
+                                            const dcf = calculateDcfFairValue(cParams, effectivePrice);
+                                            effectiveFairValue = dcf.fairValue;
+                                            calcBuyPrice = dcf.buyPrice;
+                                            mosPct = dcf.mos;
                                         } else {
-                                             mosPct = (activeParams?.valuationMode === 'conservative' && !activeParams?.isCustom && activeParams?.mos) ? activeParams.mos : smartAutoConservative.mos;
+                                            // 'manual'
+                                            mosPct = activeParams?.mos ?? smartAutoConservative.mos ?? 20;
+                                            effectiveFairValue = (activeParams?.manualFairValue && Number(activeParams.manualFairValue) > 0)
+                                                ? Number(activeParams.manualFairValue)
+                                                : (activeParams?.eps > 0 ? calculateDcfFairValue(activeParams, effectivePrice).fairValue : (parseFloat((fairValue || '').replace(',', '.')) || 0));
+                                            calcBuyPrice = effectiveFairValue > 0 ? effectiveFairValue * (1 - mosPct / 100) : null;
                                         }
 
-                                        const calcBuyPrice = !isNaN(parsedFv) && parsedFv > 0 ? parsedFv * (1 - mosPct / 100) : null;
+                                        const parsedFv = parseFloat((fairValue || '').toString().replace(',', '.')) || effectiveFairValue;
+
+                                        // Keep fairValue input in sync with current valuation mode if not in manual custom mode
+                                        if (currentMode !== 'manual' && effectiveFairValue > 0 && Math.abs((parseFloat((fairValue || '').replace(',', '.')) || 0) - effectiveFairValue) > 0.01) {
+                                            setTimeout(() => setFairValue(effectiveFairValue.toFixed(2)), 0);
+                                        }
+
                                         const parsedTarget = parseFloat((targetPrice || '').toString().replace(',', '.'));
                                         const hasCustomTarget = !isNaN(parsedTarget) && parsedTarget > 0;
                                         const isModelBuyPriceActive = calcBuyPrice !== null && hasCustomTarget && Math.abs(parsedTarget - calcBuyPrice) < 0.01;
@@ -1121,7 +1142,7 @@ export function EditDividendPage() {
                                                                             : "text-emerald-400 bg-emerald-500/15 border-emerald-500/40"
                                                                 )}>
                                                                     <Check className="size-3.5 shrink-0" />
-                                                                    <span>{calcBuyPrice.toFixed(2)} Aktiv ({currentMode === 'quality' ? 'Qualität B' : currentMode === 'conservative' ? 'Sicherheit A' : 'Modell'})</span>
+                                                                    <span>{calcBuyPrice.toFixed(2)} Aktiv ({currentMode === 'quality' ? 'Qualität B' : currentMode === 'conservative' ? 'Sicherheit A' : 'Manuell'})</span>
                                                                 </div>
                                                             ) : (
                                                                 <button
@@ -1141,10 +1162,10 @@ export function EditDividendPage() {
                                                                                 ? "text-blue-400/90 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30"
                                                                                 : "text-emerald-400/90 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30"
                                                                     )}
-                                                                    title={`Klick: Berechneten Modellpreis (${calcBuyPrice.toFixed(2)}) als Kauflimit übernehmen`}
+                                                                    title={`Klick: Berechneten Kaufpreis (${calcBuyPrice.toFixed(2)}) als Kauflimit übernehmen`}
                                                                 >
                                                                     <Sparkles className="size-3.5 shrink-0" />
-                                                                    <span>Modell: {calcBuyPrice.toFixed(2)} übernehmen</span>
+                                                                    <span>Kaufpreis ({calcBuyPrice.toFixed(2)}) übernehmen</span>
                                                                 </button>
                                                             )
                                                         )}
@@ -1222,7 +1243,7 @@ export function EditDividendPage() {
                                                             <span>Fairer Wert</span>
                                                             <ExternalLink className="size-3.5 text-muted-foreground hover:text-primary" />
                                                         </button>
-                                                        {!isNaN(parsedFv) && parsedFv > 0 && (
+                                                        {((!isNaN(effectiveFairValue) && effectiveFairValue > 0) || (!isNaN(parseFloat(fairValue)) && parseFloat(fairValue) > 0)) && (
                                                             <button
                                                                 type="button"
                                                                 onClick={handleToggleFvMode}
@@ -1253,7 +1274,7 @@ export function EditDividendPage() {
                                                         type="text"
                                                         readOnly
                                                         placeholder="Optional"
-                                                        value={fairValue}
+                                                        value={fairValue || (effectiveFairValue > 0 ? effectiveFairValue.toFixed(2) : '')}
                                                         onClick={() => navigate(`/fair-value?stock=${encodeURIComponent(String(currentStockId || symKey))}`)}
                                                         title="Klicken, um zum Fenster Fairer Wert zu wechseln"
                                                         className={cn(
