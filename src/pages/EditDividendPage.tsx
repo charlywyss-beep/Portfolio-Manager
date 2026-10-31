@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Trash2, Search, Pencil, Check, Calculator, ShieldCheck, Sparkles, Sliders, Save, AlertTriangle, Calendar } from 'lucide-react';
+import { ArrowLeft, Trash2, Search, Pencil, Check, Calculator, ShieldCheck, Sparkles, Sliders, Save, AlertTriangle, Calendar, RefreshCw, ExternalLink } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
@@ -828,10 +828,10 @@ export function EditDividendPage() {
                                         <button
                                             type="button"
                                             onClick={() => navigate(`/calculator?stock=${encodeURIComponent(String(currentStockId))}`)}
-                                            className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-colors"
+                                            className="h-7 flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-all cursor-pointer shadow-sm active:scale-95"
                                             title="Aktie direkt in Kauf / Verkauf öffnen"
                                         >
-                                            <Calculator className="size-3.5" />
+                                            <Calculator className="size-3.5 shrink-0" />
                                             <span>Kauf / Verkauf</span>
                                         </button>
                                     )}
@@ -885,11 +885,11 @@ export function EditDividendPage() {
                                                             }
                                                         }
                                                     }}
-                                                    className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded transition-colors"
+                                                    className="h-7 px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all flex items-center gap-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border-blue-500/30 cursor-pointer shadow-sm active:scale-95"
                                                     title="Kurs von Yahoo Finance laden"
                                                 >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-refresh-cw"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M3 21v-5h5" /></svg>
-                                                    Kurs laden
+                                                    <RefreshCw className="size-3.5 shrink-0" />
+                                                    <span>Kurs laden</span>
                                                 </button>
                                             )}
                                         </div>
@@ -902,7 +902,7 @@ export function EditDividendPage() {
                                             value={price}
                                             onChange={(e) => handlePriceChange(e.target.value)}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg mt-auto"
+                                            className="w-full h-11 px-3 py-2 border border-border/80 rounded-lg bg-background text-foreground text-lg font-mono font-medium mt-auto focus:border-primary focus:outline-none transition-colors"
                                         />
                                     </div>
                                     {(() => {
@@ -964,6 +964,7 @@ export function EditDividendPage() {
                                         }
 
                                         const calcBuyPrice = !isNaN(parsedFv) && parsedFv > 0 ? parsedFv * (1 - mosPct / 100) : null;
+                                        const isBuyPriceActive = calcBuyPrice !== null && parseFloat(targetPrice) === parseFloat(calcBuyPrice.toFixed(2));
 
                                         const handleToggleFvMode = () => {
                                             if (!symKey) return;
@@ -977,6 +978,11 @@ export function EditDividendPage() {
                                             }
                                             const existingLocal = map[symKey] || {};
                                             const existingBackup = existingLocal.customBackup || stockParams?.customBackup || (activeParams?.isCustom ? activeParams : null);
+                                            const shouldAutoSyncLimit = calcBuyPrice !== null && (
+                                                parseFloat(targetPrice) === parseFloat(calcBuyPrice.toFixed(2)) ||
+                                                !targetPrice ||
+                                                parseFloat(targetPrice) === 0
+                                            );
 
                                             if (currentMode === 'conservative') {
                                                 // Switch to Qualität (B)
@@ -998,9 +1004,14 @@ export function EditDividendPage() {
                                                 if (newFv > 0) {
                                                     setFairValue(newFv.toFixed(2));
                                                 }
+                                                const newQualityBuyPrice = parseFloat((newFv * (1 - smartAutoQuality.mos / 100)).toFixed(2));
+                                                if (shouldAutoSyncLimit && newQualityBuyPrice > 0) {
+                                                    setTargetPrice(newQualityBuyPrice.toFixed(2));
+                                                }
                                                 if (currentStockObj) {
                                                     updateStock(currentStockObj.id, {
                                                         ...(newFv > 0 ? { fairValue: newFv } : {}),
+                                                        ...(shouldAutoSyncLimit && newQualityBuyPrice > 0 ? { targetPrice: newQualityBuyPrice } : {}),
                                                         fairValueParams: nextEntry
                                                     });
                                                 }
@@ -1030,9 +1041,15 @@ export function EditDividendPage() {
                                                 if (newManualFv > 0) {
                                                     setFairValue(newManualFv.toFixed(2));
                                                 }
+                                                const manualMos = backupToRestore.mos ?? 20;
+                                                const newManualBuyPrice = parseFloat((newManualFv * (1 - manualMos / 100)).toFixed(2));
+                                                if (shouldAutoSyncLimit && newManualBuyPrice > 0) {
+                                                    setTargetPrice(newManualBuyPrice.toFixed(2));
+                                                }
                                                 if (currentStockObj) {
                                                     updateStock(currentStockObj.id, {
                                                         ...(newManualFv > 0 ? { fairValue: newManualFv } : {}),
+                                                        ...(shouldAutoSyncLimit && newManualBuyPrice > 0 ? { targetPrice: newManualBuyPrice } : {}),
                                                         fairValueParams: nextEntry
                                                     });
                                                 }
@@ -1062,9 +1079,14 @@ export function EditDividendPage() {
                                                 if (newAutoFv > 0) {
                                                     setFairValue(newAutoFv.toFixed(2));
                                                 }
+                                                const newConservativeBuyPrice = parseFloat((newAutoFv * (1 - smartAutoConservative.mos / 100)).toFixed(2));
+                                                if (shouldAutoSyncLimit && newConservativeBuyPrice > 0) {
+                                                    setTargetPrice(newConservativeBuyPrice.toFixed(2));
+                                                }
                                                 if (currentStockObj) {
                                                     updateStock(currentStockObj.id, {
                                                         ...(newAutoFv > 0 ? { fairValue: newAutoFv } : {}),
+                                                        ...(shouldAutoSyncLimit && newConservativeBuyPrice > 0 ? { targetPrice: newConservativeBuyPrice } : {}),
                                                         fairValueParams: nextEntry
                                                     });
                                                 }
@@ -1074,15 +1096,103 @@ export function EditDividendPage() {
 
                                         return (
                                             <>
+                                                {/* Kauflimit */}
                                                 <div className="flex flex-col h-full gap-2">
                                                     <div className="flex justify-between items-center min-h-[28px]">
                                                         <label className="text-sm font-medium">Kauflimit</label>
                                                         {calcBuyPrice !== null && (
                                                             <button
                                                                 type="button"
+                                                                onClick={() => setTargetPrice(calcBuyPrice.toFixed(2))}
+                                                                className={cn(
+                                                                    "h-7 px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95",
+                                                                    isBuyPriceActive
+                                                                        ? currentMode === 'quality'
+                                                                            ? "text-purple-400 bg-purple-500/15 hover:bg-purple-500/25 border-purple-500/40"
+                                                                            : currentMode === 'conservative'
+                                                                                ? "text-blue-400 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/40"
+                                                                                : "text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40"
+                                                                        : currentMode === 'quality'
+                                                                            ? "text-purple-400/80 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30"
+                                                                            : currentMode === 'conservative'
+                                                                                ? "text-blue-400/80 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30"
+                                                                                : "text-emerald-400/80 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30"
+                                                                )}
+                                                                title={
+                                                                    isBuyPriceActive
+                                                                        ? `Berechneter Kaufpreis (${calcBuyPrice.toFixed(2)}) ist aktiv`
+                                                                        : `Klick: Berechneten Kaufpreis (${calcBuyPrice.toFixed(2)}) als Kauflimit übernehmen`
+                                                                }
+                                                            >
+                                                                {isBuyPriceActive ? (
+                                                                    <>
+                                                                        <Check className="size-3.5 shrink-0" />
+                                                                        <span>{calcBuyPrice.toFixed(2)} Aktiv</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <span>{calcBuyPrice.toFixed(2)} übernehmen</span>
+                                                                    </>
+                                                                )}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        inputMode="decimal"
+                                                        autoComplete="off"
+                                                        placeholder="Optional"
+                                                        value={targetPrice}
+                                                        onChange={(e) => setTargetPrice(e.target.value)}
+                                                        onFocus={(e) => e.target.select()}
+                                                        className={cn(
+                                                            "w-full h-11 px-3 py-2 rounded-lg border bg-background text-foreground text-lg font-mono font-medium mt-auto transition-colors focus:outline-none",
+                                                            isBuyPriceActive
+                                                                ? currentMode === 'quality'
+                                                                    ? "border-purple-500/60 focus:border-purple-400 text-purple-400 bg-purple-500/5"
+                                                                    : currentMode === 'conservative'
+                                                                        ? "border-blue-500/60 focus:border-blue-400 text-blue-400 bg-blue-500/5"
+                                                                        : "border-emerald-500/60 focus:border-emerald-400 text-emerald-400 bg-emerald-500/5"
+                                                                : "border-border/80 focus:border-primary text-foreground"
+                                                        )}
+                                                    />
+                                                </div>
+
+                                                {/* Verkaufslimit */}
+                                                <div className="flex flex-col h-full gap-2">
+                                                    <div className="flex justify-between items-center min-h-[28px]">
+                                                        <label className="text-sm font-medium">Verkaufslimit</label>
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        inputMode="decimal"
+                                                        autoComplete="off"
+                                                        placeholder="Preis zum Verkauf..."
+                                                        value={sellLimit}
+                                                        onChange={(e) => setSellLimit(e.target.value)}
+                                                        onFocus={(e) => e.target.select()}
+                                                        className="w-full h-11 px-3 py-2 border border-border/80 rounded-lg bg-background text-foreground text-lg font-mono font-medium mt-auto focus:border-primary focus:outline-none transition-colors"
+                                                    />
+                                                </div>
+
+                                                {/* Fairer Wert */}
+                                                <div className="flex flex-col h-full gap-2">
+                                                    <div className="flex justify-between items-center min-h-[28px]">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => navigate(`/fair-value?stock=${encodeURIComponent(String(currentStockId || symKey))}`)}
+                                                            className="text-sm font-medium hover:text-primary transition-colors cursor-pointer text-left flex items-center gap-1.5"
+                                                            title="Zum Fenster Fairer Wert wechseln"
+                                                        >
+                                                            <span>Fairer Wert</span>
+                                                            <ExternalLink className="size-3.5 text-muted-foreground hover:text-primary" />
+                                                        </button>
+                                                        {!isNaN(parsedFv) && parsedFv > 0 && (
+                                                            <button
+                                                                type="button"
                                                                 onClick={handleToggleFvMode}
                                                                 className={cn(
-                                                                    "flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all cursor-pointer shadow-sm active:scale-95",
+                                                                    "h-7 px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5",
                                                                     currentMode === 'manual'
                                                                         ? "text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40"
                                                                         : currentMode === 'quality'
@@ -1100,93 +1210,6 @@ export function EditDividendPage() {
                                                                 {currentMode === 'conservative' && <ShieldCheck className="size-3.5 shrink-0" />}
                                                                 {currentMode === 'quality' && <Sparkles className="size-3.5 shrink-0" />}
                                                                 {currentMode === 'manual' && <Sliders className="size-3.5 shrink-0" />}
-                                                                <span>
-                                                                    {currentMode === 'manual'
-                                                                        ? 'Kaufpreis (Manuell)'
-                                                                        : currentMode === 'quality'
-                                                                            ? 'Kaufpreis (Qualität B)'
-                                                                            : 'Kaufpreis (Sicherheit A)'}
-                                                                </span>
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                    <div className="relative mt-auto">
-                                                        <input
-                                                            type="text"
-                                                            inputMode="decimal"
-                                                            autoComplete="off"
-                                                            placeholder="Optional"
-                                                            value={targetPrice}
-                                                            onChange={(e) => setTargetPrice(e.target.value)}
-                                                            onFocus={(e) => e.target.select()}
-                                                            className={`w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg ${calcBuyPrice !== null ? 'pr-28' : ''}`}
-                                                        />
-                                                        {calcBuyPrice !== null && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setTargetPrice(calcBuyPrice.toFixed(2))}
-                                                                className={cn(
-                                                                    "absolute right-1.5 top-1/2 -translate-y-1/2 px-2 py-1 rounded font-mono font-bold text-xs transition-all cursor-pointer flex items-center gap-1 active:scale-95 shadow-sm border",
-                                                                    parseFloat(targetPrice) === parseFloat(calcBuyPrice.toFixed(2))
-                                                                        ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                                                                        : currentMode === 'manual'
-                                                                            ? "bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border-emerald-500/40"
-                                                                            : currentMode === 'quality'
-                                                                                ? "bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 border-purple-500/40"
-                                                                                : "bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 border-blue-500/40"
-                                                                )}
-                                                                title={`Klick: Berechneten Kaufpreis (${calcBuyPrice.toFixed(2)}) als Kauflimit übernehmen`}
-                                                            >
-                                                                <span>{calcBuyPrice.toFixed(2)}</span>
-                                                                <span className="text-[10px] uppercase font-sans font-semibold opacity-80">
-                                                                    {parseFloat(targetPrice) === parseFloat(calcBuyPrice.toFixed(2)) ? '✓ Aktiv' : 'Übernehmen'}
-                                                                </span>
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-col h-full gap-2">
-                                                    <div className="flex justify-between items-center min-h-[28px]">
-                                                        <label className="text-sm font-medium">Verkaufslimit</label>
-                                                    </div>
-                                                    <input
-                                                        type="text"
-                                                        inputMode="decimal"
-                                                        autoComplete="off"
-                                                        placeholder="Preis zum Verkauf..."
-                                                        value={sellLimit}
-                                                        onChange={(e) => setSellLimit(e.target.value)}
-                                                        onFocus={(e) => e.target.select()}
-                                                        className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg mt-auto"
-                                                    />
-                                                </div>
-                                                <div className="flex flex-col h-full gap-2">
-                                                    <div className="flex justify-between items-center min-h-[28px]">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => navigate(`/fair-value?stock=${encodeURIComponent(String(currentStockId || symKey))}`)}
-                                                            className="text-sm font-medium hover:text-primary transition-colors cursor-pointer text-left"
-                                                            title="Zum Fenster Fairer Wert wechseln"
-                                                        >
-                                                            Fairer Wert
-                                                        </button>
-                                                        {!isNaN(parsedFv) && parsedFv > 0 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={handleToggleFvMode}
-                                                                className={cn(
-                                                                    "flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all cursor-pointer shadow-sm active:scale-95",
-                                                                    currentMode === 'manual'
-                                                                        ? "text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40"
-                                                                        : currentMode === 'quality'
-                                                                            ? "text-purple-400 bg-purple-500/15 hover:bg-purple-500/25 border-purple-500/40"
-                                                                            : "text-blue-400 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/40"
-                                                                )}
-                                                                title="Klicken, um zwischen Sicherheit (A), Qualität (B) und Manuell zu wechseln"
-                                                            >
-                                                                {currentMode === 'conservative' && <ShieldCheck className="size-3.5 shrink-0" />}
-                                                                {currentMode === 'quality' && <Sparkles className="size-3.5 shrink-0" />}
-                                                                {currentMode === 'manual' && <Sliders className="size-3.5 shrink-0" />}
                                                                 <span>{currentMode === 'manual' ? 'Manuell' : currentMode === 'quality' ? 'Qualität (B)' : 'Sicherheit (A)'}</span>
                                                             </button>
                                                         )}
@@ -1199,14 +1222,14 @@ export function EditDividendPage() {
                                                         onClick={() => navigate(`/fair-value?stock=${encodeURIComponent(String(currentStockId || symKey))}`)}
                                                         title="Klicken, um zum Fenster Fairer Wert zu wechseln"
                                                         className={cn(
-                                                            "w-full px-3 py-2 border rounded-md bg-background text-lg mt-auto font-mono font-semibold transition-colors cursor-pointer",
+                                                            "w-full h-11 px-3 py-2 border rounded-lg bg-background text-lg font-mono font-medium mt-auto transition-colors cursor-pointer focus:outline-none",
                                                             !isNaN(parsedFv) && parsedFv > 0
                                                                 ? currentMode === 'manual'
-                                                                    ? "border-emerald-500/60 hover:border-emerald-400 text-emerald-400"
+                                                                    ? "border-emerald-500/60 hover:border-emerald-400 text-emerald-400 bg-emerald-500/5"
                                                                     : currentMode === 'quality'
-                                                                        ? "border-purple-500/60 hover:border-purple-400 text-purple-400"
-                                                                        : "border-blue-500/60 hover:border-blue-400 text-blue-400"
-                                                                : "text-foreground hover:border-primary/50"
+                                                                        ? "border-purple-500/60 hover:border-purple-400 text-purple-400 bg-purple-500/5"
+                                                                        : "border-blue-500/60 hover:border-blue-400 text-blue-400 bg-blue-500/5"
+                                                                : "border-border/80 text-foreground hover:border-primary/50"
                                                         )}
                                                     />
                                                 </div>
@@ -1215,7 +1238,6 @@ export function EditDividendPage() {
                                     })()}
                                 </div>
                             </div>
-
 
                             {/* Dividend Section - Always visible */}
                             <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4">

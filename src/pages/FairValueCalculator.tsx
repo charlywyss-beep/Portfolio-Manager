@@ -2422,6 +2422,12 @@ export function FairValueCalculator() {
                                                 ? "text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 border-purple-500/30"
                                                 : "text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 border-blue-500/30";
 
+                                        const kaufpreisActiveTextColor = isManualMode
+                                            ? "text-emerald-400"
+                                            : isQualityMode
+                                                ? "text-purple-400"
+                                                : "text-blue-400";
+
                                         return (
                                             <div className={cn(
                                                 "p-3.5 sm:p-4 rounded-xl border-2 transition-all shadow-sm",
@@ -2467,7 +2473,7 @@ export function FairValueCalculator() {
                                                         <span>In Kursdaten übernommen!</span>
                                                     </span>
                                                 ) : currentStock?.targetPrice ? (
-                                                    <span className="text-[11px] font-medium text-emerald-400 flex items-center gap-1">
+                                                    <span className={cn("text-[11px] font-medium flex items-center gap-1", kaufpreisActiveTextColor)}>
                                                         <Check className="size-3" />
                                                         <span>Aktiv: {currentStock.targetPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency}</span>
                                                     </span>
