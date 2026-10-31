@@ -348,7 +348,7 @@ export function StockDetail() {
     return (
         <div className="p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16 landscape:pb-10">
             {/* Sticky Header on Desktop and Mobile */}
-            <div className="sticky top-0 -mx-2 md:-mx-8 px-3 py-2 md:px-8 md:py-4 z-50 bg-background/95 backdrop-blur-md border-b border-border shadow-md transition-all -mt-2 md:-mt-8 mb-3 md:mb-6">
+            <div className="sticky top-0 -mx-2 lg:-mx-8 px-3 py-2 lg:px-8 lg:py-3.5 z-50 bg-background/95 backdrop-blur-md border-b border-border shadow-md transition-all -mt-2 lg:-mt-8 mb-3 md:mb-6">
                 <div className="flex items-center gap-2 mb-2 md:mb-4 landscape:mb-1 pl-10 xl:pl-0 landscape:pl-0">
                     <button
                         onClick={() => {
@@ -479,12 +479,12 @@ export function StockDetail() {
 
                     {/* Center: Prominenter Kurs (Mittig, markant & klar mit abgegrauter CHF-Umrechnung) */}
                     <div className="flex flex-col items-center justify-center text-center py-1 sm:py-0 px-2 sm:px-4 md:flex-1 shrink-0">
-                        <div className="flex items-baseline justify-center gap-2 sm:gap-3 flex-wrap">
-                            <span className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight tabular-nums text-foreground drop-shadow-sm">
+                        <div className="flex items-baseline justify-center gap-3 sm:gap-4 flex-nowrap whitespace-nowrap">
+                            <span className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black tracking-tight tabular-nums text-foreground whitespace-nowrap drop-shadow-sm">
                                 {formatCurrency(stock.currentPrice, stock.currency, false)}
                             </span>
                             {stock.currency && stock.currency !== 'CHF' && (
-                                <span className="text-xs sm:text-sm md:text-base font-medium text-muted-foreground/80 tabular-nums whitespace-nowrap">
+                                <span className="text-sm sm:text-base lg:text-lg font-semibold text-foreground/85 dark:text-zinc-200 tabular-nums whitespace-nowrap ml-1 sm:ml-2">
                                     {formatCurrency(convertToCHF(stock.currentPrice, stock.currency), 'CHF', false)}
                                 </span>
                             )}
