@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, ShieldCheck, Sparkles, Plus, ArrowLeft } from 'lucide-react';
+import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, ShieldCheck, Sparkles, Plus, ArrowLeft, Target } from 'lucide-react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
@@ -159,6 +159,76 @@ export function FairValueCalculator() {
         if (!selectedSymbol) return null;
         return stocks.find(s => s.symbol.toLowerCase() === selectedSymbol.toLowerCase()) || null;
     }, [stocks, selectedSymbol]);
+
+    // Kauflimit state for direct transfer to Kursdaten
+    const [buyLimitInput, setBuyLimitInput] = useState('');
+    const [buyLimitSavedToast, setBuyLimitSavedToast] = useState(false);
+
+    useEffect(() => {
+        if (currentStock?.targetPrice) {
+            setBuyLimitInput(currentStock.targetPrice.toString());
+        } else {
+            const symKey = selectedSymbol ? selectedSymbol.toUpperCase() : '';
+            let savedTargetPrice: number | undefined;
+            try {
+                const mapRaw = localStorage.getItem('fair_value_params_map');
+                if (mapRaw && symKey) {
+                    const map = JSON.parse(mapRaw);
+                    if (map[symKey]?.targetPrice) {
+                        savedTargetPrice = Number(map[symKey].targetPrice);
+                    }
+                }
+            } catch {}
+            if (savedTargetPrice && savedTargetPrice > 0) {
+                setBuyLimitInput(savedTargetPrice.toString());
+            } else {
+                setBuyLimitInput('');
+            }
+        }
+    }, [currentStock?.id, currentStock?.targetPrice, selectedSymbol]);
+
+    const handleSaveBuyLimit = (valToSave?: string) => {
+        const raw = valToSave !== undefined ? valToSave : buyLimitInput;
+        const parsed = parseFloat(raw.replace(',', '.'));
+        const newLimit = !isNaN(parsed) && parsed > 0 ? parsed : undefined;
+
+        let stockId = currentStock?.id;
+        if (!stockId && selectedSymbol) {
+            stockId = addStock({
+                symbol: selectedSymbol,
+                name: quote?.name || selectedSymbol,
+                currentPrice: quote?.price || 0,
+                previousClose: quote?.previousClose || 0,
+                currency: quote?.currency || 'USD',
+                sector: quote?.sector || 'Allgemein',
+                targetPrice: newLimit,
+                fairValue: calculation.fairValue
+            });
+        } else if (stockId) {
+            updateStock(stockId, {
+                targetPrice: newLimit,
+                fairValue: calculation.fairValue
+            });
+        }
+
+        if (selectedSymbol) {
+            try {
+                const key = selectedSymbol.toUpperCase();
+                const mapRaw = localStorage.getItem('fair_value_params_map');
+                const map = mapRaw ? JSON.parse(mapRaw) : {};
+                map[key] = {
+                    ...map[key],
+                    targetPrice: newLimit,
+                    fairValue: calculation.fairValue
+                };
+                localStorage.setItem('fair_value_params_map', JSON.stringify(map));
+            } catch {}
+        }
+
+        setBuyLimitInput(newLimit ? newLimit.toString() : '');
+        setBuyLimitSavedToast(true);
+        setTimeout(() => setBuyLimitSavedToast(false), 2500);
+    };
 
     // Helper: Read/Write per-symbol parameters in localStorage
     const getSavedSymbolParams = (sym: string) => {
@@ -2350,6 +2420,73 @@ export function FairValueCalculator() {
                                         <p className="text-xs text-muted-foreground">
                                             Maximaler Preis inkl. {mos}% Sicherheitsmarge ({isSavedForStock ? 'Manuell' : 'Auto-Werte'})
                                         </p>
+
+                                        {/* Kauflimit Integration (Direkt in Kursdaten & Watchlist übernehmen) */}
+                                        <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="font-semibold text-foreground flex items-center gap-1.5">
+                                                    <Target className="size-3.5 text-blue-500" />
+                                                    <span>Kauflimit (für Kursdaten)</span>
+                                                </span>
+                                                {buyLimitSavedToast ? (
+                                                    <span className="text-[11px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1 animate-pulse">
+                                                        <Check className="size-3" />
+                                                        <span>In Kursdaten übernommen!</span>
+                                                    </span>
+                                                ) : currentStock?.targetPrice ? (
+                                                    <span className="text-[11px] font-medium text-emerald-400 flex items-center gap-1">
+                                                        <Check className="size-3" />
+                                                        <span>Aktiv: {currentStock.targetPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency}</span>
+                                                    </span>
+                                                ) : null}
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <div className="relative flex-1">
+                                                    <input
+                                                        type="text"
+                                                        inputMode="decimal"
+                                                        value={buyLimitInput}
+                                                        onChange={(e) => setBuyLimitInput(e.target.value)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                handleSaveBuyLimit(buyLimitInput);
+                                                            }
+                                                        }}
+                                                        placeholder={calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : "Optional"}
+                                                        className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-sm font-mono pr-12 focus:ring-1 focus:ring-primary text-foreground"
+                                                    />
+                                                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-muted-foreground pointer-events-none">
+                                                        {quote.currency === 'GBp' ? 'GBP' : quote.currency}
+                                                    </span>
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSaveBuyLimit(buyLimitInput || (calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : ''))}
+                                                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow-sm transition-all flex items-center gap-1 shrink-0 active:scale-95"
+                                                    title="In Kursdaten als Kauflimit speichern"
+                                                >
+                                                    <Check className="size-3.5" />
+                                                    <span>Speichern</span>
+                                                </button>
+                                            </div>
+
+                                            {/* Schnell-Übernahme: Berechneten Kaufpreis mit 1 Klick setzen */}
+                                            {calculation.buyPrice > 0 && Math.abs((parseFloat(buyLimitInput.replace(',', '.')) || 0) - calculation.buyPrice) > 0.01 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const val = calculation.buyPrice.toFixed(2);
+                                                        setBuyLimitInput(val);
+                                                        handleSaveBuyLimit(val);
+                                                    }}
+                                                    className="w-full py-1 px-2 text-[11px] font-medium text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded border border-blue-500/20 transition-all flex items-center justify-center gap-1 text-center"
+                                                >
+                                                    <span>Kaufpreis ({calculation.buyPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency}) als Kauflimit übernehmen</span>
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Fair Value */}
