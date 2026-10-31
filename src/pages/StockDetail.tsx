@@ -517,10 +517,19 @@ export function StockDetail() {
                                 ? formatCurrency(convertToCHF(totalDiff, stock.currency), 'CHF', false)
                                 : null;
 
+                            const isStockMarketOpen = estimateMarketState(stock.symbol, stock.currency) === 'REGULAR';
+                            const quoteTimestamp = stock.lastQuoteDate ? new Date(stock.lastQuoteDate).getTime() : 0;
+                            const effectiveStockDate = (!isStockMarketOpen && quoteTimestamp > 0) ? new Date(quoteTimestamp) : new Date();
+                            const stockDateStr = effectiveStockDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
+
                             return (
                                 <div className="flex flex-col items-center justify-center text-center mt-1 sm:mt-1.5">
                                     <div className="flex items-center justify-center gap-4 sm:gap-6 text-[11px] sm:text-xs text-muted-foreground font-medium">
-                                        <span>{timeRange === '1D' ? 'Tages Performance:' : `Performance ${timeRange}:`}</span>
+                                        <span>
+                                            {timeRange === '1D'
+                                                ? (!isStockMarketOpen ? `Tages Performance vom ${stockDateStr}:` : 'Tages Performance:')
+                                                : `Performance ${timeRange}:`}
+                                        </span>
                                         <span>Bestand: {position.shares.toLocaleString('de-CH')} Stk.</span>
                                     </div>
                                     <div className={cn(

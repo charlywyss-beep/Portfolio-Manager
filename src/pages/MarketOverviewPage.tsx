@@ -158,6 +158,31 @@ export function MarketOverviewPage() {
     const portfolioDailyGainPercent = totals.dailyGainPercent || 0;
     const isPortfolioPositive = portfolioDailyGain >= 0;
 
+    const isAnyMarketOpen = useMemo(() => {
+        return (positions || []).some(p => {
+            const s = stocks.find(st => st.id === p.stockId);
+            return s && estimateMarketState(s.symbol, s.currency) === 'REGULAR';
+        });
+    }, [positions, stocks]);
+
+    const performanceDateLabel = useMemo(() => {
+        const validTimestamps = (positions || [])
+            .map(p => {
+                const s = stocks.find(st => st.id === p.stockId);
+                return s?.lastQuoteDate ? new Date(s.lastQuoteDate).getTime() : 0;
+            })
+            .filter(t => t > 0);
+        const latestTimestamp = validTimestamps.length > 0 ? Math.max(...validTimestamps) : 0;
+        const effectiveDate = (!isAnyMarketOpen && latestTimestamp > 0)
+            ? new Date(latestTimestamp)
+            : new Date();
+        const shortDateLabel = effectiveDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
+        return {
+            short: isAnyMarketOpen ? `Live ${shortDateLabel}` : `vom ${shortDateLabel}`,
+            full: isAnyMarketOpen ? `Live (${shortDateLabel})` : `Schlusskurse vom ${shortDateLabel}`
+        };
+    }, [positions, stocks, isAnyMarketOpen]);
+
     // Tab types
     const VALID_TABS = useMemo(() => ['all', 'portfolio', 'indices', 'commodities', 'forex', 'stocks', 'crypto'] as const, []);
     type TabType = typeof VALID_TABS[number];
@@ -1122,7 +1147,7 @@ export function MarketOverviewPage() {
                             )}
                             title="Portfolio Tagesperformance – Klick für Positionsübersicht"
                         >
-                            {/* Top: Name */}
+                            {/* Top: Name & Date Badge */}
                             <div className="flex items-start justify-between gap-1 min-w-0">
                                 <div className="min-w-0 flex-1 flex items-center gap-1.5">
                                     <div className="size-5 sm:size-6 rounded-md bg-white text-slate-950 shadow-xs border border-white/60 flex items-center justify-center shrink-0">
@@ -1132,6 +1157,10 @@ export function MarketOverviewPage() {
                                         Tagesperformance
                                     </h3>
                                 </div>
+                                <span className="text-[10px] sm:text-xs font-bold text-slate-950/85 bg-white/60 border border-white/70 px-1.5 py-0.5 rounded-md shrink-0 shadow-xs tabular-nums whitespace-nowrap">
+                                    <span className="hidden sm:inline">{!isAnyMarketOpen && 'Schlusskurse '}</span>
+                                    {performanceDateLabel.short}
+                                </span>
                             </div>
 
                             {/* Center: CHF amount & total portfolio value */}
