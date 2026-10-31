@@ -355,11 +355,6 @@ export function EditDividendPage() {
             updates.name = stockNameOverride;
         }
 
-        // Name Update
-        if (stockNameOverride !== undefined && stockNameOverride.trim() !== stock?.name) {
-            updates.name = stockNameOverride;
-        }
-
         // Symbol update
         if (symbol && (!stock || symbol !== stock.symbol)) {
             updates.symbol = symbol.toUpperCase(); // Ensure uppercase
@@ -442,6 +437,18 @@ export function EditDividendPage() {
         setTimeout(() => setIsSavedFeedback(false), 2000);
     };
 
+    // Global Keyboard Shortcut: Ctrl+S / Cmd+S or Ctrl+Enter to save from anywhere
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'Enter')) {
+                e.preventDefault();
+                handleSubmit(e as unknown as React.FormEvent);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    });
+
     const { rates, formatCurrency } = useCurrencyFormatter();
 
     const convertAmount = (val: number, from: Currency | string, to: Currency | string) => {
@@ -500,7 +507,7 @@ export function EditDividendPage() {
                     <ArrowLeft className="size-5" />
                     <span className="hidden md:inline text-sm ml-1.5">Zurück</span>
                 </button>
-                <div className="flex-1 flex items-center gap-3 min-w-0">
+                <div className="flex-1 flex items-center gap-3 min-w-0 mr-2">
                     {logoUrl && (
                         <img
                             src={logoUrl}
@@ -511,11 +518,11 @@ export function EditDividendPage() {
                     )}
                     <div className="flex-1 min-w-0">
                         {stock ? (
-                            <div className="flex items-center gap-2 group/edit w-full min-w-0">
+                            <div className="flex items-center gap-1.5 group/edit max-w-xl">
                                 <input
                                     ref={inputRef}
                                     type="text"
-                                    className="w-full text-lg sm:text-xl md:text-2xl font-bold bg-transparent border border-transparent hover:border-border focus:border-primary focus:ring-1 focus:ring-primary rounded px-1.5 py-1 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground truncate leading-tight"
+                                    className="text-lg sm:text-xl md:text-2xl font-bold bg-transparent border border-transparent hover:border-border/80 focus:border-primary focus:bg-background/80 focus:ring-1 focus:ring-primary rounded-lg px-2 py-0.5 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground truncate leading-tight"
                                     value={stockNameOverride !== undefined ? stockNameOverride : stock.name}
                                     onChange={(e) => {
                                         setStockNameOverride(e.target.value);
@@ -531,10 +538,10 @@ export function EditDividendPage() {
                                 <button
                                     type="button"
                                     onClick={() => inputRef.current?.focus()}
-                                    className="p-1.5 text-muted-foreground hover:text-primary hover:bg-muted/50 rounded-lg transition-all shrink-0"
-                                    title="Klicken zum Bearbeiten"
+                                    className="p-1 text-muted-foreground hover:text-primary hover:bg-muted/50 rounded-md transition-all shrink-0"
+                                    title="Name bearbeiten"
                                 >
-                                    <Pencil className="size-4" />
+                                    <Pencil className="size-3.5" />
                                 </button>
                             </div>
                         ) : (
@@ -552,34 +559,40 @@ export function EditDividendPage() {
                     </div>
                 </div>
 
-                {/* Always-visible Header Speichern Button */}
+                {/* Always-visible Header Speichern Button (Connected with entire form) */}
                 <button
-                    type="button"
+                    form="dividend-form"
+                    type="submit"
                     onClick={handleSubmit}
                     className={cn(
-                        "flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl font-semibold text-xs sm:text-sm transition-all transform active:scale-95 shadow-md shrink-0 ml-auto cursor-pointer",
+                        "flex items-center gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all transform active:scale-95 shadow-md shrink-0 ml-auto cursor-pointer",
                         isSavedFeedback
-                            ? "bg-emerald-600 text-white shadow-emerald-500/20"
-                            : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20 hover:shadow-lg"
+                            ? "bg-emerald-600 text-white shadow-emerald-500/25 ring-2 ring-emerald-400"
+                            : isDirty
+                            ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/30 ring-2 ring-primary/50"
+                            : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20"
                     )}
-                    title="SPEICHERN (Strg + Enter)"
+                    title="Alles speichern (Name, Kurse, Limits, Termine & Dividenden) [Strg + S]"
                 >
                     {isSavedFeedback ? (
                         <>
-                            <Check className="size-4 stroke-[2.5]" />
+                            <Check className="size-4 stroke-[3]" />
                             <span>Gespeichert!</span>
                         </>
                     ) : (
                         <>
                             <Save className="size-4" />
-                            <span>Speichern</span>
+                            <span>{isDirty ? "Alles speichern" : "Speichern"}</span>
+                            {isDirty && (
+                                <span className="size-2 rounded-full bg-amber-300 ring-2 ring-white/50 animate-pulse ml-0.5" />
+                            )}
                         </>
                     )}
                 </button>
             </div>
 
             <div className="p-4 sm:p-6 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto w-full">
-                <form onSubmit={handleSubmit} onChangeCapture={() => setIsDirty(true)} className="space-y-6">
+                <form id="dividend-form" onSubmit={handleSubmit} onChangeCapture={() => setIsDirty(true)} className="space-y-6">
 
                     {/* Stock Selection if no ID passed */}
                     {!stockId && (
@@ -1507,21 +1520,26 @@ export function EditDividendPage() {
 
                             <div className="pt-4 pb-8">
                                 <button
+                                    form="dividend-form"
                                     type="submit"
                                     className={cn(
-                                        "w-full px-4 py-3 text-lg font-medium rounded-xl shadow-lg transition-all flex items-center justify-center gap-2",
+                                        "w-full px-4 py-3.5 text-base sm:text-lg font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer",
                                         isSavedFeedback
-                                            ? "bg-emerald-600 text-white"
-                                            : "bg-primary text-primary-foreground hover:bg-primary/90"
+                                            ? "bg-emerald-600 text-white ring-2 ring-emerald-400"
+                                            : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/25"
                                     )}
+                                    title="Alles speichern [Strg + S]"
                                 >
                                     {isSavedFeedback ? (
                                         <>
-                                            <Check className="size-5" />
+                                            <Check className="size-5 stroke-[3]" />
                                             <span>Gespeichert!</span>
                                         </>
                                     ) : (
-                                        <span>Speichern</span>
+                                        <>
+                                            <Save className="size-5" />
+                                            <span>{isDirty ? "Alle Änderungen speichern" : "Speichern"}</span>
+                                        </>
                                     )}
                                 </button>
                             </div>
