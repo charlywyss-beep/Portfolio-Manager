@@ -964,7 +964,9 @@ export function EditDividendPage() {
                                         }
 
                                         const calcBuyPrice = !isNaN(parsedFv) && parsedFv > 0 ? parsedFv * (1 - mosPct / 100) : null;
-                                        const isBuyPriceActive = calcBuyPrice !== null && parseFloat(targetPrice) === parseFloat(calcBuyPrice.toFixed(2));
+                                        const parsedTarget = parseFloat((targetPrice || '').toString().replace(',', '.'));
+                                        const hasCustomTarget = !isNaN(parsedTarget) && parsedTarget > 0;
+                                        const isModelBuyPriceActive = calcBuyPrice !== null && hasCustomTarget && Math.abs(parsedTarget - calcBuyPrice) < 0.01;
 
                                         const handleToggleFvMode = () => {
                                             if (!symKey) return;
@@ -1098,62 +1100,95 @@ export function EditDividendPage() {
                                             <>
                                                 {/* Kauflimit */}
                                                 <div className="flex flex-col h-full gap-2">
-                                                    <div className="flex justify-between items-center min-h-[28px]">
-                                                        <label className="text-sm font-medium">Kauflimit</label>
+                                                    <div className="flex justify-between items-center min-h-[28px] gap-2 flex-wrap">
+                                                        <div className="flex items-center gap-2">
+                                                            <label className="text-sm font-medium">Kauflimit</label>
+                                                            {hasCustomTarget && !isModelBuyPriceActive && (
+                                                                <span className="h-6 px-2 text-[11px] font-semibold rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1 shadow-xs">
+                                                                    <Check className="size-3 shrink-0" />
+                                                                    <span>{parsedTarget.toFixed(2)} Aktiv (Eigenes Limit)</span>
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         {calcBuyPrice !== null && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setTargetPrice(calcBuyPrice.toFixed(2))}
-                                                                className={cn(
-                                                                    "h-7 px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95",
-                                                                    isBuyPriceActive
-                                                                        ? currentMode === 'quality'
-                                                                            ? "text-purple-400 bg-purple-500/15 hover:bg-purple-500/25 border-purple-500/40"
+                                                            isModelBuyPriceActive ? (
+                                                                <div className={cn(
+                                                                    "h-7 px-2.5 py-1 text-xs font-semibold rounded-lg border flex items-center gap-1.5 shadow-sm",
+                                                                    currentMode === 'quality'
+                                                                        ? "text-purple-400 bg-purple-500/15 border-purple-500/40"
+                                                                        : currentMode === 'conservative'
+                                                                            ? "text-blue-400 bg-blue-500/15 border-blue-500/40"
+                                                                            : "text-emerald-400 bg-emerald-500/15 border-emerald-500/40"
+                                                                )}>
+                                                                    <Check className="size-3.5 shrink-0" />
+                                                                    <span>{calcBuyPrice.toFixed(2)} Aktiv ({currentMode === 'quality' ? 'Qualität B' : currentMode === 'conservative' ? 'Sicherheit A' : 'Modell'})</span>
+                                                                </div>
+                                                            ) : (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const val = calcBuyPrice.toFixed(2);
+                                                                        setTargetPrice(val);
+                                                                        if (currentStockObj) {
+                                                                            updateStock(currentStockObj.id, { targetPrice: parseFloat(val) });
+                                                                        }
+                                                                    }}
+                                                                    className={cn(
+                                                                        "h-7 px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95",
+                                                                        currentMode === 'quality'
+                                                                            ? "text-purple-400/90 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30"
                                                                             : currentMode === 'conservative'
-                                                                                ? "text-blue-400 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/40"
-                                                                                : "text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40"
-                                                                        : currentMode === 'quality'
-                                                                            ? "text-purple-400/80 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30"
-                                                                            : currentMode === 'conservative'
-                                                                                ? "text-blue-400/80 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30"
-                                                                                : "text-emerald-400/80 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30"
-                                                                )}
-                                                                title={
-                                                                    isBuyPriceActive
-                                                                        ? `Berechneter Kaufpreis (${calcBuyPrice.toFixed(2)}) ist aktiv`
-                                                                        : `Klick: Berechneten Kaufpreis (${calcBuyPrice.toFixed(2)}) als Kauflimit übernehmen`
-                                                                }
-                                                            >
-                                                                {isBuyPriceActive ? (
-                                                                    <>
-                                                                        <Check className="size-3.5 shrink-0" />
-                                                                        <span>{calcBuyPrice.toFixed(2)} Aktiv</span>
-                                                                    </>
-                                                                ) : (
-                                                                    <>
-                                                                        <span>{calcBuyPrice.toFixed(2)} übernehmen</span>
-                                                                    </>
-                                                                )}
-                                                            </button>
+                                                                                ? "text-blue-400/90 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30"
+                                                                                : "text-emerald-400/90 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30"
+                                                                    )}
+                                                                    title={`Klick: Berechneten Modellpreis (${calcBuyPrice.toFixed(2)}) als Kauflimit übernehmen`}
+                                                                >
+                                                                    <Sparkles className="size-3.5 shrink-0" />
+                                                                    <span>Modell: {calcBuyPrice.toFixed(2)} übernehmen</span>
+                                                                </button>
+                                                            )
                                                         )}
                                                     </div>
                                                     <input
                                                         type="text"
                                                         inputMode="decimal"
                                                         autoComplete="off"
-                                                        placeholder="Optional"
+                                                        placeholder="z.B. 800 (beliebiger eigener Wert)"
                                                         value={targetPrice}
                                                         onChange={(e) => setTargetPrice(e.target.value)}
+                                                        onBlur={() => {
+                                                            const val = parseFloat(targetPrice.replace(',', '.'));
+                                                            if (!isNaN(val) && val > 0) {
+                                                                setTargetPrice(val.toFixed(2));
+                                                                if (currentStockObj) {
+                                                                    updateStock(currentStockObj.id, { targetPrice: val });
+                                                                }
+                                                            }
+                                                        }}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                const val = parseFloat(targetPrice.replace(',', '.'));
+                                                                if (!isNaN(val) && val > 0) {
+                                                                    setTargetPrice(val.toFixed(2));
+                                                                    if (currentStockObj) {
+                                                                        updateStock(currentStockObj.id, { targetPrice: val });
+                                                                    }
+                                                                }
+                                                                (e.target as HTMLElement).blur();
+                                                            }
+                                                        }}
                                                         onFocus={(e) => e.target.select()}
                                                         className={cn(
-                                                            "w-full h-11 px-3 py-2 rounded-lg border bg-background text-foreground text-lg font-mono font-medium mt-auto transition-colors focus:outline-none",
-                                                            isBuyPriceActive
+                                                            "w-full h-11 px-3 py-2 rounded-lg border text-lg font-mono font-medium mt-auto transition-colors focus:outline-none",
+                                                            isModelBuyPriceActive
                                                                 ? currentMode === 'quality'
                                                                     ? "border-purple-500/60 focus:border-purple-400 text-purple-400 bg-purple-500/5"
                                                                     : currentMode === 'conservative'
                                                                         ? "border-blue-500/60 focus:border-blue-400 text-blue-400 bg-blue-500/5"
                                                                         : "border-emerald-500/60 focus:border-emerald-400 text-emerald-400 bg-emerald-500/5"
-                                                                : "border-border/80 focus:border-primary text-foreground"
+                                                                : hasCustomTarget
+                                                                    ? "border-amber-500/60 focus:border-amber-400 text-amber-300 bg-amber-500/5"
+                                                                    : "border-border/80 focus:border-primary text-foreground bg-background"
                                                         )}
                                                     />
                                                 </div>

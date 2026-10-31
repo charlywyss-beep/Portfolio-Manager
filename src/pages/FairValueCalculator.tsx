@@ -2473,9 +2473,17 @@ export function FairValueCalculator() {
                                                         <span>In Kursdaten übernommen!</span>
                                                     </span>
                                                 ) : currentStock?.targetPrice ? (
-                                                    <span className={cn("text-[11px] font-medium flex items-center gap-1", kaufpreisActiveTextColor)}>
+                                                    <span className={cn(
+                                                        "text-[11px] font-medium flex items-center gap-1",
+                                                        Math.abs(currentStock.targetPrice - calculation.buyPrice) < 0.01
+                                                            ? kaufpreisActiveTextColor
+                                                            : "text-amber-400"
+                                                    )}>
                                                         <Check className="size-3" />
-                                                        <span>Aktiv: {currentStock.targetPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency}</span>
+                                                        <span>
+                                                            Aktiv: {currentStock.targetPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency}
+                                                            {Math.abs(currentStock.targetPrice - calculation.buyPrice) < 0.01 ? " (Modell)" : " (Eigenes Limit)"}
+                                                        </span>
                                                     </span>
                                                 ) : null}
                                             </div>
