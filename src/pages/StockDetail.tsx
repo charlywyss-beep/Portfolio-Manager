@@ -357,52 +357,72 @@ export function StockDetail() {
         <div className="stock-detail-page p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16 landscape:pb-10">
             {/* Sticky Header on Desktop and Mobile */}
             <div className="stock-detail-sticky-header sticky top-0 -mx-2 lg:-mx-8 px-3 py-2 lg:px-8 lg:py-3.5 z-50 bg-background border-b border-border shadow-md transition-all -mt-2 lg:-mt-8 mb-3 md:mb-6">
-                <div className="stock-detail-top-actions flex items-center gap-2 mb-3.5 md:mb-4 landscape:mb-1 pl-11 xl:pl-0 landscape:pl-0">
-                    <button
-                        onClick={() => {
-                            const from = searchParams.get('from');
-                            if (from === 'watchlist') {
-                                navigate('/watchlist');
-                            } else if (from === 'portfolio') {
-                                navigate('/portfolio');
-                            } else if (from === 'market-overview') {
-                                const tab = searchParams.get('tab') || sessionStorage.getItem('portfolio_market_overview_tab');
-                                navigate(tab && tab !== 'all' ? `/market-overview?tab=${encodeURIComponent(tab)}` : '/market-overview');
-                            } else {
-                                navigate('/');
+                <div className="stock-detail-top-actions flex items-center justify-between gap-2 mb-3.5 md:mb-4 landscape:mb-1 pl-11 xl:pl-0 landscape:pl-0">
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => {
+                                const from = searchParams.get('from');
+                                if (from === 'watchlist') {
+                                    navigate('/watchlist');
+                                } else if (from === 'portfolio') {
+                                    navigate('/portfolio');
+                                } else if (from === 'market-overview') {
+                                    const tab = searchParams.get('tab') || sessionStorage.getItem('portfolio_market_overview_tab');
+                                    navigate(tab && tab !== 'all' ? `/market-overview?tab=${encodeURIComponent(tab)}` : '/market-overview');
+                                } else {
+                                    navigate('/');
+                                }
+                            }}
+                            className="flex items-center justify-center gap-1 bg-white text-blue-600 hover:bg-blue-50 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 py-1 px-2.5 text-xs group active:scale-95"
+                            title={
+                                searchParams.get('from') === 'market-overview'
+                                    ? "Zurück zur Marktübersicht"
+                                    : searchParams.get('from') === 'portfolio'
+                                        ? "Zurück zu Positionen"
+                                        : searchParams.get('from') === 'watchlist'
+                                            ? "Zurück zur Watchlist"
+                                            : "Zurück zur Übersicht"
                             }
-                        }}
-                        className="flex items-center justify-center gap-1 bg-white text-blue-600 hover:bg-blue-50 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 py-1 px-2.5 text-xs group active:scale-95"
-                        title={
-                            searchParams.get('from') === 'market-overview'
-                                ? "Zurück zur Marktübersicht"
-                                : searchParams.get('from') === 'portfolio'
-                                    ? "Zurück zu Positionen"
-                                    : searchParams.get('from') === 'watchlist'
-                                        ? "Zurück zur Watchlist"
-                                        : "Zurück zur Übersicht"
-                        }
-                    >
-                        <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
-                        <span>
-                            {searchParams.get('from') === 'market-overview'
-                                ? 'Marktübersicht'
-                                : searchParams.get('from') === 'portfolio'
-                                    ? 'Positionen'
-                                    : searchParams.get('from') === 'watchlist'
-                                        ? 'Watchlist'
-                                        : 'Übersicht'}
-                        </span>
-                    </button>
+                        >
+                            <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
+                            <span>
+                                {searchParams.get('from') === 'market-overview'
+                                    ? 'Marktübersicht'
+                                    : searchParams.get('from') === 'portfolio'
+                                        ? 'Positionen'
+                                        : searchParams.get('from') === 'watchlist'
+                                            ? 'Watchlist'
+                                            : 'Übersicht'}
+                            </span>
+                        </button>
 
-                    {/* Saisonalität Button */}
+                        {/* Saisonalität Button */}
+                        <button
+                            onClick={() => navigate(`/seasonality/${stock.symbol}`)}
+                            className="flex items-center justify-center gap-1.5 bg-white dark:bg-card text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-all font-semibold rounded-lg shadow-sm border border-violet-200 dark:border-violet-800 py-1 px-2.5 text-xs group active:scale-95 whitespace-nowrap"
+                            title="Saisonalitätsanalyse"
+                        >
+                            <BarChart2 className="size-3.5" />
+                            <span>Saisonalität</span>
+                        </button>
+                    </div>
+
+                    {/* Aktualisierung Button oben rechts außerhalb des Chart-Headers */}
                     <button
-                        onClick={() => navigate(`/seasonality/${stock.symbol}`)}
-                        className="flex items-center justify-center gap-1.5 bg-white dark:bg-card text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-all font-semibold rounded-lg shadow-sm border border-violet-200 dark:border-violet-800 py-1 px-2.5 text-xs group active:scale-95 whitespace-nowrap"
-                        title="Saisonalitätsanalyse"
+                        onClick={loadData}
+                        disabled={isRefreshing}
+                        className={cn(
+                            "inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all shadow-sm",
+                            "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                            "active:scale-95 shrink-0",
+                            isRefreshing && "opacity-50 cursor-not-allowed"
+                        )}
+                        title="Kursdaten aktualisieren"
                     >
-                        <BarChart2 className="size-3.5" />
-                        <span>Saisonalität</span>
+                        <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
+                        <span className="whitespace-nowrap">
+                            {isRefreshing ? 'Laden...' : lastUpdate ? `${minutesAgo} Min` : 'Laden'}
+                        </span>
                     </button>
                 </div>
 
@@ -600,11 +620,11 @@ export function StockDetail() {
                 <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 landscape:mb-1.5 shrink-0 px-2 md:px-4">
                     {/* Left: Title */}
                     <div className="flex items-center gap-2">
-                        <TrendingUp className="size-5 text-blue-500" />
-                        <h3 className="font-bold text-lg"><span className="md:hidden">Kurs</span><span className="hidden md:inline">Kursverlauf</span></h3>
+                        <TrendingUp className="size-5 text-blue-500 shrink-0" />
+                        <h3 className="font-bold text-lg whitespace-nowrap"><span className="md:hidden">Kurs</span><span className="hidden md:inline">Kursverlauf</span></h3>
                     </div>
 
-                    {/* Center: Action Buttons (Performance Details & Position bearbeiten) */}
+                    {/* Right: Action Buttons (Performance Details & Position bearbeiten) */}
                     {position && (
                         <div className="flex items-center gap-2">
                             <button
@@ -625,25 +645,6 @@ export function StockDetail() {
                             </button>
                         </div>
                     )}
-
-
-                    {/* Right: Refresh Button */}
-                    <button
-                        onClick={loadData}
-                        disabled={isRefreshing}
-                        className={cn(
-                            "inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-medium transition-all shadow-sm",
-                            "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                            "active:scale-95",
-                            isRefreshing && "opacity-50 cursor-not-allowed"
-                        )}
-                        title="Daten aktualisieren"
-                    >
-                        <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
-                        <span className="whitespace-nowrap">
-                            {isRefreshing ? 'Laden...' : lastUpdate ? `${minutesAgo} Min` : 'Laden'}
-                        </span>
-                    </button>
                 </div>
                 {/* Price History Chart */}
                 <div className="flex-1 w-full min-h-0">
