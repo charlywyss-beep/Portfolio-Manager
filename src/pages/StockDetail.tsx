@@ -361,15 +361,29 @@ export function StockDetail() {
                                 const tab = searchParams.get('tab') || sessionStorage.getItem('portfolio_market_overview_tab');
                                 navigate(tab && tab !== 'all' ? `/market-overview?tab=${encodeURIComponent(tab)}` : '/market-overview');
                             } else {
-                                navigate(-1);
+                                navigate('/');
                             }
                         }}
                         className="flex items-center justify-center gap-1 bg-white text-blue-600 hover:bg-blue-50 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 py-1 px-2.5 text-xs group active:scale-95"
-                        title={searchParams.get('from') === 'market-overview' ? "Zurück zur Marktübersicht" : "Zurück"}
+                        title={
+                            searchParams.get('from') === 'market-overview'
+                                ? "Zurück zur Marktübersicht"
+                                : searchParams.get('from') === 'portfolio'
+                                    ? "Zurück zu Positionen"
+                                    : searchParams.get('from') === 'watchlist'
+                                        ? "Zurück zur Watchlist"
+                                        : "Zurück zur Übersicht"
+                        }
                     >
                         <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
                         <span>
-                            {searchParams.get('from') === 'market-overview' ? 'Marktübersicht' : 'Zurück'}
+                            {searchParams.get('from') === 'market-overview'
+                                ? 'Marktübersicht'
+                                : searchParams.get('from') === 'portfolio'
+                                    ? 'Positionen'
+                                    : searchParams.get('from') === 'watchlist'
+                                        ? 'Watchlist'
+                                        : 'Übersicht'}
                         </span>
                     </button>
 
@@ -570,8 +584,9 @@ export function StockDetail() {
                         <button
                             onClick={() => navigate('/?openPerformance=true')}
                             className="flex items-center text-xs md:text-sm text-blue-600 hover:text-blue-700 transition-colors font-medium bg-white px-3 py-1.5 rounded-xl shadow border border-blue-100 whitespace-nowrap hover:scale-105"
+                            title="Performance Details aller Positionen öffnen"
                         >
-                            <span className="md:hidden">Zurück</span><span className="hidden md:inline">zur Performance</span>
+                            <span>zur Performance</span>
                         </button>
                     )}
 
