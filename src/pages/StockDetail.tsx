@@ -477,7 +477,7 @@ export function StockDetail() {
                         </div>
                     </div>
 
-                    {/* Center: Prominenter Kurs (Mittig, markant & klar mit abgegrauter CHF-Umrechnung) */}
+                    {/* Center: Prominenter Kurs (Mittig) + Tagesperformance darunter (Mittig) */}
                     <div className="flex flex-col items-center justify-center text-center py-1 sm:py-0 px-2 sm:px-4 md:flex-1 shrink-0">
                         <div className="flex items-baseline justify-center gap-3 sm:gap-4 flex-nowrap whitespace-nowrap">
                             <span className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black tracking-tight tabular-nums text-foreground whitespace-nowrap drop-shadow-sm">
@@ -489,83 +489,60 @@ export function StockDetail() {
                                 </span>
                             )}
                         </div>
-                    </div>
 
-                    {/* Right: Rendite & Performance */}
-                    <div className="w-full sm:w-auto md:flex-1 flex flex-col items-end text-right">
-                        <div className="text-right ml-auto landscape:ml-0 flex flex-col items-end sm:block">
-                            {stock.distributionPolicy === 'accumulating' ? (
-                                <p className="text-xs sm:text-sm landscape:text-xs text-blue-600 dark:text-blue-400 font-medium sm:mt-0.5 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded inline-block">
-                                    Thesaurierend
-                                </p>
-                            ) : (() => {
-                                const pos = positions.find(p => p.stockId === stock.id);
-                                const freqFactor = stock.dividendFrequency === 'quarterly' ? 4 : stock.dividendFrequency === 'semi-annually' ? 2 : stock.dividendFrequency === 'monthly' ? 12 : 1;
-                                const annualPayout = (stock.dividendAmount && stock.dividendAmount > 0) ? stock.dividendAmount * freqFactor : 0;
-                                const yieldCost = (annualPayout > 0 && pos && pos.buyPriceAvg > 0) ? (annualPayout / pos.buyPriceAvg) * 100 : null;
-                                const marketYield = (annualPayout > 0 && stock.currentPrice > 0) ? (annualPayout / stock.currentPrice) * 100 : (stock.dividendYield || null);
+                        {/* Dynamic Position Performance based on Chart Range (Mittig dargestellt) */}
+                        {(() => {
+                            const position = positions.find(p => p.stockId === stock.id);
+                            if (!position) return null;
 
-                                if (!marketYield && !yieldCost) return null;
+                            let referencePrice = stock.previousClose;
 
-                                return (
-                                    <div className="flex flex-col items-end sm:mt-0.5 leading-tight">
-                                        <p className="text-xs sm:text-sm landscape:text-xs text-green-600 dark:text-green-400 font-bold whitespace-nowrap">
-                                            {yieldCost !== null ? `${yieldCost.toFixed(2)}% Rendite (Käufe)` : `${marketYield?.toFixed(2)}% Div.Rendite`}
-                                        </p>
-                                        {yieldCost !== null && marketYield !== null && Math.abs(yieldCost - marketYield) > 0.01 && (
-                                            <p className="text-[10px] text-muted-foreground whitespace-nowrap landscape:hidden sm:landscape:block">
-                                                Aktueller Kurs: {marketYield.toFixed(2)}%
-                                            </p>
+                            if (timeRange !== '1D' && chartData && chartData.length > 0) {
+                                referencePrice = chartData[0].value;
+                            } else if (timeRange === '1D') {
+                                referencePrice = stock.previousClose || (chartData && chartData.length > 0 ? chartData[0].value : stock.currentPrice);
+                            } else if (chartData && chartData.length > 0) {
+                                referencePrice = chartData[0].value;
+                            }
+
+                            if (timeRange !== '1D' && (!chartData || chartData.length === 0)) return null;
+
+                            const diffPerShare = stock.currentPrice - referencePrice;
+                            const totalDiff = diffPerShare * position.shares;
+                            const percentChange = referencePrice > 0 ? (diffPerShare / referencePrice) * 100 : 0;
+                            const isPositive = totalDiff >= 0;
+
+                            const origDiffStr = formatCurrency(totalDiff, stock.currency, false);
+                            const chfDiffStr = stock.currency && stock.currency !== 'CHF'
+                                ? formatCurrency(convertToCHF(totalDiff, stock.currency), 'CHF', false)
+                                : null;
+
+                            return (
+                                <div className="flex flex-col items-center justify-center text-center mt-1 sm:mt-1.5">
+                                    <span className="text-[11px] sm:text-xs text-muted-foreground font-medium">
+                                        {timeRange === '1D' ? 'Tages Performance:' : `Performance (${timeRange}):`}
+                                    </span>
+                                    <div className={cn(
+                                        "text-xs sm:text-sm font-bold flex items-center justify-center gap-2 tabular-nums whitespace-nowrap mt-0.5",
+                                        isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                    )}>
+                                        <span>{isPositive ? '+' : ''}{percentChange.toFixed(2)}% {origDiffStr}</span>
+                                        {chfDiffStr && (
+                                            <>
+                                                <span className="text-muted-foreground/60 font-normal">-</span>
+                                                <span className={isPositive ? "text-green-600/90 dark:text-green-400/90" : "text-red-600/90 dark:text-red-400/90"}>
+                                                    {chfDiffStr}
+                                                </span>
+                                            </>
                                         )}
                                     </div>
-                                );
-                            })()}
-
-                            {/* Dynamic Position Performance based on Chart Range */}
-                            {(() => {
-                                const position = positions.find(p => p.stockId === stock.id);
-                                if (!position) return null;
-
-                                let referencePrice = stock.previousClose;
-
-                                if (timeRange !== '1D' && chartData && chartData.length > 0) {
-                                    referencePrice = chartData[0].value;
-                                } else if (timeRange === '1D') {
-                                    referencePrice = stock.previousClose || (chartData && chartData.length > 0 ? chartData[0].value : stock.currentPrice);
-                                } else if (chartData && chartData.length > 0) {
-                                    referencePrice = chartData[0].value;
-                                }
-
-                                if (timeRange !== '1D' && (!chartData || chartData.length === 0)) return null;
-
-                                const diffPerShare = stock.currentPrice - referencePrice;
-                                const totalDiff = diffPerShare * position.shares;
-                                const percentChange = referencePrice > 0 ? (diffPerShare / referencePrice) * 100 : 0;
-                                const isPositive = totalDiff >= 0;
-
-                                return (
-                                    <div className="mt-0.5 sm:mt-1 text-right">
-                                        <p className={cn(
-                                            "text-xs sm:text-sm landscape:text-xs font-bold flex items-center justify-end gap-1.5 tabular-nums whitespace-nowrap",
-                                            isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                        )}>
-                                            <span className="text-muted-foreground font-medium landscape:hidden sm:landscape:inline">
-                                                {timeRange === '1D' ? 'Tages Performance:' : `Performance (${timeRange}):`}
-                                            </span>
-                                            <span>
-                                                {isPositive ? '+' : ''}{percentChange.toFixed(2)}% {formatCurrency(totalDiff, stock.currency, false)}
-                                            </span>
-                                            {stock.currency && stock.currency !== 'CHF' && (
-                                                <span className="text-[11px] text-muted-foreground font-medium ml-1">
-                                                    ({formatCurrency(convertToCHF(totalDiff, stock.currency), 'CHF', false)})
-                                                </span>
-                                            )}
-                                        </p>
-                                    </div>
-                                );
-                            })()}
-                        </div>
+                                </div>
+                            );
+                        })()}
                     </div>
+
+                    {/* Right spacer on desktop to keep center perfectly centered */}
+                    <div className="hidden md:flex md:flex-1 justify-end items-center" />
                 </div>
             </div>
 
