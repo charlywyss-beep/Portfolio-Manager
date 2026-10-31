@@ -288,6 +288,61 @@
     scroll-snap-align: start;
   }
 
+  /* StockDetail: Maximale vertikale Kompaktheit im iPhone Querformat */
+  .stock-detail-page {
+    padding-top: 0.25rem !important;
+    padding-bottom: 1.5rem !important;
+    gap: 0.35rem !important;
+  }
+
+  .stock-detail-sticky-header {
+    margin-top: -0.25rem !important;
+    margin-bottom: 0.25rem !important;
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+  }
+
+  .stock-detail-top-actions {
+    margin-bottom: 0.2rem !important;
+  }
+
+  .stock-detail-top-actions button {
+    padding-top: 0.15rem !important;
+    padding-bottom: 0.15rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    font-size: 0.7rem !important;
+    height: 1.5rem !important;
+  }
+
+  .stock-detail-price-main {
+    font-size: 1.15rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .stock-detail-price-chf {
+    font-size: 0.85rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .stock-detail-perf-meta {
+    font-size: 0.65rem !important;
+    line-height: 1.1 !important;
+    margin-top: 0.1rem !important;
+  }
+
+  .stock-detail-perf-values {
+    font-size: 0.82rem !important;
+    line-height: 1.1 !important;
+    margin-top: 0.1rem !important;
+  }
+
+  .stock-detail-chart-card {
+    padding-top: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
   /* ==========================================================================
      iPhone Querformat: EIN einheitliches Header-System fuer alle Seiten
      (Positionen, Uebersicht, Watchlist, Dividenden, Kauf/Verkauf, Budget,

@@ -337,33 +337,33 @@ export function PriceHistoryChart({
             "w-full flex flex-col relative transition-all duration-300 select-none",
             isMaximized ? "h-full" : "min-h-[360px] landscape:min-h-0 h-auto flex-1 pb-2 landscape:pb-0"
         )}>
-            <div className="flex flex-wrap items-center justify-between mb-2 md:mb-4 landscape:mb-1.5 gap-2 relative">
-                <div className="flex flex-col gap-1 w-full sm:w-auto">
+            <div className="flex flex-wrap items-center justify-between mb-2 md:mb-4 landscape:mb-1 gap-2 relative">
+                <div className="flex flex-col gap-1 landscape:gap-0.5 w-full sm:w-auto">
                     <div>
                         {stockName && (
-                            <div className="flex items-baseline gap-2 mb-1 landscape:mb-0.5">
-                                <h4 className="text-base sm:text-2xl landscape:text-lg font-black tracking-tighter text-foreground drop-shadow-sm">
+                            <div className="flex items-baseline gap-2 mb-1 landscape:mb-0">
+                                <h4 className="text-base sm:text-2xl landscape:text-sm font-black tracking-tighter text-foreground drop-shadow-sm">
                                     {stockName}
                                 </h4>
                                 {stockSymbol && (
-                                    <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-widest">
+                                    <span className="text-xs landscape:text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">
                                         {stockSymbol}
                                     </span>
                                 )}
                             </div>
                         )}
-                        <p className="text-sm landscape:text-xs text-muted-foreground">Performance ({selectedRange})</p>
+                        <p className="text-sm landscape:text-[10px] text-muted-foreground">Performance ({selectedRange})</p>
                         <div className={cn("font-bold flex items-center gap-1", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
-                            <span className="text-xl landscape:text-xl">
+                            <span className="text-xl landscape:text-sm font-extrabold">
                                 {performance > 0 ? '+' : ''}{performance.toFixed(2)}%
-                                <span className="ml-2 opacity-90 text-lg landscape:text-lg">{diffNativeFormatted}</span>
+                                <span className="ml-2 opacity-90 text-lg landscape:text-xs font-bold">{diffNativeFormatted}</span>
                             </span>
                         </div>
                     </div>
                     {/* High/Low Indicators + Mobile Hover Overlay */}
-                    <div className="relative mt-1 min-h-[38px] sm:min-h-0 flex items-center">
+                    <div className="relative mt-1 landscape:mt-0 min-h-[38px] sm:min-h-0 landscape:min-h-0 flex items-center">
                         <div className={cn(
-                            "flex flex-wrap items-center gap-3 text-lg landscape:text-lg font-bold text-foreground transition-opacity duration-150 select-none",
+                            "flex flex-wrap items-center gap-3 landscape:gap-2 text-lg landscape:text-xs font-bold text-foreground transition-opacity duration-150 select-none",
                             hoveredData && "opacity-0 sm:opacity-100"
                         )}>
                             <div className="flex items-center gap-1">
@@ -373,7 +373,7 @@ export function PriceHistoryChart({
                                     data-extremum-btn="true"
                                     onClick={() => setSelectedExtremum(prev => prev === 'high' ? null : 'high')}
                                     className={cn(
-                                        "inline-flex items-center gap-1.5 px-2 py-0.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-lg landscape:text-lg font-bold",
+                                        "inline-flex items-center gap-1.5 landscape:gap-1 px-2 py-0.5 landscape:py-0 landscape:px-1.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-lg landscape:text-xs font-bold",
                                         selectedExtremum === 'high'
                                             ? "bg-emerald-500/20 border-emerald-500 text-foreground shadow-sm"
                                             : "border-transparent hover:bg-muted/60 text-foreground"
@@ -391,7 +391,7 @@ export function PriceHistoryChart({
                                     data-extremum-btn="true"
                                     onClick={() => setSelectedExtremum(prev => prev === 'low' ? null : 'low')}
                                     className={cn(
-                                        "inline-flex items-center gap-1.5 px-2 py-0.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-lg landscape:text-lg font-bold",
+                                        "inline-flex items-center gap-1.5 landscape:gap-1 px-2 py-0.5 landscape:py-0 landscape:px-1.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-lg landscape:text-xs font-bold",
                                         selectedExtremum === 'low'
                                             ? "bg-rose-500/20 border-rose-500 text-foreground shadow-sm"
                                             : "border-transparent hover:bg-muted/60 text-foreground"
@@ -508,7 +508,7 @@ export function PriceHistoryChart({
                 )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 sm:gap-6 mb-2 md:mb-4 landscape:mb-1.5">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-6 mb-2 md:mb-4 landscape:mb-1">
                 <div className="flex bg-muted/50 p-0.5 rounded-lg items-center overflow-x-auto scroller-none max-w-full sm:max-w-fit">
                     <div className="flex flex-1">
                         {(['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
@@ -516,7 +516,7 @@ export function PriceHistoryChart({
                                 key={range}
                                 onClick={() => handleRangeChange(range)}
                                 className={cn(
-                                    "px-2 sm:px-3 py-1 text-xs font-medium rounded-md transition-all whitespace-nowrap",
+                                    "px-2 sm:px-3 py-1 landscape:py-0.5 landscape:px-1.5 text-xs landscape:text-[11px] font-medium rounded-md transition-all whitespace-nowrap",
                                     selectedRange === range
                                         ? "bg-background shadow-sm text-foreground"
                                         : "text-muted-foreground hover:text-foreground hover:bg-background/50"
@@ -532,7 +532,7 @@ export function PriceHistoryChart({
                             <button
                                 onClick={() => setShowInCHF(!showInCHF)}
                                 className={cn(
-                                    "px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 border font-medium text-[10px] sm:text-xs shadow-sm",
+                                    "px-2 py-1 sm:px-3 sm:py-1.5 landscape:py-0.5 landscape:px-1.5 rounded-lg transition-all flex items-center gap-1.5 border font-medium text-[10px] sm:text-xs shadow-sm",
                                     showInCHF
                                         ? "bg-emerald-600 text-white border-emerald-700 shadow-md"
                                         : "bg-background hover:bg-muted text-muted-foreground"
@@ -558,7 +558,7 @@ export function PriceHistoryChart({
                                 }
                             }}
                             className={cn(
-                                "px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 border font-medium text-[10px] sm:text-xs shadow-sm",
+                                "px-2 py-1 sm:px-3 sm:py-1.5 landscape:py-0.5 landscape:px-1.5 rounded-lg transition-all flex items-center gap-1.5 border font-medium text-[10px] sm:text-xs shadow-sm",
                                 isMeasureMode
                                     ? "bg-blue-600 text-white border-blue-700 shadow-md"
                                     : "bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/20"
@@ -687,7 +687,7 @@ export function PriceHistoryChart({
 
             <div className={cn(
                 "w-full min-w-0 transition-all",
-                isMaximized ? "flex-1 min-h-[300px]" : "h-[280px] sm:h-[300px] landscape:h-[180px] min-h-[160px]"
+                isMaximized ? "flex-1 min-h-[300px]" : "h-[280px] sm:h-[300px] landscape:h-[220px] min-h-[160px]"
             )}>
                 {hasMounted && (
                     <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
