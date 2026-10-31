@@ -488,9 +488,9 @@ export function EditDividendPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background pb-20">
+        <div className="bg-background pb-20">
             {/* Header */}
-            <div className="flex items-center gap-3 sm:gap-4 pl-14 pr-4 py-3 md:py-4 md:pl-14 xl:pl-8 border-b border-border bg-background/95 backdrop-blur sticky top-0 z-40 w-full transition-all shadow-sm">
+            <div className="flex items-center gap-3 sm:gap-4 pl-14 pr-4 py-3 md:py-4 md:pl-14 xl:pl-8 border-b border-border bg-background sticky top-0 z-50 w-full shadow-md">
                 <button
                     type="button"
                     onClick={handleBack}
