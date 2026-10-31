@@ -1060,17 +1060,43 @@ export function StockDetail() {
                                     const yieldCost = (annualPayout > 0 && pos && pos.buyPriceAvg > 0) ? (annualPayout / pos.buyPriceAvg) * 100 : null;
                                     const marketYield = (annualPayout > 0 && stock.currentPrice > 0) ? (annualPayout / stock.currentPrice) * 100 : (stock.dividendYield || null);
 
-                                    if (!marketYield && !yieldCost) return '-';
+                                    let annualDividendNative = 0;
+                                    if (pos && pos.shares > 0) {
+                                        if (annualPayout > 0) {
+                                            annualDividendNative = annualPayout * pos.shares;
+                                        } else if (marketYield) {
+                                            annualDividendNative = pos.shares * stock.currentPrice * (marketYield / 100);
+                                        }
+                                    }
+                                    const divCurrency = stock.dividendCurrency || stock.currency;
+                                    const annualDividendCHF = annualDividendNative > 0 ? convertToCHF(annualDividendNative, divCurrency) : 0;
+
+                                    if (!marketYield && !yieldCost && annualDividendCHF === 0) return '-';
 
                                     if (yieldCost !== null && marketYield !== null && Math.abs(yieldCost - marketYield) > 0.01) {
                                         return (
-                                            <div className="flex flex-col items-end leading-tight">
-                                                <span className="font-bold text-green-600 dark:text-green-400">{yieldCost.toFixed(2)}% (Käufe)</span>
+                                            <div className="flex flex-col items-end leading-tight gap-0.5">
+                                                <span className="font-bold text-green-600 dark:text-green-400">{yieldCost.toFixed(2)}% Käufe</span>
+                                                {annualDividendCHF > 0 && (
+                                                    <span className="font-semibold text-xs text-foreground" title={`Erwartete Jahresdividende für ${pos?.shares} Stk.: ${annualDividendCHF.toFixed(2)} CHF`}>
+                                                        {annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                                    </span>
+                                                )}
                                                 <span className="text-[10px] text-muted-foreground">Kurs: {marketYield.toFixed(2)}%</span>
                                             </div>
                                         );
                                     }
-                                    return `${(yieldCost ?? marketYield)?.toFixed(2)}%`;
+
+                                    return (
+                                        <div className="flex flex-col items-end leading-tight gap-0.5">
+                                            <span className="font-bold">{(yieldCost ?? marketYield)?.toFixed(2)}%</span>
+                                            {annualDividendCHF > 0 && (
+                                                <span className="font-semibold text-xs text-foreground" title={`Erwartete Jahresdividende für ${pos?.shares} Stk.: ${annualDividendCHF.toFixed(2)} CHF`}>
+                                                    {annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                                </span>
+                                            )}
+                                        </div>
+                                    );
                                 })()}
                             </span>
                         </div>
