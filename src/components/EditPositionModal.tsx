@@ -460,7 +460,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                             />
                                         </div>
                                         {/* FX Rate */}
-                                        <div className="col-span-3 flex flex-col items-center gap-0.5">
+                                        <div className="col-span-3">
                                             <DecimalInput
                                                 value={selectedCurrency === 'CHF' ? 1.0 : purchase.fxRate}
                                                 onChange={(val) => handleUpdatePurchase(purchase.id, 'fxRate', parseFloat(val) || 0)}
@@ -469,16 +469,6 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                                 onFocus={(e) => e.target.select()}
                                                 className="w-full h-8 px-2 text-sm border border-border rounded bg-background focus:ring-1 focus:ring-primary disabled:opacity-50 text-center"
                                             />
-                                            {selectedCurrency !== 'CHF' && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleUpdatePurchase(purchase.id, 'fxRate', fixFx(liveFxRate))}
-                                                    className="text-[9px] text-blue-500 hover:text-blue-600 hover:underline transition-colors whitespace-nowrap"
-                                                    title="Aktuellen Live-Wechselkurs übernehmen"
-                                                >
-                                                    Live: {liveFxRate.toFixed(4)}
-                                                </button>
-                                            )}
                                         </div>
                                         {/* Delete Row */}
                                         <div className="col-span-1 flex justify-center">
