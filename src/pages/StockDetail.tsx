@@ -489,24 +489,26 @@ export function StockDetail() {
 
                     {/* Center: Prominenter Kurs (Mittig) + Tagesperformance darunter (Mittig) */}
                     <div className="flex flex-col items-center justify-center text-center py-1 sm:py-0 px-2 sm:px-4 md:flex-1 shrink-0">
-                        <div className="flex items-baseline justify-center gap-3 sm:gap-4 flex-nowrap whitespace-nowrap">
-                            <span className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black tracking-tight tabular-nums text-foreground whitespace-nowrap drop-shadow-sm">
-                                {formatCurrency(stock.currentPrice, stock.currency, false)}
-                            </span>
-                            {stock.currency && stock.currency !== 'CHF' && (
-                                <span className="text-sm sm:text-base lg:text-lg font-semibold text-foreground/85 dark:text-zinc-200 tabular-nums whitespace-nowrap ml-1 sm:ml-2">
-                                    {formatCurrency(convertToCHF(stock.currentPrice, stock.currency), 'CHF', false)}
-                                </span>
-                            )}
-                        </div>
-
-                        {/* Dynamic Position Performance based on Chart Range (Mittig dargestellt) */}
                         {(() => {
                             const position = positions.find(p => p.stockId === stock.id);
-                            if (!position) return null;
+                            const hasForeignCurrency = stock.currency && stock.currency !== 'CHF';
+
+                            if (!position) {
+                                return (
+                                    <div className="flex items-baseline justify-center gap-3 sm:gap-4 flex-nowrap whitespace-nowrap">
+                                        <span className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black tracking-tight tabular-nums text-foreground whitespace-nowrap drop-shadow-sm">
+                                            {formatCurrency(stock.currentPrice, stock.currency, false)}
+                                        </span>
+                                        {hasForeignCurrency && (
+                                            <span className="text-sm sm:text-base lg:text-lg font-semibold text-foreground/85 dark:text-zinc-200 tabular-nums whitespace-nowrap ml-1 sm:ml-2">
+                                                {formatCurrency(convertToCHF(stock.currentPrice, stock.currency), 'CHF', false)}
+                                            </span>
+                                        )}
+                                    </div>
+                                );
+                            }
 
                             let referencePrice = stock.previousClose;
-
                             if (timeRange !== '1D' && chartData && chartData.length > 0) {
                                 referencePrice = chartData[0].value;
                             } else if (timeRange === '1D') {
@@ -523,37 +525,52 @@ export function StockDetail() {
                             const isPositive = totalDiff >= 0;
 
                             const origDiffStr = formatCurrency(totalDiff, stock.currency, false);
-                            const chfDiffStr = stock.currency && stock.currency !== 'CHF'
+                            const chfDiffStr = hasForeignCurrency
                                 ? formatCurrency(convertToCHF(totalDiff, stock.currency), 'CHF', false)
                                 : null;
 
                             const isStockMarketOpen = estimateMarketState(stock.symbol, stock.currency) === 'REGULAR';
                             const quoteTimestamp = stock.lastQuoteDate ? new Date(stock.lastQuoteDate).getTime() : 0;
                             const effectiveStockDate = (!isStockMarketOpen && quoteTimestamp > 0) ? new Date(quoteTimestamp) : new Date();
-                            const stockDateStr = effectiveStockDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
+                            const stockDateStr = effectiveStockDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' });
 
                             return (
-                                <div className="flex flex-col items-center justify-center text-center mt-1 sm:mt-1.5">
-                                    <div className="flex items-center justify-center gap-4 sm:gap-6 text-[11px] sm:text-xs text-muted-foreground font-medium">
+                                <div className="inline-flex flex-col items-stretch max-w-full">
+                                    {/* Row 1: Stock Price (Native Left, CHF Right) */}
+                                    <div className="flex items-baseline justify-between gap-4 sm:gap-6 flex-nowrap whitespace-nowrap">
+                                        <span className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black tracking-tight tabular-nums text-foreground whitespace-nowrap drop-shadow-sm">
+                                            {formatCurrency(stock.currentPrice, stock.currency, false)}
+                                        </span>
+                                        {hasForeignCurrency && (
+                                            <span className="text-sm sm:text-base lg:text-lg font-semibold text-foreground/85 dark:text-zinc-200 tabular-nums whitespace-nowrap text-right">
+                                                {formatCurrency(convertToCHF(stock.currentPrice, stock.currency), 'CHF', false)}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* Row 2: Date + Performance label & Bestand */}
+                                    <div className="flex items-center justify-between gap-4 sm:gap-6 text-[11px] sm:text-xs text-muted-foreground font-medium mt-1 sm:mt-1.5 whitespace-nowrap">
                                         <span>
                                             {timeRange === '1D'
-                                                ? (!isStockMarketOpen ? `Tages Performance vom ${stockDateStr}:` : 'Tages Performance:')
-                                                : `Performance ${timeRange}:`}
+                                                ? `${stockDateStr} Tages Performance:`
+                                                : `${stockDateStr} Performance ${timeRange}:`}
                                         </span>
                                         <span>Bestand: {position.shares.toLocaleString('de-CH')} Stk.</span>
                                     </div>
+
+                                    {/* Row 3: Performance Numbers (Same font size as top CHF, CHF right-aligned, no hyphen) */}
                                     <div className={cn(
-                                        "text-xs sm:text-sm font-bold flex items-center justify-center gap-2 tabular-nums whitespace-nowrap mt-0.5",
+                                        "text-sm sm:text-base lg:text-lg font-bold flex items-baseline justify-between gap-4 sm:gap-6 tabular-nums whitespace-nowrap mt-0.5",
                                         isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                     )}>
-                                        <span>{isPositive ? '+' : ''}{percentChange.toFixed(2)}% {origDiffStr}</span>
+                                        <div className="flex items-baseline gap-3 sm:gap-4">
+                                            <span>{isPositive ? '+' : ''}{percentChange.toFixed(2)}%</span>
+                                            <span>{origDiffStr}</span>
+                                        </div>
                                         {chfDiffStr && (
-                                            <>
-                                                <span className="text-muted-foreground/60 font-normal">-</span>
-                                                <span className={isPositive ? "text-green-600/90 dark:text-green-400/90" : "text-red-600/90 dark:text-red-400/90"}>
-                                                    {chfDiffStr}
-                                                </span>
-                                            </>
+                                            <span className="text-right">
+                                                {chfDiffStr}
+                                            </span>
                                         )}
                                     </div>
                                 </div>
