@@ -2388,44 +2388,77 @@ export function FairValueCalculator() {
                                 {/* Value Stack */}
                                 <div className="flex-1 space-y-4">
                                     {/* Buy Price */}
-                                    <div className={cn(
-                                        "p-3.5 sm:p-4 rounded-xl border-2 transition-all shadow-sm",
-                                        isSavedForStock
+                                    {(() => {
+                                        const isQualityMode = !isSavedForStock && valuationProfile === 'quality';
+                                        const isManualMode = isSavedForStock;
+
+                                        const kaufpreisTextColor = isManualMode
+                                            ? "text-emerald-400"
+                                            : isQualityMode
+                                                ? "text-purple-400"
+                                                : "text-blue-400";
+
+                                        const kaufpreisBorderBg = isManualMode
                                             ? "border-emerald-500 bg-emerald-500/5"
-                                            : "border-blue-500 bg-blue-500/5"
-                                    )}>
-                                        <div className="flex justify-between items-center gap-2 mb-1">
-                                            <span className="font-bold text-base sm:text-lg shrink-0 whitespace-nowrap">Kaufpreis</span>
-                                            {quote.currency !== 'CHF' ? (
-                                                <div className={cn(
-                                                    "flex flex-col items-end font-mono leading-tight text-right shrink-0",
-                                                    isSavedForStock ? "text-emerald-400" : "text-blue-400"
-                                                )}>
-                                                    <span className="text-base sm:text-lg font-bold whitespace-nowrap">
-                                                        {formatCurrency(calculation.buyPrice, quote.currency, false)}
-                                                    </span>
-                                                    <span className="text-base sm:text-lg font-bold opacity-80 whitespace-nowrap">
-                                                        {formatCurrency(calculation.buyPrice, quote.currency).split(' - ')[1]}
-                                                    </span>
+                                            : isQualityMode
+                                                ? "border-purple-500 bg-purple-500/5"
+                                                : "border-blue-500 bg-blue-500/5";
+
+                                        const kaufpreisTargetIconColor = isManualMode
+                                            ? "text-emerald-400"
+                                            : isQualityMode
+                                                ? "text-purple-400"
+                                                : "text-blue-500";
+
+                                        const kaufpreisSaveBtnColor = isManualMode
+                                            ? "bg-emerald-600 hover:bg-emerald-500"
+                                            : isQualityMode
+                                                ? "bg-purple-600 hover:bg-purple-500"
+                                                : "bg-blue-600 hover:bg-blue-500";
+
+                                        const kaufpreisQuickBtnColor = isManualMode
+                                            ? "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border-emerald-500/30"
+                                            : isQualityMode
+                                                ? "text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 border-purple-500/30"
+                                                : "text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 border-blue-500/30";
+
+                                        return (
+                                            <div className={cn(
+                                                "p-3.5 sm:p-4 rounded-xl border-2 transition-all shadow-sm",
+                                                kaufpreisBorderBg
+                                            )}>
+                                                <div className="flex justify-between items-center gap-2 mb-1">
+                                                    <span className="font-bold text-base sm:text-lg shrink-0 whitespace-nowrap">Kaufpreis</span>
+                                                    {quote.currency !== 'CHF' ? (
+                                                        <div className={cn(
+                                                            "flex flex-col items-end font-mono leading-tight text-right shrink-0",
+                                                            kaufpreisTextColor
+                                                        )}>
+                                                            <span className="text-base sm:text-lg font-bold whitespace-nowrap">
+                                                                {formatCurrency(calculation.buyPrice, quote.currency, false)}
+                                                            </span>
+                                                            <span className="text-base sm:text-lg font-bold opacity-80 whitespace-nowrap">
+                                                                {formatCurrency(calculation.buyPrice, quote.currency).split(' - ')[1]}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className={cn(
+                                                            "font-mono font-bold text-base sm:text-lg whitespace-nowrap",
+                                                            kaufpreisTextColor
+                                                        )}>
+                                                            {formatCurrency(calculation.buyPrice, quote.currency, false)}
+                                                        </span>
+                                                    )}
                                                 </div>
-                                            ) : (
-                                                <span className={cn(
-                                                    "font-mono font-bold text-base sm:text-lg whitespace-nowrap",
-                                                    isSavedForStock ? "text-emerald-400" : "text-blue-400"
-                                                )}>
-                                                    {formatCurrency(calculation.buyPrice, quote.currency, false)}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="text-xs text-muted-foreground">
-                                            Maximaler Preis inkl. {mos}% Sicherheitsmarge ({isSavedForStock ? 'Manuell' : 'Auto-Werte'})
-                                        </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Maximaler Preis inkl. {mos}% Sicherheitsmarge ({isSavedForStock ? 'Manuell' : valuationProfile === 'quality' ? 'Qualität B' : 'Sicherheit A'})
+                                                </p>
 
                                         {/* Kauflimit Integration (Direkt in Kursdaten & Watchlist übernehmen) */}
                                         <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
                                             <div className="flex items-center justify-between text-xs">
                                                 <span className="font-semibold text-foreground flex items-center gap-1.5">
-                                                    <Target className="size-3.5 text-blue-500" />
+                                                    <Target className={cn("size-3.5", kaufpreisTargetIconColor)} />
                                                     <span>Kauflimit (für Kursdaten)</span>
                                                 </span>
                                                 {buyLimitSavedToast ? (
@@ -2464,7 +2497,7 @@ export function FairValueCalculator() {
                                                 <button
                                                     type="button"
                                                     onClick={() => handleSaveBuyLimit(buyLimitInput || (calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : ''))}
-                                                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow-sm transition-all flex items-center gap-1 shrink-0 active:scale-95"
+                                                    className={cn("px-3 py-1.5 text-white text-xs font-semibold rounded-lg shadow-sm transition-all flex items-center gap-1 shrink-0 active:scale-95", kaufpreisSaveBtnColor)}
                                                     title="In Kursdaten als Kauflimit speichern"
                                                 >
                                                     <Check className="size-3.5" />
@@ -2481,13 +2514,15 @@ export function FairValueCalculator() {
                                                         setBuyLimitInput(val);
                                                         handleSaveBuyLimit(val);
                                                     }}
-                                                    className="w-full py-1 px-2 text-[11px] font-medium text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded border border-blue-500/20 transition-all flex items-center justify-center gap-1 text-center"
+                                                    className={cn("w-full py-1.5 px-2.5 text-xs font-medium rounded-lg border transition-all flex items-center justify-center gap-1 text-center shadow-xs active:scale-95", kaufpreisQuickBtnColor)}
                                                 >
                                                     <span>Kaufpreis ({calculation.buyPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency}) als Kauflimit übernehmen</span>
                                                 </button>
                                             )}
                                         </div>
                                     </div>
+                                    );
+                                    })()}
 
                                     {/* Fair Value */}
                                     <div className="p-3.5 sm:p-4 rounded-xl border border-border bg-card">

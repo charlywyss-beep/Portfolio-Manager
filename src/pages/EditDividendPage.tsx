@@ -1082,7 +1082,7 @@ export function EditDividendPage() {
                                                                 type="button"
                                                                 onClick={handleToggleFvMode}
                                                                 className={cn(
-                                                                    "flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded border transition-colors cursor-pointer",
+                                                                    "flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all cursor-pointer shadow-sm active:scale-95",
                                                                     currentMode === 'manual'
                                                                         ? "text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40"
                                                                         : currentMode === 'quality'
@@ -1097,9 +1097,9 @@ export function EditDividendPage() {
                                                                             : "Manuell: Klick für Wechsel zu Sicherheit (A)"
                                                                 }
                                                             >
-                                                                {currentMode === 'conservative' && <ShieldCheck className="size-3 shrink-0" />}
-                                                                {currentMode === 'quality' && <Sparkles className="size-3 shrink-0" />}
-                                                                {currentMode === 'manual' && <Sliders className="size-3 shrink-0" />}
+                                                                {currentMode === 'conservative' && <ShieldCheck className="size-3.5 shrink-0" />}
+                                                                {currentMode === 'quality' && <Sparkles className="size-3.5 shrink-0" />}
+                                                                {currentMode === 'manual' && <Sliders className="size-3.5 shrink-0" />}
                                                                 <span>
                                                                     {currentMode === 'manual'
                                                                         ? 'Kaufpreis (Manuell)'
@@ -1175,7 +1175,7 @@ export function EditDividendPage() {
                                                                 type="button"
                                                                 onClick={handleToggleFvMode}
                                                                 className={cn(
-                                                                    "flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded border transition-colors cursor-pointer",
+                                                                    "flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all cursor-pointer shadow-sm active:scale-95",
                                                                     currentMode === 'manual'
                                                                         ? "text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40"
                                                                         : currentMode === 'quality'
@@ -1184,9 +1184,9 @@ export function EditDividendPage() {
                                                                 )}
                                                                 title="Klicken, um zwischen Sicherheit (A), Qualität (B) und Manuell zu wechseln"
                                                             >
-                                                                {currentMode === 'conservative' && <ShieldCheck className="size-3 shrink-0" />}
-                                                                {currentMode === 'quality' && <Sparkles className="size-3 shrink-0" />}
-                                                                {currentMode === 'manual' && <Sliders className="size-3 shrink-0" />}
+                                                                {currentMode === 'conservative' && <ShieldCheck className="size-3.5 shrink-0" />}
+                                                                {currentMode === 'quality' && <Sparkles className="size-3.5 shrink-0" />}
+                                                                {currentMode === 'manual' && <Sliders className="size-3.5 shrink-0" />}
                                                                 <span>{currentMode === 'manual' ? 'Manuell' : currentMode === 'quality' ? 'Qualität (B)' : 'Sicherheit (A)'}</span>
                                                             </button>
                                                         )}
