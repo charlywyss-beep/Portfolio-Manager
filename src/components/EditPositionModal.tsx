@@ -275,8 +275,25 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                             onClick={() => inputRef.current?.focus()}
                                         />
                                     </div>
-                                    <div className="text-xs text-muted-foreground mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
-                                        {position.stock.symbol} • Aktuell: {position.stock.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: position.stock.currency })}
+                                    <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                        <span className="font-semibold text-foreground/90">{position.stock.symbol}</span>
+                                        <span>•</span>
+                                        <span>Aktuell: {position.stock.currentPrice.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        <select
+                                            value={position.stock.currency}
+                                            onChange={(e) => {
+                                                const newCurr = e.target.value as any;
+                                                updateStock(position.stock.id, { currency: newCurr });
+                                            }}
+                                            className="bg-secondary/80 hover:bg-secondary text-foreground font-bold text-xs rounded px-1.5 py-0.5 border border-border cursor-pointer transition-colors outline-none"
+                                            title="Währung dieser Position ändern"
+                                        >
+                                            <option value="CHF">CHF</option>
+                                            <option value="EUR">EUR</option>
+                                            <option value="USD">USD</option>
+                                            <option value="GBP">GBP</option>
+                                            <option value="GBp">GBp</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
