@@ -21,6 +21,7 @@ import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
 import { estimateMarketState } from '../utils/market';
 import { cn } from '../utils';
+import { PerformanceDetailsModal } from '../components/PerformanceDetailsModal';
 
 export interface MarketItem {
     id: string;
@@ -151,8 +152,9 @@ export function MarketOverviewPage() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { stocks, positions } = usePortfolio();
-    const { totals } = usePortfolioData();
+    const { totals, positions: dataPositions } = usePortfolioData();
     const { rates } = useExchangeRates();
+    const [showPerformanceDetails, setShowPerformanceDetails] = useState(false);
 
     const portfolioDailyGain = totals.dailyGain || 0;
     const portfolioDailyGainPercent = totals.dailyGainPercent || 0;
@@ -1136,7 +1138,7 @@ export function MarketOverviewPage() {
                     {(activeFilter === 'portfolio' || activeFilter === 'all') && portfolioStocks.length > 0 && (
                         <div
                             onClick={() => {
-                                if (!isEditMode) navigate('/portfolio');
+                                if (!isEditMode) setShowPerformanceDetails(true);
                             }}
                             className={cn(
                                 "market-tile-card relative rounded-xl sm:rounded-2xl p-2.5 sm:p-4 md:p-5 transition-all shadow-md flex flex-col justify-between select-none overflow-hidden group min-h-[140px] sm:min-h-[175px] md:min-h-[190px] w-full min-w-0 border-2",
@@ -1145,7 +1147,7 @@ export function MarketOverviewPage() {
                                     ? "bg-[#3fb78f] text-slate-950 border-emerald-700/40 shadow-emerald-950/15"
                                     : "bg-[#eb6a59] text-slate-950 border-rose-700/40 shadow-rose-950/15"
                             )}
-                            title="Portfolio Tagesperformance – Klick für Positionsübersicht"
+                            title="Portfolio Tagesperformance – Klick für Performance Details"
                         >
                             {/* Top: Name & Date Badge */}
                             <div className="flex items-start justify-between gap-1 min-w-0">
@@ -1666,6 +1668,12 @@ export function MarketOverviewPage() {
                     </div>
                 </div>
             )}
+            {/* Performance Details Modal */}
+            <PerformanceDetailsModal
+                isOpen={showPerformanceDetails}
+                onClose={() => setShowPerformanceDetails(false)}
+                positions={dataPositions}
+            />
         </div>
     );
 }
