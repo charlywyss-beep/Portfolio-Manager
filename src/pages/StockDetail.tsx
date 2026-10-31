@@ -520,7 +520,10 @@ export function StockDetail() {
                             return (
                                 <div className="flex flex-col items-center justify-center text-center mt-1 sm:mt-1.5">
                                     <span className="text-[11px] sm:text-xs text-muted-foreground font-medium">
-                                        {timeRange === '1D' ? 'Tages Performance:' : `Performance (${timeRange}):`}
+                                        {timeRange === '1D' ? 'Tages Performance' : `Performance (${timeRange})`}{' '}
+                                        <span className="text-muted-foreground/85 font-normal">
+                                            (Bestand: {position.shares.toLocaleString('de-CH')} Stk.):
+                                        </span>
                                     </span>
                                     <div className={cn(
                                         "text-xs sm:text-sm font-bold flex items-center justify-center gap-2 tabular-nums whitespace-nowrap mt-0.5",
