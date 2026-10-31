@@ -4,7 +4,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, Pencil } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, Pencil } from 'lucide-react';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
 import { estimateMarketState } from '../utils/market';
@@ -14,6 +14,7 @@ import { computeSmartAutoParams, calculateDcfFairValue } from '../utils/fairValu
 import { translateSector } from '../utils/sectorTranslation';
 import { Logo } from '../components/Logo';
 import { AddToWatchlistModal } from '../components/AddToWatchlistModal'; // New Import
+import { EditPositionModal } from '../components/EditPositionModal';
 
 import { fetchStockHistory, fetchStockQuote, type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
 
@@ -21,9 +22,10 @@ export function StockDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { stocks, positions, updateStock, updateStockPrice, addQuickLink, removeQuickLink, watchlists } = usePortfolio();
+    const { stocks, positions, updateStock, updateStockPrice, addQuickLink, removeQuickLink, watchlists, updatePosition, deletePosition } = usePortfolio();
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false); // Modal State
+    const [isEditPositionModalOpen, setIsEditPositionModalOpen] = useState(false);
 
     // Find stock by ID or Symbol (case-insensitive)
     const stockFromContext = stocks.find(s =>
@@ -108,6 +110,16 @@ export function StockDetail() {
 
     // Position buy date ref
     const buyDateRef = position?.buyDate;
+
+    const handleUpdatePosition = (posId: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number, newPurchases?: any[], newBroker?: string) => {
+        const updates: any = { shares: newShares };
+        if (newAvgPrice !== undefined) updates.buyPriceAvg = newAvgPrice;
+        if (newBuyDate !== undefined) updates.buyDate = newBuyDate;
+        if (newFxRate !== undefined) updates.averageEntryFxRate = newFxRate;
+        if (newPurchases !== undefined) updates.purchases = newPurchases;
+        if (newBroker !== undefined) updates.broker = newBroker;
+        updatePosition(posId, updates);
+    };
 
     // Load data function (memoized for auto-refresh)
     // Use a Ref to always access the LATEST stock state in callbacks without recreating them
@@ -592,15 +604,26 @@ export function StockDetail() {
                         <h3 className="font-bold text-lg"><span className="md:hidden">Kurs</span><span className="hidden md:inline">Kursverlauf</span></h3>
                     </div>
 
-                    {/* Center: Performance Button (Only if in Portfolio) */}
-                    {positions.find(p => p.stockId === stock.id) && (
-                        <button
-                            onClick={() => navigate('/?openPerformance=true')}
-                            className="flex items-center text-xs md:text-sm text-blue-600 hover:text-blue-700 transition-colors font-medium bg-white px-3 py-1.5 rounded-xl shadow border border-blue-100 whitespace-nowrap hover:scale-105"
-                            title="Performance Details aller Positionen öffnen"
-                        >
-                            <span>zur Performance</span>
-                        </button>
+                    {/* Center: Action Buttons (Performance Details & Position bearbeiten) */}
+                    {position && (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => navigate('/?openPerformance=true')}
+                                className="flex items-center justify-center gap-1 bg-white text-blue-600 hover:bg-blue-50 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 py-1 px-2.5 text-xs group active:scale-95 whitespace-nowrap"
+                                title="Performance Details aller Positionen öffnen"
+                            >
+                                <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                                <span>Performance Details</span>
+                            </button>
+                            <button
+                                onClick={() => setIsEditPositionModalOpen(true)}
+                                className="flex items-center justify-center gap-1 bg-white text-blue-600 hover:bg-blue-50 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 py-1 px-2.5 text-xs group active:scale-95 whitespace-nowrap"
+                                title="Position bearbeiten (Käufe, Stückzahl, Kaufpreise)"
+                            >
+                                <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                                <span>Position</span>
+                            </button>
+                        </div>
                     )}
 
 
@@ -1374,6 +1397,21 @@ export function StockDetail() {
                     />
                 )
             }
+            {position && (
+                <EditPositionModal
+                    isOpen={isEditPositionModalOpen}
+                    onClose={() => setIsEditPositionModalOpen(false)}
+                    position={{
+                        ...position,
+                        stock: stockFromContext || stock
+                    }}
+                    onUpdate={handleUpdatePosition}
+                    onDelete={(posId) => {
+                        deletePosition(posId);
+                        setIsEditPositionModalOpen(false);
+                    }}
+                />
+            )}
         </div >
     );
 }
