@@ -341,10 +341,6 @@ export function StockDetail() {
         calculatedKgv = stock.currentPrice / stock.eps;
     }
 
-    const kcvColorClass = (stock.kcv && calculatedKgv) 
-        ? (stock.kcv < calculatedKgv ? 'text-green-500' : 'text-red-500') 
-        : '';
-
     return (
         <div className="p-2 md:p-8 space-y-4 md:space-y-8 duration-500 pb-16 landscape:pb-10">
             {/* Sticky Header on Desktop and Mobile */}
@@ -1036,7 +1032,7 @@ export function StockDetail() {
                         </div>
                         <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                             <span className="text-muted-foreground">KCV (P/CF)</span>
-                            <span className={`font-medium ${kcvColorClass}`}>
+                            <span className="font-medium">
                                 {stock.kcv ? stock.kcv.toFixed(2) : '-'}
                             </span>
                         </div>
@@ -1076,22 +1072,22 @@ export function StockDetail() {
                                     if (yieldCost !== null && marketYield !== null && Math.abs(yieldCost - marketYield) > 0.01) {
                                         return (
                                             <div className="flex flex-col items-end leading-tight gap-0.5">
+                                                <span className="font-medium text-xs text-foreground/80">{marketYield.toFixed(2)}% Kurs</span>
                                                 <span className="font-bold text-green-600 dark:text-green-400">{yieldCost.toFixed(2)}% Käufe</span>
                                                 {annualDividendCHF > 0 && (
-                                                    <span className="font-semibold text-xs text-foreground" title={`Erwartete Jahresdividende für ${pos?.shares} Stk.: ${annualDividendCHF.toFixed(2)} CHF`}>
+                                                    <span className="font-bold text-xs text-green-600 dark:text-green-400" title={`Erwartete Jahresdividende für ${pos?.shares} Stk.: ${annualDividendCHF.toFixed(2)} CHF`}>
                                                         {annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                                     </span>
                                                 )}
-                                                <span className="text-[10px] text-muted-foreground">Kurs: {marketYield.toFixed(2)}%</span>
                                             </div>
                                         );
                                     }
 
                                     return (
                                         <div className="flex flex-col items-end leading-tight gap-0.5">
-                                            <span className="font-bold">{(yieldCost ?? marketYield)?.toFixed(2)}%</span>
+                                            <span className="font-medium text-xs text-foreground/80">{(marketYield ?? yieldCost)?.toFixed(2)}% Kurs</span>
                                             {annualDividendCHF > 0 && (
-                                                <span className="font-semibold text-xs text-foreground" title={`Erwartete Jahresdividende für ${pos?.shares} Stk.: ${annualDividendCHF.toFixed(2)} CHF`}>
+                                                <span className="font-bold text-xs text-green-600 dark:text-green-400" title={`Erwartete Jahresdividende für ${pos?.shares} Stk.: ${annualDividendCHF.toFixed(2)} CHF`}>
                                                     {annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                                 </span>
                                             )}
