@@ -384,8 +384,9 @@ export function StockDetail() {
                     </button>
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 md:gap-4 landscape:flex-row landscape:items-center landscape:gap-3">
-                    <div className="flex items-center gap-2.5 md:gap-4 min-w-0">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
+                    {/* Left: Stock Info */}
+                    <div className="flex items-center gap-2.5 md:gap-4 min-w-0 md:flex-1">
                         <div
                             className={cn(
                                 "bg-card rounded-xl shrink-0",
@@ -476,14 +477,22 @@ export function StockDetail() {
                         </div>
                     </div>
 
-                    {/* Price Card */}
-                    <div className="w-full sm:w-auto pt-1 sm:pt-0 landscape:pt-0 border-t border-border/50 sm:border-none landscape:border-none flex items-center justify-between sm:block sm:text-right landscape:flex landscape:items-center landscape:gap-3 gap-x-4">
-                        <div className="flex items-baseline gap-1.5 sm:block">
-                            <span className="text-[10px] md:text-xs text-muted-foreground font-medium uppercase tracking-wider landscape:hidden sm:block">Kurs:</span>
-                            <h2 className="text-base sm:text-3xl landscape:text-base font-bold tabular-nums tracking-tight whitespace-nowrap">
-                                {formatCurrency(stock.currentPrice, stock.currency)}
-                            </h2>
+                    {/* Center: Prominenter Kurs (Mittig, markant & klar mit abgegrauter CHF-Umrechnung) */}
+                    <div className="flex flex-col items-center justify-center text-center py-1 sm:py-0 px-2 sm:px-4 md:flex-1 shrink-0">
+                        <div className="flex items-baseline justify-center gap-2 sm:gap-3 flex-wrap">
+                            <span className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight tabular-nums text-foreground drop-shadow-sm">
+                                {formatCurrency(stock.currentPrice, stock.currency, false)}
+                            </span>
+                            {stock.currency && stock.currency !== 'CHF' && (
+                                <span className="text-xs sm:text-sm md:text-base font-medium text-muted-foreground/80 tabular-nums whitespace-nowrap">
+                                    {formatCurrency(convertToCHF(stock.currentPrice, stock.currency), 'CHF', false)}
+                                </span>
+                            )}
                         </div>
+                    </div>
+
+                    {/* Right: Rendite & Performance */}
+                    <div className="w-full sm:w-auto md:flex-1 flex flex-col items-end text-right">
                         <div className="text-right ml-auto landscape:ml-0 flex flex-col items-end sm:block">
                             {stock.distributionPolicy === 'accumulating' ? (
                                 <p className="text-xs sm:text-sm landscape:text-xs text-blue-600 dark:text-blue-400 font-medium sm:mt-0.5 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded inline-block">
@@ -544,8 +553,13 @@ export function StockDetail() {
                                                 {timeRange === '1D' ? 'Tages Performance:' : `Performance (${timeRange}):`}
                                             </span>
                                             <span>
-                                                {isPositive ? '+' : ''}{percentChange.toFixed(2)}% {formatCurrency(totalDiff, stock.currency)}
+                                                {isPositive ? '+' : ''}{percentChange.toFixed(2)}% {formatCurrency(totalDiff, stock.currency, false)}
                                             </span>
+                                            {stock.currency && stock.currency !== 'CHF' && (
+                                                <span className="text-[11px] text-muted-foreground font-medium ml-1">
+                                                    ({formatCurrency(convertToCHF(totalDiff, stock.currency), 'CHF', false)})
+                                                </span>
+                                            )}
                                         </p>
                                     </div>
                                 );
