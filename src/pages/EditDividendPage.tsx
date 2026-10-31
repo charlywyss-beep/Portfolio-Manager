@@ -263,12 +263,6 @@ export function EditDividendPage() {
     const handleQuarterlyDateChange = (index: number, field: 'exDate' | 'payDate', value: string) => {
         const newDates = [...quarterlyDates];
         newDates[index] = { ...newDates[index], [field]: value };
-
-        // Auto-set PayDate if ExDate is set and PayDate is empty
-        if (field === 'exDate' && value && !newDates[index].payDate) {
-            newDates[index].payDate = value;
-        }
-
         setQuarterlyDates(newDates);
     };
 
@@ -1453,7 +1447,6 @@ export function EditDividendPage() {
                                                         <input
                                                             type="date"
                                                             value={sanitizeDateYear(date.payDate, date.exDate)}
-                                                            min={sanitizeDateYear(date.exDate) || undefined}
                                                             onChange={(e) => handleQuarterlyDateChange(idx, 'payDate', e.target.value)}
                                                             className="w-full px-2 py-2 text-sm border rounded bg-background"
                                                         />
@@ -1481,12 +1474,7 @@ export function EditDividendPage() {
                                                     type="date"
                                                     value={sanitizeDateYear(exDate)}
                                                     onChange={(e) => {
-                                                        const newVal = e.target.value;
-                                                        setExDate(newVal);
-                                                        // Only auto-fill if date is complete (YYYY-MM-DD)
-                                                        if (newVal && newVal.length === 10 && !payDate) {
-                                                            setPayDate(newVal);
-                                                        }
+                                                        setExDate(e.target.value);
                                                     }}
                                                     className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                                 />
@@ -1508,7 +1496,6 @@ export function EditDividendPage() {
                                                 <input
                                                     type="date"
                                                     value={sanitizeDateYear(payDate, exDate)}
-                                                    min={sanitizeDateYear(exDate) || undefined}
                                                     onChange={(e) => setPayDate(e.target.value)}
                                                     className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
                                                 />
