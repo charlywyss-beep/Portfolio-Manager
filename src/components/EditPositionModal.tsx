@@ -525,7 +525,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                             ) : (
                                                 <div>
                                                     <span className="text-foreground font-semibold">{calculatedAvgFx.toFixed(4)}</span>
-                                                    <span className="text-[10px] text-muted-foreground ml-1">Ø FX</span>
+                                                    <span className="text-[10px] text-muted-foreground ml-1">Ø Wechselkurs</span>
                                                 </div>
                                             )}
                                         </div>
