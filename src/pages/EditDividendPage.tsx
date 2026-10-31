@@ -636,11 +636,11 @@ export function EditDividendPage() {
                                                 placeholder="z.B. AAPL oder NESN.SW"
                                                 className={cn(
                                                     "w-full px-3 py-2 border rounded-md bg-background text-foreground font-mono uppercase",
-                                                    (currency === 'CHF' && symbol && !symbol.toUpperCase().endsWith('.SW')) ? "border-amber-500 focus:ring-amber-500" : ""
+                                                    (currency === 'CHF' && symbol && !symbol.includes('.')) ? "border-amber-500 focus:ring-amber-500" : ""
                                                 )}
                                             />
                                         </div>
-                                        {currency === 'CHF' && symbol && !symbol.toUpperCase().endsWith('.SW') && (
+                                        {currency === 'CHF' && symbol && !symbol.includes('.') && (
                                             <div className="flex items-center gap-2 text-amber-500 animate-pulse mt-1">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-alert-triangle shrink-0"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
                                                 <p className="text-xs font-medium">
@@ -1119,22 +1119,29 @@ export function EditDividendPage() {
                                                             value={targetPrice}
                                                             onChange={(e) => setTargetPrice(e.target.value)}
                                                             onFocus={(e) => e.target.select()}
-                                                            className={`w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg ${calcBuyPrice !== null ? 'pr-20' : ''}`}
+                                                            className={`w-full px-3 py-2 border rounded-md bg-background text-foreground text-lg ${calcBuyPrice !== null ? 'pr-28' : ''}`}
                                                         />
                                                         {calcBuyPrice !== null && (
-                                                            <span
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setTargetPrice(calcBuyPrice.toFixed(2))}
                                                                 className={cn(
-                                                                    "absolute right-3 top-1/2 -translate-y-1/2 font-mono font-semibold text-base pointer-events-none select-none",
-                                                                    currentMode === 'manual'
-                                                                        ? "text-emerald-400"
-                                                                        : currentMode === 'quality'
-                                                                            ? "text-purple-400"
-                                                                            : "text-blue-400"
+                                                                    "absolute right-1.5 top-1/2 -translate-y-1/2 px-2 py-1 rounded font-mono font-bold text-xs transition-all cursor-pointer flex items-center gap-1 active:scale-95 shadow-sm border",
+                                                                    parseFloat(targetPrice) === parseFloat(calcBuyPrice.toFixed(2))
+                                                                        ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                                                                        : currentMode === 'manual'
+                                                                            ? "bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border-emerald-500/40"
+                                                                            : currentMode === 'quality'
+                                                                                ? "bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 border-purple-500/40"
+                                                                                : "bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 border-blue-500/40"
                                                                 )}
-                                                                title={`Errechneter Kaufpreis inkl. ${mosPct}% Sicherheitsmarge (${currentMode === 'manual' ? 'Manuelle Werte' : currentMode === 'quality' ? 'Qualität B' : 'Sicherheit A'})`}
+                                                                title={`Klick: Berechneten Kaufpreis (${calcBuyPrice.toFixed(2)}) als Kauflimit übernehmen`}
                                                             >
-                                                                {calcBuyPrice.toFixed(2)}
-                                                            </span>
+                                                                <span>{calcBuyPrice.toFixed(2)}</span>
+                                                                <span className="text-[10px] uppercase font-sans font-semibold opacity-80">
+                                                                    {parseFloat(targetPrice) === parseFloat(calcBuyPrice.toFixed(2)) ? '✓ Aktiv' : 'Übernehmen'}
+                                                                </span>
+                                                            </button>
                                                         )}
                                                     </div>
                                                 </div>
@@ -1316,6 +1323,15 @@ export function EditDividendPage() {
                                                 <option value="GBp">GBp (Britische Pence)</option>
                                                 <option value="GBP">GBP (Britische Pfund)</option>
                                             </select>
+                                            {(symbol.toUpperCase().endsWith('.AS') || symbol.toUpperCase().endsWith('.DE') || symbol.toUpperCase().endsWith('.PA')) && currency !== 'EUR' && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setCurrency('EUR')}
+                                                    className="text-[11px] font-semibold text-blue-500 hover:text-blue-400 mt-1 inline-flex items-center gap-1 cursor-pointer"
+                                                >
+                                                    <span>💡 Ticker {symbol} handelt in EUR. Klick für Wechsel zu EUR</span>
+                                                </button>
+                                            )}
                                         </div>
 
 
