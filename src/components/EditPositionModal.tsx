@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { X, Save, Trash2, Plus, Pencil, Landmark } from 'lucide-react';
+import { X, Save, Trash2, Plus, Pencil, Landmark, Calculator } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { cn } from '../utils'; // Added import
 import type { Stock, Purchase, Currency } from '../types';
@@ -343,9 +343,14 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                     <div className="font-mono font-bold text-lg text-primary">
                                         {calculatedTotals.shares.toLocaleString('de-CH')} Stk
                                     </div>
-                                    <div className="text-[10px] text-muted-foreground">
+                                    <div className="text-xs font-semibold text-foreground/90 font-mono mt-0.5">
                                         Ø {calculatedAvgPriceUI.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {isGBX ? 'GBP' : selectedCurrency}
                                     </div>
+                                    {selectedCurrency !== 'CHF' && calculatedTotals.shares > 0 && (
+                                        <div className="text-[10px] text-muted-foreground font-mono">
+                                            ≈ {(calculatedTotals.totalCHFCost / calculatedTotals.shares).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -487,10 +492,71 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                 ))}
                             </div>
 
+                            {/* Summary / Average Row for Multiple Purchases */}
+                            {purchases.length > 1 && calculatedTotals.shares > 0 && (
+                                <div className="bg-primary/5 border border-primary/20 rounded-lg p-2.5 shadow-xs space-y-1.5 mt-2">
+                                    <div className="grid grid-cols-12 gap-3 items-center text-xs">
+                                        <div className="col-span-3 flex items-center gap-1.5 text-primary font-bold uppercase tracking-wider pl-1">
+                                            <Calculator className="size-3.5 shrink-0" />
+                                            <span>Ø Kaufpreis</span>
+                                        </div>
+                                        <div className="col-span-2 text-center font-mono font-bold text-foreground">
+                                            {calculatedTotals.shares.toLocaleString('de-CH')}
+                                            <span className="text-[10px] text-muted-foreground ml-1 font-normal">Stk</span>
+                                        </div>
+                                        <div className="col-span-3 text-center font-mono font-bold text-primary">
+                                            <div>
+                                                {inputInCHF && selectedCurrency !== 'CHF'
+                                                    ? (calculatedTotals.totalCHFCost / calculatedTotals.shares).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                                                    : calculatedAvgPriceUI.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                <span className="text-[11px] text-muted-foreground ml-1 font-sans">
+                                                    {inputInCHF && selectedCurrency !== 'CHF' ? 'CHF' : (isGBX ? 'GBP' : selectedCurrency)}
+                                                </span>
+                                            </div>
+                                            {selectedCurrency !== 'CHF' && !inputInCHF && (
+                                                <div className="text-[10px] text-muted-foreground font-normal">
+                                                    ≈ {(calculatedTotals.totalCHFCost / calculatedTotals.shares).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="col-span-3 text-center font-mono text-xs text-muted-foreground">
+                                            {selectedCurrency === 'CHF' ? (
+                                                '1.0000'
+                                            ) : (
+                                                <div>
+                                                    <span className="text-foreground font-semibold">{calculatedAvgFx.toFixed(4)}</span>
+                                                    <span className="text-[10px] text-muted-foreground ml-1">Ø FX</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="col-span-1"></div>
+                                    </div>
+
+                                    {/* Total Invested breakdown */}
+                                    <div className="grid grid-cols-12 gap-3 items-center pt-1.5 border-t border-border/40 text-[11px]">
+                                        <div className="col-span-3 pl-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+                                            Gesamtinvestition:
+                                        </div>
+                                        <div className="col-span-2 text-center text-[10px] text-muted-foreground font-medium">
+                                            {purchases.length} Käufe
+                                        </div>
+                                        <div className="col-span-3 text-center font-mono font-bold text-foreground">
+                                            {calculatedTotals.totalNativeCost.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {isGBX ? 'GBP' : selectedCurrency}
+                                        </div>
+                                        <div className="col-span-3 text-center font-mono font-bold text-foreground">
+                                            {selectedCurrency !== 'CHF' && (
+                                                <span>{calculatedTotals.totalCHFCost.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF</span>
+                                            )}
+                                        </div>
+                                        <div className="col-span-1"></div>
+                                    </div>
+                                </div>
+                            )}
+
                             <button
                                 type="button"
                                 onClick={handleAddPurchase}
-                                className="w-full py-2 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
+                                className="w-full py-2 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-center gap-2 mt-2"
                             >
                                 <Plus className="size-4" />
                                 Weiteren Kauf hinzufügen
