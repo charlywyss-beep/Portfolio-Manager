@@ -683,53 +683,33 @@ export function StockDetail() {
                         const percentChangeNative = pos.buyPriceAvg > 0 ? (diffNative / pos.buyPriceAvg) * 100 : 0;
                         const isPositiveNative = totalDiffNative >= 0;
 
-                        // CHF Calculation
-                        // 1. Total Cost in CHF (Historical)
-                        const totalCostCHF = pos.shares * pos.buyPriceAvg * (pos.averageEntryFxRate || 1);
-                        // 2. Current Value in CHF (Live)
-                        const currentValueCHF = convertToCHF(stock.currentPrice * pos.shares, stock.currency);
-                        // 3. Diff and Percent
-                        const totalDiffCHF = currentValueCHF - totalCostCHF;
-                        const percentChangeCHF = totalCostCHF > 0 ? (totalDiffCHF / totalCostCHF) * 100 : 0;
-                        const isPositiveCHF = totalDiffCHF >= 0;
-
-                        const isForeign = stock.currency !== 'CHF';
+                        // Native Currency Only (CHF conversion omitted per user preference)
 
                         return (
                             <>
                                 <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                     <span className="text-muted-foreground">Kaufpreis Ø</span>
-                                    <div className="text-right flex flex-col items-end landscape:flex-row landscape:items-baseline landscape:gap-1.5">
+                                    <div className="text-right flex items-center">
                                         <span className="font-medium tabular-nums">
                                             {formatCurrency(pos.buyPriceAvg, stock.currency, false)}
                                         </span>
-                                        {isForeign && (
-                                            <span className="text-[10px] text-muted-foreground tabular-nums">
-                                                (Ø {formatCurrency(totalCostCHF / pos.shares, 'CHF', false)})
-                                            </span>
-                                        )}
                                     </div>
                                 </div>
                                 <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                     <span className="text-muted-foreground">Gewinn/Verlust</span>
-                                    <div className="text-right flex flex-col items-end landscape:flex-row landscape:items-baseline landscape:gap-1.5">
-                                        {/* Native Gain */}
+                                    <div className="text-right flex items-center gap-2">
                                         <span className={cn(
                                             "font-bold tabular-nums",
                                             isPositiveNative ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                         )}>
-                                            {isPositiveNative ? '+' : ''}{percentChangeNative.toFixed(2)}% ({formatCurrency(totalDiffNative, stock.currency, false)})
+                                            {isPositiveNative ? '+' : ''}{percentChangeNative.toFixed(2)}%
                                         </span>
-
-                                        {/* CHF Gain (only if foreign) */}
-                                        {isForeign && (
-                                            <span className={cn(
-                                                "text-[10px] font-medium tabular-nums mt-0.5 landscape:mt-0",
-                                                isPositiveCHF ? "text-emerald-600/80 dark:text-emerald-400/80" : "text-rose-600/80 dark:text-rose-400/80"
-                                            )}>
-                                                (CHF: {isPositiveCHF ? '+' : ''}{percentChangeCHF.toFixed(2)}%)
-                                            </span>
-                                        )}
+                                        <span className={cn(
+                                            "font-medium tabular-nums",
+                                            isPositiveNative ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                        )}>
+                                            {isPositiveNative ? '+' : ''}{formatCurrency(totalDiffNative, stock.currency, false)}
+                                        </span>
                                     </div>
                                 </div>
                             </>
