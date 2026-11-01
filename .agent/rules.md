@@ -16,3 +16,11 @@ To ensure a high-quality and accessible user experience, follow these rules for 
 
 ## Header & Layout Integrity (STRIKT VERBINDLICH)
 1. **Header-Höhen sind absolut tabu**: Es ist strikt verboten, an den Höhen, Paddings (py-4, etc.) oder der Grundstruktur der Seiten-Header (sticky top-0, iphone-landscape-portfolio-header-wrap, order-b bg-card rounded-t-xl, etc.) etwas zu verändern. Alle Header aller Seiten (Kauf / Verkauf, Übersicht, Saisonalität, Fairer Wert, Portfolio, Watchlist etc.) müssen exakt einheitlich und unverändert in ihrer Höhe und Struktur bestehen bleiben.
+
+## Responsive & Viewport Ausnutzung (STRIKT VERBINDLICH)
+1. **Desktop & iPad (Quer- und Hochformat)**:
+   - **Volle Ausnutzung des Bildschirms**: Das Display soll voll ausgenutzt werden – am unteren Rand darf kein ungenutzter Platz verschenkt werden.
+   - **Alles auf einmal sichtbar (No-Scroll)**: Bei 100% Zoom müssen sämtliche Kacheln, Eingabefelder und Auswertungen vollständig auf einen Blick sichtbar sein, ohne dass der Nutzer scrollen muss oder Kanten abgeschnitten werden.
+2. **iPhone & Smartphones**:
+   - Da auf kleinen Smartphone-Displays nicht alles auf einmal sichtbar sein kann, müssen stets **ganze Kacheln** auf dem Display stehen (keine unvollständig abgeschnittenen Felder).
+   - Beim Scrollen geht es sauber und blockweise mit den nächsten Feldern bzw. Kacheln weiter.
