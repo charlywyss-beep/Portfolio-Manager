@@ -1972,106 +1972,133 @@
   }
 }
 
-/* iPad Hochformat Optimierung: Fairer Wert - 2 Spalten nebeneinander, alles auf einen Blick sichtbar ohne Scrollen */
+/* iPad Hochformat Optimierung: Fairer Wert - 2 Spalten nebeneinander, volle Ausnutzung der Displayhöhe ohne Scrollen */
 @media (orientation: portrait) and (min-width: 641px) and (min-height: 501px) and (max-width: 1279px),
        (pointer: coarse) and (orientation: portrait) and (min-width: 641px) and (min-height: 501px) {
 
-  /* Seitenabstand auf iPad Hochformat */
+  /* Seitenabstand auf iPad Hochformat: Volle Displayhöhe nutzen, Header exakt oben */
   .fair-value-calculator-page {
-    padding: 1.5rem 0.85rem 0.35rem !important;
-    gap: 0.35rem !important;
+    padding: 1.5rem 0.85rem 0.65rem !important;
+    gap: 0.4rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .fair-value-calculator-page > :not([hidden]) ~ :not([hidden]),
   .fair-value-calculator-page > * + * {
-    margin-top: 0.35rem !important;
+    margin-top: 0.4rem !important;
   }
 
-  /* Exakter Abstand nach dem Sticky Header: Aktienkarte ist zu 100% frei und voll sichtbar */
+  /* Exakter Abstand nach dem Sticky Header */
+  .fair-value-calculator-page > .iphone-landscape-portfolio-header-wrap {
+    flex-shrink: 0 !important;
+  }
+
   .fair-value-calculator-page > .iphone-landscape-portfolio-header-wrap + * {
-    margin-top: 0.45rem !important;
+    margin-top: 0.5rem !important;
+    flex-shrink: 0 !important;
   }
 
-  /* 2 Spalten nebeneinander statt untereinander gestapelt */
+  /* 2 Spalten nebeneinander, dehnen sich auf volle Resthöhe aus (kein ungenutzter Platz unten) */
   .fair-value-calculator-page .fair-value-grid {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 0.6rem !important;
+    gap: 0.75rem !important;
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    height: 100% !important;
+  }
+
+  .fair-value-calculator-page .fair-value-grid > div {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
   }
 
   .fair-value-calculator-page .fair-value-col-card {
-    padding: 0.5rem 0.75rem !important;
+    padding: 0.65rem 0.85rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    flex: 1 1 0% !important;
   }
 
-  /* Linke Spalte (Parameter) - vertikal gestrafft, damit unten nichts abgeschnitten wird */
+  /* Linke Spalte (Parameter) */
   .fair-value-calculator-page .fair-value-col-card input[type="number"],
   .fair-value-calculator-page .fair-value-col-card input[type="text"] {
-    height: 1.85rem !important;
-    min-height: 1.85rem !important;
-    font-size: 0.8rem !important;
-    padding-top: 0.15rem !important;
-    padding-bottom: 0.15rem !important;
+    height: 2rem !important;
+    min-height: 2rem !important;
+    font-size: 0.82rem !important;
+    padding-top: 0.2rem !important;
+    padding-bottom: 0.2rem !important;
   }
 
   .fair-value-calculator-page .fair-value-col-card button[title*="Sichtweise"] {
-    padding-top: 0.2rem !important;
-    padding-bottom: 0.2rem !important;
-    font-size: 0.72rem !important;
+    padding-top: 0.22rem !important;
+    padding-bottom: 0.22rem !important;
+    font-size: 0.75rem !important;
   }
 
   .fair-value-calculator-page .fair-value-col-card .space-y-1 > :not([hidden]) ~ :not([hidden]),
   .fair-value-calculator-page .fair-value-col-card .space-y-1 > * + * {
-    margin-top: 0.15rem !important;
+    margin-top: 0.2rem !important;
   }
 
   .fair-value-calculator-page .fair-value-col-card .space-y-2 > :not([hidden]) ~ :not([hidden]),
   .fair-value-calculator-page .fair-value-col-card .space-y-2\.5 > :not([hidden]) ~ :not([hidden]),
   .fair-value-calculator-page .fair-value-col-card .space-y-3 > :not([hidden]) ~ :not([hidden]),
   .fair-value-calculator-page .fair-value-col-card .space-y-3\.5 > :not([hidden]) ~ :not([hidden]) {
-    margin-top: 0.25rem !important;
+    margin-top: 0.3rem !important;
   }
 
-  /* Sicherheitsmarge unten in linker Spalte */
+  /* Sicherheitsmarge unten in linker Spalte - sitzt bündig am unteren Kachelrand */
   .fair-value-calculator-page .fair-value-col-card .space-y-1\.5 {
-    padding-top: 0.25rem !important;
+    padding-top: 0.35rem !important;
     margin-top: auto !important;
   }
 
   .fair-value-calculator-page .fair-value-col-card .space-y-1\.5 button {
-    padding-top: 0.15rem !important;
-    padding-bottom: 0.15rem !important;
-    font-size: 0.72rem !important;
+    padding-top: 0.2rem !important;
+    padding-bottom: 0.2rem !important;
+    font-size: 0.75rem !important;
   }
 
   /* Rechte Spalte (Bewertung) */
   .fair-value-calculator-page .fair-value-circle-wrap {
-    padding-top: 0.2rem !important;
-    padding-bottom: 0.2rem !important;
+    padding-top: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
   }
 
   .fair-value-calculator-page .fair-value-circle {
-    width: 6.25rem !important;
-    height: 6.25rem !important;
-    min-width: 6.25rem !important;
-    min-height: 6.25rem !important;
+    width: 6.85rem !important;
+    height: 6.85rem !important;
+    min-width: 6.85rem !important;
+    min-height: 6.85rem !important;
     padding: 0.2rem !important;
   }
 
   .fair-value-calculator-page .fair-value-circle .text-xs {
-    font-size: 0.65rem !important;
+    font-size: 0.68rem !important;
     line-height: 1 !important;
   }
 
   .fair-value-calculator-page .fair-value-circle .text-\[10px\] {
-    font-size: 0.58rem !important;
+    font-size: 0.6rem !important;
     line-height: 1 !important;
   }
 
   .fair-value-calculator-page .fair-value-circle .text-base,
   .fair-value-calculator-page .fair-value-circle .text-lg {
-    font-size: 0.88rem !important;
+    font-size: 0.92rem !important;
     line-height: 1.15 !important;
     margin-top: 0.05rem !important;
     margin-bottom: 0.05rem !important;
@@ -2079,49 +2106,50 @@
 
   /* Bewertungs-Box */
   .fair-value-calculator-page .fair-value-bewertung-box {
-    padding: 0.35rem 0.6rem !important;
-    margin-bottom: 0.35rem !important;
+    padding: 0.45rem 0.75rem !important;
+    margin-bottom: 0.45rem !important;
   }
 
   .fair-value-calculator-page .fair-value-bewertung-box .text-xl,
   .fair-value-calculator-page .fair-value-bewertung-box .text-2xl {
-    font-size: 1.15rem !important;
+    font-size: 1.2rem !important;
   }
 
   .fair-value-calculator-page .fair-value-bewertung-box .text-xs,
   .fair-value-calculator-page .fair-value-bewertung-box .text-sm {
-    font-size: 0.7rem !important;
+    font-size: 0.75rem !important;
   }
 
-  /* Value Stack */
+  /* Value Stack - sitzt bündig am unteren Kachelrand */
   .fair-value-calculator-page .fair-value-value-stack {
-    gap: 0.3rem !important;
+    gap: 0.35rem !important;
+    margin-top: auto !important;
   }
 
   .fair-value-calculator-page .fair-value-value-stack > :not([hidden]) ~ :not([hidden]),
   .fair-value-calculator-page .fair-value-value-stack > * + * {
-    margin-top: 0.3rem !important;
+    margin-top: 0.35rem !important;
   }
 
   .fair-value-calculator-page .fair-value-kaufpreis-box {
-    padding: 0.35rem 0.6rem !important;
+    padding: 0.4rem 0.7rem !important;
   }
 
   .fair-value-calculator-page .fair-value-kaufpreis-box input {
-    height: 1.65rem !important;
-    min-height: 1.65rem !important;
+    height: 1.75rem !important;
+    min-height: 1.75rem !important;
   }
 
   .fair-value-calculator-page .fair-value-kaufpreis-box button {
-    height: 1.65rem !important;
-    min-height: 1.65rem !important;
+    height: 1.75rem !important;
+    min-height: 1.75rem !important;
   }
 
   .fair-value-calculator-page .fair-value-fairvalue-box {
-    padding: 0.3rem 0.6rem !important;
+    padding: 0.35rem 0.7rem !important;
   }
 
   .fair-value-calculator-page .fair-value-target-box {
-    padding: 0.3rem 0.6rem !important;
+    padding: 0.35rem 0.7rem !important;
   }
 }
