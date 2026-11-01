@@ -13,3 +13,6 @@ To ensure a high-quality and accessible user experience, follow these rules for 
 
 ## Components
 1. **Measurement Tool**: Vertical lines should be `2px` wide and pure blue `#3b82f6`.
+
+## Header & Layout Integrity (STRIKT VERBINDLICH)
+1. **Header-Höhen sind absolut tabu**: Es ist strikt verboten, an den Höhen, Paddings (py-4, etc.) oder der Grundstruktur der Seiten-Header (sticky top-0, iphone-landscape-portfolio-header-wrap, order-b bg-card rounded-t-xl, etc.) etwas zu verändern. Alle Header aller Seiten (Kauf / Verkauf, Übersicht, Saisonalität, Fairer Wert, Portfolio, Watchlist etc.) müssen exakt einheitlich und unverändert in ihrer Höhe und Struktur bestehen bleiben.
