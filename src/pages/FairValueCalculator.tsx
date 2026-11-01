@@ -2263,15 +2263,16 @@ export function FairValueCalculator() {
                         {/* RESULTS COLUMN */}
                         <div className="flex flex-col h-full">
                             <div className="bg-card border border-border rounded-xl p-2.5 sm:p-3.5 lg:p-3 shadow-sm h-full flex flex-col justify-between overflow-hidden">
-                                <h2 className="text-sm sm:text-base font-semibold flex items-center gap-2 mb-1.5 lg:mb-2">
-                                    <span className="size-2 rounded-full bg-purple-500" />
-                                    Bewertung
-                                </h2>
+                                {/* Upper Header & Traffic Light Area - Vertically centered between top field edge and Bewertung card */}
+                                <div className="relative flex flex-col items-center justify-center py-2.5 sm:py-4 my-auto">
+                                    <h2 className="text-sm sm:text-base font-semibold flex items-center gap-2 self-start mb-2 sm:mb-0 sm:absolute sm:top-0 sm:left-0">
+                                        <span className="size-2 rounded-full bg-purple-500" />
+                                        Bewertung
+                                    </h2>
 
-                                {/* Traffic Light */}
-                                <div className="flex justify-center mb-3 sm:mb-4 lg:mb-3">
+                                    {/* Traffic Light */}
                                     <div className={cn(
-                                        "relative size-34 sm:size-36 rounded-full flex flex-col items-center justify-center border-2 shadow-md transition-all duration-500 text-center p-2",
+                                        "relative size-34 sm:size-36 rounded-full flex flex-col items-center justify-center border-2 shadow-md transition-all duration-500 text-center p-2 my-auto",
                                         isUndervalued
                                             ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-emerald-500/20"
                                             : isFairHold
