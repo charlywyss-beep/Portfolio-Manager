@@ -1086,7 +1086,7 @@ export function FairValueCalculator() {
         && (actualCurrentPe > 0 && (typeof pe === 'string' ? parseFloat(pe) || 0 : pe) > actualCurrentPe + 0.5);
 
     return (
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-3 lg:py-3.5 space-y-3 sm:space-y-4 lg:space-y-3.5 pb-24 lg:pb-6 iphone-landscape-page-root">
+        <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-3 lg:py-4 space-y-3 sm:space-y-4 pb-24 lg:pb-6 iphone-landscape-page-root flex-1 flex flex-col">
             {/* Add Link Modal */}
             {showAddLinkModal && (
                 <div className="fixed inset-0 z-[2100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
@@ -1435,7 +1435,7 @@ export function FairValueCalculator() {
             )}
 
             {/* STICKY HEADER & ACTIVE STOCK / SEARCH BAR */}
-            <div className="sticky top-0 z-40 bg-background/95 backdrop-blur -mx-3 sm:-mx-4 md:-mx-6 px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 -mt-4 border-b border-border shadow-sm space-y-2 iphone-landscape-portfolio-header-wrap">
+            <div className="sticky top-0 z-40 bg-background/95 backdrop-blur -mx-3 sm:-mx-4 md:-mx-6 lg:-mx-8 px-3 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-2.5 -mt-3 lg:-mt-4 border-b border-border shadow-sm space-y-2 iphone-landscape-portfolio-header-wrap">
                 <div className="flex items-center justify-between gap-2 iphone-landscape-header-card">
                     <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pl-11 xl:pl-0 iphone-landscape-portfolio-title-group">
                         <button
@@ -1680,7 +1680,7 @@ export function FairValueCalculator() {
 
             {
                 quote && !loadingData && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4 lg:gap-4 animate-in slide-in-from-bottom-4 duration-500">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4 lg:gap-6 animate-in slide-in-from-bottom-4 duration-500 w-full flex-1">
 
                         {/* INPUTS COLUMN */}
                         <div className="flex flex-col h-full">
