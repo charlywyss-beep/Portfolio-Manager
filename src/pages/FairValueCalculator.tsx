@@ -1086,7 +1086,7 @@ export function FairValueCalculator() {
         && (actualCurrentPe > 0 && (typeof pe === 'string' ? parseFloat(pe) || 0 : pe) > actualCurrentPe + 0.5);
 
     return (
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 md:p-8 space-y-6 sm:space-y-8 pb-32 iphone-landscape-page-root">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-3 lg:py-3.5 space-y-3 sm:space-y-4 lg:space-y-3.5 pb-24 lg:pb-6 iphone-landscape-page-root">
             {/* Add Link Modal */}
             {showAddLinkModal && (
                 <div className="fixed inset-0 z-[2100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
@@ -1585,9 +1585,9 @@ export function FairValueCalculator() {
                         </div>
                     ) : (
                         // SELECTED STOCK DISPLAY (Stays sticky with header!)
-                        <div className="flex items-center gap-3 p-2.5 sm:p-3 bg-card/90 backdrop-blur border border-border rounded-xl shadow-sm">
+                        <div className="flex items-center gap-2.5 sm:gap-3 p-2 sm:p-2.5 lg:py-1.5 lg:px-3 bg-card/90 backdrop-blur border border-border rounded-xl shadow-sm">
                             {quote?.logoUrl || stocks.find(s => s.symbol === selectedSymbol)?.logoUrl ? (
-                                <div className="size-10 sm:size-11 rounded-lg p-1 bg-white border border-border flex items-center justify-center overflow-hidden shrink-0">
+                                <div className="size-9 sm:size-10 lg:size-8.5 rounded-lg p-1 bg-white border border-border flex items-center justify-center overflow-hidden shrink-0">
                                     <img
                                         src={quote?.logoUrl || stocks.find(s => s.symbol === selectedSymbol)?.logoUrl}
                                         alt="Logo"
@@ -1595,19 +1595,19 @@ export function FairValueCalculator() {
                                     />
                                 </div>
                             ) : (
-                                <div className="size-10 sm:size-11 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 text-sm shrink-0">
+                                <div className="size-9 sm:size-10 lg:size-8.5 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 text-xs sm:text-sm shrink-0">
                                     {selectedSymbol?.slice(0, 2)}
                                 </div>
                             )}
                             <div className="flex-1 min-w-0">
                                 <Link
                                     to={`/stock/${selectedSymbol}`}
-                                    className="font-bold text-base sm:text-lg truncate hover:text-primary transition-colors block leading-tight"
+                                    className="font-bold text-sm sm:text-base truncate hover:text-primary transition-colors block leading-tight"
                                     title="Zur Detailansicht"
                                 >
                                     {quote?.name || stocks.find(s => s.symbol === selectedSymbol)?.name || selectedSymbol}
                                 </Link>
-                                <div className="flex items-center gap-2 text-muted-foreground mt-0.5 text-xs md:text-sm">
+                                <div className="flex items-center gap-1.5 text-muted-foreground mt-0.5 text-xs">
                                     <span className="font-bold text-foreground">{selectedSymbol}</span>
                                     {(() => {
                                         const stockSect = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol?.toLowerCase())?.sector;
@@ -1630,10 +1630,10 @@ export function FairValueCalculator() {
                                     setAnalysis(null);
                                     localStorage.removeItem('fair_value_state');
                                 }}
-                                className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-all shrink-0"
+                                className="p-1 sm:p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-all shrink-0"
                                 title="Aktie entfernen"
                             >
-                                <X className="size-5" />
+                                <X className="size-4 sm:size-5" />
                             </button>
                         </div>
                     )}
@@ -1680,13 +1680,13 @@ export function FairValueCalculator() {
 
             {
                 quote && !loadingData && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 animate-in slide-in-from-bottom-4 duration-500">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4 lg:gap-4 animate-in slide-in-from-bottom-4 duration-500">
 
                         {/* INPUTS COLUMN */}
                         <div className="flex flex-col h-full">
-                            <div className="bg-card border border-border rounded-xl p-3.5 sm:p-4.5 shadow-sm h-full flex flex-col justify-between">
-                                <div className="space-y-3 sm:space-y-3.5 flex-1">
-                                    <div className="space-y-2 pb-2.5 border-b border-border">
+                            <div className="bg-card border border-border rounded-xl p-2.5 sm:p-3.5 lg:p-3 shadow-sm h-full flex flex-col justify-between">
+                                <div className="space-y-2 sm:space-y-2.5 lg:space-y-2 flex-1">
+                                    <div className="space-y-1.5 pb-2 border-b border-border">
                                     <div className="flex items-center justify-between gap-2">
                                         <div className="flex items-center gap-2 min-w-0">
                                             <h2 className="text-base font-semibold flex items-center gap-1.5 shrink-0">
@@ -1743,7 +1743,7 @@ export function FairValueCalculator() {
                                             type="button"
                                             onClick={() => applyAutoValues('conservative')}
                                             className={cn(
-                                                "flex items-center justify-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-all whitespace-nowrap font-semibold border cursor-pointer active:scale-[0.98]",
+                                                "flex items-center justify-center gap-1.5 text-xs px-2.5 py-1 rounded-lg transition-all whitespace-nowrap font-semibold border cursor-pointer active:scale-[0.98]",
                                                 !isSavedForStock && valuationProfile === 'conservative'
                                                     ? "bg-blue-600 text-white border-blue-400 shadow-sm"
                                                     : "bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-blue-400/60 shadow-2xs"
@@ -1757,7 +1757,7 @@ export function FairValueCalculator() {
                                             type="button"
                                             onClick={() => applyAutoValues('quality')}
                                             className={cn(
-                                                "flex items-center justify-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-all whitespace-nowrap font-semibold border cursor-pointer active:scale-[0.98]",
+                                                "flex items-center justify-center gap-1.5 text-xs px-2.5 py-1 rounded-lg transition-all whitespace-nowrap font-semibold border cursor-pointer active:scale-[0.98]",
                                                 !isSavedForStock && valuationProfile === 'quality'
                                                     ? "bg-purple-600 text-white border-purple-400 shadow-sm"
                                                     : "bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-purple-400/60 shadow-2xs"
@@ -1786,7 +1786,7 @@ export function FairValueCalculator() {
                                                 setEpsSourceLabel('Manuell / Gespeichert');
                                                 setIsSavedForStock(true);
                                             }}
-                                            className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-9 text-sm"
+                                            className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 text-xs sm:text-sm"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">{quote.currency || 'USD'}</span>
                                     </div>
@@ -1832,7 +1832,7 @@ export function FairValueCalculator() {
                                                     setGrowthSourceLabel('Manuell / Gespeichert');
                                                     setIsSavedForStock(true);
                                                 }}
-                                                className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-9 text-sm"
+                                                className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 text-xs sm:text-sm"
                                             />
                                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">%</span>
                                         </div>
@@ -1970,7 +1970,7 @@ export function FairValueCalculator() {
                                                     setDividendYield(e.target.value);
                                                     setIsSavedForStock(true);
                                                 }}
-                                                className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-9 text-sm"
+                                                className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 text-xs sm:text-sm"
                                             />
                                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">%</span>
                                         </div>
@@ -1991,7 +1991,7 @@ export function FairValueCalculator() {
                                                     setDiscountRate(e.target.value);
                                                     setIsSavedForStock(true);
                                                 }}
-                                                className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-9 text-sm"
+                                                className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 text-xs sm:text-sm"
                                             />
                                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">%</span>
                                         </div>
@@ -2094,7 +2094,7 @@ export function FairValueCalculator() {
                                                 setSelectedPeHorizon('custom');
                                                 setIsSavedForStock(true);
                                             }}
-                                            className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-9 text-sm"
+                                            className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 text-xs sm:text-sm"
                                         />
                                         {calculation.isCorrectionNeeded && (
                                             <div className="text-xs text-amber-600 mt-1 flex items-center gap-1.5 leading-tight font-medium">
@@ -2208,7 +2208,7 @@ export function FairValueCalculator() {
                                 </div>
 
                                 {/* MARGIN OF SAFETY (Anchored to bottom so left card ends exactly aligned with right card) */}
-                                <div className="space-y-1.5 pt-3 mt-auto border-t border-border/50">
+                                <div className="space-y-1 pt-2 mt-auto border-t border-border/50">
                                     <label className="text-xs sm:text-sm font-medium flex justify-between items-center">
                                         <span>Sicherheitsmarge</span>
                                         <span className="text-[11px] text-muted-foreground font-light">
@@ -2225,7 +2225,7 @@ export function FairValueCalculator() {
                                                     setMos(e.target.value);
                                                     setIsSavedForStock(true);
                                                 }}
-                                                className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-9 text-sm"
+                                                className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 text-xs sm:text-sm"
                                             />
                                             <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">%</span>
                                         </div>
@@ -2239,7 +2239,7 @@ export function FairValueCalculator() {
                                                         setIsSavedForStock(true);
                                                     }}
                                                     className={cn(
-                                                        "py-1.5 text-xs rounded-md border font-mono transition-colors text-center font-medium",
+                                                        "py-1 text-xs rounded-md border font-mono transition-colors text-center font-medium",
                                                         Number(mos) === val
                                                             ? "bg-primary text-primary-foreground border-primary font-bold shadow-2xs"
                                                             : "bg-muted/50 hover:bg-muted text-muted-foreground border-border/60"
@@ -2256,16 +2256,16 @@ export function FairValueCalculator() {
 
                         {/* RESULTS COLUMN */}
                         <div className="flex flex-col h-full">
-                            <div className="bg-card border border-border rounded-xl p-3.5 sm:p-4.5 shadow-sm h-full flex flex-col justify-between overflow-hidden">
-                                <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2 mb-3">
+                            <div className="bg-card border border-border rounded-xl p-2.5 sm:p-3.5 lg:p-3 shadow-sm h-full flex flex-col justify-between overflow-hidden">
+                                <h2 className="text-sm sm:text-base font-semibold flex items-center gap-2 mb-1.5 lg:mb-2">
                                     <span className="size-2 rounded-full bg-purple-500" />
                                     Bewertung
                                 </h2>
 
                                 {/* Traffic Light */}
-                                <div className="flex justify-center mb-3 sm:mb-4">
+                                <div className="flex justify-center mb-2 sm:mb-2.5 lg:mb-2">
                                     <div className={cn(
-                                        "relative size-32 sm:size-36 rounded-full flex flex-col items-center justify-center border-4 shadow-lg transition-all duration-500 text-center px-2 pb-2.5 pt-1",
+                                        "relative size-28 sm:size-32 lg:size-28 xl:size-30 rounded-full flex flex-col items-center justify-center border-3 sm:border-4 shadow-md transition-all duration-500 text-center px-2 py-1",
                                         isUndervalued
                                             ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-emerald-500/20"
                                             : isFairHold
@@ -2274,16 +2274,16 @@ export function FairValueCalculator() {
                                                     ? "bg-amber-500/10 border-amber-500 text-amber-500 shadow-amber-500/20"
                                                     : "bg-red-500/10 border-red-500 text-red-500 shadow-red-500/20"
                                     )}>
-                                        <div className="text-[11px] uppercase font-black tracking-widest opacity-90 leading-tight">
+                                        <div className="text-[10px] uppercase font-black tracking-widest opacity-90 leading-tight">
                                             {isUndervalued ? 'KAUFEN' : (isFairHold || isRichHold) ? 'HOLD' : 'TEUER'}
                                         </div>
-                                        <div className="text-[9px] uppercase font-bold tracking-tight opacity-75 mt-0.5 leading-tight">
+                                        <div className="text-[8.5px] uppercase font-bold tracking-tight opacity-75 mt-0.5 leading-tight">
                                             {isUndervalued ? 'Sicherheitsmarge' : isFairHold ? 'Fairer Bereich' : isRichHold ? 'Gut bezahlt' : 'Überhitzt'}
                                         </div>
-                                        <div className="text-base sm:text-lg font-black leading-tight whitespace-nowrap tabular-nums my-1">
+                                        <div className="text-sm sm:text-base font-black leading-tight whitespace-nowrap tabular-nums my-0.5">
                                             {formatCurrency(currentPrice, quote.currency, false)}
                                         </div>
-                                        <div className="text-xs font-bold opacity-85 leading-tight">
+                                        <div className="text-[11px] font-bold opacity-85 leading-tight">
                                             Aktueller Kurs
                                         </div>
                                     </div>
@@ -2299,7 +2299,7 @@ export function FairValueCalculator() {
 
                                     return (
                                         <div className={cn(
-                                            "p-4 rounded-xl border text-center transition-all mb-4",
+                                            "p-2.5 sm:p-3 rounded-xl border text-center transition-all mb-2 sm:mb-2.5 lg:mb-2",
                                             isUndervalued
                                                 ? "bg-emerald-500/10 border-emerald-500/30"
                                                 : isFairHold
@@ -2308,11 +2308,11 @@ export function FairValueCalculator() {
                                                         ? "bg-amber-500/10 border-amber-500/30"
                                                         : "bg-rose-500/10 border-rose-500/30"
                                         )}>
-                                            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                                            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">
                                                 Bewertung
                                             </div>
                                             <div className={cn(
-                                                "text-2xl sm:text-3xl font-extrabold font-mono tracking-tight flex items-baseline justify-center gap-1.5 flex-wrap",
+                                                "text-xl sm:text-2xl font-extrabold font-mono tracking-tight flex items-baseline justify-center gap-1.5 flex-wrap",
                                                 isUndervalued
                                                     ? "text-emerald-400"
                                                     : isFairHold
@@ -2326,7 +2326,7 @@ export function FairValueCalculator() {
                                                     {diffPct > 0 ? 'unterbewertet' : diffPct < 0 ? 'überbewertet' : 'fair bewertet'}
                                                 </span>
                                             </div>
-                                            <div className="text-xs sm:text-sm font-medium mt-1.5 text-muted-foreground">
+                                            <div className="text-xs font-medium mt-1 text-muted-foreground">
                                                 {isUndervalued && (
                                                     <>
                                                         <div>Aktie hat <span className="font-bold text-emerald-400">+{potentialPct} %</span> Potenzial zum fairen Wert.</div>
@@ -2365,7 +2365,7 @@ export function FairValueCalculator() {
 
                                             {/* Fundamentale Abwärtsabsicherung / Risikoprofil */}
                                             <div className={cn(
-                                                "mt-2.5 pt-2 border-t text-xs text-left leading-relaxed flex items-start gap-2",
+                                                "mt-2 pt-1.5 border-t text-[11px] text-left leading-snug flex items-start gap-2",
                                                 downsideProtection.level === 'high'
                                                     ? "border-emerald-500/25 text-emerald-300/90"
                                                     : downsideProtection.level === 'low'
@@ -2383,7 +2383,7 @@ export function FairValueCalculator() {
                                 })()}
 
                                 {/* Value Stack */}
-                                <div className="flex-1 space-y-4">
+                                <div className="flex-1 space-y-2 sm:space-y-2.5 lg:space-y-2">
                                     {/* Buy Price */}
                                     {(() => {
                                         const isQualityMode = !isSavedForStock && valuationProfile === 'quality';
@@ -2427,38 +2427,38 @@ export function FairValueCalculator() {
 
                                         return (
                                             <div className={cn(
-                                                "p-3.5 sm:p-4 rounded-xl border-2 transition-all shadow-sm",
+                                                "p-2.5 sm:p-3 rounded-xl border-2 transition-all shadow-sm",
                                                 kaufpreisBorderBg
                                             )}>
-                                                <div className="flex justify-between items-center gap-2 mb-1">
-                                                    <span className="font-bold text-base sm:text-lg shrink-0 whitespace-nowrap">Kaufpreis</span>
+                                                <div className="flex justify-between items-center gap-2 mb-0.5">
+                                                    <span className="font-bold text-sm sm:text-base shrink-0 whitespace-nowrap">Kaufpreis</span>
                                                     {quote.currency !== 'CHF' ? (
                                                         <div className={cn(
                                                             "flex flex-col items-end font-mono leading-tight text-right shrink-0",
                                                             kaufpreisTextColor
                                                         )}>
-                                                            <span className="text-base sm:text-lg font-bold whitespace-nowrap">
+                                                            <span className="text-sm sm:text-base font-bold whitespace-nowrap">
                                                                 {formatCurrency(calculation.buyPrice, quote.currency, false)}
                                                             </span>
-                                                            <span className="text-base sm:text-lg font-bold opacity-80 whitespace-nowrap">
+                                                            <span className="text-xs sm:text-sm font-bold opacity-80 whitespace-nowrap">
                                                                 {formatCurrency(calculation.buyPrice, quote.currency).split(' - ')[1]}
                                                             </span>
                                                         </div>
                                                     ) : (
                                                         <span className={cn(
-                                                            "font-mono font-bold text-base sm:text-lg whitespace-nowrap",
+                                                            "font-mono font-bold text-sm sm:text-base whitespace-nowrap",
                                                             kaufpreisTextColor
                                                         )}>
                                                             {formatCurrency(calculation.buyPrice, quote.currency, false)}
                                                         </span>
                                                     )}
                                                 </div>
-                                                <p className="text-xs text-muted-foreground">
+                                                <p className="text-[11px] text-muted-foreground">
                                                     Maximaler Preis inkl. {mos}% Sicherheitsmarge ({isSavedForStock ? 'Manuell' : valuationProfile === 'quality' ? 'Qualität B' : 'Sicherheit A'})
                                                 </p>
 
                                         {/* Kauflimit Integration (Direkt in Kursdaten & Watchlist übernehmen) */}
-                                        <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
+                                        <div className="mt-2 pt-2 border-t border-border/50 space-y-1.5">
                                             <div className="flex items-center justify-between text-xs">
                                                 <span className="font-semibold text-foreground flex items-center gap-1.5">
                                                     <Target className={cn("size-3.5", kaufpreisTargetIconColor)} />
@@ -2498,7 +2498,7 @@ export function FairValueCalculator() {
                                                             }
                                                         }}
                                                         placeholder={calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : "Optional"}
-                                                        className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-sm font-mono pr-12 focus:ring-1 focus:ring-primary text-foreground"
+                                                        className="w-full px-2 py-1 rounded-lg border border-border bg-background text-xs sm:text-sm font-mono pr-12 focus:ring-1 focus:ring-primary text-foreground h-7 sm:h-8"
                                                     />
                                                     <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-muted-foreground pointer-events-none">
                                                         {quote.currency === 'GBp' ? 'GBP' : quote.currency}
@@ -2508,7 +2508,7 @@ export function FairValueCalculator() {
                                                 <button
                                                     type="button"
                                                     onClick={() => handleSaveBuyLimit(buyLimitInput || (calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : ''))}
-                                                    className={cn("px-3 py-1.5 text-white text-xs font-semibold rounded-lg shadow-sm transition-all flex items-center gap-1 shrink-0 active:scale-95", kaufpreisSaveBtnColor)}
+                                                    className={cn("px-2.5 py-1 text-white text-xs font-semibold rounded-lg shadow-sm transition-all flex items-center gap-1 shrink-0 active:scale-95 h-7 sm:h-8", kaufpreisSaveBtnColor)}
                                                     title="In Kursdaten als Kauflimit speichern"
                                                 >
                                                     <Check className="size-3.5" />
@@ -2525,7 +2525,7 @@ export function FairValueCalculator() {
                                                         setBuyLimitInput(val);
                                                         handleSaveBuyLimit(val);
                                                     }}
-                                                    className={cn("w-full py-1.5 px-2.5 text-xs font-medium rounded-lg border transition-all flex items-center justify-center gap-1 text-center shadow-xs active:scale-95", kaufpreisQuickBtnColor)}
+                                                    className={cn("w-full py-1 px-2 text-[11px] font-medium rounded-lg border transition-all flex items-center justify-center gap-1 text-center shadow-xs active:scale-95", kaufpreisQuickBtnColor)}
                                                 >
                                                     <span>Kaufpreis ({calculation.buyPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency}) als Kauflimit übernehmen</span>
                                                 </button>
@@ -2536,54 +2536,54 @@ export function FairValueCalculator() {
                                     })()}
 
                                     {/* Fair Value */}
-                                    <div className="p-3.5 sm:p-4 rounded-xl border border-border bg-card">
-                                        <div className="flex justify-between items-center gap-2 mb-1">
-                                            <span className="font-medium text-base shrink-0 whitespace-nowrap">Fairer Wert</span>
+                                    <div className="p-2.5 sm:p-3 rounded-xl border border-border bg-card">
+                                        <div className="flex justify-between items-center gap-2 mb-0.5">
+                                            <span className="font-medium text-sm sm:text-base shrink-0 whitespace-nowrap">Fairer Wert</span>
                                             {quote.currency !== 'CHF' ? (
                                                 <div className="flex flex-col items-end font-mono leading-tight text-right shrink-0">
-                                                    <span className="text-base sm:text-lg font-semibold whitespace-nowrap">
+                                                    <span className="text-sm sm:text-base font-semibold whitespace-nowrap">
                                                         {formatCurrency(calculation.fairValue, quote.currency, false)}
                                                     </span>
-                                                    <span className="text-base sm:text-lg font-semibold text-muted-foreground whitespace-nowrap">
+                                                    <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap">
                                                         {formatCurrency(calculation.fairValue, quote.currency).split(' - ')[1]}
                                                     </span>
                                                 </div>
                                             ) : (
-                                                <span className="font-mono text-base sm:text-lg whitespace-nowrap">
+                                                <span className="font-mono text-sm sm:text-base whitespace-nowrap">
                                                     {formatCurrency(calculation.fairValue, quote.currency, false)}
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-xs text-muted-foreground">
+                                        <p className="text-[11px] text-muted-foreground">
                                             Innerer Wert heute ({discountRate}% Zielrendite + Dividenden)
                                         </p>
                                         {isYieldGap && (
-                                            <p className="text-xs text-amber-400/90 mt-2 leading-relaxed italic font-medium">
+                                            <p className="text-[11px] text-amber-400/90 mt-1.5 leading-snug italic font-medium">
                                                 Hinweis: Renditeerwartung ({discountRate}%) liegt über Ertrag ({growthRate}% + {dividendYield}%) bei steigendem KGV.
                                             </p>
                                         )}
                                     </div>
 
                                     {/* Future Value */}
-                                    <div className="p-3.5 sm:p-4 rounded-xl border border-border bg-muted/10">
-                                        <div className="flex justify-between items-center gap-2 mb-1">
-                                            <span className="text-sm font-medium text-muted-foreground shrink-0 whitespace-nowrap">Zielkurs (5 Jahre)</span>
+                                    <div className="p-2 sm:p-2.5 rounded-xl border border-border bg-muted/10">
+                                        <div className="flex justify-between items-center gap-2 mb-0.5">
+                                            <span className="text-xs sm:text-sm font-medium text-muted-foreground shrink-0 whitespace-nowrap">Zielkurs (5 Jahre)</span>
                                             {quote.currency !== 'CHF' ? (
                                                 <div className="flex flex-col items-end font-mono text-muted-foreground leading-tight text-right shrink-0">
-                                                    <span className="text-sm sm:text-base font-medium whitespace-nowrap">
+                                                    <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
                                                         {formatCurrency(calculation.futurePrice, quote.currency, false)}
                                                     </span>
-                                                    <span className="text-sm sm:text-base font-medium opacity-80 whitespace-nowrap">
+                                                    <span className="text-[11px] sm:text-xs font-medium opacity-80 whitespace-nowrap">
                                                         {formatCurrency(calculation.futurePrice, quote.currency).split(' - ')[1]}
                                                     </span>
                                                 </div>
                                             ) : (
-                                                <span className="font-mono text-sm sm:text-base whitespace-nowrap">
+                                                <span className="font-mono text-xs sm:text-sm whitespace-nowrap">
                                                     {formatCurrency(calculation.futurePrice, quote.currency, false)}
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-xs text-muted-foreground">
+                                        <p className="text-[11px] text-muted-foreground">
                                             Gewinn {calculation.futureEps.toFixed(2)} × KGV {calculation.exitPe.toFixed(1)}
                                         </p>
                                     </div>
