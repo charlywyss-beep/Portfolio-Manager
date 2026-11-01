@@ -1978,50 +1978,150 @@
 
   /* Seitenabstand auf iPad Hochformat */
   .fair-value-calculator-page {
-    padding: 1.5rem 1rem 1rem !important;
-    gap: 0.5rem !important;
+    padding: 1.5rem 0.85rem 0.35rem !important;
+    gap: 0.35rem !important;
   }
 
   .fair-value-calculator-page > :not([hidden]) ~ :not([hidden]),
   .fair-value-calculator-page > * + * {
-    margin-top: 0.5rem !important;
+    margin-top: 0.35rem !important;
   }
 
   /* Exakter Abstand nach dem Sticky Header: Aktienkarte ist zu 100% frei und voll sichtbar */
   .fair-value-calculator-page > .iphone-landscape-portfolio-header-wrap + * {
-    margin-top: 0.65rem !important;
+    margin-top: 0.45rem !important;
   }
 
   /* 2 Spalten nebeneinander statt untereinander gestapelt */
   .fair-value-calculator-page .fair-value-grid {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 0.75rem !important;
+    gap: 0.6rem !important;
   }
 
   .fair-value-calculator-page .fair-value-col-card {
-    padding: 0.75rem 0.85rem !important;
+    padding: 0.5rem 0.75rem !important;
   }
 
-  /* Kreis im Hochformat harmonisch dimensioniert */
+  /* Linke Spalte (Parameter) - vertikal gestrafft, damit unten nichts abgeschnitten wird */
+  .fair-value-calculator-page .fair-value-col-card input[type="number"],
+  .fair-value-calculator-page .fair-value-col-card input[type="text"] {
+    height: 1.85rem !important;
+    min-height: 1.85rem !important;
+    font-size: 0.8rem !important;
+    padding-top: 0.15rem !important;
+    padding-bottom: 0.15rem !important;
+  }
+
+  .fair-value-calculator-page .fair-value-col-card button[title*="Sichtweise"] {
+    padding-top: 0.2rem !important;
+    padding-bottom: 0.2rem !important;
+    font-size: 0.72rem !important;
+  }
+
+  .fair-value-calculator-page .fair-value-col-card .space-y-1 > :not([hidden]) ~ :not([hidden]),
+  .fair-value-calculator-page .fair-value-col-card .space-y-1 > * + * {
+    margin-top: 0.15rem !important;
+  }
+
+  .fair-value-calculator-page .fair-value-col-card .space-y-2 > :not([hidden]) ~ :not([hidden]),
+  .fair-value-calculator-page .fair-value-col-card .space-y-2\.5 > :not([hidden]) ~ :not([hidden]),
+  .fair-value-calculator-page .fair-value-col-card .space-y-3 > :not([hidden]) ~ :not([hidden]),
+  .fair-value-calculator-page .fair-value-col-card .space-y-3\.5 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.25rem !important;
+  }
+
+  /* Sicherheitsmarge unten in linker Spalte */
+  .fair-value-calculator-page .fair-value-col-card .space-y-1\.5 {
+    padding-top: 0.25rem !important;
+    margin-top: auto !important;
+  }
+
+  .fair-value-calculator-page .fair-value-col-card .space-y-1\.5 button {
+    padding-top: 0.15rem !important;
+    padding-bottom: 0.15rem !important;
+    font-size: 0.72rem !important;
+  }
+
+  /* Rechte Spalte (Bewertung) */
   .fair-value-calculator-page .fair-value-circle-wrap {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
+    padding-top: 0.2rem !important;
+    padding-bottom: 0.2rem !important;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
   }
 
   .fair-value-calculator-page .fair-value-circle {
-    width: 7.25rem !important;
-    height: 7.25rem !important;
-    min-width: 7.25rem !important;
-    min-height: 7.25rem !important;
+    width: 6.25rem !important;
+    height: 6.25rem !important;
+    min-width: 6.25rem !important;
+    min-height: 6.25rem !important;
+    padding: 0.2rem !important;
+  }
+
+  .fair-value-calculator-page .fair-value-circle .text-xs {
+    font-size: 0.65rem !important;
+    line-height: 1 !important;
+  }
+
+  .fair-value-calculator-page .fair-value-circle .text-\[10px\] {
+    font-size: 0.58rem !important;
+    line-height: 1 !important;
   }
 
   .fair-value-calculator-page .fair-value-circle .text-base,
   .fair-value-calculator-page .fair-value-circle .text-lg {
-    font-size: 0.95rem !important;
+    font-size: 0.88rem !important;
     line-height: 1.15 !important;
+    margin-top: 0.05rem !important;
+    margin-bottom: 0.05rem !important;
+  }
+
+  /* Bewertungs-Box */
+  .fair-value-calculator-page .fair-value-bewertung-box {
+    padding: 0.35rem 0.6rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  .fair-value-calculator-page .fair-value-bewertung-box .text-xl,
+  .fair-value-calculator-page .fair-value-bewertung-box .text-2xl {
+    font-size: 1.15rem !important;
+  }
+
+  .fair-value-calculator-page .fair-value-bewertung-box .text-xs,
+  .fair-value-calculator-page .fair-value-bewertung-box .text-sm {
+    font-size: 0.7rem !important;
+  }
+
+  /* Value Stack */
+  .fair-value-calculator-page .fair-value-value-stack {
+    gap: 0.3rem !important;
+  }
+
+  .fair-value-calculator-page .fair-value-value-stack > :not([hidden]) ~ :not([hidden]),
+  .fair-value-calculator-page .fair-value-value-stack > * + * {
+    margin-top: 0.3rem !important;
+  }
+
+  .fair-value-calculator-page .fair-value-kaufpreis-box {
+    padding: 0.35rem 0.6rem !important;
+  }
+
+  .fair-value-calculator-page .fair-value-kaufpreis-box input {
+    height: 1.65rem !important;
+    min-height: 1.65rem !important;
+  }
+
+  .fair-value-calculator-page .fair-value-kaufpreis-box button {
+    height: 1.65rem !important;
+    min-height: 1.65rem !important;
+  }
+
+  .fair-value-calculator-page .fair-value-fairvalue-box {
+    padding: 0.3rem 0.6rem !important;
+  }
+
+  .fair-value-calculator-page .fair-value-target-box {
+    padding: 0.3rem 0.6rem !important;
   }
 }
-
