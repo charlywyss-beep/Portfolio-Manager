@@ -2265,7 +2265,7 @@ export function FairValueCalculator() {
                                 {/* Traffic Light */}
                                 <div className="flex justify-center mb-3 sm:mb-4">
                                     <div className={cn(
-                                        "relative size-40 sm:size-44 rounded-full flex flex-col items-center justify-between border-4 shadow-lg transition-all duration-500 text-center px-3 py-3 sm:py-3.5",
+                                        "relative size-32 sm:size-36 rounded-full flex flex-col items-center justify-center border-4 shadow-lg transition-all duration-500 text-center px-2 pb-2.5 pt-1",
                                         isUndervalued
                                             ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-emerald-500/20"
                                             : isFairHold
@@ -2274,23 +2274,16 @@ export function FairValueCalculator() {
                                                     ? "bg-amber-500/10 border-amber-500 text-amber-500 shadow-amber-500/20"
                                                     : "bg-red-500/10 border-red-500 text-red-500 shadow-red-500/20"
                                     )}>
-                                        {/* Top: TEUER / HOLD / KAUFEN etwas hoeher platziert */}
-                                        <div className="flex flex-col items-center pt-0.5">
-                                            <div className="text-xs sm:text-[13px] uppercase font-black tracking-widest opacity-90 leading-tight">
-                                                {isUndervalued ? 'KAUFEN' : (isFairHold || isRichHold) ? 'HOLD' : 'TEUER'}
-                                            </div>
-                                            <div className="text-[10px] sm:text-[11px] uppercase font-bold tracking-tight opacity-75 mt-0.5 leading-tight">
-                                                {isUndervalued ? 'Sicherheitsmarge' : isFairHold ? 'Fairer Bereich' : isRichHold ? 'Gut bezahlt' : 'Überhitzt'}
-                                            </div>
+                                        <div className="text-[11px] uppercase font-black tracking-widest opacity-90 leading-tight">
+                                            {isUndervalued ? 'KAUFEN' : (isFairHold || isRichHold) ? 'HOLD' : 'TEUER'}
                                         </div>
-
-                                        {/* Center: Kurs im breitesten Bereich, einzeilig */}
-                                        <div className="text-lg sm:text-xl font-black leading-tight whitespace-nowrap tabular-nums my-auto px-1">
+                                        <div className="text-[9px] uppercase font-bold tracking-tight opacity-75 mt-0.5 leading-tight">
+                                            {isUndervalued ? 'Sicherheitsmarge' : isFairHold ? 'Fairer Bereich' : isRichHold ? 'Gut bezahlt' : 'Überhitzt'}
+                                        </div>
+                                        <div className="text-base sm:text-lg font-black leading-tight whitespace-nowrap tabular-nums my-1">
                                             {formatCurrency(currentPrice, quote.currency, false)}
                                         </div>
-
-                                        {/* Bottom: Aktueller Kurs mit sicherem Abstand zum Kreisbogen */}
-                                        <div className="text-xs sm:text-[13px] font-bold opacity-80 leading-tight pb-0.5 whitespace-nowrap">
+                                        <div className="text-xs font-bold opacity-85 leading-tight">
                                             Aktueller Kurs
                                         </div>
                                     </div>
