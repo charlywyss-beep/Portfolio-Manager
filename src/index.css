@@ -1971,3 +1971,57 @@
     line-height: 1 !important;
   }
 }
+
+/* iPad Hochformat Optimierung: Fairer Wert - 2 Spalten nebeneinander, alles auf einen Blick sichtbar ohne Scrollen */
+@media (orientation: portrait) and (min-width: 641px) and (min-height: 501px) and (max-width: 1279px),
+       (pointer: coarse) and (orientation: portrait) and (min-width: 641px) and (min-height: 501px) {
+
+  /* Seitenabstand auf iPad Hochformat */
+  .fair-value-calculator-page {
+    padding: 1.5rem 1rem 1rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .fair-value-calculator-page > :not([hidden]) ~ :not([hidden]),
+  .fair-value-calculator-page > * + * {
+    margin-top: 0.5rem !important;
+  }
+
+  /* Exakter Abstand nach dem Sticky Header: Aktienkarte ist zu 100% frei und voll sichtbar */
+  .fair-value-calculator-page > .iphone-landscape-portfolio-header-wrap + * {
+    margin-top: 0.65rem !important;
+  }
+
+  /* 2 Spalten nebeneinander statt untereinander gestapelt */
+  .fair-value-calculator-page .fair-value-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.75rem !important;
+  }
+
+  .fair-value-calculator-page .fair-value-col-card {
+    padding: 0.75rem 0.85rem !important;
+  }
+
+  /* Kreis im Hochformat harmonisch dimensioniert */
+  .fair-value-calculator-page .fair-value-circle-wrap {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .fair-value-calculator-page .fair-value-circle {
+    width: 7.25rem !important;
+    height: 7.25rem !important;
+    min-width: 7.25rem !important;
+    min-height: 7.25rem !important;
+  }
+
+  .fair-value-calculator-page .fair-value-circle .text-base,
+  .fair-value-calculator-page .fair-value-circle .text-lg {
+    font-size: 0.95rem !important;
+    line-height: 1.15 !important;
+  }
+}
+
