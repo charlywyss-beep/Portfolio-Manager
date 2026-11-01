@@ -1086,7 +1086,7 @@ export function FairValueCalculator() {
         && (actualCurrentPe > 0 && (typeof pe === 'string' ? parseFloat(pe) || 0 : pe) > actualCurrentPe + 0.5);
 
     return (
-        <div className="p-4 md:p-6 space-y-4 md:space-y-6 bg-gradient-to-br from-background via-background to-muted/20 animate-in fade-in duration-500 iphone-landscape-page-root w-full">
+        <div className="fair-value-calculator-page p-4 md:p-6 space-y-4 md:space-y-6 bg-gradient-to-br from-background via-background to-muted/20 animate-in fade-in duration-500 iphone-landscape-page-root w-full">
             {/* Add Link Modal */}
             {showAddLinkModal && (
                 <div className="fixed inset-0 z-[2100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
@@ -1592,7 +1592,7 @@ export function FairValueCalculator() {
                         </div>
                     ) : (
                         // SELECTED STOCK DISPLAY (Stays sticky with header!)
-                        <div className="flex items-center gap-2.5 sm:gap-3 p-2 sm:p-2.5 lg:py-1.5 lg:px-3 bg-card/90 backdrop-blur border border-border rounded-xl shadow-sm">
+                        <div className="fair-value-stock-card flex items-center gap-2.5 sm:gap-3 p-2 sm:p-2.5 lg:py-1.5 lg:px-3 bg-card/90 backdrop-blur border border-border rounded-xl shadow-sm">
                             {quote?.logoUrl || stocks.find(s => s.symbol === selectedSymbol)?.logoUrl ? (
                                 <div className="size-9 sm:size-10 lg:size-8.5 rounded-lg p-1 bg-white border border-border flex items-center justify-center overflow-hidden shrink-0">
                                     <img
@@ -1686,11 +1686,11 @@ export function FairValueCalculator() {
 
             {
                 quote && !loadingData && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4 lg:gap-6 animate-in slide-in-from-bottom-4 duration-500 w-full flex-1">
+                    <div className="fair-value-grid grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4 lg:gap-6 animate-in slide-in-from-bottom-4 duration-500 w-full flex-1">
 
                         {/* INPUTS COLUMN */}
                         <div className="flex flex-col h-full">
-                            <div className="bg-card border border-border rounded-xl p-2.5 sm:p-3.5 lg:p-3 shadow-sm h-full flex flex-col justify-between">
+                            <div className="fair-value-col-card bg-card border border-border rounded-xl p-2.5 sm:p-3.5 lg:p-3 shadow-sm h-full flex flex-col justify-between">
                                 <div className="space-y-2 sm:space-y-2.5 lg:space-y-2 flex-1">
                                     <div className="space-y-1.5 pb-2 border-b border-border">
                                     <div className="flex items-center justify-between gap-2">
@@ -2262,9 +2262,9 @@ export function FairValueCalculator() {
 
                         {/* RESULTS COLUMN */}
                         <div className="flex flex-col h-full">
-                            <div className="bg-card border border-border rounded-xl p-2.5 sm:p-3.5 lg:p-3 shadow-sm h-full flex flex-col justify-between overflow-hidden">
+                            <div className="fair-value-col-card bg-card border border-border rounded-xl p-2.5 sm:p-3.5 lg:p-3 shadow-sm h-full flex flex-col justify-between overflow-hidden">
                                 {/* Upper Header & Traffic Light Area - Vertically centered between top field edge and Bewertung card */}
-                                <div className="relative flex flex-col items-center justify-center py-2.5 sm:py-4 my-auto">
+                                <div className="fair-value-circle-wrap relative flex flex-col items-center justify-center py-2.5 sm:py-4 my-auto">
                                     <h2 className="text-sm sm:text-base font-semibold flex items-center gap-2 self-start mb-2 sm:mb-0 sm:absolute sm:top-0 sm:left-0">
                                         <span className="size-2 rounded-full bg-purple-500" />
                                         Bewertung
@@ -2272,7 +2272,7 @@ export function FairValueCalculator() {
 
                                     {/* Traffic Light */}
                                     <div className={cn(
-                                        "relative size-34 sm:size-36 rounded-full flex flex-col items-center justify-center border-2 shadow-md transition-all duration-500 text-center p-2 my-auto",
+                                        "fair-value-circle relative size-34 sm:size-36 rounded-full flex flex-col items-center justify-center border-2 shadow-md transition-all duration-500 text-center p-2 my-auto",
                                         isUndervalued
                                             ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-emerald-500/20"
                                             : isFairHold
@@ -2308,7 +2308,7 @@ export function FairValueCalculator() {
 
                                     return (
                                         <div className={cn(
-                                            "p-2.5 sm:p-3 rounded-xl border text-center transition-all mb-2 sm:mb-2.5 lg:mb-2",
+                                            "fair-value-bewertung-box p-2.5 sm:p-3 rounded-xl border text-center transition-all mb-2 sm:mb-2.5 lg:mb-2",
                                             isUndervalued
                                                 ? "bg-emerald-500/10 border-emerald-500/30"
                                                 : isFairHold
@@ -2392,7 +2392,7 @@ export function FairValueCalculator() {
                                 })()}
 
                                 {/* Value Stack */}
-                                <div className="flex-1 space-y-2 sm:space-y-2.5 lg:space-y-2">
+                                <div className="fair-value-value-stack flex-1 space-y-2 sm:space-y-2.5 lg:space-y-2">
                                     {/* Buy Price */}
                                     {(() => {
                                         const isQualityMode = !isSavedForStock && valuationProfile === 'quality';
@@ -2436,7 +2436,7 @@ export function FairValueCalculator() {
 
                                         return (
                                             <div className={cn(
-                                                "p-2.5 sm:p-3 rounded-xl border-2 transition-all shadow-sm",
+                                                "fair-value-kaufpreis-box p-2.5 sm:p-3 rounded-xl border-2 transition-all shadow-sm",
                                                 kaufpreisBorderBg
                                             )}>
                                                 <div className="flex justify-between items-center gap-2 mb-0.5">
@@ -2545,7 +2545,7 @@ export function FairValueCalculator() {
                                     })()}
 
                                     {/* Fair Value */}
-                                    <div className="p-2.5 sm:p-3 rounded-xl border border-border bg-card">
+                                    <div className="fair-value-fairvalue-box p-2.5 sm:p-3 rounded-xl border border-border bg-card">
                                         <div className="flex justify-between items-center gap-2 mb-0.5">
                                             <span className="font-medium text-sm sm:text-base shrink-0 whitespace-nowrap">Fairer Wert</span>
                                             {quote.currency !== 'CHF' ? (
@@ -2574,7 +2574,7 @@ export function FairValueCalculator() {
                                     </div>
 
                                     {/* Future Value */}
-                                    <div className="p-2 sm:p-2.5 rounded-xl border border-border bg-muted/10">
+                                    <div className="fair-value-target-box p-2 sm:p-2.5 rounded-xl border border-border bg-muted/10">
                                         <div className="flex justify-between items-center gap-2 mb-0.5">
                                             <span className="text-xs sm:text-sm font-medium text-muted-foreground shrink-0 whitespace-nowrap">Zielkurs (5 Jahre)</span>
                                             {quote.currency !== 'CHF' ? (
