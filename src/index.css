@@ -239,6 +239,10 @@
     height: calc((100dvh - 11.2rem) / 3) !important;
     height: calc((100cqh - 1.5rem) / 3) !important;
   }
+
+  .stock-detail-top-actions {
+    padding-left: 3.5rem !important;
+  }
 }
 
 /* iPad Hochformat: exakt 2 Spalten x 5 Reihen = 10 ganze Kacheln sichtbar */
@@ -254,6 +258,10 @@
   .market-overview-page .market-tile-card {
     height: calc((100dvh - 12.2rem) / 5) !important;
     height: calc((100cqh - 3rem) / 5) !important;
+  }
+
+  .stock-detail-top-actions {
+    padding-left: 3.5rem !important;
   }
 }
 
