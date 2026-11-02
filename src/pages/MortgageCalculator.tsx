@@ -2930,7 +2930,7 @@ export const MortgageCalculator = () => {
                                         <div className="mt-6 border-t border-border pt-4">
                                             <h4 className="text-base font-semibold mb-3 text-foreground flex items-center gap-2">
                                                 <CircleGauge className="size-4 text-primary shrink-0" />
-                                                <span>Aktueller Zählerstand (Zuletzt abgelesen)</span>
+                                                <span>Aktueller Zählerstand</span>
                                             </h4>
 
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-medium">
