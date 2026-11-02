@@ -451,6 +451,7 @@ export const MortgageCalculator = () => {
             const elecHeaders = [
                 [
                     { content: 'Ablesezeitraum', styles: { halign: 'left' as const } },
+                    { content: 'Rechnungs-Nr.', styles: { halign: 'left' as const } },
                     { content: 'Dauer', styles: { halign: 'right' as const } },
                     { content: 'HT (kWh)', styles: { halign: 'right' as const } },
                     { content: 'NT (kWh)', styles: { halign: 'right' as const } },
@@ -466,10 +467,11 @@ export const MortgageCalculator = () => {
                 const totalKWh = usageHT + usageNT;
                 const p = calculatePeriodDays(r.dateFrom, r.date);
                 const inv = calculateElectricityInvoice(usageHT, usageNT, p.months, electricityTariff);
-                const fromStr = r.dateFrom ? new Date(r.dateFrom).toLocaleDateString('de-CH') + ' – ' : '';
+                const fromStr = r.dateFrom ? `${new Date(r.dateFrom).toLocaleDateString('de-CH')} – ` : '';
                 const toStr = new Date(r.date).toLocaleDateString('de-CH');
                 return [
-                    `${fromStr}${toStr}${r.invoiceNumber ? ` (Rechnung ${r.invoiceNumber})` : ''}`,
+                    `${fromStr}${toStr}`,
+                    r.invoiceNumber || '-',
                     `${p.days} Tage`,
                     `${usageHT} kWh`,
                     `${usageNT} kWh`,
@@ -484,7 +486,7 @@ export const MortgageCalculator = () => {
                 [
                     { 
                         content: `Durchschnitt & Budget-Hochrechnung (${electricityStats?.totalDays || 0} Tage Basis): Hochrechnung ~${annualKWhTotal} kWh/Jahr`, 
-                        colSpan: 4, 
+                        colSpan: 5, 
                         styles: { halign: 'left' as const, fontStyle: 'bold' as const } 
                     },
                     { content: 'ø Monat:', styles: { halign: 'right' as const, fontStyle: 'bold' as const } },
@@ -492,7 +494,37 @@ export const MortgageCalculator = () => {
                 ]
             ];
 
-            autoTable(doc, getTableOptions(finalY + 3, elecHeaders, elecTableData, [217, 119, 6], elecFooter));
+            autoTable(doc, {
+                startY: finalY + 3,
+                head: elecHeaders,
+                body: elecTableData,
+                foot: elecFooter,
+                theme: 'striped',
+                headStyles: {
+                    fillColor: [217, 119, 6],
+                    fontSize: 8.5,
+                    fontStyle: 'bold'
+                },
+                footStyles: {
+                    fillColor: [217, 119, 6],
+                    fontSize: 8.5,
+                    fontStyle: 'bold'
+                },
+                styles: {
+                    fontSize: 8.5,
+                    cellPadding: 2
+                },
+                showFoot: 'lastPage',
+                columnStyles: {
+                    0: { halign: 'left', cellWidth: 42 },
+                    1: { halign: 'left', cellWidth: 28 },
+                    2: { halign: 'right', cellWidth: 20 },
+                    3: { halign: 'right', cellWidth: 22 },
+                    4: { halign: 'right', cellWidth: 22 },
+                    5: { halign: 'right', cellWidth: 22 },
+                    6: { halign: 'right', cellWidth: 26 }
+                }
+            });
         }
 
         // Summary Table
