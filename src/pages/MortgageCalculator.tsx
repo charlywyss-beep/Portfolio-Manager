@@ -1795,48 +1795,49 @@ export const MortgageCalculator = () => {
                                     </div>
                                 </div>
 
-                                {/* 2. Tarif-Kostenpunkte: Saubere horizontale & vertikale Ausrichtung, keine abgeschnittenen Texte */}
+                                {/* 2. Tarif-Kostenpunkte */}
                                 <div className="bg-card border border-border rounded-xl overflow-hidden shadow-2xs">
-                                    <div
-                                        className="p-3.5 sm:p-4 bg-muted/40 flex flex-wrap items-center justify-between gap-3 cursor-pointer hover:bg-muted/60 transition-colors"
-                                        onClick={() => setIsElectricityTariffOpen(!isElectricityTariffOpen)}
-                                    >
+                                    <div className="p-3.5 sm:p-4 bg-muted/40 flex flex-wrap items-center justify-between gap-3">
                                         <div className="flex items-center gap-2.5 min-w-0">
                                             <div className="size-8 rounded-lg bg-yellow-500/10 text-yellow-500 flex items-center justify-center font-bold shrink-0">
                                                 ⚡
                                             </div>
-                                            <div className="min-w-0">
-                                                <div className="text-sm font-bold flex flex-wrap items-center gap-2 text-foreground">
-                                                    <span>Tarif-Kostenpunkte (gemäss Stromrechnung)</span>
-                                                    <span className="text-[11px] font-medium text-muted-foreground bg-background border border-border/80 px-2 py-0.5 rounded-full">
-                                                        Eniwa Naturstrom Schweiz
-                                                    </span>
-                                                </div>
-                                                <div className="text-xs text-muted-foreground mt-0.5 truncate">
-                                                    Effektiv: HT {(electricityTariff.energyHT + electricityTariff.gridHT + electricityTariff.gridSdl + electricityTariff.gridReserve + electricityTariff.gridSolidar + electricityTariff.communityFee + electricityTariff.federalFee).toFixed(2)} Rp. (+MwSt ~{((electricityTariff.energyHT + electricityTariff.gridHT + electricityTariff.gridSdl + electricityTariff.gridReserve + electricityTariff.gridSolidar + electricityTariff.communityFee + electricityTariff.federalFee) * 1.081).toFixed(1)} Rp./kWh) | Fixkosten: CHF {((electricityTariff.gridBaseFee + electricityTariff.gridMeasurementFee) * 1.081).toFixed(2)}/Mt.
-                                                </div>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="text-sm font-bold text-foreground">Tarif-Kostenpunkte</span>
+                                                <span className="text-xs font-semibold text-primary bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-full font-mono">
+                                                    {mortgageData.electricityProvider || 'Eniwa AG'}
+                                                </span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 shrink-0 ml-auto">
                                             <button
                                                 type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    resetToEniwaTariff();
-                                                }}
-                                                className="text-xs bg-background border border-border hover:bg-muted px-2.5 py-1.5 rounded-lg text-foreground font-medium transition-colors shadow-2xs"
-                                                title="Setzt die Standard-Kostenpunkte von Eniwa zurück"
+                                                onClick={() => setIsElectricityTariffOpen(!isElectricityTariffOpen)}
+                                                className="text-xs bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 shadow-xs"
+                                                title="Eingabe Preis / Einheit wie auf Original-Rechnung"
                                             >
-                                                Standard Eniwa Werte laden
+                                                <ReceiptText className="size-3.5 shrink-0" />
+                                                <span>Eingabe Preis / Einheit</span>
+                                                <ChevronDown className={cn("size-3.5 transition-transform duration-200", isElectricityTariffOpen && "rotate-180")} />
                                             </button>
-                                            <div className="p-1 text-muted-foreground">
-                                                {isElectricityTariffOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-                                            </div>
                                         </div>
                                     </div>
 
                                     {isElectricityTariffOpen && (
                                         <div className="p-4 sm:p-5 border-t border-border/60 bg-background/60">
+                                            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 mb-4 border-b border-border/60">
+                                                <div className="text-xs text-muted-foreground">
+                                                    Preise und Ansätze pro Einheit (wie auf Original-Rechnung):
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={resetToEniwaTariff}
+                                                    className="text-xs bg-muted hover:bg-muted/80 text-foreground border border-border px-2.5 py-1 rounded-md font-medium transition-colors shadow-2xs"
+                                                    title="Setzt die Standard-Kostenpunkte von Eniwa zurück"
+                                                >
+                                                    Standard Eniwa Werte laden
+                                                </button>
+                                            </div>
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
                                                 {/* Block 1: Energie */}
