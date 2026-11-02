@@ -2264,7 +2264,7 @@ export function FairValueCalculator() {
                                 </div>
 
                                 {/* MARGIN OF SAFETY (Anchored to bottom so left card ends exactly aligned with right card) */}
-                                <div className="space-y-1 pt-1.5 mt-auto border-t border-border/50">
+                                <div className="fair-value-mos-box space-y-1 pt-1.5 mt-auto border-t border-border/50">
                                     <label className="text-xs sm:text-sm font-medium flex justify-between items-center">
                                         <span>Sicherheitsmarge</span>
                                         <span className="text-[11px] text-muted-foreground font-light">

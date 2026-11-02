@@ -1747,33 +1747,33 @@
      und ohne Überlappung frei darunter. */
   .fair-value-calculator-page {
     padding: 1.5rem 0.85rem 0.35rem !important;
-    gap: 0.25rem !important;
+    gap: 0.2rem !important;
   }
 
   .fair-value-calculator-page > :not([hidden]) ~ :not([hidden]),
   .fair-value-calculator-page > * + * {
-    margin-top: 0.25rem !important;
+    margin-top: 0.2rem !important;
   }
 
   /* Exakter Abstand nach dem Sticky Header: Aktienkarte ist zu 100% frei und voll sichtbar */
   .fair-value-calculator-page > .iphone-landscape-portfolio-header-wrap + * {
-    margin-top: 0.45rem !important;
+    margin-top: 0.35rem !important;
   }
 
   /* Ausgewählte Aktie / Suchbereich kompakt & vollständig */
   .fair-value-stock-card {
-    padding: 0.25rem 0.65rem !important;
+    padding: 0.2rem 0.65rem !important;
   }
 
   .fair-value-stock-card .size-9,
   .fair-value-stock-card .size-10,
   .fair-value-stock-card .size-8\.5 {
-    width: 1.75rem !important;
-    height: 1.75rem !important;
+    width: 1.65rem !important;
+    height: 1.65rem !important;
   }
 
   .fair-value-stock-card a {
-    font-size: 0.85rem !important;
+    font-size: 0.82rem !important;
     line-height: 1.15 !important;
   }
 
@@ -1783,31 +1783,49 @@
   }
 
   .fair-value-col-card {
-    padding: 0.4rem 0.65rem !important;
+    padding: 0.35rem 0.65rem !important;
   }
 
-  /* Linke Spalte (Parameter) */
+  /* Linke Spalte (Parameter): Inputs kompakt & voll lesbar */
   .fair-value-col-card input[type="number"],
   .fair-value-col-card input[type="text"] {
-    height: 1.6rem !important;
-    min-height: 1.6rem !important;
-    font-size: 0.75rem !important;
+    height: 1.45rem !important;
+    min-height: 1.45rem !important;
+    font-size: 0.72rem !important;
     padding-top: 0.1rem !important;
     padding-bottom: 0.1rem !important;
+    padding-left: 0.4rem !important;
+    padding-right: 1.5rem !important;
   }
 
   .fair-value-col-card button[title*="Sichtweise"] {
-    padding-top: 0.15rem !important;
-    padding-bottom: 0.15rem !important;
+    padding-top: 0.12rem !important;
+    padding-bottom: 0.12rem !important;
     font-size: 0.68rem !important;
   }
 
   .fair-value-col-card a[target="_blank"] {
-    font-size: 0.64rem !important;
+    font-size: 0.6rem !important;
+    line-height: 1 !important;
+  }
+
+  .fair-value-col-card a[target="_blank"] svg {
+    width: 0.6rem !important;
+    height: 0.6rem !important;
+  }
+
+  .fair-value-col-card label {
+    font-size: 0.7rem !important;
+    line-height: 1.15 !important;
   }
 
   .fair-value-col-card .space-y-1 > :not([hidden]) ~ :not([hidden]),
   .fair-value-col-card .space-y-1 > * + * {
+    margin-top: 0.08rem !important;
+  }
+
+  .fair-value-col-card .space-y-1\.5 > :not([hidden]) ~ :not([hidden]),
+  .fair-value-col-card .space-y-1\.5 > * + * {
     margin-top: 0.12rem !important;
   }
 
@@ -1815,134 +1833,124 @@
   .fair-value-col-card .space-y-2\.5 > :not([hidden]) ~ :not([hidden]),
   .fair-value-col-card .space-y-3 > :not([hidden]) ~ :not([hidden]),
   .fair-value-col-card .space-y-3\.5 > :not([hidden]) ~ :not([hidden]) {
-    margin-top: 0.2rem !important;
+    margin-top: 0.15rem !important;
   }
 
   .fair-value-col-card .text-\[11px\],
   .fair-value-col-card .text-\[10px\],
   .fair-value-col-card .text-\[10\.5px\] {
-    font-size: 0.65rem !important;
+    font-size: 0.62rem !important;
     line-height: 1.15 !important;
   }
 
-  /* Sicherheitsmarge unten in linker Spalte */
-  .fair-value-col-card .space-y-1\.5 {
+  /* Verkaufs-KGV Stats */
+  .fair-value-col-card .grid.grid-cols-2.sm\:grid-cols-3 {
+    padding: 0.15rem 0.35rem !important;
+    gap: 0.25rem !important;
+  }
+
+  /* Sicherheitsmarge unten in linker Spalte (100% sichtbar) */
+  .fair-value-mos-box {
     padding-top: 0.2rem !important;
     margin-top: auto !important;
   }
 
-  .fair-value-col-card .space-y-1\.5 button {
-    padding-top: 0.12rem !important;
-    padding-bottom: 0.12rem !important;
+  .fair-value-mos-box label {
+    font-size: 0.7rem !important;
+    margin-bottom: 0.1rem !important;
+  }
+
+  .fair-value-mos-box input {
+    height: 1.45rem !important;
+    min-height: 1.45rem !important;
+    font-size: 0.72rem !important;
+  }
+
+  .fair-value-mos-box button {
+    height: 1.45rem !important;
+    min-height: 1.45rem !important;
+    padding-top: 0.1rem !important;
+    padding-bottom: 0.1rem !important;
+    padding-left: 0.2rem !important;
+    padding-right: 0.2rem !important;
     font-size: 0.68rem !important;
   }
 
   /* Rechte Spalte (Bewertung) */
   .fair-value-circle-wrap {
-    padding-top: 0.1rem !important;
-    padding-bottom: 0.1rem !important;
+    padding-top: 0.05rem !important;
+    padding-bottom: 0.05rem !important;
     margin-top: 0 !important;
-    margin-bottom: 0 !important;
+    margin-bottom: 0.1rem !important;
   }
 
-  .fair-value-circle {
-    width: 5.5rem !important;
-    height: 5.5rem !important;
-    min-width: 5.5rem !important;
-    min-height: 5.5rem !important;
-    padding: 0.15rem !important;
-  }
-
-  .fair-value-circle .text-xs {
-    font-size: 0.62rem !important;
-    line-height: 1 !important;
-  }
-
-  .fair-value-circle .text-\[10px\] {
-    font-size: 0.55rem !important;
-    line-height: 1 !important;
-  }
-
-  .fair-value-circle .text-base,
-  .fair-value-circle .text-lg {
+  .fair-value-circle-wrap h2 {
     font-size: 0.82rem !important;
     line-height: 1.1 !important;
-    margin-top: 0.05rem !important;
-    margin-bottom: 0.05rem !important;
   }
 
-  /* Bewertungs-Box (+1% Überbewertet) */
+  /* Ampel-Kreis kompakt (spart massiv Platz) */
+  .fair-value-circle {
+    width: 4.25rem !important;
+    height: 4.25rem !important;
+    min-width: 4.25rem !important;
+    min-height: 4.25rem !important;
+    padding: 0.1rem !important;
+  }
+
+  .fair-value-circle .text-xs,
+  .fair-value-circle .text-sm,
+  .fair-value-circle .text-base,
+  .fair-value-circle .text-lg {
+    font-size: 0.75rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .fair-value-circle .text-\[10px\],
+  .fair-value-circle .text-\[11px\] {
+    font-size: 0.52rem !important;
+    line-height: 1 !important;
+  }
+
+  /* Bewertungs-Box (+43% Überbewertet) */
   .fair-value-bewertung-box {
-    padding: 0.25rem 0.5rem !important;
-    margin-bottom: 0.2rem !important;
+    padding: 0.2rem 0.45rem !important;
+    margin-bottom: 0.15rem !important;
   }
 
   .fair-value-bewertung-box .text-xl,
   .fair-value-bewertung-box .text-2xl {
-    font-size: 1rem !important;
+    font-size: 0.95rem !important;
     line-height: 1.1 !important;
   }
 
   .fair-value-bewertung-box .text-xs,
   .fair-value-bewertung-box .text-sm {
-    font-size: 0.65rem !important;
+    font-size: 0.62rem !important;
     line-height: 1.15 !important;
   }
 
   .fair-value-bewertung-box .mt-2,
   .fair-value-bewertung-box .pt-1\.5 {
-    margin-top: 0.12rem !important;
-    padding-top: 0.12rem !important;
-    font-size: 0.6rem !important;
-    line-height: 1.1 !important;
+    margin-top: 0.1rem !important;
+    padding-top: 0.1rem !important;
+    font-size: 0.58rem !important;
+    line-height: 1.12 !important;
   }
 
   /* Value Stack */
   .fair-value-value-stack {
-    gap: 0.2rem !important;
+    gap: 0.18rem !important;
   }
 
   .fair-value-value-stack > :not([hidden]) ~ :not([hidden]),
   .fair-value-value-stack > * + * {
-    margin-top: 0.2rem !important;
+    margin-top: 0.18rem !important;
   }
 
-  .fair-value-kaufpreis-box {
-    padding: 0.25rem 0.5rem !important;
-  }
-
-  .fair-value-kaufpreis-box .text-base,
-  .fair-value-kaufpreis-box .text-sm {
-    font-size: 0.75rem !important;
-    line-height: 1.15 !important;
-  }
-
-  .fair-value-kaufpreis-box p.text-\[11px\] {
-    font-size: 0.6rem !important;
-    line-height: 1 !important;
-  }
-
-  .fair-value-kaufpreis-box .mt-2,
-  .fair-value-kaufpreis-box .pt-2 {
-    margin-top: 0.12rem !important;
-    padding-top: 0.12rem !important;
-  }
-
-  .fair-value-kaufpreis-box input {
-    height: 1.5rem !important;
-    min-height: 1.5rem !important;
-    font-size: 0.7rem !important;
-  }
-
-  .fair-value-kaufpreis-box button {
-    height: 1.5rem !important;
-    min-height: 1.5rem !important;
-    font-size: 0.65rem !important;
-    padding: 0 0.35rem !important;
-  }
-
+  /* Fairer Wert Box */
   .fair-value-fairvalue-box {
-    padding: 0.22rem 0.5rem !important;
+    padding: 0.18rem 0.45rem !important;
   }
 
   .fair-value-fairvalue-box .text-sm,
@@ -1952,12 +1960,59 @@
   }
 
   .fair-value-fairvalue-box p.text-\[11px\] {
-    font-size: 0.6rem !important;
-    line-height: 1 !important;
+    font-size: 0.58rem !important;
+    line-height: 1.05 !important;
   }
 
+  /* Kaufpreis Box */
+  .fair-value-kaufpreis-box {
+    padding: 0.2rem 0.45rem !important;
+  }
+
+  .fair-value-kaufpreis-box .text-base,
+  .fair-value-kaufpreis-box .text-sm {
+    font-size: 0.75rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .fair-value-kaufpreis-box p.text-\[11px\],
+  .fair-value-kaufpreis-box div.text-\[11px\],
+  .fair-value-kaufpreis-box span.text-\[11px\] {
+    font-size: 0.58rem !important;
+    line-height: 1.05 !important;
+  }
+
+  .fair-value-kaufpreis-box .mt-2,
+  .fair-value-kaufpreis-box .pt-2 {
+    margin-top: 0.1rem !important;
+    padding-top: 0.1rem !important;
+  }
+
+  .fair-value-kaufpreis-box input {
+    height: 1.45rem !important;
+    min-height: 1.45rem !important;
+    font-size: 0.7rem !important;
+    padding: 0.1rem 0.35rem !important;
+  }
+
+  .fair-value-kaufpreis-box button {
+    height: 1.45rem !important;
+    min-height: 1.45rem !important;
+    font-size: 0.65rem !important;
+    padding: 0 0.35rem !important;
+  }
+
+  .fair-value-kaufpreis-box button[title*="Kauf / Verkauf"] {
+    font-size: 0.68rem !important;
+    padding: 0.18rem 0.4rem !important;
+    margin-top: 0.15rem !important;
+    height: auto !important;
+    min-height: auto !important;
+  }
+
+  /* Zielkurs Box (5 Jahre) - 100% sichtbar */
   .fair-value-target-box {
-    padding: 0.2rem 0.5rem !important;
+    padding: 0.18rem 0.45rem !important;
   }
 
   .fair-value-target-box .text-xs,
@@ -1967,8 +2022,8 @@
   }
 
   .fair-value-target-box p.text-\[11px\] {
-    font-size: 0.6rem !important;
-    line-height: 1 !important;
+    font-size: 0.58rem !important;
+    line-height: 1.05 !important;
   }
 }
 
