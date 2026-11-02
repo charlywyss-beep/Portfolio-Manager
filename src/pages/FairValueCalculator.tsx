@@ -1122,7 +1122,7 @@ export function FairValueCalculator() {
     };
 
     return (
-        <div className="fair-value-calculator-page p-3 sm:p-4 lg:py-2.5 lg:px-4 space-y-2 sm:space-y-3 lg:space-y-2 bg-gradient-to-br from-background via-background to-muted/20 animate-in fade-in duration-500 iphone-landscape-page-root w-full">
+        <div className="fair-value-calculator-page p-3 sm:p-4 lg:py-1.5 lg:px-3 space-y-2 sm:space-y-3 lg:space-y-1.5 bg-gradient-to-br from-background via-background to-muted/20 animate-in fade-in duration-500 iphone-landscape-page-root w-full">
             {/* Add Link Modal */}
             {showAddLinkModal && (
                 <div className="fixed inset-0 z-[2100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
@@ -1471,9 +1471,9 @@ export function FairValueCalculator() {
             )}
 
             {/* Sticky Header - Consistent Design across app */}
-            <div className="sticky top-0 z-50 bg-background pb-2 sm:pb-2.5 lg:pb-2 -mt-3 sm:-mt-4 lg:-mt-2.5 -mx-3 sm:-mx-4 lg:-mx-4 px-3 sm:px-4 lg:px-4 iphone-landscape-portfolio-header-wrap">
-                <div className="border-b bg-card rounded-t-xl -mx-3 sm:-mx-4 lg:-mx-4">
-                    <div className="w-full pl-14 pr-4 py-2 sm:py-2.5 lg:py-2 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
+            <div className="sticky top-0 z-50 bg-background pb-2 sm:pb-2.5 lg:pb-1 -mt-3 sm:-mt-4 lg:-mt-1.5 -mx-3 sm:-mx-4 lg:-mx-3 px-3 sm:px-4 lg:px-3 iphone-landscape-portfolio-header-wrap">
+                <div className="border-b bg-card rounded-t-xl -mx-3 sm:-mx-4 lg:-mx-3">
+                    <div className="w-full pl-14 pr-4 py-2 sm:py-2.5 lg:py-1 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 iphone-landscape-portfolio-header-row">
                             <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto iphone-landscape-portfolio-title-group">
                                 <button
@@ -1485,12 +1485,12 @@ export function FairValueCalculator() {
                                 >
                                     <ArrowLeft className="size-4.5 sm:size-5 transition-transform group-hover:-translate-x-0.5" />
                                 </button>
-                                <div className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 shrink-0 iphone-landscape-portfolio-icon">
-                                    <Telescope className="size-5 sm:size-6" />
+                                <div className="p-2 sm:p-2.5 lg:p-1.5 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 shrink-0 iphone-landscape-portfolio-icon">
+                                    <Telescope className="size-5 sm:size-6 lg:size-4.5" />
                                 </div>
                                 <div>
-                                    <h1 className="text-xl sm:text-2xl lg:text-2xl font-bold tracking-tight whitespace-nowrap iphone-landscape-portfolio-title">Fairer Wert</h1>
-                                    <p className="text-xs text-muted-foreground hidden md:block iphone-landscape-portfolio-subtitle">Fundamentalanalyse &amp; Innerer Wert</p>
+                                    <h1 className="text-xl sm:text-2xl lg:text-lg font-bold tracking-tight whitespace-nowrap iphone-landscape-portfolio-title">Fairer Wert</h1>
+                                    <p className="text-xs text-muted-foreground hidden md:block lg:text-[11px] iphone-landscape-portfolio-subtitle">Fundamentalanalyse &amp; Innerer Wert</p>
                                 </div>
                             </div>
 
@@ -1498,7 +1498,7 @@ export function FairValueCalculator() {
                                 <button
                                     onClick={() => setShowGuide(true)}
                                     title="Wie funktioniert das? (Anleitung)"
-                                    className="text-xs flex items-center gap-1.5 border border-border px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shadow-xs group shrink-0"
+                                    className="text-xs flex items-center gap-1.5 border border-border px-3 py-2 lg:py-1 lg:px-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shadow-xs group shrink-0"
                                 >
                                     <BookOpen size={14} className="text-blue-500 group-hover:scale-110 transition-transform" />
                                     <span className="hidden sm:inline iphone-landscape-hide">Wie funktioniert das? </span>
@@ -1628,9 +1628,9 @@ export function FairValueCalculator() {
                         </div>
                     ) : (
                         // SELECTED STOCK DISPLAY (Stays sticky with header!)
-                        <div className="fair-value-stock-card flex items-center gap-2.5 sm:gap-3 p-1.5 sm:p-2 lg:py-1 lg:px-3 bg-card/90 backdrop-blur border border-border rounded-xl shadow-sm">
+                        <div className="fair-value-stock-card flex items-center gap-2.5 sm:gap-3 lg:gap-2 p-1.5 sm:p-2 lg:py-1 lg:px-2.5 bg-card/90 backdrop-blur border border-border rounded-xl shadow-sm">
                             {quote?.logoUrl || stocks.find(s => s.symbol === selectedSymbol)?.logoUrl ? (
-                                <div className="size-9 sm:size-10 lg:size-8.5 rounded-lg p-1 bg-white border border-border flex items-center justify-center overflow-hidden shrink-0">
+                                <div className="size-9 sm:size-10 lg:size-7 rounded-lg p-0.5 bg-white border border-border flex items-center justify-center overflow-hidden shrink-0">
                                     <img
                                         src={quote?.logoUrl || stocks.find(s => s.symbol === selectedSymbol)?.logoUrl}
                                         alt="Logo"
@@ -1638,14 +1638,14 @@ export function FairValueCalculator() {
                                     />
                                 </div>
                             ) : (
-                                <div className="size-9 sm:size-10 lg:size-8.5 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 text-xs sm:text-sm shrink-0">
+                                <div className="size-9 sm:size-10 lg:size-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 text-xs sm:text-sm lg:text-xs shrink-0">
                                     {selectedSymbol?.slice(0, 2)}
                                 </div>
                             )}
                             <div className="flex-1 min-w-0">
                                 <Link
                                     to={`/stock/${selectedSymbol}`}
-                                    className="font-bold text-sm sm:text-base truncate hover:text-primary transition-colors block leading-tight"
+                                    className="font-bold text-sm sm:text-base lg:text-sm truncate hover:text-primary transition-colors block leading-tight"
                                     title="Zur Detailansicht"
                                 >
                                     {quote?.name || stocks.find(s => s.symbol === selectedSymbol)?.name || selectedSymbol}
@@ -1670,7 +1670,7 @@ export function FairValueCalculator() {
                                 <button
                                     type="button"
                                     onClick={handleGoToBuySell}
-                                    className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-all cursor-pointer shadow-sm active:scale-95"
+                                    className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 lg:py-1 lg:px-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-all cursor-pointer shadow-sm active:scale-95"
                                     title="Aktie direkt in Kauf / Verkauf öffnen"
                                 >
                                     <Calculator className="size-3.5" />
@@ -1733,11 +1733,11 @@ export function FairValueCalculator() {
 
             {
                 quote && !loadingData && (
-                    <div className="fair-value-grid grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-3.5 lg:gap-4 animate-in slide-in-from-bottom-4 duration-500 w-full flex-1">
+                    <div className="fair-value-grid grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-3.5 lg:gap-2.5 animate-in slide-in-from-bottom-4 duration-500 w-full flex-1">
 
                         {/* INPUTS COLUMN */}
                         <div className="flex flex-col h-full">
-                            <div className="fair-value-col-card bg-card border border-border rounded-xl p-2 sm:p-3 lg:p-2.5 shadow-sm h-full flex flex-col justify-between">
+                            <div className="fair-value-col-card bg-card border border-border rounded-xl p-2 sm:p-3 lg:p-2 shadow-sm h-full flex flex-col justify-between">
                                 <div className="space-y-1.5 sm:space-y-2 lg:space-y-1.5 flex-1">
                                     <div className="space-y-1 sm:space-y-1.5 pb-1.5 border-b border-border">
                                     <div className="flex items-center justify-between gap-2">
@@ -1839,7 +1839,7 @@ export function FairValueCalculator() {
                                                 setEpsSourceLabel('Manuell / Gespeichert');
                                                 setIsSavedForStock(true);
                                             }}
-                                            className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 text-xs sm:text-sm"
+                                            className="w-full p-2 lg:py-1 lg:px-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 lg:h-7 text-xs sm:text-sm lg:text-xs"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">{quote.currency || 'USD'}</span>
                                     </div>
@@ -1895,7 +1895,7 @@ export function FairValueCalculator() {
                                                     setGrowthSourceLabel('Manuell / Gespeichert');
                                                     setIsSavedForStock(true);
                                                 }}
-                                                className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 text-xs sm:text-sm"
+                                                className="w-full p-2 lg:py-1 lg:px-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 lg:h-7 text-xs sm:text-sm lg:text-xs"
                                             />
                                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">%</span>
                                         </div>
@@ -2033,7 +2033,7 @@ export function FairValueCalculator() {
                                                     setDividendYield(e.target.value);
                                                     setIsSavedForStock(true);
                                                 }}
-                                                className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 text-xs sm:text-sm"
+                                                className="w-full p-2 lg:py-1 lg:px-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 lg:h-7 text-xs sm:text-sm lg:text-xs"
                                             />
                                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">%</span>
                                         </div>
@@ -2054,7 +2054,7 @@ export function FairValueCalculator() {
                                                     setDiscountRate(e.target.value);
                                                     setIsSavedForStock(true);
                                                 }}
-                                                className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 text-xs sm:text-sm"
+                                                className="w-full p-2 lg:py-1 lg:px-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 lg:h-7 text-xs sm:text-sm lg:text-xs"
                                             />
                                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">%</span>
                                         </div>
@@ -2111,7 +2111,7 @@ export function FairValueCalculator() {
                                             })()}
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-muted-foreground bg-muted/40 p-1.5 rounded-lg border border-border/50">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 lg:gap-1.5 text-[11px] lg:text-[10px] text-muted-foreground bg-muted/40 p-1.5 lg:p-1 rounded-lg border border-border/50">
                                         <div>
                                             <span className="block text-[10px] uppercase font-semibold text-muted-foreground/75">Aktuell:</span>
                                             <span className="font-mono font-bold text-foreground">
@@ -2157,7 +2157,7 @@ export function FairValueCalculator() {
                                                 setSelectedPeHorizon('custom');
                                                 setIsSavedForStock(true);
                                             }}
-                                            className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 text-xs sm:text-sm"
+                                            className="w-full p-2 lg:py-1 lg:px-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 lg:h-7 text-xs sm:text-sm lg:text-xs"
                                         />
                                         {calculation.isCorrectionNeeded && (
                                             <div className="text-xs text-amber-600 mt-1 flex items-center gap-1.5 leading-tight font-medium">
@@ -2294,7 +2294,7 @@ export function FairValueCalculator() {
                                                     setMos(e.target.value);
                                                     setIsSavedForStock(true);
                                                 }}
-                                                className="w-full p-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 text-xs sm:text-sm"
+                                                className="w-full p-2 lg:py-1 lg:px-2 rounded-lg border border-border bg-background font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:ring-1 focus:ring-primary h-8 sm:h-8.5 lg:h-7 text-xs sm:text-sm lg:text-xs"
                                             />
                                             <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">%</span>
                                         </div>
@@ -2325,9 +2325,9 @@ export function FairValueCalculator() {
 
                         {/* RESULTS COLUMN */}
                         <div className="flex flex-col h-full">
-                            <div className="fair-value-col-card bg-card border border-border rounded-xl p-2 sm:p-3 lg:p-2.5 shadow-sm h-full flex flex-col justify-between overflow-hidden">
+                            <div className="fair-value-col-card bg-card border border-border rounded-xl p-2 sm:p-3 lg:p-2 shadow-sm h-full flex flex-col justify-between overflow-hidden">
                                 {/* Upper Header & Traffic Light Area - Vertically centered between top field edge and Bewertung card */}
-                                <div className="fair-value-circle-wrap relative flex flex-col items-center justify-center py-1 sm:py-2.5 lg:py-1 my-auto">
+                                <div className="fair-value-circle-wrap relative flex flex-col items-center justify-center py-1 sm:py-2.5 lg:py-0.5 my-auto lg:my-0">
                                     <h2 className="text-sm sm:text-base font-semibold flex items-center gap-2 self-start mb-1 sm:mb-0 sm:absolute sm:top-0 sm:left-0">
                                         <span className="size-2 rounded-full bg-purple-500" />
                                         Bewertung
@@ -2335,7 +2335,7 @@ export function FairValueCalculator() {
 
                                     {/* Traffic Light */}
                                     <div className={cn(
-                                        "fair-value-circle relative size-28 sm:size-32 lg:size-28 rounded-full flex flex-col items-center justify-center border-2 shadow-md transition-all duration-500 text-center p-1.5 my-auto",
+                                        "fair-value-circle relative size-28 sm:size-32 lg:size-20 rounded-full flex flex-col items-center justify-center border-2 shadow-md transition-all duration-500 text-center p-1.5 lg:p-1 my-auto lg:my-0",
                                         isUndervalued
                                             ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-emerald-500/20"
                                             : isFairHold
@@ -2345,16 +2345,16 @@ export function FairValueCalculator() {
                                                     : "bg-red-500/10 border-red-500 text-red-500 shadow-red-500/20"
                                     )}>
                                         <div className="flex flex-col items-center justify-center">
-                                            <div className="text-xs uppercase font-black tracking-wider opacity-90 leading-tight">
+                                            <div className="text-xs lg:text-[10px] uppercase font-black tracking-wider opacity-90 leading-tight">
                                                 {isUndervalued ? 'KAUFEN' : (isFairHold || isRichHold) ? 'HOLD' : 'TEUER'}
                                             </div>
-                                            <div className="text-[10px] uppercase font-bold tracking-tight opacity-75 mt-0.5 leading-tight">
+                                            <div className="text-[10px] lg:text-[8.5px] uppercase font-bold tracking-tight opacity-75 mt-0.5 lg:mt-0 leading-tight">
                                                 {isUndervalued ? 'Sicherheitsmarge' : isFairHold ? 'Fairer Bereich' : isRichHold ? 'Gut bezahlt' : 'Überhitzt'}
                                             </div>
-                                            <div className="text-sm sm:text-base font-black leading-tight whitespace-nowrap tabular-nums my-0.5">
+                                            <div className="text-sm sm:text-base lg:text-sm font-black leading-tight whitespace-nowrap tabular-nums my-0.5 lg:my-0">
                                                 {formatCurrency(currentPrice, quote.currency, false)}
                                             </div>
-                                            <div className="text-[11px] font-bold opacity-85 leading-tight">
+                                            <div className="text-[11px] lg:text-[9px] font-bold opacity-85 leading-tight">
                                                 Aktueller Kurs
                                             </div>
                                         </div>
@@ -2371,7 +2371,7 @@ export function FairValueCalculator() {
 
                                     return (
                                         <div className={cn(
-                                            "fair-value-bewertung-box p-2 sm:p-2.5 lg:py-1.5 lg:px-2.5 rounded-xl border text-center transition-all mb-1.5 sm:mb-2 lg:mb-1.5",
+                                            "fair-value-bewertung-box p-2 sm:p-2.5 lg:py-1 lg:px-2 rounded-xl border text-center transition-all mb-1.5 sm:mb-2 lg:mb-1",
                                             isUndervalued
                                                 ? "bg-emerald-500/10 border-emerald-500/30"
                                                 : isFairHold
@@ -2384,7 +2384,7 @@ export function FairValueCalculator() {
                                                 Bewertung
                                             </div>
                                             <div className={cn(
-                                                "text-xl sm:text-2xl font-extrabold font-mono tracking-tight flex items-baseline justify-center gap-1.5 flex-wrap",
+                                                "text-xl sm:text-2xl lg:text-lg font-extrabold font-mono tracking-tight flex items-baseline justify-center gap-1.5 flex-wrap",
                                                 isUndervalued
                                                     ? "text-emerald-400"
                                                     : isFairHold
@@ -2394,11 +2394,11 @@ export function FairValueCalculator() {
                                                             : "text-rose-400"
                                             )}>
                                                 <span>{diffPct > 0 ? `+${diffPct}%` : diffPct < 0 ? `+${overvaluationPct}%` : `0%`}</span>
-                                                <span className="text-sm sm:text-base font-bold font-sans uppercase tracking-normal opacity-90">
+                                                <span className="text-sm sm:text-base lg:text-xs font-bold font-sans uppercase tracking-normal opacity-90">
                                                     {diffPct > 0 ? 'unterbewertet' : diffPct < 0 ? 'überbewertet' : 'fair bewertet'}
                                                 </span>
                                             </div>
-                                            <div className="text-xs font-medium mt-1 text-muted-foreground">
+                                            <div className="text-xs lg:text-[11px] font-medium mt-1 lg:mt-0.5 text-muted-foreground">
                                                 {isUndervalued && (
                                                     <>
                                                         <div>Aktie hat <span className="font-bold text-emerald-400">+{potentialPct} %</span> Potenzial zum fairen Wert.</div>
@@ -2448,7 +2448,7 @@ export function FairValueCalculator() {
                                                 const isMixActive = activeLimit > 0 && (Math.abs(activeLimit - pMix) < 0.50 || Math.abs(activeLimit - pMix) / pMix < 0.005);
 
                                                 return (
-                                                    <div className="mt-2 pt-1.5 border-t border-border/40 text-[11px] text-muted-foreground flex flex-col items-center justify-center gap-1">
+                                                    <div className="mt-2 lg:mt-1 pt-1.5 lg:pt-1 border-t border-border/40 text-[11px] lg:text-[10px] text-muted-foreground flex flex-col items-center justify-center gap-0.5">
                                                         <div className="flex items-center justify-center gap-1.5 flex-wrap">
                                                             <span className="font-semibold text-foreground">Staffelkauf 2 Tranchen</span>
                                                             <span>•</span>
@@ -2487,7 +2487,7 @@ export function FairValueCalculator() {
 
                                             {/* Fundamentale Abwärtsabsicherung / Risikoprofil */}
                                             <div className={cn(
-                                                "mt-2 pt-1.5 border-t text-[11px] text-left leading-snug flex items-start gap-2",
+                                                "mt-2 lg:mt-1 pt-1.5 lg:pt-1 border-t text-[11px] lg:text-[10px] text-left leading-snug flex items-start gap-1.5",
                                                 downsideProtection.level === 'high'
                                                     ? "border-emerald-500/25 text-emerald-300/90"
                                                     : downsideProtection.level === 'low'
@@ -2505,11 +2505,11 @@ export function FairValueCalculator() {
                                 })()}
 
                                 {/* Value Stack */}
-                                <div className="fair-value-value-stack flex-1 space-y-1.5 sm:space-y-2 lg:space-y-1.5">
+                                <div className="fair-value-value-stack flex-1 space-y-1.5 sm:space-y-2 lg:space-y-1">
                                     {/* Fair Value */}
-                                    <div className="fair-value-fairvalue-box p-2 sm:p-2.5 lg:py-1.5 lg:px-2.5 rounded-xl border border-border bg-card">
+                                    <div className="fair-value-fairvalue-box p-2 sm:p-2.5 lg:py-1 lg:px-2 rounded-xl border border-border bg-card">
                                         <div className="flex justify-between items-center gap-2 mb-0.5">
-                                            <span className="font-medium text-sm sm:text-base shrink-0 whitespace-nowrap">Fairer Wert</span>
+                                            <span className="font-medium text-sm sm:text-base lg:text-xs shrink-0 whitespace-nowrap">Fairer Wert</span>
                                             {quote.currency !== 'CHF' ? (
                                                 <div className="flex flex-col items-end font-mono leading-tight text-right shrink-0">
                                                     <span className="text-sm sm:text-base font-semibold whitespace-nowrap">
@@ -2578,11 +2578,11 @@ export function FairValueCalculator() {
 
                                         return (
                                             <div className={cn(
-                                                "fair-value-kaufpreis-box p-2 sm:p-2.5 lg:py-1.5 lg:px-2.5 rounded-xl border-2 transition-all shadow-sm",
+                                                "fair-value-kaufpreis-box p-2 sm:p-2.5 lg:py-1 lg:px-2 rounded-xl border-2 transition-all shadow-sm",
                                                 kaufpreisBorderBg
                                             )}>
                                                 <div className="flex justify-between items-center gap-2 mb-0.5">
-                                                    <span className="font-bold text-sm sm:text-base shrink-0 whitespace-nowrap">Kaufpreis</span>
+                                                    <span className="font-bold text-sm sm:text-base lg:text-xs shrink-0 whitespace-nowrap">Kaufpreis</span>
                                                     <span className={cn(
                                                         "font-mono font-bold text-sm sm:text-base whitespace-nowrap",
                                                         kaufpreisTextColor
@@ -2607,7 +2607,7 @@ export function FairValueCalculator() {
                                                 </div>
 
                                         {/* Kauflimit Integration (Direkt in Kursdaten & Watchlist übernehmen) */}
-                                        <div className="mt-2 pt-2 border-t border-border/50 space-y-1.5">
+                                        <div className="mt-2 lg:mt-1 pt-2 lg:pt-1 border-t border-border/50 space-y-1.5 lg:space-y-1">
                                             <div className="flex items-center justify-between text-xs">
                                                 <span className="font-semibold text-foreground flex items-center gap-1.5">
                                                     <Target className={cn("size-3.5", kaufpreisTargetIconColor)} />
@@ -2646,7 +2646,7 @@ export function FairValueCalculator() {
                                                             }
                                                         }}
                                                         placeholder={calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : "Optional"}
-                                                        className="w-full px-2 py-1 rounded-lg border border-border bg-background text-xs sm:text-sm font-mono pr-12 focus:ring-1 focus:ring-primary text-foreground h-7 sm:h-8"
+                                                        className="w-full px-2 py-1 lg:py-0.5 rounded-lg border border-border bg-background text-xs sm:text-sm lg:text-xs font-mono pr-12 focus:ring-1 focus:ring-primary text-foreground h-7 sm:h-8 lg:h-6.5"
                                                     />
                                                     <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-muted-foreground pointer-events-none">
                                                         {quote.currency === 'GBp' ? 'GBP' : quote.currency}
@@ -2656,7 +2656,7 @@ export function FairValueCalculator() {
                                                 <button
                                                     type="button"
                                                     onClick={() => handleSaveBuyLimit(buyLimitInput || (calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : ''))}
-                                                    className={cn("px-2.5 py-1 text-white text-xs font-semibold rounded-lg shadow-sm transition-all flex items-center gap-1 shrink-0 active:scale-95 h-7 sm:h-8", kaufpreisSaveBtnColor)}
+                                                    className={cn("px-2.5 py-1 lg:py-0.5 text-white text-xs font-semibold rounded-lg shadow-sm transition-all flex items-center gap-1 shrink-0 active:scale-95 h-7 sm:h-8 lg:h-6.5", kaufpreisSaveBtnColor)}
                                                     title="In Kursdaten als Kauflimit speichern"
                                                 >
                                                     <Check className="size-3.5" />
@@ -2673,7 +2673,7 @@ export function FairValueCalculator() {
                                                         setBuyLimitInput(val);
                                                         handleSaveBuyLimit(val);
                                                     }}
-                                                    className={cn("w-full py-1 px-2 text-[11px] font-medium rounded-lg border transition-all flex items-center justify-center gap-1 text-center shadow-xs active:scale-95", kaufpreisQuickBtnColor)}
+                                                    className={cn("w-full py-1 lg:py-0.5 px-2 text-[11px] lg:text-[10px] font-medium rounded-lg border transition-all flex items-center justify-center gap-1 text-center shadow-xs active:scale-95", kaufpreisQuickBtnColor)}
                                                 >
                                                     <span>Kaufpreis ({calculation.buyPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency}) als Kauflimit übernehmen</span>
                                                 </button>
@@ -2683,7 +2683,7 @@ export function FairValueCalculator() {
                                             <button
                                                 type="button"
                                                 onClick={handleGoToBuySell}
-                                                className="w-full mt-1 py-1 px-3 text-xs font-semibold rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                                                className="w-full mt-1 lg:mt-0.5 py-1 lg:py-0.5 px-3 text-xs lg:text-[11px] font-semibold rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
                                                 title="Diesen Titel direkt in Kauf / Verkauf öffnen"
                                             >
                                                 <Calculator className="size-3.5" />
@@ -2695,9 +2695,9 @@ export function FairValueCalculator() {
                                     })()}
 
                                     {/* Future Value */}
-                                    <div className="fair-value-target-box p-1.5 sm:p-2 lg:py-1.5 lg:px-2.5 rounded-xl border border-border bg-muted/10">
+                                    <div className="fair-value-target-box p-1.5 sm:p-2 lg:py-1 lg:px-2 rounded-xl border border-border bg-muted/10">
                                         <div className="flex justify-between items-center gap-2 mb-0.5">
-                                            <span className="text-xs sm:text-sm font-medium text-muted-foreground shrink-0 whitespace-nowrap">Zielkurs (5 Jahre)</span>
+                                            <span className="text-xs sm:text-sm lg:text-xs font-medium text-muted-foreground shrink-0 whitespace-nowrap">Zielkurs (5 Jahre)</span>
                                             {quote.currency !== 'CHF' ? (
                                                 <div className="flex flex-col items-end font-mono text-muted-foreground leading-tight text-right shrink-0">
                                                     <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
