@@ -1,6 +1,6 @@
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { useMemo, useState } from 'react';
-import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car, ChevronDown, ChevronUp, Fuel, Zap, FileText, Droplets, Calendar, ReceiptText, TrendingUp, CircleUser, CircleGauge, RotateCcw, Check } from 'lucide-react';
+import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car, ChevronDown, ChevronUp, Fuel, Zap, FileText, Droplets, Calendar, ReceiptText, TrendingUp, CircleUser, CircleGauge, RotateCcw, Check, X } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { cn } from '../utils';
@@ -1784,9 +1784,9 @@ export const MortgageCalculator = () => {
                                 {/* 1. Kundendaten: Exakt im gleichen 4-Spalten Grid wie die Zählererfassung */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 bg-accent/20 p-3.5 rounded-xl border border-border/60">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center justify-end gap-1.5 whitespace-nowrap py-0.5">
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 truncate py-0.5">
                                             <CircleUser className="size-4 text-primary shrink-0" />
-                                            Kundennummer
+                                            <span>Kundennummer</span>
                                         </label>
                                         <input
                                             type="text"
@@ -1798,9 +1798,9 @@ export const MortgageCalculator = () => {
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center justify-end gap-1.5 whitespace-nowrap py-0.5">
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 truncate py-0.5">
                                             <FileText className="size-4 text-primary shrink-0" />
-                                            Vertragskonto
+                                            <span>Vertragskonto</span>
                                         </label>
                                         <input
                                             type="text"
@@ -1812,9 +1812,9 @@ export const MortgageCalculator = () => {
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center justify-end gap-1.5 whitespace-nowrap py-0.5">
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 truncate py-0.5">
                                             <CircleGauge className="size-4 text-primary shrink-0" />
-                                            Zähler-Nr.
+                                            <span>Zähler-Nr.</span>
                                         </label>
                                         <input
                                             type="text"
@@ -1826,9 +1826,9 @@ export const MortgageCalculator = () => {
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center justify-end gap-1.5 whitespace-nowrap py-0.5">
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 truncate py-0.5">
                                             <Zap className="size-4 text-primary shrink-0" />
-                                            Stromversorger
+                                            <span>Stromversorger</span>
                                         </label>
                                         <input
                                             type="text"
@@ -2294,12 +2294,28 @@ export const MortgageCalculator = () => {
                                                     {isCardOpen && (
                                                         <>
                                                     {/* 4-SPALTEN GRID: 100% einheitliche Feldbreiten, exakt vertikal und horizontal ausgerichtet */}
-                                                    <div className="space-y-3.5">
+                                                    <div className="space-y-4">
                                                         
-                                                        {/* ZEILE 1: Ableseperiode & Rechnungsdaten (6-Spalten Grid) */}
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+                                                        {/* ZEILE 1: Ableseperiode (100% bündiges 4-Spalten Grid) */}
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                                                            {/* Spalte 1: Ablesung von */}
                                                             <div className="space-y-1">
-                                                                <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Ablesung Von</label>
+                                                                <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                                                                    <span>Ablesung von</span>
+                                                                    {effectiveDateFrom && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, dateFrom: '' } : r);
+                                                                                updateMortgageData({ electricityReadings: newReadings });
+                                                                            }}
+                                                                            className="text-[10px] text-muted-foreground hover:text-foreground cursor-pointer px-1 rounded hover:bg-muted"
+                                                                            title="Datum leeren"
+                                                                        >
+                                                                            Leeren
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                                 <input
                                                                     type="date"
                                                                     value={reading.dateFrom || (reading.date === '2026-09-30' ? '2026-08-28' : '')}
@@ -2307,33 +2323,140 @@ export const MortgageCalculator = () => {
                                                                         const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, dateFrom: e.target.value } : r);
                                                                         updateMortgageData({ electricityReadings: newReadings });
                                                                     }}
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2 text-xs font-mono"
+                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono"
                                                                 />
                                                             </div>
+
+                                                            {/* Spalte 2: Ablesung bis (mit Schnell-Löschung auf 'Offen') */}
                                                             <div className="space-y-1">
-                                                                <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Ablesung Bis</label>
-                                                                <input
-                                                                    type="date"
-                                                                    value={reading.date}
-                                                                    onChange={(e) => {
-                                                                        const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, date: e.target.value } : r);
-                                                                        updateMortgageData({ electricityReadings: newReadings });
-                                                                    }}
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2 text-xs font-mono"
-                                                                />
+                                                                <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                                                                    <span>Ablesung bis</span>
+                                                                    {reading.date ? (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, date: '' } : r);
+                                                                                updateMortgageData({ electricityReadings: newReadings });
+                                                                            }}
+                                                                            className="text-[10px] text-amber-400 hover:text-amber-300 cursor-pointer px-1 rounded hover:bg-amber-500/10 font-medium"
+                                                                            title="Auf 'Offen' (laufend) zurücksetzen"
+                                                                        >
+                                                                            Auf Offen
+                                                                        </button>
+                                                                    ) : (
+                                                                        <span className="text-[10px] text-emerald-400 font-medium">Laufend / Offen</span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="relative">
+                                                                    <input
+                                                                        type="date"
+                                                                        value={reading.date || ''}
+                                                                        onChange={(e) => {
+                                                                            const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, date: e.target.value } : r);
+                                                                            updateMortgageData({ electricityReadings: newReadings });
+                                                                        }}
+                                                                        className={cn(
+                                                                            "w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono",
+                                                                            reading.date && "pr-8"
+                                                                        )}
+                                                                    />
+                                                                    {reading.date && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, date: '' } : r);
+                                                                                updateMortgageData({ electricityReadings: newReadings });
+                                                                            }}
+                                                                            className="absolute right-2 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer transition-colors"
+                                                                            title="Ablesedatum leeren (auf Offen setzen)"
+                                                                        >
+                                                                            <X className="size-3.5" />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                             </div>
+
+                                                            {/* Spalte 3: Abrechnungsdauer */}
                                                             <div className="space-y-1">
-                                                                <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap text-center">Abrechnungsdauer</label>
+                                                                <label className="text-xs font-semibold text-muted-foreground block truncate">Abrechnungsdauer</label>
                                                                 <div 
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2 flex items-center justify-center text-sm font-mono font-bold text-foreground shadow-xs cursor-default select-none"
-                                                                    title={period.days > 0 ? "Automatisch berechnet aus Ablesung Von und Bis" : "Wird automatisch berechnet, sobald Datum Bis gewählt wird"}
+                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 flex items-center justify-center text-sm font-mono font-bold text-foreground shadow-xs cursor-default select-none"
+                                                                    title={period.days > 0 ? "Automatisch berechnet aus Ablesung von und bis" : "Wird automatisch berechnet, sobald Ablesung bis gewählt wird"}
                                                                 >
                                                                     <Calendar className="size-3.5 text-primary mr-1.5 shrink-0" />
                                                                     <span>{period.days > 0 ? `${period.days} Tage` : '–'}</span>
                                                                 </div>
                                                             </div>
+
+                                                            {/* Spalte 4: Rechnungs-Nr. */}
                                                             <div className="space-y-1">
-                                                                <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Rechnungsdatum</label>
+                                                                <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                                                                    <span>Rechnungs-Nr.</span>
+                                                                    {reading.invoiceNumber && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, invoiceNumber: '' } : r);
+                                                                                updateMortgageData({ electricityReadings: newReadings });
+                                                                            }}
+                                                                            className="text-[10px] text-muted-foreground hover:text-foreground cursor-pointer px-1 rounded hover:bg-muted"
+                                                                            title="Rechnungs-Nr. leeren"
+                                                                        >
+                                                                            Leeren
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                                <div className="relative">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={reading.invoiceNumber || ''}
+                                                                        onChange={(e) => {
+                                                                            const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, invoiceNumber: e.target.value } : r);
+                                                                            updateMortgageData({ electricityReadings: newReadings });
+                                                                        }}
+                                                                        placeholder="z.B. 7 134 488"
+                                                                        className={cn(
+                                                                            "w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-bold font-mono text-right",
+                                                                            reading.invoiceNumber && "pr-8"
+                                                                        )}
+                                                                    />
+                                                                    {reading.invoiceNumber && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, invoiceNumber: '' } : r);
+                                                                                updateMortgageData({ electricityReadings: newReadings });
+                                                                            }}
+                                                                            className="absolute right-2 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer transition-colors"
+                                                                            title="Rechnungs-Nr. leeren"
+                                                                        >
+                                                                            <X className="size-3.5" />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* ZEILE 2: Rechnungsdatum, Zahlbar bis & Aktionen (Exakt gleiche 4 Spalten darunter) */}
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                                                            {/* Spalte 1: Rechnungsdatum */}
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                                                                    <span>Rechnungsdatum</span>
+                                                                    {(reading.invoiceDate || (reading.date === '2026-09-30' ? '2026-10-31' : '')) && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, invoiceDate: '' } : r);
+                                                                                updateMortgageData({ electricityReadings: newReadings });
+                                                                            }}
+                                                                            className="text-[10px] text-muted-foreground hover:text-foreground cursor-pointer px-1 rounded hover:bg-muted"
+                                                                            title="Rechnungsdatum leeren"
+                                                                        >
+                                                                            Leeren
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                                 <input
                                                                     type="date"
                                                                     value={reading.invoiceDate || (reading.date === '2026-09-30' ? '2026-10-31' : '')}
@@ -2341,12 +2464,29 @@ export const MortgageCalculator = () => {
                                                                         const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, invoiceDate: e.target.value } : r);
                                                                         updateMortgageData({ electricityReadings: newReadings });
                                                                     }}
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2 text-xs font-mono"
+                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono"
                                                                     title="Offizielles Rechnungsdatum (Faktura)"
                                                                 />
                                                             </div>
+
+                                                            {/* Spalte 2: Zahlbar bis */}
                                                             <div className="space-y-1">
-                                                                <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Zahlbar bis</label>
+                                                                <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                                                                    <span>Zahlbar bis</span>
+                                                                    {(reading.dueDate || (reading.date === '2026-09-30' ? '2026-11-30' : '')) && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, dueDate: '' } : r);
+                                                                                updateMortgageData({ electricityReadings: newReadings });
+                                                                            }}
+                                                                            className="text-[10px] text-muted-foreground hover:text-foreground cursor-pointer px-1 rounded hover:bg-muted"
+                                                                            title="Fälligkeitsdatum leeren"
+                                                                        >
+                                                                            Leeren
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                                 <input
                                                                     type="date"
                                                                     value={reading.dueDate || (reading.date === '2026-09-30' ? '2026-11-30' : '')}
@@ -2354,27 +2494,49 @@ export const MortgageCalculator = () => {
                                                                         const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, dueDate: e.target.value } : r);
                                                                         updateMortgageData({ electricityReadings: newReadings });
                                                                     }}
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2 text-xs font-mono"
+                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono"
                                                                     title="Fälligkeitsdatum der Rechnung"
                                                                 />
                                                             </div>
-                                                            <div className="space-y-1">
-                                                                <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap text-right">Rechnungs-Nr.</label>
-                                                                <input
-                                                                    type="text"
-                                                                    value={reading.invoiceNumber || ''}
-                                                                    onChange={(e) => {
-                                                                        const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, invoiceNumber: e.target.value } : r);
-                                                                        updateMortgageData({ electricityReadings: newReadings });
+
+                                                            {/* Spalte 3 & 4 (col-span-2): Status-Hinweis & Reset-Button für diesen Eintrag */}
+                                                            <div className="sm:col-span-2 flex items-end justify-between gap-2">
+                                                                <div className="text-[11px] text-muted-foreground pb-2 hidden sm:block leading-tight">
+                                                                    {reading.date ? (
+                                                                        <span>Abrechnungszeitraum abgeschlossen ({period.days} Tage).</span>
+                                                                    ) : (
+                                                                        <span className="text-amber-400 font-medium">Offene laufende Ablesung. Wird über aktuellen Zählerstand berechnet.</span>
+                                                                    )}
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        if (window.confirm('Möchten Sie alle neu eingetragenen Zählerstände und Datums-Felder dieser Ablesung leeren?')) {
+                                                                            const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? {
+                                                                                ...r,
+                                                                                date: '',
+                                                                                valueHT: 0,
+                                                                                valueNT: 0,
+                                                                                usageHT: 0,
+                                                                                usageNT: 0,
+                                                                                invoiceNumber: '',
+                                                                                invoiceDate: '',
+                                                                                dueDate: ''
+                                                                            } : r);
+                                                                            updateMortgageData({ electricityReadings: newReadings });
+                                                                        }
                                                                     }}
-                                                                    placeholder="z.B. 7 134 488"
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-bold font-mono text-right"
-                                                                />
+                                                                    className="h-9 px-3 text-xs font-medium rounded-lg border border-border bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 ml-auto cursor-pointer"
+                                                                    title="Alle neuen Eingaben dieser Ablesung leeren"
+                                                                >
+                                                                    <RotateCcw className="size-3.5" />
+                                                                    <span>Eingaben leeren</span>
+                                                                </button>
                                                             </div>
                                                         </div>
 
-                                                        {/* ZEILE 2: Kategorie-Header HT (Spalte 1-2) und NT (Spalte 3-4) */}
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                                                        {/* ZEILE 3: Kategorie-Header HT (Spalte 1-2) und NT (Spalte 3-4) */}
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-1">
                                                             <div className="col-span-1 sm:col-span-2 flex items-center justify-between text-xs font-bold text-foreground bg-muted/40 px-3 py-1.5 rounded-lg border border-border/60">
                                                                 <span>Wirkenergie Hochtarif (HT)</span>
                                                                 <span className="font-mono text-primary font-extrabold bg-primary/10 px-2 py-0.5 rounded-md">
@@ -2389,10 +2551,10 @@ export const MortgageCalculator = () => {
                                                             </div>
                                                         </div>
 
-                                                        {/* ZEILE 3: Zählerstände (Exakt gleiche 4 Spalten darunter wie Zeile 1) */}
+                                                        {/* ZEILE 4: Zählerstände (Exakt gleiche 4 Spalten darunter wie Zeile 1 und 2) */}
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                                                             <div className="space-y-1">
-                                                                <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap text-right">Stand alt HT</span>
+                                                                <span className="text-xs font-semibold text-muted-foreground block truncate">Stand alt HT</span>
                                                                 <DecimalInput
                                                                     value={reading.standAltHT ?? (reading.valueHT === 542 ? 473 : 0)}
                                                                     placeholder="Alt"
@@ -2406,7 +2568,22 @@ export const MortgageCalculator = () => {
                                                                 />
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap text-right">Stand neu HT</span>
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className="text-xs font-semibold text-muted-foreground block truncate">Stand neu HT</span>
+                                                                    {reading.valueHT && reading.valueHT > 0 ? (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueHT: 0, usageHT: 0 } : r);
+                                                                                updateMortgageData({ electricityReadings: newReadings });
+                                                                            }}
+                                                                            className="text-[10px] text-muted-foreground hover:text-foreground cursor-pointer px-1 rounded hover:bg-muted"
+                                                                            title="Zählerstand neu leeren"
+                                                                        >
+                                                                            Leeren
+                                                                        </button>
+                                                                    ) : null}
+                                                                </div>
                                                                 <DecimalInput
                                                                     value={reading.valueHT && reading.valueHT > 0 ? reading.valueHT : ''}
                                                                     placeholder="Neu"
@@ -2421,7 +2598,7 @@ export const MortgageCalculator = () => {
                                                                 />
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap text-right">Stand alt NT</span>
+                                                                <span className="text-xs font-semibold text-muted-foreground block truncate">Stand alt NT</span>
                                                                 <DecimalInput
                                                                     value={reading.standAltNT ?? (reading.valueNT === 3583 ? 3108 : 0)}
                                                                     placeholder="Alt"
@@ -2435,7 +2612,22 @@ export const MortgageCalculator = () => {
                                                                 />
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap text-right">Stand neu NT</span>
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className="text-xs font-semibold text-muted-foreground block truncate">Stand neu NT</span>
+                                                                    {reading.valueNT && reading.valueNT > 0 ? (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueNT: 0, usageNT: 0 } : r);
+                                                                                updateMortgageData({ electricityReadings: newReadings });
+                                                                            }}
+                                                                            className="text-[10px] text-muted-foreground hover:text-foreground cursor-pointer px-1 rounded hover:bg-muted"
+                                                                            title="Zählerstand neu leeren"
+                                                                        >
+                                                                            Leeren
+                                                                        </button>
+                                                                    ) : null}
+                                                                </div>
                                                                 <DecimalInput
                                                                     value={reading.valueNT && reading.valueNT > 0 ? reading.valueNT : ''}
                                                                     placeholder="Neu"
@@ -3123,13 +3315,13 @@ export const MortgageCalculator = () => {
 
                         <div className="space-y-2">
                             <h3 className="text-base font-bold text-foreground">
-                                Standard-Werte laden?
+                                Eniwa Standard-Tarif laden?
                             </h3>
                             <p className="text-xs text-muted-foreground leading-relaxed px-2">
-                                Möchten Sie die Eingabefelder auf die Eniwa Standard-Werte zurücksetzen?
+                                Möchten Sie die Stromtarif-Kostenpunkte (Energie, Netznutzung & Abgaben) auf die offiziellen Eniwa-Tarife 2026 zurücksetzen?
                             </p>
                             <p className="text-[11px] text-amber-400 font-medium bg-amber-500/10 border border-amber-500/20 rounded-md py-1 px-2 mx-2">
-                                (Ihre aktuellen Eingaben in den Feldern werden dabei überschrieben)
+                                (Ihre manuellen Tarif-Ansätze werden auf Eniwa-Werte gesetzt. Ihre erfassten Rechnungen und Zählerstände bleiben erhalten.)
                             </p>
                         </div>
 
@@ -3149,7 +3341,7 @@ export const MortgageCalculator = () => {
                                 }}
                                 className="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xs cursor-pointer"
                             >
-                                Zurücksetzen
+                                Tarif laden
                             </button>
                         </div>
                     </div>
