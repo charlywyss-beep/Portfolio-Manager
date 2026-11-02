@@ -201,6 +201,14 @@ export interface ElectricityTariffConfig {
     vatRate: number;            // Standard 8.1 %
 }
 
+export interface ElectricityTariffProfile {
+    id: string;
+    name: string;               // z.B. "Eniwa Standard 2026", "Eniwa 2027"
+    validFrom: string;          // Gültig ab (YYYY-MM-DD), z.B. "2026-01-01"
+    provider?: string;          // z.B. "Eniwa AG"
+    tariff: ElectricityTariffConfig;
+}
+
 export interface ElectricityReading {
     id: string;
     date: string;               // Ablesedatum / Bis-Datum (YYYY-MM-DD)
@@ -221,6 +229,7 @@ export interface ElectricityReading {
     costTotalExclVat?: number;  // Zwischentotal Strom exkl. MwSt
     costVat?: number;           // MwSt Betrag
     costTotal?: number;         // Rechnungsbetrag inkl. MwSt
+    tariffSnapshot?: ElectricityTariffConfig;
 }
 
 export interface MortgageData {
@@ -251,6 +260,7 @@ export interface MortgageData {
     electricityMeterNumber?: string;
     electricityProvider?: string;
     electricityTariff?: ElectricityTariffConfig;
+    electricityTariffProfiles?: ElectricityTariffProfile[];
     electricityCalculationMode?: 'detailed' | 'simple';
 
     // Wasser (Vereinfachtes Modell)

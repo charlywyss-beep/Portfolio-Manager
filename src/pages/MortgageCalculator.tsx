@@ -1,6 +1,6 @@
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { useMemo, useState } from 'react';
-import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car, ChevronDown, ChevronUp, Fuel, Zap, FileText, Droplets, Calendar, ReceiptText, TrendingUp, CircleUser, CircleGauge } from 'lucide-react';
+import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car, ChevronDown, ChevronUp, Fuel, Zap, FileText, Droplets, Calendar, ReceiptText, TrendingUp, CircleUser, CircleGauge, RotateCcw, Check } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { cn } from '../utils';
@@ -9,12 +9,14 @@ import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip as Rec
 import { SaronChart } from '../components/SaronChart';
 import { DecimalInput } from '../components/DecimalInput';
 import { usePortfolio } from '../context/PortfolioContext';
-import type { MortgageTranche, BudgetEntry, OilPurchase, ElectricityReading, ElectricityTariffConfig } from '../types';
+import type { MortgageTranche, BudgetEntry, OilPurchase, ElectricityReading, ElectricityTariffConfig, ElectricityTariffProfile } from '../types';
 import {
     DEFAULT_ELECTRICITY_TARIFF,
+    DEFAULT_TARIFF_PROFILES,
     calculateElectricityInvoice,
     calculatePeriodDays,
-    getReadingUsage
+    getReadingUsage,
+    getTariffForDate
 } from '../utils/electricityCalculator';
 
 const formatSwissDate = (dInput?: string | Date): string => {
@@ -66,6 +68,46 @@ export const MortgageCalculator = () => {
     const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
     const [openCardIds, setOpenCardIds] = useState<string[] | null>(null);
 
+    const tariffProfiles: ElectricityTariffProfile[] = useMemo(() => {
+        return (mortgageData.electricityTariffProfiles && mortgageData.electricityTariffProfiles.length > 0)
+            ? mortgageData.electricityTariffProfiles
+            : DEFAULT_TARIFF_PROFILES;
+    }, [mortgageData.electricityTariffProfiles]);
+
+    const [selectedProfileId, setSelectedProfileId] = useState<string>(tariffProfiles[0]?.id || 'eniwa-2026');
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
+    const [newProfileName, setNewProfileName] = useState('Eniwa 2027');
+    const [newProfileDate, setNewProfileDate] = useState('2027-01-01');
+
+    const handleSelectProfile = (profileId: string) => {
+        setSelectedProfileId(profileId);
+        const match = tariffProfiles.find(p => p.id === profileId);
+        if (match) {
+            const inv = calculateElectricityInvoice(100, 100, 1, match.tariff);
+            updateMortgageData({
+                electricityTariff: { ...match.tariff },
+                electricityPriceHT: inv.effectiveRateHTRp,
+                electricityPriceNT: inv.effectiveRateNTRp
+            });
+        }
+    };
+
+    const confirmSaveProfile = () => {
+        const name = newProfileName.trim() || 'Neuer Tarif';
+        const validFrom = newProfileDate || '2027-01-01';
+        const newProfile: ElectricityTariffProfile = {
+            id: crypto.randomUUID(),
+            name,
+            validFrom,
+            provider: mortgageData.electricityProvider || 'Eniwa AG',
+            tariff: { ...electricityTariff }
+        };
+        const updated = [...tariffProfiles.filter(p => p.id !== newProfile.id), newProfile];
+        updateMortgageData({ electricityTariffProfiles: updated });
+        setSelectedProfileId(newProfile.id);
+        setIsSavingProfile(false);
+    };
+
     const toggleCardOpen = (id: string) => {
         setOpenCardIds(prev => {
             const sorted = [...(electricityReadings || [])].sort((a, b) => {
@@ -97,7 +139,7 @@ export const MortgageCalculator = () => {
         const totalUsage = usageHT + usageNT;
         const period = calculatePeriodDays(effectiveDateFrom, reading.date);
         const months = period.months || 1;
-        const tariff = electricityTariff;
+        const tariff = reading.tariffSnapshot || getTariffForDate(reading.date || effectiveDateFrom, tariffProfiles, electricityTariff);
         const inv = calculateElectricityInvoice(usageHT, usageNT, months, tariff);
 
         const providerName = electricityProvider || 'Eniwa AG';
@@ -254,6 +296,7 @@ export const MortgageCalculator = () => {
         const prevHT = latest ? (latest.valueHT || latest.standAltHT || 473) : 473;
         const prevNT = latest ? (latest.valueNT || latest.standAltNT || 3108) : 3108;
 
+        const applicableTariff = getTariffForDate(nextDateFrom, tariffProfiles, electricityTariff);
         const newReading: ElectricityReading = {
             id: crypto.randomUUID(),
             dateFrom: nextDateFrom,
@@ -265,7 +308,8 @@ export const MortgageCalculator = () => {
             usageHT: 0,
             usageNT: 0,
             billingMonths: 0,
-            invoiceNumber: ''
+            invoiceNumber: '',
+            tariffSnapshot: { ...applicableTariff }
         };
         updateMortgageData({ electricityReadings: [newReading, ...(electricityReadings || [])] });
         setOpenCardIds([newReading.id]);
@@ -341,6 +385,7 @@ export const MortgageCalculator = () => {
             electricityPriceHT: inv.effectiveRateHTRp,
             electricityPriceNT: inv.effectiveRateNTRp
         });
+        setSelectedProfileId('eniwa-2026');
     };
 
     const electricityStats = useMemo(() => {
@@ -1824,20 +1869,92 @@ export const MortgageCalculator = () => {
                                     </div>
 
                                     {isElectricityTariffOpen && (
-                                        <div className="p-4 sm:p-5 border-t border-border/60 bg-background/60">
-                                            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 mb-4 border-b border-border/60">
-                                                <div className="text-xs text-muted-foreground">
-                                                    Preise und Ansätze pro Einheit (wie auf Original-Rechnung):
+                                        <div className="p-4 sm:p-5 border-t border-border/60 bg-background/60 space-y-4">
+                                            {/* Toolbar für Tarif-Profile & Vorlagen */}
+                                            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/60">
+                                                <div className="flex flex-wrap items-center gap-2.5">
+                                                    <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
+                                                        Tarif-Profil:
+                                                    </span>
+                                                    <select
+                                                        value={selectedProfileId}
+                                                        onChange={(e) => handleSelectProfile(e.target.value)}
+                                                        className="h-8 bg-background border border-input rounded-lg px-2.5 text-xs font-medium text-foreground cursor-pointer"
+                                                    >
+                                                        {tariffProfiles.map(p => (
+                                                            <option key={p.id} value={p.id}>
+                                                                {p.name} (ab {formatSwissDate(p.validFrom)})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setIsSavingProfile(!isSavingProfile);
+                                                            const nextYear = new Date().getFullYear() + 1;
+                                                            setNewProfileName(`Eniwa ${nextYear}`);
+                                                            setNewProfileDate(`${nextYear}-01-01`);
+                                                        }}
+                                                        className="h-8 px-3 text-xs bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg font-semibold transition-all flex items-center gap-1.5 shadow-xs"
+                                                        title="Aktuelle Ansätze als neues Tarif-Profil mit Gültig-ab Datum speichern"
+                                                    >
+                                                        <Plus className="size-3.5 shrink-0" />
+                                                        <span>Als Tarif-Profil speichern</span>
+                                                    </button>
                                                 </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={resetToEniwaTariff}
-                                                    className="text-xs bg-muted hover:bg-muted/80 text-foreground border border-border px-2.5 py-1 rounded-md font-medium transition-colors shadow-2xs"
-                                                    title="Setzt die Standard-Kostenpunkte von Eniwa zurück"
-                                                >
-                                                    Standard Eniwa Werte laden
-                                                </button>
+
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={resetToEniwaTariff}
+                                                        className="h-8 px-3 text-xs bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg font-semibold transition-all flex items-center gap-1.5 shadow-xs"
+                                                        title="Setzt alle Kostenpunkte auf die Standardwerte zurück"
+                                                    >
+                                                        <RotateCcw className="size-3.5 shrink-0" />
+                                                        <span>Standard Werte laden</span>
+                                                    </button>
+                                                </div>
                                             </div>
+
+                                            {/* Mini-Formular: Neues Profil speichern */}
+                                            {isSavingProfile && (
+                                                <div className="p-3.5 bg-primary/5 border border-primary/25 rounded-xl flex flex-wrap items-end gap-3 shadow-2xs">
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-semibold text-muted-foreground block">Profil-Name</label>
+                                                        <input
+                                                            type="text"
+                                                            value={newProfileName}
+                                                            onChange={(e) => setNewProfileName(e.target.value)}
+                                                            placeholder="z.B. Eniwa 2027"
+                                                            className="h-8 bg-background border border-input rounded-lg px-2.5 text-xs font-medium w-48 text-foreground"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-semibold text-muted-foreground block">Gültig ab Datum</label>
+                                                        <input
+                                                            type="date"
+                                                            value={newProfileDate}
+                                                            onChange={(e) => setNewProfileDate(e.target.value)}
+                                                            className="h-8 bg-background border border-input rounded-lg px-2.5 text-xs font-medium text-foreground"
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={confirmSaveProfile}
+                                                        className="h-8 px-3.5 text-xs bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg font-semibold transition-all flex items-center gap-1.5 shadow-xs"
+                                                    >
+                                                        <Check className="size-3.5" /> Speichern
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsSavingProfile(false)}
+                                                        className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-muted transition-colors"
+                                                    >
+                                                        Abbrechen
+                                                    </button>
+                                                </div>
+                                            )}
+
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
                                                 {/* Block 1: Energie */}
@@ -2069,7 +2186,8 @@ export const MortgageCalculator = () => {
                                             const totalUsage = usageHT + usageNT;
                                             const period = calculatePeriodDays(effectiveDateFrom, reading.date);
                                             const months = period.months;
-                                            const invoice = calculateElectricityInvoice(usageHT, usageNT, months, electricityTariff);
+                                            const effectiveTariff = reading.tariffSnapshot || getTariffForDate(reading.date || effectiveDateFrom, tariffProfiles, electricityTariff);
+                                            const invoice = calculateElectricityInvoice(usageHT, usageNT, months, effectiveTariff);
                                             const isExpanded = expandedInvoiceId === reading.id;
                                             const isCardOpen = openCardIds !== null ? openCardIds.includes(reading.id) : (index === 0);
 

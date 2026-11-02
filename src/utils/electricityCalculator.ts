@@ -1,4 +1,4 @@
-import type { ElectricityTariffConfig, ElectricityReading } from '../types';
+import type { ElectricityTariffConfig, ElectricityReading, ElectricityTariffProfile } from '../types';
 
 /**
  * Standard-Tarifwerte basierend auf der Schweizer Stromrechnung (Eniwa AG / StromVG).
@@ -182,4 +182,42 @@ export function getReadingUsage(reading: ElectricityReading, prevReading?: Elect
         usageHT: reading.usageHT || 0,
         usageNT: reading.usageNT || 0
     };
+}
+
+/**
+ * Standard-Tarifprofile basierend auf der Schweizer Stromrechnung (Eniwa AG / StromVG).
+ */
+export const DEFAULT_TARIFF_PROFILES: ElectricityTariffProfile[] = [
+    {
+        id: 'eniwa-2026',
+        name: 'Eniwa Standard 2026',
+        validFrom: '2026-01-01',
+        provider: 'Eniwa AG',
+        tariff: { ...DEFAULT_ELECTRICITY_TARIFF }
+    }
+]
+
+export function getTariffForDate(
+    dateStr?: string,
+    profiles?: ElectricityTariffProfile[],
+    fallback?: ElectricityTariffConfig
+): ElectricityTariffConfig {
+    const list = profiles && profiles.length > 0 ? profiles : DEFAULT_TARIFF_PROFILES;
+    if (!dateStr) {
+        return list[0]?.tariff || fallback || DEFAULT_ELECTRICITY_TARIFF;
+    }
+    // Sort profiles descending by validFrom
+    const sorted = [...list].sort((a, b) => (b.validFrom || '').localeCompare(a.validFrom || ''));
+    const match = sorted.find(p => !p.validFrom || p.validFrom <= dateStr);
+    return match ? match.tariff : (sorted[sorted.length - 1]?.tariff || fallback || DEFAULT_ELECTRICITY_TARIFF);
+}
+
+export function getTariffProfileForDate(
+    dateStr?: string,
+    profiles?: ElectricityTariffProfile[]
+): ElectricityTariffProfile | undefined {
+    const list = profiles && profiles.length > 0 ? profiles : DEFAULT_TARIFF_PROFILES;
+    if (!dateStr) return list[0];
+    const sorted = [...list].sort((a, b) => (b.validFrom || '').localeCompare(a.validFrom || ''));
+    return sorted.find(p => !p.validFrom || p.validFrom <= dateStr) || sorted[sorted.length - 1];
 }
