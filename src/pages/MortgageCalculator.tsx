@@ -1907,80 +1907,80 @@ export const MortgageCalculator = () => {
                                                         </div>
                                                     </div>
 
-                                                    {/* REIHE 3: KOSTEN-AUFLISTUNG DES ABLESEZEITRAUMS (Exakt wie gewünscht: HT, NT, Total Energie, Netznutzung, Abgaben, MwSt, Total) */}
-                                                    <div className="p-3.5 bg-accent/25 rounded-xl border border-border/80 space-y-2.5">
-                                                        <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between border-b border-border/50 pb-1.5">
+                                                    {/* REIHE 3: KOSTEN-AUFLISTUNG DES ABLESEZEITRAUMS (Gesamtbreite exakt bündig mit den Zählerfeldern darüber) */}
+                                                    <div className="border-t border-border/70 pt-3.5 space-y-2.5">
+                                                        <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between pb-1">
                                                             <span>Kosten des Ablesezeitraums (Total {totalUsage.toLocaleString('de-CH')} kWh)</span>
                                                             <span className="text-foreground font-mono">
                                                                 {period.days} Tage Abrechnung
                                                             </span>
                                                         </div>
 
-                                                        {/* Kosten-Kacheln in horizontaler Reihe */}
-                                                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
+                                                        {/* Kosten-Kacheln in horizontaler Reihe (Gesamtbreite von Kante zu Kante bündig) */}
+                                                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1fr_1fr_1.1fr_1.1fr_1.25fr_1.55fr] gap-2.5 text-xs">
                                                             
                                                             {/* Energie HT */}
-                                                            <div className="p-2.5 bg-background/80 rounded-lg border border-border/60 space-y-0.5">
-                                                                <div className="text-[10.5px] text-muted-foreground font-medium truncate">Energie HT</div>
+                                                            <div className="p-2.5 bg-background border border-border/70 rounded-lg space-y-0.5 shadow-2xs">
+                                                                <div className="text-xs text-muted-foreground font-semibold truncate">Energie HT</div>
                                                                 <div className="text-sm font-extrabold font-mono text-foreground">
                                                                     {formatCHF(invoice.energyHTAmount, 2)}
                                                                 </div>
-                                                                <div className="text-[10px] text-muted-foreground truncate">
+                                                                <div className="text-[10.5px] text-muted-foreground">
                                                                     {usageHT} kWh @ {electricityTariff.energyHT.toFixed(2)} Rp.
                                                                 </div>
                                                             </div>
 
                                                             {/* Energie NT */}
-                                                            <div className="p-2.5 bg-background/80 rounded-lg border border-border/60 space-y-0.5">
-                                                                <div className="text-[10.5px] text-muted-foreground font-medium truncate">Energie NT</div>
+                                                            <div className="p-2.5 bg-background border border-border/70 rounded-lg space-y-0.5 shadow-2xs">
+                                                                <div className="text-xs text-muted-foreground font-semibold truncate">Energie NT</div>
                                                                 <div className="text-sm font-extrabold font-mono text-foreground">
                                                                     {formatCHF(invoice.energyNTAmount, 2)}
                                                                 </div>
-                                                                <div className="text-[10px] text-muted-foreground truncate">
+                                                                <div className="text-[10.5px] text-muted-foreground">
                                                                     {usageNT} kWh @ {electricityTariff.energyNT.toFixed(2)} Rp.
                                                                 </div>
                                                             </div>
 
                                                             {/* Total Energie */}
-                                                            <div className="p-2.5 bg-primary/10 rounded-lg border border-primary/25 space-y-0.5">
-                                                                <div className="text-[10.5px] text-primary font-bold truncate">Total Energie</div>
+                                                            <div className="p-2.5 bg-primary/10 border border-primary/25 rounded-lg space-y-0.5 shadow-2xs">
+                                                                <div className="text-xs text-primary font-bold truncate">Total Energie</div>
                                                                 <div className="text-sm font-extrabold font-mono text-primary">
                                                                     {formatCHF(invoice.subtotalEnergy, 2)}
                                                                 </div>
-                                                                <div className="text-[10px] text-muted-foreground truncate">
+                                                                <div className="text-[10.5px] text-muted-foreground">
                                                                     Wirkenergie exkl. MwSt
                                                                 </div>
                                                             </div>
 
                                                             {/* Netznutzung */}
-                                                            <div className="p-2.5 bg-blue-500/10 rounded-lg border border-blue-500/25 space-y-0.5">
-                                                                <div className="text-[10.5px] text-blue-400 font-bold truncate">Netznutzung</div>
+                                                            <div className="p-2.5 bg-blue-500/10 border border-blue-500/25 rounded-lg space-y-0.5 shadow-2xs">
+                                                                <div className="text-xs text-blue-400 font-bold truncate">Netznutzung</div>
                                                                 <div className="text-sm font-extrabold font-mono text-blue-400">
                                                                     {formatCHF(invoice.subtotalGrid, 2)}
                                                                 </div>
-                                                                <div className="text-[10px] text-muted-foreground truncate">
+                                                                <div className="text-[10.5px] text-muted-foreground">
                                                                     inkl. SDL & Fixkosten
                                                                 </div>
                                                             </div>
 
                                                             {/* Öffentliche Abgaben */}
-                                                            <div className="p-2.5 bg-amber-500/10 rounded-lg border border-amber-500/25 space-y-0.5">
-                                                                <div className="text-[10.5px] text-amber-400 font-bold truncate">Öffentl. Abgaben</div>
+                                                            <div className="p-2.5 bg-amber-500/10 border border-amber-500/25 rounded-lg space-y-0.5 shadow-2xs">
+                                                                <div className="text-xs text-amber-400 font-bold whitespace-nowrap">Öffentliche Abgaben</div>
                                                                 <div className="text-sm font-extrabold font-mono text-amber-400">
                                                                     {formatCHF(invoice.subtotalFees, 2)}
                                                                 </div>
-                                                                <div className="text-[10px] text-muted-foreground truncate">
+                                                                <div className="text-[10.5px] text-muted-foreground">
                                                                     Gemeinde & Bund
                                                                 </div>
                                                             </div>
 
                                                             {/* Total Strom inkl. MwSt */}
-                                                            <div className="p-2.5 bg-emerald-500/15 rounded-lg border border-emerald-500/35 space-y-0.5">
-                                                                <div className="text-[10.5px] text-emerald-400 font-extrabold truncate">Total Stromrechnung</div>
+                                                            <div className="p-2.5 bg-emerald-500/15 border border-emerald-500/35 rounded-lg space-y-0.5 shadow-2xs">
+                                                                <div className="text-xs text-emerald-400 font-extrabold whitespace-nowrap">Total Stromrechnung</div>
                                                                 <div className="text-sm font-extrabold font-mono text-emerald-400">
                                                                     {formatCHF(invoice.totalInclVat, 2)}
                                                                 </div>
-                                                                <div className="text-[10px] text-muted-foreground truncate">
+                                                                <div className="text-[10.5px] text-muted-foreground whitespace-nowrap">
                                                                     inkl. {electricityTariff.vatRate}% MwSt ({formatCHF(invoice.vatAmount, 2)})
                                                                 </div>
                                                             </div>
