@@ -64,6 +64,24 @@ export const MortgageCalculator = () => {
     const [isElectricityOpen, setIsElectricityOpen] = useState(false);
     const [isElectricityTariffOpen, setIsElectricityTariffOpen] = useState(false);
     const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
+    const [openCardIds, setOpenCardIds] = useState<string[] | null>(null);
+
+    const toggleCardOpen = (id: string) => {
+        setOpenCardIds(prev => {
+            const sorted = [...(electricityReadings || [])].sort((a, b) => {
+                if (!a.date && b.date) return -1;
+                if (a.date && !b.date) return 1;
+                return new Date(b.date || '1970-01-01').getTime() - new Date(a.date || '1970-01-01').getTime();
+            });
+            const defaultOpen = sorted.length > 0 ? [sorted[0].id] : [];
+            const current = prev !== null ? prev : defaultOpen;
+            if (current.includes(id)) {
+                return current.filter(cardId => cardId !== id);
+            } else {
+                return [...current, id];
+            }
+        });
+    };
     const [isWaterOpen, setIsWaterOpen] = useState(false);
 
     const exportSingleInvoicePDF = (reading: ElectricityReading) => {
@@ -250,6 +268,7 @@ export const MortgageCalculator = () => {
             invoiceNumber: ''
         };
         updateMortgageData({ electricityReadings: [newReading, ...(electricityReadings || [])] });
+        setOpenCardIds([newReading.id]);
         if (!isElectricityOpen) setIsElectricityOpen(true);
     };
 
@@ -2057,12 +2076,16 @@ export const MortgageCalculator = () => {
                                             const months = period.months;
                                             const invoice = calculateElectricityInvoice(usageHT, usageNT, months, electricityTariff);
                                             const isExpanded = expandedInvoiceId === reading.id;
+                                            const isCardOpen = openCardIds !== null ? openCardIds.includes(reading.id) : (index === 0);
 
                                             return (
-                                                <div key={reading.id} className="bg-card border border-primary/50 rounded-xl p-4 sm:p-5 shadow-xs space-y-4 transition-all">
+                                                <div key={reading.id} className={cn("bg-card border rounded-xl shadow-xs transition-all", isCardOpen ? "border-primary/50 p-4 sm:p-5 space-y-4" : "border-border/70 hover:border-primary/40 p-3 sm:p-4")}>
                                                     
                                                     {/* Header-Zeile mit Zeitraum, Status-Pille und Aktions-Buttons */}
-                                                    <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-border/70 pb-3">
+                                                    <div 
+                                                        onClick={() => toggleCardOpen(reading.id)}
+                                                        className={cn("flex flex-wrap items-center justify-between gap-2.5 cursor-pointer select-none", isCardOpen && "border-b border-border/70 pb-3")}
+                                                    >
                                                         <div className="flex flex-wrap items-center gap-2.5">
                                                             <div className="text-xs font-bold bg-muted px-3 py-1.5 rounded-lg text-foreground flex items-center gap-2">
                                                                 <Calendar className="size-3.5 text-primary shrink-0 overflow-visible" />
@@ -2088,9 +2111,14 @@ export const MortgageCalculator = () => {
                                                                     <span>Fällig: {formatSwissDate(reading.dueDate || '2026-11-30')}</span>
                                                                 </div>
                                                             )}
+                                                            {!isCardOpen && invoice.totalInclVat > 0 && (
+                                                                <div className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 rounded-md font-mono shadow-2xs whitespace-nowrap">
+                                                                    <span>{formatCHF(invoice.totalInclVat, 2)}</span>
+                                                                </div>
+                                                            )}
                                                         </div>
 
-                                                        <div className="flex items-center gap-2 ml-auto">
+                                                        <div className="flex items-center gap-2 ml-auto" onClick={(e) => e.stopPropagation()}>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => exportSingleInvoicePDF(reading)}
@@ -2103,7 +2131,12 @@ export const MortgageCalculator = () => {
 
                                                             <button
                                                                 type="button"
-                                                                onClick={() => setExpandedInvoiceId(isExpanded ? null : reading.id)}
+                                                                onClick={() => {
+                                                                    if (!isCardOpen) {
+                                                                        toggleCardOpen(reading.id);
+                                                                    }
+                                                                    setExpandedInvoiceId(isExpanded ? null : reading.id);
+                                                                }}
                                                                 className={cn(
                                                                     "px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors flex items-center gap-1.5",
                                                                     isExpanded
@@ -2114,6 +2147,16 @@ export const MortgageCalculator = () => {
                                                             >
                                                                 <ReceiptText className="size-3.5 shrink-0 overflow-visible" />
                                                                 <span>{isExpanded ? 'Auflistung verbergen' : 'Auflistung'}</span>
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => toggleCardOpen(reading.id)}
+                                                                className="px-2.5 py-1.5 text-xs font-medium rounded-lg border bg-muted/60 hover:bg-muted text-foreground border-border transition-colors flex items-center gap-1 shadow-2xs"
+                                                                title={isCardOpen ? "Eintrag einklappen" : "Eintrag aufklappen"}
+                                                            >
+                                                                <ChevronDown className={cn("size-3.5 transition-transform duration-200", isCardOpen && "rotate-180")} />
+                                                                <span>{isCardOpen ? 'Einklappen' : 'Aufklappen'}</span>
                                                             </button>
 
                                                             <button
@@ -2134,6 +2177,8 @@ export const MortgageCalculator = () => {
                                                         </div>
                                                     </div>
 
+                                                    {isCardOpen && (
+                                                        <>
                                                     {/* 4-SPALTEN GRID: 100% einheitliche Feldbreiten, exakt vertikal und horizontal ausgerichtet */}
                                                     <div className="space-y-3.5">
                                                         
@@ -2494,6 +2539,8 @@ export const MortgageCalculator = () => {
 
                                                             </div>
                                                         </div>
+                                                    )}
+                                                        </>
                                                     )}
 
                                                 </div>
