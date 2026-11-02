@@ -1,6 +1,6 @@
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { useMemo, useState } from 'react';
-import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car, ChevronDown, ChevronUp, Fuel, Zap, FileText, Droplets, Calendar, ReceiptText, TrendingUp, CircleUser, CircleGauge, RotateCcw, Check, X } from 'lucide-react';
+import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car, ChevronDown, ChevronUp, Fuel, Zap, FileText, Droplets, Calendar, ReceiptText, TrendingUp, CircleUser, CircleGauge, RotateCcw, Check } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { cn } from '../utils';
@@ -61,7 +61,6 @@ interface DatePickerFieldProps {
 const DatePickerField = ({
     value,
     onChange,
-    onClear,
     placeholder = "TT.MM.JJJJ",
     className,
     title
@@ -72,32 +71,26 @@ const DatePickerField = ({
                 type="date"
                 value={value || ''}
                 onChange={(e) => onChange(e.target.value)}
+                onClick={(e) => {
+                    try {
+                        e.currentTarget.showPicker?.();
+                    } catch {
+                        // ignore if showPicker is unsupported
+                    }
+                }}
                 title={title}
                 className={cn(
                     "w-full h-9 bg-background border border-border/80 focus:border-primary rounded-lg px-2.5 text-sm font-bold font-mono text-center text-foreground min-w-0 appearance-none [-webkit-appearance:none] cursor-pointer",
+                    "[&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:appearance-none",
+                    "[&::-webkit-inner-spin-button]:appearance-none",
                     !value && "[&::-webkit-datetime-edit]:opacity-0",
-                    value ? "pr-8" : "pr-8",
                     className
                 )}
             />
             {!value && (
-                <div className="absolute inset-y-0 left-2.5 right-2.5 flex items-center justify-between pointer-events-none text-sm text-muted-foreground/60 font-mono select-none">
-                    <span className="w-full text-center">{placeholder}</span>
-                    <Calendar className="size-3.5 text-muted-foreground/50 shrink-0 absolute right-2.5 top-1/2 -translate-y-1/2" />
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-sm text-muted-foreground/60 font-mono select-none">
+                    <span>{placeholder}</span>
                 </div>
-            )}
-            {value && onClear && (
-                <button
-                    type="button"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onClear();
-                    }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer transition-colors z-10"
-                    title="Datum leeren"
-                >
-                    <X className="size-3.5" />
-                </button>
             )}
         </div>
     );
@@ -2471,24 +2464,8 @@ export const MortgageCalculator = () => {
                                                                             updateMortgageData({ electricityReadings: newReadings });
                                                                         }}
                                                                         placeholder="z.B. 7 134 488"
-                                                                        className={cn(
-                                                                            "w-full h-9 bg-background border border-border/80 focus:border-primary rounded-lg px-2.5 text-sm font-bold font-mono text-center",
-                                                                            reading.invoiceNumber && "pr-8"
-                                                                        )}
+                                                                        className="w-full h-9 bg-background border border-border/80 focus:border-primary rounded-lg px-2.5 text-sm font-bold font-mono text-center text-foreground"
                                                                     />
-                                                                    {reading.invoiceNumber && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => {
-                                                                                const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, invoiceNumber: '' } : r);
-                                                                                updateMortgageData({ electricityReadings: newReadings });
-                                                                            }}
-                                                                            className="absolute right-2 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer transition-colors"
-                                                                            title="Rechnungs-Nr. leeren"
-                                                                        >
-                                                                            <X className="size-3.5" />
-                                                                        </button>
-                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </div>
