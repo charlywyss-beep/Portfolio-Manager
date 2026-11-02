@@ -1400,9 +1400,9 @@ export const MortgageCalculator = () => {
                         {isElectricityOpen && (
                             <div className="p-5 sm:p-6 border-b border-border space-y-6">
 
-                                {/* 1. Kundendaten: Einheitlich horizontal & vertikal ausgerichtet */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 bg-accent/20 p-3.5 rounded-xl border border-border/60">
-                                    <div className="space-y-1.5">
+                                {/* 1. Kundendaten: Harmonische Feldbreiten aneinander angepasst */}
+                                <div className="flex flex-wrap items-center gap-4 bg-accent/20 p-3.5 rounded-xl border border-border/60">
+                                    <div className="space-y-1.5 w-full sm:w-44">
                                         <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap">
                                             <User className="size-3.5 text-primary" />
                                             Kundennummer
@@ -1412,11 +1412,11 @@ export const MortgageCalculator = () => {
                                             value={electricityCustomerNumber || ''}
                                             onChange={(e) => updateMortgageData({ electricityCustomerNumber: e.target.value })}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full h-9 bg-background border border-input rounded-lg px-3 text-sm font-medium focus:ring-1 focus:ring-primary"
+                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono font-medium focus:ring-1 focus:ring-primary"
                                             placeholder="z.B. 130584"
                                         />
                                     </div>
-                                    <div className="space-y-1.5 md:border-l md:border-border/60 md:pl-4">
+                                    <div className="space-y-1.5 w-full sm:w-44">
                                         <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap">
                                             <FileText className="size-3.5 text-primary" />
                                             Vertragskonto
@@ -1426,11 +1426,11 @@ export const MortgageCalculator = () => {
                                             value={electricityContractNumber || ''}
                                             onChange={(e) => updateMortgageData({ electricityContractNumber: e.target.value })}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full h-9 bg-background border border-input rounded-lg px-3 text-sm font-medium focus:ring-1 focus:ring-primary"
+                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono font-medium focus:ring-1 focus:ring-primary"
                                             placeholder="z.B. 530879"
                                         />
                                     </div>
-                                    <div className="space-y-1.5 md:border-l md:border-border/60 md:pl-4">
+                                    <div className="space-y-1.5 w-full sm:w-52">
                                         <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap">
                                             <Gauge className="size-3.5 text-primary" />
                                             Zähler-Nr.
@@ -1440,7 +1440,7 @@ export const MortgageCalculator = () => {
                                             value={electricityMeterNumber || ''}
                                             onChange={(e) => updateMortgageData({ electricityMeterNumber: e.target.value })}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full h-9 bg-background border border-input rounded-lg px-3 text-sm font-medium focus:ring-1 focus:ring-primary"
+                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono font-medium focus:ring-1 focus:ring-primary"
                                             placeholder="z.B. 1LGZ0188395373"
                                         />
                                     </div>
@@ -1765,9 +1765,9 @@ export const MortgageCalculator = () => {
                                                         </div>
                                                     </div>
 
-                                                    {/* REIHE 1: Ablesezeitraum & Rechnungsangaben (Einzeilig, horizontal perfekt ausgerichtet) */}
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                                        <div className="space-y-1">
+                                                    {/* REIHE 1: Ablesezeitraum & Rechnungsangaben (Harmonisch aufeinander abgestimmte Feldbreiten) */}
+                                                    <div className="flex flex-wrap items-end gap-3.5">
+                                                        <div className="space-y-1 w-full sm:w-44">
                                                             <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Ablesung Von</label>
                                                             <input
                                                                 type="date"
@@ -1779,7 +1779,7 @@ export const MortgageCalculator = () => {
                                                                 className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono"
                                                             />
                                                         </div>
-                                                        <div className="space-y-1">
+                                                        <div className="space-y-1 w-full sm:w-44">
                                                             <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Ablesung Bis</label>
                                                             <input
                                                                 type="date"
@@ -1791,7 +1791,7 @@ export const MortgageCalculator = () => {
                                                                 className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono"
                                                             />
                                                         </div>
-                                                        <div className="space-y-1">
+                                                        <div className="space-y-1 w-full sm:w-52">
                                                             <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Abrechnungsdauer</label>
                                                             <div 
                                                                 className="w-full h-9 bg-background/80 border border-input rounded-lg px-2.5 flex items-center justify-between text-xs cursor-default select-none shadow-xs"
@@ -1806,8 +1806,8 @@ export const MortgageCalculator = () => {
                                                                 </span>
                                                             </div>
                                                         </div>
-                                                        <div className="space-y-1">
-                                                            <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Rechnungs-Nr. (optional)</label>
+                                                        <div className="space-y-1 w-full sm:w-44">
+                                                            <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Rechnungs-Nr.</label>
                                                             <input
                                                                 type="text"
                                                                 value={reading.invoiceNumber || ''}
