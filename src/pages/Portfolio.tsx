@@ -340,7 +340,7 @@ export function Portfolio() {
             )}
 
             {isAddChoiceModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 iphone-modal-overlay">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[2000] p-4 iphone-modal-overlay">
                     <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200 overflow-hidden iphone-modal-shell iphone-choice-modal-shell">
                         <div className="flex items-center justify-between p-4 border-b border-border bg-card z-10 iphone-modal-header-card">
                             <div className="flex items-center gap-2.5 min-w-0">
