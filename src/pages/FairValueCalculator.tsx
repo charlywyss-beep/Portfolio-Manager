@@ -1809,7 +1809,7 @@ export function FairValueCalculator() {
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">{quote.currency || 'USD'}</span>
                                     </div>
-                                    <div className="flex gap-3 mt-1 text-[11px]">
+                                    <div className="flex gap-3 mt-1 text-[11px] flex-wrap items-center">
                                         <a
                                             href={`https://finance.yahoo.com/quote/${selectedSymbol}`}
                                             target="_blank"
@@ -1828,6 +1828,16 @@ export function FairValueCalculator() {
                                         >
                                             <ExternalLink className="size-2.5" />
                                             finanzen.ch
+                                        </a>
+                                        <a
+                                            href="https://boerse.raiffeisen.ch/"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-primary font-medium hover:underline flex items-center gap-1"
+                                            title="Raiffeisen Börse: Aktuelle Börsenkurse & globale Märkte"
+                                        >
+                                            <ExternalLink className="size-2.5" />
+                                            Raiffeisen Börse
                                         </a>
                                     </div>
                                 </div>
