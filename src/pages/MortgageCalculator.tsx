@@ -379,6 +379,9 @@ export const MortgageCalculator = () => {
     };
 
     const resetToEniwaTariff = () => {
+        if (!window.confirm('Möchten Sie die aktuellen Eingabefelder wirklich auf die Eniwa Standard-Werte zurücksetzen?\n\nIhre gespeicherten Profile bleiben dabei erhalten.')) {
+            return;
+        }
         const inv = calculateElectricityInvoice(100, 100, 1, DEFAULT_ELECTRICITY_TARIFF);
         updateMortgageData({
             electricityTariff: { ...DEFAULT_ELECTRICITY_TARIFF },
