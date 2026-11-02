@@ -74,16 +74,16 @@ const DatePickerField = ({
                 onChange={(e) => onChange(e.target.value)}
                 title={title}
                 className={cn(
-                    "w-full h-9 bg-background border border-border/80 focus:border-primary rounded-lg px-2.5 text-xs font-mono text-foreground min-w-0 appearance-none [-webkit-appearance:none] cursor-pointer",
+                    "w-full h-9 bg-background border border-border/80 focus:border-primary rounded-lg px-2.5 text-sm font-bold font-mono text-center text-foreground min-w-0 appearance-none [-webkit-appearance:none] cursor-pointer",
                     !value && "[&::-webkit-datetime-edit]:opacity-0",
                     value ? "pr-8" : "pr-8",
                     className
                 )}
             />
             {!value && (
-                <div className="absolute inset-y-0 left-2.5 right-2.5 flex items-center justify-between pointer-events-none text-xs text-muted-foreground/60 font-mono select-none">
-                    <span>{placeholder}</span>
-                    <Calendar className="size-3.5 text-muted-foreground/50 shrink-0" />
+                <div className="absolute inset-y-0 left-2.5 right-2.5 flex items-center justify-between pointer-events-none text-sm text-muted-foreground/60 font-mono select-none">
+                    <span className="w-full text-center">{placeholder}</span>
+                    <Calendar className="size-3.5 text-muted-foreground/50 shrink-0 absolute right-2.5 top-1/2 -translate-y-1/2" />
                 </div>
             )}
             {value && onClear && (
@@ -2472,7 +2472,7 @@ export const MortgageCalculator = () => {
                                                                         }}
                                                                         placeholder="z.B. 7 134 488"
                                                                         className={cn(
-                                                                            "w-full h-9 bg-background border border-border/80 focus:border-primary rounded-lg px-2.5 text-sm font-bold font-mono text-right",
+                                                                            "w-full h-9 bg-background border border-border/80 focus:border-primary rounded-lg px-2.5 text-sm font-bold font-mono text-center",
                                                                             reading.invoiceNumber && "pr-8"
                                                                         )}
                                                                     />
