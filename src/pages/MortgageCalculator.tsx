@@ -2006,8 +2006,8 @@ export const MortgageCalculator = () => {
                                                             </span>
                                                         </div>
 
-                                                        {/* Kosten-Kacheln in horizontaler Reihe (Gesamtbreite von Kante zu Kante bündig) */}
-                                                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1fr_1fr_1.1fr_1.1fr_1.25fr_1.55fr] gap-2.5 text-xs">
+                                                        {/* Kosten-Kacheln in horizontaler Reihe (Gesamtbreite bündig, einzeilige Details ohne Umbruch) */}
+                                                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1.1fr_1.1fr_1fr_1fr_1.15fr_1.4fr] gap-2.5 text-xs">
                                                             
                                                             {/* Energie HT */}
                                                             <div className="p-2.5 bg-background border border-border/70 rounded-lg space-y-0.5 shadow-2xs">
@@ -2015,7 +2015,7 @@ export const MortgageCalculator = () => {
                                                                 <div className="text-sm font-extrabold font-mono text-foreground">
                                                                     {formatCHF(invoice.energyHTAmount, 2)}
                                                                 </div>
-                                                                <div className="text-[10.5px] text-muted-foreground">
+                                                                <div className="text-[10px] text-muted-foreground whitespace-nowrap">
                                                                     {usageHT} kWh @ {electricityTariff.energyHT.toFixed(2)} Rp.
                                                                 </div>
                                                             </div>
@@ -2026,7 +2026,7 @@ export const MortgageCalculator = () => {
                                                                 <div className="text-sm font-extrabold font-mono text-foreground">
                                                                     {formatCHF(invoice.energyNTAmount, 2)}
                                                                 </div>
-                                                                <div className="text-[10.5px] text-muted-foreground">
+                                                                <div className="text-[10px] text-muted-foreground whitespace-nowrap">
                                                                     {usageNT} kWh @ {electricityTariff.energyNT.toFixed(2)} Rp.
                                                                 </div>
                                                             </div>
@@ -2037,7 +2037,7 @@ export const MortgageCalculator = () => {
                                                                 <div className="text-sm font-extrabold font-mono text-primary">
                                                                     {formatCHF(invoice.subtotalEnergy, 2)}
                                                                 </div>
-                                                                <div className="text-[10.5px] text-muted-foreground">
+                                                                <div className="text-[10px] text-muted-foreground whitespace-nowrap">
                                                                     Wirkenergie exkl. MwSt
                                                                 </div>
                                                             </div>
@@ -2048,7 +2048,7 @@ export const MortgageCalculator = () => {
                                                                 <div className="text-sm font-extrabold font-mono text-blue-400">
                                                                     {formatCHF(invoice.subtotalGrid, 2)}
                                                                 </div>
-                                                                <div className="text-[10.5px] text-muted-foreground">
+                                                                <div className="text-[10px] text-muted-foreground whitespace-nowrap">
                                                                     inkl. SDL & Fixkosten
                                                                 </div>
                                                             </div>
@@ -2059,7 +2059,7 @@ export const MortgageCalculator = () => {
                                                                 <div className="text-sm font-extrabold font-mono text-amber-400">
                                                                     {formatCHF(invoice.subtotalFees, 2)}
                                                                 </div>
-                                                                <div className="text-[10.5px] text-muted-foreground">
+                                                                <div className="text-[10px] text-muted-foreground whitespace-nowrap">
                                                                     Gemeinde & Bund
                                                                 </div>
                                                             </div>
@@ -2070,7 +2070,7 @@ export const MortgageCalculator = () => {
                                                                 <div className="text-sm font-extrabold font-mono text-emerald-400">
                                                                     {formatCHF(invoice.totalInclVat, 2)}
                                                                 </div>
-                                                                <div className="text-[10.5px] text-muted-foreground whitespace-nowrap">
+                                                                <div className="text-[10px] text-muted-foreground whitespace-nowrap">
                                                                     inkl. {electricityTariff.vatRate}% MwSt ({formatCHF(invoice.vatAmount, 2)})
                                                                 </div>
                                                             </div>
