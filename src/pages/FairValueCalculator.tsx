@@ -2401,6 +2401,47 @@ export function FairValueCalculator() {
                                                 )}
                                             </div>
 
+                                            {/* Staffelkauf-Empfehlung (2 Tranchen) */}
+                                            {!isUndervalued && calculation.fairValue > 0 && (() => {
+                                                const isEtf = isEtfAsset(currentStock, quote, selectedSymbol);
+                                                const m1 = isEtf ? 10 : 15;
+                                                const m2 = isEtf ? 15 : 20;
+                                                const p1 = calculation.fairValue * (1 - m1 / 100);
+                                                const p2 = calculation.fairValue * (1 - m2 / 100);
+                                                const pMix = (p1 + p2) / 2;
+                                                return (
+                                                    <div className="mt-2 pt-1.5 border-t border-border/40 text-[11px] text-muted-foreground flex items-center justify-center gap-1.5 flex-wrap">
+                                                        <span className="font-semibold text-foreground">Staffelkauf (2 Tranchen):</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setBuyLimitInput(p1.toFixed(2))}
+                                                            title={`1. Tranche (${m1}% Marge) als Kauflimit eintragen`}
+                                                            className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                                                        >
+                                                            1. Tranche ({m1}%): <strong className="text-foreground font-mono">{formatCurrency(p1, quote.currency, false)}</strong>
+                                                        </button>
+                                                        <span>•</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setBuyLimitInput(p2.toFixed(2))}
+                                                            title={`2. Tranche (${m2}% Marge) als Kauflimit eintragen`}
+                                                            className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                                                        >
+                                                            2. Tranche ({m2}%): <strong className="text-foreground font-mono">{formatCurrency(p2, quote.currency, false)}</strong>
+                                                        </button>
+                                                        <span>•</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setBuyLimitInput(pMix.toFixed(2))}
+                                                            title={`Mischkurs (${((m1 + m2) / 2).toFixed(1)}% Marge) als Kauflimit eintragen`}
+                                                            className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                                                        >
+                                                            Ø: <strong className="text-emerald-400 font-mono">{formatCurrency(pMix, quote.currency, false)}</strong>
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })()}
+
                                             {/* Fundamentale Abwärtsabsicherung / Risikoprofil */}
                                             <div className={cn(
                                                 "mt-2 pt-1.5 border-t text-[11px] text-left leading-snug flex items-start gap-2",
