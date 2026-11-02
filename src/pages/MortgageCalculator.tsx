@@ -1896,35 +1896,30 @@ export const MortgageCalculator = () => {
                                 </div>
 
                                 {/* 2. Tarif-Kostenpunkte */}
-                                <div className="bg-card border border-border rounded-xl overflow-hidden shadow-2xs">
-                                    <div className="p-3.5 sm:p-4 bg-muted/40 flex flex-wrap items-center justify-between gap-3">
+                                <div className="space-y-3.5 pt-1">
+                                    <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2.5 min-w-0">
-                                            <div className="size-8 rounded-lg bg-yellow-500/10 text-yellow-500 flex items-center justify-center font-bold shrink-0">
-                                                ⚡
-                                            </div>
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="text-sm font-bold text-foreground">Tarif-Kostenpunkte</span>
+                                            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                                                <span>Tarif-Kostenpunkte</span>
                                                 <span className="text-xs font-semibold text-primary bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-full font-mono">
                                                     {mortgageData.electricityProvider || 'Eniwa AG'}
                                                 </span>
-                                            </div>
+                                            </h3>
                                         </div>
-                                        <div className="flex items-center gap-2 shrink-0 ml-auto">
-                                            <button
-                                                type="button"
-                                                onClick={() => setIsElectricityTariffOpen(!isElectricityTariffOpen)}
-                                                className="text-xs bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 shadow-xs"
-                                                title="Eingabe Preis / Einheit wie auf Original-Rechnung"
-                                            >
-                                                <ReceiptText className="size-3.5 shrink-0" />
-                                                <span>Eingabe Preis / Einheit</span>
-                                                <ChevronDown className={cn("size-3.5 transition-transform duration-200", isElectricityTariffOpen && "rotate-180")} />
-                                            </button>
-                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsElectricityTariffOpen(!isElectricityTariffOpen)}
+                                            className="h-9 text-xs sm:text-sm bg-primary text-primary-foreground hover:bg-primary/90 px-3.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
+                                            title="Eingabe Preis / Einheit wie auf Original-Rechnung"
+                                        >
+                                            <ReceiptText className="size-4 shrink-0" />
+                                            <span>Eingabe Preis / Einheit</span>
+                                            <ChevronDown className={cn("size-4 transition-transform duration-200", isElectricityTariffOpen && "rotate-180")} />
+                                        </button>
                                     </div>
 
                                     {isElectricityTariffOpen && (
-                                        <div className="p-4 sm:p-5 border-t border-border/60 bg-background/60 space-y-4">
+                                        <div className="bg-card border border-border rounded-xl p-4 sm:p-5 shadow-2xs space-y-4 animate-in fade-in duration-150">
                                             {/* Toolbar für Tarif-Profile & Vorlagen */}
                                             <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/60">
                                                 <div className="flex flex-wrap items-center gap-2.5">
@@ -2216,7 +2211,7 @@ export const MortgageCalculator = () => {
                                         <button
                                             type="button"
                                             onClick={handleAddReading}
-                                            className="text-xs sm:text-sm bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 shadow-xs active:scale-95"
+                                            className="h-9 text-xs sm:text-sm bg-primary text-primary-foreground hover:bg-primary/90 px-3.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
                                             title="Neue Stromrechnung oder Ablesung erfassen"
                                         >
                                             <Plus className="size-4" /> Eingabe
