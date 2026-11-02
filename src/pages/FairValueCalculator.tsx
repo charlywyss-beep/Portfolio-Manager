@@ -2409,6 +2409,11 @@ export function FairValueCalculator() {
                                                 const p1 = calculation.fairValue * (1 - m1 / 100);
                                                 const p2 = calculation.fairValue * (1 - m2 / 100);
                                                 const pMix = (p1 + p2) / 2;
+                                                const activeLimit = currentStock?.targetPrice ?? (calculation.buyPrice > 0 ? calculation.buyPrice : 0);
+                                                const isP1Active = Math.abs(activeLimit - p1) < 0.05;
+                                                const isP2Active = Math.abs(activeLimit - p2) < 0.05;
+                                                const isMixActive = Math.abs(activeLimit - pMix) < 0.05;
+
                                                 return (
                                                     <div className="mt-2 pt-1.5 border-t border-border/40 text-[11px] text-muted-foreground flex items-center justify-center gap-1.5 flex-wrap">
                                                         <span className="font-semibold text-foreground">Staffelkauf (2 Tranchen):</span>
@@ -2418,7 +2423,7 @@ export function FairValueCalculator() {
                                                             title={`1. Tranche (${m1}% Marge) als Kauflimit eintragen`}
                                                             className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
                                                         >
-                                                            1. Tranche ({m1}%): <strong className="text-foreground font-mono">{formatCurrency(p1, quote.currency, false)}</strong>
+                                                            1. Tranche ({m1}%): <strong className={cn("font-mono", isP1Active ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(p1, quote.currency, false)}</strong>
                                                         </button>
                                                         <span>•</span>
                                                         <button
@@ -2427,7 +2432,7 @@ export function FairValueCalculator() {
                                                             title={`2. Tranche (${m2}% Marge) als Kauflimit eintragen`}
                                                             className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
                                                         >
-                                                            2. Tranche ({m2}%): <strong className="text-foreground font-mono">{formatCurrency(p2, quote.currency, false)}</strong>
+                                                            2. Tranche ({m2}%): <strong className={cn("font-mono", isP2Active ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(p2, quote.currency, false)}</strong>
                                                         </button>
                                                         <span>•</span>
                                                         <button
@@ -2436,7 +2441,7 @@ export function FairValueCalculator() {
                                                             title={`Mischkurs (${((m1 + m2) / 2).toFixed(1)}% Marge) als Kauflimit eintragen`}
                                                             className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
                                                         >
-                                                            Ø: <strong className="text-emerald-400 font-mono">{formatCurrency(pMix, quote.currency, false)}</strong>
+                                                            Ø: <strong className={cn("font-mono", isMixActive ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(pMix, quote.currency, false)}</strong>
                                                         </button>
                                                     </div>
                                                 );
