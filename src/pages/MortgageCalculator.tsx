@@ -2937,6 +2937,7 @@ export const MortgageCalculator = () => {
                                                 <div className="flex items-center justify-between py-1.5">
                                                     <span className="text-muted-foreground text-sm font-semibold">Stand HT (Wirkenergie)</span>
                                                     <div className="flex items-center gap-2">
+                                                        <span className="text-muted-foreground text-xs font-bold">kWh</span>
                                                         <DecimalInput
                                                             value={latest.valueHT}
                                                             onChange={(val) => {
@@ -2949,13 +2950,13 @@ export const MortgageCalculator = () => {
                                                             onFocus={(e) => e.target.select()}
                                                             className="bg-[#a3cc29] text-white px-2 py-1 rounded-lg text-base font-mono font-bold tracking-wider shadow-2xs w-[120px] text-center border-none focus:ring-2 focus:ring-primary outline-none"
                                                         />
-                                                        <span className="text-muted-foreground text-xs font-bold">kWh</span>
                                                     </div>
                                                 </div>
 
                                                 <div className="flex items-center justify-between py-1.5">
                                                     <span className="text-muted-foreground text-sm font-semibold">Stand NT (Wirkenergie)</span>
                                                     <div className="flex items-center gap-2">
+                                                        <span className="text-muted-foreground text-xs font-bold">kWh</span>
                                                         <DecimalInput
                                                             value={latest.valueNT}
                                                             onChange={(val) => {
@@ -2968,7 +2969,6 @@ export const MortgageCalculator = () => {
                                                             onFocus={(e) => e.target.select()}
                                                             className="bg-[#a3cc29] text-white px-2 py-1 rounded-lg text-base font-mono font-bold tracking-wider shadow-2xs w-[120px] text-center border-none focus:ring-2 focus:ring-primary outline-none"
                                                         />
-                                                        <span className="text-muted-foreground text-xs font-bold">kWh</span>
                                                     </div>
                                                 </div>
                                             </div>
