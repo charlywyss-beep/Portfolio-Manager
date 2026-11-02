@@ -2460,26 +2460,12 @@ export function FairValueCalculator() {
                                             )}>
                                                 <div className="flex justify-between items-center gap-2 mb-0.5">
                                                     <span className="font-bold text-sm sm:text-base shrink-0 whitespace-nowrap">Kaufpreis</span>
-                                                    {quote.currency !== 'CHF' ? (
-                                                        <div className={cn(
-                                                            "flex flex-col items-end font-mono leading-tight text-right shrink-0",
-                                                            kaufpreisTextColor
-                                                        )}>
-                                                            <span className="text-sm sm:text-base font-bold whitespace-nowrap">
-                                                                {formatCurrency(calculation.buyPrice, quote.currency, false)}
-                                                            </span>
-                                                            <span className="text-xs sm:text-sm font-bold opacity-80 whitespace-nowrap">
-                                                                {formatCurrency(calculation.buyPrice, quote.currency).split(' - ')[1]}
-                                                            </span>
-                                                        </div>
-                                                    ) : (
-                                                        <span className={cn(
-                                                            "font-mono font-bold text-sm sm:text-base whitespace-nowrap",
-                                                            kaufpreisTextColor
-                                                        )}>
-                                                            {formatCurrency(calculation.buyPrice, quote.currency, false)}
-                                                        </span>
-                                                    )}
+                                                    <span className={cn(
+                                                        "font-mono font-bold text-sm sm:text-base whitespace-nowrap",
+                                                        kaufpreisTextColor
+                                                    )}>
+                                                        {formatCurrency(calculation.buyPrice, quote.currency, false)}
+                                                    </span>
                                                 </div>
                                                 <div className="flex items-center justify-between flex-wrap gap-1 text-[11px] text-muted-foreground">
                                                     <span>Maximaler Preis inkl. {mos}% Sicherheitsmarge ({isSavedForStock ? 'Manuell' : valuationProfile === 'quality' ? 'Qualität B' : 'Sicherheit A'})</span>
