@@ -17,6 +17,28 @@ import {
     getReadingUsage
 } from '../utils/electricityCalculator';
 
+const formatSwissDate = (dInput?: string | Date): string => {
+    if (!dInput) return '-';
+    if (typeof dInput === 'string') {
+        const parts = dInput.split('-');
+        if (parts.length === 3) {
+            const year = parts[0];
+            const month = parts[1].padStart(2, '0');
+            const day = parts[2].padStart(2, '0');
+            return `${day}.${month}.${year}`;
+        }
+        const d = new Date(dInput);
+        if (isNaN(d.getTime())) return dInput;
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        return `${day}.${month}.${d.getFullYear()}`;
+    }
+    if (isNaN(dInput.getTime())) return '-';
+    const day = String(dInput.getDate()).padStart(2, '0');
+    const month = String(dInput.getMonth() + 1).padStart(2, '0');
+    return `${day}.${month}.${dInput.getFullYear()}`;
+};
+
 const formatCHF = (amount: number, fractionDigits = 0) => {
     return new Intl.NumberFormat('de-CH', {
         style: 'decimal',
@@ -61,8 +83,8 @@ export const MortgageCalculator = () => {
         const inv = calculateElectricityInvoice(usageHT, usageNT, months, tariff);
 
         const providerName = electricityProvider || 'Eniwa AG';
-        const fromStr = effectiveDateFrom ? new Date(effectiveDateFrom).toLocaleDateString('de-CH') : '-';
-        const toStr = reading.date ? new Date(reading.date).toLocaleDateString('de-CH') : '-';
+        const fromStr = effectiveDateFrom ? formatSwissDate(effectiveDateFrom) : '-';
+        const toStr = reading.date ? formatSwissDate(reading.date) : '-';
         const invoiceNo = reading.invoiceNumber || '–';
 
         // 1. Titel & Header
@@ -72,7 +94,7 @@ export const MortgageCalculator = () => {
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(100, 100, 100);
-        doc.text(`Erstellt am: ${new Date().toLocaleDateString('de-CH')}`, 14, 26);
+        doc.text(`Erstellt am: ${formatSwissDate(new Date())}`, 14, 26);
         doc.setTextColor(0, 0, 0);
 
         // 2. Infobox: Kundendaten links, Abrechnungsdetails rechts
@@ -183,8 +205,11 @@ export const MortgageCalculator = () => {
             }
         });
 
-        const safeInvoice = (reading.invoiceNumber || 'Abrechnung').replace(/[^a-zA-Z0-9_-]/g, '_');
-        const filename = `Stromrechnung_${safeInvoice}_${toStr.replace(/\./g, '-')}.pdf`;
+        const cleanedInvoice = (reading.invoiceNumber || '').trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+        const invoicePart = cleanedInvoice ? `Nr_${cleanedInvoice}` : '';
+        const datePart = reading.date ? formatSwissDate(reading.date) : '';
+        const parts = ['Stromrechnung', invoicePart, datePart].filter(Boolean);
+        const filename = `${parts.join('_')}.pdf`;
         doc.save(filename);
     };
 
@@ -2039,7 +2064,7 @@ export const MortgageCalculator = () => {
                                                         <div className="flex flex-wrap items-center gap-2.5">
                                                             <div className="text-xs font-bold bg-muted px-3 py-1.5 rounded-lg text-foreground flex items-center gap-2">
                                                                 <Calendar className="size-3.5 text-primary shrink-0 overflow-visible" />
-                                                                <span>{effectiveDateFrom ? `${new Date(effectiveDateFrom).toLocaleDateString('de-CH')} – ` : ''}{reading.date ? new Date(reading.date).toLocaleDateString('de-CH') : 'Offen'}</span>
+                                                                <span>{effectiveDateFrom ? `${formatSwissDate(effectiveDateFrom)} – ` : ''}{reading.date ? formatSwissDate(reading.date) : 'Offen'}</span>
                                                             </div>
                                                             <span className="text-xs text-muted-foreground font-medium bg-accent/30 px-2.5 py-1 rounded-md border border-border/40">
                                                                 {period.days > 0 ? `${period.days} Tage` : '–'}
@@ -2080,8 +2105,8 @@ export const MortgageCalculator = () => {
                                                             <button
                                                                 onClick={() => {
                                                                     const dateStr = reading.dateFrom 
-                                                                        ? `${new Date(reading.dateFrom).toLocaleDateString('de-CH')} – ${reading.date ? new Date(reading.date).toLocaleDateString('de-CH') : 'Offen'}`
-                                                                        : (reading.date ? new Date(reading.date).toLocaleDateString('de-CH') : 'Neue Ablesung');
+                                                                        ? `${formatSwissDate(reading.dateFrom)} – ${reading.date ? formatSwissDate(reading.date) : 'Offen'}`
+                                                                        : (reading.date ? formatSwissDate(reading.date) : 'Neue Ablesung');
                                                                     if (window.confirm(`Möchten Sie diese Stromrechnung / Ablesung (${dateStr}) wirklich löschen?`)) {
                                                                         const newReadings = electricityReadings?.filter(r => r.id !== reading.id);
                                                                         updateMortgageData({ electricityReadings: newReadings });
@@ -2318,7 +2343,7 @@ export const MortgageCalculator = () => {
                                                                 </div>
                                                                 <div className="flex items-center gap-3">
                                                                     <span className="font-mono text-muted-foreground">
-                                                                        Zeitraum: {effectiveDateFrom ? `${new Date(effectiveDateFrom).toLocaleDateString('de-CH')} – ` : ''}{reading.date ? new Date(reading.date).toLocaleDateString('de-CH') : 'Offen'}
+                                                                        Zeitraum: {effectiveDateFrom ? `${formatSwissDate(effectiveDateFrom)} – ` : ''}{reading.date ? formatSwissDate(reading.date) : 'Offen'}
                                                                     </span>
                                                                     <button
                                                                         type="button"
