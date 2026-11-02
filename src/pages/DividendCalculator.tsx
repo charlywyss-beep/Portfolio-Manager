@@ -130,21 +130,14 @@ export function DividendCalculator() {
     const lastLoadedParamRef = useRef<string | null>(null);
     useEffect(() => {
         const stockId = searchParams.get('stock');
-        const queryPrice = searchParams.get('price');
-        const parsedQueryPrice = queryPrice ? parseFloat(queryPrice) : NaN;
-        const currentParamKey = `${stockId || ''}_${queryPrice || ''}`;
+        const currentParamKey = `${stockId || ''}`;
 
         if (stockId && stockId !== 'new' && currentParamKey !== lastLoadedParamRef.current) {
             const stock = stocks.find(s => String(s.id) === String(stockId) || s.symbol.toLowerCase() === stockId.toLowerCase());
             if (stock) {
-                const hasExplicitQueryPrice = !isNaN(parsedQueryPrice) && parsedQueryPrice > 0;
-                const effectivePrice = hasExplicitQueryPrice
-                    ? parsedQueryPrice
-                    : (stock.plannedPurchase
-                        ? stock.plannedPurchase.pricePerShare
-                        : (stock.targetPrice && stock.targetPrice > 0
-                            ? stock.targetPrice
-                            : (stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice)));
+                const effectivePrice = stock.plannedPurchase
+                    ? stock.plannedPurchase.pricePerShare
+                    : (stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice);
 
                 if (stock.plannedPurchase) {
                     // Load with planned purchase data
@@ -767,10 +760,7 @@ export function DividendCalculator() {
                 simValor: stock.valor || '',
                 // If it's accumulating, ignore dividends
                 dividend: (stock.distributionPolicy === 'accumulating') ? 0 : (stock.currency === 'GBp' ? annualDiv / 100 : annualDiv),
-                // If stock has a targetPrice (Kauflimit) and buying, prioritize it
-                price: (mode === 'buy' && stock.targetPrice && stock.targetPrice > 0)
-                    ? stock.targetPrice
-                    : (stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice),
+                price: stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice,
                 fees: { ...fees, stampDutyPercent: newStamp },
             });
         }
@@ -1559,26 +1549,10 @@ export function DividendCalculator() {
 
                                     return (
                                         <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border/50 mb-6">
-                                            {/* Shares & Kauflimit direkt unter Bestand */}
+                                            {/* Shares */}
                                             <div className="flex flex-col items-center gap-1">
                                                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Bestand</span>
                                                 <span className="text-xl font-medium">{currentPos ? `${currentPos.shares} Stk.` : '0 Stk.'}</span>
-                                                {stock?.targetPrice ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => updateSimulatorState({ price: stock.targetPrice! })}
-                                                        className={cn(
-                                                            "text-[11px] font-mono flex items-center gap-1 px-1.5 py-0.5 rounded transition-all cursor-pointer mt-0.5 shadow-2xs",
-                                                            Math.abs(price - stock.targetPrice) < 0.01
-                                                                ? "text-emerald-400 font-bold bg-emerald-500/15 border border-emerald-500/30"
-                                                                : "text-muted-foreground hover:text-foreground hover:bg-muted/60 border border-border/40"
-                                                        )}
-                                                        title="Klicken, um Kauflimit als Kaufpreis zu übernehmen"
-                                                    >
-                                                        <Target className="size-3 text-emerald-400" />
-                                                        <span>Limit: {stock.targetPrice.toFixed(2)} {displayCurrency}</span>
-                                                    </button>
-                                                ) : null}
                                             </div>
 
                                             {/* Divider */}
@@ -1660,6 +1634,26 @@ export function DividendCalculator() {
                                 })()}
                                 {/* Transaction details below selector always visible */}
 
+                                {/* Kauflimit übernehmen (mittig über Kurs Laden Feld) */}
+                                {(() => {
+                                    const stock = stocks.find(s => s.id === selectedStockId);
+                                    if (!stock?.targetPrice) return null;
+                                    const limitCurr = (stock.currency === 'GBp' || stock.currency === 'GBP') ? 'GBp' : (stock.currency || 'CHF');
+                                    return (
+                                        <div className="flex justify-center -mt-2 mb-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => updateSimulatorState({ price: stock.targetPrice! })}
+                                                className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-3.5 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs active:scale-95 flex items-center gap-1.5"
+                                                title="Kauflimit als Kaufpreis übernehmen"
+                                            >
+                                                <Target className="size-3.5 text-emerald-400" />
+                                                <span>Kauflimit übernehmen : {stock.targetPrice.toFixed(2)} {limitCurr}</span>
+                                            </button>
+                                        </div>
+                                    );
+                                })()}
+
                                 {/* Core Inputs - Compact Grid */}
                                 <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 items-start">
                                     <div className="space-y-1">
@@ -1683,47 +1677,24 @@ export function DividendCalculator() {
                                             <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap truncate min-w-0">
                                                 {mode === 'buy' ? 'Kaufpreis' : 'Verkaufspreis'} ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
                                             </label>
-                                            <div className="flex items-center gap-1 shrink-0">
-                                                {(() => {
-                                                    const stock = stocks.find(s => s.id === selectedStockId);
-                                                    if (!stock?.targetPrice) return null;
-                                                    const isLimitActive = Math.abs(price - stock.targetPrice) < 0.01;
-                                                    return (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => updateSimulatorState({ price: stock.targetPrice! })}
-                                                            className={cn(
-                                                                "text-[10px] flex items-center gap-1 px-1.5 py-0.5 rounded-md font-semibold transition-all cursor-pointer leading-none",
-                                                                isLimitActive
-                                                                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
-                                                                    : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/40"
-                                                            )}
-                                                            title="Kauflimit als Kaufpreis setzen"
-                                                        >
-                                                            <Target className="size-2.5 text-emerald-400" />
-                                                            <span>Limit {stock.targetPrice.toFixed(2)}</span>
-                                                        </button>
-                                                    );
-                                                })()}
-                                                {(stocks.find(s => s.id === selectedStockId)?.symbol) && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={async () => {
-                                                            const stock = stocks.find(s => s.id === selectedStockId);
-                                                            if (!stock?.symbol) return;
-                                                            const res = await fetchStockHistory(stock.symbol, '1D');
-                                                            if (res.data && res.data.length > 0) {
-                                                                let val = res.data[res.data.length - 1].value;
-                                                                updateSimulatorState({ price: val });
-                                                            }
-                                                        }}
-                                                        className="text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-1.5 py-0.5 rounded-md transition-colors whitespace-nowrap shrink-0 leading-none"
-                                                        title="Aktuellen Börsenkurs laden"
-                                                    >
-                                                        <RefreshCw className="size-2.5 shrink-0" /> Kurs laden
-                                                    </button>
-                                                )}
-                                            </div>
+                                            {(stocks.find(s => s.id === selectedStockId)?.symbol) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        const stock = stocks.find(s => s.id === selectedStockId);
+                                                        if (!stock?.symbol) return;
+                                                        const res = await fetchStockHistory(stock.symbol, '1D');
+                                                        if (res.data && res.data.length > 0) {
+                                                            let val = res.data[res.data.length - 1].value;
+                                                            updateSimulatorState({ price: val });
+                                                        }
+                                                    }}
+                                                    className="text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-0.5 rounded-md transition-colors whitespace-nowrap shrink-0 leading-none"
+                                                    title="Aktuellen Kurs laden"
+                                                >
+                                                    <RefreshCw className="size-3 shrink-0" /> Kurs laden
+                                                </button>
+                                            )}
                                         </div>
                                         <LocalNumberInput
                                             step="0.01"
@@ -1731,29 +1702,8 @@ export function DividendCalculator() {
                                             onChange={(val) => updateSimulatorState({ price: val })}
                                             className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                         />
-                                        <div className="flex items-center justify-between text-xs text-muted-foreground mt-1.5 h-5 font-medium">
-                                            {(() => {
-                                                const stock = stocks.find(s => s.id === selectedStockId);
-                                                if (stock?.targetPrice) {
-                                                    const isLimitActive = Math.abs(price - stock.targetPrice) < 0.01;
-                                                    return (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => updateSimulatorState({ price: stock.targetPrice! })}
-                                                            className={cn(
-                                                                "text-[10px] flex items-center gap-1 font-mono transition-colors cursor-pointer hover:underline",
-                                                                isLimitActive ? "text-emerald-400 font-bold" : "text-muted-foreground hover:text-foreground"
-                                                            )}
-                                                            title="Kauflimit übernehmen"
-                                                        >
-                                                            <Target className="size-2.5 text-emerald-400" />
-                                                            <span>Kauflimit: {stock.targetPrice.toFixed(2)} {simCurrency}</span>
-                                                        </button>
-                                                    );
-                                                }
-                                                return <span />;
-                                            })()}
-                                            <span>pro Anteil</span>
+                                        <div className="text-xs text-muted-foreground text-right mt-1.5 h-5 font-medium">
+                                            pro Anteil
                                         </div>
                                     </div>
 

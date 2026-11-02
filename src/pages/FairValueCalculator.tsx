@@ -1118,8 +1118,7 @@ export function FairValueCalculator() {
         } else if (activeLimit && currentStock && currentStock.targetPrice !== activeLimit) {
             updateStock(targetStockId, { targetPrice: activeLimit });
         }
-        const priceParam = activeLimit && activeLimit > 0 ? `&price=${encodeURIComponent(activeLimit.toFixed(2))}` : '';
-        navigate(`/calculator?stock=${encodeURIComponent(String(targetStockId || selectedSymbol))}${priceParam}&from=fair-value`);
+        navigate(`/calculator?stock=${encodeURIComponent(String(targetStockId || selectedSymbol))}&from=fair-value`);
     };
 
     return (
