@@ -44,6 +44,35 @@ export const MortgageCalculator = () => {
     const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
     const [isWaterOpen, setIsWaterOpen] = useState(false);
 
+    const handleAddReading = (e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        const sorted = electricityReadings && electricityReadings.length > 0
+            ? [...electricityReadings].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            : [];
+        const latest = sorted[0];
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        const prevDate = latest ? latest.date : '2026-08-28';
+        const prevHT = latest ? latest.valueHT : 473;
+        const prevNT = latest ? latest.valueNT : 3108;
+
+        const newReading: ElectricityReading = {
+            id: crypto.randomUUID(),
+            dateFrom: prevDate,
+            date: todayStr > prevDate ? todayStr : prevDate,
+            standAltHT: prevHT,
+            standAltNT: prevNT,
+            valueHT: prevHT,
+            valueNT: prevNT,
+            usageHT: 0,
+            usageNT: 0,
+            billingMonths: 1,
+            invoiceNumber: ''
+        };
+        updateMortgageData({ electricityReadings: [newReading, ...(electricityReadings || [])] });
+        if (!isElectricityOpen) setIsElectricityOpen(true);
+    };
+
     // Water entry form state
 
 
@@ -1492,32 +1521,11 @@ export const MortgageCalculator = () => {
                                         </button>
                                     )}
                                     <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const sorted = electricityReadings && electricityReadings.length > 0
-                                                ? [...electricityReadings].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                                                : [];
-                                            const latest = sorted[0];
-
-                                            const newReading: ElectricityReading = {
-                                                id: crypto.randomUUID(),
-                                                dateFrom: latest?.date || '2026-08-28',
-                                                date: new Date().toISOString().split('T')[0],
-                                                standAltHT: latest ? latest.valueHT : 473,
-                                                standAltNT: latest ? latest.valueNT : 3108,
-                                                valueHT: latest ? latest.valueHT : 542,
-                                                valueNT: latest ? latest.valueNT : 3583,
-                                                usageHT: latest ? 0 : 69,
-                                                usageNT: latest ? 0 : 475,
-                                                billingMonths: 1,
-                                                invoiceNumber: ''
-                                            };
-                                            updateMortgageData({ electricityReadings: [...(electricityReadings || []), newReading] });
-                                            if (!isElectricityOpen) setIsElectricityOpen(true);
-                                        }}
+                                        onClick={handleAddReading}
                                         className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
+                                        title="Neue Stromrechnung oder Zählerablesung erfassen"
                                     >
-                                        <Plus className="size-4" /> Eingabe
+                                        <Plus className="size-4" /> Eintrag erfassen
                                     </button>
                                 </div>
                             </div>
@@ -1837,6 +1845,14 @@ export const MortgageCalculator = () => {
                                                 {(electricityReadings || []).length} {((electricityReadings || []).length === 1) ? 'Eintrag' : 'Einträge'}
                                             </span>
                                         </h3>
+                                        <button
+                                            type="button"
+                                            onClick={handleAddReading}
+                                            className="text-xs sm:text-sm bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 shadow-xs active:scale-95"
+                                            title="Neue Stromrechnung oder Ablesung erfassen"
+                                        >
+                                            <Plus className="size-4" /> Eintrag erfassen
+                                        </button>
                                     </div>
 
                                     <div className="space-y-4">
@@ -2243,8 +2259,15 @@ export const MortgageCalculator = () => {
                                         })}
 
                                         {(electricityReadings || []).length === 0 && (
-                                            <div className="text-center text-sm text-muted-foreground py-8 border border-dashed rounded-xl bg-muted/10">
-                                                Noch keine Stromrechnungen erfasst. Klicke oben auf &quot;+ Eingabe&quot;.
+                                            <div className="text-center text-sm text-muted-foreground py-8 border border-dashed rounded-xl bg-muted/10 space-y-3">
+                                                <p>Noch keine Stromrechnungen erfasst. Klicke auf &quot;+ Eintrag erfassen&quot;.</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAddReading}
+                                                    className="inline-flex items-center gap-1.5 text-xs sm:text-sm bg-primary text-primary-foreground hover:bg-primary/90 px-3.5 py-1.5 rounded-lg font-semibold transition-all shadow-xs"
+                                                >
+                                                    <Plus className="size-4" /> Eintrag erfassen
+                                                </button>
                                             </div>
                                         )}
                                     </div>
