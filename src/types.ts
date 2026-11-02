@@ -247,6 +247,7 @@ export interface MortgageData {
     electricityCustomerNumber?: string;
     electricityContractNumber?: string;
     electricityMeterNumber?: string;
+    electricityProvider?: string;
     electricityTariff?: ElectricityTariffConfig;
     electricityCalculationMode?: 'detailed' | 'simple';
 

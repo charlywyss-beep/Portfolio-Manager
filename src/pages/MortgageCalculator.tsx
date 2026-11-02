@@ -28,7 +28,7 @@ const formatCHF = (amount: number, fractionDigits = 0) => {
 export const MortgageCalculator = () => {
     const { mortgageData, updateMortgageData } = usePortfolio();
 
-    const { propertyValue, maintenanceRate, yearlyAmortization, tranches, budgetItems, incomeItems, autoCosts, fuelPricePerLiter, consumptionPer100km, dailyKm, workingDaysPerMonth, oilTankCapacity, oilPurchases, electricityReadings, electricityPriceHT, electricityPriceNT, electricityCustomerNumber, electricityContractNumber, electricityMeterNumber, waterHistory } = mortgageData;
+    const { propertyValue, maintenanceRate, yearlyAmortization, tranches, budgetItems, incomeItems, autoCosts, fuelPricePerLiter, consumptionPer100km, dailyKm, workingDaysPerMonth, oilTankCapacity, oilPurchases, electricityReadings, electricityPriceHT, electricityPriceNT, electricityCustomerNumber, electricityContractNumber, electricityMeterNumber, electricityProvider, waterHistory } = mortgageData;
 
     const [isFuelCalcOpen, setIsFuelCalcOpen] = useState(false);
 
@@ -1529,7 +1529,7 @@ export const MortgageCalculator = () => {
                                 {/* 1. Kundendaten: Exakt im gleichen 4-Spalten Grid wie die Zählererfassung */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 bg-accent/20 p-3.5 rounded-xl border border-border/60">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap py-0.5">
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center justify-end gap-1.5 whitespace-nowrap py-0.5">
                                             <CircleUser className="size-4 text-primary shrink-0" />
                                             Kundennummer
                                         </label>
@@ -1543,7 +1543,7 @@ export const MortgageCalculator = () => {
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap py-0.5">
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center justify-end gap-1.5 whitespace-nowrap py-0.5">
                                             <FileText className="size-4 text-primary shrink-0" />
                                             Vertragskonto
                                         </label>
@@ -1557,7 +1557,7 @@ export const MortgageCalculator = () => {
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap py-0.5">
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center justify-end gap-1.5 whitespace-nowrap py-0.5">
                                             <CircleGauge className="size-4 text-primary shrink-0" />
                                             Zähler-Nr.
                                         </label>
@@ -1571,13 +1571,18 @@ export const MortgageCalculator = () => {
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap py-0.5">
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center justify-end gap-1.5 whitespace-nowrap py-0.5">
                                             <Zap className="size-4 text-primary shrink-0" />
                                             Stromversorger
                                         </label>
-                                        <div className="w-full h-9 bg-muted/40 border border-input/60 rounded-lg px-2.5 flex items-center justify-end text-sm font-semibold text-foreground">
-                                            Eniwa AG
-                                        </div>
+                                        <input
+                                            type="text"
+                                            value={electricityProvider !== undefined ? electricityProvider : 'Eniwa AG'}
+                                            onChange={(e) => updateMortgageData({ electricityProvider: e.target.value })}
+                                            onFocus={(e) => e.target.select()}
+                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-bold text-right focus:ring-1 focus:ring-primary"
+                                            placeholder="z.B. Eniwa AG"
+                                        />
                                     </div>
                                 </div>
 
@@ -1945,7 +1950,7 @@ export const MortgageCalculator = () => {
                                                                 </div>
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Rechnungs-Nr.</label>
+                                                                <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap text-right">Rechnungs-Nr.</label>
                                                                 <input
                                                                     type="text"
                                                                     value={reading.invoiceNumber || ''}
@@ -1978,7 +1983,7 @@ export const MortgageCalculator = () => {
                                                         {/* ZEILE 3: Zählerstände (Exakt gleiche 4 Spalten darunter wie Zeile 1) */}
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                                                             <div className="space-y-1">
-                                                                <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Stand alt HT</span>
+                                                                <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap text-right">Stand alt HT</span>
                                                                 <DecimalInput
                                                                     value={reading.standAltHT ?? (reading.valueHT === 542 ? 473 : 0)}
                                                                     placeholder="Alt"
@@ -1992,7 +1997,7 @@ export const MortgageCalculator = () => {
                                                                 />
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Stand neu HT</span>
+                                                                <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap text-right">Stand neu HT</span>
                                                                 <DecimalInput
                                                                     value={reading.valueHT}
                                                                     placeholder="Neu"
@@ -2007,7 +2012,7 @@ export const MortgageCalculator = () => {
                                                                 />
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Stand alt NT</span>
+                                                                <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap text-right">Stand alt NT</span>
                                                                 <DecimalInput
                                                                     value={reading.standAltNT ?? (reading.valueNT === 3583 ? 3108 : 0)}
                                                                     placeholder="Alt"
@@ -2021,7 +2026,7 @@ export const MortgageCalculator = () => {
                                                                 />
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Stand neu NT</span>
+                                                                <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap text-right">Stand neu NT</span>
                                                                 <DecimalInput
                                                                     value={reading.valueNT}
                                                                     placeholder="Neu"
