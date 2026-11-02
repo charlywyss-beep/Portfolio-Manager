@@ -182,11 +182,43 @@ export interface OilPurchase {
     pricePer100L: number;   // Price per 100L in CHF (e.g., 122)
 }
 
+export interface ElectricityTariffConfig {
+    // 1. Energie (Rp./kWh)
+    energyHT: number;           // z.B. 10.90 Rp./kWh
+    energyNT: number;           // z.B. 9.10 Rp./kWh
+    // 2. Netznutzung (Rp./kWh & CHF/Monat)
+    gridHT: number;             // z.B. 12.90 Rp./kWh
+    gridNT: number;             // z.B. 9.10 Rp./kWh
+    gridSdl: number;            // Systemdienstleistungen Swissgrid (z.B. 0.27 Rp./kWh)
+    gridReserve: number;        // Stromreserve des Bundes (z.B. 0.41 Rp./kWh)
+    gridSolidar: number;        // Zuschlag solidarisierte Kosten (z.B. 0.05 Rp./kWh)
+    gridBaseFee: number;        // Grundpreis Netznutzung (z.B. CHF 5.00/Monat)
+    gridMeasurementFee: number; // Messkosten direkt (z.B. CHF 6.20/Monat)
+    // 3. Öffentliche Abgaben (Rp./kWh)
+    communityFee: number;       // Konzessionsabgabe an Gemeinde (z.B. 0.85 Rp./kWh)
+    federalFee: number;         // Bundesabgaben gemäss Energiegesetz (z.B. 2.30 Rp./kWh)
+    // 4. Mehrwertsteuer (%)
+    vatRate: number;            // Standard 8.1 %
+}
+
 export interface ElectricityReading {
     id: string;
-    date: string;
-    valueHT: number; // Hochtarif Zählerstand
-    valueNT: number; // Niedertarif Zählerstand
+    date: string;               // Ablesedatum / Bis-Datum (YYYY-MM-DD)
+    dateFrom?: string;          // Von-Datum (Ablesezeitraum Start, YYYY-MM-DD)
+    valueHT: number;            // Stand neu HT (Zählerstand)
+    valueNT: number;            // Stand neu NT (Zählerstand)
+    standAltHT?: number;        // Stand alt HT
+    standAltNT?: number;        // Stand alt NT
+    usageHT?: number;           // Verbrauch Wirkenergie HT (kWh)
+    usageNT?: number;           // Verbrauch Wirkenergie NT (kWh)
+    billingMonths?: number;     // Abrechnungsmonate für Fixkosten (z.B. 1)
+    invoiceNumber?: string;     // Optionale Rechnungs-Nr. (z.B. 7 134 488)
+    costEnergy?: number;        // Zwischentotal Energie exkl. MwSt
+    costGrid?: number;          // Zwischentotal Netznutzung exkl. MwSt
+    costFees?: number;          // Zwischentotal Abgaben exkl. MwSt
+    costTotalExclVat?: number;  // Zwischentotal Strom exkl. MwSt
+    costVat?: number;           // MwSt Betrag
+    costTotal?: number;         // Rechnungsbetrag inkl. MwSt
 }
 
 export interface MortgageData {
@@ -215,6 +247,8 @@ export interface MortgageData {
     electricityCustomerNumber?: string;
     electricityContractNumber?: string;
     electricityMeterNumber?: string;
+    electricityTariff?: ElectricityTariffConfig;
+    electricityCalculationMode?: 'detailed' | 'simple';
 
     // Wasser (Vereinfachtes Modell)
     waterHistory?: WaterYearlyEntry[];

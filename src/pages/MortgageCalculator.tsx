@@ -1,6 +1,6 @@
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { useMemo, useState } from 'react';
-import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car, ChevronDown, ChevronUp, Fuel, Zap, User, FileText, Gauge, Droplets } from 'lucide-react';
+import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car, ChevronDown, ChevronUp, Fuel, Zap, User, FileText, Gauge, Droplets, Calendar, ReceiptText, TrendingUp } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { cn } from '../utils';
@@ -9,7 +9,13 @@ import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip as Rec
 import { SaronChart } from '../components/SaronChart';
 import { DecimalInput } from '../components/DecimalInput';
 import { usePortfolio } from '../context/PortfolioContext';
-import type { MortgageTranche, BudgetEntry, OilPurchase, ElectricityReading } from '../types';
+import type { MortgageTranche, BudgetEntry, OilPurchase, ElectricityReading, ElectricityTariffConfig } from '../types';
+import {
+    DEFAULT_ELECTRICITY_TARIFF,
+    calculateElectricityInvoice,
+    calculatePeriodDays,
+    getReadingUsage
+} from '../utils/electricityCalculator';
 
 const formatCHF = (amount: number, fractionDigits = 0) => {
     return new Intl.NumberFormat('de-CH', {
@@ -34,6 +40,8 @@ export const MortgageCalculator = () => {
     const [isAutoOpen, setIsAutoOpen] = useState(false);
     const [isHeatingCalcOpen, setIsHeatingCalcOpen] = useState(false);
     const [isElectricityOpen, setIsElectricityOpen] = useState(false);
+    const [isElectricityTariffOpen, setIsElectricityTariffOpen] = useState(false);
+    const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
     const [isWaterOpen, setIsWaterOpen] = useState(false);
 
     // Water entry form state
@@ -85,57 +93,88 @@ export const MortgageCalculator = () => {
         };
     }, [oilPurchases]);
 
-    // Strom Statistik
-    const electricityStats = useMemo(() => {
-        if (!electricityReadings || electricityReadings.length < 2) return null;
+    // Strom Statistik & Tarif-Helper
+    const electricityTariff = mortgageData.electricityTariff || DEFAULT_ELECTRICITY_TARIFF;
 
+    const updateTariff = (field: keyof ElectricityTariffConfig, val: number) => {
+        const updated = { ...(mortgageData.electricityTariff || DEFAULT_ELECTRICITY_TARIFF), [field]: val };
+        const inv = calculateElectricityInvoice(100, 100, 1, updated);
+        updateMortgageData({
+            electricityTariff: updated,
+            electricityPriceHT: inv.effectiveRateHTRp,
+            electricityPriceNT: inv.effectiveRateNTRp
+        });
+    };
+
+    const resetToEniwaTariff = () => {
+        const inv = calculateElectricityInvoice(100, 100, 1, DEFAULT_ELECTRICITY_TARIFF);
+        updateMortgageData({
+            electricityTariff: { ...DEFAULT_ELECTRICITY_TARIFF },
+            electricityPriceHT: inv.effectiveRateHTRp,
+            electricityPriceNT: inv.effectiveRateNTRp
+        });
+    };
+
+    const electricityStats = useMemo(() => {
+        if (!electricityReadings || electricityReadings.length === 0) return null;
+
+        const tariff = mortgageData.electricityTariff || DEFAULT_ELECTRICITY_TARIFF;
         const sorted = [...electricityReadings].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
         let totalUsageHT = 0;
         let totalUsageNT = 0;
         let totalDays = 0;
+        let totalCostRecorded = 0;
 
-        // Preise in CHF umrechnen (Eingabe ist in Rp.)
-        const priceHT = (electricityPriceHT || 0) / 100;
-        const priceNT = (electricityPriceNT || 0) / 100;
-
-        for (let i = 1; i < sorted.length; i++) {
-            const prev = sorted[i - 1];
+        for (let i = 0; i < sorted.length; i++) {
             const curr = sorted[i];
+            const prev = i > 0 ? sorted[i - 1] : undefined;
+            const { usageHT, usageNT } = getReadingUsage(curr, prev);
 
-            const days = (new Date(curr.date).getTime() - new Date(prev.date).getTime()) / (1000 * 3600 * 24);
-            if (days <= 0) continue;
+            let days = 0;
+            let months = curr.billingMonths || 1;
 
-            const usageHT = curr.valueHT - prev.valueHT;
-            const usageNT = curr.valueNT - prev.valueNT;
+            if (curr.dateFrom && curr.date) {
+                const p = calculatePeriodDays(curr.dateFrom, curr.date);
+                days = p.days;
+                if (!curr.billingMonths) months = p.months;
+            } else if (prev) {
+                days = Math.max(1, Math.round((new Date(curr.date).getTime() - new Date(prev.date).getTime()) / (1000 * 3600 * 24)));
+                months = Math.max(1, Math.round(days / 30.416));
+            } else if (usageHT > 0 || usageNT > 0) {
+                days = 33;
+                months = 1;
+            }
 
-            // Ignore resets or negative usage (meter replacement/rollover not handled for simplicity unless explicit)
-            if (usageHT >= 0) totalUsageHT += usageHT;
-            if (usageNT >= 0) totalUsageNT += usageNT;
-
-            totalDays += days;
+            if (days > 0 && (usageHT > 0 || usageNT > 0 || curr.costTotal)) {
+                totalDays += days;
+                totalUsageHT += usageHT;
+                totalUsageNT += usageNT;
+                const inv = calculateElectricityInvoice(usageHT, usageNT, months, tariff);
+                totalCostRecorded += (curr.costTotal || inv.totalInclVat);
+            }
         }
 
         if (totalDays === 0) return null;
 
-        // Annualize
         const avgUsageHTPerDay = totalUsageHT / totalDays;
         const avgUsageNTPerDay = totalUsageNT / totalDays;
-
         const annualUsageHT = avgUsageHTPerDay * 365;
         const annualUsageNT = avgUsageNTPerDay * 365;
 
-        const annualCostHT = annualUsageHT * priceHT;
-        const annualCostNT = annualUsageNT * priceNT;
+        // Breakdown for annual cost based on tariff
+        const annualInvoice = calculateElectricityInvoice(annualUsageHT, annualUsageNT, 12, tariff);
 
         return {
             annualUsageHT,
             annualUsageNT,
-            annualCost: annualCostHT + annualCostNT,
-            avgCostHT: annualCostHT,
-            avgCostNT: annualCostNT
+            annualCost: annualInvoice.totalInclVat,
+            avgCostHT: annualInvoice.energyHTAmount + annualInvoice.gridHTAmount,
+            avgCostNT: annualInvoice.energyNTAmount + annualInvoice.gridNTAmount,
+            annualInvoice,
+            totalDays
         };
-    }, [electricityReadings, electricityPriceHT, electricityPriceNT]);
+    }, [electricityReadings, mortgageData.electricityTariff, electricityPriceHT, electricityPriceNT]);
 
     // Water Statistics
     const waterStats = useMemo(() => {
@@ -1326,31 +1365,46 @@ export const MortgageCalculator = () => {
                                 Strom Kosten
                                 {isElectricityOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
                             </h2>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const newReading: ElectricityReading = {
-                                        id: crypto.randomUUID(),
-                                        date: new Date().toISOString().split('T')[0],
-                                        valueHT: 0,
-                                        valueNT: 0
-                                    };
-                                    updateMortgageData({ electricityReadings: [...(electricityReadings || []), newReading] });
-                                    if (!isElectricityOpen) setIsElectricityOpen(true);
-                                }}
-                                className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
-                            >
-                                <Plus className="size-4" /> Eingabe
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const sorted = electricityReadings && electricityReadings.length > 0
+                                            ? [...electricityReadings].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                            : [];
+                                        const latest = sorted[0];
+
+                                        const newReading: ElectricityReading = {
+                                            id: crypto.randomUUID(),
+                                            dateFrom: latest?.date || '2026-08-28',
+                                            date: new Date().toISOString().split('T')[0],
+                                            standAltHT: latest ? latest.valueHT : 473,
+                                            standAltNT: latest ? latest.valueNT : 3108,
+                                            valueHT: latest ? latest.valueHT : 542,
+                                            valueNT: latest ? latest.valueNT : 3583,
+                                            usageHT: latest ? 0 : 69,
+                                            usageNT: latest ? 0 : 475,
+                                            billingMonths: 1,
+                                            invoiceNumber: ''
+                                        };
+                                        updateMortgageData({ electricityReadings: [...(electricityReadings || []), newReading] });
+                                        if (!isElectricityOpen) setIsElectricityOpen(true);
+                                    }}
+                                    className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
+                                >
+                                    <Plus className="size-4" /> Rechnung / Ablesung erfassen
+                                </button>
+                            </div>
                         </div>
+
                         {isElectricityOpen && (
                             <div className="p-6 border-b border-border space-y-6">
 
-                                {/* Metadata Section (Kundennummer, etc.) */}
-                                <div className="grid grid-cols-3 gap-4 bg-accent/20 p-3 rounded-lg border border-border/50">
+                                {/* 1. Metadata Section (Kundennummer, Vertragskonto, Zähler) */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-accent/20 p-3 rounded-lg border border-border/50">
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase font-semibold">
-                                            <User className="size-3" />
+                                            <User className="size-3 text-primary" />
                                             Kundennummer
                                         </div>
                                         <input
@@ -1358,13 +1412,13 @@ export const MortgageCalculator = () => {
                                             value={electricityCustomerNumber || ''}
                                             onChange={(e) => updateMortgageData({ electricityCustomerNumber: e.target.value })}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full bg-background border border-input rounded px-2 py-1.5 text-sm font-medium focus:ring-1 focus:ring-primary"
-                                            placeholder="z.B. 129865"
+                                            className="w-full bg-background border border-input rounded px-2.5 py-1.5 text-sm font-medium focus:ring-1 focus:ring-primary"
+                                            placeholder="z.B. 130584"
                                         />
                                     </div>
-                                    <div className="space-y-1 border-l border-border/50 pl-4">
+                                    <div className="space-y-1 md:border-l md:border-border/50 md:pl-4">
                                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase font-semibold">
-                                            <FileText className="size-3" />
+                                            <FileText className="size-3 text-primary" />
                                             Vertragskonto
                                         </div>
                                         <input
@@ -1372,200 +1426,704 @@ export const MortgageCalculator = () => {
                                             value={electricityContractNumber || ''}
                                             onChange={(e) => updateMortgageData({ electricityContractNumber: e.target.value })}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full bg-background border border-input rounded px-2 py-1.5 text-sm font-medium focus:ring-1 focus:ring-primary"
-                                            placeholder="z.B. 530160"
+                                            className="w-full bg-background border border-input rounded px-2.5 py-1.5 text-sm font-medium focus:ring-1 focus:ring-primary"
+                                            placeholder="z.B. 530879"
                                         />
                                     </div>
-                                    <div className="space-y-1 border-l border-border/50 pl-4">
+                                    <div className="space-y-1 md:border-l md:border-border/50 md:pl-4">
                                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase font-semibold">
-                                            <Gauge className="size-3" />
-                                            Zähler
+                                            <Gauge className="size-3 text-primary" />
+                                            Zähler-Nr.
                                         </div>
                                         <input
                                             type="text"
                                             value={electricityMeterNumber || ''}
                                             onChange={(e) => updateMortgageData({ electricityMeterNumber: e.target.value })}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full bg-background border border-input rounded px-2 py-1.5 text-sm font-medium focus:ring-1 focus:ring-primary"
-                                            placeholder="z.B. 53212"
+                                            className="w-full bg-background border border-input rounded px-2.5 py-1.5 text-sm font-medium focus:ring-1 focus:ring-primary"
+                                            placeholder="z.B. 1LGZ0188395373"
                                         />
                                     </div>
                                 </div>
 
-                                {/* Price Inputs */}
-                                <div className="grid grid-cols-2 gap-4 bg-accent/30 p-3 rounded-lg border border-border/50">
-                                    <div className="space-y-1">
-                                        <label className="text-sm font-medium text-foreground block">
-                                            Hochtarif (Total) <span className="opacity-70 text-xs font-normal text-muted-foreground block">Energie + Netz + Abgaben</span>
-                                        </label>
-                                        <div className="relative w-[140px]">
-                                            <DecimalInput
-                                                value={electricityPriceHT || 0}
-                                                onChange={(val) => updateMortgageData({ electricityPriceHT: parseFloat(val) || 0 })}
-                                                className="w-full bg-background border border-input rounded px-3 py-2 pl-3 pr-16 text-base"
-                                            />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">Rp./kWh</span>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-sm font-medium text-foreground block">
-                                            Niedertarif (Total) <span className="opacity-70 text-xs font-normal text-muted-foreground block">Energie + Netz + Abgaben</span>
-                                        </label>
-                                        <div className="relative w-[140px]">
-                                            <DecimalInput
-                                                value={electricityPriceNT || 0}
-                                                onChange={(val) => updateMortgageData({ electricityPriceNT: parseFloat(val) || 0 })}
-                                                className="w-full bg-background border border-input rounded px-3 py-2 pl-3 pr-16 text-base"
-                                            />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">Rp./kWh</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Reading List */}
-                                <div className="space-y-2 pt-2">
-                                    <div className="grid grid-cols-12 gap-2 text-xs uppercase font-semibold text-muted-foreground mb-1 px-2">
-                                        <div className="col-span-4">Datum</div>
-                                        <div className="col-span-3 text-right">HT Stand</div>
-                                        <div className="col-span-3 text-right">NT Stand</div>
-                                        <div className="col-span-1"></div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        {(electricityReadings || []).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((reading) => (
-                                            <div key={reading.id} className="grid grid-cols-12 gap-2 items-center bg-accent/30 p-2 rounded border border-border/50 text-base">
-                                                <div className="col-span-4">
-                                                    <input
-                                                        type="date"
-                                                        value={reading.date}
-                                                        onChange={(e) => {
-                                                            const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, date: e.target.value } : r);
-                                                            updateMortgageData({ electricityReadings: newReadings });
-                                                        }}
-                                                        className="w-full bg-background border border-input rounded px-3 py-1.5 text-sm h-9"
-                                                    />
+                                {/* 2. Tarif & Kostenpunkte (1:1 gemäss Stromrechnung / StromVG) */}
+                                <div className="bg-card border border-border/80 rounded-xl overflow-hidden">
+                                    <div
+                                        className="p-3.5 bg-muted/40 flex items-center justify-between cursor-pointer hover:bg-muted/60 transition-colors"
+                                        onClick={() => setIsElectricityTariffOpen(!isElectricityTariffOpen)}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <div className="size-7 rounded-lg bg-yellow-500/10 text-yellow-500 flex items-center justify-center font-bold">
+                                                ⚡
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-bold flex items-center gap-2">
+                                                    Tarif-Kostenpunkte (gemäss Stromrechnung)
+                                                    <span className="text-[11px] font-normal text-muted-foreground bg-background/80 border border-border/60 px-2 py-0.5 rounded-full">
+                                                        Eniwa Naturstrom Schweiz
+                                                    </span>
                                                 </div>
-                                                <div className="col-span-3">
-                                                    <DecimalInput
-                                                        value={reading.valueHT}
-                                                        onChange={(val) => {
-                                                            const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueHT: parseFloat(val) || 0 } : r);
-                                                            updateMortgageData({ electricityReadings: newReadings });
-                                                        }}
-                                                        className="w-full bg-background border border-input rounded px-3 py-1.5 text-sm h-9 text-right"
-                                                    />
-                                                </div>
-                                                <div className="col-span-3">
-                                                    <DecimalInput
-                                                        value={reading.valueNT}
-                                                        onChange={(val) => {
-                                                            const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueNT: parseFloat(val) || 0 } : r);
-                                                            updateMortgageData({ electricityReadings: newReadings });
-                                                        }}
-                                                        className="w-full bg-background border border-input rounded px-3 py-1.5 text-sm h-9 text-right"
-                                                    />
-                                                </div>
-                                                <div className="col-span-1 flex justify-end">
-                                                    <button
-                                                        onClick={() => {
-                                                            const newReadings = electricityReadings?.filter(r => r.id !== reading.id);
-                                                            updateMortgageData({ electricityReadings: newReadings });
-                                                        }}
-                                                        className="text-muted-foreground hover:text-destructive"
-                                                    >
-                                                        <Trash2 className="size-4" />
-                                                    </button>
+                                                <div className="text-xs text-muted-foreground mt-0.5">
+                                                    Effektiv: HT {(electricityTariff.energyHT + electricityTariff.gridHT + electricityTariff.gridSdl + electricityTariff.gridReserve + electricityTariff.gridSolidar + electricityTariff.communityFee + electricityTariff.federalFee).toFixed(2)} Rp. (+MwSt ~{((electricityTariff.energyHT + electricityTariff.gridHT + electricityTariff.gridSdl + electricityTariff.gridReserve + electricityTariff.gridSolidar + electricityTariff.communityFee + electricityTariff.federalFee) * 1.081).toFixed(1)} Rp./kWh) | Feste Monatskosten: CHF {((electricityTariff.gridBaseFee + electricityTariff.gridMeasurementFee) * 1.081).toFixed(2)}/Mt.
                                                 </div>
                                             </div>
-                                        ))}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    resetToEniwaTariff();
+                                                }}
+                                                className="text-xs bg-background border border-border hover:bg-muted px-2.5 py-1 rounded text-foreground font-medium transition-colors shadow-2xs"
+                                                title="Setzt die Standard-Kostenpunkte von Eniwa zurück"
+                                            >
+                                                Standard Eniwa Werte laden
+                                            </button>
+                                            <div className="p-1 text-muted-foreground">
+                                                {isElectricityTariffOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {isElectricityTariffOpen && (
+                                        <div className="p-4 space-y-4 border-t border-border/60 bg-background/60">
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                                                {/* Block 1: Energie */}
+                                                <div className="p-3 rounded-lg border border-border/60 bg-muted/20 space-y-2.5">
+                                                    <div className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5 border-b border-border/50 pb-1.5">
+                                                        <span>1. Energie (Wirkenergie)</span>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-medium text-foreground block">
+                                                            Hochtarif (HT) <span className="text-[11px] text-muted-foreground">(Eniwa Naturstrom)</span>
+                                                        </label>
+                                                        <div className="relative">
+                                                            <DecimalInput
+                                                                value={electricityTariff.energyHT}
+                                                                onChange={(val) => updateTariff('energyHT', parseFloat(val) || 0)}
+                                                                className="w-full bg-background border border-input rounded px-2.5 py-1.5 pr-14 text-sm font-mono"
+                                                            />
+                                                            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">Rp./kWh</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-medium text-foreground block">
+                                                            Niedertarif (NT) <span className="text-[11px] text-muted-foreground">(Eniwa Naturstrom)</span>
+                                                        </label>
+                                                        <div className="relative">
+                                                            <DecimalInput
+                                                                value={electricityTariff.energyNT}
+                                                                onChange={(val) => updateTariff('energyNT', parseFloat(val) || 0)}
+                                                                className="w-full bg-background border border-input rounded px-2.5 py-1.5 pr-14 text-sm font-mono"
+                                                            />
+                                                            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">Rp./kWh</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Block 2: Netznutzung */}
+                                                <div className="p-3 rounded-lg border border-border/60 bg-muted/20 space-y-2.5">
+                                                    <div className="text-xs font-bold uppercase tracking-wider text-blue-500 flex items-center gap-1.5 border-b border-border/50 pb-1.5">
+                                                        <span>2. Netznutzung (Netz & Umlagen)</span>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <div className="space-y-1">
+                                                            <label className="text-xs font-medium text-foreground block">Netz HT</label>
+                                                            <div className="relative">
+                                                                <DecimalInput
+                                                                    value={electricityTariff.gridHT}
+                                                                    onChange={(val) => updateTariff('gridHT', parseFloat(val) || 0)}
+                                                                    className="w-full bg-background border border-input rounded px-2 py-1 pr-11 text-xs font-mono"
+                                                                />
+                                                                <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">Rp.</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-xs font-medium text-foreground block">Netz NT</label>
+                                                            <div className="relative">
+                                                                <DecimalInput
+                                                                    value={electricityTariff.gridNT}
+                                                                    onChange={(val) => updateTariff('gridNT', parseFloat(val) || 0)}
+                                                                    className="w-full bg-background border border-input rounded px-2 py-1 pr-11 text-xs font-mono"
+                                                                />
+                                                                <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">Rp.</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="grid grid-cols-3 gap-1.5 text-xs">
+                                                        <div className="space-y-0.5">
+                                                            <label className="text-[10px] text-muted-foreground block truncate" title="Systemdienstleistungen Swissgrid">Swissgrid SDL</label>
+                                                            <DecimalInput
+                                                                value={electricityTariff.gridSdl}
+                                                                onChange={(val) => updateTariff('gridSdl', parseFloat(val) || 0)}
+                                                                className="w-full bg-background border border-input rounded px-1.5 py-1 text-xs font-mono"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-0.5">
+                                                            <label className="text-[10px] text-muted-foreground block truncate" title="Stromreserve des Bundes">Stromreserve</label>
+                                                            <DecimalInput
+                                                                value={electricityTariff.gridReserve}
+                                                                onChange={(val) => updateTariff('gridReserve', parseFloat(val) || 0)}
+                                                                className="w-full bg-background border border-input rounded px-1.5 py-1 text-xs font-mono"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-0.5">
+                                                            <label className="text-[10px] text-muted-foreground block truncate" title="Zuschlag Übertragungsnetz">Solidar. Netz</label>
+                                                            <DecimalInput
+                                                                value={electricityTariff.gridSolidar}
+                                                                onChange={(val) => updateTariff('gridSolidar', parseFloat(val) || 0)}
+                                                                className="w-full bg-background border border-input rounded px-1.5 py-1 text-xs font-mono"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-border/40">
+                                                        <div className="space-y-0.5">
+                                                            <label className="text-[11px] font-medium text-foreground block truncate">Grundpreis Netznutzung</label>
+                                                            <div className="relative">
+                                                                <DecimalInput
+                                                                    value={electricityTariff.gridBaseFee}
+                                                                    onChange={(val) => updateTariff('gridBaseFee', parseFloat(val) || 0)}
+                                                                    className="w-full bg-background border border-input rounded px-2 py-1 pr-14 text-xs font-mono"
+                                                                />
+                                                                <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">CHF/Mt.</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="space-y-0.5">
+                                                            <label className="text-[11px] font-medium text-foreground block truncate">Messkosten direkt</label>
+                                                            <div className="relative">
+                                                                <DecimalInput
+                                                                    value={electricityTariff.gridMeasurementFee}
+                                                                    onChange={(val) => updateTariff('gridMeasurementFee', parseFloat(val) || 0)}
+                                                                    className="w-full bg-background border border-input rounded px-2 py-1 pr-14 text-xs font-mono"
+                                                                />
+                                                                <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">CHF/Mt.</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Block 3: Öffentliche Abgaben & Steuern */}
+                                                <div className="p-3 rounded-lg border border-border/60 bg-muted/20 space-y-2.5">
+                                                    <div className="text-xs font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1.5 border-b border-border/50 pb-1.5">
+                                                        <span>3. Öffentliche Abgaben & MwSt</span>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-medium text-foreground block">
+                                                            Konzessionsabgabe Gemeinde
+                                                        </label>
+                                                        <div className="relative">
+                                                            <DecimalInput
+                                                                value={electricityTariff.communityFee}
+                                                                onChange={(val) => updateTariff('communityFee', parseFloat(val) || 0)}
+                                                                className="w-full bg-background border border-input rounded px-2.5 py-1.5 pr-14 text-sm font-mono"
+                                                            />
+                                                            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">Rp./kWh</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-medium text-foreground block">
+                                                            Bundesabgaben (Energiegesetz / KEV)
+                                                        </label>
+                                                        <div className="relative">
+                                                            <DecimalInput
+                                                                value={electricityTariff.federalFee}
+                                                                onChange={(val) => updateTariff('federalFee', parseFloat(val) || 0)}
+                                                                className="w-full bg-background border border-input rounded px-2.5 py-1.5 pr-14 text-sm font-mono"
+                                                            />
+                                                            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">Rp./kWh</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-1 pt-1 border-t border-border/40">
+                                                        <label className="text-xs font-medium text-foreground block">
+                                                            Mehrwertsteuer (MwSt)
+                                                        </label>
+                                                        <div className="relative">
+                                                            <DecimalInput
+                                                                value={electricityTariff.vatRate}
+                                                                onChange={(val) => updateTariff('vatRate', parseFloat(val) || 0)}
+                                                                className="w-full bg-background border border-input rounded px-2.5 py-1.5 pr-10 text-sm font-mono"
+                                                            />
+                                                            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 3. Erfasste Rechnungen & Ablesungen (mit Zeitraum von–bis & 1:1 Kostenabbild) */}
+                                <div className="space-y-3 pt-2">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                                            <span>Erfasste Stromrechnungen & Ablesungen</span>
+                                            <span className="text-xs font-medium bg-primary/10 text-primary px-2.5 py-0.5 rounded-full">
+                                                {(electricityReadings || []).length} {((electricityReadings || []).length === 1) ? 'Eintrag' : 'Einträge'}
+                                            </span>
+                                        </h3>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {(electricityReadings || []).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((reading, index, arr) => {
+                                            const prevReading = index < arr.length - 1 ? arr[index + 1] : undefined;
+                                            const { usageHT, usageNT } = getReadingUsage(reading, prevReading);
+                                            const totalUsage = usageHT + usageNT;
+                                            const period = calculatePeriodDays(reading.dateFrom, reading.date);
+                                            const months = reading.billingMonths || period.months;
+                                            const invoice = calculateElectricityInvoice(usageHT, usageNT, months, electricityTariff);
+                                            const isExpanded = expandedInvoiceId === reading.id;
+
+                                            return (
+                                                <div key={reading.id} className="bg-card border border-border rounded-xl p-3.5 shadow-2xs space-y-3 transition-all hover:border-primary/40">
+                                                    
+                                                    {/* Header-Zeile mit Zeitraum, Gesamtverbrauch und Total Betrag */}
+                                                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5">
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <span className="text-xs font-bold bg-muted px-2.5 py-1 rounded-md text-foreground flex items-center gap-1.5">
+                                                                <Calendar className="size-3.5 text-primary" />
+                                                                {reading.dateFrom ? `${new Date(reading.dateFrom).toLocaleDateString('de-CH')} – ` : ''}
+                                                                {new Date(reading.date).toLocaleDateString('de-CH')}
+                                                            </span>
+                                                            <span className="text-xs text-muted-foreground font-medium">
+                                                                ({period.days} Tage / {months} Mt.)
+                                                            </span>
+                                                            {reading.invoiceNumber && (
+                                                                <span className="text-xs text-muted-foreground border border-border/80 px-2 py-0.5 rounded">
+                                                                    Rechnungs-Nr. {reading.invoiceNumber}
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="flex items-center gap-2 ml-auto">
+                                                            <div className="text-right">
+                                                                <div className="text-base font-extrabold font-mono text-emerald-400">
+                                                                    {formatCHF(reading.costTotal || invoice.totalInclVat, 2)}
+                                                                </div>
+                                                                <div className="text-[11px] text-muted-foreground">
+                                                                    Verbrauch: <span className="font-semibold text-foreground">{totalUsage.toLocaleString('de-CH')} kWh</span> (HT: {usageHT} / NT: {usageNT})
+                                                                </div>
+                                                            </div>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setExpandedInvoiceId(isExpanded ? null : reading.id)}
+                                                                className={cn(
+                                                                    "px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors flex items-center gap-1 shrink-0",
+                                                                    isExpanded
+                                                                        ? "bg-primary text-primary-foreground border-primary"
+                                                                        : "bg-muted/60 hover:bg-muted text-foreground border-border"
+                                                                )}
+                                                                title="1:1 Rechnungs-Abbild aufklappen"
+                                                            >
+                                                                <ReceiptText className="size-3.5" />
+                                                                <span>{isExpanded ? 'Details verbergen' : 'Rechnung 1:1'}</span>
+                                                            </button>
+
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newReadings = electricityReadings?.filter(r => r.id !== reading.id);
+                                                                    updateMortgageData({ electricityReadings: newReadings });
+                                                                }}
+                                                                className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                                                                title="Eintrag löschen"
+                                                            >
+                                                                <Trash2 className="size-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Eingabefelder: Zeitraum & Zählerstände (Stand alt -> Stand neu -> Verbrauch) */}
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5 text-xs">
+                                                        <div className="space-y-1">
+                                                            <label className="text-muted-foreground font-semibold uppercase text-[10.5px]">Ablesung Von</label>
+                                                            <input
+                                                                type="date"
+                                                                value={reading.dateFrom || (reading.date === '2026-09-30' ? '2026-08-28' : '')}
+                                                                onChange={(e) => {
+                                                                    const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, dateFrom: e.target.value } : r);
+                                                                    updateMortgageData({ electricityReadings: newReadings });
+                                                                }}
+                                                                className="w-full bg-background border border-input rounded px-2 py-1.5 text-xs font-mono"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-muted-foreground font-semibold uppercase text-[10.5px]">Ablesung Bis</label>
+                                                            <input
+                                                                type="date"
+                                                                value={reading.date}
+                                                                onChange={(e) => {
+                                                                    const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, date: e.target.value } : r);
+                                                                    updateMortgageData({ electricityReadings: newReadings });
+                                                                }}
+                                                                className="w-full bg-background border border-input rounded px-2 py-1.5 text-xs font-mono"
+                                                            />
+                                                        </div>
+
+                                                        {/* HT Zählerstand alt -> neu -> kWh */}
+                                                        <div className="space-y-1">
+                                                            <div className="flex justify-between items-center text-[10.5px] uppercase font-semibold text-muted-foreground">
+                                                                <span>Stand alt HT</span>
+                                                                <span className="text-primary font-bold">{usageHT} kWh</span>
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-1">
+                                                                <DecimalInput
+                                                                    value={reading.standAltHT ?? 473}
+                                                                    placeholder="Alt"
+                                                                    onChange={(val) => {
+                                                                        const parsed = parseFloat(val) || 0;
+                                                                        const newUsage = Math.max(0, reading.valueHT - parsed);
+                                                                        const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, standAltHT: parsed, usageHT: newUsage } : r);
+                                                                        updateMortgageData({ electricityReadings: newReadings });
+                                                                    }}
+                                                                    className="w-full bg-background border border-input rounded px-2 py-1.5 text-xs font-mono text-right"
+                                                                    title="Stand alt Wirkenergie HT"
+                                                                />
+                                                                <DecimalInput
+                                                                    value={reading.valueHT}
+                                                                    placeholder="Neu"
+                                                                    onChange={(val) => {
+                                                                        const parsed = parseFloat(val) || 0;
+                                                                        const alt = reading.standAltHT ?? 0;
+                                                                        const newUsage = alt > 0 ? Math.max(0, parsed - alt) : reading.usageHT;
+                                                                        const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueHT: parsed, usageHT: newUsage } : r);
+                                                                        updateMortgageData({ electricityReadings: newReadings });
+                                                                    }}
+                                                                    className="w-full bg-background border border-input rounded px-2 py-1.5 text-xs font-mono font-bold text-right"
+                                                                    title="Stand neu Wirkenergie HT"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* NT Zählerstand alt -> neu -> kWh */}
+                                                        <div className="space-y-1">
+                                                            <div className="flex justify-between items-center text-[10.5px] uppercase font-semibold text-muted-foreground">
+                                                                <span>Stand alt NT</span>
+                                                                <span className="text-primary font-bold">{usageNT} kWh</span>
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-1">
+                                                                <DecimalInput
+                                                                    value={reading.standAltNT ?? 3108}
+                                                                    placeholder="Alt"
+                                                                    onChange={(val) => {
+                                                                        const parsed = parseFloat(val) || 0;
+                                                                        const newUsage = Math.max(0, reading.valueNT - parsed);
+                                                                        const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, standAltNT: parsed, usageNT: newUsage } : r);
+                                                                        updateMortgageData({ electricityReadings: newReadings });
+                                                                    }}
+                                                                    className="w-full bg-background border border-input rounded px-2 py-1.5 text-xs font-mono text-right"
+                                                                    title="Stand alt Wirkenergie NT"
+                                                                />
+                                                                <DecimalInput
+                                                                    value={reading.valueNT}
+                                                                    placeholder="Neu"
+                                                                    onChange={(val) => {
+                                                                        const parsed = parseFloat(val) || 0;
+                                                                        const alt = reading.standAltNT ?? 0;
+                                                                        const newUsage = alt > 0 ? Math.max(0, parsed - alt) : reading.usageNT;
+                                                                        const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueNT: parsed, usageNT: newUsage } : r);
+                                                                        updateMortgageData({ electricityReadings: newReadings });
+                                                                    }}
+                                                                    className="w-full bg-background border border-input rounded px-2 py-1.5 text-xs font-mono font-bold text-right"
+                                                                    title="Stand neu Wirkenergie NT"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Abrechnungsmonate (Fixkosten) */}
+                                                        <div className="space-y-1">
+                                                            <label className="text-muted-foreground font-semibold uppercase text-[10.5px]">Abrechnungs-Mt.</label>
+                                                            <input
+                                                                type="number"
+                                                                step="0.5"
+                                                                min="0.5"
+                                                                max="12"
+                                                                value={months}
+                                                                onChange={(e) => {
+                                                                    const val = parseFloat(e.target.value) || 1;
+                                                                    const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, billingMonths: val } : r);
+                                                                    updateMortgageData({ electricityReadings: newReadings });
+                                                                }}
+                                                                className="w-full bg-background border border-input rounded px-2 py-1.5 text-xs font-mono text-center"
+                                                                title="Anzahl Monate für monatliche Fixkosten (Grundpreis & Messung)"
+                                                            />
+                                                        </div>
+
+                                                        {/* Optionale Rechnungsnummer */}
+                                                        <div className="space-y-1">
+                                                            <label className="text-muted-foreground font-semibold uppercase text-[10.5px]">Rechnungs-Nr.</label>
+                                                            <input
+                                                                type="text"
+                                                                value={reading.invoiceNumber || ''}
+                                                                onChange={(e) => {
+                                                                    const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, invoiceNumber: e.target.value } : r);
+                                                                    updateMortgageData({ electricityReadings: newReadings });
+                                                                }}
+                                                                placeholder="z.B. 7 134 488"
+                                                                className="w-full bg-background border border-input rounded px-2 py-1.5 text-xs font-mono"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* 1:1 RECHNUNGS-ABBILD (Aufklappbar - genau wie auf Eniwa-Rechnung) */}
+                                                    {isExpanded && (
+                                                        <div className="mt-3 border border-border/80 rounded-xl overflow-hidden bg-background/95 shadow-md animate-in fade-in duration-200">
+                                                            <div className="bg-muted/50 px-4 py-2.5 border-b border-border flex items-center justify-between text-xs font-bold">
+                                                                <div className="flex items-center gap-2">
+                                                                    <ReceiptText className="size-4 text-primary" />
+                                                                    <span>Rechnungs-Aufschlüsselung (1:1 Abbild StromVG)</span>
+                                                                </div>
+                                                                <span className="font-mono text-muted-foreground">
+                                                                    Ablesezeitraum: {reading.dateFrom ? `${new Date(reading.dateFrom).toLocaleDateString('de-CH')} – ` : ''}{new Date(reading.date).toLocaleDateString('de-CH')}
+                                                                </span>
+                                                            </div>
+
+                                                            <div className="p-4 space-y-4 text-xs font-mono">
+
+                                                                {/* 1. ENERGIE */}
+                                                                <div className="space-y-1.5">
+                                                                    <div className="font-sans font-bold text-sm text-primary flex items-center justify-between border-b border-border/60 pb-1">
+                                                                        <span>1. Energie (Wirkenergie)</span>
+                                                                        <span className="text-foreground">{formatCHF(invoice.subtotalEnergy, 2)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
+                                                                        <span>Eniwa Naturstrom Schweiz Hochtarif (HT)</span>
+                                                                        <span>{usageHT} kWh @ {electricityTariff.energyHT.toFixed(2)} Rp./kWh = {formatCHF(invoice.energyHTAmount, 2)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
+                                                                        <span>Eniwa Naturstrom Schweiz Niedertarif (NT)</span>
+                                                                        <span>{usageNT} kWh @ {electricityTariff.energyNT.toFixed(2)} Rp./kWh = {formatCHF(invoice.energyNTAmount, 2)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center font-bold text-foreground bg-muted/20 px-2 py-1 rounded">
+                                                                        <span>Zwischentotal Energie exkl. MwSt</span>
+                                                                        <span>{formatCHF(invoice.subtotalEnergy, 2)}</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* 2. NETZNUTZUNG */}
+                                                                <div className="space-y-1.5">
+                                                                    <div className="font-sans font-bold text-sm text-blue-500 flex items-center justify-between border-b border-border/60 pb-1">
+                                                                        <span>2. Netznutzung</span>
+                                                                        <span className="text-foreground">{formatCHF(invoice.subtotalGrid, 2)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
+                                                                        <span>Wirkenergie Hochtarif (HT)</span>
+                                                                        <span>{usageHT} kWh @ {electricityTariff.gridHT.toFixed(2)} Rp./kWh = {formatCHF(invoice.gridHTAmount, 2)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
+                                                                        <span>Wirkenergie Niedertarif (NT)</span>
+                                                                        <span>{usageNT} kWh @ {electricityTariff.gridNT.toFixed(2)} Rp./kWh = {formatCHF(invoice.gridNTAmount, 2)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
+                                                                        <span>Systemdienstleistungen Swissgrid</span>
+                                                                        <span>{totalUsage} kWh @ {electricityTariff.gridSdl.toFixed(2)} Rp./kWh = {formatCHF(invoice.gridSdlAmount, 2)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
+                                                                        <span>Stromreserve des Bundes</span>
+                                                                        <span>{totalUsage} kWh @ {electricityTariff.gridReserve.toFixed(2)} Rp./kWh = {formatCHF(invoice.gridReserveAmount, 2)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
+                                                                        <span>Zuschlag solidarisierte Kosten im Übertragungsnetz</span>
+                                                                        <span>{totalUsage} kWh @ {electricityTariff.gridSolidar.toFixed(2)} Rp./kWh = {formatCHF(invoice.gridSolidarAmount, 2)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
+                                                                        <span>Grundpreis Netznutzung</span>
+                                                                        <span>{months} Mt. @ {formatCHF(electricityTariff.gridBaseFee, 2)}/Monat = {formatCHF(invoice.baseFeeAmount, 2)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
+                                                                        <span>Messkosten direkt</span>
+                                                                        <span>{months} Mt. @ {formatCHF(electricityTariff.gridMeasurementFee, 2)}/Monat = {formatCHF(invoice.measurementFeeAmount, 2)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center font-bold text-foreground bg-muted/20 px-2 py-1 rounded">
+                                                                        <span>Zwischentotal Netznutzung exkl. MwSt</span>
+                                                                        <span>{formatCHF(invoice.subtotalGrid, 2)}</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* 3. ÖFFENTLICHE ABGABEN */}
+                                                                <div className="space-y-1.5">
+                                                                    <div className="font-sans font-bold text-sm text-amber-500 flex items-center justify-between border-b border-border/60 pb-1">
+                                                                        <span>3. Öffentliche Abgaben</span>
+                                                                        <span className="text-foreground">{formatCHF(invoice.subtotalFees, 2)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
+                                                                        <span>Konzessionsabgabe an die Gemeinde</span>
+                                                                        <span>{totalUsage} kWh @ {electricityTariff.communityFee.toFixed(2)} Rp./kWh = {formatCHF(invoice.communityFeeAmount, 2)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
+                                                                        <span>Bundesabgaben gemäss Energiegesetz (KEV)</span>
+                                                                        <span>{totalUsage} kWh @ {electricityTariff.federalFee.toFixed(2)} Rp./kWh = {formatCHF(invoice.federalFeeAmount, 2)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center font-bold text-foreground bg-muted/20 px-2 py-1 rounded">
+                                                                        <span>Zwischentotal öffentliche Abgaben exkl. MwSt</span>
+                                                                        <span>{formatCHF(invoice.subtotalFees, 2)}</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* 4. TOTAL & MEHRWERTSTEUER */}
+                                                                <div className="pt-2 border-t-2 border-border space-y-1.5">
+                                                                    <div className="flex justify-between items-center text-muted-foreground">
+                                                                        <span>Zwischentotal Strom exkl. MwSt</span>
+                                                                        <span className="font-bold text-foreground">{formatCHF(invoice.totalExclVat, 2)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center text-muted-foreground">
+                                                                        <span>Mehrwertsteuer {electricityTariff.vatRate.toFixed(1)} %</span>
+                                                                        <span>{formatCHF(invoice.vatAmount, 2)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center text-base font-extrabold text-foreground bg-emerald-500/10 border border-emerald-500/30 px-3 py-2 rounded-lg mt-1 font-sans">
+                                                                        <span className="text-emerald-400">Total Strom inkl. MwSt</span>
+                                                                        <span className="text-emerald-400 font-mono text-lg">{formatCHF(invoice.totalInclVat, 2)}</span>
+                                                                    </div>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                </div>
+                                            );
+                                        })}
+
                                         {(electricityReadings || []).length === 0 && (
-                                            <div className="text-center text-sm text-muted-foreground py-6 border border-dashed rounded-lg">
-                                                Noch keine Zählerstände erfasst.
+                                            <div className="text-center text-sm text-muted-foreground py-8 border border-dashed rounded-xl bg-muted/10">
+                                                Noch keine Stromrechnungen erfasst. Klicke oben auf &quot;+ Rechnung / Ablesung erfassen&quot;.
                                             </div>
                                         )}
                                     </div>
                                 </div>
 
-                                {/* Current Reading Display (Latest) */}
+                                {/* 4. Current Reading Display (Latest Stand) */}
                                 {electricityReadings && electricityReadings.length > 0 && (() => {
                                     const sortedReadings = [...electricityReadings].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                                     const latest = sortedReadings[0];
                                     return (
                                         <div className="mt-6 border-t border-border pt-4">
-                                            <h4 className="text-xl font-semibold mb-4 text-foreground">Aktueller Zählerstand</h4>
+                                            <h4 className="text-base font-semibold mb-3 text-foreground flex items-center gap-2">
+                                                <Gauge className="size-4 text-primary" />
+                                                <span>Aktueller Zählerstand (Zuletzt abgelesen)</span>
+                                            </h4>
 
-                                            <div className="space-y-3 font-medium">
-                                                <div className="flex items-center justify-between bg-muted/30 p-1 rounded-md">
-                                                    <span className="text-muted-foreground w-32 text-right pr-4 text-base">Stand HT</span>
-                                                    <div className="flex-1 flex justify-center">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-medium">
+                                                <div className="flex items-center justify-between bg-muted/30 p-2.5 rounded-lg border border-border/50">
+                                                    <span className="text-muted-foreground text-sm font-semibold">Stand HT (Wirkenergie)</span>
+                                                    <div className="flex items-center gap-2">
                                                         <DecimalInput
                                                             value={latest.valueHT}
                                                             onChange={(val) => {
-                                                                const newReadings = electricityReadings.map(r => r.id === latest.id ? { ...r, valueHT: parseFloat(val) || 0 } : r);
+                                                                const parsed = parseFloat(val) || 0;
+                                                                const alt = latest.standAltHT ?? 0;
+                                                                const newUsage = alt > 0 ? Math.max(0, parsed - alt) : latest.usageHT;
+                                                                const newReadings = electricityReadings.map(r => r.id === latest.id ? { ...r, valueHT: parsed, usageHT: newUsage } : r);
                                                                 updateMortgageData({ electricityReadings: newReadings });
                                                             }}
                                                             onFocus={(e) => e.target.select()}
-                                                            className="bg-[#a3cc29] text-white px-2 py-1 rounded text-lg font-mono tracking-wider shadow-sm w-[140px] text-center border-none focus:ring-2 focus:ring-primary outline-none"
+                                                            className="bg-[#a3cc29] text-white px-2 py-1 rounded text-base font-mono font-bold tracking-wider shadow-xs w-[120px] text-center border-none focus:ring-2 focus:ring-primary outline-none"
                                                         />
+                                                        <span className="text-muted-foreground text-xs font-bold">kWh</span>
                                                     </div>
-                                                    <span className="text-muted-foreground w-16 pl-2 text-base">kWh</span>
                                                 </div>
 
-                                                <div className="flex items-center justify-between bg-muted/30 p-1 rounded-md">
-                                                    <span className="text-muted-foreground w-32 text-right pr-4 text-base">Stand NT</span>
-                                                    <div className="flex-1 flex justify-center">
+                                                <div className="flex items-center justify-between bg-muted/30 p-2.5 rounded-lg border border-border/50">
+                                                    <span className="text-muted-foreground text-sm font-semibold">Stand NT (Wirkenergie)</span>
+                                                    <div className="flex items-center gap-2">
                                                         <DecimalInput
                                                             value={latest.valueNT}
                                                             onChange={(val) => {
-                                                                const newReadings = electricityReadings.map(r => r.id === latest.id ? { ...r, valueNT: parseFloat(val) || 0 } : r);
+                                                                const parsed = parseFloat(val) || 0;
+                                                                const alt = latest.standAltNT ?? 0;
+                                                                const newUsage = alt > 0 ? Math.max(0, parsed - alt) : latest.usageNT;
+                                                                const newReadings = electricityReadings.map(r => r.id === latest.id ? { ...r, valueNT: parsed, usageNT: newUsage } : r);
                                                                 updateMortgageData({ electricityReadings: newReadings });
                                                             }}
                                                             onFocus={(e) => e.target.select()}
-                                                            className="bg-[#a3cc29] text-white px-2 py-1 rounded text-lg font-mono tracking-wider shadow-sm w-[140px] text-center border-none focus:ring-2 focus:ring-primary outline-none"
+                                                            className="bg-[#a3cc29] text-white px-2 py-1 rounded text-base font-mono font-bold tracking-wider shadow-xs w-[120px] text-center border-none focus:ring-2 focus:ring-primary outline-none"
                                                         />
+                                                        <span className="text-muted-foreground text-xs font-bold">kWh</span>
                                                     </div>
-                                                    <span className="text-muted-foreground w-16 pl-2 text-base">kWh</span>
                                                 </div>
                                             </div>
 
-                                            <div className="mt-3 text-base text-foreground">
-                                                Ablesedatum: <span className="font-medium">{new Date(latest.date).toLocaleDateString('de-CH')}</span>
+                                            <div className="mt-2 text-xs text-muted-foreground flex items-center justify-between">
+                                                <span>
+                                                    Ablesedatum: <span className="font-semibold text-foreground">{new Date(latest.date).toLocaleDateString('de-CH')}</span>
+                                                    {latest.dateFrom && ` (Zeitraum ab ${new Date(latest.dateFrom).toLocaleDateString('de-CH')})`}
+                                                </span>
                                             </div>
                                         </div>
                                     );
                                 })()}
 
-                                {/* Stats */}
+                                {/* 5. Statistik & Budget-Hochrechnung */}
                                 {electricityStats ? (
-                                    <div className="mt-8 pt-6 border-t border-border space-y-2">
-                                        <h4 className="text-sm font-semibold uppercase text-muted-foreground mb-2">Statistik (Ø Jährlich)</h4>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="bg-yellow-500/10 p-3 rounded">
-                                                <div className="text-sm text-muted-foreground">Verbrauch</div>
-                                                <div className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
+                                    <div className="mt-6 pt-5 border-t border-border space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                                <TrendingUp className="size-3.5 text-primary" />
+                                                Statistik & Budget-Hochrechnung
+                                            </h4>
+                                            <span className="text-xs text-muted-foreground">
+                                                Basis: {electricityStats.totalDays} abgelesene Tage
+                                            </span>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            <div className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-xl space-y-1">
+                                                <div className="text-xs text-muted-foreground font-medium">Jahresverbrauch (Hochrechnung)</div>
+                                                <div className="text-xl font-extrabold text-yellow-500 font-mono">
                                                     {(electricityStats.annualUsageHT + electricityStats.annualUsageNT).toFixed(0)} kWh
                                                 </div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    HT: {electricityStats.annualUsageHT.toFixed(0)} / NT: {electricityStats.annualUsageNT.toFixed(0)}
+                                                <div className="text-[11px] text-muted-foreground">
+                                                    HT: {electricityStats.annualUsageHT.toFixed(0)} kWh / NT: {electricityStats.annualUsageNT.toFixed(0)} kWh
                                                 </div>
                                             </div>
-                                            <div className="bg-yellow-500/10 p-3 rounded">
-                                                <div className="text-sm text-muted-foreground">Kosten</div>
-                                                <div className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
-                                                    {formatCHF(electricityStats.annualCost)}
+
+                                            <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-xl space-y-1">
+                                                <div className="text-xs text-muted-foreground font-medium">Jahreskosten (inkl. Fixkosten & MwSt)</div>
+                                                <div className="text-xl font-extrabold text-blue-400 font-mono">
+                                                    {formatCHF(electricityStats.annualCost, 2)}
                                                 </div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    HT: {electricityStats.avgCostHT.toFixed(0)} / NT: {electricityStats.avgCostNT.toFixed(0)}
+                                                <div className="text-[11px] text-muted-foreground">
+                                                    Energie: {formatCHF(electricityStats.annualInvoice.subtotalEnergy, 0)} | Netz: {formatCHF(electricityStats.annualInvoice.subtotalGrid, 0)}
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl space-y-1">
+                                                <div className="text-xs text-muted-foreground font-medium">Monatliche Belastung fürs Budget</div>
+                                                <div className="text-xl font-extrabold text-emerald-400 font-mono">
+                                                    {formatCHF(electricityStats.annualCost / 12, 2)}
+                                                </div>
+                                                <div className="text-[11px] text-muted-foreground">
+                                                    ca. {((electricityStats.annualUsageHT + electricityStats.annualUsageNT) / 12).toFixed(0)} kWh pro Monat
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="text-center text-sm text-muted-foreground mt-1">
-                                            monatlich ca. {formatCHF(electricityStats.annualCost / 12)}
-                                        </div>
+
+                                        {/* Kostenverteilungs-Balken */}
+                                        {electricityStats.annualInvoice && (
+                                            <div className="space-y-1.5 pt-2">
+                                                <div className="text-xs text-muted-foreground flex justify-between font-medium">
+                                                    <span>Kostenaufteilung Strom:</span>
+                                                    <span className="space-x-3 text-[11px]">
+                                                        <span className="text-primary font-semibold">● Energie ({Math.round(electricityStats.annualInvoice.subtotalEnergy / electricityStats.annualCost * 100)}%)</span>
+                                                        <span className="text-blue-400 font-semibold">● Netznutzung ({Math.round(electricityStats.annualInvoice.subtotalGrid / electricityStats.annualCost * 100)}%)</span>
+                                                        <span className="text-amber-400 font-semibold">● Abgaben ({Math.round(electricityStats.annualInvoice.subtotalFees / electricityStats.annualCost * 100)}%)</span>
+                                                        <span className="text-muted-foreground font-semibold">● MwSt ({Math.round(electricityStats.annualInvoice.vatAmount / electricityStats.annualCost * 100)}%)</span>
+                                                    </span>
+                                                </div>
+                                                <div className="h-2 rounded-full overflow-hidden flex bg-muted/60">
+                                                    <div className="bg-primary h-full" style={{ width: `${(electricityStats.annualInvoice.subtotalEnergy / electricityStats.annualCost) * 100}%` }} title="Energie" />
+                                                    <div className="bg-blue-400 h-full" style={{ width: `${(electricityStats.annualInvoice.subtotalGrid / electricityStats.annualCost) * 100}%` }} title="Netznutzung" />
+                                                    <div className="bg-amber-400 h-full" style={{ width: `${(electricityStats.annualInvoice.subtotalFees / electricityStats.annualCost) * 100}%` }} title="Öffentliche Abgaben" />
+                                                    <div className="bg-slate-500 h-full" style={{ width: `${(electricityStats.annualInvoice.vatAmount / electricityStats.annualCost) * 100}%` }} title="MwSt" />
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <p className="text-sm text-muted-foreground italic mt-6 text-center">
-                                        Erfassen Sie mindestens 2 Zählerstände für Statistiken.
+                                        Erfassen Sie eine Stromrechnung mit Ablesezeitraum oder mindestens 2 Zählerstände für Statistiken.
                                     </p>
                                 )}
                             </div>
