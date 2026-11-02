@@ -1,6 +1,6 @@
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { useMemo, useState } from 'react';
-import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car, ChevronDown, ChevronUp, Fuel, Zap, User, FileText, Gauge, Droplets, Calendar, ReceiptText, TrendingUp } from 'lucide-react';
+import { Building, Calculator, Plus, Trash2, Landmark, Percent, Wallet, Download, Car, ChevronDown, ChevronUp, Fuel, Zap, FileText, Droplets, Calendar, ReceiptText, TrendingUp, CircleUser, CircleGauge } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { cn } from '../utils';
@@ -1529,8 +1529,8 @@ export const MortgageCalculator = () => {
                                 {/* 1. Kundendaten: Exakt im gleichen 4-Spalten Grid wie die Zählererfassung */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 bg-accent/20 p-3.5 rounded-xl border border-border/60">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap">
-                                            <User className="size-4 text-primary shrink-0 overflow-visible" />
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap py-0.5">
+                                            <CircleUser className="size-4 text-primary shrink-0" />
                                             Kundennummer
                                         </label>
                                         <input
@@ -1543,8 +1543,8 @@ export const MortgageCalculator = () => {
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap">
-                                            <FileText className="size-4 text-primary shrink-0 overflow-visible" />
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap py-0.5">
+                                            <FileText className="size-4 text-primary shrink-0" />
                                             Vertragskonto
                                         </label>
                                         <input
@@ -1557,8 +1557,8 @@ export const MortgageCalculator = () => {
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap">
-                                            <Gauge className="size-4 text-primary shrink-0 overflow-visible" />
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap py-0.5">
+                                            <CircleGauge className="size-4 text-primary shrink-0" />
                                             Zähler-Nr.
                                         </label>
                                         <input
@@ -1571,8 +1571,8 @@ export const MortgageCalculator = () => {
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap">
-                                            <Zap className="size-4 text-primary shrink-0 overflow-visible" />
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap py-0.5">
+                                            <Zap className="size-4 text-primary shrink-0" />
                                             Stromversorger
                                         </label>
                                         <div className="w-full h-9 bg-muted/40 border border-input/60 rounded-lg px-2.5 flex items-center text-xs font-semibold text-foreground">
@@ -2252,7 +2252,7 @@ export const MortgageCalculator = () => {
                                     return (
                                         <div className="mt-6 border-t border-border pt-4">
                                             <h4 className="text-base font-semibold mb-3 text-foreground flex items-center gap-2">
-                                                <Gauge className="size-4 text-primary" />
+                                                <CircleGauge className="size-4 text-primary shrink-0" />
                                                 <span>Aktueller Zählerstand (Zuletzt abgelesen)</span>
                                             </h4>
 
