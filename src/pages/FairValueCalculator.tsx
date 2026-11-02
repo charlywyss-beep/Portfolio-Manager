@@ -2421,19 +2421,19 @@ export function FairValueCalculator() {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setBuyLimitInput(p1.toFixed(2))}
-                                                                title="1. Tranche (Fairer Wert) als Kauflimit eintragen"
+                                                                title="1. Tranche (Fairer Wert - 0%) als Kauflimit eintragen"
                                                                 className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
                                                             >
-                                                                1. Tranche Fairer Wert : <strong className={cn("font-mono", isP1Active ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(p1, quote.currency, false)}</strong>
+                                                                1. Tranche Fairer Wert - 0% : <strong className={cn("font-mono", isP1Active ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(p1, quote.currency, false)}</strong>
                                                             </button>
                                                             <span>•</span>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setBuyLimitInput(p2.toFixed(2))}
-                                                                title={`2. Tranche (${m2}% Sicherheitsmarge) als Kauflimit eintragen`}
+                                                                title={`2. Tranche (- ${m2}% Sicherheitsmarge) als Kauflimit eintragen`}
                                                                 className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
                                                             >
-                                                                2. Tranche {m2}% : <strong className={cn("font-mono", isP2Active ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(p2, quote.currency, false)}</strong>
+                                                                2. Tranche - {m2}% : <strong className={cn("font-mono", isP2Active ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(p2, quote.currency, false)}</strong>
                                                             </button>
                                                         </div>
                                                         <div className="flex items-center justify-center gap-1.5 flex-wrap">
