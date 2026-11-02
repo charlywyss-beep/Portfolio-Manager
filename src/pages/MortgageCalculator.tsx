@@ -2254,9 +2254,10 @@ export const MortgageCalculator = () => {
                                                         onClick={() => toggleCardOpen(reading.id)}
                                                         className={cn("cursor-pointer select-none space-y-2", isCardOpen && "border-b border-border/70 pb-3.5")}
                                                     >
-                                                        {/* ZEILE 1: Badges & Betrag */}
+                                                        {/* ZEILE 1: Badges (Links: Datum & Dauer | Rechts: Rechnungs-Nr., Fälligkeit & Betrag) */}
                                                         <div className="flex flex-wrap items-center justify-between gap-2">
-                                                            <div className="flex flex-wrap items-center gap-2">
+                                                            {/* Links: Zeitraum & Dauer */}
+                                                            <div className="flex items-center gap-2">
                                                                 <div className="text-xs font-bold bg-muted px-2.5 py-1 rounded-lg text-foreground flex items-center gap-1.5 shadow-2xs">
                                                                     <Calendar className="size-3.5 text-primary shrink-0 overflow-visible" />
                                                                     <span>{effectiveDateFrom ? `${formatSwissDate(effectiveDateFrom)} – ` : ''}{reading.date ? formatSwissDate(reading.date) : 'Offen'}</span>
@@ -2264,6 +2265,10 @@ export const MortgageCalculator = () => {
                                                                 <span className="text-xs text-muted-foreground font-medium bg-accent/30 px-2 py-0.5 rounded-md border border-border/40">
                                                                     {period.days > 0 ? `${period.days} Tage` : '–'}
                                                                 </span>
+                                                            </div>
+
+                                                            {/* Rechts: Rechnungs-Nr., Fälligkeit & ggf. Betrag */}
+                                                            <div className="flex flex-wrap items-center gap-2 ml-auto">
                                                                 {reading.invoiceNumber && (
                                                                     <div className="text-xs bg-blue-500/10 border border-blue-500/25 px-2.5 py-0.5 rounded-md font-mono flex items-center gap-1.5 shadow-2xs whitespace-nowrap">
                                                                         <FileText className="size-3.5 text-blue-400 shrink-0" />
@@ -2276,14 +2281,12 @@ export const MortgageCalculator = () => {
                                                                         <span>Fällig: {formatSwissDate(effectiveDueDate)}</span>
                                                                     </div>
                                                                 )}
+                                                                {!isCardOpen && invoice.totalInclVat > 0 && (
+                                                                    <div className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-0.5 rounded-md font-mono shadow-2xs whitespace-nowrap">
+                                                                        <span>{formatCHF(invoice.totalInclVat, 2)}</span>
+                                                                    </div>
+                                                                )}
                                                             </div>
-
-                                                            {/* Betrag immer bündig rechts in Zeile 1 */}
-                                                            {!isCardOpen && invoice.totalInclVat > 0 && (
-                                                                <div className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 rounded-md font-mono shadow-2xs whitespace-nowrap ml-auto">
-                                                                    <span>{formatCHF(invoice.totalInclVat, 2)}</span>
-                                                                </div>
-                                                            )}
                                                         </div>
 
                                                         {/* ZEILE 2: Aktions-Buttons kompakt rechts bündig */}
