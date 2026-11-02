@@ -2997,7 +2997,7 @@ export const MortgageCalculator = () => {
                                         </div>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                                            <div className="bg-yellow-500/10 border border-yellow-500/20 p-3.5 rounded-xl space-y-1">
+                                            <div className="bg-yellow-500/10 border border-yellow-500/20 p-3.5 rounded-xl space-y-1 text-center">
                                                 <div className="text-xs text-muted-foreground font-medium">Jahresverbrauch (Hochrechnung)</div>
                                                 <div className="text-xl font-extrabold text-yellow-500 font-mono">
                                                     {(electricityStats.annualUsageHT + electricityStats.annualUsageNT).toFixed(0)} kWh
@@ -3007,7 +3007,7 @@ export const MortgageCalculator = () => {
                                                 </div>
                                             </div>
 
-                                            <div className="bg-blue-500/10 border border-blue-500/20 p-3.5 rounded-xl space-y-1">
+                                            <div className="bg-blue-500/10 border border-blue-500/20 p-3.5 rounded-xl space-y-1 text-center">
                                                 <div className="text-xs text-muted-foreground font-medium">Jahreskosten (inkl. Fixkosten & MwSt)</div>
                                                 <div className="text-xl font-extrabold text-blue-400 font-mono">
                                                     {formatCHF(electricityStats.annualCost, 2)}
@@ -3017,7 +3017,7 @@ export const MortgageCalculator = () => {
                                                 </div>
                                             </div>
 
-                                            <div className="bg-emerald-500/10 border border-emerald-500/20 p-3.5 rounded-xl space-y-1">
+                                            <div className="bg-emerald-500/10 border border-emerald-500/20 p-3.5 rounded-xl space-y-1 text-center">
                                                 <div className="text-xs text-muted-foreground font-medium">Monatliche Belastung fürs Budget</div>
                                                 <div className="text-xl font-extrabold text-emerald-400 font-mono">
                                                     {formatCHF(electricityStats.annualCost / 12, 2)}
