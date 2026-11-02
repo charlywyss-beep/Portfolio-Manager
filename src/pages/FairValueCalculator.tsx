@@ -1122,7 +1122,7 @@ export function FairValueCalculator() {
     };
 
     return (
-        <div className="fair-value-calculator-page p-4 md:p-6 space-y-4 md:space-y-6 bg-gradient-to-br from-background via-background to-muted/20 animate-in fade-in duration-500 iphone-landscape-page-root w-full">
+        <div className="fair-value-calculator-page p-3 sm:p-4 lg:py-2.5 lg:px-4 space-y-2 sm:space-y-3 lg:space-y-2 bg-gradient-to-br from-background via-background to-muted/20 animate-in fade-in duration-500 iphone-landscape-page-root w-full">
             {/* Add Link Modal */}
             {showAddLinkModal && (
                 <div className="fixed inset-0 z-[2100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
@@ -1471,26 +1471,26 @@ export function FairValueCalculator() {
             )}
 
             {/* Sticky Header - Consistent Design across app */}
-            <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6 iphone-landscape-portfolio-header-wrap">
-                <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
-                    <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 iphone-landscape-portfolio-header-row">
-                            <div className="flex items-center gap-3 w-full sm:w-auto iphone-landscape-portfolio-title-group">
+            <div className="sticky top-0 z-50 bg-background pb-2 sm:pb-2.5 lg:pb-2 -mt-3 sm:-mt-4 lg:-mt-2.5 -mx-3 sm:-mx-4 lg:-mx-4 px-3 sm:px-4 lg:px-4 iphone-landscape-portfolio-header-wrap">
+                <div className="border-b bg-card rounded-t-xl -mx-3 sm:-mx-4 lg:-mx-4">
+                    <div className="w-full pl-14 pr-4 py-2 sm:py-2.5 lg:py-2 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 iphone-landscape-portfolio-header-row">
+                            <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto iphone-landscape-portfolio-title-group">
                                 <button
                                     onClick={handleBack}
                                     type="button"
-                                    className="flex items-center justify-center p-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-all font-medium text-xs sm:text-sm shadow-xs group shrink-0 active:scale-95"
+                                    className="flex items-center justify-center p-1.5 sm:p-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-all font-medium text-xs sm:text-sm shadow-xs group shrink-0 active:scale-95"
                                     title="Zurück"
                                     aria-label="Zurück"
                                 >
-                                    <ArrowLeft className="size-5 transition-transform group-hover:-translate-x-0.5" />
+                                    <ArrowLeft className="size-4.5 sm:size-5 transition-transform group-hover:-translate-x-0.5" />
                                 </button>
-                                <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 shrink-0 iphone-landscape-portfolio-icon">
-                                    <Telescope className="size-6" />
+                                <div className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 shrink-0 iphone-landscape-portfolio-icon">
+                                    <Telescope className="size-5 sm:size-6" />
                                 </div>
                                 <div>
-                                    <h1 className="text-3xl font-bold tracking-tight whitespace-nowrap iphone-landscape-portfolio-title">Fairer Wert</h1>
-                                    <p className="text-muted-foreground hidden md:block iphone-landscape-portfolio-subtitle">Fundamentalanalyse &amp; Innerer Wert</p>
+                                    <h1 className="text-xl sm:text-2xl lg:text-2xl font-bold tracking-tight whitespace-nowrap iphone-landscape-portfolio-title">Fairer Wert</h1>
+                                    <p className="text-xs text-muted-foreground hidden md:block iphone-landscape-portfolio-subtitle">Fundamentalanalyse &amp; Innerer Wert</p>
                                 </div>
                             </div>
 
@@ -1628,7 +1628,7 @@ export function FairValueCalculator() {
                         </div>
                     ) : (
                         // SELECTED STOCK DISPLAY (Stays sticky with header!)
-                        <div className="fair-value-stock-card flex items-center gap-2.5 sm:gap-3 p-2 sm:p-2.5 lg:py-1.5 lg:px-3 bg-card/90 backdrop-blur border border-border rounded-xl shadow-sm">
+                        <div className="fair-value-stock-card flex items-center gap-2.5 sm:gap-3 p-1.5 sm:p-2 lg:py-1 lg:px-3 bg-card/90 backdrop-blur border border-border rounded-xl shadow-sm">
                             {quote?.logoUrl || stocks.find(s => s.symbol === selectedSymbol)?.logoUrl ? (
                                 <div className="size-9 sm:size-10 lg:size-8.5 rounded-lg p-1 bg-white border border-border flex items-center justify-center overflow-hidden shrink-0">
                                     <img
@@ -1733,13 +1733,13 @@ export function FairValueCalculator() {
 
             {
                 quote && !loadingData && (
-                    <div className="fair-value-grid grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4 lg:gap-6 animate-in slide-in-from-bottom-4 duration-500 w-full flex-1">
+                    <div className="fair-value-grid grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-3.5 lg:gap-4 animate-in slide-in-from-bottom-4 duration-500 w-full flex-1">
 
                         {/* INPUTS COLUMN */}
                         <div className="flex flex-col h-full">
-                            <div className="fair-value-col-card bg-card border border-border rounded-xl p-2.5 sm:p-3.5 lg:p-3 shadow-sm h-full flex flex-col justify-between">
-                                <div className="space-y-2 sm:space-y-2.5 lg:space-y-2 flex-1">
-                                    <div className="space-y-1.5 pb-2 border-b border-border">
+                            <div className="fair-value-col-card bg-card border border-border rounded-xl p-2 sm:p-3 lg:p-2.5 shadow-sm h-full flex flex-col justify-between">
+                                <div className="space-y-1.5 sm:space-y-2 lg:space-y-1.5 flex-1">
+                                    <div className="space-y-1 sm:space-y-1.5 pb-1.5 border-b border-border">
                                     <div className="flex items-center justify-between gap-2">
                                         <div className="flex items-center gap-2 min-w-0">
                                             <h2 className="text-base font-semibold flex items-center gap-1.5 shrink-0">
@@ -2271,7 +2271,7 @@ export function FairValueCalculator() {
                                 </div>
 
                                 {/* MARGIN OF SAFETY (Anchored to bottom so left card ends exactly aligned with right card) */}
-                                <div className="space-y-1 pt-2 mt-auto border-t border-border/50">
+                                <div className="space-y-1 pt-1.5 mt-auto border-t border-border/50">
                                     <label className="text-xs sm:text-sm font-medium flex justify-between items-center">
                                         <span>Sicherheitsmarge</span>
                                         <span className="text-[11px] text-muted-foreground font-light">
@@ -2325,17 +2325,17 @@ export function FairValueCalculator() {
 
                         {/* RESULTS COLUMN */}
                         <div className="flex flex-col h-full">
-                            <div className="fair-value-col-card bg-card border border-border rounded-xl p-2.5 sm:p-3.5 lg:p-3 shadow-sm h-full flex flex-col justify-between overflow-hidden">
+                            <div className="fair-value-col-card bg-card border border-border rounded-xl p-2 sm:p-3 lg:p-2.5 shadow-sm h-full flex flex-col justify-between overflow-hidden">
                                 {/* Upper Header & Traffic Light Area - Vertically centered between top field edge and Bewertung card */}
-                                <div className="fair-value-circle-wrap relative flex flex-col items-center justify-center py-2.5 sm:py-4 my-auto">
-                                    <h2 className="text-sm sm:text-base font-semibold flex items-center gap-2 self-start mb-2 sm:mb-0 sm:absolute sm:top-0 sm:left-0">
+                                <div className="fair-value-circle-wrap relative flex flex-col items-center justify-center py-1 sm:py-2.5 lg:py-1 my-auto">
+                                    <h2 className="text-sm sm:text-base font-semibold flex items-center gap-2 self-start mb-1 sm:mb-0 sm:absolute sm:top-0 sm:left-0">
                                         <span className="size-2 rounded-full bg-purple-500" />
                                         Bewertung
                                     </h2>
 
                                     {/* Traffic Light */}
                                     <div className={cn(
-                                        "fair-value-circle relative size-34 sm:size-36 rounded-full flex flex-col items-center justify-center border-2 shadow-md transition-all duration-500 text-center p-2 my-auto",
+                                        "fair-value-circle relative size-28 sm:size-32 lg:size-28 rounded-full flex flex-col items-center justify-center border-2 shadow-md transition-all duration-500 text-center p-1.5 my-auto",
                                         isUndervalued
                                             ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-emerald-500/20"
                                             : isFairHold
@@ -2351,10 +2351,10 @@ export function FairValueCalculator() {
                                             <div className="text-[10px] uppercase font-bold tracking-tight opacity-75 mt-0.5 leading-tight">
                                                 {isUndervalued ? 'Sicherheitsmarge' : isFairHold ? 'Fairer Bereich' : isRichHold ? 'Gut bezahlt' : 'Überhitzt'}
                                             </div>
-                                            <div className="text-base sm:text-lg font-black leading-tight whitespace-nowrap tabular-nums my-1">
+                                            <div className="text-sm sm:text-base font-black leading-tight whitespace-nowrap tabular-nums my-0.5">
                                                 {formatCurrency(currentPrice, quote.currency, false)}
                                             </div>
-                                            <div className="text-xs font-bold opacity-85 leading-tight">
+                                            <div className="text-[11px] font-bold opacity-85 leading-tight">
                                                 Aktueller Kurs
                                             </div>
                                         </div>
@@ -2371,7 +2371,7 @@ export function FairValueCalculator() {
 
                                     return (
                                         <div className={cn(
-                                            "fair-value-bewertung-box p-2.5 sm:p-3 rounded-xl border text-center transition-all mb-2 sm:mb-2.5 lg:mb-2",
+                                            "fair-value-bewertung-box p-2 sm:p-2.5 lg:py-1.5 lg:px-2.5 rounded-xl border text-center transition-all mb-1.5 sm:mb-2 lg:mb-1.5",
                                             isUndervalued
                                                 ? "bg-emerald-500/10 border-emerald-500/30"
                                                 : isFairHold
@@ -2505,9 +2505,9 @@ export function FairValueCalculator() {
                                 })()}
 
                                 {/* Value Stack */}
-                                <div className="fair-value-value-stack flex-1 space-y-2 sm:space-y-2.5 lg:space-y-2">
+                                <div className="fair-value-value-stack flex-1 space-y-1.5 sm:space-y-2 lg:space-y-1.5">
                                     {/* Fair Value */}
-                                    <div className="fair-value-fairvalue-box p-2.5 sm:p-3 rounded-xl border border-border bg-card">
+                                    <div className="fair-value-fairvalue-box p-2 sm:p-2.5 lg:py-1.5 lg:px-2.5 rounded-xl border border-border bg-card">
                                         <div className="flex justify-between items-center gap-2 mb-0.5">
                                             <span className="font-medium text-sm sm:text-base shrink-0 whitespace-nowrap">Fairer Wert</span>
                                             {quote.currency !== 'CHF' ? (
@@ -2578,7 +2578,7 @@ export function FairValueCalculator() {
 
                                         return (
                                             <div className={cn(
-                                                "fair-value-kaufpreis-box p-2.5 sm:p-3 rounded-xl border-2 transition-all shadow-sm",
+                                                "fair-value-kaufpreis-box p-2 sm:p-2.5 lg:py-1.5 lg:px-2.5 rounded-xl border-2 transition-all shadow-sm",
                                                 kaufpreisBorderBg
                                             )}>
                                                 <div className="flex justify-between items-center gap-2 mb-0.5">
@@ -2683,7 +2683,7 @@ export function FairValueCalculator() {
                                             <button
                                                 type="button"
                                                 onClick={handleGoToBuySell}
-                                                className="w-full mt-1.5 py-1.5 px-3 text-xs font-semibold rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                                                className="w-full mt-1 py-1 px-3 text-xs font-semibold rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
                                                 title="Diesen Titel direkt in Kauf / Verkauf öffnen"
                                             >
                                                 <Calculator className="size-3.5" />
@@ -2695,7 +2695,7 @@ export function FairValueCalculator() {
                                     })()}
 
                                     {/* Future Value */}
-                                    <div className="fair-value-target-box p-2 sm:p-2.5 rounded-xl border border-border bg-muted/10">
+                                    <div className="fair-value-target-box p-1.5 sm:p-2 lg:py-1.5 lg:px-2.5 rounded-xl border border-border bg-muted/10">
                                         <div className="flex justify-between items-center gap-2 mb-0.5">
                                             <span className="text-xs sm:text-sm font-medium text-muted-foreground shrink-0 whitespace-nowrap">Zielkurs (5 Jahre)</span>
                                             {quote.currency !== 'CHF' ? (
