@@ -2485,14 +2485,13 @@ export function FairValueCalculator() {
                                                     <span>Maximaler Preis inkl. {mos}% Sicherheitsmarge ({isSavedForStock ? 'Manuell' : valuationProfile === 'quality' ? 'Qualität B' : 'Sicherheit A'})</span>
                                                     {quote?.price && calculation.buyPrice > 0 && (() => {
                                                         const diffPct = ((quote.price - calculation.buyPrice) / calculation.buyPrice) * 100;
-                                                        const dropPct = ((calculation.buyPrice - quote.price) / quote.price) * 100;
                                                         return diffPct > 0 ? (
                                                             <span className="font-semibold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/25">
-                                                                Kurs +{diffPct.toFixed(1)}% über Kaufpreis ({dropPct.toFixed(1)}% bis Kauf)
+                                                                Aktueller Kurs +{diffPct.toFixed(1)}% über Kaufkurs
                                                             </span>
                                                         ) : (
                                                             <span className="font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/25">
-                                                                In Kaufzone ({Math.abs(diffPct).toFixed(1)}% unter Kaufpreis)
+                                                                Aktueller Kurs {Math.abs(diffPct).toFixed(1)}% unter Kaufkurs
                                                             </span>
                                                         );
                                                     })()}
@@ -2519,11 +2518,7 @@ export function FairValueCalculator() {
                                                     )}>
                                                         <Check className="size-3" />
                                                         <span>
-                                                            Aktiv: {currentStock.targetPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency}
-                                                            {Math.abs(currentStock.targetPrice - calculation.buyPrice) < 0.01 ? ` (${valuationProfile === 'quality' ? 'Qualität B' : valuationProfile === 'conservative' ? 'Sicherheit A' : 'Manuell'})` : " (Eigenes Limit)"}
-                                                            {quote?.price && currentStock?.targetPrice && quote.price > currentStock.targetPrice ? (
-                                                                <span className="opacity-80"> (noch {(((currentStock.targetPrice - quote.price) / quote.price) * 100).toFixed(1)}%)</span>
-                                                            ) : null}
+                                                            Aktiv: {currentStock.targetPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency} {Math.abs(currentStock.targetPrice - calculation.buyPrice) < 0.01 ? (valuationProfile === 'quality' ? 'Qualität B' : valuationProfile === 'conservative' ? 'Sicherheit A' : 'Manuell') : 'Eigenes Limit'}
                                                         </span>
                                                     </span>
                                                 ) : null}
