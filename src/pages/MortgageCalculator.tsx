@@ -146,7 +146,7 @@ export const MortgageCalculator = () => {
                 months = 1;
             }
 
-            if (days > 0 && (usageHT > 0 || usageNT > 0 || curr.costTotal)) {
+            if (days > 0) {
                 totalDays += days;
                 totalUsageHT += usageHT;
                 totalUsageNT += usageNT;
@@ -437,6 +437,63 @@ export const MortgageCalculator = () => {
         ];
 
         autoTable(doc, getTableOptions(finalY + 3, expenseHeaders, combinedExpenseData, [59, 130, 246], expenseFooter));
+
+        // Stromkosten & Zählerstände Tabelle im PDF
+        if (electricityReadings && electricityReadings.length > 0) {
+            finalY = (doc as any).lastAutoTable.finalY + 8;
+            if (finalY > 210) {
+                doc.addPage();
+                finalY = 20;
+            }
+            doc.setFontSize(12);
+            doc.text('Stromkosten & Zählerstände (StromVG)', 14, finalY);
+
+            const elecHeaders = [
+                [
+                    { content: 'Ablesezeitraum', styles: { halign: 'left' as const } },
+                    { content: 'Dauer', styles: { halign: 'right' as const } },
+                    { content: 'HT (kWh)', styles: { halign: 'right' as const } },
+                    { content: 'NT (kWh)', styles: { halign: 'right' as const } },
+                    { content: 'Total kWh', styles: { halign: 'right' as const } },
+                    { content: 'Rechnung inkl. MwSt', styles: { halign: 'right' as const } }
+                ]
+            ];
+
+            const sortedElec = [...electricityReadings].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            const elecTableData = sortedElec.map((r, idx) => {
+                const prev = idx > 0 ? sortedElec[idx - 1] : undefined;
+                const { usageHT, usageNT } = getReadingUsage(r, prev);
+                const totalKWh = usageHT + usageNT;
+                const p = calculatePeriodDays(r.dateFrom, r.date);
+                const inv = calculateElectricityInvoice(usageHT, usageNT, p.months, electricityTariff);
+                const fromStr = r.dateFrom ? new Date(r.dateFrom).toLocaleDateString('de-CH') + ' – ' : '';
+                const toStr = new Date(r.date).toLocaleDateString('de-CH');
+                return [
+                    `${fromStr}${toStr}${r.invoiceNumber ? ` (#${r.invoiceNumber})` : ''}`,
+                    `${p.days} Tage`,
+                    `${usageHT} kWh`,
+                    `${usageNT} kWh`,
+                    `${totalKWh} kWh`,
+                    formatCurrencyPDF(inv.totalInclVat)
+                ];
+            });
+
+            const monthlyElecAvg = electricityStats ? (electricityStats.annualCost / 12) : 0;
+            const annualKWhTotal = electricityStats ? Math.round(electricityStats.annualUsageHT + electricityStats.annualUsageNT) : 0;
+            const elecFooter = [
+                [
+                    { 
+                        content: `Durchschnitt & Budget-Hochrechnung (${electricityStats?.totalDays || 0} Tage Basis): Hochrechnung ~${annualKWhTotal} kWh/Jahr`, 
+                        colSpan: 4, 
+                        styles: { halign: 'left' as const, fontStyle: 'bold' as const } 
+                    },
+                    { content: 'ø Monat:', styles: { halign: 'right' as const, fontStyle: 'bold' as const } },
+                    { content: formatCurrencyPDF(monthlyElecAvg), styles: { halign: 'right' as const, fontStyle: 'bold' as const } }
+                ]
+            ];
+
+            autoTable(doc, getTableOptions(finalY + 3, elecHeaders, elecTableData, [217, 119, 6], elecFooter));
+        }
 
         // Summary Table
         finalY = (doc as any).lastAutoTable.finalY + 12;
@@ -1366,34 +1423,62 @@ export const MortgageCalculator = () => {
                                 {isElectricityOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
                             </h2>
                             <div className="flex items-center gap-2">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        const sorted = electricityReadings && electricityReadings.length > 0
-                                            ? [...electricityReadings].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                                            : [];
-                                        const latest = sorted[0];
+                                <div className="flex items-center gap-2">
+                                    {(!electricityReadings || !electricityReadings.some(r => r.usageHT === 69 && r.usageNT === 475)) && (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const eniwaInvoice: ElectricityReading = {
+                                                    id: crypto.randomUUID(),
+                                                    dateFrom: '2026-08-28',
+                                                    date: '2026-09-30',
+                                                    standAltHT: 473,
+                                                    standAltNT: 3108,
+                                                    valueHT: 542,
+                                                    valueNT: 3583,
+                                                    usageHT: 69,
+                                                    usageNT: 475,
+                                                    invoiceNumber: '7 134 488'
+                                                };
+                                                updateMortgageData({ electricityReadings: [eniwaInvoice, ...(electricityReadings || [])] });
+                                                if (!isElectricityOpen) setIsElectricityOpen(true);
+                                            }}
+                                            className="text-xs bg-amber-500/15 text-amber-500 hover:bg-amber-500/25 px-2.5 py-1.5 rounded-md font-semibold transition-colors flex items-center gap-1 border border-amber-500/30"
+                                            title="Eniwa Rechnung vom 28.08.–30.09.2026 (146.13 CHF) wiederherstellen"
+                                        >
+                                            <Zap className="size-3.5" /> Eniwa-Rechnung laden
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const sorted = electricityReadings && electricityReadings.length > 0
+                                                ? [...electricityReadings].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                                : [];
+                                            const latest = sorted[0];
 
-                                        const newReading: ElectricityReading = {
-                                            id: crypto.randomUUID(),
-                                            dateFrom: latest?.date || '2026-08-28',
-                                            date: new Date().toISOString().split('T')[0],
-                                            standAltHT: latest ? latest.valueHT : 473,
-                                            standAltNT: latest ? latest.valueNT : 3108,
-                                            valueHT: latest ? latest.valueHT : 542,
-                                            valueNT: latest ? latest.valueNT : 3583,
-                                            usageHT: latest ? 0 : 69,
-                                            usageNT: latest ? 0 : 475,
-                                            billingMonths: 1,
-                                            invoiceNumber: ''
-                                        };
-                                        updateMortgageData({ electricityReadings: [...(electricityReadings || []), newReading] });
-                                        if (!isElectricityOpen) setIsElectricityOpen(true);
-                                    }}
-                                    className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1 shadow-2xs"
-                                >
-                                    <Plus className="size-4" /> Rechnung / Ablesung erfassen
-                                </button>
+                                            const newReading: ElectricityReading = {
+                                                id: crypto.randomUUID(),
+                                                dateFrom: latest?.date || '2026-08-28',
+                                                date: new Date().toISOString().split('T')[0],
+                                                standAltHT: latest ? latest.valueHT : 473,
+                                                standAltNT: latest ? latest.valueNT : 3108,
+                                                valueHT: latest ? latest.valueHT : 542,
+                                                valueNT: latest ? latest.valueNT : 3583,
+                                                usageHT: latest ? 0 : 69,
+                                                usageNT: latest ? 0 : 475,
+                                                billingMonths: 1,
+                                                invoiceNumber: ''
+                                            };
+                                            updateMortgageData({ electricityReadings: [...(electricityReadings || []), newReading] });
+                                            if (!isElectricityOpen) setIsElectricityOpen(true);
+                                        }}
+                                        className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1 shadow-2xs"
+                                    >
+                                        <Plus className="size-4" /> Rechnung / Ablesung erfassen
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -1763,8 +1848,13 @@ export const MortgageCalculator = () => {
 
                                                             <button
                                                                 onClick={() => {
-                                                                    const newReadings = electricityReadings?.filter(r => r.id !== reading.id);
-                                                                    updateMortgageData({ electricityReadings: newReadings });
+                                                                    const dateStr = reading.dateFrom 
+                                                                        ? `${new Date(reading.dateFrom).toLocaleDateString('de-CH')} – ${new Date(reading.date).toLocaleDateString('de-CH')}`
+                                                                        : new Date(reading.date).toLocaleDateString('de-CH');
+                                                                    if (window.confirm(`Möchten Sie diese Stromrechnung / Ablesung (${dateStr}) wirklich löschen?`)) {
+                                                                        const newReadings = electricityReadings?.filter(r => r.id !== reading.id);
+                                                                        updateMortgageData({ electricityReadings: newReadings });
+                                                                    }
                                                                 }}
                                                                 className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
                                                                 title="Eintrag löschen"
