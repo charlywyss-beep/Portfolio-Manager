@@ -66,7 +66,7 @@ export function calculateElectricityInvoice(
     const safeUsageHT = Math.max(0, usageHT || 0);
     const safeUsageNT = Math.max(0, usageNT || 0);
     const totalUsage = safeUsageHT + safeUsageNT;
-    const safeMonths = Math.max(0, months || 1);
+    const safeMonths = Math.max(0, months !== undefined ? months : 1);
 
     // 1. Energie
     const energyHTAmount = Math.round(safeUsageHT * (tariff.energyHT / 100) * 100) / 100;
@@ -133,10 +133,10 @@ export function calculateElectricityInvoice(
  * Ermittelt die Tage und rechnerischen Monate zwischen zwei Daten.
  */
 export function calculatePeriodDays(dateFrom?: string, dateTo?: string): { days: number; months: number } {
-    if (!dateFrom || !dateTo) return { days: 30, months: 1 };
+    if (!dateFrom || !dateTo) return { days: 0, months: 0 };
     const tFrom = new Date(dateFrom).getTime();
     const tTo = new Date(dateTo).getTime();
-    if (isNaN(tFrom) || isNaN(tTo) || tTo <= tFrom) return { days: 30, months: 1 };
+    if (isNaN(tFrom) || isNaN(tTo) || tTo <= tFrom) return { days: 0, months: 0 };
 
     const days = Math.round((tTo - tFrom) / (1000 * 3600 * 24));
     // Schweizer Stromversorger (z.B. Eniwa) verrechnen Fixkosten monatsweise:

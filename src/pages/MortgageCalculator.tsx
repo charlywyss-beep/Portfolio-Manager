@@ -46,27 +46,38 @@ export const MortgageCalculator = () => {
 
     const handleAddReading = (e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
-        const sorted = electricityReadings && electricityReadings.length > 0
-            ? [...electricityReadings].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-            : [];
+        // Finde den zeitlich neuesten gültigen Eintrag mit Datum
+        const validReadings = (electricityReadings || []).filter(r => r.date);
+        const sorted = [...validReadings].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         const latest = sorted[0];
 
-        const todayStr = new Date().toISOString().split('T')[0];
-        const prevDate = latest ? latest.date : '2026-08-28';
-        const prevHT = latest ? latest.valueHT : 473;
-        const prevNT = latest ? latest.valueNT : 3108;
+        // Ablesung Von: plus 1 Tag vom letzten Eintrag (z.B. 30.09.2026 -> 01.10.2026)
+        let nextDateFrom = '2026-10-01';
+        if (latest?.date) {
+            const [y, m, d] = latest.date.split('-').map(Number);
+            const nextDay = new Date(y, m - 1, d);
+            nextDay.setDate(nextDay.getDate() + 1);
+            const year = nextDay.getFullYear();
+            const month = String(nextDay.getMonth() + 1).padStart(2, '0');
+            const day = String(nextDay.getDate()).padStart(2, '0');
+            nextDateFrom = `${year}-${month}-${day}`;
+        }
+
+        // Stand alt: übernimmt exakt den Zählerstand (Stand neu) der vorherigen Ablesung
+        const prevHT = latest ? (latest.valueHT || latest.standAltHT || 473) : 473;
+        const prevNT = latest ? (latest.valueNT || latest.standAltNT || 3108) : 3108;
 
         const newReading: ElectricityReading = {
             id: crypto.randomUUID(),
-            dateFrom: prevDate,
-            date: todayStr > prevDate ? todayStr : prevDate,
+            dateFrom: nextDateFrom,
+            date: '', // Ablesung Datum bis: nicht eingetragen (bleibt leer)
             standAltHT: prevHT,
             standAltNT: prevNT,
-            valueHT: prevHT,
-            valueNT: prevNT,
+            valueHT: 0, // Stand neu HT: nicht eingetragen (bleibt leer)
+            valueNT: 0, // Stand neu NT: nicht eingetragen (bleibt leer)
             usageHT: 0,
             usageNT: 0,
-            billingMonths: 1,
+            billingMonths: 0,
             invoiceNumber: ''
         };
         updateMortgageData({ electricityReadings: [newReading, ...(electricityReadings || [])] });
@@ -1856,7 +1867,11 @@ export const MortgageCalculator = () => {
                                     </div>
 
                                     <div className="space-y-4">
-                                        {(electricityReadings || []).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((reading, index, arr) => {
+                                        {[...(electricityReadings || [])].sort((a, b) => {
+                                            if (!a.date && b.date) return -1;
+                                            if (a.date && !b.date) return 1;
+                                            return new Date(b.date || '1970-01-01').getTime() - new Date(a.date || '1970-01-01').getTime();
+                                        }).map((reading, index, arr) => {
                                             const prevReading = index < arr.length - 1 ? arr[index + 1] : undefined;
                                             const effectiveDateFrom = reading.dateFrom || (reading.date === '2026-09-30' ? '2026-08-28' : undefined);
                                             const effectiveReading = {
@@ -1880,10 +1895,10 @@ export const MortgageCalculator = () => {
                                                         <div className="flex flex-wrap items-center gap-2.5">
                                                             <div className="text-xs font-bold bg-muted px-3 py-1.5 rounded-lg text-foreground flex items-center gap-2">
                                                                 <Calendar className="size-3.5 text-primary shrink-0 overflow-visible" />
-                                                                <span>{effectiveDateFrom ? `${new Date(effectiveDateFrom).toLocaleDateString('de-CH')} – ` : ''}{new Date(reading.date).toLocaleDateString('de-CH')}</span>
+                                                                <span>{effectiveDateFrom ? `${new Date(effectiveDateFrom).toLocaleDateString('de-CH')} – ` : ''}{reading.date ? new Date(reading.date).toLocaleDateString('de-CH') : 'Offen'}</span>
                                                             </div>
                                                             <span className="text-xs text-muted-foreground font-medium bg-accent/30 px-2.5 py-1 rounded-md border border-border/40">
-                                                                {period.days} Tage
+                                                                {period.days > 0 ? `${period.days} Tage` : '–'}
                                                             </span>
                                                             {reading.invoiceNumber && (
                                                                 <span className="text-xs text-muted-foreground border border-border/80 px-2 py-0.5 rounded-md font-mono">
@@ -1911,8 +1926,8 @@ export const MortgageCalculator = () => {
                                                             <button
                                                                 onClick={() => {
                                                                     const dateStr = reading.dateFrom 
-                                                                        ? `${new Date(reading.dateFrom).toLocaleDateString('de-CH')} – ${new Date(reading.date).toLocaleDateString('de-CH')}`
-                                                                        : new Date(reading.date).toLocaleDateString('de-CH');
+                                                                        ? `${new Date(reading.dateFrom).toLocaleDateString('de-CH')} – ${reading.date ? new Date(reading.date).toLocaleDateString('de-CH') : 'Offen'}`
+                                                                        : (reading.date ? new Date(reading.date).toLocaleDateString('de-CH') : 'Neue Ablesung');
                                                                     if (window.confirm(`Möchten Sie diese Stromrechnung / Ablesung (${dateStr}) wirklich löschen?`)) {
                                                                         const newReadings = electricityReadings?.filter(r => r.id !== reading.id);
                                                                         updateMortgageData({ electricityReadings: newReadings });
@@ -1959,10 +1974,10 @@ export const MortgageCalculator = () => {
                                                                 <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Abrechnungsdauer</label>
                                                                 <div 
                                                                     className="w-full h-9 bg-background border border-input rounded-lg px-2.5 flex items-center justify-center text-sm font-mono font-bold text-foreground shadow-xs cursor-default select-none"
-                                                                    title="Automatisch berechnet aus Ablesung Von und Bis"
+                                                                    title={period.days > 0 ? "Automatisch berechnet aus Ablesung Von und Bis" : "Wird automatisch berechnet, sobald Datum Bis gewählt wird"}
                                                                 >
                                                                     <Calendar className="size-3.5 text-primary mr-2 shrink-0" />
-                                                                    <span>{period.days} Tage</span>
+                                                                    <span>{period.days > 0 ? `${period.days} Tage` : '–'}</span>
                                                                 </div>
                                                             </div>
                                                             <div className="space-y-1">
@@ -2015,12 +2030,12 @@ export const MortgageCalculator = () => {
                                                             <div className="space-y-1">
                                                                 <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap text-right">Stand neu HT</span>
                                                                 <DecimalInput
-                                                                    value={reading.valueHT}
+                                                                    value={reading.valueHT && reading.valueHT > 0 ? reading.valueHT : ''}
                                                                     placeholder="Neu"
                                                                     onChange={(val) => {
                                                                         const parsed = parseFloat(val) || 0;
                                                                         const alt = reading.standAltHT ?? (reading.valueHT === 542 ? 473 : 0);
-                                                                        const newUsage = alt > 0 ? Math.max(0, parsed - alt) : reading.usageHT;
+                                                                        const newUsage = (parsed > 0 && alt > 0) ? Math.max(0, parsed - alt) : 0;
                                                                         const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueHT: parsed, usageHT: newUsage } : r);
                                                                         updateMortgageData({ electricityReadings: newReadings });
                                                                     }}
@@ -2044,12 +2059,12 @@ export const MortgageCalculator = () => {
                                                             <div className="space-y-1">
                                                                 <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap text-right">Stand neu NT</span>
                                                                 <DecimalInput
-                                                                    value={reading.valueNT}
+                                                                    value={reading.valueNT && reading.valueNT > 0 ? reading.valueNT : ''}
                                                                     placeholder="Neu"
                                                                     onChange={(val) => {
                                                                         const parsed = parseFloat(val) || 0;
                                                                         const alt = reading.standAltNT ?? (reading.valueNT === 3583 ? 3108 : 0);
-                                                                        const newUsage = alt > 0 ? Math.max(0, parsed - alt) : reading.usageNT;
+                                                                        const newUsage = (parsed > 0 && alt > 0) ? Math.max(0, parsed - alt) : 0;
                                                                         const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueNT: parsed, usageNT: newUsage } : r);
                                                                         updateMortgageData({ electricityReadings: newReadings });
                                                                     }}
