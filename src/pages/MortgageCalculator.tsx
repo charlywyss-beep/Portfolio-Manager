@@ -1786,7 +1786,7 @@ export const MortgageCalculator = () => {
                             </h2>
                             <div className="flex items-center gap-2">
                                 <div className="flex items-center gap-2">
-                                    {(!electricityReadings || !electricityReadings.some(r => r.usageHT === 69 && r.usageNT === 475)) && (
+                                    {(!electricityReadings || !electricityReadings.some(r => r.invoiceNumber === '7 134 488' && r.date === '2026-09-30')) && (
                                         <button
                                             type="button"
                                             onClick={(e) => {
@@ -1805,10 +1805,11 @@ export const MortgageCalculator = () => {
                                                     usageNT: 475,
                                                     invoiceNumber: '7 134 488'
                                                 };
-                                                updateMortgageData({ electricityReadings: [eniwaInvoice, ...(electricityReadings || [])] });
+                                                const otherReadings = (electricityReadings || []).filter(r => r.invoiceNumber !== '7 134 488');
+                                                updateMortgageData({ electricityReadings: [eniwaInvoice, ...otherReadings] });
                                                 if (!isElectricityOpen) setIsElectricityOpen(true);
                                             }}
-                                            className="text-xs bg-amber-500/15 text-amber-500 hover:bg-amber-500/25 px-2.5 py-1.5 rounded-md font-semibold transition-colors flex items-center gap-1 border border-amber-500/30"
+                                            className="text-xs bg-amber-500/15 text-amber-500 hover:bg-amber-500/25 px-2.5 py-1.5 rounded-md font-semibold transition-colors flex items-center gap-1 border border-amber-500/30 cursor-pointer"
                                             title="Eniwa Rechnung vom 28.08.–30.09.2026 (146.13 CHF) wiederherstellen"
                                         >
                                             <Zap className="size-3.5" /> Eniwa-Rechnung laden
@@ -2218,19 +2219,16 @@ export const MortgageCalculator = () => {
                                             return new Date(b.date || '1970-01-01').getTime() - new Date(a.date || '1970-01-01').getTime();
                                         }).map((reading, index, arr) => {
                                             const prevReading = index < arr.length - 1 ? arr[index + 1] : undefined;
-                                            const effectiveDateFrom = reading.dateFrom || (
-                                                reading.invoiceNumber === '7 134 488' || reading.date === '2026-09-30' ? '2026-08-28' : undefined
-                                            );
-                                            const effectiveDueDate = reading.dueDate || (
-                                                reading.invoiceNumber === '7 134 488' || reading.date === '2026-09-30' || effectiveDateFrom === '2026-08-28'
-                                                    ? '2026-11-30'
-                                                    : ''
-                                            );
-                                            const effectiveInvoiceDate = reading.invoiceDate || (
-                                                reading.invoiceNumber === '7 134 488' || reading.date === '2026-09-30' || effectiveDateFrom === '2026-08-28'
-                                                    ? '2026-10-31'
-                                                    : ''
-                                            );
+                                            const isEniwaSample = reading.invoiceNumber === '7 134 488' || reading.date === '2026-09-30';
+                                            const effectiveDateFrom = reading.dateFrom !== undefined
+                                                ? reading.dateFrom
+                                                : (isEniwaSample ? '2026-08-28' : undefined);
+                                            const effectiveDueDate = reading.dueDate !== undefined
+                                                ? reading.dueDate
+                                                : (isEniwaSample ? '2026-11-30' : '');
+                                            const effectiveInvoiceDate = reading.invoiceDate !== undefined
+                                                ? reading.invoiceDate
+                                                : (isEniwaSample ? '2026-10-31' : '');
                                             const effectiveReading = {
                                                 ...reading,
                                                 dateFrom: effectiveDateFrom,
@@ -2375,7 +2373,7 @@ export const MortgageCalculator = () => {
                                                                     )}
                                                                 </div>
                                                                 <DatePickerField
-                                                                    value={reading.dateFrom || (reading.date === '2026-09-30' ? '2026-08-28' : '')}
+                                                                    value={effectiveDateFrom || ''}
                                                                     onChange={(val) => {
                                                                         const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, dateFrom: val } : r);
                                                                         updateMortgageData({ electricityReadings: newReadings });
@@ -2392,7 +2390,7 @@ export const MortgageCalculator = () => {
                                                             <div className="space-y-1 min-w-0">
                                                                 <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
                                                                     <span>Ablesung bis</span>
-                                                                    {reading.date && (
+                                                                    {reading.date ? (
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => {
@@ -2404,7 +2402,19 @@ export const MortgageCalculator = () => {
                                                                         >
                                                                             Leeren
                                                                         </button>
-                                                                    )}
+                                                                    ) : isEniwaSample ? (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, date: '2026-09-30' } : r);
+                                                                                updateMortgageData({ electricityReadings: newReadings });
+                                                                            }}
+                                                                            className="text-[10px] text-primary hover:underline cursor-pointer font-medium"
+                                                                            title="30.09.2026 wieder einsetzen"
+                                                                        >
+                                                                            Standard: 30.09.2026
+                                                                        </button>
+                                                                    ) : null}
                                                                 </div>
                                                                 <DatePickerField
                                                                     value={reading.date || ''}
@@ -2428,10 +2438,10 @@ export const MortgageCalculator = () => {
                                                                 <label className="text-xs font-semibold text-muted-foreground block truncate">Abrechnungsdauer</label>
                                                                 <div 
                                                                     className="w-full h-9 bg-background border border-border/80 rounded-lg px-2.5 flex items-center justify-center text-sm font-mono font-bold text-foreground shadow-xs cursor-default select-none"
-                                                                    title={period.days > 0 ? "Automatisch berechnet aus Ablesung von und bis" : "Wird automatisch berechnet, sobald Ablesung bis gewählt wird"}
+                                                                    title={period.days > 0 ? "Automatisch berechnet aus Ablesung von und bis" : "Wird automatisch berechnet, sobald ein Enddatum eingetragen ist"}
                                                                 >
                                                                     <Calendar className="size-3.5 text-primary mr-1.5 shrink-0" />
-                                                                    <span>{period.days > 0 ? `${period.days} Tage` : '–'}</span>
+                                                                    <span>{period.days > 0 ? `${period.days} Tage` : 'Offen'}</span>
                                                                 </div>
                                                             </div>
 
@@ -2474,7 +2484,7 @@ export const MortgageCalculator = () => {
                                                             <div className="space-y-1 min-w-0">
                                                                 <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
                                                                     <span>Rechnungsdatum</span>
-                                                                    {(reading.invoiceDate || (reading.date === '2026-09-30' ? '2026-10-31' : '')) && (
+                                                                    {effectiveInvoiceDate && (
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => {
@@ -2489,7 +2499,7 @@ export const MortgageCalculator = () => {
                                                                     )}
                                                                 </div>
                                                                 <DatePickerField
-                                                                    value={reading.invoiceDate || (reading.date === '2026-09-30' ? '2026-10-31' : '')}
+                                                                    value={effectiveInvoiceDate || ''}
                                                                     onChange={(val) => {
                                                                         const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, invoiceDate: val } : r);
                                                                         updateMortgageData({ electricityReadings: newReadings });
@@ -2506,7 +2516,7 @@ export const MortgageCalculator = () => {
                                                             <div className="space-y-1 min-w-0">
                                                                 <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
                                                                     <span>Zahlbar bis</span>
-                                                                    {(reading.dueDate || (reading.date === '2026-09-30' ? '2026-11-30' : '')) && (
+                                                                    {effectiveDueDate && (
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => {
@@ -2521,7 +2531,7 @@ export const MortgageCalculator = () => {
                                                                     )}
                                                                 </div>
                                                                 <DatePickerField
-                                                                    value={reading.dueDate || (reading.date === '2026-09-30' ? '2026-11-30' : '')}
+                                                                    value={effectiveDueDate || ''}
                                                                     onChange={(val) => {
                                                                         const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, dueDate: val } : r);
                                                                         updateMortgageData({ electricityReadings: newReadings });
