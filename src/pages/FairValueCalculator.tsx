@@ -1098,6 +1098,26 @@ export function FairValueCalculator() {
     const isYieldGap = (((typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : growthRate) + (typeof dividendYield === 'string' ? parseFloat(dividendYield) || 0 : dividendYield)) < ((typeof discountRate === 'string' ? parseFloat(discountRate) || 0 : discountRate) - 0.5))
         && (actualCurrentPe > 0 && (typeof pe === 'string' ? parseFloat(pe) || 0 : pe) > actualCurrentPe + 0.5);
 
+    const handleGoToBuySell = () => {
+        if (!selectedSymbol) return;
+        let targetStockId = currentStock?.id;
+        if (!targetStockId) {
+            targetStockId = addStock({
+                symbol: selectedSymbol,
+                name: quote?.name || selectedSymbol,
+                currentPrice: quote?.price || 0,
+                previousClose: quote?.previousClose || 0,
+                currency: (quote?.currency === 'GBp' ? 'GBP' : (quote?.currency || 'USD')) as any,
+                sector: quote?.sector || 'Allgemein',
+                type: isEtfAsset(currentStock, quote, selectedSymbol) ? 'etf' : 'stock',
+                isin: quote?.isin || ''
+            });
+        }
+        const activeLimit = parseFloat(buyLimitInput.replace(',', '.')) || currentStock?.targetPrice || (calculation.buyPrice > 0 ? calculation.buyPrice : undefined);
+        const priceParam = activeLimit && activeLimit > 0 ? `&price=${encodeURIComponent(activeLimit.toFixed(2))}` : '';
+        navigate(`/calculator?stock=${encodeURIComponent(String(targetStockId || selectedSymbol))}${priceParam}&from=fair-value`);
+    };
+
     return (
         <div className="fair-value-calculator-page p-4 md:p-6 space-y-4 md:space-y-6 bg-gradient-to-br from-background via-background to-muted/20 animate-in fade-in duration-500 iphone-landscape-page-root w-full">
             {/* Add Link Modal */}
@@ -1643,18 +1663,29 @@ export function FairValueCalculator() {
                                     })()}
                                 </div>
                             </div>
-                            <button
-                                onClick={() => {
-                                    setSelectedSymbol(null);
-                                    setQuote(null);
-                                    setAnalysis(null);
-                                    localStorage.removeItem('fair_value_state');
-                                }}
-                                className="p-1 sm:p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-all shrink-0"
-                                title="Aktie entfernen"
-                            >
-                                <X className="size-4 sm:size-5" />
-                            </button>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={handleGoToBuySell}
+                                    className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-all cursor-pointer shadow-sm active:scale-95"
+                                    title="Aktie direkt in Kauf / Verkauf öffnen"
+                                >
+                                    <Calculator className="size-3.5" />
+                                    <span>Kauf / Verkauf</span>
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setSelectedSymbol(null);
+                                        setQuote(null);
+                                        setAnalysis(null);
+                                        localStorage.removeItem('fair_value_state');
+                                    }}
+                                    className="p-1 sm:p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-all shrink-0"
+                                    title="Aktie entfernen"
+                                >
+                                    <X className="size-4 sm:size-5" />
+                                </button>
+                            </div>
                         </div>
                     )}
             </div>
@@ -2644,6 +2675,17 @@ export function FairValueCalculator() {
                                                     <span>Kaufpreis ({calculation.buyPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency}) als Kauflimit übernehmen</span>
                                                 </button>
                                             )}
+
+                                            {/* Direkt zu Kauf / Verkauf */}
+                                            <button
+                                                type="button"
+                                                onClick={handleGoToBuySell}
+                                                className="w-full mt-1.5 py-1.5 px-3 text-xs font-semibold rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                                                title="Diesen Titel direkt in Kauf / Verkauf öffnen"
+                                            >
+                                                <Calculator className="size-3.5" />
+                                                <span>In Kauf / Verkauf öffnen</span>
+                                            </button>
                                         </div>
                                     </div>
                                     );

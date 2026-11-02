@@ -130,6 +130,9 @@ export function DividendCalculator() {
     const lastLoadedStockIdRef = useRef<string | null>(null);
     useEffect(() => {
         const stockId = searchParams.get('stock');
+        const queryPrice = searchParams.get('price');
+        const parsedQueryPrice = queryPrice ? parseFloat(queryPrice) : NaN;
+
         if (stockId && stockId !== 'new' && stockId !== lastLoadedStockIdRef.current) {
             const stock = stocks.find(s => String(s.id) === String(stockId) || s.symbol.toLowerCase() === stockId.toLowerCase());
             if (stock) {
@@ -139,7 +142,7 @@ export function DividendCalculator() {
                     updateSimulatorState({
                         selectedStockId: stock.id,
                         shares: pp.shares,
-                        price: pp.pricePerShare,
+                        price: !isNaN(parsedQueryPrice) && parsedQueryPrice > 0 ? parsedQueryPrice : pp.pricePerShare,
                         dividend: pp.dividendPerShare,
                         simCurrency: pp.currency,
                         mode: 'buy',
@@ -165,7 +168,7 @@ export function DividendCalculator() {
                         simCurrency: stock.currency,
                         simType: stock.type,
                         simFrequency: stockFreq,
-                        price: stock.currentPrice,
+                        price: !isNaN(parsedQueryPrice) && parsedQueryPrice > 0 ? parsedQueryPrice : stock.currentPrice,
                         dividend: annualDiv
                     });
                 }
@@ -1082,6 +1085,8 @@ export function DividendCalculator() {
             navigate('/watchlist');
         } else if (from === 'portfolio') {
             navigate('/portfolio');
+        } else if (from === 'fair-value') {
+            navigate('/fair-value');
         } else if (from === 'market-overview') {
             const tab = searchParams.get('tab') || sessionStorage.getItem('portfolio_market_overview_tab');
             navigate(tab && tab !== 'all' ? `/market-overview?tab=${encodeURIComponent(tab)}` : '/market-overview');
