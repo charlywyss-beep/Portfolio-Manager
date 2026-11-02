@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { Plus, Trash2, X, Edit2 } from 'lucide-react';
 import { DecimalInput } from './DecimalInput';
+import { cn } from '../utils';
 
 interface SaronDataPoint {
     date: string;
@@ -38,7 +39,7 @@ const DEFAULT_DATA: SaronDataPoint[] = [
     { date: 'Apr 26', rate: 0.00, isForecast: true },
 ];
 
-export const SaronChart = () => {
+export const SaronChart = ({ className }: { className?: string } = {}) => {
     const [data, setData] = useState<SaronDataPoint[]>(() => {
         try {
             const saved = localStorage.getItem('saron_data_v3');
@@ -78,7 +79,7 @@ export const SaronChart = () => {
     };
 
     return (
-        <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+        <div className={cn("bg-card rounded-xl border border-border p-6 shadow-sm flex flex-col", className)}>
             <div className="flex items-center justify-between mb-4">
                 <div>
                     <h3 className="text-lg font-semibold">SARON / SNB Leitzins</h3>
@@ -142,7 +143,7 @@ export const SaronChart = () => {
                     </button>
                 </div>
             ) : (
-                <div className="h-[250px] w-full">
+                <div className="h-[250px] flex-1 min-h-[220px] w-full">
                     <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
                         <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />

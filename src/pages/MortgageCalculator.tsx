@@ -3229,7 +3229,7 @@ export const MortgageCalculator = () => {
                 </div>
 
                 {/* RIGHT COLUMN: RESULTS */}
-                <div className="space-y-6">
+                <div className="flex flex-col justify-between h-full space-y-6">
 
                     {/* Monthly Cost Breakdown */}
                     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
@@ -3316,42 +3316,42 @@ export const MortgageCalculator = () => {
                     </div>
 
                     {/* SARON Chart */}
-                    <SaronChart />
-
-                    {/* Tranche Visual */}
-                    {tranches.length > 0 && (
-                        <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-                            <h3 className="text-sm font-medium mb-4 text-muted-foreground">Mix-Verteilung</h3>
-                            <div className="h-[200px] w-full">
-                                <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
-                                    <RechartsPie>
-                                        <Pie
-                                            data={pieData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={80}
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                        >
-                                            {pieData.map((_entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <RechartsTooltip
-                                            formatter={(value: number) => formatCHF(value)}
-                                            contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
-                                            itemStyle={{ color: 'hsl(var(--foreground))' }}
-                                        />
-                                        <Legend />
-                                    </RechartsPie>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-                    )}
+                    <SaronChart className="flex-1 min-h-[320px]" />
 
                 </div>
             </div>
+
+            {/* Tranche Visual - Mix-Verteilung darunter platziert, damit bei 100% Desktop-Zoom das erste Sichtfenster bündig abschließt */}
+            {tranches.length > 0 && (
+                <div className="bg-card rounded-xl border border-border p-6 shadow-sm mt-8">
+                    <h3 className="text-sm font-medium mb-4 text-muted-foreground">Mix-Verteilung</h3>
+                    <div className="h-[220px] w-full max-w-2xl mx-auto">
+                        <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
+                            <RechartsPie>
+                                <Pie
+                                    data={pieData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                >
+                                    {pieData.map((_entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <RechartsTooltip
+                                    formatter={(value: number) => formatCHF(value)}
+                                    contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                                    itemStyle={{ color: 'hsl(var(--foreground))' }}
+                                />
+                                <Legend />
+                            </RechartsPie>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
 
             {/* Schöne, kompakte & zentrierte Bestätigungs-Modal für Standardwerte-Reset */}
             {showResetConfirmModal && (
