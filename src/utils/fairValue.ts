@@ -40,6 +40,16 @@ export const WIDE_MOAT_QUALITY = new Set([
     'BRK-B', 'BRK.B', 'BRK-A', 'BRK.A'
 ]);
 
+export function isEtfAsset(stockObj?: any, qData?: any, symbolStr?: string | null): boolean {
+    if (stockObj?.type === 'etf') return true;
+    if (qData?.quoteType === 'ETF' || qData?.type === 'etf') return true;
+    const name = (stockObj?.name || qData?.name || '').toLowerCase();
+    const sym = (symbolStr || stockObj?.symbol || qData?.symbol || '').toLowerCase();
+    if (name.includes('etf') || name.includes('ucits') || name.includes('ishares') || name.includes('vanguard ftse')) return true;
+    if (sym.includes('etf')) return true;
+    return false;
+}
+
 export function computeSmartAutoParams(
     qData: any,
     aData: any,
@@ -48,6 +58,7 @@ export function computeSmartAutoParams(
     valuationMode: 'conservative' | 'quality' = 'conservative'
 ) {
     const symUpper = (symbolStr || '').toUpperCase();
+    const isEtf = isEtfAsset(stockObj, qData, symbolStr);
     const isWideMoat = WIDE_MOAT_QUALITY.has(symUpper);
     const isQualityMode = valuationMode === 'quality';
     const price = qData?.price || stockObj?.currentPrice || 0;
@@ -298,12 +309,14 @@ export function computeSmartAutoParams(
     }
     autoPe10 = parseFloat(Number(autoPe10).toFixed(1));
 
-    // 5. Smart Margin of Safety (15% for Swiss / defensive / wide-moat quality blue-chips, 20% standard, 25% cyclicals)
+    // 5. Smart Margin of Safety (15% for Swiss / defensive / wide-moat quality blue-chips and ETFs, 20% standard, 25% cyclicals)
     let autoMos = 20;
     if (preset?.mos !== undefined) {
         autoMos = isQualityMode
             ? (isSwissBlueChip || isWideMoat ? 15 : preset.mos)
             : (preset.mos <= 15 ? 15 : 20);
+    } else if (isEtf) {
+        autoMos = 15; // ETFs sind breit diversifiziert (kein Einzelwert-Pleiterisiko)
     } else if (isQualityMode && (isSwissBlueChip || isWideMoat || isDefensiveSector)) {
         // In Quality Mode: Top-tier Swiss bluechips, Wide Moats and defensive leaders have 15% Margin of Safety!
         autoMos = 15;
@@ -315,17 +328,23 @@ export function computeSmartAutoParams(
         autoMos = 20;
     }
 
+    const defaultHorizon: '5Y' | '10Y' = isEtf ? '10Y' : '5Y';
+    const effectiveDefaultPe = isEtf ? autoPe10 : autoPe;
+
     return {
         eps: autoEps,
         growthRate: autoGrowth,
-        pe: autoPe,
+        pe: effectiveDefaultPe,
+        pe5: autoPe,
         pe10: autoPe10,
+        peHorizon: defaultHorizon,
         dividendYield: autoDiv,
         discountRate: 8,
         mos: autoMos,
         epsLabel,
         growthLabel: isQualityMode ? `${growthLabel} (Markt)` : `${growthLabel} (Sicherheit)`,
-        valuationMode
+        valuationMode,
+        isEtf
     };
 }
 

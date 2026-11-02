@@ -6,7 +6,7 @@ import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { fetchStockQuote, fetchStockAnalysis, searchStocks } from '../services/yahoo-finance';
-import { computeSmartAutoParams, adjustForReportingCurrency, WIDE_MOAT_QUALITY, FUNDAMENTAL_FALLBACKS } from '../utils/fairValue';
+import { computeSmartAutoParams, adjustForReportingCurrency, WIDE_MOAT_QUALITY, FUNDAMENTAL_FALLBACKS, isEtfAsset } from '../utils/fairValue';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { translateSector } from '../utils/sectorTranslation';
 
@@ -422,12 +422,15 @@ export function FairValueCalculator() {
         const smart = computeSmartAutoParamsFx(quote, analysis, existingStock, selectedSymbol, mode);
         setEps(smart.eps);
         setGrowthRate(smart.growthRate);
-        const pe5 = smart.pe;
+        const pe5 = (smart as any).pe5 || smart.pe;
         const pe10 = (smart as any).pe10 || smart.pe;
         setPe5Year(pe5);
         setPe10Year(pe10);
-        setSelectedPeHorizon('5Y');
-        setPe(pe5);
+        const isEtf = isEtfAsset(existingStock, quote, selectedSymbol);
+        const defaultHorizon: '5Y' | '10Y' = (smart as any).peHorizon || (isEtf ? '10Y' : '5Y');
+        const defaultPe = defaultHorizon === '10Y' ? pe10 : pe5;
+        setSelectedPeHorizon(defaultHorizon);
+        setPe(defaultPe);
         setDividendYield(smart.dividendYield);
         setDiscountRate(smart.discountRate);
         setMos(smart.mos);
@@ -468,18 +471,24 @@ export function FairValueCalculator() {
     const clearManualValues = () => {
         if (!selectedSymbol) return;
         const existingStock = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol.toLowerCase());
+        const isEtf = isEtfAsset(existingStock, quote, selectedSymbol);
         const smart = computeSmartAutoParamsFx(quote, analysis, existingStock, selectedSymbol, valuationProfile);
+        const pe5 = (smart as any).pe5 || smart.pe;
+        const pe10 = (smart as any).pe10 || smart.pe;
+        const defaultHorizon: '5Y' | '10Y' = (smart as any).peHorizon || (isEtf ? '10Y' : '5Y');
+        const defaultPe = defaultHorizon === '10Y' ? pe10 : pe5;
 
         saveSymbolParamsToLocal(selectedSymbol, {
             eps: smart.eps,
             growthRate: smart.growthRate,
-            pe: smart.pe,
+            pe: defaultPe,
             dividendYield: smart.dividendYield,
             discountRate: smart.discountRate,
             mos: smart.mos,
             isCustom: false,
             clearCustomBackup: true,
-            valuationMode: valuationProfile
+            valuationMode: valuationProfile,
+            peHorizon: defaultHorizon
         });
 
         if (existingStock) {
@@ -487,7 +496,7 @@ export function FairValueCalculator() {
                 fairValueParams: {
                     eps: smart.eps,
                     growthRate: smart.growthRate,
-                    pe: smart.pe,
+                    pe: defaultPe,
                     dividendYield: smart.dividendYield,
                     discountRate: smart.discountRate,
                     mos: smart.mos,
@@ -499,12 +508,10 @@ export function FairValueCalculator() {
 
         setEps(smart.eps);
         setGrowthRate(smart.growthRate);
-        const pe5 = smart.pe;
-        const pe10 = (smart as any).pe10 || smart.pe;
         setPe5Year(pe5);
         setPe10Year(pe10);
-        setSelectedPeHorizon('5Y');
-        setPe(pe5);
+        setSelectedPeHorizon(defaultHorizon);
+        setPe(defaultPe);
         setDividendYield(smart.dividendYield);
         setDiscountRate(smart.discountRate);
         setMos(smart.mos);
@@ -846,14 +853,19 @@ export function FairValueCalculator() {
             setAnalysis(a || { growthRate: null });
 
             const smart = computeSmartAutoParamsFx(finalQuote, a, existingStock, symbol, valuationProfile);
-            setPe5Year(smart.pe);
-            setPe10Year((smart as any).pe10 || smart.pe);
+            const pe5 = (smart as any).pe5 || smart.pe;
+            const pe10 = (smart as any).pe10 || smart.pe;
+            setPe5Year(pe5);
+            setPe10Year(pe10);
 
             if (!preventReset && !savedStockParams) {
                 setEps(smart.eps);
                 setGrowthRate(smart.growthRate);
-                setSelectedPeHorizon('5Y');
-                setPe(smart.pe);
+                const isEtf = isEtfAsset(existingStock, finalQuote, symbol);
+                const defaultHorizon: '5Y' | '10Y' = (smart as any).peHorizon || (isEtf ? '10Y' : '5Y');
+                const defaultPe = defaultHorizon === '10Y' ? pe10 : pe5;
+                setSelectedPeHorizon(defaultHorizon);
+                setPe(defaultPe);
                 setDividendYield(smart.dividendYield);
                 setDiscountRate(smart.discountRate);
                 setMos(smart.mos);
@@ -864,13 +876,14 @@ export function FairValueCalculator() {
                     saveSymbolParamsToLocal(symbol, {
                         eps: smart.eps,
                         growthRate: smart.growthRate,
-                        pe: smart.pe,
+                        pe: defaultPe,
                         dividendYield: smart.dividendYield,
                         discountRate: smart.discountRate,
                         mos: smart.mos,
                         isCustom: false,
                         clearCustomBackup: true,
-                        valuationMode: valuationProfile
+                        valuationMode: valuationProfile,
+                        peHorizon: defaultHorizon
                     });
                 }
             }
@@ -2045,7 +2058,7 @@ export function FairValueCalculator() {
                                                                     ? "bg-blue-600 text-white shadow-xs"
                                                                     : "text-muted-foreground hover:text-foreground hover:bg-card/80"
                                                             )}
-                                                            title={`Historischer 10-Jahres-KGV-Schnitt: ${pe10Year.toFixed(1)}`}
+                                                            title={`Historischer 10-Jahres-KGV-Schnitt: ${pe10Year.toFixed(1)}${isEtfAsset(currentStock, quote, selectedSymbol) ? ' (Standard für ETFs)' : ''}`}
                                                         >
                                                             <span>10J Ø</span>
                                                         </button>
