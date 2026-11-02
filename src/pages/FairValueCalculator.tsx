@@ -2321,7 +2321,7 @@ export function FairValueCalculator() {
                             <div className="fair-value-col-card bg-card border border-border rounded-xl p-3 md:p-3.5 shadow-sm h-full flex flex-col justify-between overflow-y-auto overflow-x-hidden">
                                 {/* Upper Header & Traffic Light Area - Vertically centered between top field edge and Bewertung card */}
                                 <div className="fair-value-circle-wrap relative flex flex-col items-center justify-center py-0.5 shrink-0">
-                                    <h2 className="text-sm sm:text-base font-semibold flex items-center gap-2 self-start mb-1 sm:mb-0 sm:absolute sm:top-0 sm:left-0">
+                                    <h2 className="text-sm sm:text-base font-semibold flex items-center gap-2 self-start mb-1 xl:mb-0 xl:absolute xl:top-0 xl:left-0">
                                         <span className="size-2 rounded-full bg-purple-500" />
                                         Bewertung
                                     </h2>
@@ -2373,9 +2373,6 @@ export function FairValueCalculator() {
                                                         ? "bg-amber-500/10 border-amber-500/30"
                                                         : "bg-rose-500/10 border-rose-500/30"
                                         )}>
-                                            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">
-                                                Bewertung
-                                            </div>
                                             <div className={cn(
                                                 "text-xl sm:text-2xl lg:text-lg font-extrabold font-mono tracking-tight flex items-baseline justify-center gap-1.5 flex-wrap",
                                                 isUndervalued
