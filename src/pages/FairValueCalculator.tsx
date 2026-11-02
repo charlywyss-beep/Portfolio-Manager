@@ -2403,17 +2403,15 @@ export function FairValueCalculator() {
 
                                             {/* Staffelkauf-Empfehlung (2 Tranchen) */}
                                             {!isUndervalued && calculation.fairValue > 0 && (() => {
-                                                const isEtf = isEtfAsset(currentStock, quote, selectedSymbol);
-                                                const m1 = isEtf ? 10 : 15;
-                                                const m2 = isEtf ? 15 : 20;
-                                                const mMix = ((m1 + m2) / 2).toFixed(1);
-                                                const p1 = calculation.fairValue * (1 - m1 / 100);
-                                                const p2 = calculation.fairValue * (1 - m2 / 100);
+                                                const p1 = calculation.fairValue;
+                                                const m2 = Number(mos) || (isEtfAsset(currentStock, quote, selectedSymbol) ? 10 : 15);
+                                                const p2 = calculation.buyPrice > 0 ? calculation.buyPrice : calculation.fairValue * (1 - m2 / 100);
                                                 const pMix = (p1 + p2) / 2;
+                                                const mMix = (m2 / 2).toFixed(1);
                                                 const activeLimit = currentStock?.targetPrice ?? (calculation.buyPrice > 0 ? calculation.buyPrice : 0);
-                                                const isP1Active = Math.abs(activeLimit - p1) < 0.05;
-                                                const isP2Active = Math.abs(activeLimit - p2) < 0.05;
-                                                const isMixActive = Math.abs(activeLimit - pMix) < 0.05;
+                                                const isP1Active = activeLimit > 0 && (Math.abs(activeLimit - p1) < 0.50 || Math.abs(activeLimit - p1) / p1 < 0.005);
+                                                const isP2Active = activeLimit > 0 && (Math.abs(activeLimit - p2) < 0.50 || Math.abs(activeLimit - p2) / p2 < 0.005);
+                                                const isMixActive = activeLimit > 0 && (Math.abs(activeLimit - pMix) < 0.50 || Math.abs(activeLimit - pMix) / pMix < 0.005);
 
                                                 return (
                                                     <div className="mt-2 pt-1.5 border-t border-border/40 text-[11px] text-muted-foreground flex flex-col items-center justify-center gap-1">
@@ -2423,16 +2421,16 @@ export function FairValueCalculator() {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setBuyLimitInput(p1.toFixed(2))}
-                                                                title={`1. Tranche ${m1}% als Kauflimit eintragen`}
+                                                                title="1. Tranche (Fairer Wert) als Kauflimit eintragen"
                                                                 className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
                                                             >
-                                                                1. Tranche {m1}% : <strong className={cn("font-mono", isP1Active ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(p1, quote.currency, false)}</strong>
+                                                                1. Tranche Fairer Wert : <strong className={cn("font-mono", isP1Active ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(p1, quote.currency, false)}</strong>
                                                             </button>
                                                             <span>•</span>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setBuyLimitInput(p2.toFixed(2))}
-                                                                title={`2. Tranche ${m2}% als Kauflimit eintragen`}
+                                                                title={`2. Tranche (${m2}% Sicherheitsmarge) als Kauflimit eintragen`}
                                                                 className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
                                                             >
                                                                 2. Tranche {m2}% : <strong className={cn("font-mono", isP2Active ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(p2, quote.currency, false)}</strong>
@@ -2442,7 +2440,7 @@ export function FairValueCalculator() {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setBuyLimitInput(pMix.toFixed(2))}
-                                                                title={`Kauf bei Ø ${mMix}% als Kauflimit eintragen`}
+                                                                title={`Kauf bei Ø ${mMix}% Marge als Kauflimit eintragen`}
                                                                 className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
                                                             >
                                                                 <span>Kauf bei Ø • {mMix}% : </span>
