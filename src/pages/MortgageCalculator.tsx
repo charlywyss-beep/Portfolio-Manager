@@ -2225,10 +2225,24 @@ export const MortgageCalculator = () => {
                                             return new Date(b.date || '1970-01-01').getTime() - new Date(a.date || '1970-01-01').getTime();
                                         }).map((reading, index, arr) => {
                                             const prevReading = index < arr.length - 1 ? arr[index + 1] : undefined;
-                                            const effectiveDateFrom = reading.dateFrom || (reading.date === '2026-09-30' ? '2026-08-28' : undefined);
+                                            const effectiveDateFrom = reading.dateFrom || (
+                                                reading.invoiceNumber === '7 134 488' || reading.date === '2026-09-30' ? '2026-08-28' : undefined
+                                            );
+                                            const effectiveDueDate = reading.dueDate || (
+                                                reading.invoiceNumber === '7 134 488' || reading.date === '2026-09-30' || effectiveDateFrom === '2026-08-28'
+                                                    ? '2026-11-30'
+                                                    : ''
+                                            );
+                                            const effectiveInvoiceDate = reading.invoiceDate || (
+                                                reading.invoiceNumber === '7 134 488' || reading.date === '2026-09-30' || effectiveDateFrom === '2026-08-28'
+                                                    ? '2026-10-31'
+                                                    : ''
+                                            );
                                             const effectiveReading = {
                                                 ...reading,
                                                 dateFrom: effectiveDateFrom,
+                                                dueDate: effectiveDueDate,
+                                                invoiceDate: effectiveInvoiceDate,
                                                 standAltHT: reading.standAltHT ?? (reading.valueHT === 542 ? 473 : undefined),
                                                 standAltNT: reading.standAltNT ?? (reading.valueNT === 3583 ? 3108 : undefined)
                                             };
@@ -2242,50 +2256,51 @@ export const MortgageCalculator = () => {
                                             const isCardOpen = openCardIds !== null ? openCardIds.includes(reading.id) : (index === 0);
 
                                             return (
-                                                <div key={reading.id} className={cn("bg-card border rounded-xl shadow-xs transition-all", isCardOpen ? "border-primary/50 p-4 sm:p-5 space-y-4" : "border-border/70 hover:border-primary/40 p-3 sm:p-4")}>
+                                                <div key={reading.id} className={cn("bg-card border rounded-xl shadow-xs transition-all", isCardOpen ? "border-primary/50 p-4 sm:p-5 space-y-4" : "border-border/70 hover:border-primary/40 p-3 sm:p-3.5")}>
                                                     
-                                                    {/* Header-Zeile mit Zeitraum, Status-Pille und Aktions-Buttons */}
+                                                    {/* Header: Genau 2 Zeilen (Zeile 1: Badges & Betrag, Zeile 2: Aktions-Buttons) */}
                                                     <div 
                                                         onClick={() => toggleCardOpen(reading.id)}
-                                                        className={cn("flex flex-wrap items-center justify-between gap-2.5 cursor-pointer select-none", isCardOpen && "border-b border-border/70 pb-3")}
+                                                        className={cn("cursor-pointer select-none space-y-2", isCardOpen && "border-b border-border/70 pb-3.5")}
                                                     >
-                                                        <div className="flex flex-wrap items-center gap-2.5">
-                                                            <div className="text-xs font-bold bg-muted px-3 py-1.5 rounded-lg text-foreground flex items-center gap-2">
-                                                                <Calendar className="size-3.5 text-primary shrink-0 overflow-visible" />
-                                                                <span>{effectiveDateFrom ? `${formatSwissDate(effectiveDateFrom)} – ` : ''}{reading.date ? formatSwissDate(reading.date) : 'Offen'}</span>
+                                                        {/* ZEILE 1: Badges & Betrag */}
+                                                        <div className="flex flex-wrap items-center justify-between gap-2">
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <div className="text-xs font-bold bg-muted px-2.5 py-1 rounded-lg text-foreground flex items-center gap-1.5 shadow-2xs">
+                                                                    <Calendar className="size-3.5 text-primary shrink-0 overflow-visible" />
+                                                                    <span>{effectiveDateFrom ? `${formatSwissDate(effectiveDateFrom)} – ` : ''}{reading.date ? formatSwissDate(reading.date) : 'Offen'}</span>
+                                                                </div>
+                                                                <span className="text-xs text-muted-foreground font-medium bg-accent/30 px-2 py-0.5 rounded-md border border-border/40">
+                                                                    {period.days > 0 ? `${period.days} Tage` : '–'}
+                                                                </span>
+                                                                {reading.invoiceNumber && (
+                                                                    <div className="text-xs bg-blue-500/10 border border-blue-500/25 px-2.5 py-0.5 rounded-md font-mono flex items-center gap-1.5 shadow-2xs whitespace-nowrap">
+                                                                        <FileText className="size-3.5 text-blue-400 shrink-0" />
+                                                                        <span className="text-blue-400 font-semibold font-sans">Rechnungs-Nr.</span>
+                                                                        <span className="text-foreground font-bold">{reading.invoiceNumber}</span>
+                                                                    </div>
+                                                                )}
+                                                                {effectiveDueDate && (
+                                                                    <div className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/25 px-2.5 py-0.5 rounded-md font-mono font-semibold flex items-center gap-1.5 shadow-2xs whitespace-nowrap">
+                                                                        <span>Fällig: {formatSwissDate(effectiveDueDate)}</span>
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                            <span className="text-xs text-muted-foreground font-medium bg-accent/30 px-2.5 py-1 rounded-md border border-border/40">
-                                                                {period.days > 0 ? `${period.days} Tage` : '–'}
-                                                            </span>
-                                                            {reading.invoiceNumber && (
-                                                                <div className="text-xs bg-blue-500/10 border border-blue-500/25 px-2.5 py-1 rounded-md font-mono flex items-center gap-1.5 shadow-2xs whitespace-nowrap">
-                                                                    <FileText className="size-3.5 text-blue-400 shrink-0" />
-                                                                    <span className="text-blue-400 font-semibold font-sans">Rechnungs-Nr.</span>
-                                                                    <span className="text-foreground font-bold">{reading.invoiceNumber}</span>
-                                                                    {(reading.invoiceDate || (reading.date === '2026-09-30' ? '2026-10-31' : '')) && (
-                                                                        <span className="text-muted-foreground font-sans text-[11px] hidden 2xl:inline">
-                                                                            (vom {formatSwissDate(reading.invoiceDate || '2026-10-31')})
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                            {(reading.dueDate || (reading.date === '2026-09-30' ? '2026-11-30' : '')) && (
-                                                                <div className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/25 px-2.5 py-1 rounded-md font-mono font-semibold flex items-center gap-1.5 shadow-2xs whitespace-nowrap">
-                                                                    <span>Fällig: {formatSwissDate(reading.dueDate || '2026-11-30')}</span>
-                                                                </div>
-                                                            )}
+
+                                                            {/* Betrag immer bündig rechts in Zeile 1 */}
                                                             {!isCardOpen && invoice.totalInclVat > 0 && (
-                                                                <div className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 rounded-md font-mono shadow-2xs whitespace-nowrap">
+                                                                <div className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 rounded-md font-mono shadow-2xs whitespace-nowrap ml-auto">
                                                                     <span>{formatCHF(invoice.totalInclVat, 2)}</span>
                                                                 </div>
                                                             )}
                                                         </div>
 
-                                                        <div className="flex items-center gap-2 ml-auto" onClick={(e) => e.stopPropagation()}>
+                                                        {/* ZEILE 2: Aktions-Buttons kompakt rechts bündig */}
+                                                        <div className="flex items-center justify-end gap-2 pt-0.5" onClick={(e) => e.stopPropagation()}>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => exportSingleInvoicePDF(reading)}
-                                                                className="px-2.5 py-1.5 text-xs font-medium rounded-lg border bg-muted/60 hover:bg-muted text-foreground border-border transition-colors flex items-center gap-1.5 shadow-2xs"
+                                                                className="h-7 px-2.5 text-xs font-medium rounded-lg border bg-muted/60 hover:bg-muted text-foreground border-border transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
                                                                 title="Diese Stromrechnung als separates PDF herunterladen"
                                                             >
                                                                 <Download className="size-3.5 text-primary shrink-0" />
@@ -2301,7 +2316,7 @@ export const MortgageCalculator = () => {
                                                                     setExpandedInvoiceId(isExpanded ? null : reading.id);
                                                                 }}
                                                                 className={cn(
-                                                                    "px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors flex items-center gap-1.5",
+                                                                    "h-7 px-2.5 text-xs font-medium rounded-lg border transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer",
                                                                     isExpanded
                                                                         ? "bg-primary text-primary-foreground border-primary"
                                                                         : "bg-muted/60 hover:bg-muted text-foreground border-border"
@@ -2315,7 +2330,7 @@ export const MortgageCalculator = () => {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => toggleCardOpen(reading.id)}
-                                                                className="px-2.5 py-1.5 text-xs font-medium rounded-lg border bg-muted/60 hover:bg-muted text-foreground border-border transition-colors flex items-center gap-1 shadow-2xs"
+                                                                className="h-7 px-2.5 text-xs font-medium rounded-lg border bg-muted/60 hover:bg-muted text-foreground border-border transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
                                                                 title={isCardOpen ? "Eintrag einklappen" : "Eintrag aufklappen"}
                                                             >
                                                                 <ChevronDown className={cn("size-3.5 transition-transform duration-200", isCardOpen && "rotate-180")} />
@@ -2323,19 +2338,20 @@ export const MortgageCalculator = () => {
                                                             </button>
 
                                                             <button
+                                                                type="button"
                                                                 onClick={() => {
-                                                                    const dateStr = reading.dateFrom 
-                                                                        ? `${formatSwissDate(reading.dateFrom)} – ${reading.date ? formatSwissDate(reading.date) : 'Offen'}`
+                                                                    const dateStr = effectiveDateFrom 
+                                                                        ? `${formatSwissDate(effectiveDateFrom)} – ${reading.date ? formatSwissDate(reading.date) : 'Offen'}`
                                                                         : (reading.date ? formatSwissDate(reading.date) : 'Neue Ablesung');
                                                                     if (window.confirm(`Möchten Sie diese Stromrechnung / Ablesung (${dateStr}) wirklich löschen?`)) {
                                                                         const newReadings = electricityReadings?.filter(r => r.id !== reading.id);
                                                                         updateMortgageData({ electricityReadings: newReadings });
                                                                     }
                                                                 }}
-                                                                className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                                                                className="size-7 flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer"
                                                                 title="Eintrag löschen"
                                                             >
-                                                                <Trash2 className="size-4" />
+                                                                <Trash2 className="size-3.5" />
                                                             </button>
                                                         </div>
                                                     </div>
