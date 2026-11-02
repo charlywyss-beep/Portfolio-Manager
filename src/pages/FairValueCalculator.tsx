@@ -2463,6 +2463,35 @@ export function FairValueCalculator() {
 
                                 {/* Value Stack */}
                                 <div className="fair-value-value-stack flex-1 space-y-2 sm:space-y-2.5 lg:space-y-2">
+                                    {/* Fair Value */}
+                                    <div className="fair-value-fairvalue-box p-2.5 sm:p-3 rounded-xl border border-border bg-card">
+                                        <div className="flex justify-between items-center gap-2 mb-0.5">
+                                            <span className="font-medium text-sm sm:text-base shrink-0 whitespace-nowrap">Fairer Wert</span>
+                                            {quote.currency !== 'CHF' ? (
+                                                <div className="flex flex-col items-end font-mono leading-tight text-right shrink-0">
+                                                    <span className="text-sm sm:text-base font-semibold whitespace-nowrap">
+                                                        {formatCurrency(calculation.fairValue, quote.currency, false)}
+                                                    </span>
+                                                    <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap">
+                                                        {formatCurrency(calculation.fairValue, quote.currency).split(' - ')[1]}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="font-mono text-sm sm:text-base whitespace-nowrap">
+                                                    {formatCurrency(calculation.fairValue, quote.currency, false)}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-[11px] text-muted-foreground">
+                                            Innerer Wert heute ({discountRate}% Zielrendite + Dividenden)
+                                        </p>
+                                        {isYieldGap && (
+                                            <p className="text-[11px] text-amber-400/90 mt-1.5 leading-snug italic font-medium">
+                                                Hinweis: Renditeerwartung ({discountRate}%) liegt über Ertrag ({growthRate}% + {dividendYield}%) bei steigendem KGV.
+                                            </p>
+                                        )}
+                                    </div>
+
                                     {/* Buy Price */}
                                     {(() => {
                                         const isQualityMode = !isSavedForStock && valuationProfile === 'quality';
@@ -2610,35 +2639,6 @@ export function FairValueCalculator() {
                                     </div>
                                     );
                                     })()}
-
-                                    {/* Fair Value */}
-                                    <div className="fair-value-fairvalue-box p-2.5 sm:p-3 rounded-xl border border-border bg-card">
-                                        <div className="flex justify-between items-center gap-2 mb-0.5">
-                                            <span className="font-medium text-sm sm:text-base shrink-0 whitespace-nowrap">Fairer Wert</span>
-                                            {quote.currency !== 'CHF' ? (
-                                                <div className="flex flex-col items-end font-mono leading-tight text-right shrink-0">
-                                                    <span className="text-sm sm:text-base font-semibold whitespace-nowrap">
-                                                        {formatCurrency(calculation.fairValue, quote.currency, false)}
-                                                    </span>
-                                                    <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap">
-                                                        {formatCurrency(calculation.fairValue, quote.currency).split(' - ')[1]}
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                <span className="font-mono text-sm sm:text-base whitespace-nowrap">
-                                                    {formatCurrency(calculation.fairValue, quote.currency, false)}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="text-[11px] text-muted-foreground">
-                                            Innerer Wert heute ({discountRate}% Zielrendite + Dividenden)
-                                        </p>
-                                        {isYieldGap && (
-                                            <p className="text-[11px] text-amber-400/90 mt-1.5 leading-snug italic font-medium">
-                                                Hinweis: Renditeerwartung ({discountRate}%) liegt über Ertrag ({growthRate}% + {dividendYield}%) bei steigendem KGV.
-                                            </p>
-                                        )}
-                                    </div>
 
                                     {/* Future Value */}
                                     <div className="fair-value-target-box p-2 sm:p-2.5 rounded-xl border border-border bg-muted/10">
