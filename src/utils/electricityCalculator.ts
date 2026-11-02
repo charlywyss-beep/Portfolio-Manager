@@ -139,8 +139,10 @@ export function calculatePeriodDays(dateFrom?: string, dateTo?: string): { days:
     if (isNaN(tFrom) || isNaN(tTo) || tTo <= tFrom) return { days: 30, months: 1 };
 
     const days = Math.round((tTo - tFrom) / (1000 * 3600 * 24));
-    // In der Schweizer Praxis: 28-33 Tage entsprechen meist 1 Abrechnungsmonat
-    const months = days >= 25 && days <= 35 ? 1 : Math.max(1, Math.round((days / 30.416) * 10) / 10);
+    // Schweizer Stromversorger (z.B. Eniwa) verrechnen Fixkosten monatsweise:
+    // Ein Ableseintervall von ca. 25 bis 45 Tagen entspricht genau 1 Abrechnungsmonat.
+    // Längere Zyklen (z.B. Quartal ~90 Tage = 3 Monate, Halbjahr ~180 Tage = 6 Monate, Jahr ~365 Tage = 12 Monate).
+    const months = Math.max(1, Math.round(days / 30.416));
     return { days, months };
 }
 

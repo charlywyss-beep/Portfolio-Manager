@@ -131,13 +131,13 @@ export const MortgageCalculator = () => {
             const prev = i > 0 ? sorted[i - 1] : undefined;
             const { usageHT, usageNT } = getReadingUsage(curr, prev);
 
-            let days = 0;
-            let months = curr.billingMonths || 1;
+            let days = 30;
+            let months = 1;
 
             if (curr.dateFrom && curr.date) {
                 const p = calculatePeriodDays(curr.dateFrom, curr.date);
                 days = p.days;
-                if (!curr.billingMonths) months = p.months;
+                months = p.months;
             } else if (prev) {
                 days = Math.max(1, Math.round((new Date(curr.date).getTime() - new Date(prev.date).getTime()) / (1000 * 3600 * 24)));
                 months = Math.max(1, Math.round(days / 30.416));
@@ -1712,7 +1712,7 @@ export const MortgageCalculator = () => {
                                             const { usageHT, usageNT } = getReadingUsage(effectiveReading, prevReading);
                                             const totalUsage = usageHT + usageNT;
                                             const period = calculatePeriodDays(effectiveDateFrom, reading.date);
-                                            const months = reading.billingMonths || period.months;
+                                            const months = period.months;
                                             const invoice = calculateElectricityInvoice(usageHT, usageNT, months, electricityTariff);
                                             const isExpanded = expandedInvoiceId === reading.id;
 
@@ -1792,21 +1792,19 @@ export const MortgageCalculator = () => {
                                                             />
                                                         </div>
                                                         <div className="space-y-1">
-                                                            <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Abrechnungs-Monate</label>
-                                                            <input
-                                                                type="number"
-                                                                step="0.5"
-                                                                min="0.5"
-                                                                max="12"
-                                                                value={months}
-                                                                onChange={(e) => {
-                                                                    const val = parseFloat(e.target.value) || 1;
-                                                                    const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, billingMonths: val } : r);
-                                                                    updateMortgageData({ electricityReadings: newReadings });
-                                                                }}
-                                                                className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono text-center"
-                                                                title="Anzahl Monate für monatliche Fixkosten (Grundpreis & Messung)"
-                                                            />
+                                                            <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Abrechnungsdauer</label>
+                                                            <div 
+                                                                className="w-full h-9 bg-background/80 border border-input rounded-lg px-2.5 flex items-center justify-between text-xs cursor-default select-none shadow-xs"
+                                                                title="Automatisch berechnet aus Ablesung Von und Bis"
+                                                            >
+                                                                <span className="font-semibold text-foreground flex items-center gap-1.5">
+                                                                    <Calendar className="size-3.5 text-primary shrink-0" />
+                                                                    {period.days} Tage
+                                                                </span>
+                                                                <span className="text-[11px] font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+                                                                    {months} {months === 1 ? 'Monat' : 'Monate'}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                         <div className="space-y-1">
                                                             <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Rechnungs-Nr. (optional)</label>
