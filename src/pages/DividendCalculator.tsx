@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
-import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, ArrowLeft, HelpCircle, BookOpen, AlertTriangle, Target } from 'lucide-react';
+import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, ArrowLeft, HelpCircle, BookOpen, AlertTriangle, Target, Telescope } from 'lucide-react';
 import { fetchStockHistory, searchStocks, fetchStockQuote } from '../services/yahoo-finance';
 
 import { jsPDF } from 'jspdf';
@@ -1634,22 +1634,36 @@ export function DividendCalculator() {
                                 })()}
                                 {/* Transaction details below selector always visible */}
 
-                                {/* Kauflimit übernehmen (mittig über Kurs Laden Feld) */}
+                                {/* Kauflimit & Fairer Wert Buttons (mittig über den Eingabefeldern) */}
                                 {(() => {
                                     const stock = stocks.find(s => s.id === selectedStockId);
-                                    if (!stock?.targetPrice) return null;
-                                    const limitCurr = (stock.currency === 'GBp' || stock.currency === 'GBP') ? 'GBp' : (stock.currency || 'CHF');
+                                    if (!stock?.targetPrice && !stock?.symbol) return null;
+                                    const limitCurr = (stock?.currency === 'GBp' || stock?.currency === 'GBP') ? 'GBp' : (stock?.currency || 'CHF');
                                     return (
-                                        <div className="flex justify-center -mt-2 mb-3">
-                                            <button
-                                                type="button"
-                                                onClick={() => updateSimulatorState({ price: stock.targetPrice! })}
-                                                className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-3.5 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs active:scale-95 flex items-center gap-1.5"
-                                                title="Kauflimit als Kaufpreis übernehmen"
-                                            >
-                                                <Target className="size-3.5 text-emerald-400" />
-                                                <span>Kauflimit übernehmen : {stock.targetPrice.toFixed(2)} {limitCurr}</span>
-                                            </button>
+                                        <div className="flex items-center justify-center gap-2 -mt-2 mb-3 flex-wrap">
+                                            {stock?.targetPrice ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateSimulatorState({ price: stock.targetPrice! })}
+                                                    className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-3.5 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs active:scale-95 flex items-center gap-1.5"
+                                                    title="Kauflimit als Kaufpreis übernehmen"
+                                                >
+                                                    <Target className="size-3.5 text-emerald-400" />
+                                                    <span>Kauflimit übernehmen : {stock.targetPrice.toFixed(2)} {limitCurr}</span>
+                                                </button>
+                                            ) : null}
+
+                                            {stock?.symbol ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => navigate(`/fair-value?stock=${encodeURIComponent(String(stock.id || stock.symbol))}&from=calculator`)}
+                                                    className="text-xs font-semibold text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs active:scale-95 flex items-center gap-1.5"
+                                                    title="Zur fundamentalen Analyse & Innerer Wert springen"
+                                                >
+                                                    <Telescope className="size-3.5 text-blue-400" />
+                                                    <span>Fairer Wert</span>
+                                                </button>
+                                            ) : null}
                                         </div>
                                     );
                                 })()}
