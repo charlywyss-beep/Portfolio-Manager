@@ -2392,20 +2392,18 @@ export const MortgageCalculator = () => {
                                                             <div className="space-y-1 min-w-0">
                                                                 <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
                                                                     <span>Ablesung bis</span>
-                                                                    {reading.date ? (
+                                                                    {reading.date && (
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => {
                                                                                 const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, date: '' } : r);
                                                                                 updateMortgageData({ electricityReadings: newReadings });
                                                                             }}
-                                                                            className="text-[10px] text-amber-400 hover:text-amber-300 cursor-pointer px-1.5 py-0.5 rounded hover:bg-amber-500/10 font-medium"
-                                                                            title="Auf 'Offen' (laufend) zurücksetzen"
+                                                                            className="text-[10px] text-muted-foreground hover:text-foreground cursor-pointer px-1 rounded hover:bg-muted"
+                                                                            title="Enddatum leeren"
                                                                         >
-                                                                            Auf Offen
+                                                                            Leeren
                                                                         </button>
-                                                                    ) : (
-                                                                        <span className="text-[10px] text-emerald-400 font-medium">Laufend / Offen</span>
                                                                     )}
                                                                 </div>
                                                                 <DatePickerField
