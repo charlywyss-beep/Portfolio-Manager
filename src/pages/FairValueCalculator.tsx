@@ -2568,7 +2568,7 @@ export function FairValueCalculator() {
                                             <div className="flex items-center justify-between text-xs">
                                                 <span className="font-semibold text-foreground flex items-center gap-1.5">
                                                     <Target className={cn("size-3.5", kaufpreisTargetIconColor)} />
-                                                    <span>Kauflimit (für Kursdaten)</span>
+                                                    <span>Kauflimit</span>
                                                 </span>
                                                 {buyLimitSavedToast ? (
                                                     <span className="text-[11px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1 animate-pulse">
