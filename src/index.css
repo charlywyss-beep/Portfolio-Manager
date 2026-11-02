@@ -1889,13 +1889,16 @@
     line-height: 1.1 !important;
   }
 
-  /* Ampel-Kreis mit ausreichend Raum: Kein Überlappen der Texte mehr */
-  .fair-value-circle {
-    width: 5.5rem !important;
-    height: 5.5rem !important;
-    min-width: 5.5rem !important;
-    min-height: 5.5rem !important;
-    padding: 0.2rem !important;
+  /* Ampel-Badge als abgerundetes Quadrat: Voller Platz für Schrift ohne Ecken-Verlust */
+  .fair-value-circle,
+  .fair-value-badge {
+    width: auto !important;
+    min-width: 9.5rem !important;
+    max-width: 12.5rem !important;
+    height: auto !important;
+    min-height: auto !important;
+    border-radius: 1rem !important;
+    padding: 0.35rem 0.65rem !important;
   }
 
   .fair-value-circle .text-xs {
@@ -1905,14 +1908,14 @@
 
   .fair-value-circle .text-\[10px\],
   .fair-value-circle .text-\[8\.5px\] {
-    font-size: 0.55rem !important;
+    font-size: 0.58rem !important;
     line-height: 1 !important;
     margin-top: 0.05rem !important;
   }
 
   .fair-value-circle .text-sm,
   .fair-value-circle .text-base {
-    font-size: 0.88rem !important;
+    font-size: 0.92rem !important;
     line-height: 1.15 !important;
     margin-top: 0.08rem !important;
     margin-bottom: 0.08rem !important;
@@ -1920,7 +1923,7 @@
 
   .fair-value-circle .text-\[11px\],
   .fair-value-circle .text-\[9px\] {
-    font-size: 0.58rem !important;
+    font-size: 0.6rem !important;
     line-height: 1 !important;
   }
 
@@ -2149,12 +2152,15 @@
     margin-bottom: 0 !important;
   }
 
-  .fair-value-calculator-page .fair-value-circle {
-    width: 6.85rem !important;
-    height: 6.85rem !important;
-    min-width: 6.85rem !important;
-    min-height: 6.85rem !important;
-    padding: 0.2rem !important;
+  .fair-value-calculator-page .fair-value-circle,
+  .fair-value-calculator-page .fair-value-badge {
+    width: auto !important;
+    min-width: 10.5rem !important;
+    max-width: 13.5rem !important;
+    height: auto !important;
+    min-height: auto !important;
+    border-radius: 1rem !important;
+    padding: 0.4rem 0.75rem !important;
   }
 
   .fair-value-calculator-page .fair-value-circle .text-xs {

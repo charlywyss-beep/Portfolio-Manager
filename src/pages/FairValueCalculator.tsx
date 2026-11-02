@@ -2326,9 +2326,9 @@ export function FairValueCalculator() {
                                         Bewertung
                                     </h2>
 
-                                    {/* Traffic Light */}
+                                    {/* Traffic Light Badge (Abgerundetes Quadrat) */}
                                     <div className={cn(
-                                        "fair-value-circle relative size-28 sm:size-32 lg:size-20 rounded-full flex flex-col items-center justify-center border-2 shadow-md transition-all duration-500 text-center p-1.5 lg:p-1 my-auto lg:my-0",
+                                        "fair-value-circle fair-value-badge relative w-40 sm:w-48 lg:w-44 xl:w-52 py-2 px-3 sm:py-2.5 sm:px-4 rounded-2xl flex flex-col items-center justify-center border-2 shadow-md transition-all duration-500 text-center my-auto lg:my-0",
                                         isUndervalued
                                             ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-emerald-500/20"
                                             : isFairHold
@@ -2337,17 +2337,17 @@ export function FairValueCalculator() {
                                                     ? "bg-amber-500/10 border-amber-500 text-amber-500 shadow-amber-500/20"
                                                     : "bg-red-500/10 border-red-500 text-red-500 shadow-red-500/20"
                                     )}>
-                                        <div className="flex flex-col items-center justify-center">
-                                            <div className="text-xs lg:text-[10px] uppercase font-black tracking-wider opacity-90 leading-tight">
+                                        <div className="flex flex-col items-center justify-center w-full">
+                                            <div className="text-xs sm:text-sm font-black tracking-wider uppercase opacity-90 leading-tight">
                                                 {isUndervalued ? 'KAUFEN' : (isFairHold || isRichHold) ? 'HOLD' : 'TEUER'}
                                             </div>
-                                            <div className="text-[10px] lg:text-[8.5px] uppercase font-bold tracking-tight opacity-75 mt-0.5 lg:mt-0 leading-tight">
+                                            <div className="text-[10px] sm:text-xs uppercase font-bold tracking-tight opacity-75 mt-0.5 leading-tight">
                                                 {isUndervalued ? 'Sicherheitsmarge' : isFairHold ? 'Fairer Bereich' : isRichHold ? 'Gut bezahlt' : 'Überhitzt'}
                                             </div>
-                                            <div className="text-sm sm:text-base lg:text-sm font-black leading-tight whitespace-nowrap tabular-nums my-0.5 lg:my-0">
+                                            <div className="text-sm sm:text-base lg:text-base xl:text-lg font-black leading-tight whitespace-nowrap tabular-nums my-0.5 sm:my-1">
                                                 {formatCurrency(currentPrice, quote.currency, false)}
                                             </div>
-                                            <div className="text-[11px] lg:text-[9px] font-bold opacity-85 leading-tight">
+                                            <div className="text-[10px] sm:text-xs font-semibold opacity-85 leading-tight">
                                                 Aktueller Kurs
                                             </div>
                                         </div>
