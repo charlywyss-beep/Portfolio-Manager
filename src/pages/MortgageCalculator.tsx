@@ -2711,7 +2711,7 @@ export const MortgageCalculator = () => {
                                                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 xl:gap-2.5 text-xs w-full">
                                                             
                                                             {/* Energie HT */}
-                                                            <div className="p-2 xl:p-2.5 bg-background border border-border/70 rounded-lg space-y-0.5 shadow-2xs min-w-0">
+                                                            <div className="p-2 xl:p-2.5 bg-background border border-border/70 rounded-lg space-y-0.5 shadow-2xs min-w-0 text-center">
                                                                 <div className="text-xs text-muted-foreground font-semibold truncate">Energie HT</div>
                                                                 <div className="text-sm font-extrabold font-mono text-foreground">
                                                                     {formatCHF(invoice.energyHTAmount, 2)}
@@ -2722,7 +2722,7 @@ export const MortgageCalculator = () => {
                                                             </div>
 
                                                             {/* Energie NT */}
-                                                            <div className="p-2 xl:p-2.5 bg-background border border-border/70 rounded-lg space-y-0.5 shadow-2xs min-w-0">
+                                                            <div className="p-2 xl:p-2.5 bg-background border border-border/70 rounded-lg space-y-0.5 shadow-2xs min-w-0 text-center">
                                                                 <div className="text-xs text-muted-foreground font-semibold truncate">Energie NT</div>
                                                                 <div className="text-sm font-extrabold font-mono text-foreground">
                                                                     {formatCHF(invoice.energyNTAmount, 2)}
@@ -2733,7 +2733,7 @@ export const MortgageCalculator = () => {
                                                             </div>
 
                                                             {/* Total Energie */}
-                                                            <div className="p-2 xl:p-2.5 bg-primary/10 border border-primary/25 rounded-lg space-y-0.5 shadow-2xs min-w-0">
+                                                            <div className="p-2 xl:p-2.5 bg-primary/10 border border-primary/25 rounded-lg space-y-0.5 shadow-2xs min-w-0 text-center">
                                                                 <div className="text-xs text-primary font-bold truncate">Total Energie</div>
                                                                 <div className="text-sm font-extrabold font-mono text-primary">
                                                                     {formatCHF(invoice.subtotalEnergy, 2)}
@@ -2744,7 +2744,7 @@ export const MortgageCalculator = () => {
                                                             </div>
 
                                                             {/* Netznutzung */}
-                                                            <div className="p-2 xl:p-2.5 bg-blue-500/10 border border-blue-500/25 rounded-lg space-y-0.5 shadow-2xs min-w-0">
+                                                            <div className="p-2 xl:p-2.5 bg-blue-500/10 border border-blue-500/25 rounded-lg space-y-0.5 shadow-2xs min-w-0 text-center">
                                                                 <div className="text-xs text-blue-400 font-bold truncate">Netznutzung</div>
                                                                 <div className="text-sm font-extrabold font-mono text-blue-400">
                                                                     {formatCHF(invoice.subtotalGrid, 2)}
@@ -2755,7 +2755,7 @@ export const MortgageCalculator = () => {
                                                             </div>
 
                                                             {/* Abgaben */}
-                                                            <div className="p-2 xl:p-2.5 bg-amber-500/10 border border-amber-500/25 rounded-lg space-y-0.5 shadow-2xs min-w-0">
+                                                            <div className="p-2 xl:p-2.5 bg-amber-500/10 border border-amber-500/25 rounded-lg space-y-0.5 shadow-2xs min-w-0 text-center">
                                                                 <div className="text-xs text-amber-400 font-bold truncate">Abgaben</div>
                                                                 <div className="text-sm font-extrabold font-mono text-amber-400">
                                                                     {formatCHF(invoice.subtotalFees, 2)}
@@ -2766,7 +2766,7 @@ export const MortgageCalculator = () => {
                                                             </div>
 
                                                             {/* Stromkosten inkl. MwSt */}
-                                                            <div className="p-2 xl:p-2.5 bg-emerald-500/15 border border-emerald-500/35 rounded-lg space-y-0.5 shadow-2xs min-w-0">
+                                                            <div className="p-2 xl:p-2.5 bg-emerald-500/15 border border-emerald-500/35 rounded-lg space-y-0.5 shadow-2xs min-w-0 text-center">
                                                                 <div className="text-xs text-emerald-400 font-extrabold truncate">Stromkosten</div>
                                                                 <div className="text-sm font-extrabold font-mono text-emerald-400">
                                                                     {formatCHF(invoice.totalInclVat, 2)}
