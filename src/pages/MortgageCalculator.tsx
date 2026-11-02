@@ -126,8 +126,8 @@ export const MortgageCalculator = () => {
         const tableBody: any[] = [
             // 1. Energie
             [
-                { content: '1. Energie (Wirkenergie)', colSpan: 3, styles: { fontStyle: 'bold', fillColor: [240, 245, 255], textColor: [30, 64, 175] } },
-                { content: formatCHF(inv.subtotalEnergy, 2), styles: { fontStyle: 'bold', halign: 'right', fillColor: [240, 245, 255], textColor: [30, 64, 175] } }
+                { content: '1. Energie (Wirkenergie)', colSpan: 3, styles: { fontStyle: 'bold', fillColor: [239, 246, 255], textColor: [30, 64, 175] } },
+                { content: formatCHF(inv.subtotalEnergy, 2), styles: { fontStyle: 'bold', halign: 'right', fillColor: [239, 246, 255], textColor: [30, 64, 175] } }
             ],
             [`${providerName} Naturstrom Schweiz Hochtarif (HT)`, `${usageHT} kWh`, `${tariff.energyHT.toFixed(2)} Rp./kWh`, formatCHF(inv.energyHTAmount, 2)],
             [`${providerName} Naturstrom Schweiz Niedertarif (NT)`, `${usageNT} kWh`, `${tariff.energyNT.toFixed(2)} Rp./kWh`, formatCHF(inv.energyNTAmount, 2)],
@@ -138,8 +138,8 @@ export const MortgageCalculator = () => {
 
             // 2. Netznutzung
             [
-                { content: '2. Netznutzung', colSpan: 3, styles: { fontStyle: 'bold', fillColor: [239, 246, 255], textColor: [37, 99, 235] } },
-                { content: formatCHF(inv.subtotalGrid, 2), styles: { fontStyle: 'bold', halign: 'right', fillColor: [239, 246, 255], textColor: [37, 99, 235] } }
+                { content: '2. Netznutzung', colSpan: 3, styles: { fontStyle: 'bold', fillColor: [239, 246, 255], textColor: [30, 64, 175] } },
+                { content: formatCHF(inv.subtotalGrid, 2), styles: { fontStyle: 'bold', halign: 'right', fillColor: [239, 246, 255], textColor: [30, 64, 175] } }
             ],
             ['Wirkenergie Hochtarif (HT)', `${usageHT} kWh`, `${tariff.gridHT.toFixed(2)} Rp./kWh`, formatCHF(inv.gridHTAmount, 2)],
             ['Wirkenergie Niedertarif (NT)', `${usageNT} kWh`, `${tariff.gridNT.toFixed(2)} Rp./kWh`, formatCHF(inv.gridNTAmount, 2)],
@@ -155,8 +155,8 @@ export const MortgageCalculator = () => {
 
             // 3. Öffentliche Abgaben
             [
-                { content: '3. Öffentliche Abgaben', colSpan: 3, styles: { fontStyle: 'bold', fillColor: [254, 243, 199], textColor: [180, 83, 9] } },
-                { content: formatCHF(inv.subtotalFees, 2), styles: { fontStyle: 'bold', halign: 'right', fillColor: [254, 243, 199], textColor: [180, 83, 9] } }
+                { content: '3. Öffentliche Abgaben', colSpan: 3, styles: { fontStyle: 'bold', fillColor: [239, 246, 255], textColor: [30, 64, 175] } },
+                { content: formatCHF(inv.subtotalFees, 2), styles: { fontStyle: 'bold', halign: 'right', fillColor: [239, 246, 255], textColor: [30, 64, 175] } }
             ],
             ['Konzessionsabgabe an die Gemeinde', `${totalUsage} kWh`, `${tariff.communityFee.toFixed(2)} Rp./kWh`, formatCHF(inv.communityFeeAmount, 2)],
             ['Bundesabgaben gemäss Energiegesetz (KEV)', `${totalUsage} kWh`, `${tariff.federalFee.toFixed(2)} Rp./kWh`, formatCHF(inv.federalFeeAmount, 2)],
