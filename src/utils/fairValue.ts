@@ -309,14 +309,15 @@ export function computeSmartAutoParams(
     }
     autoPe10 = parseFloat(Number(autoPe10).toFixed(1));
 
-    // 5. Smart Margin of Safety (15% for Swiss / defensive / wide-moat quality blue-chips and ETFs, 20% standard, 25% cyclicals)
+    // 5. Smart Margin of Safety (10% for ETFs in Quality, 15% for ETFs in Safety / Swiss / wide-moat bluechips, 20% standard, 25% cyclicals)
     let autoMos = 20;
     if (preset?.mos !== undefined) {
         autoMos = isQualityMode
             ? (isSwissBlueChip || isWideMoat ? 15 : preset.mos)
             : (preset.mos <= 15 ? 15 : 20);
     } else if (isEtf) {
-        autoMos = 15; // ETFs sind breit diversifiziert (kein Einzelwert-Pleiterisiko)
+        // Breit diversifizierte ETFs: 10% in Qualität B (praxisnaher Korrektur-Einstieg), 15% in Sicherheit A (strikter Puffer)
+        autoMos = isQualityMode ? 10 : 15;
     } else if (isQualityMode && (isSwissBlueChip || isWideMoat || isDefensiveSector)) {
         // In Quality Mode: Top-tier Swiss bluechips, Wide Moats and defensive leaders have 15% Margin of Safety!
         autoMos = 15;

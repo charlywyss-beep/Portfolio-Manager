@@ -2231,7 +2231,13 @@ export function FairValueCalculator() {
                                     <label className="text-xs sm:text-sm font-medium flex justify-between items-center">
                                         <span>Sicherheitsmarge</span>
                                         <span className="text-[11px] text-muted-foreground font-light">
-                                            {Number(mos) <= 15 ? 'Qualitätsführer / Defensiv' : Number(mos) <= 20 ? 'Standard / Tabak / REITs' : 'Zykliker / Risiko'}
+                                            {(() => {
+                                                const isCurrentEtf = isEtfAsset(currentStock, quote, selectedSymbol);
+                                                if (isCurrentEtf) {
+                                                    return Number(mos) <= 10 ? 'ETF Qualität / Markt (10%)' : Number(mos) <= 15 ? 'ETF Sicherheit (15%)' : 'ETF Strenger Crash-Puffer';
+                                                }
+                                                return Number(mos) <= 15 ? 'Qualitätsführer / Defensiv' : Number(mos) <= 20 ? 'Standard / Tabak / REITs' : 'Zykliker / Risiko';
+                                            })()}
                                         </span>
                                     </label>
                                     <div className="flex items-center gap-2">
@@ -2249,7 +2255,7 @@ export function FairValueCalculator() {
                                             <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">%</span>
                                         </div>
                                         <div className="grid grid-cols-4 gap-1.5 flex-1">
-                                            {[15, 20, 25, 30].map((val) => (
+                                            {(isEtfAsset(currentStock, quote, selectedSymbol) ? [10, 15, 20, 25] : [15, 20, 25, 30]).map((val) => (
                                                 <button
                                                     key={val}
                                                     type="button"
