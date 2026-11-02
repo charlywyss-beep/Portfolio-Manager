@@ -922,7 +922,7 @@ export const MortgageCalculator = () => {
                 </div>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-6 grid-cols-1 2xl:grid-cols-2">
                 {/* LEFT COLUMN: INPUTS */}
                 <div className="space-y-6">
 
@@ -2729,8 +2729,8 @@ export const MortgageCalculator = () => {
 
                                             <div className="mt-2.5 text-xs text-muted-foreground flex items-center justify-between">
                                                 <span>
-                                                    Ablesedatum: <span className="font-semibold text-foreground">{new Date(latest.date).toLocaleDateString('de-CH')}</span>
-                                                    {latest.dateFrom && ` (Zeitraum ab ${new Date(latest.dateFrom).toLocaleDateString('de-CH')})`}
+                                                    Ablesedatum: <span className="font-semibold text-foreground">{latest.date ? formatSwissDate(latest.date) : 'Offen'}</span>
+                                                    {latest.dateFrom && ` (Zeitraum ab ${formatSwissDate(latest.dateFrom)})`}
                                                 </span>
                                             </div>
                                         </div>
