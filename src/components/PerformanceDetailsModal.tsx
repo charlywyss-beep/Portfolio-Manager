@@ -1,6 +1,7 @@
 import { ArrowLeft, TrendingUp, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { Logo } from './Logo';
@@ -192,9 +193,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     const todayDateLabel = effectiveDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
     const fullDateLabel = effectiveDate.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
 
-    return (
+    return createPortal(
         <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-center justify-center p-2 sm:p-4 md:py-3 iphone-modal-overlay"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-2 sm:p-4 md:py-3 iphone-modal-overlay"
             onClick={onClose}
         >
             <div
@@ -646,6 +647,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                 </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
