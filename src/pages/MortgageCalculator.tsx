@@ -469,7 +469,7 @@ export const MortgageCalculator = () => {
                 const fromStr = r.dateFrom ? new Date(r.dateFrom).toLocaleDateString('de-CH') + ' – ' : '';
                 const toStr = new Date(r.date).toLocaleDateString('de-CH');
                 return [
-                    `${fromStr}${toStr}${r.invoiceNumber ? ` (#${r.invoiceNumber})` : ''}`,
+                    `${fromStr}${toStr}${r.invoiceNumber ? ` (Rechnung ${r.invoiceNumber})` : ''}`,
                     `${p.days} Tage`,
                     `${usageHT} kWh`,
                     `${usageNT} kWh`,
@@ -1825,7 +1825,7 @@ export const MortgageCalculator = () => {
                                                             </span>
                                                             {reading.invoiceNumber && (
                                                                 <span className="text-xs text-muted-foreground border border-border/80 px-2 py-0.5 rounded-md font-mono">
-                                                                    Rechnung #{reading.invoiceNumber}
+                                                                    Rechnung {reading.invoiceNumber}
                                                                 </span>
                                                             )}
                                                         </div>
