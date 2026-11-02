@@ -1530,7 +1530,7 @@ export const MortgageCalculator = () => {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 bg-accent/20 p-3.5 rounded-xl border border-border/60">
                                     <div className="space-y-1">
                                         <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap">
-                                            <User className="size-3.5 text-primary" />
+                                            <User className="size-4 text-primary shrink-0 overflow-visible" />
                                             Kundennummer
                                         </label>
                                         <input
@@ -1544,7 +1544,7 @@ export const MortgageCalculator = () => {
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap">
-                                            <FileText className="size-3.5 text-primary" />
+                                            <FileText className="size-4 text-primary shrink-0 overflow-visible" />
                                             Vertragskonto
                                         </label>
                                         <input
@@ -1558,7 +1558,7 @@ export const MortgageCalculator = () => {
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap">
-                                            <Gauge className="size-3.5 text-primary" />
+                                            <Gauge className="size-4 text-primary shrink-0 overflow-visible" />
                                             Zähler-Nr.
                                         </label>
                                         <input
@@ -1572,7 +1572,7 @@ export const MortgageCalculator = () => {
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap">
-                                            <Zap className="size-3.5 text-primary" />
+                                            <Zap className="size-4 text-primary shrink-0 overflow-visible" />
                                             Stromversorger
                                         </label>
                                         <div className="w-full h-9 bg-muted/40 border border-input/60 rounded-lg px-2.5 flex items-center text-xs font-semibold text-foreground">
@@ -1858,7 +1858,7 @@ export const MortgageCalculator = () => {
                                                     <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-border/70 pb-3">
                                                         <div className="flex flex-wrap items-center gap-2.5">
                                                             <div className="text-xs font-bold bg-muted px-3 py-1.5 rounded-lg text-foreground flex items-center gap-2">
-                                                                <Calendar className="size-3.5 text-primary" />
+                                                                <Calendar className="size-3.5 text-primary shrink-0 overflow-visible" />
                                                                 <span>{effectiveDateFrom ? `${new Date(effectiveDateFrom).toLocaleDateString('de-CH')} – ` : ''}{new Date(reading.date).toLocaleDateString('de-CH')}</span>
                                                             </div>
                                                             <span className="text-xs text-muted-foreground font-medium bg-accent/30 px-2.5 py-1 rounded-md border border-border/40">
@@ -1883,7 +1883,7 @@ export const MortgageCalculator = () => {
                                                                 )}
                                                                 title="1:1 Rechnungs-Tabelle aufklappen"
                                                             >
-                                                                <ReceiptText className="size-3.5" />
+                                                                <ReceiptText className="size-3.5 shrink-0 overflow-visible" />
                                                                 <span>{isExpanded ? 'Details verbergen' : '1:1 Rechnungs-Tabelle'}</span>
                                                             </button>
 
