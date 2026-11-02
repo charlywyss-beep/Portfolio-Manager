@@ -1843,7 +1843,7 @@ export const MortgageCalculator = () => {
                                             const isExpanded = expandedInvoiceId === reading.id;
 
                                             return (
-                                                <div key={reading.id} className="bg-card border border-border rounded-xl p-4 sm:p-5 shadow-xs space-y-4 transition-all hover:border-primary/40">
+                                                <div key={reading.id} className="bg-card border border-primary/50 rounded-xl p-4 sm:p-5 shadow-xs space-y-4 transition-all">
                                                     
                                                     {/* Header-Zeile mit Zeitraum, Status-Pille und Aktions-Buttons */}
                                                     <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-border/70 pb-3">
