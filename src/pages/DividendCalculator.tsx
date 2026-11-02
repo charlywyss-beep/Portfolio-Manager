@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
-import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, ArrowLeft, HelpCircle, BookOpen, AlertTriangle } from 'lucide-react';
+import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, ArrowLeft, HelpCircle, BookOpen, AlertTriangle, Target } from 'lucide-react';
 import { fetchStockHistory, searchStocks, fetchStockQuote } from '../services/yahoo-finance';
 
 import { jsPDF } from 'jspdf';
@@ -127,22 +127,32 @@ export function DividendCalculator() {
     }, [simulatorState.simCurrency, simulatorState.price, simulatorState.dividend, updateSimulatorState]);
 
     // Load planned purchase from URL parameter
-    const lastLoadedStockIdRef = useRef<string | null>(null);
+    const lastLoadedParamRef = useRef<string | null>(null);
     useEffect(() => {
         const stockId = searchParams.get('stock');
         const queryPrice = searchParams.get('price');
         const parsedQueryPrice = queryPrice ? parseFloat(queryPrice) : NaN;
+        const currentParamKey = `${stockId || ''}_${queryPrice || ''}`;
 
-        if (stockId && stockId !== 'new' && stockId !== lastLoadedStockIdRef.current) {
+        if (stockId && stockId !== 'new' && currentParamKey !== lastLoadedParamRef.current) {
             const stock = stocks.find(s => String(s.id) === String(stockId) || s.symbol.toLowerCase() === stockId.toLowerCase());
             if (stock) {
+                const hasExplicitQueryPrice = !isNaN(parsedQueryPrice) && parsedQueryPrice > 0;
+                const effectivePrice = hasExplicitQueryPrice
+                    ? parsedQueryPrice
+                    : (stock.plannedPurchase
+                        ? stock.plannedPurchase.pricePerShare
+                        : (stock.targetPrice && stock.targetPrice > 0
+                            ? stock.targetPrice
+                            : (stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice)));
+
                 if (stock.plannedPurchase) {
                     // Load with planned purchase data
                     const pp = stock.plannedPurchase;
                     updateSimulatorState({
                         selectedStockId: stock.id,
                         shares: pp.shares,
-                        price: !isNaN(parsedQueryPrice) && parsedQueryPrice > 0 ? parsedQueryPrice : pp.pricePerShare,
+                        price: effectivePrice,
                         dividend: pp.dividendPerShare,
                         simCurrency: pp.currency,
                         mode: 'buy',
@@ -165,19 +175,19 @@ export function DividendCalculator() {
                         simName: stock.name,
                         simSymbol: stock.symbol,
                         simIsin: stock.isin || '',
-                        simCurrency: stock.currency,
+                        simCurrency: stock.currency === 'GBp' ? 'GBP' : stock.currency,
                         simType: stock.type,
                         simFrequency: stockFreq,
-                        price: !isNaN(parsedQueryPrice) && parsedQueryPrice > 0 ? parsedQueryPrice : stock.currentPrice,
+                        price: effectivePrice,
                         dividend: annualDiv
                     });
                 }
-                lastLoadedStockIdRef.current = stockId;
+                lastLoadedParamRef.current = currentParamKey;
             }
         }
         // Reset when no stock parameter
         if (!stockId) {
-            lastLoadedStockIdRef.current = null;
+            lastLoadedParamRef.current = null;
         }
     }, [searchParams, stocks, updateSimulatorState]);
 
@@ -757,7 +767,10 @@ export function DividendCalculator() {
                 simValor: stock.valor || '',
                 // If it's accumulating, ignore dividends
                 dividend: (stock.distributionPolicy === 'accumulating') ? 0 : (stock.currency === 'GBp' ? annualDiv / 100 : annualDiv),
-                price: stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice,
+                // If stock has a targetPrice (Kauflimit) and buying, prioritize it
+                price: (mode === 'buy' && stock.targetPrice && stock.targetPrice > 0)
+                    ? stock.targetPrice
+                    : (stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice),
                 fees: { ...fees, stampDutyPercent: newStamp },
             });
         }
@@ -1527,93 +1540,118 @@ export function DividendCalculator() {
                                     </div>
                                 )}
 
-                                {/* Current Position Info & Edit */}
+                                {/* Position Info & Kauflimit */}
                                 {(() => {
                                     const currentPos = positions.find(p => p.stockId === selectedStockId);
-                                    if (!currentPos) return null;
+                                    const stock = stocks.find(s => s.id === selectedStockId);
+                                    if (!currentPos && !stock) return null;
 
                                     // Fix GBp display: If stock is GBp, buyPriceAvg is key.
-                                    const stock = stocks.find(s => s.id === selectedStockId);
-                                    let displayAvgPrice = currentPos.buyPriceAvg;
                                     let displayCurrency: string = stock?.currency || 'CHF';
+                                    let displayAvgPrice = currentPos ? currentPos.buyPriceAvg : 0;
 
-                                    // GBp is now auto-converted to GBP in state, so we just check for GBP
                                     if (displayCurrency === 'GBp') {
                                         displayCurrency = 'GBP';
-                                        displayAvgPrice = currentPos.buyPriceAvg / 100;
+                                        if (currentPos) displayAvgPrice = currentPos.buyPriceAvg / 100;
                                     }
+
+                                    const curPrice = stock ? (stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice) : 0;
 
                                     return (
                                         <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border/50 mb-6">
-                                            {/* Shares */}
+                                            {/* Shares & Kauflimit direkt unter Bestand */}
                                             <div className="flex flex-col items-center gap-1">
                                                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Bestand</span>
-                                                <span className="text-xl font-medium">{currentPos.shares} Stk.</span>
+                                                <span className="text-xl font-medium">{currentPos ? `${currentPos.shares} Stk.` : '0 Stk.'}</span>
+                                                {stock?.targetPrice ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => updateSimulatorState({ price: stock.targetPrice! })}
+                                                        className={cn(
+                                                            "text-[11px] font-mono flex items-center gap-1 px-1.5 py-0.5 rounded transition-all cursor-pointer mt-0.5 shadow-2xs",
+                                                            Math.abs(price - stock.targetPrice) < 0.01
+                                                                ? "text-emerald-400 font-bold bg-emerald-500/15 border border-emerald-500/30"
+                                                                : "text-muted-foreground hover:text-foreground hover:bg-muted/60 border border-border/40"
+                                                        )}
+                                                        title="Klicken, um Kauflimit als Kaufpreis zu übernehmen"
+                                                    >
+                                                        <Target className="size-3 text-emerald-400" />
+                                                        <span>Limit: {stock.targetPrice.toFixed(2)} {displayCurrency}</span>
+                                                    </button>
+                                                ) : null}
                                             </div>
 
                                             {/* Divider */}
                                             <div className="h-8 w-px bg-border/50"></div>
 
-                                            {/* Avg Price */}
+                                            {/* Avg Price or Current Price */}
                                             <div className="flex flex-col items-center gap-1">
-                                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Ø Einstieg</span>
-                                                <div className="flex items-center gap-2 group cursor-pointer"
-                                                    onClick={() => {
-                                                        setEditPriceVal(currentPos.buyPriceAvg.toString());
-                                                        setIsEditingPrice(true);
-                                                    }}
-                                                >
-                                                    {isEditingPrice ? (
-                                                        <div className="flex items-center gap-1 animate-in fade-in zoom-in-95 duration-200">
-                                                            <input
-                                                                type="number"
-                                                                step="0.01"
-                                                                className="w-24 px-2 py-0.5 text-center border rounded bg-background text-foreground text-lg font-bold focus:ring-1 focus:ring-primary no-spinner"
-                                                                value={editPriceVal}
-                                                                onChange={(e) => setEditPriceVal(e.target.value)}
-                                                                onFocus={(e) => e.target.select()}
-                                                                autoFocus
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === 'Enter') {
+                                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{currentPos ? 'Ø Einstieg' : 'Aktueller Kurs'}</span>
+                                                {currentPos ? (
+                                                    <div className="flex items-center gap-2 group cursor-pointer"
+                                                        onClick={() => {
+                                                            setEditPriceVal(currentPos.buyPriceAvg.toString());
+                                                            setIsEditingPrice(true);
+                                                        }}
+                                                    >
+                                                        {isEditingPrice ? (
+                                                            <div className="flex items-center gap-1 animate-in fade-in zoom-in-95 duration-200">
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    className="w-24 px-2 py-0.5 text-center border rounded bg-background text-foreground text-lg font-bold focus:ring-1 focus:ring-primary no-spinner"
+                                                                    value={editPriceVal}
+                                                                    onChange={(e) => setEditPriceVal(e.target.value)}
+                                                                    onFocus={(e) => e.target.select()}
+                                                                    autoFocus
+                                                                    onKeyDown={(e) => {
+                                                                        if (e.key === 'Enter') {
+                                                                            if (editPriceVal && !isNaN(Number(editPriceVal))) {
+                                                                                updatePosition(currentPos.id, { buyPriceAvg: Number(editPriceVal) });
+                                                                                setIsEditingPrice(false);
+                                                                            }
+                                                                        } else if (e.key === 'Escape') {
+                                                                            setIsEditingPrice(false);
+                                                                        }
+                                                                    }}
+                                                                />
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
                                                                         if (editPriceVal && !isNaN(Number(editPriceVal))) {
                                                                             updatePosition(currentPos.id, { buyPriceAvg: Number(editPriceVal) });
                                                                             setIsEditingPrice(false);
                                                                         }
-                                                                    } else if (e.key === 'Escape') {
-                                                                        setIsEditingPrice(false);
-                                                                    }
-                                                                }}
-                                                            />
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    if (editPriceVal && !isNaN(Number(editPriceVal))) {
-                                                                        updatePosition(currentPos.id, { buyPriceAvg: Number(editPriceVal) });
-                                                                        setIsEditingPrice(false);
-                                                                    }
-                                                                }}
-                                                                className="p-1 hover:bg-green-500/20 text-green-600 rounded"
-                                                            >
-                                                                <Check size={16} />
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-xl font-bold group-hover:text-primary transition-colors flex items-center gap-2">
-                                                            {displayAvgPrice.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')}
-                                                            <Pencil size={12} className="opacity-0 group-hover:opacity-50 text-muted-foreground" />
-                                                        </span>
-                                                    )}
-                                                </div>
+                                                                    }}
+                                                                    className="p-1 hover:bg-green-500/20 text-green-600 rounded"
+                                                                >
+                                                                    <Check size={16} />
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-xl font-bold group-hover:text-primary transition-colors flex items-center gap-2">
+                                                                {displayAvgPrice.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')}
+                                                                <Pencil size={12} className="opacity-0 group-hover:opacity-50 text-muted-foreground" />
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xl font-bold">
+                                                        {curPrice.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')}
+                                                    </span>
+                                                )}
                                             </div>
 
                                             {/* Divider */}
                                             <div className="h-8 w-px bg-border/50"></div>
 
-                                            {/* Total Value */}
+                                            {/* Total Value or Status */}
                                             <div className="flex flex-col items-center gap-1">
-                                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Gesamtwert</span>
+                                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{currentPos ? 'Gesamtwert' : 'Status'}</span>
                                                 <span className="text-xl font-medium">
-                                                    {(displayAvgPrice * currentPos.shares).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')}
+                                                    {currentPos
+                                                        ? `${(displayAvgPrice * currentPos.shares).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')}`
+                                                        : (stock?.targetPrice ? 'Auf Watchlist mit Limit' : 'Beobachtet')}
                                                 </span>
                                             </div>
                                         </div>
@@ -1645,24 +1683,47 @@ export function DividendCalculator() {
                                             <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap truncate min-w-0">
                                                 {mode === 'buy' ? 'Kaufpreis' : 'Verkaufspreis'} ({simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')})
                                             </label>
-                                            {(stocks.find(s => s.id === selectedStockId)?.symbol) && (
-                                                <button
-                                                    type="button"
-                                                    onClick={async () => {
-                                                        const stock = stocks.find(s => s.id === selectedStockId);
-                                                        if (!stock?.symbol) return;
-                                                        const res = await fetchStockHistory(stock.symbol, '1D');
-                                                        if (res.data && res.data.length > 0) {
-                                                            let val = res.data[res.data.length - 1].value;
-                                                            updateSimulatorState({ price: val });
-                                                        }
-                                                    }}
-                                                    className="text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-0.5 rounded-md transition-colors whitespace-nowrap shrink-0 leading-none"
-                                                    title="Aktuellen Kurs laden"
-                                                >
-                                                    <RefreshCw className="size-3 shrink-0" /> Kurs laden
-                                                </button>
-                                            )}
+                                            <div className="flex items-center gap-1 shrink-0">
+                                                {(() => {
+                                                    const stock = stocks.find(s => s.id === selectedStockId);
+                                                    if (!stock?.targetPrice) return null;
+                                                    const isLimitActive = Math.abs(price - stock.targetPrice) < 0.01;
+                                                    return (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => updateSimulatorState({ price: stock.targetPrice! })}
+                                                            className={cn(
+                                                                "text-[10px] flex items-center gap-1 px-1.5 py-0.5 rounded-md font-semibold transition-all cursor-pointer leading-none",
+                                                                isLimitActive
+                                                                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                                                                    : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/40"
+                                                            )}
+                                                            title="Kauflimit als Kaufpreis setzen"
+                                                        >
+                                                            <Target className="size-2.5 text-emerald-400" />
+                                                            <span>Limit {stock.targetPrice.toFixed(2)}</span>
+                                                        </button>
+                                                    );
+                                                })()}
+                                                {(stocks.find(s => s.id === selectedStockId)?.symbol) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={async () => {
+                                                            const stock = stocks.find(s => s.id === selectedStockId);
+                                                            if (!stock?.symbol) return;
+                                                            const res = await fetchStockHistory(stock.symbol, '1D');
+                                                            if (res.data && res.data.length > 0) {
+                                                                let val = res.data[res.data.length - 1].value;
+                                                                updateSimulatorState({ price: val });
+                                                            }
+                                                        }}
+                                                        className="text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-1.5 py-0.5 rounded-md transition-colors whitespace-nowrap shrink-0 leading-none"
+                                                        title="Aktuellen Börsenkurs laden"
+                                                    >
+                                                        <RefreshCw className="size-2.5 shrink-0" /> Kurs laden
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                         <LocalNumberInput
                                             step="0.01"
@@ -1670,8 +1731,29 @@ export function DividendCalculator() {
                                             onChange={(val) => updateSimulatorState({ price: val })}
                                             className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
                                         />
-                                        <div className="text-xs text-muted-foreground text-right mt-1.5 h-5 font-medium">
-                                            pro Anteil
+                                        <div className="flex items-center justify-between text-xs text-muted-foreground mt-1.5 h-5 font-medium">
+                                            {(() => {
+                                                const stock = stocks.find(s => s.id === selectedStockId);
+                                                if (stock?.targetPrice) {
+                                                    const isLimitActive = Math.abs(price - stock.targetPrice) < 0.01;
+                                                    return (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => updateSimulatorState({ price: stock.targetPrice! })}
+                                                            className={cn(
+                                                                "text-[10px] flex items-center gap-1 font-mono transition-colors cursor-pointer hover:underline",
+                                                                isLimitActive ? "text-emerald-400 font-bold" : "text-muted-foreground hover:text-foreground"
+                                                            )}
+                                                            title="Kauflimit übernehmen"
+                                                        >
+                                                            <Target className="size-2.5 text-emerald-400" />
+                                                            <span>Kauflimit: {stock.targetPrice.toFixed(2)} {simCurrency}</span>
+                                                        </button>
+                                                    );
+                                                }
+                                                return <span />;
+                                            })()}
+                                            <span>pro Anteil</span>
                                         </div>
                                     </div>
 

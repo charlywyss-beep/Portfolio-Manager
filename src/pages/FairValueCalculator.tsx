@@ -1101,6 +1101,8 @@ export function FairValueCalculator() {
     const handleGoToBuySell = () => {
         if (!selectedSymbol) return;
         let targetStockId = currentStock?.id;
+        const activeLimit = parseFloat(buyLimitInput.replace(',', '.')) || currentStock?.targetPrice || (calculation.buyPrice > 0 ? calculation.buyPrice : undefined);
+
         if (!targetStockId) {
             targetStockId = addStock({
                 symbol: selectedSymbol,
@@ -1110,10 +1112,12 @@ export function FairValueCalculator() {
                 currency: (quote?.currency === 'GBp' ? 'GBP' : (quote?.currency || 'USD')) as any,
                 sector: quote?.sector || 'Allgemein',
                 type: isEtfAsset(currentStock, quote, selectedSymbol) ? 'etf' : 'stock',
-                isin: quote?.isin || ''
+                isin: quote?.isin || '',
+                targetPrice: activeLimit
             });
+        } else if (activeLimit && currentStock && currentStock.targetPrice !== activeLimit) {
+            updateStock(targetStockId, { targetPrice: activeLimit });
         }
-        const activeLimit = parseFloat(buyLimitInput.replace(',', '.')) || currentStock?.targetPrice || (calculation.buyPrice > 0 ? calculation.buyPrice : undefined);
         const priceParam = activeLimit && activeLimit > 0 ? `&price=${encodeURIComponent(activeLimit.toFixed(2))}` : '';
         navigate(`/calculator?stock=${encodeURIComponent(String(targetStockId || selectedSymbol))}${priceParam}&from=fair-value`);
     };
