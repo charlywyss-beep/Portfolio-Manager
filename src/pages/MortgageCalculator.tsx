@@ -2933,8 +2933,8 @@ export const MortgageCalculator = () => {
                                                 <span>Aktueller Zählerstand (Zuletzt abgelesen)</span>
                                             </h4>
 
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 font-medium">
-                                                <div className="flex items-center justify-between bg-muted/30 p-3 rounded-xl border border-border/60">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-medium">
+                                                <div className="flex items-center justify-between py-1.5">
                                                     <span className="text-muted-foreground text-sm font-semibold">Stand HT (Wirkenergie)</span>
                                                     <div className="flex items-center gap-2">
                                                         <DecimalInput
@@ -2953,7 +2953,7 @@ export const MortgageCalculator = () => {
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center justify-between bg-muted/30 p-3 rounded-xl border border-border/60">
+                                                <div className="flex items-center justify-between py-1.5">
                                                     <span className="text-muted-foreground text-sm font-semibold">Stand NT (Wirkenergie)</span>
                                                     <div className="flex items-center gap-2">
                                                         <DecimalInput
