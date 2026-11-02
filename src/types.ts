@@ -213,6 +213,8 @@ export interface ElectricityReading {
     usageNT?: number;           // Verbrauch Wirkenergie NT (kWh)
     billingMonths?: number;     // Abrechnungsmonate für Fixkosten (z.B. 1)
     invoiceNumber?: string;     // Optionale Rechnungs-Nr. (z.B. 7 134 488)
+    invoiceDate?: string;       // Rechnungsdatum (z.B. 2026-10-31)
+    dueDate?: string;           // Zahlbar bis (z.B. 2026-11-30)
     costEnergy?: number;        // Zwischentotal Energie exkl. MwSt
     costGrid?: number;          // Zwischentotal Netznutzung exkl. MwSt
     costFees?: number;          // Zwischentotal Abgaben exkl. MwSt

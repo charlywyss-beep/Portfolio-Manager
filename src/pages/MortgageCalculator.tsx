@@ -85,6 +85,8 @@ export const MortgageCalculator = () => {
         const providerName = electricityProvider || 'Eniwa AG';
         const fromStr = effectiveDateFrom ? formatSwissDate(effectiveDateFrom) : '-';
         const toStr = reading.date ? formatSwissDate(reading.date) : '-';
+        const effectiveInvoiceDate = reading.invoiceDate || (reading.date === '2026-09-30' ? '2026-10-31' : (reading.date || ''));
+        const effectiveDueDate = reading.dueDate || (reading.date === '2026-09-30' ? '2026-11-30' : '');
         const invoiceNo = reading.invoiceNumber || '–';
 
         // 1. Titel & Header
@@ -109,11 +111,12 @@ export const MortgageCalculator = () => {
                 3: { cellWidth: 54 }
             },
             body: [
-                ['Stromversorger:', providerName, 'Ablesezeitraum:', `${fromStr} – ${toStr} (${period.days} Tage)`],
-                ['Kundennummer:', electricityCustomerNumber || '–', 'Rechnungs-Nr.:', invoiceNo],
-                ['Vertragskonto:', electricityContractNumber || '–', 'Zählerstand alt:', `HT: ${effectiveReading.standAltHT ?? '-'} | NT: ${effectiveReading.standAltNT ?? '-'}`],
-                ['Zähler-Nr.:', electricityMeterNumber || '–', 'Zählerstand neu:', `HT: ${reading.valueHT || '-'} | NT: ${reading.valueNT || '-'}`],
-                ['', '', 'Wirkenergie Total:', `${totalUsage} kWh (HT: ${usageHT} / NT: ${usageNT})`]
+                ['Stromversorger:', providerName, 'Rechnungsdatum:', formatSwissDate(effectiveInvoiceDate)],
+                ['Kundennummer:', electricityCustomerNumber || '–', 'Zahlbar bis:', effectiveDueDate ? formatSwissDate(effectiveDueDate) : '–'],
+                ['Vertragskonto:', electricityContractNumber || '–', 'Rechnungs-Nr.:', invoiceNo],
+                ['Zähler-Nr.:', electricityMeterNumber || '–', 'Ablesezeitraum:', `${fromStr} – ${toStr} (${period.days} Tage)`],
+                ['Zählerstand alt:', `HT: ${effectiveReading.standAltHT ?? '-'} | NT: ${effectiveReading.standAltNT ?? '-'}`, 'Zählerstand neu:', `HT: ${reading.valueHT || '-'} | NT: ${reading.valueNT || '-'}`],
+                ['Wirkenergie Total:', `${totalUsage} kWh (HT: ${usageHT} / NT: ${usageNT})`, '', '']
             ]
         });
 
@@ -207,7 +210,7 @@ export const MortgageCalculator = () => {
 
         const cleanedInvoice = (reading.invoiceNumber || '').trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
         const invoicePart = cleanedInvoice ? `Nr_${cleanedInvoice}` : '';
-        const datePart = reading.date ? formatSwissDate(reading.date) : '';
+        const datePart = effectiveInvoiceDate ? formatSwissDate(effectiveInvoiceDate) : '';
         const parts = ['Stromrechnung', invoicePart, datePart].filter(Boolean);
         const filename = `${parts.join('_')}.pdf`;
         doc.save(filename);
@@ -1683,6 +1686,8 @@ export const MortgageCalculator = () => {
                                                     id: crypto.randomUUID(),
                                                     dateFrom: '2026-08-28',
                                                     date: '2026-09-30',
+                                                    invoiceDate: '2026-10-31',
+                                                    dueDate: '2026-11-30',
                                                     standAltHT: 473,
                                                     standAltNT: 3108,
                                                     valueHT: 542,
@@ -2071,7 +2076,12 @@ export const MortgageCalculator = () => {
                                                             </span>
                                                             {reading.invoiceNumber && (
                                                                 <span className="text-xs text-muted-foreground border border-border/80 px-2 py-0.5 rounded-md font-mono">
-                                                                    Rechnung {reading.invoiceNumber}
+                                                                    Rechnung {reading.invoiceNumber}{reading.invoiceDate || (reading.date === '2026-09-30' ? '2026-10-31' : '') ? ` (vom ${formatSwissDate(reading.invoiceDate || '2026-10-31')})` : ''}
+                                                                </span>
+                                                            )}
+                                                            {(reading.dueDate || (reading.date === '2026-09-30' ? '2026-11-30' : '')) && (
+                                                                <span className="text-xs text-amber-500/90 bg-amber-500/10 border border-amber-500/25 px-2 py-0.5 rounded-md font-mono">
+                                                                    Fällig: {formatSwissDate(reading.dueDate || '2026-11-30')}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -2123,8 +2133,8 @@ export const MortgageCalculator = () => {
                                                     {/* 4-SPALTEN GRID: 100% einheitliche Feldbreiten, exakt vertikal und horizontal ausgerichtet */}
                                                     <div className="space-y-3.5">
                                                         
-                                                        {/* ZEILE 1: Zeitraum, Dauer & Rechnungs-Nr. */}
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                                                        {/* ZEILE 1: Ableseperiode & Rechnungsdaten (6-Spalten Grid) */}
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
                                                             <div className="space-y-1">
                                                                 <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Ablesung Von</label>
                                                                 <input
@@ -2134,7 +2144,7 @@ export const MortgageCalculator = () => {
                                                                         const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, dateFrom: e.target.value } : r);
                                                                         updateMortgageData({ electricityReadings: newReadings });
                                                                     }}
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono"
+                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2 text-xs font-mono"
                                                                 />
                                                             </div>
                                                             <div className="space-y-1">
@@ -2146,18 +2156,44 @@ export const MortgageCalculator = () => {
                                                                         const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, date: e.target.value } : r);
                                                                         updateMortgageData({ electricityReadings: newReadings });
                                                                     }}
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono"
+                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2 text-xs font-mono"
                                                                 />
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Abrechnungsdauer</label>
+                                                                <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap text-center">Abrechnungsdauer</label>
                                                                 <div 
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 flex items-center justify-center text-sm font-mono font-bold text-foreground shadow-xs cursor-default select-none"
+                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2 flex items-center justify-center text-sm font-mono font-bold text-foreground shadow-xs cursor-default select-none"
                                                                     title={period.days > 0 ? "Automatisch berechnet aus Ablesung Von und Bis" : "Wird automatisch berechnet, sobald Datum Bis gewählt wird"}
                                                                 >
-                                                                    <Calendar className="size-3.5 text-primary mr-2 shrink-0" />
+                                                                    <Calendar className="size-3.5 text-primary mr-1.5 shrink-0" />
                                                                     <span>{period.days > 0 ? `${period.days} Tage` : '–'}</span>
                                                                 </div>
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Rechnungsdatum</label>
+                                                                <input
+                                                                    type="date"
+                                                                    value={reading.invoiceDate || (reading.date === '2026-09-30' ? '2026-10-31' : '')}
+                                                                    onChange={(e) => {
+                                                                        const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, invoiceDate: e.target.value } : r);
+                                                                        updateMortgageData({ electricityReadings: newReadings });
+                                                                    }}
+                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2 text-xs font-mono"
+                                                                    title="Offizielles Rechnungsdatum (Faktura)"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Zahlbar bis</label>
+                                                                <input
+                                                                    type="date"
+                                                                    value={reading.dueDate || (reading.date === '2026-09-30' ? '2026-11-30' : '')}
+                                                                    onChange={(e) => {
+                                                                        const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, dueDate: e.target.value } : r);
+                                                                        updateMortgageData({ electricityReadings: newReadings });
+                                                                    }}
+                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2 text-xs font-mono"
+                                                                    title="Fälligkeitsdatum der Rechnung"
+                                                                />
                                                             </div>
                                                             <div className="space-y-1">
                                                                 <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap text-right">Rechnungs-Nr.</label>
