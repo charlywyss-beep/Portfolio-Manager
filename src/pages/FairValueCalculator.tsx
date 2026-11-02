@@ -1730,7 +1730,7 @@ export function FairValueCalculator() {
 
                         {/* INPUTS COLUMN */}
                         <div className="flex flex-col h-full min-h-0 overflow-hidden">
-                            <div className="fair-value-col-card bg-card border border-border rounded-xl p-3 md:p-3.5 shadow-sm h-full flex flex-col justify-between overflow-y-auto overflow-x-hidden">
+                            <div className="fair-value-col-card bg-card border border-border rounded-xl p-3 md:p-3.5 shadow-sm h-full flex flex-col justify-between gap-2 overflow-y-auto overflow-x-hidden">
                                 <div className="space-y-1.5 sm:space-y-2 lg:space-y-1.5 flex-1">
                                     <div className="space-y-1 sm:space-y-1.5 pb-1.5 border-b border-border">
                                     <div className="flex items-center justify-between gap-2">
@@ -2320,7 +2320,7 @@ export function FairValueCalculator() {
                         <div className="flex flex-col h-full min-h-0 overflow-hidden">
                             <div className="fair-value-col-card bg-card border border-border rounded-xl p-3 md:p-3.5 shadow-sm h-full flex flex-col justify-between overflow-y-auto overflow-x-hidden">
                                 {/* Upper Header & Traffic Light Area - Vertically centered between top field edge and Bewertung card */}
-                                <div className="fair-value-circle-wrap relative flex flex-col items-center justify-center py-1 sm:py-2.5 lg:py-0.5 my-auto lg:my-0">
+                                <div className="fair-value-circle-wrap relative flex flex-col items-center justify-center py-0.5 shrink-0">
                                     <h2 className="text-sm sm:text-base font-semibold flex items-center gap-2 self-start mb-1 sm:mb-0 sm:absolute sm:top-0 sm:left-0">
                                         <span className="size-2 rounded-full bg-purple-500" />
                                         Bewertung
@@ -2328,7 +2328,7 @@ export function FairValueCalculator() {
 
                                     {/* Traffic Light Badge (Abgerundetes Quadrat) */}
                                     <div className={cn(
-                                        "fair-value-circle fair-value-badge relative w-40 sm:w-48 lg:w-44 xl:w-52 py-2 px-3 sm:py-2.5 sm:px-4 rounded-2xl flex flex-col items-center justify-center border-2 shadow-md transition-all duration-500 text-center my-auto lg:my-0",
+                                        "fair-value-circle fair-value-badge relative w-40 sm:w-48 lg:w-44 xl:w-52 py-2 px-3 sm:py-2.5 sm:px-4 rounded-2xl flex flex-col items-center justify-center border-2 shadow-md transition-all duration-500 text-center",
                                         isUndervalued
                                             ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-emerald-500/20"
                                             : isFairHold
@@ -2364,7 +2364,7 @@ export function FairValueCalculator() {
 
                                     return (
                                         <div className={cn(
-                                            "fair-value-bewertung-box p-2 sm:p-2.5 lg:py-1 lg:px-2 rounded-xl border text-center transition-all mb-1.5 sm:mb-2 lg:mb-1",
+                                            "fair-value-bewertung-box p-2 sm:p-2.5 lg:py-1.5 lg:px-2.5 rounded-xl border text-center transition-all shrink-0",
                                             isUndervalued
                                                 ? "bg-emerald-500/10 border-emerald-500/30"
                                                 : isFairHold
@@ -2497,10 +2497,8 @@ export function FairValueCalculator() {
                                     );
                                 })()}
 
-                                {/* Value Stack */}
-                                <div className="fair-value-value-stack flex-1 space-y-1.5 sm:space-y-2 lg:space-y-1">
                                     {/* Fair Value */}
-                                    <div className="fair-value-fairvalue-box p-2 sm:p-2.5 lg:py-1 lg:px-2 rounded-xl border border-border bg-card">
+                                    <div className="fair-value-fairvalue-box p-2 sm:p-2.5 lg:py-1.5 lg:px-2.5 rounded-xl border border-border bg-card/60 shrink-0">
                                         <div className="flex justify-between items-center gap-2 mb-0.5">
                                             <span className="font-medium text-sm sm:text-base lg:text-xs shrink-0 whitespace-nowrap">Fairer Wert</span>
                                             {quote.currency !== 'CHF' ? (
@@ -2571,7 +2569,7 @@ export function FairValueCalculator() {
 
                                         return (
                                             <div className={cn(
-                                                "fair-value-kaufpreis-box p-2 sm:p-2.5 lg:py-1 lg:px-2 rounded-xl border-2 transition-all shadow-sm",
+                                                "fair-value-kaufpreis-box p-2 sm:p-2.5 lg:py-1.5 lg:px-2.5 rounded-xl border-2 transition-all shadow-sm shrink-0",
                                                 kaufpreisBorderBg
                                             )}>
                                                 <div className="flex justify-between items-center gap-2 mb-0.5">
@@ -2687,10 +2685,8 @@ export function FairValueCalculator() {
                                     );
                                     })()}
 
-                                </div>
-
                                 {/* Zielkurs (5 Jahre) - zuunterst ins Feld */}
-                                <div className="fair-value-target-box pt-1.5 mt-auto border-t border-border/50">
+                                <div className="fair-value-target-box pt-2 border-t border-border/50 shrink-0">
                                     <div className="flex justify-between items-center text-xs">
                                         <span className="font-medium text-muted-foreground whitespace-nowrap">Zielkurs (5 Jahre)</span>
                                         <span className="font-mono font-bold text-foreground">

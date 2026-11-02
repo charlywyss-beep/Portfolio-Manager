@@ -2028,7 +2028,7 @@
   /* Zielkurs Box (5 Jahre) - zuunterst im Feld analog zur Sicherheitsmarge links */
   .fair-value-target-box {
     padding-top: 0.2rem !important;
-    margin-top: auto !important;
+
     background: transparent !important;
     border: none !important;
     border-top: 1px solid var(--border) !important;
@@ -2200,7 +2200,7 @@
   /* Value Stack - sitzt bündig am unteren Kachelrand */
   .fair-value-calculator-page .fair-value-value-stack {
     gap: 0.35rem !important;
-    margin-top: auto !important;
+
   }
 
   .fair-value-calculator-page .fair-value-value-stack > :not([hidden]) ~ :not([hidden]),
