@@ -971,160 +971,163 @@ export function MarketOverviewPage() {
     };
 
     return (
-        <div className="w-full max-w-7xl mx-auto pb-32 iphone-landscape-page-root market-overview-page">
-            {/* Sticky Header Section: Title, Action Buttons & Category Filter Tabs */}
-            <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md px-3 sm:px-4 md:px-6 pt-2.5 sm:pt-4 pb-2 sm:pb-3 border-b border-border shadow-xs space-y-2 sm:space-y-3 mb-3 sm:mb-5 w-full iphone-landscape-portfolio-header-wrap">
-                {/* Top Row: Title + Action Buttons */}
-                <div className="flex items-center justify-between gap-2 w-full iphone-landscape-header-card">
-                    <div className="flex items-center gap-2 pl-11 xl:pl-0 min-w-0 iphone-landscape-portfolio-title-group">
-                        <LandscapeBackButton />
-                        <div className="size-8 sm:size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner shrink-0 iphone-landscape-portfolio-icon">
-                            <Globe className="size-4 sm:size-6" />
-                        </div>
-                        <div className="min-w-0">
-                            <h1 className="text-base sm:text-xl lg:text-3xl font-extrabold tracking-tight text-foreground whitespace-nowrap iphone-landscape-portfolio-title">
-                                Marktübersicht
-                            </h1>
-                            <p className="iphone-landscape-portfolio-subtitle text-[11px] sm:text-xs text-muted-foreground font-medium hidden xl:block">
-                                Rohstoffe, Währungen, Indizes &amp; Top-Märkte auf einen Blick
-                            </p>
-                        </div>
-                    </div>
+        <div className="p-4 md:p-6 space-y-4 bg-gradient-to-br from-background via-background to-muted/20 min-h-screen iphone-landscape-page-root market-overview-page">
+            {/* Sticky Header Section */}
+            <div className="sticky top-0 z-50 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6 iphone-landscape-portfolio-header-wrap">
+                <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
+                    <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
+                        <div className="flex items-center justify-between gap-3 iphone-landscape-portfolio-header-row">
+                            <div className="flex items-center gap-3 iphone-landscape-portfolio-title-group">
+                                <LandscapeBackButton />
+                                <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 shrink-0 iphone-landscape-portfolio-icon">
+                                    <Globe className="size-6" />
+                                </div>
+                                <div>
+                                    <h1 className="text-3xl font-bold tracking-tight text-foreground whitespace-nowrap iphone-landscape-portfolio-title">
+                                        Marktübersicht
+                                    </h1>
+                                    <p className="iphone-landscape-portfolio-subtitle text-muted-foreground hidden md:block">
+                                        Rohstoffe, Währungen, Indizes &amp; Top-Märkte auf einen Blick
+                                    </p>
+                                </div>
+                            </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0 iphone-landscape-portfolio-actions">
-                        {/* Sort Dropdown */}
-                        <div className="relative">
-                            <select
-                                value={sortBy}
-                                onChange={(e) => {
-                                    const val = e.target.value as SortOption;
-                                    setSortBy(val);
-                                    try { localStorage.setItem('portfolio_market_overview_sort', val); } catch {}
-                                }}
-                                className={cn(
-                                    "appearance-none flex items-center pl-7 pr-7 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-xs border cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary max-w-[130px] sm:max-w-[210px] lg:max-w-none truncate",
-                                    sortBy !== 'default'
-                                        ? "bg-primary/10 text-primary border-primary/30"
-                                        : "bg-card hover:bg-muted text-foreground border-border"
-                                )}
-                                title="Kacheln sortieren (A-Z, Gewinn, Typ etc.)"
-                            >
-                                <option value="default">Reihenfolge: Meine Anordnung (Standard)</option>
-                                <option value="name-asc">Sortierung: Geöffnete zuerst (A → Z)</option>
-                                <option value="name-desc">Sortierung: Name (Z → A)</option>
-                                <option value="gain-desc">Sortierung: Höchster Gewinn %</option>
-                                <option value="gain-asc">Sortierung: Grösster Verlust %</option>
-                                <option value="type-stocks">Sortierung: Aktien zuerst</option>
-                                <option value="type-etfs">Sortierung: ETFs zuerst</option>
-                                <option value="value-desc">Sortierung: Höchster Depotwert</option>
-                            </select>
-                            <ArrowUpDown className="size-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                        </div>
+                            <div className="flex items-center gap-2 shrink-0 iphone-landscape-portfolio-actions">
+                                {/* Sort Dropdown */}
+                                <div className="relative">
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => {
+                                            const val = e.target.value as SortOption;
+                                            setSortBy(val);
+                                            try { localStorage.setItem('portfolio_market_overview_sort', val); } catch {}
+                                        }}
+                                        className={cn(
+                                            "appearance-none flex items-center pl-7 pr-7 py-2 rounded-xl text-xs font-bold transition-all shadow-xs border cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary max-w-[130px] sm:max-w-[210px] lg:max-w-none truncate",
+                                            sortBy !== 'default'
+                                                ? "bg-primary/10 text-primary border-primary/30"
+                                                : "bg-card hover:bg-muted text-foreground border-border"
+                                        )}
+                                        title="Kacheln sortieren (A-Z, Gewinn, Typ etc.)"
+                                    >
+                                        <option value="default">Reihenfolge: Meine Anordnung (Standard)</option>
+                                        <option value="name-asc">Sortierung: Geöffnete zuerst (A → Z)</option>
+                                        <option value="name-desc">Sortierung: Name (Z → A)</option>
+                                        <option value="gain-desc">Sortierung: Höchster Gewinn %</option>
+                                        <option value="gain-asc">Sortierung: Grösster Verlust %</option>
+                                        <option value="type-stocks">Sortierung: Aktien zuerst</option>
+                                        <option value="type-etfs">Sortierung: ETFs zuerst</option>
+                                        <option value="value-desc">Sortierung: Höchster Depotwert</option>
+                                    </select>
+                                    <ArrowUpDown className="size-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                                </div>
 
-                        {/* Refresh Button */}
-                        <button
-                            onClick={fetchQuotes}
-                            disabled={loading}
-                            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-card hover:bg-muted border border-border text-xs font-semibold text-foreground transition-all shadow-xs shrink-0"
-                            title="Kurse jetzt aktualisieren"
-                        >
-                            <RefreshCw className={cn("size-3.5 shrink-0", loading && "animate-spin text-primary")} />
-                            <span className="hidden sm:inline">Aktualisieren</span>
-                        </button>
-
-                        {/* Edit Mode Toggle Button */}
-                        <button
-                            onClick={() => setIsEditMode(!isEditMode)}
-                            className={cn(
-                                "flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-xs border shrink-0",
-                                isEditMode
-                                    ? "bg-primary text-primary-foreground border-primary"
-                                    : "bg-card hover:bg-muted text-foreground border-border"
-                            )}
-                        >
-                            {isEditMode ? (
-                                <>
-                                    <Check className="size-3.5 shrink-0" />
-                                    <span>Fertig</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Edit3 className="size-3.5 shrink-0" />
-                                    <span className="hidden xs:inline">Bearbeiten</span>
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </div>
-
-                {/* Second Row: Category Filter Pills & Edit Actions (Sticky with header!) */}
-                <div className="flex items-center justify-between gap-2 w-full min-w-0">
-                    <div className="w-full min-w-0 overflow-x-auto scroller-none py-0.5">
-                        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/50 w-fit iphone-landscape-segmented">
-                            {[
-                                { id: 'all', label: 'Alle' },
-                                { id: 'portfolio', label: '💼 Bestand' },
-                                { id: 'indices', label: 'Indizes' },
-                                { id: 'commodities', label: 'Rohstoffe' },
-                                { id: 'forex', label: 'Währungen' },
-                                { id: 'stocks', label: 'Aktien / ETFs' },
-                                { id: 'crypto', label: 'Krypto' },
-                            ].map(tab => (
+                                {/* Refresh Button */}
                                 <button
-                                    key={tab.id}
-                                    onClick={() => handleTabChange(tab.id as any)}
+                                    onClick={fetchQuotes}
+                                    disabled={loading}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card hover:bg-muted border border-border text-xs font-semibold text-foreground transition-all shadow-xs shrink-0"
+                                    title="Kurse jetzt aktualisieren"
+                                >
+                                    <RefreshCw className={cn("size-3.5 shrink-0", loading && "animate-spin text-primary")} />
+                                    <span className="hidden sm:inline">Aktualisieren</span>
+                                </button>
+
+                                {/* Edit Mode Toggle Button */}
+                                <button
+                                    onClick={() => setIsEditMode(!isEditMode)}
                                     className={cn(
-                                        "px-2.5 sm:px-3 py-1 sm:py-1.5 text-[13px] sm:text-xs font-semibold rounded-lg transition-all whitespace-nowrap shrink-0",
-                                        activeFilter === tab.id
-                                            ? "bg-primary text-white shadow-xs font-bold"
-                                            : "text-foreground hover:text-foreground hover:bg-background/40"
+                                        "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-xs border shrink-0",
+                                        isEditMode
+                                            ? "bg-primary text-primary-foreground border-primary"
+                                            : "bg-card hover:bg-muted text-foreground border-border"
                                     )}
                                 >
-                                    {tab.label}
+                                    {isEditMode ? (
+                                        <>
+                                            <Check className="size-3.5 shrink-0" />
+                                            <span>Fertig</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Edit3 className="size-3.5 shrink-0" />
+                                            <span className="hidden xs:inline">Bearbeiten</span>
+                                        </>
+                                    )}
                                 </button>
-                            ))}
+                            </div>
                         </div>
                     </div>
-
-                    {isEditMode && (
-                        <div className="flex items-center gap-1.5 shrink-0 pl-1">
-                            {selectedMoveId ? (
-                                <button
-                                    onClick={() => setSelectedMoveId(null)}
-                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500 text-white font-bold text-[11px] shadow-xs animate-pulse hover:bg-amber-600 transition-all shrink-0"
-                                    title="Klick zum Abbrechen"
-                                >
-                                    <Check className="size-3" />
-                                    <span>Zielkachel jetzt anklicken</span>
-                                </button>
-                            ) : (
-                                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[11px] font-bold text-primary shrink-0 animate-in fade-in">
-                                    <GripVertical className="size-3" />
-                                    Ziehen oder antippen zum Platzieren
-                                </span>
-                            )}
-                            <button
-                                onClick={resetToDefault}
-                                className="flex items-center gap-1 px-2 py-1 rounded-lg border border-border bg-card hover:bg-muted text-[11px] font-medium text-muted-foreground transition-colors shrink-0"
-                                title="Standard-Kacheln wiederherstellen"
-                            >
-                                <RotateCcw className="size-3" />
-                                <span className="hidden sm:inline">Standard</span>
-                            </button>
-                            <button
-                                onClick={() => setShowAddModal(true)}
-                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary text-primary-foreground text-[11px] font-bold hover:bg-primary/90 transition-all shadow-xs shrink-0"
-                            >
-                                <Plus className="size-3" />
-                                <span>Kachel hinzufügen</span>
-                            </button>
-                        </div>
-                    )}
                 </div>
             </div>
 
-            {/* Padded Container for Grid and Content */}
-            <div className="px-3 sm:px-4 md:px-6 space-y-4 iphone-landscape-no-px market-content-wrap">
+            {/* Second Row: Category Filter Pills & Edit Actions */}
+            <div className="flex items-center justify-between gap-2 w-full min-w-0 iphone-landscape-portfolio-subtabs">
+                <div className="w-full min-w-0 overflow-x-auto scroller-none py-0.5">
+                    <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/50 w-fit iphone-landscape-segmented">
+                        {[
+                            { id: 'all', label: 'Alle' },
+                            { id: 'portfolio', label: '💼 Bestand' },
+                            { id: 'indices', label: 'Indizes' },
+                            { id: 'commodities', label: 'Rohstoffe' },
+                            { id: 'forex', label: 'Währungen' },
+                            { id: 'stocks', label: 'Aktien / ETFs' },
+                            { id: 'crypto', label: 'Krypto' },
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => handleTabChange(tab.id as any)}
+                                className={cn(
+                                    "px-2.5 sm:px-3 py-1 sm:py-1.5 text-[13px] sm:text-xs font-semibold rounded-lg transition-all whitespace-nowrap shrink-0",
+                                    activeFilter === tab.id
+                                        ? "bg-primary text-white shadow-xs font-bold"
+                                        : "text-foreground hover:text-foreground hover:bg-background/40"
+                                )}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {isEditMode && (
+                    <div className="flex items-center gap-1.5 shrink-0 pl-1">
+                        {selectedMoveId ? (
+                            <button
+                                onClick={() => setSelectedMoveId(null)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500 text-white font-bold text-[11px] shadow-xs animate-pulse hover:bg-amber-600 transition-all shrink-0"
+                                title="Klick zum Abbrechen"
+                            >
+                                <Check className="size-3" />
+                                <span>Zielkachel jetzt anklicken</span>
+                            </button>
+                        ) : (
+                            <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[11px] font-bold text-primary shrink-0 animate-in fade-in">
+                                <GripVertical className="size-3" />
+                                Ziehen oder antippen zum Platzieren
+                            </span>
+                        )}
+                        <button
+                            onClick={resetToDefault}
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg border border-border bg-card hover:bg-muted text-[11px] font-medium text-muted-foreground transition-colors shrink-0"
+                            title="Standard-Kacheln wiederherstellen"
+                        >
+                            <RotateCcw className="size-3" />
+                            <span className="hidden sm:inline">Standard</span>
+                        </button>
+                        <button
+                            onClick={() => setShowAddModal(true)}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary text-primary-foreground text-[11px] font-bold hover:bg-primary/90 transition-all shadow-xs shrink-0"
+                        >
+                            <Plus className="size-3" />
+                            <span>Kachel hinzufügen</span>
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* Container for Grid and Content */}
+            <div className="space-y-4 iphone-landscape-no-px market-content-wrap">
                 {/* The Market Tiles Grid (Optimized 2 columns on iPhone & mobile, 3 columns on tablet/desktop) */}
                 <div 
                     onDragOver={(e) => {

@@ -356,17 +356,17 @@ export function DividendPlanner() {
     return (
         <div className="h-full flex flex-col p-4 md:p-6 space-y-3 bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden iphone-landscape-page-root">
             {/* Header - Fixed Height */}
-            <div className="shrink-0 bg-background pb-2 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6 iphone-landscape-portfolio-header-wrap">
+            <div className="shrink-0 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6 iphone-landscape-portfolio-header-wrap">
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
-                    <div className="w-full pl-14 pr-4 py-3 sm:py-3.5 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
+                    <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
                         <div className="flex items-center justify-between gap-3 iphone-landscape-portfolio-header-row">
                             <div className="flex items-center gap-3 iphone-landscape-portfolio-title-group">
                                 <LandscapeBackButton />
-                                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600 dark:text-green-400 shrink-0 iphone-landscape-portfolio-icon">
-                                    <TrendingUp className="size-5 sm:size-6" />
+                                <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600 dark:text-green-400 shrink-0 iphone-landscape-portfolio-icon">
+                                    <TrendingUp className="size-6" />
                                 </div>
                                 <div>
-                                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight iphone-landscape-portfolio-title">Dividenden</h1>
+                                    <h1 className="text-3xl font-bold tracking-tight whitespace-nowrap iphone-landscape-portfolio-title">Dividenden</h1>
                                     <p className="text-muted-foreground hidden md:block iphone-landscape-portfolio-subtitle">Übersicht aller erwarteten Zahlungen</p>
                                 </div>
                             </div>

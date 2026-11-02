@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, BarChart2, Search, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Coins, Globe } from 'lucide-react';
+import { BarChart2, Search, RefreshCw, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Coins, Globe } from 'lucide-react';
+import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { usePortfolio } from '../context/PortfolioContext';
 import { fetchSeasonalityData } from '../services/yahoo-finance';
 import type { MonthlySeasonality } from '../services/yahoo-finance';
@@ -105,9 +106,7 @@ export function SeasonalityPage() {
                     <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
                         <div className="flex items-center justify-between gap-3 iphone-landscape-portfolio-header-row">
                             <div className="flex items-center gap-3 iphone-landscape-portfolio-title-group">
-                                <button onClick={() => navigate(-1)} className="p-2 hover:bg-accent rounded-lg transition-colors text-muted-foreground">
-                                    <ArrowLeft className="size-5" />
-                                </button>
+                                <LandscapeBackButton />
                                 <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 text-violet-600 dark:text-violet-400 iphone-landscape-portfolio-icon">
                                     <BarChart2 className="size-6" />
                                 </div>

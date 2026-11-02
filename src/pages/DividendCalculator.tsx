@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { LandscapeBackButton } from '../components/LandscapeBackButton';
 
-import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, ArrowLeft, HelpCircle, BookOpen, AlertTriangle, Target, Telescope } from 'lucide-react';
+import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, HelpCircle, BookOpen, AlertTriangle, Target, Telescope } from 'lucide-react';
 import { fetchStockHistory, searchStocks, fetchStockQuote } from '../services/yahoo-finance';
 
 import { jsPDF } from 'jspdf';
@@ -1108,15 +1109,7 @@ export function DividendCalculator() {
                     <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 iphone-landscape-portfolio-header-row">
                             <div className="flex items-center gap-3 w-full sm:w-auto iphone-landscape-portfolio-title-group">
-                                <button
-                                    onClick={handleBack}
-                                    type="button"
-                                    className="flex items-center justify-center p-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-all font-medium text-xs sm:text-sm shadow-xs group shrink-0 active:scale-95"
-                                    title="Zurück"
-                                    aria-label="Zurück"
-                                >
-                                    <ArrowLeft className="size-5 transition-transform group-hover:-translate-x-0.5" />
-                                </button>
+                                <LandscapeBackButton onClick={handleBack} />
                                 <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 iphone-landscape-portfolio-icon">
                                     <Coins className="size-6" />
                                 </div>

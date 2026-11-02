@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, ShieldCheck, Sparkles, Plus, ArrowLeft, Target } from 'lucide-react';
+import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, ShieldCheck, Sparkles, Plus, Target } from 'lucide-react';
+import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
@@ -1476,15 +1477,7 @@ export function FairValueCalculator() {
                     <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 iphone-landscape-portfolio-header-row">
                             <div className="flex items-center gap-3 w-full sm:w-auto iphone-landscape-portfolio-title-group">
-                                <button
-                                    onClick={handleBack}
-                                    type="button"
-                                    className="flex items-center justify-center p-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-all font-medium text-xs sm:text-sm shadow-xs group shrink-0 active:scale-95"
-                                    title="Zurück"
-                                    aria-label="Zurück"
-                                >
-                                    <ArrowLeft className="size-5 transition-transform group-hover:-translate-x-0.5" />
-                                </button>
+                                <LandscapeBackButton onClick={handleBack} />
                                 <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 shrink-0 iphone-landscape-portfolio-icon">
                                     <Telescope className="size-6" />
                                 </div>
