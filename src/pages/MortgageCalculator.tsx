@@ -754,6 +754,15 @@ export const MortgageCalculator = () => {
                                 Immobilie & Nebenkosten
                                 {isPropertyOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
                             </h2>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsPropertyOpen(true);
+                                }}
+                                className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
+                            >
+                                <Plus className="size-4" /> Eingabe
+                            </button>
                         </div>
                         {isPropertyOpen && (
                             <div className="p-6 space-y-4">
