@@ -44,6 +44,150 @@ export const MortgageCalculator = () => {
     const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
     const [isWaterOpen, setIsWaterOpen] = useState(false);
 
+    const exportSingleInvoicePDF = (reading: ElectricityReading) => {
+        const doc = new jsPDF();
+        const effectiveDateFrom = reading.dateFrom || (reading.date === '2026-09-30' ? '2026-08-28' : undefined);
+        const effectiveReading = {
+            ...reading,
+            dateFrom: effectiveDateFrom,
+            standAltHT: reading.standAltHT ?? (reading.valueHT === 542 ? 473 : undefined),
+            standAltNT: reading.standAltNT ?? (reading.valueNT === 3583 ? 3108 : undefined)
+        };
+        const { usageHT, usageNT } = getReadingUsage(effectiveReading);
+        const totalUsage = usageHT + usageNT;
+        const period = calculatePeriodDays(effectiveDateFrom, reading.date);
+        const months = period.months || 1;
+        const tariff = electricityTariff;
+        const inv = calculateElectricityInvoice(usageHT, usageNT, months, tariff);
+
+        const providerName = electricityProvider || 'Eniwa AG';
+        const fromStr = effectiveDateFrom ? new Date(effectiveDateFrom).toLocaleDateString('de-CH') : '-';
+        const toStr = reading.date ? new Date(reading.date).toLocaleDateString('de-CH') : '-';
+        const invoiceNo = reading.invoiceNumber || '–';
+
+        // 1. Titel & Header
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Stromabrechnung nach StromVG`, 14, 20);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text(`1:1 Rechnungs-Aufschlüsselung | Erstellt am: ${new Date().toLocaleDateString('de-CH')}`, 14, 26);
+        doc.setTextColor(0, 0, 0);
+
+        // 2. Infobox: Kundendaten links, Abrechnungsdetails rechts
+        autoTable(doc, {
+            startY: 32,
+            theme: 'plain',
+            styles: { fontSize: 8.5, cellPadding: 1.8 },
+            columnStyles: {
+                0: { fontStyle: 'bold', cellWidth: 32 },
+                1: { cellWidth: 58 },
+                2: { fontStyle: 'bold', cellWidth: 38 },
+                3: { cellWidth: 54 }
+            },
+            body: [
+                ['Stromversorger:', providerName, 'Ablesezeitraum:', `${fromStr} – ${toStr} (${period.days} Tage)`],
+                ['Kundennummer:', electricityCustomerNumber || '–', 'Rechnungs-Nr.:', invoiceNo],
+                ['Vertragskonto:', electricityContractNumber || '–', 'Zählerstand alt:', `HT: ${effectiveReading.standAltHT ?? '-'} | NT: ${effectiveReading.standAltNT ?? '-'}`],
+                ['Zähler-Nr.:', electricityMeterNumber || '–', 'Zählerstand neu:', `HT: ${reading.valueHT || '-'} | NT: ${reading.valueNT || '-'}`],
+                ['', '', 'Wirkenergie Total:', `${totalUsage} kWh (HT: ${usageHT} / NT: ${usageNT})`]
+            ]
+        });
+
+        const startY = (doc as any).lastAutoTable.finalY + 6;
+
+        // 3. 1:1 Kostenaufschlüsselungstabelle
+        const tableBody: any[] = [
+            // 1. Energie
+            [
+                { content: '1. Energie (Wirkenergie)', colSpan: 3, styles: { fontStyle: 'bold', fillColor: [240, 245, 255], textColor: [30, 64, 175] } },
+                { content: formatCHF(inv.subtotalEnergy, 2), styles: { fontStyle: 'bold', halign: 'right', fillColor: [240, 245, 255], textColor: [30, 64, 175] } }
+            ],
+            [`${providerName} Naturstrom Schweiz Hochtarif (HT)`, `${usageHT} kWh`, `@ ${tariff.energyHT.toFixed(2)} Rp./kWh`, formatCHF(inv.energyHTAmount, 2)],
+            [`${providerName} Naturstrom Schweiz Niedertarif (NT)`, `${usageNT} kWh`, `@ ${tariff.energyNT.toFixed(2)} Rp./kWh`, formatCHF(inv.energyNTAmount, 2)],
+            [
+                { content: 'Zwischentotal Energie exkl. MwSt', colSpan: 3, styles: { fontStyle: 'bold', halign: 'left' } },
+                { content: formatCHF(inv.subtotalEnergy, 2), styles: { fontStyle: 'bold', halign: 'right' } }
+            ],
+
+            // 2. Netznutzung
+            [
+                { content: '2. Netznutzung', colSpan: 3, styles: { fontStyle: 'bold', fillColor: [239, 246, 255], textColor: [37, 99, 235] } },
+                { content: formatCHF(inv.subtotalGrid, 2), styles: { fontStyle: 'bold', halign: 'right', fillColor: [239, 246, 255], textColor: [37, 99, 235] } }
+            ],
+            ['Wirkenergie Hochtarif (HT)', `${usageHT} kWh`, `@ ${tariff.gridHT.toFixed(2)} Rp./kWh`, formatCHF(inv.gridHTAmount, 2)],
+            ['Wirkenergie Niedertarif (NT)', `${usageNT} kWh`, `@ ${tariff.gridNT.toFixed(2)} Rp./kWh`, formatCHF(inv.gridNTAmount, 2)],
+            ['Systemdienstleistungen Swissgrid', `${totalUsage} kWh`, `@ ${tariff.gridSdl.toFixed(2)} Rp./kWh`, formatCHF(inv.gridSdlAmount, 2)],
+            ['Stromreserve des Bundes', `${totalUsage} kWh`, `@ ${tariff.gridReserve.toFixed(2)} Rp./kWh`, formatCHF(inv.gridReserveAmount, 2)],
+            ['Zuschlag solidarisierte Kosten im Übertragungsnetz', `${totalUsage} kWh`, `@ ${tariff.gridSolidar.toFixed(2)} Rp./kWh`, formatCHF(inv.gridSolidarAmount, 2)],
+            ['Grundpreis Netznutzung', `${months} Mt.`, `@ ${formatCHF(tariff.gridBaseFee, 2)}/Monat`, formatCHF(inv.baseFeeAmount, 2)],
+            ['Messkosten direkt', `${months} Mt.`, `@ ${formatCHF(tariff.gridMeasurementFee, 2)}/Monat`, formatCHF(inv.measurementFeeAmount, 2)],
+            [
+                { content: 'Zwischentotal Netznutzung exkl. MwSt', colSpan: 3, styles: { fontStyle: 'bold', halign: 'left' } },
+                { content: formatCHF(inv.subtotalGrid, 2), styles: { fontStyle: 'bold', halign: 'right' } }
+            ],
+
+            // 3. Öffentliche Abgaben
+            [
+                { content: '3. Öffentliche Abgaben', colSpan: 3, styles: { fontStyle: 'bold', fillColor: [254, 243, 199], textColor: [180, 83, 9] } },
+                { content: formatCHF(inv.subtotalFees, 2), styles: { fontStyle: 'bold', halign: 'right', fillColor: [254, 243, 199], textColor: [180, 83, 9] } }
+            ],
+            ['Konzessionsabgabe an die Gemeinde', `${totalUsage} kWh`, `@ ${tariff.communityFee.toFixed(2)} Rp./kWh`, formatCHF(inv.communityFeeAmount, 2)],
+            ['Bundesabgaben gemäss Energiegesetz (KEV)', `${totalUsage} kWh`, `@ ${tariff.federalFee.toFixed(2)} Rp./kWh`, formatCHF(inv.federalFeeAmount, 2)],
+            [
+                { content: 'Zwischentotal öffentliche Abgaben exkl. MwSt', colSpan: 3, styles: { fontStyle: 'bold', halign: 'left' } },
+                { content: formatCHF(inv.subtotalFees, 2), styles: { fontStyle: 'bold', halign: 'right' } }
+            ],
+
+            // 4. Totals
+            [
+                { content: 'Zwischentotal Strom exkl. MwSt', colSpan: 3, styles: { fontStyle: 'bold', halign: 'left', fillColor: [245, 245, 245] } },
+                { content: formatCHF(inv.totalExclVat, 2), styles: { fontStyle: 'bold', halign: 'right', fillColor: [245, 245, 245] } }
+            ],
+            [
+                { content: `Mehrwertsteuer ${tariff.vatRate.toFixed(1)} %`, colSpan: 3, styles: { halign: 'left' } },
+                { content: formatCHF(inv.vatAmount, 2), styles: { halign: 'right' } }
+            ],
+            [
+                { content: 'Total Stromrechnung inkl. MwSt', colSpan: 3, styles: { fontStyle: 'bold', fontSize: 10, fillColor: [16, 185, 129], textColor: [255, 255, 255] } },
+                { content: formatCHF(inv.totalInclVat, 2), styles: { fontStyle: 'bold', fontSize: 10, halign: 'right', fillColor: [16, 185, 129], textColor: [255, 255, 255] } }
+            ]
+        ];
+
+        autoTable(doc, {
+            startY: startY,
+            head: [[
+                { content: 'Position / Leistungsbeschreibung', styles: { halign: 'left' } },
+                { content: 'Menge / Basis', styles: { halign: 'right' } },
+                { content: 'Ansatz / Tarif', styles: { halign: 'right' } },
+                { content: 'Betrag', styles: { halign: 'right' } }
+            ]],
+            body: tableBody,
+            theme: 'grid',
+            headStyles: {
+                fillColor: [30, 41, 59],
+                textColor: [255, 255, 255],
+                fontSize: 8.5,
+                fontStyle: 'bold'
+            },
+            styles: {
+                fontSize: 8,
+                cellPadding: 2
+            },
+            columnStyles: {
+                0: { halign: 'left', cellWidth: 88 },
+                1: { halign: 'right', cellWidth: 28 },
+                2: { halign: 'right', cellWidth: 38 },
+                3: { halign: 'right', cellWidth: 28 }
+            }
+        });
+
+        const safeInvoice = (reading.invoiceNumber || 'Abrechnung').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const filename = `Stromrechnung_${safeInvoice}_${toStr.replace(/\./g, '-')}.pdf`;
+        doc.save(filename);
+    };
+
     const handleAddReading = (e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
         // Finde den zeitlich neuesten gültigen Eintrag mit Datum
@@ -1910,6 +2054,16 @@ export const MortgageCalculator = () => {
                                                         <div className="flex items-center gap-2 ml-auto">
                                                             <button
                                                                 type="button"
+                                                                onClick={() => exportSingleInvoicePDF(reading)}
+                                                                className="px-2.5 py-1.5 text-xs font-medium rounded-lg border bg-muted/60 hover:bg-muted text-foreground border-border transition-colors flex items-center gap-1.5 shadow-2xs"
+                                                                title="Diese Stromrechnung als separates PDF herunterladen"
+                                                            >
+                                                                <Download className="size-3.5 text-primary shrink-0" />
+                                                                <span>PDF</span>
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
                                                                 onClick={() => setExpandedInvoiceId(isExpanded ? null : reading.id)}
                                                                 className={cn(
                                                                     "px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors flex items-center gap-1.5",
@@ -2157,14 +2311,25 @@ export const MortgageCalculator = () => {
                                                     {/* 1:1 RECHNUNGS-TABELLE (Aufklappbar bei Bedarf) */}
                                                     {isExpanded && (
                                                         <div className="border border-border rounded-xl overflow-hidden bg-background shadow-md animate-in fade-in duration-200">
-                                                            <div className="bg-muted/50 px-4 py-2.5 border-b border-border flex items-center justify-between text-xs font-bold">
+                                                            <div className="bg-muted/50 px-4 py-2.5 border-b border-border flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
                                                                 <div className="flex items-center gap-2">
                                                                     <ReceiptText className="size-4 text-primary" />
                                                                     <span>Rechnungs-Aufschlüsselung (1:1 Abbild nach StromVG)</span>
                                                                 </div>
-                                                                <span className="font-mono text-muted-foreground">
-                                                                    Zeitraum: {effectiveDateFrom ? `${new Date(effectiveDateFrom).toLocaleDateString('de-CH')} – ` : ''}{new Date(reading.date).toLocaleDateString('de-CH')}
-                                                                </span>
+                                                                <div className="flex items-center gap-3">
+                                                                    <span className="font-mono text-muted-foreground">
+                                                                        Zeitraum: {effectiveDateFrom ? `${new Date(effectiveDateFrom).toLocaleDateString('de-CH')} – ` : ''}{reading.date ? new Date(reading.date).toLocaleDateString('de-CH') : 'Offen'}
+                                                                    </span>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => exportSingleInvoicePDF(reading)}
+                                                                        className="px-2.5 py-1 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
+                                                                        title="Rechnung 1:1 als PDF herunterladen"
+                                                                    >
+                                                                        <Download className="size-3.5 shrink-0" />
+                                                                        <span>PDF Export</span>
+                                                                    </button>
+                                                                </div>
                                                             </div>
 
                                                             <div className="p-4 space-y-4 text-xs font-mono">
