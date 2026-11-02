@@ -1470,27 +1470,27 @@ export function FairValueCalculator() {
                 </div>
             )}
 
-            {/* Sticky Header - Fixed Height exactly like Positionen */}
-            <div className="shrink-0 bg-background pb-2 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6 iphone-landscape-portfolio-header-wrap">
+            {/* Sticky Header - Consistent Design across app */}
+            <div className="shrink-0 bg-background pb-4 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6 iphone-landscape-portfolio-header-wrap">
                 <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
-                    <div className="w-full pl-14 pr-4 py-2.5 sm:py-3 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 iphone-landscape-portfolio-header-row">
-                            <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto iphone-landscape-portfolio-title-group">
+                    <div className="w-full pl-14 pr-4 py-4 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 iphone-landscape-portfolio-header-row">
+                            <div className="flex items-center gap-3 w-full sm:w-auto iphone-landscape-portfolio-title-group">
                                 <button
                                     onClick={handleBack}
                                     type="button"
-                                    className="flex items-center justify-center p-1.5 sm:p-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-all font-medium text-xs sm:text-sm shadow-xs group shrink-0 active:scale-95"
+                                    className="flex items-center justify-center p-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-all font-medium text-xs sm:text-sm shadow-xs group shrink-0 active:scale-95"
                                     title="Zurück"
                                     aria-label="Zurück"
                                 >
-                                    <ArrowLeft className="size-4.5 sm:size-5 transition-transform group-hover:-translate-x-0.5" />
+                                    <ArrowLeft className="size-5 transition-transform group-hover:-translate-x-0.5" />
                                 </button>
-                                <div className="p-2 sm:p-2.5 lg:p-1.5 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 shrink-0 iphone-landscape-portfolio-icon">
-                                    <Telescope className="size-5 sm:size-6 lg:size-4.5" />
+                                <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 shrink-0 iphone-landscape-portfolio-icon">
+                                    <Telescope className="size-6" />
                                 </div>
                                 <div>
-                                    <h1 className="text-xl sm:text-2xl lg:text-lg font-bold tracking-tight whitespace-nowrap iphone-landscape-portfolio-title">Fairer Wert</h1>
-                                    <p className="text-xs text-muted-foreground hidden md:block lg:text-[11px] iphone-landscape-portfolio-subtitle">Fundamentalanalyse &amp; Innerer Wert</p>
+                                    <h1 className="text-3xl font-bold tracking-tight whitespace-nowrap iphone-landscape-portfolio-title">Fairer Wert</h1>
+                                    <p className="text-muted-foreground hidden md:block iphone-landscape-portfolio-subtitle">Fundamentalanalyse &amp; Innerer Wert</p>
                                 </div>
                             </div>
 
@@ -1498,7 +1498,7 @@ export function FairValueCalculator() {
                                 <button
                                     onClick={() => setShowGuide(true)}
                                     title="Wie funktioniert das? (Anleitung)"
-                                    className="text-xs flex items-center gap-1.5 border border-border px-3 py-2 lg:py-1 lg:px-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shadow-xs group shrink-0"
+                                    className="text-xs flex items-center gap-1.5 border border-border px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shadow-xs group shrink-0"
                                 >
                                     <BookOpen size={14} className="text-blue-500 group-hover:scale-110 transition-transform" />
                                     <span className="hidden sm:inline iphone-landscape-hide">Wie funktioniert das? </span>
