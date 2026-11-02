@@ -2281,7 +2281,7 @@ export const MortgageCalculator = () => {
                                                                         <span>Fällig: {formatSwissDate(effectiveDueDate)}</span>
                                                                     </div>
                                                                 )}
-                                                                {!isCardOpen && invoice.totalInclVat > 0 && (
+                                                                {invoice.totalInclVat > 0 && (
                                                                     <div className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-0.5 rounded-md font-mono shadow-2xs whitespace-nowrap">
                                                                         <span>{formatCHF(invoice.totalInclVat, 2)}</span>
                                                                     </div>
