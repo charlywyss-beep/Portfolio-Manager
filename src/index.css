@@ -1889,26 +1889,38 @@
     line-height: 1.1 !important;
   }
 
-  /* Ampel-Kreis kompakt (spart massiv Platz) */
+  /* Ampel-Kreis mit ausreichend Raum: Kein Überlappen der Texte mehr */
   .fair-value-circle {
-    width: 4.25rem !important;
-    height: 4.25rem !important;
-    min-width: 4.25rem !important;
-    min-height: 4.25rem !important;
-    padding: 0.1rem !important;
+    width: 5.5rem !important;
+    height: 5.5rem !important;
+    min-width: 5.5rem !important;
+    min-height: 5.5rem !important;
+    padding: 0.2rem !important;
   }
 
-  .fair-value-circle .text-xs,
-  .fair-value-circle .text-sm,
-  .fair-value-circle .text-base,
-  .fair-value-circle .text-lg {
-    font-size: 0.75rem !important;
+  .fair-value-circle .text-xs {
+    font-size: 0.72rem !important;
     line-height: 1.1 !important;
   }
 
   .fair-value-circle .text-\[10px\],
-  .fair-value-circle .text-\[11px\] {
-    font-size: 0.52rem !important;
+  .fair-value-circle .text-\[8\.5px\] {
+    font-size: 0.55rem !important;
+    line-height: 1 !important;
+    margin-top: 0.05rem !important;
+  }
+
+  .fair-value-circle .text-sm,
+  .fair-value-circle .text-base {
+    font-size: 0.88rem !important;
+    line-height: 1.15 !important;
+    margin-top: 0.08rem !important;
+    margin-bottom: 0.08rem !important;
+  }
+
+  .fair-value-circle .text-\[11px\],
+  .fair-value-circle .text-\[9px\] {
+    font-size: 0.58rem !important;
     line-height: 1 !important;
   }
 
@@ -2010,20 +2022,24 @@
     min-height: auto !important;
   }
 
-  /* Zielkurs Box (5 Jahre) - 100% sichtbar */
+  /* Zielkurs Box (5 Jahre) - zuunterst im Feld analog zur Sicherheitsmarge links */
   .fair-value-target-box {
-    padding: 0.18rem 0.45rem !important;
+    padding-top: 0.2rem !important;
+    margin-top: auto !important;
+    background: transparent !important;
+    border: none !important;
+    border-top: 1px solid var(--border) !important;
+    border-radius: 0 !important;
   }
 
-  .fair-value-target-box .text-xs,
-  .fair-value-target-box .text-sm {
-    font-size: 0.7rem !important;
-    line-height: 1.15 !important;
+  .fair-value-target-box .text-xs {
+    font-size: 0.72rem !important;
+    line-height: 1.2 !important;
   }
 
-  .fair-value-target-box p.text-\[11px\] {
-    font-size: 0.58rem !important;
-    line-height: 1.05 !important;
+  .fair-value-target-box .text-\[11px\] {
+    font-size: 0.62rem !important;
+    line-height: 1.2 !important;
   }
 }
 

@@ -2687,28 +2687,23 @@ export function FairValueCalculator() {
                                     );
                                     })()}
 
-                                    {/* Future Value */}
-                                    <div className="fair-value-target-box p-1.5 sm:p-2 lg:py-1 lg:px-2 rounded-xl border border-border bg-muted/10">
-                                        <div className="flex justify-between items-center gap-2 mb-0.5">
-                                            <span className="text-xs sm:text-sm lg:text-xs font-medium text-muted-foreground shrink-0 whitespace-nowrap">Zielkurs (5 Jahre)</span>
-                                            {quote.currency !== 'CHF' ? (
-                                                <div className="flex flex-col items-end font-mono text-muted-foreground leading-tight text-right shrink-0">
-                                                    <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
-                                                        {formatCurrency(calculation.futurePrice, quote.currency, false)}
-                                                    </span>
-                                                    <span className="text-[11px] sm:text-xs font-medium opacity-80 whitespace-nowrap">
-                                                        {formatCurrency(calculation.futurePrice, quote.currency).split(' - ')[1]}
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                <span className="font-mono text-xs sm:text-sm whitespace-nowrap">
-                                                    {formatCurrency(calculation.futurePrice, quote.currency, false)}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="text-[11px] text-muted-foreground">
-                                            Gewinn {calculation.futureEps.toFixed(2)} × KGV {calculation.exitPe.toFixed(1)}
-                                        </p>
+                                </div>
+
+                                {/* Zielkurs (5 Jahre) - zuunterst ins Feld */}
+                                <div className="fair-value-target-box pt-1.5 mt-auto border-t border-border/50">
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="font-medium text-muted-foreground whitespace-nowrap">Zielkurs (5 Jahre)</span>
+                                        <span className="font-mono font-bold text-foreground">
+                                            {formatCurrency(calculation.futurePrice, quote.currency, false)}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[11px] text-muted-foreground">
+                                        <span>Gewinn {calculation.futureEps.toFixed(2)} × KGV {calculation.exitPe.toFixed(1)}</span>
+                                        {quote.currency && quote.currency !== 'CHF' && (
+                                            <span className="font-mono">
+                                                {formatCurrency(calculation.futurePrice, quote.currency).split(' - ')[1]}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
 
