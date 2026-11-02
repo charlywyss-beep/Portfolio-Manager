@@ -2406,6 +2406,7 @@ export function FairValueCalculator() {
                                                 const isEtf = isEtfAsset(currentStock, quote, selectedSymbol);
                                                 const m1 = isEtf ? 10 : 15;
                                                 const m2 = isEtf ? 15 : 20;
+                                                const mMix = ((m1 + m2) / 2).toFixed(1);
                                                 const p1 = calculation.fairValue * (1 - m1 / 100);
                                                 const p2 = calculation.fairValue * (1 - m2 / 100);
                                                 const pMix = (p1 + p2) / 2;
@@ -2415,34 +2416,39 @@ export function FairValueCalculator() {
                                                 const isMixActive = Math.abs(activeLimit - pMix) < 0.05;
 
                                                 return (
-                                                    <div className="mt-2 pt-1.5 border-t border-border/40 text-[11px] text-muted-foreground flex items-center justify-center gap-1.5 flex-wrap">
-                                                        <span className="font-semibold text-foreground">Staffelkauf (2 Tranchen):</span>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setBuyLimitInput(p1.toFixed(2))}
-                                                            title={`1. Tranche (${m1}% Marge) als Kauflimit eintragen`}
-                                                            className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-                                                        >
-                                                            1. Tranche ({m1}%): <strong className={cn("font-mono", isP1Active ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(p1, quote.currency, false)}</strong>
-                                                        </button>
-                                                        <span>•</span>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setBuyLimitInput(p2.toFixed(2))}
-                                                            title={`2. Tranche (${m2}% Marge) als Kauflimit eintragen`}
-                                                            className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-                                                        >
-                                                            2. Tranche ({m2}%): <strong className={cn("font-mono", isP2Active ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(p2, quote.currency, false)}</strong>
-                                                        </button>
-                                                        <span>•</span>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setBuyLimitInput(pMix.toFixed(2))}
-                                                            title={`Mischkurs (${((m1 + m2) / 2).toFixed(1)}% Marge) als Kauflimit eintragen`}
-                                                            className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-                                                        >
-                                                            Ø: <strong className={cn("font-mono", isMixActive ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(pMix, quote.currency, false)}</strong>
-                                                        </button>
+                                                    <div className="mt-2 pt-1.5 border-t border-border/40 text-[11px] text-muted-foreground flex flex-col items-center justify-center gap-1">
+                                                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                                                            <span className="font-semibold text-foreground">Staffelkauf 2 Tranchen</span>
+                                                            <span>•</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setBuyLimitInput(p1.toFixed(2))}
+                                                                title={`1. Tranche ${m1}% als Kauflimit eintragen`}
+                                                                className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                                                            >
+                                                                1. Tranche {m1}% : <strong className={cn("font-mono", isP1Active ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(p1, quote.currency, false)}</strong>
+                                                            </button>
+                                                            <span>•</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setBuyLimitInput(p2.toFixed(2))}
+                                                                title={`2. Tranche ${m2}% als Kauflimit eintragen`}
+                                                                className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                                                            >
+                                                                2. Tranche {m2}% : <strong className={cn("font-mono", isP2Active ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(p2, quote.currency, false)}</strong>
+                                                            </button>
+                                                        </div>
+                                                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setBuyLimitInput(pMix.toFixed(2))}
+                                                                title={`Kauf bei Ø ${mMix}% als Kauflimit eintragen`}
+                                                                className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                                                            >
+                                                                <span>Kauf bei Ø • {mMix}% : </span>
+                                                                <strong className={cn("font-mono", isMixActive ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(pMix, quote.currency, false)}</strong>
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 );
                                             })()}
