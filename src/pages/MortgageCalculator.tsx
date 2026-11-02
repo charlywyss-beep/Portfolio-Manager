@@ -1485,8 +1485,8 @@ export const MortgageCalculator = () => {
                         {isElectricityOpen && (
                             <div className="p-5 sm:p-6 border-b border-border space-y-6">
 
-                                {/* 1. Kundendaten: Exakt im gleichen 4-Spalten Grid wie die Zählererfassung */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 bg-accent/20 p-3.5 rounded-xl border border-border/60">
+                                {/* 1. Kundendaten: 2 Spalten auf Tablet/iPad, 4 Spalten auf grossem Desktop */}
+                                <div className="grid grid-cols-2 2xl:grid-cols-4 gap-3 bg-accent/20 p-3.5 rounded-xl border border-border/60">
                                     <div className="space-y-1">
                                         <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 whitespace-nowrap">
                                             <User className="size-3.5 text-primary" />
@@ -1582,7 +1582,7 @@ export const MortgageCalculator = () => {
 
                                     {isElectricityTariffOpen && (
                                         <div className="p-4 sm:p-5 border-t border-border/60 bg-background/60">
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div className="grid grid-cols-1 2xl:grid-cols-3 gap-4">
 
                                                 {/* Block 1: Energie */}
                                                 <div className="p-3.5 rounded-xl border border-border/70 bg-card/60 flex flex-col justify-between space-y-3">
@@ -1867,8 +1867,8 @@ export const MortgageCalculator = () => {
                                                     {/* 4-SPALTEN GRID: 100% einheitliche Feldbreiten, exakt vertikal und horizontal ausgerichtet */}
                                                     <div className="space-y-3.5">
                                                         
-                                                        {/* ZEILE 1: Zeitraum, Dauer & Rechnungs-Nr. */}
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                                                        {/* ZEILE 1: Zeitraum, Dauer & Rechnungs-Nr. (2 Spalten auf iPad/Tablet, 4 auf Desktop) */}
+                                                        <div className="grid grid-cols-2 2xl:grid-cols-4 gap-3">
                                                             <div className="space-y-1">
                                                                 <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Ablesung Von</label>
                                                                 <input
@@ -1918,81 +1918,85 @@ export const MortgageCalculator = () => {
                                                             </div>
                                                         </div>
 
-                                                        {/* ZEILE 2: Kategorie-Header HT (Spalte 1-2) und NT (Spalte 3-4) */}
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                                                            <div className="col-span-1 sm:col-span-2 flex items-center justify-between text-xs font-bold text-foreground bg-muted/40 px-3 py-1.5 rounded-lg border border-border/60">
+                                                        {/* HT Block: Banner + Zählerstände (2 Spalten) */}
+                                                        <div className="space-y-2">
+                                                            <div className="flex items-center justify-between text-xs font-bold text-foreground bg-muted/40 px-3 py-1.5 rounded-lg border border-border/60">
                                                                 <span>Wirkenergie Hochtarif (HT)</span>
                                                                 <span className="font-mono text-primary font-extrabold bg-primary/10 px-2 py-0.5 rounded-md">
                                                                     {usageHT} kWh
                                                                 </span>
                                                             </div>
-                                                            <div className="col-span-1 sm:col-span-2 flex items-center justify-between text-xs font-bold text-foreground bg-muted/40 px-3 py-1.5 rounded-lg border border-border/60">
+                                                            <div className="grid grid-cols-2 gap-3">
+                                                                <div className="space-y-1">
+                                                                    <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Stand alt HT</span>
+                                                                    <DecimalInput
+                                                                        value={reading.standAltHT ?? (reading.valueHT === 542 ? 473 : 0)}
+                                                                        placeholder="Alt"
+                                                                        onChange={(val) => {
+                                                                            const parsed = parseFloat(val) || 0;
+                                                                            const newUsage = Math.max(0, reading.valueHT - parsed);
+                                                                            const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, standAltHT: parsed, usageHT: newUsage } : r);
+                                                                            updateMortgageData({ electricityReadings: newReadings });
+                                                                        }}
+                                                                        className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono text-right"
+                                                                    />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Stand neu HT</span>
+                                                                    <DecimalInput
+                                                                        value={reading.valueHT}
+                                                                        placeholder="Neu"
+                                                                        onChange={(val) => {
+                                                                            const parsed = parseFloat(val) || 0;
+                                                                            const alt = reading.standAltHT ?? (reading.valueHT === 542 ? 473 : 0);
+                                                                            const newUsage = alt > 0 ? Math.max(0, parsed - alt) : reading.usageHT;
+                                                                            const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueHT: parsed, usageHT: newUsage } : r);
+                                                                            updateMortgageData({ electricityReadings: newReadings });
+                                                                        }}
+                                                                        className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono font-bold text-right"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* NT Block: Banner + Zählerstände (2 Spalten) */}
+                                                        <div className="space-y-2">
+                                                            <div className="flex items-center justify-between text-xs font-bold text-foreground bg-muted/40 px-3 py-1.5 rounded-lg border border-border/60">
                                                                 <span>Wirkenergie Niedertarif (NT)</span>
                                                                 <span className="font-mono text-primary font-extrabold bg-primary/10 px-2 py-0.5 rounded-md">
                                                                     {usageNT} kWh
                                                                 </span>
                                                             </div>
-                                                        </div>
-
-                                                        {/* ZEILE 3: Zählerstände (Exakt gleiche 4 Spalten darunter wie Zeile 1) */}
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                                                            <div className="space-y-1">
-                                                                <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Stand alt HT</span>
-                                                                <DecimalInput
-                                                                    value={reading.standAltHT ?? (reading.valueHT === 542 ? 473 : 0)}
-                                                                    placeholder="Alt"
-                                                                    onChange={(val) => {
-                                                                        const parsed = parseFloat(val) || 0;
-                                                                        const newUsage = Math.max(0, reading.valueHT - parsed);
-                                                                        const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, standAltHT: parsed, usageHT: newUsage } : r);
-                                                                        updateMortgageData({ electricityReadings: newReadings });
-                                                                    }}
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono text-right"
-                                                                />
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Stand neu HT</span>
-                                                                <DecimalInput
-                                                                    value={reading.valueHT}
-                                                                    placeholder="Neu"
-                                                                    onChange={(val) => {
-                                                                        const parsed = parseFloat(val) || 0;
-                                                                        const alt = reading.standAltHT ?? (reading.valueHT === 542 ? 473 : 0);
-                                                                        const newUsage = alt > 0 ? Math.max(0, parsed - alt) : reading.usageHT;
-                                                                        const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueHT: parsed, usageHT: newUsage } : r);
-                                                                        updateMortgageData({ electricityReadings: newReadings });
-                                                                    }}
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono font-bold text-right"
-                                                                />
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Stand alt NT</span>
-                                                                <DecimalInput
-                                                                    value={reading.standAltNT ?? (reading.valueNT === 3583 ? 3108 : 0)}
-                                                                    placeholder="Alt"
-                                                                    onChange={(val) => {
-                                                                        const parsed = parseFloat(val) || 0;
-                                                                        const newUsage = Math.max(0, reading.valueNT - parsed);
-                                                                        const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, standAltNT: parsed, usageNT: newUsage } : r);
-                                                                        updateMortgageData({ electricityReadings: newReadings });
-                                                                    }}
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono text-right"
-                                                                />
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Stand neu NT</span>
-                                                                <DecimalInput
-                                                                    value={reading.valueNT}
-                                                                    placeholder="Neu"
-                                                                    onChange={(val) => {
-                                                                        const parsed = parseFloat(val) || 0;
-                                                                        const alt = reading.standAltNT ?? (reading.valueNT === 3583 ? 3108 : 0);
-                                                                        const newUsage = alt > 0 ? Math.max(0, parsed - alt) : reading.usageNT;
-                                                                        const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueNT: parsed, usageNT: newUsage } : r);
-                                                                        updateMortgageData({ electricityReadings: newReadings });
-                                                                    }}
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono font-bold text-right"
-                                                                />
+                                                            <div className="grid grid-cols-2 gap-3">
+                                                                <div className="space-y-1">
+                                                                    <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Stand alt NT</span>
+                                                                    <DecimalInput
+                                                                        value={reading.standAltNT ?? (reading.valueNT === 3583 ? 3108 : 0)}
+                                                                        placeholder="Alt"
+                                                                        onChange={(val) => {
+                                                                            const parsed = parseFloat(val) || 0;
+                                                                            const newUsage = Math.max(0, reading.valueNT - parsed);
+                                                                            const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, standAltNT: parsed, usageNT: newUsage } : r);
+                                                                            updateMortgageData({ electricityReadings: newReadings });
+                                                                        }}
+                                                                        className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono text-right"
+                                                                    />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <span className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Stand neu NT</span>
+                                                                    <DecimalInput
+                                                                        value={reading.valueNT}
+                                                                        placeholder="Neu"
+                                                                        onChange={(val) => {
+                                                                            const parsed = parseFloat(val) || 0;
+                                                                            const alt = reading.standAltNT ?? (reading.valueNT === 3583 ? 3108 : 0);
+                                                                            const newUsage = alt > 0 ? Math.max(0, parsed - alt) : reading.usageNT;
+                                                                            const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueNT: parsed, usageNT: newUsage } : r);
+                                                                            updateMortgageData({ electricityReadings: newReadings });
+                                                                        }}
+                                                                        className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono font-bold text-right"
+                                                                    />
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -2006,8 +2010,8 @@ export const MortgageCalculator = () => {
                                                             </span>
                                                         </div>
 
-                                                        {/* Kosten-Kacheln in horizontaler Reihe (Gesamtbreite bündig, einzeilige Details ohne Umbruch) */}
-                                                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1.1fr_1.1fr_1fr_1fr_1.15fr_1.4fr] gap-2.5 text-xs">
+                                                        {/* Kosten-Kacheln: 3 Spalten auf iPad/Tablet (je 2 Zeilen), 6 Spalten auf 2xl Monitor */}
+                                                        <div className="grid grid-cols-2 sm:grid-cols-3 2xl:grid-cols-6 gap-2.5 text-xs">
                                                             
                                                             {/* Energie HT */}
                                                             <div className="p-2.5 bg-background border border-border/70 rounded-lg space-y-0.5 shadow-2xs">
@@ -2216,10 +2220,10 @@ export const MortgageCalculator = () => {
                                                 <span>Aktueller Zählerstand (Zuletzt abgelesen)</span>
                                             </h4>
 
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 font-medium">
+                                            <div className="grid grid-cols-1 2xl:grid-cols-2 gap-3 font-medium">
                                                 <div className="flex items-center justify-between bg-muted/30 p-3 rounded-xl border border-border/60">
-                                                    <span className="text-muted-foreground text-sm font-semibold">Stand HT (Wirkenergie)</span>
-                                                    <div className="flex items-center gap-2">
+                                                    <span className="text-muted-foreground text-xs sm:text-sm font-semibold">Stand HT (Wirkenergie)</span>
+                                                    <div className="flex items-center gap-2 shrink-0">
                                                         <DecimalInput
                                                             value={latest.valueHT}
                                                             onChange={(val) => {
@@ -2230,15 +2234,15 @@ export const MortgageCalculator = () => {
                                                                 updateMortgageData({ electricityReadings: newReadings });
                                                             }}
                                                             onFocus={(e) => e.target.select()}
-                                                            className="bg-[#a3cc29] text-white px-2 py-1 rounded-lg text-base font-mono font-bold tracking-wider shadow-2xs w-[120px] text-center border-none focus:ring-2 focus:ring-primary outline-none"
+                                                            className="bg-[#a3cc29] text-white px-2 py-1 rounded-lg text-base font-mono font-bold tracking-wider shadow-2xs w-24 sm:w-28 text-center border-none focus:ring-2 focus:ring-primary outline-none"
                                                         />
                                                         <span className="text-muted-foreground text-xs font-bold">kWh</span>
                                                     </div>
                                                 </div>
 
                                                 <div className="flex items-center justify-between bg-muted/30 p-3 rounded-xl border border-border/60">
-                                                    <span className="text-muted-foreground text-sm font-semibold">Stand NT (Wirkenergie)</span>
-                                                    <div className="flex items-center gap-2">
+                                                    <span className="text-muted-foreground text-xs sm:text-sm font-semibold">Stand NT (Wirkenergie)</span>
+                                                    <div className="flex items-center gap-2 shrink-0">
                                                         <DecimalInput
                                                             value={latest.valueNT}
                                                             onChange={(val) => {
@@ -2249,7 +2253,7 @@ export const MortgageCalculator = () => {
                                                                 updateMortgageData({ electricityReadings: newReadings });
                                                             }}
                                                             onFocus={(e) => e.target.select()}
-                                                            className="bg-[#a3cc29] text-white px-2 py-1 rounded-lg text-base font-mono font-bold tracking-wider shadow-2xs w-[120px] text-center border-none focus:ring-2 focus:ring-primary outline-none"
+                                                            className="bg-[#a3cc29] text-white px-2 py-1 rounded-lg text-base font-mono font-bold tracking-wider shadow-2xs w-24 sm:w-28 text-center border-none focus:ring-2 focus:ring-primary outline-none"
                                                         />
                                                         <span className="text-muted-foreground text-xs font-bold">kWh</span>
                                                     </div>
