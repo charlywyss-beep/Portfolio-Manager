@@ -129,8 +129,8 @@ export const MortgageCalculator = () => {
                 { content: '1. Energie (Wirkenergie)', colSpan: 3, styles: { fontStyle: 'bold', fillColor: [240, 245, 255], textColor: [30, 64, 175] } },
                 { content: formatCHF(inv.subtotalEnergy, 2), styles: { fontStyle: 'bold', halign: 'right', fillColor: [240, 245, 255], textColor: [30, 64, 175] } }
             ],
-            [`${providerName} Naturstrom Schweiz Hochtarif (HT)`, `${usageHT} kWh`, `@ ${tariff.energyHT.toFixed(2)} Rp./kWh`, formatCHF(inv.energyHTAmount, 2)],
-            [`${providerName} Naturstrom Schweiz Niedertarif (NT)`, `${usageNT} kWh`, `@ ${tariff.energyNT.toFixed(2)} Rp./kWh`, formatCHF(inv.energyNTAmount, 2)],
+            [`${providerName} Naturstrom Schweiz Hochtarif (HT)`, `${usageHT} kWh`, `${tariff.energyHT.toFixed(2)} Rp./kWh`, formatCHF(inv.energyHTAmount, 2)],
+            [`${providerName} Naturstrom Schweiz Niedertarif (NT)`, `${usageNT} kWh`, `${tariff.energyNT.toFixed(2)} Rp./kWh`, formatCHF(inv.energyNTAmount, 2)],
             [
                 { content: 'Zwischentotal Energie exkl. MwSt', colSpan: 3, styles: { fontStyle: 'bold', halign: 'left' } },
                 { content: formatCHF(inv.subtotalEnergy, 2), styles: { fontStyle: 'bold', halign: 'right' } }
@@ -141,13 +141,13 @@ export const MortgageCalculator = () => {
                 { content: '2. Netznutzung', colSpan: 3, styles: { fontStyle: 'bold', fillColor: [239, 246, 255], textColor: [37, 99, 235] } },
                 { content: formatCHF(inv.subtotalGrid, 2), styles: { fontStyle: 'bold', halign: 'right', fillColor: [239, 246, 255], textColor: [37, 99, 235] } }
             ],
-            ['Wirkenergie Hochtarif (HT)', `${usageHT} kWh`, `@ ${tariff.gridHT.toFixed(2)} Rp./kWh`, formatCHF(inv.gridHTAmount, 2)],
-            ['Wirkenergie Niedertarif (NT)', `${usageNT} kWh`, `@ ${tariff.gridNT.toFixed(2)} Rp./kWh`, formatCHF(inv.gridNTAmount, 2)],
-            ['Systemdienstleistungen Swissgrid', `${totalUsage} kWh`, `@ ${tariff.gridSdl.toFixed(2)} Rp./kWh`, formatCHF(inv.gridSdlAmount, 2)],
-            ['Stromreserve des Bundes', `${totalUsage} kWh`, `@ ${tariff.gridReserve.toFixed(2)} Rp./kWh`, formatCHF(inv.gridReserveAmount, 2)],
-            ['Zuschlag solidarisierte Kosten im Übertragungsnetz', `${totalUsage} kWh`, `@ ${tariff.gridSolidar.toFixed(2)} Rp./kWh`, formatCHF(inv.gridSolidarAmount, 2)],
-            ['Grundpreis Netznutzung', `${months} Mt.`, `@ ${formatCHF(tariff.gridBaseFee, 2)}/Monat`, formatCHF(inv.baseFeeAmount, 2)],
-            ['Messkosten direkt', `${months} Mt.`, `@ ${formatCHF(tariff.gridMeasurementFee, 2)}/Monat`, formatCHF(inv.measurementFeeAmount, 2)],
+            ['Wirkenergie Hochtarif (HT)', `${usageHT} kWh`, `${tariff.gridHT.toFixed(2)} Rp./kWh`, formatCHF(inv.gridHTAmount, 2)],
+            ['Wirkenergie Niedertarif (NT)', `${usageNT} kWh`, `${tariff.gridNT.toFixed(2)} Rp./kWh`, formatCHF(inv.gridNTAmount, 2)],
+            ['Systemdienstleistungen Swissgrid', `${totalUsage} kWh`, `${tariff.gridSdl.toFixed(2)} Rp./kWh`, formatCHF(inv.gridSdlAmount, 2)],
+            ['Stromreserve des Bundes', `${totalUsage} kWh`, `${tariff.gridReserve.toFixed(2)} Rp./kWh`, formatCHF(inv.gridReserveAmount, 2)],
+            ['Zuschlag solidarisierte Kosten im Übertragungsnetz', `${totalUsage} kWh`, `${tariff.gridSolidar.toFixed(2)} Rp./kWh`, formatCHF(inv.gridSolidarAmount, 2)],
+            ['Grundpreis Netznutzung', `${months} Mt.`, `${formatCHF(tariff.gridBaseFee, 2)} / Monat`, formatCHF(inv.baseFeeAmount, 2)],
+            ['Messkosten direkt', `${months} Mt.`, `${formatCHF(tariff.gridMeasurementFee, 2)} / Monat`, formatCHF(inv.measurementFeeAmount, 2)],
             [
                 { content: 'Zwischentotal Netznutzung exkl. MwSt', colSpan: 3, styles: { fontStyle: 'bold', halign: 'left' } },
                 { content: formatCHF(inv.subtotalGrid, 2), styles: { fontStyle: 'bold', halign: 'right' } }
@@ -158,8 +158,8 @@ export const MortgageCalculator = () => {
                 { content: '3. Öffentliche Abgaben', colSpan: 3, styles: { fontStyle: 'bold', fillColor: [254, 243, 199], textColor: [180, 83, 9] } },
                 { content: formatCHF(inv.subtotalFees, 2), styles: { fontStyle: 'bold', halign: 'right', fillColor: [254, 243, 199], textColor: [180, 83, 9] } }
             ],
-            ['Konzessionsabgabe an die Gemeinde', `${totalUsage} kWh`, `@ ${tariff.communityFee.toFixed(2)} Rp./kWh`, formatCHF(inv.communityFeeAmount, 2)],
-            ['Bundesabgaben gemäss Energiegesetz (KEV)', `${totalUsage} kWh`, `@ ${tariff.federalFee.toFixed(2)} Rp./kWh`, formatCHF(inv.federalFeeAmount, 2)],
+            ['Konzessionsabgabe an die Gemeinde', `${totalUsage} kWh`, `${tariff.communityFee.toFixed(2)} Rp./kWh`, formatCHF(inv.communityFeeAmount, 2)],
+            ['Bundesabgaben gemäss Energiegesetz (KEV)', `${totalUsage} kWh`, `${tariff.federalFee.toFixed(2)} Rp./kWh`, formatCHF(inv.federalFeeAmount, 2)],
             [
                 { content: 'Zwischentotal öffentliche Abgaben exkl. MwSt', colSpan: 3, styles: { fontStyle: 'bold', halign: 'left' } },
                 { content: formatCHF(inv.subtotalFees, 2), styles: { fontStyle: 'bold', halign: 'right' } }
@@ -2314,7 +2314,7 @@ export const MortgageCalculator = () => {
                                                                 <div className="text-sm font-extrabold font-mono text-foreground">
                                                                     {formatCHF(invoice.energyHTAmount, 2)}
                                                                 </div>
-                                                                <div className="text-[11px] text-muted-foreground truncate" title={`${usageHT} kWh @ ${electricityTariff.energyHT.toFixed(2)} Rp.`}>
+                                                                <div className="text-[11px] text-muted-foreground truncate" title={`${usageHT} kWh à ${electricityTariff.energyHT.toFixed(2)} Rp.`}>
                                                                     {usageHT} kWh · {electricityTariff.energyHT.toFixed(1)} Rp.
                                                                 </div>
                                                             </div>
@@ -2325,7 +2325,7 @@ export const MortgageCalculator = () => {
                                                                 <div className="text-sm font-extrabold font-mono text-foreground">
                                                                     {formatCHF(invoice.energyNTAmount, 2)}
                                                                 </div>
-                                                                <div className="text-[11px] text-muted-foreground truncate" title={`${usageNT} kWh @ ${electricityTariff.energyNT.toFixed(2)} Rp.`}>
+                                                                <div className="text-[11px] text-muted-foreground truncate" title={`${usageNT} kWh à ${electricityTariff.energyNT.toFixed(2)} Rp.`}>
                                                                     {usageNT} kWh · {electricityTariff.energyNT.toFixed(1)} Rp.
                                                                 </div>
                                                             </div>
@@ -2410,11 +2410,11 @@ export const MortgageCalculator = () => {
                                                                     </div>
                                                                     <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
                                                                         <span>Eniwa Naturstrom Schweiz Hochtarif (HT)</span>
-                                                                        <span>{usageHT} kWh @ {electricityTariff.energyHT.toFixed(2)} Rp./kWh = {formatCHF(invoice.energyHTAmount, 2)}</span>
+                                                                        <span>{usageHT} kWh à {electricityTariff.energyHT.toFixed(2)} Rp./kWh = {formatCHF(invoice.energyHTAmount, 2)}</span>
                                                                     </div>
                                                                     <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
                                                                         <span>Eniwa Naturstrom Schweiz Niedertarif (NT)</span>
-                                                                        <span>{usageNT} kWh @ {electricityTariff.energyNT.toFixed(2)} Rp./kWh = {formatCHF(invoice.energyNTAmount, 2)}</span>
+                                                                        <span>{usageNT} kWh à {electricityTariff.energyNT.toFixed(2)} Rp./kWh = {formatCHF(invoice.energyNTAmount, 2)}</span>
                                                                     </div>
                                                                     <div className="flex justify-between items-center font-bold text-foreground bg-muted/20 px-2.5 py-1 rounded-md">
                                                                         <span>Zwischentotal Energie exkl. MwSt</span>
@@ -2430,31 +2430,31 @@ export const MortgageCalculator = () => {
                                                                     </div>
                                                                     <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
                                                                         <span>Wirkenergie Hochtarif (HT)</span>
-                                                                        <span>{usageHT} kWh @ {electricityTariff.gridHT.toFixed(2)} Rp./kWh = {formatCHF(invoice.gridHTAmount, 2)}</span>
+                                                                        <span>{usageHT} kWh à {electricityTariff.gridHT.toFixed(2)} Rp./kWh = {formatCHF(invoice.gridHTAmount, 2)}</span>
                                                                     </div>
                                                                     <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
                                                                         <span>Wirkenergie Niedertarif (NT)</span>
-                                                                        <span>{usageNT} kWh @ {electricityTariff.gridNT.toFixed(2)} Rp./kWh = {formatCHF(invoice.gridNTAmount, 2)}</span>
+                                                                        <span>{usageNT} kWh à {electricityTariff.gridNT.toFixed(2)} Rp./kWh = {formatCHF(invoice.gridNTAmount, 2)}</span>
                                                                     </div>
                                                                     <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
                                                                         <span>Systemdienstleistungen Swissgrid</span>
-                                                                        <span>{totalUsage} kWh @ {electricityTariff.gridSdl.toFixed(2)} Rp./kWh = {formatCHF(invoice.gridSdlAmount, 2)}</span>
+                                                                        <span>{totalUsage} kWh à {electricityTariff.gridSdl.toFixed(2)} Rp./kWh = {formatCHF(invoice.gridSdlAmount, 2)}</span>
                                                                     </div>
                                                                     <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
                                                                         <span>Stromreserve des Bundes</span>
-                                                                        <span>{totalUsage} kWh @ {electricityTariff.gridReserve.toFixed(2)} Rp./kWh = {formatCHF(invoice.gridReserveAmount, 2)}</span>
+                                                                        <span>{totalUsage} kWh à {electricityTariff.gridReserve.toFixed(2)} Rp./kWh = {formatCHF(invoice.gridReserveAmount, 2)}</span>
                                                                     </div>
                                                                     <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
                                                                         <span>Zuschlag solidarisierte Kosten im Übertragungsnetz</span>
-                                                                        <span>{totalUsage} kWh @ {electricityTariff.gridSolidar.toFixed(2)} Rp./kWh = {formatCHF(invoice.gridSolidarAmount, 2)}</span>
+                                                                        <span>{totalUsage} kWh à {electricityTariff.gridSolidar.toFixed(2)} Rp./kWh = {formatCHF(invoice.gridSolidarAmount, 2)}</span>
                                                                     </div>
                                                                     <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
                                                                         <span>Grundpreis Netznutzung</span>
-                                                                        <span>{months} Mt. @ {formatCHF(electricityTariff.gridBaseFee, 2)}/Monat = {formatCHF(invoice.baseFeeAmount, 2)}</span>
+                                                                        <span>{months} Mt. à {formatCHF(electricityTariff.gridBaseFee, 2)}/Monat = {formatCHF(invoice.baseFeeAmount, 2)}</span>
                                                                     </div>
                                                                     <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
                                                                         <span>Messkosten direkt</span>
-                                                                        <span>{months} Mt. @ {formatCHF(electricityTariff.gridMeasurementFee, 2)}/Monat = {formatCHF(invoice.measurementFeeAmount, 2)}</span>
+                                                                        <span>{months} Mt. à {formatCHF(electricityTariff.gridMeasurementFee, 2)}/Monat = {formatCHF(invoice.measurementFeeAmount, 2)}</span>
                                                                     </div>
                                                                     <div className="flex justify-between items-center font-bold text-foreground bg-muted/20 px-2.5 py-1 rounded-md">
                                                                         <span>Zwischentotal Netznutzung exkl. MwSt</span>
@@ -2470,11 +2470,11 @@ export const MortgageCalculator = () => {
                                                                     </div>
                                                                     <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
                                                                         <span>Konzessionsabgabe an die Gemeinde</span>
-                                                                        <span>{totalUsage} kWh @ {electricityTariff.communityFee.toFixed(2)} Rp./kWh = {formatCHF(invoice.communityFeeAmount, 2)}</span>
+                                                                        <span>{totalUsage} kWh à {electricityTariff.communityFee.toFixed(2)} Rp./kWh = {formatCHF(invoice.communityFeeAmount, 2)}</span>
                                                                     </div>
                                                                     <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
                                                                         <span>Bundesabgaben gemäss Energiegesetz (KEV)</span>
-                                                                        <span>{totalUsage} kWh @ {electricityTariff.federalFee.toFixed(2)} Rp./kWh = {formatCHF(invoice.federalFeeAmount, 2)}</span>
+                                                                        <span>{totalUsage} kWh à {electricityTariff.federalFee.toFixed(2)} Rp./kWh = {formatCHF(invoice.federalFeeAmount, 2)}</span>
                                                                     </div>
                                                                     <div className="flex justify-between items-center font-bold text-foreground bg-muted/20 px-2.5 py-1 rounded-md">
                                                                         <span>Zwischentotal öffentliche Abgaben exkl. MwSt</span>
