@@ -1506,9 +1506,9 @@ export const MortgageCalculator = () => {
                                             updateMortgageData({ electricityReadings: [...(electricityReadings || []), newReading] });
                                             if (!isElectricityOpen) setIsElectricityOpen(true);
                                         }}
-                                        className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1 shadow-2xs"
+                                        className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
                                     >
-                                        <Plus className="size-4" /> Rechnung / Ablesung erfassen
+                                        <Plus className="size-4" /> Eingabe
                                     </button>
                                 </div>
                             </div>
@@ -2231,7 +2231,7 @@ export const MortgageCalculator = () => {
 
                                         {(electricityReadings || []).length === 0 && (
                                             <div className="text-center text-sm text-muted-foreground py-8 border border-dashed rounded-xl bg-muted/10">
-                                                Noch keine Stromrechnungen erfasst. Klicke oben auf &quot;+ Rechnung / Ablesung erfassen&quot;.
+                                                Noch keine Stromrechnungen erfasst. Klicke oben auf &quot;+ Eingabe&quot;.
                                             </div>
                                         )}
                                     </div>
