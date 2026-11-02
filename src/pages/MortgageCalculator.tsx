@@ -3077,7 +3077,7 @@ export const MortgageCalculator = () => {
                         <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
                             <h3 className="text-sm font-medium mb-4 text-muted-foreground">Mix-Verteilung</h3>
                             <div className="h-[200px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
                                     <RechartsPie>
                                         <Pie
                                             data={pieData}
