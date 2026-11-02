@@ -2075,14 +2075,21 @@ export const MortgageCalculator = () => {
                                                                 {period.days > 0 ? `${period.days} Tage` : '–'}
                                                             </span>
                                                             {reading.invoiceNumber && (
-                                                                <span className="text-xs text-muted-foreground border border-border/80 px-2 py-0.5 rounded-md font-mono">
-                                                                    Rechnung {reading.invoiceNumber}{reading.invoiceDate || (reading.date === '2026-09-30' ? '2026-10-31' : '') ? ` (vom ${formatSwissDate(reading.invoiceDate || '2026-10-31')})` : ''}
-                                                                </span>
+                                                                <div className="text-xs bg-blue-500/10 border border-blue-500/25 px-2.5 py-1 rounded-md font-mono flex items-center gap-1.5 shadow-2xs whitespace-nowrap">
+                                                                    <FileText className="size-3.5 text-blue-400 shrink-0" />
+                                                                    <span className="text-blue-400 font-semibold font-sans">Rechnungs-Nr.</span>
+                                                                    <span className="text-foreground font-bold">{reading.invoiceNumber}</span>
+                                                                    {(reading.invoiceDate || (reading.date === '2026-09-30' ? '2026-10-31' : '')) && (
+                                                                        <span className="text-muted-foreground font-sans text-[11px] hidden 2xl:inline">
+                                                                            (vom {formatSwissDate(reading.invoiceDate || '2026-10-31')})
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                             )}
                                                             {(reading.dueDate || (reading.date === '2026-09-30' ? '2026-11-30' : '')) && (
-                                                                <span className="text-xs text-amber-500/90 bg-amber-500/10 border border-amber-500/25 px-2 py-0.5 rounded-md font-mono">
-                                                                    Fällig: {formatSwissDate(reading.dueDate || '2026-11-30')}
-                                                                </span>
+                                                                <div className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/25 px-2.5 py-1 rounded-md font-mono font-semibold flex items-center gap-1.5 shadow-2xs whitespace-nowrap">
+                                                                    <span>Fällig: {formatSwissDate(reading.dueDate || '2026-11-30')}</span>
+                                                                </div>
                                                             )}
                                                         </div>
 
@@ -2106,10 +2113,10 @@ export const MortgageCalculator = () => {
                                                                         ? "bg-primary text-primary-foreground border-primary"
                                                                         : "bg-muted/60 hover:bg-muted text-foreground border-border"
                                                                 )}
-                                                                title="1:1 Rechnungs-Tabelle aufklappen"
+                                                                title="Auflistung aufklappen"
                                                             >
                                                                 <ReceiptText className="size-3.5 shrink-0 overflow-visible" />
-                                                                <span>{isExpanded ? 'Details verbergen' : '1:1 Rechnungs-Tabelle'}</span>
+                                                                <span>{isExpanded ? 'Auflistung verbergen' : 'Auflistung'}</span>
                                                             </button>
 
                                                             <button
