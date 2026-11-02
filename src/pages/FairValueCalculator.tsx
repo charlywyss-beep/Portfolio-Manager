@@ -1122,7 +1122,7 @@ export function FairValueCalculator() {
     };
 
     return (
-        <div className="fair-value-calculator-page p-3 sm:p-4 lg:py-1.5 lg:px-3 space-y-2 sm:space-y-3 lg:space-y-1.5 bg-gradient-to-br from-background via-background to-muted/20 animate-in fade-in duration-500 iphone-landscape-page-root w-full">
+        <div className="fair-value-calculator-page h-full flex flex-col p-4 md:p-6 space-y-3 bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden iphone-landscape-page-root w-full">
             {/* Add Link Modal */}
             {showAddLinkModal && (
                 <div className="fixed inset-0 z-[2100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
@@ -1470,10 +1470,10 @@ export function FairValueCalculator() {
                 </div>
             )}
 
-            {/* Sticky Header - Consistent Design across app */}
-            <div className="sticky top-0 z-50 bg-background pb-2 sm:pb-2.5 lg:pb-1 -mt-3 sm:-mt-4 lg:-mt-1.5 -mx-3 sm:-mx-4 lg:-mx-3 px-3 sm:px-4 lg:px-3 iphone-landscape-portfolio-header-wrap">
-                <div className="border-b bg-card rounded-t-xl -mx-3 sm:-mx-4 lg:-mx-3">
-                    <div className="w-full pl-14 pr-4 py-2 sm:py-2.5 lg:py-1 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
+            {/* Sticky Header - Fixed Height exactly like Positionen */}
+            <div className="shrink-0 bg-background pb-2 -mt-4 -mx-4 px-4 md:-mt-6 md:-mx-6 md:px-6 iphone-landscape-portfolio-header-wrap">
+                <div className="border-b bg-card rounded-t-xl -mx-4 md:-mx-6">
+                    <div className="w-full pl-14 pr-4 py-2.5 sm:py-3 md:px-6 md:pl-14 xl:pl-6 iphone-landscape-portfolio-header-content">
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 iphone-landscape-portfolio-header-row">
                             <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto iphone-landscape-portfolio-title-group">
                                 <button
@@ -1511,7 +1511,7 @@ export function FairValueCalculator() {
             </div>
 
             {/* Search Bar OR Selected Stock Card */}
-            <div className="relative">
+            <div className="relative shrink-0">
                     {!selectedSymbol || searchTerm ? (
                         <div className="relative" ref={searchRef}>
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -1733,11 +1733,11 @@ export function FairValueCalculator() {
 
             {
                 quote && !loadingData && (
-                    <div className="fair-value-grid grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-3.5 lg:gap-2.5 animate-in slide-in-from-bottom-4 duration-500 w-full flex-1">
+                    <div className="fair-value-grid flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-3.5 lg:gap-4 animate-in slide-in-from-bottom-4 duration-500 w-full overflow-hidden">
 
                         {/* INPUTS COLUMN */}
-                        <div className="flex flex-col h-full">
-                            <div className="fair-value-col-card bg-card border border-border rounded-xl p-2 sm:p-3 lg:p-2 shadow-sm h-full flex flex-col justify-between">
+                        <div className="flex flex-col h-full min-h-0 overflow-hidden">
+                            <div className="fair-value-col-card bg-card border border-border rounded-xl p-3 md:p-3.5 shadow-sm h-full flex flex-col justify-between overflow-y-auto overflow-x-hidden">
                                 <div className="space-y-1.5 sm:space-y-2 lg:space-y-1.5 flex-1">
                                     <div className="space-y-1 sm:space-y-1.5 pb-1.5 border-b border-border">
                                     <div className="flex items-center justify-between gap-2">
@@ -2324,8 +2324,8 @@ export function FairValueCalculator() {
                         </div>
 
                         {/* RESULTS COLUMN */}
-                        <div className="flex flex-col h-full">
-                            <div className="fair-value-col-card bg-card border border-border rounded-xl p-2 sm:p-3 lg:p-2 shadow-sm h-full flex flex-col justify-between overflow-hidden">
+                        <div className="flex flex-col h-full min-h-0 overflow-hidden">
+                            <div className="fair-value-col-card bg-card border border-border rounded-xl p-3 md:p-3.5 shadow-sm h-full flex flex-col justify-between overflow-y-auto overflow-x-hidden">
                                 {/* Upper Header & Traffic Light Area - Vertically centered between top field edge and Bewertung card */}
                                 <div className="fair-value-circle-wrap relative flex flex-col items-center justify-center py-1 sm:py-2.5 lg:py-0.5 my-auto lg:my-0">
                                     <h2 className="text-sm sm:text-base font-semibold flex items-center gap-2 self-start mb-1 sm:mb-0 sm:absolute sm:top-0 sm:left-0">
