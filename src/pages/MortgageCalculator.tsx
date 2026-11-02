@@ -67,6 +67,7 @@ export const MortgageCalculator = () => {
     const [isElectricityTariffOpen, setIsElectricityTariffOpen] = useState(false);
     const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
     const [openCardIds, setOpenCardIds] = useState<string[] | null>(null);
+    const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
 
     const tariffProfiles: ElectricityTariffProfile[] = useMemo(() => {
         return (mortgageData.electricityTariffProfiles && mortgageData.electricityTariffProfiles.length > 0)
@@ -378,10 +379,7 @@ export const MortgageCalculator = () => {
         });
     };
 
-    const resetToEniwaTariff = () => {
-        if (!window.confirm('Möchten Sie die Eingabefelder auf die Eniwa Standard-Werte zurücksetzen?\n\n(Ihre aktuellen Eingaben in den Feldern werden dabei überschrieben)')) {
-            return;
-        }
+    const executeResetToEniwaTariff = () => {
         const inv = calculateElectricityInvoice(100, 100, 1, DEFAULT_ELECTRICITY_TARIFF);
         updateMortgageData({
             electricityTariff: { ...DEFAULT_ELECTRICITY_TARIFF },
@@ -1909,7 +1907,7 @@ export const MortgageCalculator = () => {
                                                 <div className="flex items-center gap-2">
                                                     <button
                                                         type="button"
-                                                        onClick={resetToEniwaTariff}
+                                                        onClick={() => setShowResetConfirmModal(true)}
                                                         className="h-8 px-3 text-xs bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg font-semibold transition-all flex items-center gap-1.5 shadow-xs"
                                                         title="Setzt alle Kostenpunkte auf die Standardwerte zurück"
                                                     >
@@ -3108,6 +3106,55 @@ export const MortgageCalculator = () => {
 
                 </div>
             </div>
+
+            {/* Schöne, kompakte & zentrierte Bestätigungs-Modal für Standardwerte-Reset */}
+            {showResetConfirmModal && (
+                <div 
+                    className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+                    onClick={() => setShowResetConfirmModal(false)}
+                >
+                    <div 
+                        className="bg-card border border-border/80 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center space-y-4 animate-in zoom-in-95 duration-150"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="size-12 rounded-full bg-primary/10 text-primary mx-auto flex items-center justify-center border border-primary/25 shadow-2xs">
+                            <RotateCcw className="size-5" />
+                        </div>
+
+                        <div className="space-y-2">
+                            <h3 className="text-base font-bold text-foreground">
+                                Standard-Werte laden?
+                            </h3>
+                            <p className="text-xs text-muted-foreground leading-relaxed px-2">
+                                Möchten Sie die Eingabefelder auf die Eniwa Standard-Werte zurücksetzen?
+                            </p>
+                            <p className="text-[11px] text-amber-400 font-medium bg-amber-500/10 border border-amber-500/20 rounded-md py-1 px-2 mx-2">
+                                (Ihre aktuellen Eingaben in den Feldern werden dabei überschrieben)
+                            </p>
+                        </div>
+
+                        <div className="flex items-center justify-center gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowResetConfirmModal(false)}
+                                className="px-4 py-2 text-xs font-semibold rounded-lg border border-border bg-muted/60 hover:bg-muted text-foreground transition-colors cursor-pointer"
+                            >
+                                Abbrechen
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowResetConfirmModal(false);
+                                    executeResetToEniwaTariff();
+                                }}
+                                className="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xs cursor-pointer"
+                            >
+                                Zurücksetzen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };
