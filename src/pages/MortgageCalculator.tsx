@@ -1538,7 +1538,7 @@ export const MortgageCalculator = () => {
                                             value={electricityCustomerNumber || ''}
                                             onChange={(e) => updateMortgageData({ electricityCustomerNumber: e.target.value })}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono font-medium focus:ring-1 focus:ring-primary"
+                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-bold font-mono text-right focus:ring-1 focus:ring-primary"
                                             placeholder="z.B. 130584"
                                         />
                                     </div>
@@ -1552,7 +1552,7 @@ export const MortgageCalculator = () => {
                                             value={electricityContractNumber || ''}
                                             onChange={(e) => updateMortgageData({ electricityContractNumber: e.target.value })}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono font-medium focus:ring-1 focus:ring-primary"
+                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-bold font-mono text-right focus:ring-1 focus:ring-primary"
                                             placeholder="z.B. 530879"
                                         />
                                     </div>
@@ -1566,7 +1566,7 @@ export const MortgageCalculator = () => {
                                             value={electricityMeterNumber || ''}
                                             onChange={(e) => updateMortgageData({ electricityMeterNumber: e.target.value })}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono font-medium focus:ring-1 focus:ring-primary"
+                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-bold font-mono text-right focus:ring-1 focus:ring-primary"
                                             placeholder="z.B. 1LGZ0188395373"
                                         />
                                     </div>
@@ -1575,7 +1575,7 @@ export const MortgageCalculator = () => {
                                             <Zap className="size-4 text-primary shrink-0" />
                                             Stromversorger
                                         </label>
-                                        <div className="w-full h-9 bg-muted/40 border border-input/60 rounded-lg px-2.5 flex items-center text-xs font-semibold text-foreground">
+                                        <div className="w-full h-9 bg-muted/40 border border-input/60 rounded-lg px-2.5 flex items-center justify-end text-sm font-semibold text-foreground">
                                             Eniwa AG
                                         </div>
                                     </div>
@@ -1937,7 +1937,7 @@ export const MortgageCalculator = () => {
                                                             <div className="space-y-1">
                                                                 <label className="text-xs font-semibold text-muted-foreground block whitespace-nowrap">Abrechnungsdauer</label>
                                                                 <div 
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 flex items-center justify-center text-xs font-mono font-bold text-foreground shadow-xs cursor-default select-none"
+                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 flex items-center justify-center text-sm font-mono font-bold text-foreground shadow-xs cursor-default select-none"
                                                                     title="Automatisch berechnet aus Ablesung Von und Bis"
                                                                 >
                                                                     <Calendar className="size-3.5 text-primary mr-2 shrink-0" />
@@ -1954,7 +1954,7 @@ export const MortgageCalculator = () => {
                                                                         updateMortgageData({ electricityReadings: newReadings });
                                                                     }}
                                                                     placeholder="z.B. 7 134 488"
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono"
+                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-bold font-mono text-right"
                                                                 />
                                                             </div>
                                                         </div>
@@ -1988,7 +1988,7 @@ export const MortgageCalculator = () => {
                                                                         const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, standAltHT: parsed, usageHT: newUsage } : r);
                                                                         updateMortgageData({ electricityReadings: newReadings });
                                                                     }}
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono text-right"
+                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-semibold font-mono text-right"
                                                                 />
                                                             </div>
                                                             <div className="space-y-1">
@@ -2003,7 +2003,7 @@ export const MortgageCalculator = () => {
                                                                         const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueHT: parsed, usageHT: newUsage } : r);
                                                                         updateMortgageData({ electricityReadings: newReadings });
                                                                     }}
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono font-bold text-right"
+                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-bold font-mono text-right"
                                                                 />
                                                             </div>
                                                             <div className="space-y-1">
@@ -2017,7 +2017,7 @@ export const MortgageCalculator = () => {
                                                                         const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, standAltNT: parsed, usageNT: newUsage } : r);
                                                                         updateMortgageData({ electricityReadings: newReadings });
                                                                     }}
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono text-right"
+                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-semibold font-mono text-right"
                                                                 />
                                                             </div>
                                                             <div className="space-y-1">
@@ -2032,7 +2032,7 @@ export const MortgageCalculator = () => {
                                                                         const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueNT: parsed, usageNT: newUsage } : r);
                                                                         updateMortgageData({ electricityReadings: newReadings });
                                                                     }}
-                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-xs font-mono font-bold text-right"
+                                                                    className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-bold font-mono text-right"
                                                                 />
                                                             </div>
                                                         </div>
