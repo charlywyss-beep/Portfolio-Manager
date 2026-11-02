@@ -126,8 +126,7 @@ export const MortgageCalculator = () => {
         const tableBody: any[] = [
             // 1. Energie
             [
-                { content: '1. Energie (Wirkenergie)', colSpan: 3, styles: { fontStyle: 'bold', fillColor: [239, 246, 255], textColor: [30, 64, 175] } },
-                { content: formatCHF(inv.subtotalEnergy, 2), styles: { fontStyle: 'bold', halign: 'right', fillColor: [239, 246, 255], textColor: [30, 64, 175] } }
+                { content: '1. Energie (Wirkenergie)', colSpan: 4, styles: { fontStyle: 'bold', fillColor: [239, 246, 255], textColor: [30, 64, 175] } }
             ],
             [`${providerName} Naturstrom Schweiz Hochtarif (HT)`, `${usageHT} kWh`, `${tariff.energyHT.toFixed(2)} Rp./kWh`, formatCHF(inv.energyHTAmount, 2)],
             [`${providerName} Naturstrom Schweiz Niedertarif (NT)`, `${usageNT} kWh`, `${tariff.energyNT.toFixed(2)} Rp./kWh`, formatCHF(inv.energyNTAmount, 2)],
@@ -138,8 +137,7 @@ export const MortgageCalculator = () => {
 
             // 2. Netznutzung
             [
-                { content: '2. Netznutzung', colSpan: 3, styles: { fontStyle: 'bold', fillColor: [239, 246, 255], textColor: [30, 64, 175] } },
-                { content: formatCHF(inv.subtotalGrid, 2), styles: { fontStyle: 'bold', halign: 'right', fillColor: [239, 246, 255], textColor: [30, 64, 175] } }
+                { content: '2. Netznutzung', colSpan: 4, styles: { fontStyle: 'bold', fillColor: [239, 246, 255], textColor: [30, 64, 175] } }
             ],
             ['Wirkenergie Hochtarif (HT)', `${usageHT} kWh`, `${tariff.gridHT.toFixed(2)} Rp./kWh`, formatCHF(inv.gridHTAmount, 2)],
             ['Wirkenergie Niedertarif (NT)', `${usageNT} kWh`, `${tariff.gridNT.toFixed(2)} Rp./kWh`, formatCHF(inv.gridNTAmount, 2)],
@@ -155,8 +153,7 @@ export const MortgageCalculator = () => {
 
             // 3. Öffentliche Abgaben
             [
-                { content: '3. Öffentliche Abgaben', colSpan: 3, styles: { fontStyle: 'bold', fillColor: [239, 246, 255], textColor: [30, 64, 175] } },
-                { content: formatCHF(inv.subtotalFees, 2), styles: { fontStyle: 'bold', halign: 'right', fillColor: [239, 246, 255], textColor: [30, 64, 175] } }
+                { content: '3. Öffentliche Abgaben', colSpan: 4, styles: { fontStyle: 'bold', fillColor: [239, 246, 255], textColor: [30, 64, 175] } }
             ],
             ['Konzessionsabgabe an die Gemeinde', `${totalUsage} kWh`, `${tariff.communityFee.toFixed(2)} Rp./kWh`, formatCHF(inv.communityFeeAmount, 2)],
             ['Bundesabgaben gemäss Energiegesetz (KEV)', `${totalUsage} kWh`, `${tariff.federalFee.toFixed(2)} Rp./kWh`, formatCHF(inv.federalFeeAmount, 2)],
@@ -2406,7 +2403,6 @@ export const MortgageCalculator = () => {
                                                                 <div className="space-y-1.5">
                                                                     <div className="font-sans font-bold text-sm text-primary flex items-center justify-between border-b border-border/60 pb-1">
                                                                         <span>1. Energie (Wirkenergie)</span>
-                                                                        <span className="text-foreground">{formatCHF(invoice.subtotalEnergy, 2)}</span>
                                                                     </div>
                                                                     <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
                                                                         <span>Eniwa Naturstrom Schweiz Hochtarif (HT)</span>
@@ -2426,7 +2422,6 @@ export const MortgageCalculator = () => {
                                                                 <div className="space-y-1.5">
                                                                     <div className="font-sans font-bold text-sm text-blue-500 flex items-center justify-between border-b border-border/60 pb-1">
                                                                         <span>2. Netznutzung</span>
-                                                                        <span className="text-foreground">{formatCHF(invoice.subtotalGrid, 2)}</span>
                                                                     </div>
                                                                     <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
                                                                         <span>Wirkenergie Hochtarif (HT)</span>
@@ -2466,7 +2461,6 @@ export const MortgageCalculator = () => {
                                                                 <div className="space-y-1.5">
                                                                     <div className="font-sans font-bold text-sm text-amber-500 flex items-center justify-between border-b border-border/60 pb-1">
                                                                         <span>3. Öffentliche Abgaben</span>
-                                                                        <span className="text-foreground">{formatCHF(invoice.subtotalFees, 2)}</span>
                                                                     </div>
                                                                     <div className="flex justify-between items-center text-muted-foreground pl-2 py-0.5">
                                                                         <span>Konzessionsabgabe an die Gemeinde</span>
