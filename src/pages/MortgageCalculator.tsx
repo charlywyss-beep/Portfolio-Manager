@@ -2258,7 +2258,7 @@ export const MortgageCalculator = () => {
                                                         <div className="flex flex-wrap items-center justify-between gap-2">
                                                             {/* Links: Zeitraum & Dauer */}
                                                             <div className="flex items-center gap-2">
-                                                                <div className="text-xs font-bold bg-muted px-2.5 py-1 rounded-lg text-foreground flex items-center gap-1.5 shadow-2xs">
+                                                                <div className="text-xs font-bold bg-muted/80 border border-border/70 px-2.5 py-0.5 rounded-md text-foreground flex items-center gap-1.5 shadow-2xs">
                                                                     <Calendar className="size-3.5 text-primary shrink-0 overflow-visible" />
                                                                     <span>{effectiveDateFrom ? `${formatSwissDate(effectiveDateFrom)} – ` : ''}{reading.date ? formatSwissDate(reading.date) : 'Offen'}</span>
                                                                 </div>
@@ -2443,7 +2443,6 @@ export const MortgageCalculator = () => {
                                                                     className="w-full h-9 bg-background border border-border/80 rounded-lg px-2.5 flex items-center justify-center text-sm font-mono font-bold text-foreground shadow-xs cursor-default select-none"
                                                                     title={period.days > 0 ? "Automatisch berechnet aus Ablesung von und bis" : "Wird automatisch berechnet, sobald ein Enddatum eingetragen ist"}
                                                                 >
-                                                                    <Calendar className="size-3.5 text-primary mr-1.5 shrink-0" />
                                                                     <span>{period.days > 0 ? `${period.days} Tage` : 'Offen'}</span>
                                                                 </div>
                                                             </div>
@@ -2614,7 +2613,7 @@ export const MortgageCalculator = () => {
                                                                             const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, standAltHT: parsed, usageHT: newUsage } : r);
                                                                             updateMortgageData({ electricityReadings: newReadings });
                                                                         }}
-                                                                        className="w-full h-9 bg-background border border-border/80 rounded-lg px-2.5 text-sm font-semibold font-mono text-right"
+                                                                        className="w-full h-9 bg-background border border-border/80 rounded-lg px-2.5 text-sm font-semibold font-mono text-center"
                                                                     />
                                                                 </div>
                                                                 <div className="space-y-1 min-w-0">
@@ -2644,7 +2643,7 @@ export const MortgageCalculator = () => {
                                                                             const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueHT: parsed, usageHT: newUsage } : r);
                                                                             updateMortgageData({ electricityReadings: newReadings });
                                                                         }}
-                                                                        className="w-full h-9 bg-background border border-border/80 rounded-lg px-2.5 text-sm font-bold font-mono text-right"
+                                                                        className="w-full h-9 bg-background border border-border/80 rounded-lg px-2.5 text-sm font-bold font-mono text-center"
                                                                     />
                                                                 </div>
                                                             </div>
@@ -2662,7 +2661,7 @@ export const MortgageCalculator = () => {
                                                                             const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, standAltNT: parsed, usageNT: newUsage } : r);
                                                                             updateMortgageData({ electricityReadings: newReadings });
                                                                         }}
-                                                                        className="w-full h-9 bg-background border border-border/80 rounded-lg px-2.5 text-sm font-semibold font-mono text-right"
+                                                                        className="w-full h-9 bg-background border border-border/80 rounded-lg px-2.5 text-sm font-semibold font-mono text-center"
                                                                     />
                                                                 </div>
                                                                 <div className="space-y-1 min-w-0">
@@ -2692,7 +2691,7 @@ export const MortgageCalculator = () => {
                                                                             const newReadings = (electricityReadings || []).map(r => r.id === reading.id ? { ...r, valueNT: parsed, usageNT: newUsage } : r);
                                                                             updateMortgageData({ electricityReadings: newReadings });
                                                                         }}
-                                                                        className="w-full h-9 bg-background border border-border/80 rounded-lg px-2.5 text-sm font-bold font-mono text-right"
+                                                                        className="w-full h-9 bg-background border border-border/80 rounded-lg px-2.5 text-sm font-bold font-mono text-center"
                                                                     />
                                                                 </div>
                                                             </div>
