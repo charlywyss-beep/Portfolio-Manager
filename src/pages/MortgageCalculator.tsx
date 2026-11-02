@@ -1875,9 +1875,7 @@ export const MortgageCalculator = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 text-[11px] text-muted-foreground leading-relaxed mt-auto">
-                                                        Kosten der reinen elektrischen Energie (HT 07:00–20:00, NT übrige Zeit).
-                                                    </div>
+
                                                 </div>
 
                                                 {/* Block 2: Netznutzung */}
@@ -1975,9 +1973,7 @@ export const MortgageCalculator = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 text-[11px] text-muted-foreground leading-relaxed mt-auto">
-                                                        Transport des Stroms, Unterhalt Leitungsnetz und staatliche Stromreserven.
-                                                    </div>
+
                                                 </div>
 
                                                 {/* Block 3: Öffentliche Abgaben & Steuern */}
@@ -2028,9 +2024,7 @@ export const MortgageCalculator = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="p-2.5 rounded-lg bg-muted/30 border border-border/50 text-[11px] text-muted-foreground leading-relaxed mt-auto">
-                                                        Konzessionsentschädigungen an Kommunen und Bundesförderung erneuerbarer Energien.
-                                                    </div>
+
                                                 </div>
 
                                             </div>
