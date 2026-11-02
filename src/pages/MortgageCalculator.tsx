@@ -1771,7 +1771,7 @@ export const MortgageCalculator = () => {
                                         className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
                                         title="Neue Stromrechnung oder Zählerablesung erfassen"
                                     >
-                                        <Plus className="size-4" /> Eintrag erfassen
+                                        <Plus className="size-4" /> Eingabe
                                     </button>
                                 </div>
                             </div>
@@ -2164,7 +2164,7 @@ export const MortgageCalculator = () => {
                                             className="text-xs sm:text-sm bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 shadow-xs active:scale-95"
                                             title="Neue Stromrechnung oder Ablesung erfassen"
                                         >
-                                            <Plus className="size-4" /> Eintrag erfassen
+                                            <Plus className="size-4" /> Eingabe
                                         </button>
                                     </div>
 
@@ -2662,13 +2662,13 @@ export const MortgageCalculator = () => {
 
                                         {(electricityReadings || []).length === 0 && (
                                             <div className="text-center text-sm text-muted-foreground py-8 border border-dashed rounded-xl bg-muted/10 space-y-3">
-                                                <p>Noch keine Stromrechnungen erfasst. Klicke auf &quot;+ Eintrag erfassen&quot;.</p>
+                                                <p>Noch keine Stromrechnungen erfasst. Klicke auf &quot;+ Eingabe&quot;.</p>
                                                 <button
                                                     type="button"
                                                     onClick={handleAddReading}
                                                     className="inline-flex items-center gap-1.5 text-xs sm:text-sm bg-primary text-primary-foreground hover:bg-primary/90 px-3.5 py-1.5 rounded-lg font-semibold transition-all shadow-xs"
                                                 >
-                                                    <Plus className="size-4" /> Eintrag erfassen
+                                                    <Plus className="size-4" /> Eingabe
                                                 </button>
                                             </div>
                                         )}
