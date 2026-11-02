@@ -1784,7 +1784,7 @@ export const MortgageCalculator = () => {
                                 {/* 1. Kundendaten: Exakt im gleichen 4-Spalten Grid wie die Zählererfassung */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 bg-accent/20 p-3.5 rounded-xl border border-border/60">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 truncate py-0.5">
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center justify-center gap-1.5 text-center truncate py-0.5">
                                             <CircleUser className="size-4 text-primary shrink-0" />
                                             <span>Kundennummer</span>
                                         </label>
@@ -1793,12 +1793,12 @@ export const MortgageCalculator = () => {
                                             value={electricityCustomerNumber || ''}
                                             onChange={(e) => updateMortgageData({ electricityCustomerNumber: e.target.value })}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-bold font-mono text-right focus:ring-1 focus:ring-primary"
+                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-bold font-mono text-center focus:ring-1 focus:ring-primary"
                                             placeholder="z.B. 130584"
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 truncate py-0.5">
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center justify-center gap-1.5 text-center truncate py-0.5">
                                             <FileText className="size-4 text-primary shrink-0" />
                                             <span>Vertragskonto</span>
                                         </label>
@@ -1807,12 +1807,12 @@ export const MortgageCalculator = () => {
                                             value={electricityContractNumber || ''}
                                             onChange={(e) => updateMortgageData({ electricityContractNumber: e.target.value })}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-bold font-mono text-right focus:ring-1 focus:ring-primary"
+                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-bold font-mono text-center focus:ring-1 focus:ring-primary"
                                             placeholder="z.B. 530879"
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 truncate py-0.5">
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center justify-center gap-1.5 text-center truncate py-0.5">
                                             <CircleGauge className="size-4 text-primary shrink-0" />
                                             <span>Zähler-Nr.</span>
                                         </label>
@@ -1821,12 +1821,12 @@ export const MortgageCalculator = () => {
                                             value={electricityMeterNumber || ''}
                                             onChange={(e) => updateMortgageData({ electricityMeterNumber: e.target.value })}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-bold font-mono text-right focus:ring-1 focus:ring-primary"
+                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-bold font-mono text-center focus:ring-1 focus:ring-primary"
                                             placeholder="z.B. 1LGZ0188395373"
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 truncate py-0.5">
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center justify-center gap-1.5 text-center truncate py-0.5">
                                             <Zap className="size-4 text-primary shrink-0" />
                                             <span>Stromversorger</span>
                                         </label>
@@ -1835,7 +1835,7 @@ export const MortgageCalculator = () => {
                                             value={electricityProvider !== undefined ? electricityProvider : 'Eniwa AG'}
                                             onChange={(e) => updateMortgageData({ electricityProvider: e.target.value })}
                                             onFocus={(e) => e.target.select()}
-                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-bold text-right focus:ring-1 focus:ring-primary"
+                                            className="w-full h-9 bg-background border border-input rounded-lg px-2.5 text-sm font-bold text-center focus:ring-1 focus:ring-primary"
                                             placeholder="z.B. Eniwa AG"
                                         />
                                     </div>
