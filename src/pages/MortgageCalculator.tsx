@@ -68,11 +68,11 @@ export const MortgageCalculator = () => {
         // 1. Titel & Header
         doc.setFontSize(16);
         doc.setFont('helvetica', 'bold');
-        doc.text(`Stromabrechnung nach StromVG`, 14, 20);
+        doc.text('Stromabrechnung aus Budget Planer', 14, 20);
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(100, 100, 100);
-        doc.text(`1:1 Rechnungs-Aufschlüsselung | Erstellt am: ${new Date().toLocaleDateString('de-CH')}`, 14, 26);
+        doc.text(`Erstellt am: ${new Date().toLocaleDateString('de-CH')}`, 14, 26);
         doc.setTextColor(0, 0, 0);
 
         // 2. Infobox: Kundendaten links, Abrechnungsdetails rechts
@@ -630,7 +630,7 @@ export const MortgageCalculator = () => {
                 finalY = 20;
             }
             doc.setFontSize(12);
-            doc.text('Stromkosten & Zählerstände (StromVG)', 14, finalY);
+            doc.text('Stromkosten & Zählerstände', 14, finalY);
 
             const elecHeaders = [
                 [
@@ -2314,7 +2314,7 @@ export const MortgageCalculator = () => {
                                                             <div className="bg-muted/50 px-4 py-2.5 border-b border-border flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
                                                                 <div className="flex items-center gap-2">
                                                                     <ReceiptText className="size-4 text-primary" />
-                                                                    <span>Rechnungs-Aufschlüsselung (1:1 Abbild nach StromVG)</span>
+                                                                    <span>Detaillierte Rechnungs-Aufschlüsselung</span>
                                                                 </div>
                                                                 <div className="flex items-center gap-3">
                                                                     <span className="font-mono text-muted-foreground">
