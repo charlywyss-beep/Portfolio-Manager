@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, Fragment } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
 import { useCurrencyFormatter } from '../utils/currency';
 import { Ruler, X } from 'lucide-react';
@@ -20,6 +20,12 @@ interface PriceHistoryChartProps {
     isMarketOpen?: boolean;
     purchasePrice?: number;
     purchaseDate?: string;
+    purchases?: Array<{
+        id?: string;
+        date: string;
+        shares?: number;
+        price: number;
+    }>;
     sellLimit?: number;
     stockName?: string;
     stockSymbol?: string;
@@ -38,6 +44,7 @@ export function PriceHistoryChart({
     isMarketOpen = true,
     purchasePrice,
     purchaseDate,
+    purchases,
     sellLimit,
     stockName,
     stockSymbol
@@ -251,18 +258,30 @@ export function PriceHistoryChart({
     // Only expand to show purchasePrice if it doesn't compress the data too much.
     // If the data range becomes < 15% of the total range (due to a far-away purchase price),
     // we prioritize showing the curve details over the purchase line.
-    if (selectedRange === 'BUY' && effectivePurchasePrice && effectivePurchasePrice > 0) {
-        const potentialMin = Math.min(calcMin, effectivePurchasePrice);
-        const potentialMax = Math.max(calcMax, effectivePurchasePrice);
+    if (selectedRange === 'BUY') {
+        const allPurchasePrices: number[] = [];
+        if (effectivePurchasePrice && effectivePurchasePrice > 0) {
+            allPurchasePrices.push(effectivePurchasePrice);
+        }
+        if (purchases && purchases.length > 0) {
+            purchases.forEach(p => {
+                if (p.price && p.price > 0) {
+                    allPurchasePrices.push(p.price * conversionRate);
+                }
+            });
+        }
 
-        const dataRange = calcMax - calcMin;
-        const potentialRange = potentialMax - potentialMin;
+        if (allPurchasePrices.length > 0) {
+            const potentialMin = Math.min(calcMin, ...allPurchasePrices);
+            const potentialMax = Math.max(calcMax, ...allPurchasePrices);
 
-        // If dataRange is 0 (flat line), we expand anyway to show something.
-        // Otherwise, checking compression ratio.
-        if (dataRange === 0 || (dataRange / potentialRange) > 0.15) {
-            calcMin = potentialMin;
-            calcMax = potentialMax;
+            const dataRange = calcMax - calcMin;
+            const potentialRange = potentialMax - potentialMin;
+
+            if (dataRange === 0 || (dataRange / potentialRange) > 0.15) {
+                calcMin = potentialMin;
+                calcMax = potentialMax;
+            }
         }
     }
 
@@ -320,54 +339,90 @@ export function PriceHistoryChart({
         return Math.max(0, (end - start) / (1000 * 60 * 60 * 24));
     }, [displayData]);
 
-    const parsedPurchaseTime = useMemo(() => {
-        if (!purchaseDate) return null;
-        try {
-            if (typeof purchaseDate === 'string' && purchaseDate.includes('.')) {
-                const parts = purchaseDate.trim().split('.');
-                if (parts.length === 3) {
-                    const d = parseInt(parts[0], 10);
-                    const m = parseInt(parts[1], 10);
-                    let y = parseInt(parts[2], 10);
-                    if (y < 100) y += 2000;
-                    const dt = new Date(y, m - 1, d);
-                    return isNaN(dt.getTime()) ? null : dt.getTime();
+    const purchaseMarkers = useMemo(() => {
+        if (!displayData || displayData.length === 0) return [];
+
+        const parseDate = (dStr: string | undefined): number | null => {
+            if (!dStr) return null;
+            try {
+                if (typeof dStr === 'string' && dStr.includes('.')) {
+                    const parts = dStr.trim().split('.');
+                    if (parts.length === 3) {
+                        const d = parseInt(parts[0], 10);
+                        const m = parseInt(parts[1], 10);
+                        let y = parseInt(parts[2], 10);
+                        if (y < 100) y += 2000;
+                        const dt = new Date(y, m - 1, d);
+                        return isNaN(dt.getTime()) ? null : dt.getTime();
+                    }
+                }
+                const dt = new Date(dStr);
+                return isNaN(dt.getTime()) ? null : dt.getTime();
+            } catch {
+                return null;
+            }
+        };
+
+        const rawList = (purchases && purchases.length > 0)
+            ? purchases
+            : (purchasePrice ? [{ id: 'single', date: purchaseDate || '', price: purchasePrice, shares: undefined }] : []);
+
+        if (rawList.length === 0) return [];
+
+        const chartStart = new Date(displayData[0].date).getTime();
+        const chartEnd = new Date(displayData[displayData.length - 1].date).getTime();
+        const oneDay = 86400000;
+
+        const validList = rawList
+            .map(p => ({ ...p, time: parseDate(p.date) }))
+            .filter((p): p is typeof p & { time: number } => p.time !== null)
+            .sort((a, b) => a.time - b.time);
+
+        const isMulti = validList.length > 1;
+
+        return validList.map((p, index) => {
+            if (p.time < (chartStart - oneDay) || p.time > (chartEnd + oneDay)) {
+                return null;
+            }
+
+            let closest = displayData[0];
+            let minDiff = Math.abs(new Date(closest.date).getTime() - p.time);
+            for (let i = 1; i < displayData.length; i++) {
+                const diff = Math.abs(new Date(displayData[i].date).getTime() - p.time);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closest = displayData[i];
                 }
             }
-            const dt = new Date(purchaseDate);
-            return isNaN(dt.getTime()) ? null : dt.getTime();
-        } catch {
-            return null;
-        }
-    }, [purchaseDate]);
 
-    const formattedPurchaseDate = useMemo(() => {
-        if (!parsedPurchaseTime) return '';
-        const d = new Date(parsedPurchaseTime);
-        return d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' });
-    }, [parsedPurchaseTime]);
+            const formattedDate = new Date(p.time).toLocaleDateString('de-CH', {
+                day: '2-digit',
+                month: '2-digit',
+                year: '2-digit'
+            });
 
-    const purchasePoint = useMemo(() => {
-        if (!parsedPurchaseTime || !displayData || displayData.length === 0) return null;
-        let closest = displayData[0];
-        let minDiff = Math.abs(new Date(closest.date).getTime() - parsedPurchaseTime);
+            const effectivePrice = p.price * conversionRate;
+            const priceFormatted = formatCurrency(effectivePrice, displayCurrency, false);
 
-        for (let i = 1; i < displayData.length; i++) {
-            const diff = Math.abs(new Date(displayData[i].date).getTime() - parsedPurchaseTime);
-            if (diff < minDiff) {
-                minDiff = diff;
-                closest = displayData[i];
-            }
-        }
-        return closest;
-    }, [parsedPurchaseTime, displayData]);
+            const labelText = isMulti
+                ? `Kauf ${index + 1}: ${formattedDate} (${priceFormatted})`
+                : `Kauf: ${formattedDate}`;
 
-    const isPurchaseWithinRange = useMemo(() => {
-        if (!parsedPurchaseTime || !displayData || displayData.length === 0) return false;
-        const start = new Date(displayData[0].date).getTime();
-        const end = new Date(displayData[displayData.length - 1].date).getTime();
-        return parsedPurchaseTime >= (start - 86400000) && parsedPurchaseTime <= (end + 86400000);
-    }, [parsedPurchaseTime, displayData]);
+            const tooltipText = isMulti
+                ? `Kauf ${index + 1}: ${formattedDate}${p.shares ? ` · ${p.shares.toLocaleString('de-CH')} Stk.` : ''} @ ${priceFormatted}`
+                : `Kauf: ${formattedDate}${p.shares ? ` · ${p.shares.toLocaleString('de-CH')} Stk.` : ''} @ ${priceFormatted}`;
+
+            return {
+                id: p.id || `purchase-${index}`,
+                dateKey: closest.date,
+                effectivePrice,
+                labelText,
+                tooltipText,
+                shares: p.shares,
+                index
+            };
+        }).filter((m): m is NonNullable<typeof m> => m !== null);
+    }, [purchases, purchasePrice, purchaseDate, displayData, conversionRate, displayCurrency, formatCurrency]);
 
     const { minPoint, maxPoint } = useMemo(() => {
         if (!displayData || displayData.length === 0) {
@@ -971,32 +1026,33 @@ export function PriceHistoryChart({
                                     }}
                                 />
                             )}
-                            {/* Purchase Date Vertical Line & Marker */}
-                            {purchasePoint && isPurchaseWithinRange && selectedRange !== '1D' && (
-                                <>
+                            {/* Individual Purchase Markers (Vertical Lines & Dots for each tranche) */}
+                            {selectedRange !== '1D' && purchaseMarkers.map((marker) => (
+                                <Fragment key={marker.id}>
                                     <ReferenceLine
-                                        x={purchasePoint.date}
+                                        x={marker.dateKey}
                                         stroke="#3b82f6"
                                         strokeWidth={1.5}
                                         strokeDasharray="3 3"
                                         label={{
                                             position: 'insideTopLeft',
-                                            value: `Kauf: ${formattedPurchaseDate}`,
+                                            value: marker.labelText,
                                             fill: '#3b82f6',
                                             fontSize: 11,
                                             fontWeight: 700
                                         }}
                                     />
-                                    {effectivePurchasePrice && (
+                                    {marker.effectivePrice > 0 && (
                                         <ReferenceDot
-                                            x={purchasePoint.date}
-                                            y={effectivePurchasePrice}
+                                            x={marker.dateKey}
+                                            y={marker.effectivePrice}
                                             r={6}
                                             shape={(props: any) => {
                                                 const { cx, cy } = props;
                                                 if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
                                                 return (
                                                     <g>
+                                                        <title>{marker.tooltipText}</title>
                                                         <circle cx={cx} cy={cy} r={10} fill="#3b82f6" fillOpacity={0.25} />
                                                         <circle cx={cx} cy={cy} r={5} fill="#3b82f6" stroke="#ffffff" strokeWidth={2} />
                                                     </g>
@@ -1004,8 +1060,8 @@ export function PriceHistoryChart({
                                             }}
                                         />
                                     )}
-                                </>
-                            )}
+                                </Fragment>
+                            ))}
                             {effectiveSellLimit && (
                                 <ReferenceLine
                                     y={effectiveSellLimit}
