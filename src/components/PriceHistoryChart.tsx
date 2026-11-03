@@ -258,30 +258,16 @@ export function PriceHistoryChart({
     // Only expand to show purchasePrice if it doesn't compress the data too much.
     // If the data range becomes < 15% of the total range (due to a far-away purchase price),
     // we prioritize showing the curve details over the purchase line.
-    if (selectedRange === 'BUY') {
-        const allPurchasePrices: number[] = [];
-        if (effectivePurchasePrice && effectivePurchasePrice > 0) {
-            allPurchasePrices.push(effectivePurchasePrice);
-        }
-        if (purchases && purchases.length > 0) {
-            purchases.forEach(p => {
-                if (p.price && p.price > 0) {
-                    allPurchasePrices.push(p.price * conversionRate);
-                }
-            });
-        }
+    if (selectedRange === 'BUY' && effectivePurchasePrice && effectivePurchasePrice > 0) {
+        const potentialMin = Math.min(calcMin, effectivePurchasePrice);
+        const potentialMax = Math.max(calcMax, effectivePurchasePrice);
 
-        if (allPurchasePrices.length > 0) {
-            const potentialMin = Math.min(calcMin, ...allPurchasePrices);
-            const potentialMax = Math.max(calcMax, ...allPurchasePrices);
+        const dataRange = calcMax - calcMin;
+        const potentialRange = potentialMax - potentialMin;
 
-            const dataRange = calcMax - calcMin;
-            const potentialRange = potentialMax - potentialMin;
-
-            if (dataRange === 0 || (dataRange / potentialRange) > 0.15) {
-                calcMin = potentialMin;
-                calcMax = potentialMax;
-            }
+        if (dataRange === 0 || (dataRange / potentialRange) > 0.15) {
+            calcMin = potentialMin;
+            calcMax = potentialMax;
         }
     }
 
@@ -1026,7 +1012,7 @@ export function PriceHistoryChart({
                                     }}
                                 />
                             )}
-                            {/* Individual Purchase Markers (Vertical Lines & Dots for each tranche) */}
+                            {/* Individual Purchase Markers (Vertical dashed line + blue dot at bottom baseline) */}
                             {selectedRange !== '1D' && purchaseMarkers.map((marker) => (
                                 <Fragment key={marker.id}>
                                     <ReferenceLine
@@ -1034,33 +1020,27 @@ export function PriceHistoryChart({
                                         stroke="#3b82f6"
                                         strokeWidth={1.5}
                                         strokeDasharray="3 3"
-                                        label={{
-                                            position: 'insideTopLeft',
-                                            value: marker.labelText,
-                                            fill: '#3b82f6',
-                                            fontSize: 11,
-                                            fontWeight: 700,
-                                            dy: (marker.index % 3) * 20
+                                    />
+                                    <ReferenceDot
+                                        x={marker.dateKey}
+                                        y={domainMin}
+                                        r={6}
+                                        shape={(props: any) => {
+                                            const { cx, cy } = props;
+                                            if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
+                                            return (
+                                                <g className="cursor-pointer">
+                                                    <title>{marker.tooltipText}</title>
+                                                    {/* Invisible larger hit area for easy hover/tap */}
+                                                    <circle cx={cx} cy={cy - 6} r={14} fill="transparent" />
+                                                    {/* Outer glow halo */}
+                                                    <circle cx={cx} cy={cy - 6} r={8.5} fill="#3b82f6" fillOpacity={0.25} />
+                                                    {/* Core dot */}
+                                                    <circle cx={cx} cy={cy - 6} r={4.5} fill="#3b82f6" stroke="#ffffff" strokeWidth={2} />
+                                                </g>
+                                            );
                                         }}
                                     />
-                                    {marker.effectivePrice > 0 && (
-                                        <ReferenceDot
-                                            x={marker.dateKey}
-                                            y={marker.effectivePrice}
-                                            r={6}
-                                            shape={(props: any) => {
-                                                const { cx, cy } = props;
-                                                if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
-                                                return (
-                                                    <g>
-                                                        <title>{marker.tooltipText}</title>
-                                                        <circle cx={cx} cy={cy} r={10} fill="#3b82f6" fillOpacity={0.25} />
-                                                        <circle cx={cx} cy={cy} r={5} fill="#3b82f6" stroke="#ffffff" strokeWidth={2} />
-                                                    </g>
-                                                );
-                                            }}
-                                        />
-                                    )}
                                 </Fragment>
                             ))}
                             {effectiveSellLimit && (
