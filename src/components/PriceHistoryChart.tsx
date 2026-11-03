@@ -19,6 +19,7 @@ interface PriceHistoryChartProps {
     previousClose?: number;
     isMarketOpen?: boolean;
     purchasePrice?: number;
+    purchaseDate?: string;
     sellLimit?: number;
     stockName?: string;
     stockSymbol?: string;
@@ -36,6 +37,7 @@ export function PriceHistoryChart({
     previousClose,
     isMarketOpen = true,
     purchasePrice,
+    purchaseDate,
     sellLimit,
     stockName,
     stockSymbol
@@ -310,6 +312,62 @@ export function PriceHistoryChart({
         }
         return displayPoints;
     }, [data, selectedRange, sma200Data]);
+
+    const totalDurationDays = useMemo(() => {
+        if (!displayData || displayData.length < 2) return 0;
+        const start = new Date(displayData[0].date).getTime();
+        const end = new Date(displayData[displayData.length - 1].date).getTime();
+        return Math.max(0, (end - start) / (1000 * 60 * 60 * 24));
+    }, [displayData]);
+
+    const parsedPurchaseTime = useMemo(() => {
+        if (!purchaseDate) return null;
+        try {
+            if (typeof purchaseDate === 'string' && purchaseDate.includes('.')) {
+                const parts = purchaseDate.trim().split('.');
+                if (parts.length === 3) {
+                    const d = parseInt(parts[0], 10);
+                    const m = parseInt(parts[1], 10);
+                    let y = parseInt(parts[2], 10);
+                    if (y < 100) y += 2000;
+                    const dt = new Date(y, m - 1, d);
+                    return isNaN(dt.getTime()) ? null : dt.getTime();
+                }
+            }
+            const dt = new Date(purchaseDate);
+            return isNaN(dt.getTime()) ? null : dt.getTime();
+        } catch {
+            return null;
+        }
+    }, [purchaseDate]);
+
+    const formattedPurchaseDate = useMemo(() => {
+        if (!parsedPurchaseTime) return '';
+        const d = new Date(parsedPurchaseTime);
+        return d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    }, [parsedPurchaseTime]);
+
+    const purchasePoint = useMemo(() => {
+        if (!parsedPurchaseTime || !displayData || displayData.length === 0) return null;
+        let closest = displayData[0];
+        let minDiff = Math.abs(new Date(closest.date).getTime() - parsedPurchaseTime);
+
+        for (let i = 1; i < displayData.length; i++) {
+            const diff = Math.abs(new Date(displayData[i].date).getTime() - parsedPurchaseTime);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closest = displayData[i];
+            }
+        }
+        return closest;
+    }, [parsedPurchaseTime, displayData]);
+
+    const isPurchaseWithinRange = useMemo(() => {
+        if (!parsedPurchaseTime || !displayData || displayData.length === 0) return false;
+        const start = new Date(displayData[0].date).getTime();
+        const end = new Date(displayData[displayData.length - 1].date).getTime();
+        return parsedPurchaseTime >= (start - 86400000) && parsedPurchaseTime <= (end + 86400000);
+    }, [parsedPurchaseTime, displayData]);
 
     const { minPoint, maxPoint } = useMemo(() => {
         if (!displayData || displayData.length === 0) {
@@ -743,7 +801,7 @@ export function PriceHistoryChart({
 
                                     if (selectedRange === '1D') {
                                         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                    } else if (selectedRange === '1W' || selectedRange === '1M' || selectedRange === '3M' || selectedRange === '6M') {
+                                    } else if (selectedRange === '1W' || selectedRange === '1M' || selectedRange === '3M' || selectedRange === '6M' || (selectedRange === 'BUY' && totalDurationDays <= 120)) {
                                         // Show weekday + date (e.g. "Fr 06.02")
                                         const dayMonth = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
                                         return `${weekdayShort} ${dayMonth}`;
@@ -779,8 +837,8 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
-                                    // 1M: Every Friday (5) - one tick per day
-                                    if (selectedRange === '1M') {
+                                    // 1M: Every Friday (5) - one tick per day (also BUY if <= 35 days)
+                                    if (selectedRange === '1M' || (selectedRange === 'BUY' && totalDurationDays <= 35)) {
                                         const ticks: string[] = [];
                                         const seenDays = new Set<string>();
                                         for (const point of displayData) {
@@ -804,8 +862,8 @@ export function PriceHistoryChart({
                                         return ticks;
                                     }
 
-                                    // 3M: Every Friday (5) - one tick per day
-                                    if (selectedRange === '3M') {
+                                    // 3M: Every Friday (5) - one tick per day (also BUY if 35 < duration <= 120 days)
+                                    if (selectedRange === '3M' || (selectedRange === 'BUY' && totalDurationDays > 35 && totalDurationDays <= 120)) {
                                         const ticks: string[] = [];
                                         const seenDays = new Set<string>();
                                         for (const point of displayData) {
@@ -905,13 +963,48 @@ export function PriceHistoryChart({
                                     stroke="#3b82f6"
                                     strokeDasharray="3 3"
                                     label={{
-                                        position: 'right',
+                                        position: 'insideTopRight',
                                         value: 'Ø Kauf',
                                         fill: '#3b82f6',
-                                        fontSize: 12,
+                                        fontSize: 11,
                                         fontWeight: 700
                                     }}
                                 />
+                            )}
+                            {/* Purchase Date Vertical Line & Marker */}
+                            {purchasePoint && isPurchaseWithinRange && selectedRange !== '1D' && (
+                                <>
+                                    <ReferenceLine
+                                        x={purchasePoint.date}
+                                        stroke="#3b82f6"
+                                        strokeWidth={1.5}
+                                        strokeDasharray="3 3"
+                                        label={{
+                                            position: 'insideTopLeft',
+                                            value: `Kauf: ${formattedPurchaseDate}`,
+                                            fill: '#3b82f6',
+                                            fontSize: 11,
+                                            fontWeight: 700
+                                        }}
+                                    />
+                                    {effectivePurchasePrice && (
+                                        <ReferenceDot
+                                            x={purchasePoint.date}
+                                            y={effectivePurchasePrice}
+                                            r={6}
+                                            shape={(props: any) => {
+                                                const { cx, cy } = props;
+                                                if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
+                                                return (
+                                                    <g>
+                                                        <circle cx={cx} cy={cy} r={10} fill="#3b82f6" fillOpacity={0.25} />
+                                                        <circle cx={cx} cy={cy} r={5} fill="#3b82f6" stroke="#ffffff" strokeWidth={2} />
+                                                    </g>
+                                                );
+                                            }}
+                                        />
+                                    )}
+                                </>
                             )}
                             {effectiveSellLimit && (
                                 <ReferenceLine

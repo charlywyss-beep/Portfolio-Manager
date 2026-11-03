@@ -18,6 +18,27 @@ import { EditPositionModal } from '../components/EditPositionModal';
 
 import { fetchStockHistory, fetchStockQuote, type TimeRange, type ChartDataPoint } from '../services/yahoo-finance';
 
+function parseBuyDate(dateStr?: string | null): Date | null {
+    if (!dateStr) return null;
+    try {
+        if (typeof dateStr === 'string' && dateStr.includes('.')) {
+            const parts = dateStr.trim().split('.');
+            if (parts.length === 3) {
+                const d = parseInt(parts[0], 10);
+                const m = parseInt(parts[1], 10);
+                let y = parseInt(parts[2], 10);
+                if (y < 100) y += 2000;
+                const dt = new Date(y, m - 1, d);
+                return isNaN(dt.getTime()) ? null : dt;
+            }
+        }
+        const dt = new Date(dateStr);
+        return isNaN(dt.getTime()) ? null : dt;
+    } catch {
+        return null;
+    }
+}
+
 export function StockDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -109,7 +130,13 @@ export function StockDetail() {
     const position = positions.find(p => p.stockId === stock?.id);
 
     // Position buy date ref
-    const buyDateRef = position?.buyDate;
+    const buyDateRef = (() => {
+        if (position?.purchases && position.purchases.length > 0) {
+            const sorted = [...position.purchases].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            return sorted[0].date;
+        }
+        return position?.buyDate;
+    })();
 
     const handleUpdatePosition = (posId: string, newShares: number, newAvgPrice?: number, newBuyDate?: string, newFxRate?: number, newPurchases?: any[], newBroker?: string) => {
         const updates: any = { shares: newShares };
@@ -143,21 +170,31 @@ export function StockDetail() {
 
         let rangeToUse = timeRange;
 
-        // Handle 'BUY' range
+        // Handle 'BUY' range (Seit Kauf)
         if (timeRange === 'BUY') {
-            if (buyDateRef) {
-                let buyDate: Date;
-                if (typeof buyDateRef === 'string' && buyDateRef.includes('.')) {
-                    const [d, m, y] = buyDateRef.split('.');
-                    buyDate = new Date(`${y}-${m}-${d}`);
+            const buyDate = parseBuyDate(buyDateRef);
+            if (buyDate) {
+                buyDate.setHours(0, 0, 0, 0);
+                const now = new Date();
+                const elapsedMs = Math.max(0, now.getTime() - buyDate.getTime());
+                const elapsedDays = elapsedMs / (1000 * 60 * 60 * 24);
+
+                let bufferDays = 28;
+                if (elapsedDays < 14) {
+                    bufferDays = 28;
+                } else if (elapsedDays <= 180) {
+                    bufferDays = Math.max(21, Math.round(elapsedDays * 0.4));
                 } else {
-                    buyDate = new Date(buyDateRef);
+                    bufferDays = Math.min(90, Math.max(45, Math.round(elapsedDays * 0.15)));
                 }
+
+                const bufferDate = new Date(buyDate);
+                bufferDate.setDate(bufferDate.getDate() - bufferDays);
 
                 const oneYearAgo = new Date();
                 oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
-                if (!isNaN(buyDate.getTime()) && buyDate > oneYearAgo) {
+                if (bufferDate > oneYearAgo) {
                     rangeToUse = '1Y'; // Daily data
                 } else {
                     rangeToUse = '5Y'; // Weekly data
@@ -175,31 +212,36 @@ export function StockDetail() {
             response = await fetchStockHistory(symbol, '1W');
         }
 
-        // NEW: Filter for 'BUY' range (Seit Kauf)
-        // Ensure we only show data starting from the buy date
+        // Filter for 'BUY' range (Seit Kauf)
+        // Include context buffer before buy date so buy date is well visible and not cut off
         if (timeRange === 'BUY' && buyDateRef && response.data && response.data.length > 0) {
             try {
-                let buyDate: Date;
-                // Handle "DD.MM.YYYY" format manually if needed, or standard Date
-                if (typeof buyDateRef === 'string' && buyDateRef.includes('.')) {
-                    const [d, m, y] = buyDateRef.split('.');
-                    buyDate = new Date(`${y}-${m}-${d}`);
-                } else {
-                    buyDate = new Date(buyDateRef);
-                }
-
-                if (!isNaN(buyDate.getTime())) {
-                    // Set time to 00:00:00 to be inclusive of the buy day
+                const buyDate = parseBuyDate(buyDateRef);
+                if (buyDate) {
                     buyDate.setHours(0, 0, 0, 0);
+                    const now = new Date();
+                    const elapsedMs = Math.max(0, now.getTime() - buyDate.getTime());
+                    const elapsedDays = elapsedMs / (1000 * 60 * 60 * 24);
+
+                    let bufferDays = 28;
+                    if (elapsedDays < 14) {
+                        bufferDays = 28;
+                    } else if (elapsedDays <= 180) {
+                        bufferDays = Math.max(21, Math.round(elapsedDays * 0.4));
+                    } else {
+                        bufferDays = Math.min(90, Math.max(45, Math.round(elapsedDays * 0.15)));
+                    }
+
+                    const bufferDate = new Date(buyDate);
+                    bufferDate.setDate(bufferDate.getDate() - bufferDays);
 
                     const filteredData = response.data.filter(point => {
                         const pointDate = new Date(point.date);
-                        return pointDate >= buyDate;
+                        return pointDate >= bufferDate;
                     });
 
-                    // Only apply filter if we have data left
                     if (filteredData.length > 0) {
-                        console.log(`[StockDetail] Filtering BUY range: ${filteredData.length} points from ${buyDate.toISOString()}`);
+                        console.log(`[StockDetail] Filtering BUY range with ${bufferDays}d buffer: ${filteredData.length} points from ${bufferDate.toISOString()}`);
                         response.data = filteredData;
                     } else {
                         console.warn('[StockDetail] BUY range filter resulted in empty data, showing full history.');
@@ -678,6 +720,7 @@ export function StockDetail() {
                         previousClose={safePreviousClose || 0}
                         isMarketOpen={estimateMarketState(stock.symbol, stock.currency) === 'REGULAR'}
                         purchasePrice={position?.buyPriceAvg}
+                        purchaseDate={buyDateRef}
                         sellLimit={stock.sellLimit}
                         stockName={stock.name}
                         stockSymbol={stock.symbol}
