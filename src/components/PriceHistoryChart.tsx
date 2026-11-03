@@ -1039,7 +1039,8 @@ export function PriceHistoryChart({
                                             value: marker.labelText,
                                             fill: '#3b82f6',
                                             fontSize: 11,
-                                            fontWeight: 700
+                                            fontWeight: 700,
+                                            dy: (marker.index % 3) * 20
                                         }}
                                     />
                                     {marker.effectivePrice > 0 && (
