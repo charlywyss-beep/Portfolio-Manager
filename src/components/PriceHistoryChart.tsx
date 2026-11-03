@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, Fragment } from 'react';
+import { useMemo, useState, useEffect, Fragment, useRef } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
 import { useCurrencyFormatter } from '../utils/currency';
 import { Ruler, X } from 'lucide-react';
@@ -62,8 +62,8 @@ export function PriceHistoryChart({
         return () => window.removeEventListener('resize', handleResize);
     }, []);
     const [isMeasureMode, setIsMeasureMode] = useState(false);
-    const [isMaximized, setIsMaximized] = useState(false);
     const [measurePoints, setMeasurePoints] = useState<{ date: string; value: number }[]>([]);
+    const lastMeasureClickRef = useRef(0);
     const [hoveredData, setHoveredData] = useState<{ date: string; value: number; sma200?: number | null } | null>(null);
     const [selectedExtremum, setSelectedExtremum] = useState<'high' | 'low' | null>(null);
 
@@ -117,11 +117,6 @@ export function PriceHistoryChart({
     // Reset measure points when mode is toggled or range changes
     useEffect(() => {
         setMeasurePoints([]);
-        if (isMeasureMode) {
-            setIsMaximized(true);
-        } else {
-            setIsMaximized(false);
-        }
     }, [isMeasureMode, selectedRange]);
     const { formatCurrency } = useCurrencyFormatter();
 
@@ -433,8 +428,7 @@ export function PriceHistoryChart({
 
     const chartContent = (
         <div className={cn(
-            "w-full flex flex-col relative transition-all duration-300 select-none",
-            isMaximized ? "h-full" : "min-h-[360px] landscape:min-h-0 h-auto flex-1 pb-2 landscape:pb-0"
+            "w-full flex flex-col relative transition-all duration-300 select-none min-h-[360px] landscape:min-h-0 h-auto flex-1 pb-2 landscape:pb-0"
         )}>
             <div className="flex flex-wrap items-center justify-between mb-2 md:mb-4 landscape:mb-1.5 gap-2 relative">
                 <div className="flex flex-col gap-1 w-full sm:w-auto">
@@ -646,15 +640,10 @@ export function PriceHistoryChart({
                     <div className="flex items-center gap-1 ml-2 border-l border-border/50 pl-2">
                         <button
                             onClick={() => {
-                                if (isMeasureMode) {
-                                    if (measurePoints.length > 0) {
-                                        setMeasurePoints([]);
-                                    } else {
-                                        setIsMeasureMode(false);
-                                    }
-                                } else {
-                                    setIsMeasureMode(true);
-                                }
+                                setIsMeasureMode(prev => {
+                                    setMeasurePoints([]);
+                                    return !prev;
+                                });
                             }}
                             className={cn(
                                 "px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 border font-medium text-[10px] sm:text-xs shadow-sm",
@@ -726,67 +715,91 @@ export function PriceHistoryChart({
                 )}
             </div>
 
-            {isMeasureMode && measurePoints.length > 0 && (
-                <div className="absolute top-2 right-2 z-20 animate-in fade-in slide-in-from-right-2">
-                    <div className="bg-blue-600 dark:bg-blue-500 text-white px-4 py-3 rounded-xl shadow-2xl border border-blue-400/30 flex items-center gap-4">
-                        <div className="flex flex-col items-center leading-tight">
-                            {measurement ? (
-                                <div className="flex items-center gap-4">
-                                    <div className="flex flex-col items-center">
-                                        <span className="text-xl font-black whitespace-nowrap">
-                                            {measurement.percent > 0 ? '+' : ''}{measurement.percent.toFixed(2)}%
-                                        </span>
-                                        <span className="text-xs font-bold text-white">
-                                            {formatCurrency(measurement.diff, displayCurrency, false)}
-                                        </span>
-                                    </div>
-                                    <div className="h-8 w-px bg-white/20" />
-                                    <div className="flex flex-col text-[10px] text-white font-medium">
-                                        <div className="flex justify-between gap-4">
-                                            <span className="font-bold">Von:</span>
-                                            <span>
-                                                {formatCurrency(measurement.p1.value, displayCurrency, false)}
-                                                <span className="ml-1 text-[11px] text-white font-bold">
-                                                    {new Date(measurement.p1.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} {new Date(measurement.p1.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between gap-4">
-                                            <span className="font-bold">Bis:</span>
-                                            <span>
-                                                {formatCurrency(measurement.p2.value, displayCurrency, false)}
-                                                <span className="ml-1 text-[11px] text-white font-bold">
-                                                    {new Date(measurement.p2.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} {new Date(measurement.p2.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center">
-                                    <span className="text-xs font-bold whitespace-nowrap">
-                                        {measurePoints.length === 1 ? 'Endpunkt wählen...' : 'Punkte wählen...'}
+            {isMeasureMode && (
+                <div className="absolute top-2 right-2 z-20 animate-in fade-in slide-in-from-right-2 max-w-[calc(100%-1rem)]">
+                    <div className="bg-blue-600 dark:bg-blue-500 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-2xl border border-blue-400/30 flex items-center gap-3 sm:gap-4 text-xs sm:text-sm">
+                        {measurement ? (
+                            <div className="flex items-center gap-3 sm:gap-4">
+                                <div className="flex flex-col items-center leading-tight">
+                                    <span className="text-base sm:text-lg font-black whitespace-nowrap">
+                                        {measurement.percent > 0 ? '+' : ''}{measurement.percent.toFixed(2)}%
                                     </span>
-                                    <span className="text-[10px] text-white font-bold">Chart anklicken</span>
+                                    <span className="text-[11px] sm:text-xs font-bold text-blue-100 whitespace-nowrap">
+                                        {measurement.diff > 0 ? '+' : ''}{formatCurrency(measurement.diff, displayCurrency, false)}
+                                    </span>
                                 </div>
+                                <div className="h-7 w-px bg-white/20" />
+                                <div className="flex flex-col text-[10px] sm:text-xs text-white font-medium leading-tight">
+                                    <div className="flex justify-between gap-3">
+                                        <span className="font-bold text-blue-100">Von:</span>
+                                        <span>
+                                            {formatCurrency(measurement.p1.value, displayCurrency, false)}
+                                            <span className="ml-1 text-[10px] sm:text-[11px] text-blue-200 font-bold">
+                                                {new Date(measurement.p1.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })}
+                                            </span>
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between gap-3">
+                                        <span className="font-bold text-blue-100">Bis:</span>
+                                        <span>
+                                            {formatCurrency(measurement.p2.value, displayCurrency, false)}
+                                            <span className="ml-1 text-[10px] sm:text-[11px] text-blue-200 font-bold">
+                                                {new Date(measurement.p2.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })}
+                                            </span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : measurePoints.length === 1 ? (
+                            <div className="flex items-center gap-2">
+                                <div className="size-2 rounded-full bg-amber-300 animate-pulse shrink-0" />
+                                <div className="flex flex-col leading-tight">
+                                    <span className="text-xs font-bold whitespace-nowrap">
+                                        1. Punkt: {formatCurrency(measurePoints[0].value, displayCurrency, false)}
+                                    </span>
+                                    <span className="text-[10px] text-blue-100">Jetzt 2. Punkt (Endpunkt) im Chart anklicken</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <Ruler className="size-4 text-blue-200 shrink-0" />
+                                <div className="flex flex-col leading-tight">
+                                    <span className="text-xs font-bold whitespace-nowrap">Messmodus aktiv</span>
+                                    <span className="text-[10px] text-blue-100">1. Punkt im Chart anklicken</span>
+                                </div>
+                            </div>
+                        )}
+                        <div className="flex items-center gap-1 ml-1 pl-2 border-l border-white/20">
+                            {measurePoints.length > 0 && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setMeasurePoints([]);
+                                    }}
+                                    className="bg-white/20 hover:bg-white/30 px-2 py-1 rounded text-[10px] font-bold transition-colors"
+                                    title="Messung zurücksetzen"
+                                >
+                                    Neu
+                                </button>
                             )}
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsMeasureMode(false);
+                                    setMeasurePoints([]);
+                                }}
+                                className="bg-white/20 hover:bg-white/40 p-1.5 rounded-full transition-colors"
+                                title="Messen beenden"
+                            >
+                                <X className="size-3.5" />
+                            </button>
                         </div>
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setMeasurePoints([]);
-                            }}
-                            className="bg-white/20 hover:bg-white/40 p-1.5 rounded-full transition-colors"
-                        >
-                            <X className="size-4" />
-                        </button>
                     </div>
                 </div>
             )}
 
             <div className={cn(
-                "w-full min-w-0 transition-all",
-                isMaximized ? "flex-1 min-h-[300px]" : "h-[280px] sm:h-[300px] landscape:h-[180px] min-h-[160px]"
+                "w-full min-w-0 transition-all h-[280px] sm:h-[300px] landscape:h-[180px] min-h-[160px]"
             )}>
                 {hasMounted && (
                     <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
@@ -804,20 +817,46 @@ export function PriceHistoryChart({
                                 }
                             }}
                             onMouseLeave={() => setHoveredData(null)}
-                            onMouseDown={(data: any) => {
-                                if (isMeasureMode) {
-                                    // Robust point detection: activePayload OR activeLabel fallback
-                                    let point = data?.activePayload?.[0]?.payload;
-                                    if (!point && data?.activeLabel) {
-                                        point = displayData.find(d => d.date === data.activeLabel);
-                                    }
+                            onClick={(data: any) => {
+                                if (!isMeasureMode) return;
+                                const now = Date.now();
+                                if (now - lastMeasureClickRef.current < 150) return;
+                                lastMeasureClickRef.current = now;
 
-                                    if (point) {
-                                        setMeasurePoints(prev => {
-                                            if (prev.length >= 2) return [point];
-                                            return [...prev, point];
-                                        });
-                                    }
+                                let point = data?.activePayload?.[0]?.payload;
+                                if (!point && data?.activeLabel) {
+                                    point = displayData.find(d => d.date === data.activeLabel);
+                                }
+                                if (!point && hoveredData) {
+                                    point = displayData.find(d => d.date === hoveredData.date) || hoveredData;
+                                }
+
+                                if (point) {
+                                    setMeasurePoints(prev => {
+                                        if (prev.length >= 2) return [point];
+                                        return [...prev, point];
+                                    });
+                                }
+                            }}
+                            onMouseDown={(data: any) => {
+                                if (!isMeasureMode) return;
+                                const now = Date.now();
+                                if (now - lastMeasureClickRef.current < 150) return;
+                                lastMeasureClickRef.current = now;
+
+                                let point = data?.activePayload?.[0]?.payload;
+                                if (!point && data?.activeLabel) {
+                                    point = displayData.find(d => d.date === data.activeLabel);
+                                }
+                                if (!point && hoveredData) {
+                                    point = displayData.find(d => d.date === hoveredData.date) || hoveredData;
+                                }
+
+                                if (point) {
+                                    setMeasurePoints(prev => {
+                                        if (prev.length >= 2) return [point];
+                                        return [...prev, point];
+                                    });
                                 }
                             }}
                             style={{ cursor: isMeasureMode ? 'crosshair' : 'default' }}
@@ -1109,15 +1148,31 @@ export function PriceHistoryChart({
                                 );
                             })()}
 
-                            {/* Measurement Reference Lines */}
+                            {/* Measurement Reference Lines & Dots */}
                             {measurePoints.map((p, i) => (
-                                <ReferenceLine
-                                    key={`measure-${i}`}
-                                    x={p.date}
-                                    stroke="#3b82f6"
-                                    strokeWidth={2}
-                                    strokeOpacity={1}
-                                />
+                                <Fragment key={`measure-pt-${i}`}>
+                                    <ReferenceLine
+                                        x={p.date}
+                                        stroke="#3b82f6"
+                                        strokeWidth={2}
+                                        strokeOpacity={1}
+                                    />
+                                    <ReferenceDot
+                                        x={p.date}
+                                        y={p.value}
+                                        r={6}
+                                        shape={(props: any) => {
+                                            const { cx, cy } = props;
+                                            if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
+                                            return (
+                                                <g className="pointer-events-none select-none" style={{ outline: 'none' }} tabIndex={-1}>
+                                                    <circle cx={cx} cy={cy} r={11} fill="#3b82f6" fillOpacity={0.25} />
+                                                    <circle cx={cx} cy={cy} r={5} fill="#3b82f6" stroke="#ffffff" strokeWidth={2} />
+                                                </g>
+                                            );
+                                        }}
+                                    />
+                                </Fragment>
                             ))}
                             {measurement && (
                                 <ReferenceLine
@@ -1193,22 +1248,6 @@ export function PriceHistoryChart({
             </div>
         </div>
     );
-
-    if (isMaximized) {
-        return (
-            <div className="fixed inset-0 z-[2000] bg-background/95 backdrop-blur-sm p-4 md:p-8 animate-in zoom-in-95 duration-200 flex flex-col">
-                <button
-                    onClick={() => setIsMeasureMode(false)}
-                    className="absolute top-6 right-6 z-[2010] p-2 bg-muted/50 hover:bg-red-500 hover:text-white rounded-full transition-all"
-                >
-                    <X className="size-6" />
-                </button>
-                <div className="flex-1 bg-card rounded-xl border border-border shadow-2xl overflow-hidden p-6">
-                    {chartContent}
-                </div>
-            </div>
-        );
-    }
 
     return chartContent;
 }
