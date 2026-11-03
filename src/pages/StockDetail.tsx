@@ -630,21 +630,24 @@ export function StockDetail() {
                             const stockDateStr = effectiveStockDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' });
 
                             const perfLabel = timeRange === 'BUY'
-                                ? `${stockDateStr} Performance Seit Kauf:`
+                                ? 'Performance Seit Kauf:'
                                 : timeRange === '1D'
-                                    ? `${stockDateStr} Tages Performance (Aktie):`
-                                    : `${stockDateStr} Performance ${timeRange} (Aktie):`;
+                                    ? 'Tages Performance:'
+                                    : `Performance ${timeRange}:`;
 
                             return (
                                 <div className="inline-flex flex-col items-stretch max-w-full">
-                                    {/* Row 1: Stock Price (Native only, clean) */}
+                                    {/* Row 1: Stock Price (Left) + Price Date (Right) */}
                                     <div className="flex items-baseline justify-between gap-4 sm:gap-6 flex-nowrap whitespace-nowrap">
                                         <span className="stock-detail-price-main text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black tracking-tight tabular-nums text-foreground whitespace-nowrap drop-shadow-sm">
                                             {formatCurrency(stock.currentPrice, stock.currency, false)}
                                         </span>
+                                        <span className="text-xs sm:text-sm font-semibold text-muted-foreground tabular-nums whitespace-nowrap text-right">
+                                            {stockDateStr}
+                                        </span>
                                     </div>
 
-                                    {/* Row 2: Date + Performance label & optional Bestand */}
+                                    {/* Row 2: Performance Label (Left) & Bestand (Right) */}
                                     {hasPerf && (
                                         <div className="stock-detail-perf-meta flex items-center justify-between gap-4 sm:gap-6 text-[11px] sm:text-xs text-muted-foreground font-medium mt-1 sm:mt-1.5 whitespace-nowrap">
                                             <span>{perfLabel}</span>
