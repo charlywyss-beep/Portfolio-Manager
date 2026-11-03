@@ -567,26 +567,11 @@ export function StockDetail() {
                         </div>
                     </div>
 
-                    {/* Center: Prominenter Kurs (Mittig) + Tagesperformance darunter (Mittig) */}
+                    {/* Center: Prominenter Kurs (Mittig) + Performance darunter (Mittig) */}
                     <div className="flex flex-col items-center justify-center text-center py-1 sm:py-0 px-2 sm:px-4 md:flex-1 shrink-0">
                         {(() => {
                             const position = positions.find(p => p.stockId === stock.id);
                             const hasForeignCurrency = stock.currency && stock.currency !== 'CHF';
-
-                            if (!position) {
-                                return (
-                                    <div className="flex items-baseline justify-center gap-3 sm:gap-4 flex-nowrap whitespace-nowrap">
-                                        <span className="stock-detail-price-main text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black tracking-tight tabular-nums text-foreground whitespace-nowrap drop-shadow-sm">
-                                            {formatCurrency(stock.currentPrice, stock.currency, false)}
-                                        </span>
-                                        {hasForeignCurrency && (
-                                            <span className="stock-detail-price-chf text-sm sm:text-base lg:text-lg font-semibold text-foreground/85 dark:text-zinc-200 tabular-nums whitespace-nowrap ml-1 sm:ml-2">
-                                                {formatCurrency(convertToCHF(stock.currentPrice, stock.currency), 'CHF', false)}
-                                            </span>
-                                        )}
-                                    </div>
-                                );
-                            }
 
                             let referencePrice = stock.previousClose;
                             if (timeRange === 'BUY' && position?.buyPriceAvg && position.buyPriceAvg > 0) {
@@ -599,23 +584,45 @@ export function StockDetail() {
                                 referencePrice = chartData[0].value;
                             }
 
-                            if (timeRange !== '1D' && timeRange !== 'BUY' && (!chartData || chartData.length === 0)) return null;
+                            // Determine if we have performance data
+                            const hasPerf = (timeRange === '1D' && referencePrice && referencePrice > 0) ||
+                                            (timeRange === 'BUY' && position?.buyPriceAvg && position.buyPriceAvg > 0) ||
+                                            (chartData && chartData.length > 0 && referencePrice && referencePrice > 0);
 
-                            const diffPerShare = stock.currentPrice - referencePrice;
-                            const totalDiff = diffPerShare * position.shares;
-                            const percentChange = referencePrice > 0 ? (diffPerShare / referencePrice) * 100 : 0;
-                            const isPositive = totalDiff >= 0;
+                            const diffPerShare = (hasPerf && referencePrice) ? (stock.currentPrice - referencePrice) : 0;
+                            const percentChange = (hasPerf && referencePrice && referencePrice > 0) ? (diffPerShare / referencePrice) * 100 : 0;
 
-                            const origDiffStr = formatCurrency(totalDiff, stock.currency, false);
+                            const isBuyView = timeRange === 'BUY' && position && position.shares > 0;
+
+                            let origDiffStr = '';
                             let chfDiffStr: string | null = null;
-                            if (hasForeignCurrency) {
-                                if (timeRange === 'BUY' && position.averageEntryFxRate && position.averageEntryFxRate > 0) {
-                                    const investedCHF = position.buyPriceAvg * position.shares * position.averageEntryFxRate;
-                                    const currentValCHF = convertToCHF(stock.currentPrice * position.shares, stock.currency);
-                                    const chfTotalDiff = currentValCHF - investedCHF;
-                                    chfDiffStr = formatCurrency(chfTotalDiff, 'CHF', false);
+                            let isPositive = diffPerShare >= 0;
+
+                            if (hasPerf) {
+                                if (isBuyView) {
+                                    // Seit Kauf: Calculated strictly on total portfolio holding (matches Positionen table)
+                                    const totalDiff = diffPerShare * position.shares;
+                                    isPositive = totalDiff >= 0;
+                                    origDiffStr = formatCurrency(totalDiff, stock.currency, false);
+
+                                    if (hasForeignCurrency) {
+                                        if (position.averageEntryFxRate && position.averageEntryFxRate > 0) {
+                                            const investedCHF = position.buyPriceAvg * position.shares * position.averageEntryFxRate;
+                                            const currentValCHF = convertToCHF(stock.currentPrice * position.shares, stock.currency);
+                                            const chfTotalDiff = currentValCHF - investedCHF;
+                                            chfDiffStr = formatCurrency(chfTotalDiff, 'CHF', false);
+                                        } else {
+                                            chfDiffStr = formatCurrency(convertToCHF(totalDiff, stock.currency), 'CHF', false);
+                                        }
+                                    }
                                 } else {
-                                    chfDiffStr = formatCurrency(convertToCHF(totalDiff, stock.currency), 'CHF', false);
+                                    // Standard timeframes (1D, 1W, 1M, 3M, 6M, 1Y, 5Y):
+                                    // Per-share price performance of the stock (NOT multiplied by shares)
+                                    isPositive = diffPerShare >= 0;
+                                    origDiffStr = formatCurrency(diffPerShare, stock.currency, false);
+                                    if (hasForeignCurrency) {
+                                        chfDiffStr = formatCurrency(convertToCHF(diffPerShare, stock.currency), 'CHF', false);
+                                    }
                                 }
                             }
 
@@ -623,6 +630,12 @@ export function StockDetail() {
                             const quoteTimestamp = stock.lastQuoteDate ? new Date(stock.lastQuoteDate).getTime() : 0;
                             const effectiveStockDate = (!isStockMarketOpen && quoteTimestamp > 0) ? new Date(quoteTimestamp) : new Date();
                             const stockDateStr = effectiveStockDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' });
+
+                            const perfLabel = timeRange === 'BUY'
+                                ? `${stockDateStr} Performance Seit Kauf:`
+                                : timeRange === '1D'
+                                    ? `${stockDateStr} Tages Performance (Aktie):`
+                                    : `${stockDateStr} Performance ${timeRange} (Aktie):`;
 
                             return (
                                 <div className="inline-flex flex-col items-stretch max-w-full">
@@ -638,33 +651,31 @@ export function StockDetail() {
                                         )}
                                     </div>
 
-                                    {/* Row 2: Date + Performance label & Bestand */}
-                                    <div className="stock-detail-perf-meta flex items-center justify-between gap-4 sm:gap-6 text-[11px] sm:text-xs text-muted-foreground font-medium mt-1 sm:mt-1.5 whitespace-nowrap">
-                                        <span>
-                                            {timeRange === '1D'
-                                                ? `${stockDateStr} Tages Performance:`
-                                                : timeRange === 'BUY'
-                                                    ? `${stockDateStr} Performance Seit Kauf:`
-                                                    : `${stockDateStr} Performance ${timeRange}:`}
-                                        </span>
-                                        <span>Bestand: {position.shares.toLocaleString('de-CH')} Stk.</span>
-                                    </div>
-
-                                    {/* Row 3: Performance Numbers (Same font size as top CHF, CHF right-aligned, no hyphen) */}
-                                    <div className={cn(
-                                        "stock-detail-perf-values text-sm sm:text-base lg:text-lg font-bold flex items-baseline justify-between gap-4 sm:gap-6 tabular-nums whitespace-nowrap mt-0.5",
-                                        isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                    )}>
-                                        <div className="flex items-baseline gap-3 sm:gap-4">
-                                            <span>{isPositive ? '+' : ''}{percentChange.toFixed(2)}%</span>
-                                            <span>{origDiffStr}</span>
+                                    {/* Row 2: Date + Performance label & optional Bestand */}
+                                    {hasPerf && (
+                                        <div className="stock-detail-perf-meta flex items-center justify-between gap-4 sm:gap-6 text-[11px] sm:text-xs text-muted-foreground font-medium mt-1 sm:mt-1.5 whitespace-nowrap">
+                                            <span>{perfLabel}</span>
+                                            {position && <span>Bestand: {position.shares.toLocaleString('de-CH')} Stk.</span>}
                                         </div>
-                                        {chfDiffStr && (
-                                            <span className="text-right">
-                                                {chfDiffStr}
-                                            </span>
-                                        )}
-                                    </div>
+                                    )}
+
+                                    {/* Row 3: Performance Numbers */}
+                                    {hasPerf && (
+                                        <div className={cn(
+                                            "stock-detail-perf-values text-sm sm:text-base lg:text-lg font-bold flex items-baseline justify-between gap-4 sm:gap-6 tabular-nums whitespace-nowrap mt-0.5",
+                                            isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                        )}>
+                                            <div className="flex items-baseline gap-3 sm:gap-4">
+                                                <span>{isPositive ? '+' : ''}{percentChange.toFixed(2)}%</span>
+                                                <span>{origDiffStr}</span>
+                                            </div>
+                                            {chfDiffStr && (
+                                                <span className="text-right">
+                                                    {chfDiffStr}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })()}
