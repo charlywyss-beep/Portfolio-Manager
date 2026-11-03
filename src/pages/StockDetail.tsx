@@ -146,12 +146,18 @@ export function StockDetail() {
         // Handle 'BUY' range
         if (timeRange === 'BUY') {
             if (buyDateRef) {
-                // If buy date is less than 1 year ago, use 1Y (Daily) instead of 5Y (Weekly)
-                const buyDate = new Date(buyDateRef);
+                let buyDate: Date;
+                if (typeof buyDateRef === 'string' && buyDateRef.includes('.')) {
+                    const [d, m, y] = buyDateRef.split('.');
+                    buyDate = new Date(`${y}-${m}-${d}`);
+                } else {
+                    buyDate = new Date(buyDateRef);
+                }
+
                 const oneYearAgo = new Date();
                 oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
-                if (buyDate > oneYearAgo) {
+                if (!isNaN(buyDate.getTime()) && buyDate > oneYearAgo) {
                     rangeToUse = '1Y'; // Daily data
                 } else {
                     rangeToUse = '5Y'; // Weekly data
@@ -541,7 +547,9 @@ export function StockDetail() {
                             }
 
                             let referencePrice = stock.previousClose;
-                            if (timeRange !== '1D' && chartData && chartData.length > 0) {
+                            if (timeRange === 'BUY' && position?.buyPriceAvg && position.buyPriceAvg > 0) {
+                                referencePrice = position.buyPriceAvg;
+                            } else if (timeRange !== '1D' && chartData && chartData.length > 0) {
                                 referencePrice = chartData[0].value;
                             } else if (timeRange === '1D') {
                                 referencePrice = stock.previousClose || (chartData && chartData.length > 0 ? chartData[0].value : stock.currentPrice);
@@ -549,7 +557,7 @@ export function StockDetail() {
                                 referencePrice = chartData[0].value;
                             }
 
-                            if (timeRange !== '1D' && (!chartData || chartData.length === 0)) return null;
+                            if (timeRange !== '1D' && timeRange !== 'BUY' && (!chartData || chartData.length === 0)) return null;
 
                             const diffPerShare = stock.currentPrice - referencePrice;
                             const totalDiff = diffPerShare * position.shares;
@@ -557,9 +565,17 @@ export function StockDetail() {
                             const isPositive = totalDiff >= 0;
 
                             const origDiffStr = formatCurrency(totalDiff, stock.currency, false);
-                            const chfDiffStr = hasForeignCurrency
-                                ? formatCurrency(convertToCHF(totalDiff, stock.currency), 'CHF', false)
-                                : null;
+                            let chfDiffStr: string | null = null;
+                            if (hasForeignCurrency) {
+                                if (timeRange === 'BUY' && position.averageEntryFxRate && position.averageEntryFxRate > 0) {
+                                    const investedCHF = position.buyPriceAvg * position.shares * position.averageEntryFxRate;
+                                    const currentValCHF = convertToCHF(stock.currentPrice * position.shares, stock.currency);
+                                    const chfTotalDiff = currentValCHF - investedCHF;
+                                    chfDiffStr = formatCurrency(chfTotalDiff, 'CHF', false);
+                                } else {
+                                    chfDiffStr = formatCurrency(convertToCHF(totalDiff, stock.currency), 'CHF', false);
+                                }
+                            }
 
                             const isStockMarketOpen = estimateMarketState(stock.symbol, stock.currency) === 'REGULAR';
                             const quoteTimestamp = stock.lastQuoteDate ? new Date(stock.lastQuoteDate).getTime() : 0;
@@ -585,7 +601,9 @@ export function StockDetail() {
                                         <span>
                                             {timeRange === '1D'
                                                 ? `${stockDateStr} Tages Performance:`
-                                                : `${stockDateStr} Performance ${timeRange}:`}
+                                                : timeRange === 'BUY'
+                                                    ? `${stockDateStr} Performance Seit Kauf:`
+                                                    : `${stockDateStr} Performance ${timeRange}:`}
                                         </span>
                                         <span>Bestand: {position.shares.toLocaleString('de-CH')} Stk.</span>
                                     </div>
