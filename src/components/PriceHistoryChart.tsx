@@ -1029,7 +1029,13 @@ export function PriceHistoryChart({
                                             const { cx, cy } = props;
                                             if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
                                             return (
-                                                <g className="cursor-pointer">
+                                                <g
+                                                    className="cursor-pointer select-none focus:outline-none"
+                                                    style={{ outline: 'none', WebkitTapHighlightColor: 'transparent' }}
+                                                    tabIndex={-1}
+                                                    onMouseDown={(e) => e.preventDefault()}
+                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                                >
                                                     <title>{marker.tooltipText}</title>
                                                     {/* Invisible larger hit area for easy hover/tap */}
                                                     <circle cx={cx} cy={cy - 6} r={14} fill="transparent" />
@@ -1088,7 +1094,11 @@ export function PriceHistoryChart({
                                                 const { cx, cy } = props;
                                                 if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
                                                 return (
-                                                    <g>
+                                                    <g
+                                                        className="pointer-events-none select-none focus:outline-none"
+                                                        style={{ outline: 'none' }}
+                                                        tabIndex={-1}
+                                                    >
                                                         <circle cx={cx} cy={cy} r={12} fill={color} fillOpacity={0.28} />
                                                         <circle cx={cx} cy={cy} r={6.5} fill={color} stroke="#ffffff" strokeWidth={2.5} />
                                                     </g>

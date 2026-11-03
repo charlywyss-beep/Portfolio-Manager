@@ -2237,3 +2237,19 @@
     padding: 0.25rem 0.65rem 0.1rem !important;
   }
 }
+
+
+/* Chart Focus Outline Reset */
+.recharts-wrapper *:focus,
+.recharts-wrapper *:focus-visible,
+.recharts-layer:focus,
+.recharts-layer:focus-visible,
+.recharts-reference-dot:focus,
+.recharts-reference-dot:focus-visible,
+.recharts-surface:focus,
+.recharts-surface:focus-visible,
+svg *:focus,
+svg *:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
