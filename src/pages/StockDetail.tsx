@@ -603,26 +603,24 @@ export function StockDetail() {
                                     // Seit Kauf: Calculated strictly on total portfolio holding (matches Positionen table)
                                     const totalDiff = diffPerShare * position.shares;
                                     isPositive = totalDiff >= 0;
-                                    origDiffStr = formatCurrency(totalDiff, stock.currency, false);
+                                    origDiffStr = (totalDiff > 0 ? '+' : '') + formatCurrency(totalDiff, stock.currency, false);
 
                                     if (hasForeignCurrency) {
                                         if (position.averageEntryFxRate && position.averageEntryFxRate > 0) {
                                             const investedCHF = position.buyPriceAvg * position.shares * position.averageEntryFxRate;
                                             const currentValCHF = convertToCHF(stock.currentPrice * position.shares, stock.currency);
                                             const chfTotalDiff = currentValCHF - investedCHF;
-                                            chfDiffStr = formatCurrency(chfTotalDiff, 'CHF', false);
+                                            chfDiffStr = (chfTotalDiff > 0 ? '+' : '') + formatCurrency(chfTotalDiff, 'CHF', false);
                                         } else {
-                                            chfDiffStr = formatCurrency(convertToCHF(totalDiff, stock.currency), 'CHF', false);
+                                            chfDiffStr = (totalDiff > 0 ? '+' : '') + formatCurrency(convertToCHF(totalDiff, stock.currency), 'CHF', false);
                                         }
                                     }
                                 } else {
                                     // Standard timeframes (1D, 1W, 1M, 3M, 6M, 1Y, 5Y):
-                                    // Per-share price performance of the stock (NOT multiplied by shares)
+                                    // Per-share price performance of the stock in native currency (NO CHF conversion)
                                     isPositive = diffPerShare >= 0;
-                                    origDiffStr = formatCurrency(diffPerShare, stock.currency, false);
-                                    if (hasForeignCurrency) {
-                                        chfDiffStr = formatCurrency(convertToCHF(diffPerShare, stock.currency), 'CHF', false);
-                                    }
+                                    origDiffStr = (diffPerShare > 0 ? '+' : '') + formatCurrency(diffPerShare, stock.currency, false);
+                                    chfDiffStr = null;
                                 }
                             }
 
@@ -639,16 +637,11 @@ export function StockDetail() {
 
                             return (
                                 <div className="inline-flex flex-col items-stretch max-w-full">
-                                    {/* Row 1: Stock Price (Native Left, CHF Right) */}
+                                    {/* Row 1: Stock Price (Native only, clean) */}
                                     <div className="flex items-baseline justify-between gap-4 sm:gap-6 flex-nowrap whitespace-nowrap">
                                         <span className="stock-detail-price-main text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black tracking-tight tabular-nums text-foreground whitespace-nowrap drop-shadow-sm">
                                             {formatCurrency(stock.currentPrice, stock.currency, false)}
                                         </span>
-                                        {hasForeignCurrency && (
-                                            <span className="stock-detail-price-chf text-sm sm:text-base lg:text-lg font-semibold text-foreground/85 dark:text-zinc-200 tabular-nums whitespace-nowrap text-right">
-                                                {formatCurrency(convertToCHF(stock.currentPrice, stock.currency), 'CHF', false)}
-                                            </span>
-                                        )}
                                     </div>
 
                                     {/* Row 2: Date + Performance label & optional Bestand */}
