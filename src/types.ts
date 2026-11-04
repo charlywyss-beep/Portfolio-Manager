@@ -59,6 +59,7 @@ export interface Stock {
     dividendPayDate?: string; // Payment date (ISO format)
     dividendDates?: { exDate: string; payDate: string }[]; // NEW: Multiple dates support
     dividendFrequency?: 'none' | 'monthly' | 'quarterly' | 'annually' | 'semi-annually';
+    withholdingTaxRate?: number; // Quellensteuersatz in % (z.B. 15, 30, 35, 0)
     logoUrl?: string;
     targetPrice?: number; // Desired buy price (Fair Value) -> Buy Limit
     fairValue?: number; // Calculated Intrinsic Value (without Margin of Safety)

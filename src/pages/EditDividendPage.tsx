@@ -3,7 +3,8 @@ import { ArrowLeft, Trash2, Search, Pencil, Check, Calculator, ShieldCheck, Spar
 import { usePortfolio } from '../context/PortfolioContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
-import { useCurrencyFormatter } from '../utils/currency';
+import { useCurrencyFormatter, convertToCHF } from '../utils/currency';
+import { getWithholdingTaxRate, detectStockCountry, COUNTRY_TAX_RATES } from '../utils/tax';
 import { fetchStockHistory, fetchStockQuote } from '../services/yahoo-finance';
 import { cn } from '../utils';
 import { computeSmartAutoParams, calculateDcfFairValue } from '../utils/fairValue';
@@ -66,6 +67,7 @@ export function EditDividendPage() {
     const [exDate, setExDate] = useState('');
     const [payDate, setPayDate] = useState('');
     const [frequency, setFrequency] = useState<'none' | 'quarterly' | 'semi-annually' | 'annually' | 'monthly'>('quarterly');
+    const [withholdingTaxRate, setWithholdingTaxRate] = useState<string>('');
 
     const [quarterlyDates, setQuarterlyDates] = useState<{ exDate: string; payDate: string; }[]>([
         { exDate: '', payDate: '' },
@@ -167,6 +169,7 @@ export function EditDividendPage() {
             setExDate(stock.dividendExDate || '');
             setPayDate(stock.dividendPayDate || '');
             setFrequency(freq);
+            setWithholdingTaxRate(stock.withholdingTaxRate !== undefined && stock.withholdingTaxRate !== null ? stock.withholdingTaxRate.toString() : '');
 
             if (stock.dividendDates && stock.dividendDates.length > 0) {
                 // Sanitize dates when loading to fix corrupted years
@@ -382,6 +385,9 @@ export function EditDividendPage() {
             updates.currency = currency;
         }
 
+        const parsedTax = withholdingTaxRate.trim() !== '' ? parseFloat(withholdingTaxRate.replace(',', '.')) : undefined;
+        updates.withholdingTaxRate = typeof parsedTax === 'number' && !isNaN(parsedTax) ? parsedTax : undefined;
+
         if (Object.keys(updates).length > 0) {
             updateStock(targetId, updates);
         }
@@ -427,7 +433,8 @@ export function EditDividendPage() {
                 dividendExDate: submissionExDate || undefined,
                 dividendPayDate: submissionPayDate || undefined,
                 dividendDates: submissionDates,
-                dividendFrequency: frequency
+                dividendFrequency: frequency,
+                withholdingTaxRate: typeof parsedTax === 'number' && !isNaN(parsedTax) ? parsedTax : undefined
             });
         }
 
@@ -1419,7 +1426,6 @@ export function EditDividendPage() {
                                                 <button
                                                     type="button"
                                                     onClick={() => {
-                                                        // If switching to distributing, maybe keep as is
                                                         updateStock(currentStockId!, { distributionPolicy: 'distributing' });
                                                     }}
                                                     className={cn(
@@ -1446,6 +1452,166 @@ export function EditDividendPage() {
                                                     Thesaurierend
                                                 </button>
                                             </div>
+                                        </div>
+
+                                        {/* Quellensteuer (Withholding Tax) */}
+                                        <div className="bg-muted/40 border border-border/80 rounded-xl p-4 space-y-3">
+                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-semibold text-foreground">Quellensteuer</span>
+                                                    {(() => {
+                                                        const detectedCountry = detectStockCountry(stock);
+                                                        const info = COUNTRY_TAX_RATES[detectedCountry];
+                                                        if (!info) return null;
+                                                        return (
+                                                            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium flex items-center gap-1">
+                                                                <span>{info.flag}</span>
+                                                                <span>{info.countryName} Standard: {info.rate}%</span>
+                                                            </span>
+                                                        );
+                                                    })()}
+                                                </div>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {withholdingTaxRate.trim() === '' ? 'Automatisch ermittelt' : 'Manuell angepasst'}
+                                                </span>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="relative flex-1">
+                                                        <input
+                                                            type="text"
+                                                            inputMode="decimal"
+                                                            step="0.01"
+                                                            placeholder={`z.B. ${getWithholdingTaxRate(stock)}`}
+                                                            value={withholdingTaxRate}
+                                                            onChange={(e) => {
+                                                                setIsDirty(true);
+                                                                setWithholdingTaxRate(e.target.value);
+                                                            }}
+                                                            className="w-full px-3 py-2 border rounded-md bg-background text-foreground pr-8 text-base font-mono"
+                                                        />
+                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-sm">%</span>
+                                                    </div>
+                                                    {withholdingTaxRate.trim() !== '' && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setIsDirty(true);
+                                                                setWithholdingTaxRate('');
+                                                            }}
+                                                            className="px-2.5 py-2 text-xs font-medium border border-border rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                                                            title="Auf Landes-Standard zurücksetzen"
+                                                        >
+                                                            Auto ({getWithholdingTaxRate({ ...stock, withholdingTaxRate: undefined })}%)
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {/* Presets */}
+                                                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                                                    <span className="text-[11px] text-muted-foreground mr-1">Vorgaben:</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => { setIsDirty(true); setWithholdingTaxRate('15'); }}
+                                                        className={cn(
+                                                            "px-2 py-1 text-xs rounded border transition-all",
+                                                            withholdingTaxRate === '15' ? "bg-primary text-primary-foreground border-primary font-bold" : "bg-background border-border text-foreground hover:bg-muted"
+                                                        )}
+                                                    >
+                                                        🇺🇸 15% (USA W-8BEN)
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => { setIsDirty(true); setWithholdingTaxRate('30'); }}
+                                                        className={cn(
+                                                            "px-2 py-1 text-xs rounded border transition-all",
+                                                            withholdingTaxRate === '30' ? "bg-primary text-primary-foreground border-primary font-bold" : "bg-background border-border text-foreground hover:bg-muted"
+                                                        )}
+                                                    >
+                                                        🇺🇸 30% (USA Standard)
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => { setIsDirty(true); setWithholdingTaxRate('35'); }}
+                                                        className={cn(
+                                                            "px-2 py-1 text-xs rounded border transition-all",
+                                                            withholdingTaxRate === '35' ? "bg-primary text-primary-foreground border-primary font-bold" : "bg-background border-border text-foreground hover:bg-muted"
+                                                        )}
+                                                    >
+                                                        🇨🇭 35% (CH VSt)
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => { setIsDirty(true); setWithholdingTaxRate('0'); }}
+                                                        className={cn(
+                                                            "px-2 py-1 text-xs rounded border transition-all",
+                                                            withholdingTaxRate === '0' ? "bg-primary text-primary-foreground border-primary font-bold" : "bg-background border-border text-foreground hover:bg-muted"
+                                                        )}
+                                                    >
+                                                        🇬🇧 0% (UK / IE)
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => { setIsDirty(true); setWithholdingTaxRate('26.375'); }}
+                                                        className={cn(
+                                                            "px-2 py-1 text-xs rounded border transition-all",
+                                                            withholdingTaxRate === '26.375' ? "bg-primary text-primary-foreground border-primary font-bold" : "bg-background border-border text-foreground hover:bg-muted"
+                                                        )}
+                                                    >
+                                                        🇩🇪 26.4% (DE)
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => { setIsDirty(true); setWithholdingTaxRate('25'); }}
+                                                        className={cn(
+                                                            "px-2 py-1 text-xs rounded border transition-all",
+                                                            withholdingTaxRate === '25' ? "bg-primary text-primary-foreground border-primary font-bold" : "bg-background border-border text-foreground hover:bg-muted"
+                                                        )}
+                                                    >
+                                                        🇫🇷 25% (FR)
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Live Net Calculation Preview */}
+                                            {(() => {
+                                                const am = parseFloat(amount.replace(',', '.'));
+                                                if (isNaN(am) || am <= 0) return null;
+                                                const taxRate = withholdingTaxRate.trim() !== '' ? parseFloat(withholdingTaxRate.replace(',', '.')) : getWithholdingTaxRate(stock);
+                                                if (isNaN(taxRate)) return null;
+
+                                                const currentPos = positions.find(p => (stock && p.stockId === stock.id) || p.id === rawId);
+                                                const effectiveShares = currentPos?.shares || 1;
+                                                const totalGrossNative = am * effectiveShares;
+                                                const taxNative = totalGrossNative * (taxRate / 100);
+                                                const totalNetNative = totalGrossNative - taxNative;
+                                                const curr = currency === 'GBp' ? 'GBP' : currency;
+                                                const totalNetCHF = convertToCHF(totalNetNative, curr);
+
+                                                return (
+                                                    <div className="mt-3 p-3 bg-background rounded-lg border border-border/80 text-xs space-y-1.5">
+                                                        <div className="flex justify-between items-center text-muted-foreground">
+                                                            <span>Brutto {currentPos?.shares ? `(${currentPos.shares} Anteile)` : '(1 Anteil)'}:</span>
+                                                            <span className="font-mono font-semibold text-foreground">{totalGrossNative.toFixed(2)} {curr}</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center text-red-500 dark:text-red-400">
+                                                            <span>Abzug Quellensteuer ({taxRate}%):</span>
+                                                            <span className="font-mono font-semibold">-{taxNative.toFixed(2)} {curr}</span>
+                                                        </div>
+                                                        <div className="h-px bg-border my-1" />
+                                                        <div className="flex justify-between items-center font-bold text-sm">
+                                                            <span className="text-foreground">Netto-Gutschrift:</span>
+                                                            <div className="text-right">
+                                                                <span className="font-mono text-green-600 dark:text-green-400">{totalNetNative.toFixed(2)} {curr}</span>
+                                                                {curr !== 'CHF' && (
+                                                                    <span className="block text-[11px] text-muted-foreground font-mono">≈ {totalNetCHF.toFixed(2)} CHF</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
 
                                         {amount && !isNaN(parseFloat(amount)) && (

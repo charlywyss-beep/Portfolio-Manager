@@ -4,6 +4,7 @@ import { usePortfolioData } from '../hooks/usePortfolioData';
 import { useCurrencyFormatter } from '../utils/currency';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
+import { getWithholdingTaxRate } from '../utils/tax';
 
 export function DividendCalendarChart() {
     const { positions } = usePortfolioData();
@@ -21,6 +22,14 @@ export function DividendCalendarChart() {
             'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'
         ];
 
+        const isNet = (() => {
+            try {
+                return localStorage.getItem('dividend_tax_mode') === 'net';
+            } catch {
+                return false;
+            }
+        })();
+
         // Initialize outcome array with 0s
         const data = months.map(name => ({ name, value: 0 }));
 
@@ -28,16 +37,19 @@ export function DividendCalendarChart() {
             const stock = pos.stock;
             if (!stock.dividendAmount && !stock.dividendYield) return;
 
+            const taxRate = isNet ? getWithholdingTaxRate(stock) : 0;
+            const taxFactor = 1 - taxRate / 100;
+
             // Determine monthly payout amount in CHF
             let annualAmountCHF = 0;
             if (stock.dividendAmount) {
-                annualAmountCHF = convertToCHF(stock.dividendAmount * pos.shares, stock.dividendCurrency || stock.currency, rates);
+                annualAmountCHF = convertToCHF(stock.dividendAmount * pos.shares, stock.dividendCurrency || stock.currency, rates) * taxFactor;
             } else if (stock.dividendYield) {
                 // Yield is percentage of current value
                 // Typically used for ETFs where amount isn't fixed per share efficiently in this model
                 // We'll estimate based on yield
                 const valueCHF = convertToCHF(pos.currentValue, stock.currency, rates);
-                annualAmountCHF = valueCHF * (stock.dividendYield / 100);
+                annualAmountCHF = valueCHF * (stock.dividendYield / 100) * taxFactor;
             }
 
             // Distribute based on frequency/dates
@@ -84,7 +96,7 @@ export function DividendCalendarChart() {
 
                 let paymentAmountCHF = 0;
                 if (stock.dividendAmount) {
-                    paymentAmountCHF = convertToCHF(stock.dividendAmount * pos.shares, stock.dividendCurrency || stock.currency, rates);
+                    paymentAmountCHF = convertToCHF(stock.dividendAmount * pos.shares, stock.dividendCurrency || stock.currency, rates) * taxFactor;
                 } else {
                     // Yield based is annual
                     paymentAmountCHF = annualAmountCHF / (stock.dividendFrequency === 'monthly' ? 12 : stock.dividendFrequency === 'quarterly' ? 4 : stock.dividendFrequency === 'semi-annually' ? 2 : 1);
