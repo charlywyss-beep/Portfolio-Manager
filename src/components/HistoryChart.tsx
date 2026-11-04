@@ -130,7 +130,7 @@ export function HistoryChart() {
                                     : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                             )}
                         >
-                            {range}
+                            {range.replace('Y', 'J')}
                         </button>
                     ))}
                 </div>

@@ -193,9 +193,13 @@ export function StockDetail() {
 
                 const oneYearAgo = new Date();
                 oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+                const threeYearsAgo = new Date();
+                threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
 
                 if (bufferDate > oneYearAgo) {
                     rangeToUse = '1Y'; // Daily data
+                } else if (bufferDate > threeYearsAgo) {
+                    rangeToUse = '3Y'; // Daily data (3 years)
                 } else {
                     rangeToUse = '5Y'; // Weekly data
                 }
@@ -615,11 +619,12 @@ export function StockDetail() {
                             const effectiveStockDate = (!isStockMarketOpen && quoteTimestamp > 0) ? new Date(quoteTimestamp) : new Date();
                             const stockDateStr = effectiveStockDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: '2-digit' });
 
+                            const rangeFormatted = timeRange === '1Y' ? '1J' : timeRange === '3Y' ? '3J' : timeRange === '5Y' ? '5J' : timeRange;
                             const perfLabel = timeRange === 'BUY'
                                 ? 'Performance Seit Kauf'
                                 : timeRange === '1D'
                                     ? 'Tages Performance'
-                                    : `Performance ${timeRange}`;
+                                    : `Performance ${rangeFormatted}`;
 
                             return (
                                 <div className="flex flex-col items-center justify-center text-center max-w-full">

@@ -6,6 +6,15 @@ import { cn } from '../utils';
 import { type TimeRange } from '../services/yahoo-finance';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 
+
+export function formatRangeLabel(range: string): string {
+    if (range === '1Y') return '1J';
+    if (range === '3Y') return '3J';
+    if (range === '5Y') return '5J';
+    if (range === 'BUY') return 'Seit Kauf';
+    return range;
+}
+
 interface PriceHistoryChartProps {
     currentPrice: number;
     currency: string;
@@ -163,6 +172,7 @@ export function PriceHistoryChart({
             case '3M': days = 90; intervalHours = 24; break;
             case '6M': days = 180; intervalHours = 24; break;
             case '1Y': days = 365; intervalHours = 24; break;
+            case '3Y': days = 365 * 3; intervalHours = 24 * 3; break;
             case '5Y': days = 365 * 5; intervalHours = 24 * 7; break; // Weekly
         }
 
@@ -445,7 +455,7 @@ export function PriceHistoryChart({
                                 )}
                             </div>
                         )}
-                        <p className="text-sm landscape:text-xs text-muted-foreground">Performance ({selectedRange})</p>
+                        <p className="text-sm landscape:text-xs text-muted-foreground">Performance ({formatRangeLabel(selectedRange)})</p>
                         <div className={cn("font-bold flex items-center gap-1", isPositive ? "text-green-600 dark:text-green-400" : "text-red-500")}>
                             <span className="text-xl landscape:text-xl">
                                 {performance > 0 ? '+' : ''}{performance.toFixed(2)}%
@@ -604,7 +614,7 @@ export function PriceHistoryChart({
             <div className="flex flex-wrap items-center gap-2 sm:gap-6 mb-2 md:mb-4 landscape:mb-1.5">
                 <div className="flex bg-muted/50 p-0.5 rounded-lg items-center overflow-x-auto scroller-none max-w-full sm:max-w-fit">
                     <div className="flex flex-1">
-                        {(['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
+                        {(['1D', '1W', '1M', '3M', '6M', '1Y', '3Y', '5Y', 'BUY'] as TimeRange[]).map((range) => (
                             <button
                                 key={range}
                                 onClick={() => handleRangeChange(range)}
@@ -615,7 +625,7 @@ export function PriceHistoryChart({
                                         : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                                 )}
                             >
-                                {range === 'BUY' ? <><span className="sm:hidden">SK</span><span className="hidden sm:inline">Seit Kauf</span></> : range}
+                                {range === 'BUY' ? <><span className="sm:hidden">SK</span><span className="hidden sm:inline">Seit Kauf</span></> : formatRangeLabel(range)}
                             </button>
                         ))}
                     </div>
@@ -885,7 +895,7 @@ export function PriceHistoryChart({
                                         // Show weekday + date (e.g. "Fr 06.02")
                                         const dayMonth = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
                                         return `${weekdayShort} ${dayMonth}`;
-                                    } else if (selectedRange === '1Y' || selectedRange === '5Y' || selectedRange === 'BUY') {
+                                    } else if (selectedRange === '1Y' || selectedRange === '3Y' || selectedRange === '5Y' || selectedRange === 'BUY') {
                                         // For yearly views, just show month/year (e.g. "02.25") - no weekday
                                         return `${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear().toString().slice(-2)}`;
                                     }
@@ -991,7 +1001,7 @@ export function PriceHistoryChart({
                                     }
 
                                     // 1Y / 5Y / BUY: Monthly first-trading-day points
-                                    if (['1Y', '5Y', 'BUY'].includes(selectedRange)) {
+                                    if (['1Y', '3Y', '5Y', 'BUY'].includes(selectedRange)) {
                                         const monthlyFirstPoints: string[] = [];
                                         let currentMonth = -1;
                                         for (const point of displayData) {
@@ -1005,11 +1015,11 @@ export function PriceHistoryChart({
 
                                         if (selectedRange === '1Y' && !isNarrowPortrait) return monthlyFirstPoints;
 
-                                        // For 5Y/BUY: Every 3rd month, backtracking from the end
+                                        // For 3Y/5Y/BUY: Every 3rd month (or 4th for 5Y desktop), backtracking from the end
                                         const result: string[] = [];
                                         const gap = isNarrowPortrait
                                             ? Math.max(2, Math.ceil(monthlyFirstPoints.length / 5))
-                                            : 3;
+                                            : (selectedRange === '5Y' ? 4 : 3);
                                         for (let i = monthlyFirstPoints.length - 1; i >= 0; i -= gap) {
                                             result.unshift(monthlyFirstPoints[i]);
                                         }
@@ -1018,8 +1028,8 @@ export function PriceHistoryChart({
 
                                     return undefined;
                                 })()}
-                                minTickGap={['1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'].includes(selectedRange) ? 0 : 30}
-                                interval={['1W', '1M', '3M', '6M', '1Y', '5Y', 'BUY'].includes(selectedRange) ? 0 : 'preserveStartEnd'}
+                                minTickGap={['1W', '1M', '3M', '6M', '1Y', '3Y', '5Y', 'BUY'].includes(selectedRange) ? 0 : 30}
+                                interval={['1W', '1M', '3M', '6M', '1Y', '3Y', '5Y', 'BUY'].includes(selectedRange) ? 0 : 'preserveStartEnd'}
                             />
                             <YAxis
                                 domain={[domainMin, domainMax]}

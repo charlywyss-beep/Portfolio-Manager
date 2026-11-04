@@ -9,7 +9,7 @@ interface RateHistory {
 }
 
 type Currency = 'EUR' | 'USD' | 'GBP';
-type ChartTimeRange = '1W' | '1M' | '3M' | '6M' | '1Y' | '5Y';
+type ChartTimeRange = '1W' | '1M' | '3M' | '6M' | '1Y' | '3Y' | '5Y';
 
 import { fetchStockHistory } from '../services/yahoo-finance';
 
@@ -232,13 +232,13 @@ export function CurrencyChart({ inverse = false }: Props) {
                                         ? "text-green-600 dark:text-green-400"
                                         : "text-red-600 dark:text-red-400"
                                 )}>
-                                    {percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}% <span className="text-muted-foreground ml-1 font-normal">({timeRange})</span>
+                                    {percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}% <span className="text-muted-foreground ml-1 font-normal">({timeRange.replace('Y', 'J')})</span>
                                 </div>
                             </div>
 
                             {/* Timeframe Selector */}
                             <div className="flex bg-muted/50 p-1 rounded-lg">
-                                {(['1W', '1M', '3M', '6M', '1Y', '5Y'] as const).map((range) => (
+                                {(['1W', '1M', '3M', '6M', '1Y', '3Y', '5Y'] as const).map((range) => (
                                     <button
                                         key={range}
                                         onClick={() => handleSelectTimeRange(range)}
@@ -249,7 +249,7 @@ export function CurrencyChart({ inverse = false }: Props) {
                                                 : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                                         )}
                                     >
-                                        {range}
+                                        {range.replace('Y', 'J')}
                                     </button>
                                 ))}
                             </div>
