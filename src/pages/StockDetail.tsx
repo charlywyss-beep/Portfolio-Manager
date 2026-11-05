@@ -858,6 +858,7 @@ export function StockDetail() {
 
                         let effectiveFairValue = 0;
                         let calcBuyPrice: number | null = null;
+                        let calcFuturePrice: number | null = null;
                         let mosPct = 20;
 
                         if (currentMode === 'manual') {
@@ -866,11 +867,13 @@ export function StockDetail() {
                                 ? Number(activeParams.manualFairValue)
                                 : (activeParams?.eps > 0 ? calculateDcfFairValue(activeParams, effectivePrice).fairValue : (stock.fairValue || 0));
                             calcBuyPrice = effectiveFairValue > 0 ? effectiveFairValue * (1 - mosPct / 100) : null;
+                            calcFuturePrice = effectiveFairValue > 0 ? effectiveFairValue * Math.pow(1.08, 5) : null;
                         } else if (currentMode === 'quality') {
                             const qParams = (activeParams?.valuationMode === 'quality' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : smartAutoQuality;
                             const dcf = calculateDcfFairValue(qParams, effectivePrice);
                             effectiveFairValue = dcf.fairValue;
                             calcBuyPrice = dcf.buyPrice;
+                            calcFuturePrice = (dcf as any)?.futurePrice ?? null;
                             mosPct = dcf.mos;
                         } else {
                             // 'conservative'
@@ -878,6 +881,7 @@ export function StockDetail() {
                             const dcf = calculateDcfFairValue(cParams, effectivePrice);
                             effectiveFairValue = dcf.fairValue;
                             calcBuyPrice = dcf.buyPrice;
+                            calcFuturePrice = (dcf as any)?.futurePrice ?? null;
                             mosPct = dcf.mos;
                         }
 
@@ -1102,6 +1106,39 @@ export function StockDetail() {
                                         {effectiveFairValue > 0 ? formatCurrency(effectiveFairValue, stock.currency, false) : '-'}
                                     </span>
                                 </div>
+                                <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
+                                    <span className="text-muted-foreground">Zielkurs (5J)</span>
+                                    <span className="font-medium tabular-nums text-foreground">
+                                        {calcFuturePrice !== null && calcFuturePrice > 0 ? formatCurrency(calcFuturePrice, stock.currency, false) : '-'}
+                                    </span>
+                                </div>
+                                {position && position.shares > 0 && calcFuturePrice !== null && calcFuturePrice > 0 && (() => {
+                                    const invested = position.shares * position.buyPriceAvg;
+                                    const expectedVal = position.shares * calcFuturePrice;
+                                    const expectedGain = expectedVal - invested;
+                                    const gainPct = invested > 0 ? (expectedGain / invested) * 100 : 0;
+                                    const curPrice = stock.currentPrice || 0;
+                                    const cagr = (curPrice > 0 && calcFuturePrice > 0)
+                                        ? (Math.pow(calcFuturePrice / curPrice, 0.2) - 1) * 100
+                                        : 0;
+
+                                    return (
+                                        <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px] bg-emerald-500/10 px-2 rounded mt-0.5">
+                                            <div className="flex flex-col">
+                                                <span className="text-emerald-400 font-semibold text-[11px] sm:text-xs">Ertrag 5J (Bestand)</span>
+                                                <span className="text-[10px] text-muted-foreground">~{cagr.toFixed(1)}% p.a. ab heute</span>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="font-bold text-emerald-400 font-mono text-xs sm:text-sm">
+                                                    {expectedGain >= 0 ? '+' : ''}{formatCurrency(expectedGain, stock.currency, false)}
+                                                </span>
+                                                <span className="block text-[10px] text-emerald-400/90 font-mono">
+                                                    ({gainPct >= 0 ? '+' : ''}{gainPct.toFixed(1)}%)
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
                             </>
                         );
                     })()}

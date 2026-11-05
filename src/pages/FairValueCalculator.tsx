@@ -2722,7 +2722,40 @@ export function FairValueCalculator() {
                                     </div>
                                     <div className="flex justify-between items-center text-[11px] text-muted-foreground">
                                         <span>Gewinn {calculation.futureEps.toFixed(2)} × KGV {calculation.exitPe.toFixed(1)}</span>
+                                        {currentPrice > 0 && calculation.futurePrice > 0 && (
+                                            <span className="font-medium text-emerald-400">
+                                                +{((Math.pow(calculation.futurePrice / currentPrice, 0.2) - 1) * 100).toFixed(1)}% p.a.
+                                            </span>
+                                        )}
                                     </div>
+                                    {(() => {
+                                        if (!selectedSymbol) return null;
+                                        const activeStock = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol.toLowerCase());
+                                        const activePosition = activeStock ? positions.find(p => p.stockId === activeStock.id) : null;
+                                        if (!activePosition || !activePosition.shares || activePosition.shares <= 0) return null;
+
+                                        const invested = activePosition.shares * activePosition.buyPriceAvg;
+                                        const futureVal = activePosition.shares * calculation.futurePrice;
+                                        const futureGain = futureVal - invested;
+                                        const gainPct = invested > 0 ? (futureGain / invested) * 100 : 0;
+
+                                        return (
+                                            <div className="mt-2 pt-1.5 border-t border-border/40 text-[11px] bg-muted/20 rounded px-2 py-1.5 space-y-0.5">
+                                                <div className="flex justify-between items-center text-muted-foreground font-medium">
+                                                    <span>Für Ihren Bestand ({activePosition.shares} Stk. • Ø {formatCurrency(activePosition.buyPriceAvg, quote.currency, false)}):</span>
+                                                </div>
+                                                <div className="flex justify-between items-center pt-0.5">
+                                                    <span className="text-muted-foreground">
+                                                        Erwartet: <strong className="text-foreground">{formatCurrency(futureVal, quote.currency, false)}</strong>
+                                                    </span>
+                                                    <span className={cn("font-bold font-mono", futureGain >= 0 ? "text-emerald-400" : "text-rose-400")}>
+                                                        {futureGain >= 0 ? '+' : ''}{formatCurrency(futureGain, quote.currency, false)}
+                                                        {' '}({gainPct >= 0 ? '+' : ''}{gainPct.toFixed(1)}%)
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
 
                             </div>

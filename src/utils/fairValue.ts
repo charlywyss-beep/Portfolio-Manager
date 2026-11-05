@@ -402,6 +402,9 @@ export function calculateDcfFairValue(
     return {
         fairValue,
         buyPrice,
+        futurePrice,
+        futureEps,
+        exitPe: valPe,
         mos: valMos
     };
 }
