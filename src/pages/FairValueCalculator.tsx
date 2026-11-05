@@ -2338,17 +2338,17 @@ export function FairValueCalculator() {
                                                     : "bg-red-500/10 border-red-500 text-red-500 shadow-red-500/20"
                                     )}>
                                         <div className="flex flex-col items-center justify-center w-full">
+                                            <div className="text-sm sm:text-base lg:text-base xl:text-lg font-black leading-tight whitespace-nowrap tabular-nums">
+                                                {formatCurrency(currentPrice, quote.currency, false)}
+                                            </div>
+                                            <div className="text-[10px] sm:text-xs font-semibold opacity-85 leading-tight mb-1 sm:mb-1.5">
+                                                Aktueller Kurs
+                                            </div>
                                             <div className="text-xs sm:text-sm font-black tracking-wider uppercase opacity-90 leading-tight">
                                                 {isUndervalued ? 'KAUFEN' : (isFairHold || isRichHold) ? 'HOLD' : 'TEUER'}
                                             </div>
-                                            <div className="text-[10px] sm:text-xs uppercase font-bold tracking-tight opacity-75 mt-0.5 leading-tight">
+                                            <div className="text-[10px] sm:text-xs font-bold tracking-tight opacity-75 mt-0.5 leading-tight">
                                                 {isUndervalued ? 'Sicherheitsmarge' : isFairHold ? 'Fairer Bereich' : isRichHold ? 'Gut bezahlt' : 'Überhitzt'}
-                                            </div>
-                                            <div className="text-sm sm:text-base lg:text-base xl:text-lg font-black leading-tight whitespace-nowrap tabular-nums my-0.5 sm:my-1">
-                                                {formatCurrency(currentPrice, quote.currency, false)}
-                                            </div>
-                                            <div className="text-[10px] sm:text-xs font-semibold opacity-85 leading-tight">
-                                                Aktueller Kurs
                                             </div>
                                         </div>
                                     </div>
