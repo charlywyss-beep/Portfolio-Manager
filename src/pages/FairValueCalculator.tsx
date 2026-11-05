@@ -2590,14 +2590,32 @@ export function FairValueCalculator() {
                                                 <div className="flex items-center justify-between flex-wrap gap-1 text-[11px] text-muted-foreground">
                                                     <span>Maximales Limit inkl. {mos}% Sicherheitsmarge ({isSavedForStock ? 'Manuell' : valuationProfile === 'quality' ? 'Qualität B' : 'Sicherheit A'})</span>
                                                     {quote?.price && calculation.buyPrice > 0 && (() => {
-                                                        const diffPct = ((quote.price - calculation.buyPrice) / calculation.buyPrice) * 100;
+                                                        const activeLimit = (currentStock?.targetPrice && currentStock.targetPrice > 0)
+                                                            ? currentStock.targetPrice
+                                                            : calculation.buyPrice;
+                                                        const isCustomLimit = Boolean(currentStock?.targetPrice && Math.abs(currentStock.targetPrice - calculation.buyPrice) > 0.01);
+                                                        const diffPct = ((quote.price - activeLimit) / activeLimit) * 100;
+                                                        const curSymbol = quote.currency === 'GBp' ? 'GBP' : quote.currency;
+
+                                                        if (isCustomLimit) {
+                                                            return diffPct > 0 ? (
+                                                                <span className="font-semibold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/25">
+                                                                    Aktueller Kurs +{diffPct.toFixed(1)}% über eigenem Limit ({activeLimit.toFixed(2)} {curSymbol})
+                                                                </span>
+                                                            ) : (
+                                                                <span className="font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/25 animate-pulse">
+                                                                    🎯 Aktueller Kurs {Math.abs(diffPct).toFixed(1)}% unter eigenem Limit ({activeLimit.toFixed(2)} {curSymbol})
+                                                                </span>
+                                                            );
+                                                        }
+
                                                         return diffPct > 0 ? (
                                                             <span className="font-semibold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/25">
                                                                 Aktueller Kurs +{diffPct.toFixed(1)}% über Kauflimit
                                                             </span>
                                                         ) : (
                                                             <span className="font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/25">
-                                                                Aktueller Kurs {Math.abs(diffPct).toFixed(1)}% unter Kauflimit
+                                                                🎯 Aktueller Kurs {Math.abs(diffPct).toFixed(1)}% unter Kauflimit
                                                             </span>
                                                         );
                                                     })()}
