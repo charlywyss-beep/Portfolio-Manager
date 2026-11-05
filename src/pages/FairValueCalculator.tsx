@@ -2583,7 +2583,7 @@ export function FairValueCalculator() {
                                                 kaufpreisBorderBg
                                             )}>
                                                 <div className="flex justify-between items-center gap-2 mb-0.5">
-                                                    <span className="font-bold text-sm sm:text-base lg:text-xs shrink-0 whitespace-nowrap">Kaufpreis</span>
+                                                    <span className="font-bold text-sm sm:text-base lg:text-xs shrink-0 whitespace-nowrap">Kauflimit</span>
                                                     <span className={cn(
                                                         "font-mono font-bold text-sm sm:text-base whitespace-nowrap",
                                                         kaufpreisTextColor
@@ -2592,16 +2592,16 @@ export function FairValueCalculator() {
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center justify-between flex-wrap gap-1 text-[11px] text-muted-foreground">
-                                                    <span>Maximaler Preis inkl. {mos}% Sicherheitsmarge ({isSavedForStock ? 'Manuell' : valuationProfile === 'quality' ? 'Qualität B' : 'Sicherheit A'})</span>
+                                                    <span>Maximales Limit inkl. {mos}% Sicherheitsmarge ({isSavedForStock ? 'Manuell' : valuationProfile === 'quality' ? 'Qualität B' : 'Sicherheit A'})</span>
                                                     {quote?.price && calculation.buyPrice > 0 && (() => {
                                                         const diffPct = ((quote.price - calculation.buyPrice) / calculation.buyPrice) * 100;
                                                         return diffPct > 0 ? (
                                                             <span className="font-semibold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/25">
-                                                                Aktueller Kurs +{diffPct.toFixed(1)}% über Kaufkurs
+                                                                Aktueller Kurs +{diffPct.toFixed(1)}% über Kauflimit
                                                             </span>
                                                         ) : (
                                                             <span className="font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/25">
-                                                                Aktueller Kurs {Math.abs(diffPct).toFixed(1)}% unter Kaufkurs
+                                                                Aktueller Kurs {Math.abs(diffPct).toFixed(1)}% unter Kauflimit
                                                             </span>
                                                         );
                                                     })()}
@@ -2612,7 +2612,7 @@ export function FairValueCalculator() {
                                             <div className="flex items-center justify-between text-xs">
                                                 <span className="font-semibold text-foreground flex items-center gap-1.5">
                                                     <Target className={cn("size-3.5", kaufpreisTargetIconColor)} />
-                                                    <span>Kauflimit</span>
+                                                    <span>Aktives Kauflimit:</span>
                                                 </span>
                                                 {buyLimitSavedToast ? (
                                                     <span className="text-[11px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1 animate-pulse">
@@ -2677,7 +2677,7 @@ export function FairValueCalculator() {
                                                     className={cn("w-full py-1.5 px-3 text-xs sm:text-sm font-semibold rounded-lg border transition-all flex items-center justify-center gap-1.5 text-center shadow-sm active:scale-95 cursor-pointer", kaufpreisQuickBtnColor)}
                                                 >
                                                     <Target className="size-3.5 shrink-0" />
-                                                    <span>Kaufpreis {calculation.buyPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency} als Kauflimit übernehmen</span>
+                                                    <span>Kauflimit {calculation.buyPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency} übernehmen</span>
                                                 </button>
                                             )}
 
