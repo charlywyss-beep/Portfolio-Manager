@@ -2742,14 +2742,14 @@ export function FairValueCalculator() {
                                         return (
                                             <div className="mt-2 pt-1.5 border-t border-border/40 text-[11px] bg-muted/20 rounded px-2 py-1.5 space-y-0.5">
                                                 <div className="flex justify-between items-center text-muted-foreground font-medium">
-                                                    <span>Für Ihren Bestand ({activePosition.shares} Stk. • Ø {formatCurrency(activePosition.buyPriceAvg, quote.currency, false)}):</span>
+                                                    <span>Ihr Bestand ({activePosition.shares} Stk. • Ø {formatCurrency(activePosition.buyPriceAvg, quote.currency, false)}):</span>
                                                 </div>
                                                 <div className="flex justify-between items-center pt-0.5">
                                                     <span className="text-muted-foreground">
-                                                        Erwartet: <strong className="text-foreground">{formatCurrency(futureVal, quote.currency, false)}</strong>
+                                                        Depotwert in 5J: <strong className="text-foreground font-mono">{formatCurrency(futureVal, quote.currency, false)}</strong>
                                                     </span>
                                                     <span className={cn("font-bold font-mono", futureGain >= 0 ? "text-emerald-400" : "text-rose-400")}>
-                                                        {futureGain >= 0 ? '+' : ''}{formatCurrency(futureGain, quote.currency, false)}
+                                                        Gewinn: {futureGain >= 0 ? '+' : ''}{formatCurrency(futureGain, quote.currency, false)}
                                                         {' '}({gainPct >= 0 ? '+' : ''}{gainPct.toFixed(1)}%)
                                                     </span>
                                                 </div>

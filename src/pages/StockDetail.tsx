@@ -1131,7 +1131,7 @@ export function StockDetail() {
                                     return (
                                         <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px] bg-emerald-500/10 px-2 rounded mt-0.5">
                                             <div className="flex flex-col">
-                                                <span className="text-emerald-400 font-semibold text-[11px] sm:text-xs">Ertrag 5J (Bestand)</span>
+                                                <span className="text-emerald-400 font-semibold text-[11px] sm:text-xs">Gewinn 5J (Bestand)</span>
                                                 <span className="text-[10px] text-muted-foreground">~{cagr.toFixed(1)}% p.a. ab heute</span>
                                             </div>
                                             <div className="text-right">
