@@ -2595,16 +2595,15 @@ export function FairValueCalculator() {
                                                             : calculation.buyPrice;
                                                         const isCustomLimit = Boolean(currentStock?.targetPrice && Math.abs(currentStock.targetPrice - calculation.buyPrice) > 0.01);
                                                         const diffPct = ((quote.price - activeLimit) / activeLimit) * 100;
-                                                        const curSymbol = quote.currency === 'GBp' ? 'GBP' : quote.currency;
 
                                                         if (isCustomLimit) {
                                                             return diffPct > 0 ? (
                                                                 <span className="font-semibold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/25">
-                                                                    Aktueller Kurs +{diffPct.toFixed(1)}% über eigenem Limit ({activeLimit.toFixed(2)} {curSymbol})
+                                                                    Aktueller Kurs +{diffPct.toFixed(1)}% über eigenem Limit
                                                                 </span>
                                                             ) : (
                                                                 <span className="font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/25 animate-pulse">
-                                                                    🎯 Aktueller Kurs {Math.abs(diffPct).toFixed(1)}% unter eigenem Limit ({activeLimit.toFixed(2)} {curSymbol})
+                                                                    🎯 Aktueller Kurs {Math.abs(diffPct).toFixed(1)}% unter eigenem Limit
                                                                 </span>
                                                             );
                                                         }
