@@ -2348,7 +2348,7 @@ export function FairValueCalculator() {
                                                 {isUndervalued ? 'KAUFEN' : (isFairHold || isRichHold) ? 'HOLD' : 'TEUER'}
                                             </div>
                                             <div className="text-[10px] sm:text-xs font-bold tracking-tight opacity-75 mt-0.5 leading-tight">
-                                                {isUndervalued ? 'Sicherheitsmarge' : isFairHold ? 'Fairer Bereich' : isRichHold ? 'Gut bezahlt' : 'Überhitzt'}
+                                                {isUndervalued ? 'Unterbewertet' : isFairHold ? 'Fair bewertet' : isRichHold ? 'Hoch bewertet' : 'Teuer bewertet'}
                                             </div>
                                         </div>
                                     </div>
@@ -2384,43 +2384,37 @@ export function FairValueCalculator() {
                                                             : "text-rose-400"
                                             )}>
                                                 <span>{diffPct > 0 ? `+${diffPct}%` : diffPct < 0 ? `+${overvaluationPct}%` : `0%`}</span>
-                                                <span className="text-sm sm:text-base lg:text-xs font-bold font-sans uppercase tracking-normal opacity-90">
-                                                    {diffPct > 0 ? 'unterbewertet' : diffPct < 0 ? 'überbewertet' : 'fair bewertet'}
+                                                <span className="text-sm sm:text-base lg:text-xs font-bold font-sans tracking-normal opacity-90">
+                                                    {diffPct > 0 ? 'unter fairem Wert' : diffPct < 0 ? 'über fairem Wert' : 'Exakt auf fairem Wert'}
                                                 </span>
                                             </div>
                                             <div className="text-xs lg:text-[11px] font-medium mt-1 lg:mt-0.5 text-muted-foreground">
                                                 {isUndervalued && (
                                                     <>
-                                                        <div>Aktie hat <span className="font-bold text-emerald-400">+{potentialPct} %</span> Potenzial zum fairen Wert.</div>
-                                                        <div className="mt-1 text-xs text-muted-foreground/90">Attraktive Sicherheitsmarge für Neukäufe.</div>
+                                                        <div>Unterbewertet mit attraktiver Sicherheitsmarge für Neukäufe.</div>
+                                                        <div className="mt-0.5 text-xs text-muted-foreground/90">
+                                                            Potenzial: <span className="font-bold text-emerald-400">+{potentialPct} %</span> zum fairen Wert.
+                                                        </div>
                                                     </>
                                                 )}
                                                 {isFairHold && (
                                                     <>
-                                                        <div>
-                                                            {diffPct > 0 ? (
-                                                                <>Aktie notiert <span className="font-bold text-emerald-400">+{diffPct} % unter</span> fairem Wert.</>
-                                                            ) : diffPct < 0 ? (
-                                                                <>Aktie notiert <span className="font-bold text-yellow-400">+{Math.abs(diffPct)} % über</span> fairem Wert.</>
-                                                            ) : (
-                                                                <>Aktie notiert exakt auf fairem Wert.</>
-                                                            )}
-                                                        </div>
-                                                        <div className="mt-1 text-xs text-muted-foreground/90"><span className="font-bold text-yellow-400">Bestände halten</span>.</div>
+                                                        <div>Kurs im fairen Bewertungskorridor.</div>
+                                                        <div className="mt-0.5 text-xs text-muted-foreground/90"><span className="font-bold text-yellow-400">Bestände halten</span>.</div>
                                                     </>
                                                 )}
                                                 {isRichHold && (
                                                     <>
-                                                        <div>Gut bezahlt (+{overvaluationPct} % über fairem Wert).</div>
-                                                        <div className="mt-1 text-xs text-muted-foreground/90">
+                                                        <div>Hoch bewertet gegenüber dem fundamentalen Wert.</div>
+                                                        <div className="mt-0.5 text-xs text-muted-foreground/90">
                                                             Für Bestände: <span className="font-bold text-amber-400">Entspannt halten</span> – aktuell kein Neukauf.
                                                         </div>
                                                     </>
                                                 )}
                                                 {isOverheated && (
                                                     <>
-                                                        <div>Aktie ist ca. <span className="font-bold text-rose-400">{overvaluationPct} %</span> überbewertet.</div>
-                                                        <div className="mt-1 text-xs text-muted-foreground/90">Aktuell kein Neukauf.</div>
+                                                        <div>Teuer bewertet – hohes Korrekturrisiko bezogen auf fundamentale Kennzahlen.</div>
+                                                        <div className="mt-0.5 text-xs text-muted-foreground/90">Aktuell kein Neukauf.</div>
                                                     </>
                                                 )}
                                             </div>
