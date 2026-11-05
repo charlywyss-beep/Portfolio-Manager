@@ -2542,10 +2542,10 @@ export function FairValueCalculator() {
                                                 : "bg-blue-600 hover:bg-blue-500";
 
                                         const kaufpreisQuickBtnColor = isManualMode
-                                            ? "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border-emerald-500/30"
+                                            ? "bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border-emerald-400/30"
                                             : isQualityMode
-                                                ? "text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 border-purple-500/30"
-                                                : "text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 border-blue-500/30";
+                                                ? "bg-purple-600/20 hover:bg-purple-600/35 text-purple-300 border-purple-400/30"
+                                                : "bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border-blue-400/30";
 
                                         const kaufpreisActiveTextColor = isManualMode
                                             ? "text-emerald-400"
@@ -2650,9 +2650,10 @@ export function FairValueCalculator() {
                                                         setBuyLimitInput(val);
                                                         handleSaveBuyLimit(val);
                                                     }}
-                                                    className={cn("w-full py-1 lg:py-0.5 px-2 text-[11px] lg:text-[10px] font-medium rounded-lg border transition-all flex items-center justify-center gap-1 text-center shadow-xs active:scale-95", kaufpreisQuickBtnColor)}
+                                                    className={cn("w-full py-1.5 px-3 text-xs sm:text-sm font-semibold rounded-lg border transition-all flex items-center justify-center gap-1.5 text-center shadow-sm active:scale-95 cursor-pointer", kaufpreisQuickBtnColor)}
                                                 >
-                                                    <span>Kaufpreis ({calculation.buyPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency}) als Kauflimit übernehmen</span>
+                                                    <Target className="size-3.5 shrink-0" />
+                                                    <span>Kaufpreis {calculation.buyPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency} als Kauflimit übernehmen</span>
                                                 </button>
                                             )}
 
@@ -2660,7 +2661,7 @@ export function FairValueCalculator() {
                                             <button
                                                 type="button"
                                                 onClick={handleGoToBuySell}
-                                                className="w-full mt-1 lg:mt-0.5 py-1 lg:py-0.5 px-3 text-xs lg:text-[11px] font-semibold rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                                                className="w-full mt-1.5 py-1.5 px-3 text-xs sm:text-sm font-semibold rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
                                                 title="Diesen Titel direkt in Kauf / Verkauf öffnen"
                                             >
                                                 <Calculator className="size-3.5" />
