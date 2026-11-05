@@ -1734,19 +1734,19 @@ export function FairValueCalculator() {
                                 <div className="space-y-1.5 sm:space-y-2 lg:space-y-1.5 flex-1">
                                     <div className="space-y-1 sm:space-y-1.5 pb-1.5 border-b border-border">
                                     <div className="flex items-center justify-between gap-2">
-                                        <div className="flex items-center gap-2 min-w-0">
+                                        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
                                             <h2 className="text-base font-semibold flex items-center gap-1.5 shrink-0">
                                                 <span className="size-2 rounded-full bg-blue-500 shrink-0" />
                                                 Parameter
                                             </h2>
-                                            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-muted/70 border border-border/70 text-foreground truncate">
-                                                {formatCurrency(quote.price || 0, quote.currency || 'USD', false)}
-                                                {quote.currency && quote.currency !== 'CHF' && (
-                                                    <span className="text-muted-foreground font-normal ml-1 hidden sm:inline">
-                                                        ({formatCurrency(quote.price || 0, quote.currency || 'USD').split(' - ')[1]})
-                                                    </span>
-                                                )}
-                                            </span>
+                                            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-muted/80 border border-border/80 text-foreground truncate shadow-2xs">
+                                                <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
+                                                    Aktueller Kurs:
+                                                </span>
+                                                <span className="text-sm sm:text-base font-black font-mono text-foreground tracking-tight whitespace-nowrap tabular-nums">
+                                                    {formatCurrency(quote.price || 0, quote.currency || 'USD', false)}
+                                                </span>
+                                            </div>
                                         </div>
                                         {isSavedForStock ? (
                                             <span className="inline-flex items-center gap-1.5 text-xs font-bold pl-2.5 pr-1 py-0.5 rounded-lg bg-emerald-500/25 text-emerald-300 border border-emerald-500/50 whitespace-nowrap shrink-0 shadow-2xs">
