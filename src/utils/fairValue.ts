@@ -34,6 +34,7 @@ export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number
 
 export const WIDE_MOAT_QUALITY = new Set([
     'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'NVDA', 'META', 'TSLA', 'V', 'MA',
+    'ABEA.DE', 'ABEC.DE', 'ABEA', 'ABEC', 'APC.DE', 'APC', 'MSF.DE', 'MSF', 'AMZ.DE', 'AMZ', 'NVD.DE', 'NVD', 'FB2A.DE', 'FB2A', 'TL0.DE', 'TL0',
     'PG', 'KO', 'PEP', 'JNJ', 'MCD', 'COST', 'WMT', 'ABBV', 'LLY', 'UNH', 'HD', 'NVO', 'NOVO-B.CO',
     'ASML.AS', 'ASML', 'SAP.DE', 'SAP', 'NESN.SW', 'ROG.SW', 'NOVN.SW', 'LIN', 'OR.PA',
     'SREN.SW', 'SREN', 'ZURN.SW', 'ZURN',
@@ -58,8 +59,12 @@ export function computeSmartAutoParams(
     valuationMode: 'conservative' | 'quality' = 'conservative'
 ) {
     const symUpper = (symbolStr || '').toUpperCase();
+    const nameStr = (stockObj?.name || qData?.shortName || qData?.longName || '').toLowerCase();
     const isEtf = isEtfAsset(stockObj, qData, symbolStr);
-    const isWideMoat = WIDE_MOAT_QUALITY.has(symUpper);
+    const isWideMoat = WIDE_MOAT_QUALITY.has(symUpper) ||
+        nameStr.includes('alphabet') || nameStr.includes('google') ||
+        nameStr.includes('microsoft') || (nameStr.includes('apple') && !nameStr.includes('hospitality')) ||
+        nameStr.includes('amazon.com') || nameStr.includes('nvidia') || nameStr.includes('meta platforms');
     const isQualityMode = valuationMode === 'quality';
     const price = qData?.price || stockObj?.currentPrice || 0;
     const preset = FUNDAMENTAL_FALLBACKS[symUpper];
