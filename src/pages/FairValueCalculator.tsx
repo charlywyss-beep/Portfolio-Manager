@@ -2498,20 +2498,9 @@ export function FairValueCalculator() {
                                     <div className="fair-value-fairvalue-box p-2 sm:p-2.5 lg:py-1.5 lg:px-2.5 rounded-xl border border-border bg-card/60 shrink-0">
                                         <div className="flex justify-between items-center gap-2 mb-0.5">
                                             <span className="font-medium text-sm sm:text-base lg:text-xs shrink-0 whitespace-nowrap">Fairer Wert</span>
-                                            {quote.currency !== 'CHF' ? (
-                                                <div className="flex flex-col items-end font-mono leading-tight text-right shrink-0">
-                                                    <span className="text-sm sm:text-base font-semibold whitespace-nowrap">
-                                                        {formatCurrency(calculation.fairValue, quote.currency, false)}
-                                                    </span>
-                                                    <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap">
-                                                        {formatCurrency(calculation.fairValue, quote.currency).split(' - ')[1]}
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                <span className="font-mono text-sm sm:text-base whitespace-nowrap">
-                                                    {formatCurrency(calculation.fairValue, quote.currency, false)}
-                                                </span>
-                                            )}
+                                            <span className="font-mono font-bold text-sm sm:text-base whitespace-nowrap text-foreground">
+                                                {formatCurrency(calculation.fairValue, quote.currency, false)}
+                                            </span>
                                         </div>
                                         <p className="text-[11px] text-muted-foreground">
                                             Innerer Wert heute ({discountRate}% Zielrendite + Dividenden)
@@ -2692,11 +2681,6 @@ export function FairValueCalculator() {
                                     </div>
                                     <div className="flex justify-between items-center text-[11px] text-muted-foreground">
                                         <span>Gewinn {calculation.futureEps.toFixed(2)} × KGV {calculation.exitPe.toFixed(1)}</span>
-                                        {quote.currency && quote.currency !== 'CHF' && (
-                                            <span className="font-mono">
-                                                {formatCurrency(calculation.futurePrice, quote.currency).split(' - ')[1]}
-                                            </span>
-                                        )}
                                     </div>
                                 </div>
 
