@@ -2495,22 +2495,46 @@ export function FairValueCalculator() {
                                 })()}
 
                                     {/* Fair Value */}
-                                    <div className="fair-value-fairvalue-box p-2 sm:p-2.5 lg:py-1.5 lg:px-2.5 rounded-xl border border-border bg-card/60 shrink-0">
-                                        <div className="flex justify-between items-center gap-2 mb-0.5">
-                                            <span className="font-medium text-sm sm:text-base lg:text-xs shrink-0 whitespace-nowrap">Fairer Wert</span>
-                                            <span className="font-mono font-bold text-sm sm:text-base whitespace-nowrap text-foreground">
-                                                {formatCurrency(calculation.fairValue, quote.currency, false)}
-                                            </span>
-                                        </div>
-                                        <p className="text-[11px] text-muted-foreground">
-                                            Innerer Wert heute ({discountRate}% Zielrendite + Dividenden)
-                                        </p>
-                                        {isYieldGap && (
-                                            <p className="text-[11px] text-amber-400/90 mt-1.5 leading-snug italic font-medium">
-                                                Hinweis: Renditeerwartung ({discountRate}%) liegt über Ertrag ({growthRate}% + {dividendYield}%) bei steigendem KGV.
-                                            </p>
-                                        )}
-                                    </div>
+                                    {(() => {
+                                        const isQualityMode = !isSavedForStock && valuationProfile === 'quality';
+                                        const isManualMode = isSavedForStock;
+
+                                        const profileColor = isManualMode
+                                            ? "text-emerald-400"
+                                            : isQualityMode
+                                                ? "text-purple-400"
+                                                : "text-blue-400";
+
+                                        const profileBorderBg = isManualMode
+                                            ? "border-emerald-500/35 bg-emerald-500/5"
+                                            : isQualityMode
+                                                ? "border-purple-500/35 bg-purple-500/5"
+                                                : "border-blue-500/35 bg-blue-500/5";
+
+                                        return (
+                                            <div className={cn(
+                                                "fair-value-fairvalue-box p-2 sm:p-2.5 lg:py-2 lg:px-3 rounded-xl border transition-all shadow-xs shrink-0",
+                                                profileBorderBg
+                                            )}>
+                                                <div className="flex justify-between items-center gap-2 mb-0.5">
+                                                    <span className={cn("font-bold text-base sm:text-lg shrink-0 whitespace-nowrap", profileColor)}>
+                                                        Fairer Wert
+                                                    </span>
+                                                    <span className={cn("font-mono font-black text-base sm:text-lg whitespace-nowrap tabular-nums", profileColor)}>
+                                                        {formatCurrency(calculation.fairValue, quote.currency, false)}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[11px] text-muted-foreground">
+                                                    Innerer Wert heute ({discountRate}% Zielrendite + Dividenden)
+                                                </p>
+                                                {isYieldGap && (
+                                                    <p className="text-[11px] text-amber-400/90 mt-1.5 leading-snug italic font-medium">
+                                                        Hinweis: Renditeerwartung ({discountRate}%) liegt über Ertrag ({growthRate}% + {dividendYield}%) bei steigendem KGV.
+                                                    </p>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
 
                                     {/* Buy Price */}
                                     {(() => {
