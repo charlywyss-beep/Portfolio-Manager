@@ -2583,9 +2583,11 @@ export function FairValueCalculator() {
                                                 kaufpreisBorderBg
                                             )}>
                                                 <div className="flex justify-between items-center gap-2 mb-0.5">
-                                                    <span className="font-bold text-sm sm:text-base lg:text-xs shrink-0 whitespace-nowrap">Kauflimit</span>
+                                                    <span className={cn("font-bold text-base sm:text-lg shrink-0 whitespace-nowrap", kaufpreisTextColor)}>
+                                                        Kauflimit
+                                                    </span>
                                                     <span className={cn(
-                                                        "font-mono font-bold text-sm sm:text-base whitespace-nowrap",
+                                                        "font-mono font-black text-base sm:text-lg whitespace-nowrap tabular-nums",
                                                         kaufpreisTextColor
                                                     )}>
                                                         {formatCurrency(calculation.buyPrice, quote.currency, false)}
