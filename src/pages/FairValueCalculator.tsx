@@ -2598,22 +2598,22 @@ export function FairValueCalculator() {
 
                                                         if (isCustomLimit) {
                                                             return diffPct > 0 ? (
-                                                                <span className="font-semibold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/25">
+                                                                <span className="font-medium text-amber-400">
                                                                     Aktueller Kurs +{diffPct.toFixed(1)}% über eigenem Limit
                                                                 </span>
                                                             ) : (
-                                                                <span className="font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/25 animate-pulse">
+                                                                <span className="font-semibold text-emerald-400 animate-pulse">
                                                                     🎯 Aktueller Kurs {Math.abs(diffPct).toFixed(1)}% unter eigenem Limit
                                                                 </span>
                                                             );
                                                         }
 
                                                         return diffPct > 0 ? (
-                                                            <span className="font-semibold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/25">
+                                                            <span className="font-medium text-amber-400">
                                                                 Aktueller Kurs +{diffPct.toFixed(1)}% über Kauflimit
                                                             </span>
                                                         ) : (
-                                                            <span className="font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/25">
+                                                            <span className="font-semibold text-emerald-400">
                                                                 🎯 Aktueller Kurs {Math.abs(diffPct).toFixed(1)}% unter Kauflimit
                                                             </span>
                                                         );
