@@ -190,6 +190,9 @@ export function computeSmartAutoParams(
         } else if (effectivePe > 24 && autoDiv < 1.5) {
             autoGrowth = isWideMoat ? (isQualityMode ? 14.5 : 12.5) : (isQualityMode ? 11.5 : 9.5);
             growthLabel = isWideMoat ? 'Wachstumswert (Wide Moat)' : 'Wachstumswert';
+        } else if (isWideMoat && autoDiv < 1.5) {
+            autoGrowth = isQualityMode ? 14.0 : 12.0;
+            growthLabel = isQualityMode ? 'Qualitäts-Wachstum (Wide Moat)' : 'Konsens-Wachstum (Wide Moat)';
         } else {
             autoGrowth = isQualityMode ? 7.0 : 5.5;
             growthLabel = 'Standard-Profil';
