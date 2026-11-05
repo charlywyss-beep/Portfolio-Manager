@@ -2687,7 +2687,10 @@ export function FairValueCalculator() {
                                             <button
                                                 type="button"
                                                 onClick={handleGoToBuySell}
-                                                className="w-full mt-1.5 py-1.5 px-3 text-xs sm:text-sm font-semibold rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                                                className={cn(
+                                                    "w-full mt-1.5 py-1.5 px-3 text-xs sm:text-sm font-semibold rounded-lg border transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer",
+                                                    kaufpreisQuickBtnColor
+                                                )}
                                                 title="Diesen Titel direkt in Kauf / Verkauf öffnen"
                                             >
                                                 <Calculator className="size-3.5" />
