@@ -863,11 +863,17 @@ export function StockDetail() {
 
                         if (currentMode === 'manual') {
                             mosPct = activeParams?.mos ?? smartAutoConservative.mos ?? 20;
+                            const manualDcf = (activeParams && Number(activeParams.eps) > 0)
+                                ? calculateDcfFairValue(activeParams, effectivePrice)
+                                : null;
                             effectiveFairValue = (activeParams?.manualFairValue && Number(activeParams.manualFairValue) > 0)
                                 ? Number(activeParams.manualFairValue)
-                                : (activeParams?.eps > 0 ? calculateDcfFairValue(activeParams, effectivePrice).fairValue : (stock.fairValue || 0));
+                                : (manualDcf ? manualDcf.fairValue : (stock.fairValue || 0));
                             calcBuyPrice = effectiveFairValue > 0 ? effectiveFairValue * (1 - mosPct / 100) : null;
-                            calcFuturePrice = effectiveFairValue > 0 ? effectiveFairValue * Math.pow(1.08, 5) : null;
+                            calcFuturePrice = (manualDcf as any)?.futurePrice
+                                ?? ((activeParams && Number(activeParams.eps) > 0 && Number(activeParams.pe) > 0)
+                                    ? (Number(activeParams.eps) * Math.pow(1 + (Number(activeParams.growthRate) || 0) / 100, 5) * Number(activeParams.pe))
+                                    : null);
                         } else if (currentMode === 'quality') {
                             const qParams = (activeParams?.valuationMode === 'quality' && !activeParams?.isCustom && activeParams?.eps > 0) ? activeParams : smartAutoQuality;
                             const dcf = calculateDcfFairValue(qParams, effectivePrice);
