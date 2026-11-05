@@ -412,7 +412,21 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
                     forwardEps,
                     epsSource,
                     growthRate: extractValue(res.growthRate) ?? null,
-                    dividendYield: extractValue(res.dividendYield) || undefined,
+                    dividendYield: (() => {
+                        let dy = extractValue(res.dividendYield);
+                        if (dy === undefined || dy === null || dy === 0) {
+                            const ty = extractValue(res.trailingAnnualDividendYield);
+                            const tr = extractValue(res.trailingAnnualDividendRate) ?? extractValue(res.dividendRate);
+                            if (ty && ty > 0) {
+                                dy = ty < 0.25 ? ty * 100 : ty;
+                            } else if (tr && tr > 0 && price > 0) {
+                                dy = (tr / price) * 100;
+                            }
+                        } else if (dy > 0 && dy < 0.1) {
+                            dy = dy * 100;
+                        }
+                        return dy ? parseFloat(Number(dy).toFixed(2)) : undefined;
+                    })(),
                     longName: res.longName || null,
                     shortName: res.shortName || null,
                     displayName: res.displayName || null,

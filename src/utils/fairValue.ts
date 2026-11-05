@@ -75,11 +75,26 @@ export function computeSmartAutoParams(
         autoDiv = preset.div;
     } else if (qData?.dividendYield !== null && qData?.dividendYield !== undefined && Number(qData.dividendYield) > 0) {
         autoDiv = Number(qData.dividendYield);
+    } else if (qData?.trailingAnnualDividendYield !== null && qData?.trailingAnnualDividendYield !== undefined && Number(qData.trailingAnnualDividendYield) > 0) {
+        autoDiv = Number(qData.trailingAnnualDividendYield);
+    } else if (qData?.trailingAnnualDividendRate && price > 0) {
+        autoDiv = (Number(qData.trailingAnnualDividendRate) / price) * 100;
     } else if (stockObj?.dividendYield !== undefined && Number(stockObj.dividendYield) > 0) {
         autoDiv = Number(stockObj.dividendYield);
     } else if (stockObj?.dividendAmount && price > 0) {
         autoDiv = (Number(stockObj.dividendAmount) / price) * 100;
     }
+
+    // Handle decimal yield if reported as ratio (e.g. 0.003 -> 0.3%)
+    if (autoDiv > 0 && autoDiv < 0.1) {
+        autoDiv = autoDiv * 100;
+    }
+
+    // Specific fallback for Alphabet (GOOG / GOOGL) if Yahoo still returned 0: Alphabet pays $0.80/yr ($0.20/qtr) ~ 0.3%
+    if (autoDiv === 0 && (symUpper === 'GOOG' || symUpper === 'GOOGL' || symUpper === 'ABEA.DE' || symUpper === 'ABEC.DE')) {
+        autoDiv = price > 0 ? parseFloat(((0.80 / price) * 100).toFixed(2)) : 0.3;
+    }
+
     autoDiv = parseFloat(Math.min(Math.max(autoDiv, 0), 25).toFixed(2));
 
     // 2. Smart EPS (protect against negative/zero or restructuring-depressed GAAP/IFRS TTM EPS)
