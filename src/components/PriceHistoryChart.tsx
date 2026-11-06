@@ -1386,7 +1386,6 @@ export function PriceHistoryChart({
                             {/* Measurement Reference Lines & Dots */}
                             {measurePoints.map((p, i) => {
                                 const dotColor = p.extremumType === 'high' ? '#10b981' : p.extremumType === 'low' ? '#f43f5e' : '#3b82f6';
-                                const badgeText = p.extremumType === 'high' ? `H (${i + 1})` : p.extremumType === 'low' ? `T (${i + 1})` : `P${i + 1}`;
                                 return (
                                     <Fragment key={`measure-pt-${i}-${p.date}`}>
                                         <ReferenceLine
@@ -1403,36 +1402,10 @@ export function PriceHistoryChart({
                                             shape={(props: any) => {
                                                 const { cx, cy } = props;
                                                 if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
-
-                                                // Beide Markierungen (H und T) einheitlich unterhalb des Punktes platzieren
-                                                const rectY = cy + 10;
-                                                const textY = cy + 22;
-
                                                 return (
                                                     <g className="pointer-events-none select-none" style={{ outline: 'none' }} tabIndex={-1}>
                                                         <circle cx={cx} cy={cy} r={12} fill={dotColor} fillOpacity={0.25} />
                                                         <circle cx={cx} cy={cy} r={6} fill={dotColor} stroke="#ffffff" strokeWidth={2} />
-                                                        <rect
-                                                            x={cx - 18}
-                                                            y={rectY}
-                                                            width={36}
-                                                            height={17}
-                                                            rx={4}
-                                                            fill="#0f172a"
-                                                            fillOpacity={0.92}
-                                                            stroke={dotColor}
-                                                            strokeWidth={1.2}
-                                                        />
-                                                        <text
-                                                            x={cx}
-                                                            y={textY}
-                                                            textAnchor="middle"
-                                                            fill="#ffffff"
-                                                            fontSize={10}
-                                                            fontWeight="bold"
-                                                        >
-                                                            {badgeText}
-                                                        </text>
                                                     </g>
                                                 );
                                             }}
