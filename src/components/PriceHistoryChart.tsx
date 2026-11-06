@@ -864,14 +864,19 @@ export function PriceHistoryChart({
                                     </span>
                                 </div>
                                 <div className="h-7 w-px bg-white/20" />
-                                <div className="flex flex-col text-[10px] sm:text-xs text-white font-medium leading-tight">
+                                <div className="flex flex-col text-[10px] sm:text-xs text-white font-medium leading-tight gap-0.5">
                                     <div className="flex justify-between items-center gap-2 sm:gap-3">
-                                        <span className="font-bold text-blue-100 flex items-center gap-1">
-                                            <span>Von:</span>
-                                            {measurement.p1.extremumType === 'high' && <span className="bg-white/20 text-white text-[9px] px-1 rounded font-bold">H</span>}
-                                            {measurement.p1.extremumType === 'low' && <span className="bg-white/20 text-white text-[9px] px-1 rounded font-bold">T</span>}
+                                        <span className="font-bold text-blue-100 flex items-center gap-1.5">
+                                            <span className="w-7 shrink-0">Von:</span>
+                                            {measurement.p1.extremumType === 'high' ? (
+                                                <span className="bg-white/20 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded font-bold shrink-0">H</span>
+                                            ) : measurement.p1.extremumType === 'low' ? (
+                                                <span className="bg-white/20 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded font-bold shrink-0">T</span>
+                                            ) : (
+                                                <span className="w-4 shrink-0" />
+                                            )}
                                         </span>
-                                        <span>
+                                        <span className="tabular-nums">
                                             {formatCurrency(measurement.p1.value, displayCurrency, false)}
                                             <span className="ml-1 text-[10px] sm:text-[11px] text-blue-200 font-bold">
                                                 {formatPointDate(measurement.p1.date)}
@@ -879,12 +884,17 @@ export function PriceHistoryChart({
                                         </span>
                                     </div>
                                     <div className="flex justify-between items-center gap-2 sm:gap-3">
-                                        <span className="font-bold text-blue-100 flex items-center gap-1">
-                                            <span>Bis:</span>
-                                            {measurement.p2.extremumType === 'high' && <span className="bg-white/20 text-white text-[9px] px-1 rounded font-bold">H</span>}
-                                            {measurement.p2.extremumType === 'low' && <span className="bg-white/20 text-white text-[9px] px-1 rounded font-bold">T</span>}
+                                        <span className="font-bold text-blue-100 flex items-center gap-1.5">
+                                            <span className="w-7 shrink-0">Bis:</span>
+                                            {measurement.p2.extremumType === 'high' ? (
+                                                <span className="bg-white/20 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded font-bold shrink-0">H</span>
+                                            ) : measurement.p2.extremumType === 'low' ? (
+                                                <span className="bg-white/20 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded font-bold shrink-0">T</span>
+                                            ) : (
+                                                <span className="w-4 shrink-0" />
+                                            )}
                                         </span>
-                                        <span>
+                                        <span className="tabular-nums">
                                             {formatCurrency(measurement.p2.value, displayCurrency, false)}
                                             <span className="ml-1 text-[10px] sm:text-[11px] text-blue-200 font-bold">
                                                 {formatPointDate(measurement.p2.date)}
@@ -907,10 +917,13 @@ export function PriceHistoryChart({
                             <div className="flex items-center gap-2">
                                 <div className="size-2 rounded-full bg-amber-300 animate-pulse shrink-0" />
                                 <div className="flex flex-col leading-tight">
-                                    <span className="text-xs font-bold whitespace-nowrap flex items-center gap-1 text-white">
+                                    <span className="text-xs font-bold whitespace-nowrap flex items-center gap-1.5 text-white">
                                         <span>1. Punkt:</span>
-                                        {measurePoints[0].extremumType === 'high' && <span className="bg-white/20 text-white text-[9px] px-1 rounded font-bold">H</span>}
-                                        {measurePoints[0].extremumType === 'low' && <span className="bg-white/20 text-white text-[9px] px-1 rounded font-bold">T</span>}
+                                        {measurePoints[0].extremumType === 'high' ? (
+                                            <span className="bg-white/20 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded font-bold shrink-0">H</span>
+                                        ) : measurePoints[0].extremumType === 'low' ? (
+                                            <span className="bg-white/20 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded font-bold shrink-0">T</span>
+                                        ) : null}
                                         <span>{formatCurrency(measurePoints[0].value, displayCurrency, false)}</span>
                                     </span>
                                     <span className="text-[10px] text-blue-100">Jetzt 2. Punkt wählen: [H], [T] oder im Chart</span>
