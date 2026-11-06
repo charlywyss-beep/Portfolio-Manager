@@ -926,15 +926,15 @@ export function PriceHistoryChart({
                             </div>
                         )}
 
-                        {/* Quick H / T selection buttons in toolbar */}
-                        <div className="flex items-center gap-1 pl-1.5 sm:pl-2 border-l border-white/20">
+                        {/* Quick H / T selection buttons in toolbar (untereinander ausgerichtet) */}
+                        <div className="flex flex-col gap-1 pl-1.5 sm:pl-2 border-l border-white/20 justify-center">
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     handleExtremumMeasure('high');
                                 }}
                                 className={cn(
-                                    "px-2 py-1 rounded text-[11px] font-bold transition-all flex items-center gap-1 border",
+                                    "px-2 py-0.5 rounded text-[10px] font-bold transition-all flex items-center justify-between gap-1.5 border min-w-[62px]",
                                     highMeasureIdx >= 0
                                         ? "bg-emerald-600 text-white border-white/40 shadow-sm"
                                         : "bg-white/20 hover:bg-white/30 text-white border-white/20"
@@ -948,8 +948,10 @@ export function PriceHistoryChart({
                                 }
                             >
                                 <span className="text-white">Hoch</span>
-                                {highMeasureIdx >= 0 && (
-                                    <span className="bg-black/30 text-white px-1 rounded text-[9px] font-bold">P{highMeasureIdx + 1}</span>
+                                {highMeasureIdx >= 0 ? (
+                                    <span className="bg-black/30 text-white px-1 rounded text-[8.5px] font-bold leading-none py-0.5">P{highMeasureIdx + 1}</span>
+                                ) : (
+                                    <span className="text-[9px] text-white/50 font-bold leading-none">H</span>
                                 )}
                             </button>
 
@@ -959,7 +961,7 @@ export function PriceHistoryChart({
                                     handleExtremumMeasure('low');
                                 }}
                                 className={cn(
-                                    "px-2 py-1 rounded text-[11px] font-bold transition-all flex items-center gap-1 border",
+                                    "px-2 py-0.5 rounded text-[10px] font-bold transition-all flex items-center justify-between gap-1.5 border min-w-[62px]",
                                     lowMeasureIdx >= 0
                                         ? "bg-rose-600 text-white border-white/40 shadow-sm"
                                         : "bg-white/20 hover:bg-white/30 text-white border-white/20"
@@ -973,8 +975,10 @@ export function PriceHistoryChart({
                                 }
                             >
                                 <span className="text-white">Tief</span>
-                                {lowMeasureIdx >= 0 && (
-                                    <span className="bg-black/30 text-white px-1 rounded text-[9px] font-bold">P{lowMeasureIdx + 1}</span>
+                                {lowMeasureIdx >= 0 ? (
+                                    <span className="bg-black/30 text-white px-1 rounded text-[8.5px] font-bold leading-none py-0.5">P{lowMeasureIdx + 1}</span>
+                                ) : (
+                                    <span className="text-[9px] text-white/50 font-bold leading-none">T</span>
                                 )}
                             </button>
                         </div>
