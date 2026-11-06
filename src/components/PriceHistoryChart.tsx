@@ -856,10 +856,7 @@ export function PriceHistoryChart({
                         {measurement ? (
                             <div className="flex items-center gap-2 sm:gap-3">
                                 <div className="flex flex-col items-center leading-tight">
-                                    <span className={cn(
-                                        "text-base sm:text-lg font-black whitespace-nowrap",
-                                        measurement.percent > 0 ? "text-green-300" : measurement.percent < 0 ? "text-red-300" : "text-white"
-                                    )}>
+                                    <span className="text-base sm:text-lg font-black whitespace-nowrap text-white">
                                         {measurement.percent > 0 ? '+' : ''}{measurement.percent.toFixed(2)}%
                                     </span>
                                     <span className="text-[11px] sm:text-xs font-bold text-blue-100 whitespace-nowrap">
@@ -871,8 +868,8 @@ export function PriceHistoryChart({
                                     <div className="flex justify-between items-center gap-2 sm:gap-3">
                                         <span className="font-bold text-blue-100 flex items-center gap-1">
                                             <span>Von:</span>
-                                            {measurement.p1.extremumType === 'high' && <span className="bg-emerald-500 text-white text-[9px] px-1 rounded font-black">H</span>}
-                                            {measurement.p1.extremumType === 'low' && <span className="bg-rose-500 text-white text-[9px] px-1 rounded font-black">T</span>}
+                                            {measurement.p1.extremumType === 'high' && <span className="bg-white/20 text-white text-[9px] px-1 rounded font-bold">H</span>}
+                                            {measurement.p1.extremumType === 'low' && <span className="bg-white/20 text-white text-[9px] px-1 rounded font-bold">T</span>}
                                         </span>
                                         <span>
                                             {formatCurrency(measurement.p1.value, displayCurrency, false)}
@@ -884,8 +881,8 @@ export function PriceHistoryChart({
                                     <div className="flex justify-between items-center gap-2 sm:gap-3">
                                         <span className="font-bold text-blue-100 flex items-center gap-1">
                                             <span>Bis:</span>
-                                            {measurement.p2.extremumType === 'high' && <span className="bg-emerald-500 text-white text-[9px] px-1 rounded font-black">H</span>}
-                                            {measurement.p2.extremumType === 'low' && <span className="bg-rose-500 text-white text-[9px] px-1 rounded font-black">T</span>}
+                                            {measurement.p2.extremumType === 'high' && <span className="bg-white/20 text-white text-[9px] px-1 rounded font-bold">H</span>}
+                                            {measurement.p2.extremumType === 'low' && <span className="bg-white/20 text-white text-[9px] px-1 rounded font-bold">T</span>}
                                         </span>
                                         <span>
                                             {formatCurrency(measurement.p2.value, displayCurrency, false)}
@@ -910,10 +907,10 @@ export function PriceHistoryChart({
                             <div className="flex items-center gap-2">
                                 <div className="size-2 rounded-full bg-amber-300 animate-pulse shrink-0" />
                                 <div className="flex flex-col leading-tight">
-                                    <span className="text-xs font-bold whitespace-nowrap flex items-center gap-1">
+                                    <span className="text-xs font-bold whitespace-nowrap flex items-center gap-1 text-white">
                                         <span>1. Punkt:</span>
-                                        {measurePoints[0].extremumType === 'high' && <span className="bg-emerald-500 text-white text-[9px] px-1 rounded font-black">H</span>}
-                                        {measurePoints[0].extremumType === 'low' && <span className="bg-rose-500 text-white text-[9px] px-1 rounded font-black">T</span>}
+                                        {measurePoints[0].extremumType === 'high' && <span className="bg-white/20 text-white text-[9px] px-1 rounded font-bold">H</span>}
+                                        {measurePoints[0].extremumType === 'low' && <span className="bg-white/20 text-white text-[9px] px-1 rounded font-bold">T</span>}
                                         <span>{formatCurrency(measurePoints[0].value, displayCurrency, false)}</span>
                                     </span>
                                     <span className="text-[10px] text-blue-100">Jetzt 2. Punkt wählen: [H], [T] oder im Chart</span>
@@ -937,9 +934,9 @@ export function PriceHistoryChart({
                                     handleExtremumMeasure('high');
                                 }}
                                 className={cn(
-                                    "px-1.5 sm:px-2 py-1 rounded text-[10px] font-black transition-all flex items-center gap-1 border",
+                                    "px-2 py-1 rounded text-[11px] font-bold transition-all flex items-center gap-1 border",
                                     highMeasureIdx >= 0
-                                        ? "bg-emerald-500 text-white border-white/50 shadow"
+                                        ? "bg-emerald-600 text-white border-white/40 shadow-sm"
                                         : "bg-white/20 hover:bg-white/30 text-white border-white/20"
                                 )}
                                 title={
@@ -950,10 +947,9 @@ export function PriceHistoryChart({
                                             : "Hoch als 2. Messpunkt wählen"
                                 }
                             >
-                                <span className="text-emerald-300 font-extrabold">H</span>
-                                <span className="hidden sm:inline">och</span>
+                                <span className="text-white">Hoch</span>
                                 {highMeasureIdx >= 0 && (
-                                    <span className="bg-blue-900/60 text-white px-1 rounded text-[9px] font-black">P{highMeasureIdx + 1}</span>
+                                    <span className="bg-black/30 text-white px-1 rounded text-[9px] font-bold">P{highMeasureIdx + 1}</span>
                                 )}
                             </button>
 
@@ -963,9 +959,9 @@ export function PriceHistoryChart({
                                     handleExtremumMeasure('low');
                                 }}
                                 className={cn(
-                                    "px-1.5 sm:px-2 py-1 rounded text-[10px] font-black transition-all flex items-center gap-1 border",
+                                    "px-2 py-1 rounded text-[11px] font-bold transition-all flex items-center gap-1 border",
                                     lowMeasureIdx >= 0
-                                        ? "bg-rose-500 text-white border-white/50 shadow"
+                                        ? "bg-rose-600 text-white border-white/40 shadow-sm"
                                         : "bg-white/20 hover:bg-white/30 text-white border-white/20"
                                 )}
                                 title={
@@ -976,10 +972,9 @@ export function PriceHistoryChart({
                                             : "Tief als 2. Messpunkt wählen"
                                 }
                             >
-                                <span className="text-rose-300 font-extrabold">T</span>
-                                <span className="hidden sm:inline">ief</span>
+                                <span className="text-white">Tief</span>
                                 {lowMeasureIdx >= 0 && (
-                                    <span className="bg-blue-900/60 text-white px-1 rounded text-[9px] font-black">P{lowMeasureIdx + 1}</span>
+                                    <span className="bg-black/30 text-white px-1 rounded text-[9px] font-bold">P{lowMeasureIdx + 1}</span>
                                 )}
                             </button>
                         </div>
