@@ -88,13 +88,12 @@ export function CurrencyChart({ inverse = false }: Props) {
                         };
                     });
                     
-                    // Filter out duplicates (Yahoo sometimes returns multiple points per day on larger intervals)
-                    const uniqueDates = new Set<string>();
-                    const filtered = transformed.filter((t: any) => {
-                        if (uniqueDates.has(t.date)) return false;
-                        uniqueDates.add(t.date);
-                        return true;
+                    // Filter out duplicates: keep the latest rate of each day (closing/current rate)
+                    const mapByDate = new Map<string, number>();
+                    transformed.forEach((t: any) => {
+                        mapByDate.set(t.date, t.rate);
                     });
+                    const filtered = Array.from(mapByDate.entries()).map(([date, rate]) => ({ date, rate }));
 
                     setHistoryData(filtered);
 
@@ -268,9 +267,9 @@ export function CurrencyChart({ inverse = false }: Props) {
                 ) : (
                     hasMounted && (
                         <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
-                            <AreaChart data={historyData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                            <AreaChart data={historyData} margin={{ top: 10, right: 35, left: -10, bottom: 0 }}>
                                 <defs>
-                                    <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
+                                    <linearGradient id={inverse ? "colorRateInverse" : "colorRateDirect"} x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
                                         <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                                     </linearGradient>
@@ -279,11 +278,25 @@ export function CurrencyChart({ inverse = false }: Props) {
                                 <XAxis
                                     dataKey="date"
                                     tickFormatter={(date) => {
-                                        const d = new Date(date);
+                                        if (!date) return '';
+                                        const d = new Date(date.includes('T') ? date : date + 'T12:00:00');
+                                        if (isNaN(d.getTime())) return date;
+                                        if (timeRange === '1W') {
+                                            const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+                                            const w = days[d.getDay()];
+                                            const dd = String(d.getDate()).padStart(2, '0');
+                                            const mm = String(d.getMonth() + 1).padStart(2, '0');
+                                            const yy = String(d.getFullYear()).slice(-2);
+                                            return `${w} ${dd}.${mm}.${yy}`;
+                                        }
+                                        if (timeRange === '1M' || timeRange === '3M') {
+                                            return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+                                        }
                                         return d.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
                                     }}
-                                    tick={{ fontSize: 11, fill: 'currentColor', opacity: 0.5 }}
-                                    minTickGap={30}
+                                    interval={timeRange === '1W' ? 0 : 'preserveEnd'}
+                                    minTickGap={timeRange === '1W' ? 0 : 30}
+                                    tick={{ fontSize: timeRange === '1W' ? 10 : 11, fill: 'currentColor', opacity: 0.6 }}
                                     tickLine={false}
                                     axisLine={false}
                                 />
@@ -297,7 +310,14 @@ export function CurrencyChart({ inverse = false }: Props) {
                                 <Tooltip
                                     contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                                     itemStyle={{ color: 'hsl(var(--foreground))' }}
-                                    labelFormatter={(date) => new Date(date).toLocaleDateString('de-DE')}
+                                    labelFormatter={(date) => {
+                                        if (!date) return '';
+                                        const d = new Date(date.includes('T') ? date : date + 'T12:00:00');
+                                        if (isNaN(d.getTime())) return date;
+                                        const days = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+                                        const w = days[d.getDay()];
+                                        return `${w}, ${d.toLocaleDateString('de-DE')}`;
+                                    }}
                                     formatter={(value: number) => [value.toFixed(4), targetCurrency]}
                                 />
                                 <Area
@@ -306,8 +326,9 @@ export function CurrencyChart({ inverse = false }: Props) {
                                     stroke="hsl(var(--primary))"
                                     strokeWidth={2}
                                     fillOpacity={1}
-                                    fill="url(#colorRate)"
+                                    fill={`url(#${inverse ? "colorRateInverse" : "colorRateDirect"})`}
                                     animationDuration={500}
+                                    activeDot={{ r: 4, strokeWidth: 2, fill: 'hsl(var(--background))' }}
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
