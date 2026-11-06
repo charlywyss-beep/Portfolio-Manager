@@ -1,10 +1,17 @@
 import { useMemo, useState, useEffect, Fragment, useRef } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
 import { useCurrencyFormatter } from '../utils/currency';
-import { Ruler, X } from 'lucide-react';
+import { Ruler, X, ArrowLeftRight } from 'lucide-react';
 import { cn } from '../utils';
 import { type TimeRange } from '../services/yahoo-finance';
 import { useExchangeRates } from '../context/ExchangeRateContext';
+
+export interface MeasurePoint {
+    date: string;
+    value: number;
+    label?: string;
+    extremumType?: 'high' | 'low';
+}
 
 
 export function formatRangeLabel(range: string): string {
@@ -71,7 +78,7 @@ export function PriceHistoryChart({
         return () => window.removeEventListener('resize', handleResize);
     }, []);
     const [isMeasureMode, setIsMeasureMode] = useState(false);
-    const [measurePoints, setMeasurePoints] = useState<{ date: string; value: number }[]>([]);
+    const [measurePoints, setMeasurePoints] = useState<MeasurePoint[]>([]);
     const lastMeasureClickRef = useRef(0);
     const [hoveredData, setHoveredData] = useState<{ date: string; value: number; sma200?: number | null } | null>(null);
     const [selectedExtremum, setSelectedExtremum] = useState<'high' | 'low' | null>(null);
@@ -428,11 +435,63 @@ export function PriceHistoryChart({
         return { minPoint: minP, maxPoint: maxP };
     }, [displayData]);
 
+    const highMeasureIdx = useMemo(() => {
+        if (!maxPoint) return -1;
+        return measurePoints.findIndex(p => p.extremumType === 'high' || (p.date === maxPoint.date && Math.abs(p.value - maxPoint.value) < 0.0001));
+    }, [measurePoints, maxPoint]);
+
+    const lowMeasureIdx = useMemo(() => {
+        if (!minPoint) return -1;
+        return measurePoints.findIndex(p => p.extremumType === 'low' || (p.date === minPoint.date && Math.abs(p.value - minPoint.value) < 0.0001));
+    }, [measurePoints, minPoint]);
+
+    const handleExtremumMeasure = (type: 'high' | 'low') => {
+        const pt = type === 'high' ? maxPoint : minPoint;
+        if (!pt) return;
+
+        setSelectedExtremum(null);
+
+        const newPt: MeasurePoint = {
+            date: pt.date,
+            value: pt.value,
+            label: type === 'high' ? 'Hoch (H)' : 'Tief (T)',
+            extremumType: type
+        };
+
+        setMeasurePoints(prev => {
+            if (prev.length >= 2) {
+                return [newPt];
+            }
+            if (prev.length === 1 && (prev[0].extremumType === type || (prev[0].date === newPt.date && Math.abs(prev[0].value - newPt.value) < 0.0001))) {
+                return [];
+            }
+            return [...prev, newPt];
+        });
+    };
+
+    const formatPointDate = (dateStr: string) => {
+        try {
+            const d = new Date(dateStr);
+            if (selectedRange === '1D') {
+                return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr';
+            }
+            if (selectedRange === '1W') {
+                const weekday = d.toLocaleDateString('de-DE', { weekday: 'short' });
+                const date = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+                return `${weekday} ${date}`;
+            }
+            return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+        } catch {
+            return dateStr;
+        }
+    };
+
     const measurement = useMemo(() => {
         if (measurePoints.length !== 2) return null;
-        const [p1, p2] = [...measurePoints].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const p1 = measurePoints[0];
+        const p2 = measurePoints[1];
         const diff = p2.value - p1.value;
-        const percent = (diff / p1.value) * 100;
+        const percent = p1.value !== 0 ? (diff / p1.value) * 100 : 0;
         return { p1, p2, diff, percent };
     }, [measurePoints]);
 
@@ -470,39 +529,103 @@ export function PriceHistoryChart({
                             hoveredData && "opacity-0 sm:opacity-100"
                         )}>
                             <div className="flex items-center gap-1">
-
                                 <button
                                     type="button"
                                     data-extremum-btn="true"
-                                    onClick={() => setSelectedExtremum(prev => prev === 'high' ? null : 'high')}
+                                    onClick={() => {
+                                        if (isMeasureMode) {
+                                            handleExtremumMeasure('high');
+                                        } else {
+                                            setSelectedExtremum(prev => prev === 'high' ? null : 'high');
+                                        }
+                                    }}
                                     className={cn(
                                         "inline-flex items-center gap-1.5 px-2 py-0.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-lg landscape:text-lg font-bold",
-                                        selectedExtremum === 'high'
-                                            ? "bg-emerald-500/20 border-emerald-500 text-foreground shadow-sm"
-                                            : "border-transparent hover:bg-muted/60 text-foreground"
+                                        isMeasureMode
+                                            ? highMeasureIdx >= 0
+                                                ? "bg-blue-600 text-white border-blue-400 shadow-md ring-2 ring-blue-400/50"
+                                                : "border-blue-400/60 bg-blue-500/10 hover:bg-blue-500/20 text-foreground"
+                                            : selectedExtremum === 'high'
+                                                ? "bg-emerald-500/20 border-emerald-500 text-foreground shadow-sm"
+                                                : "border-transparent hover:bg-muted/60 text-foreground"
                                     )}
-                                    title="Klicken, um das Hoch im Chart zu markieren"
+                                    title={
+                                        isMeasureMode
+                                            ? highMeasureIdx >= 0
+                                                ? `Hoch ist Messpunkt ${highMeasureIdx + 1} (Klicken zum Entfernen)`
+                                                : measurePoints.length === 0
+                                                    ? "Hoch als 1. Messpunkt wählen"
+                                                    : "Hoch als 2. Messpunkt wählen"
+                                            : "Klicken, um das Hoch im Chart zu markieren"
+                                    }
                                 >
-                                    <span className="font-extrabold text-emerald-500 dark:text-emerald-400">H:</span>
-                                    <span className="font-bold text-foreground">{formatCurrency(maxPrice, displayCurrency, false)}</span>
+                                    <span className={cn(
+                                        "font-extrabold",
+                                        isMeasureMode && highMeasureIdx >= 0 ? "text-emerald-300" : "text-emerald-500 dark:text-emerald-400"
+                                    )}>H:</span>
+                                    <span className={cn("font-bold", isMeasureMode && highMeasureIdx >= 0 ? "text-white" : "text-foreground")}>
+                                        {formatCurrency(maxPrice, displayCurrency, false)}
+                                    </span>
+                                    {isMeasureMode && (
+                                        <span className={cn(
+                                            "text-[10px] px-1.5 py-0.2 rounded-full font-black ml-0.5",
+                                            highMeasureIdx >= 0
+                                                ? "bg-white text-blue-700 shadow-sm"
+                                                : "bg-blue-500/20 text-blue-400 border border-blue-400/40"
+                                        )}>
+                                            {highMeasureIdx >= 0 ? `P${highMeasureIdx + 1}` : 'Messpunkt'}
+                                        </span>
+                                    )}
                                 </button>
                             </div>
                             <div className="flex items-center gap-1">
-
                                 <button
                                     type="button"
                                     data-extremum-btn="true"
-                                    onClick={() => setSelectedExtremum(prev => prev === 'low' ? null : 'low')}
+                                    onClick={() => {
+                                        if (isMeasureMode) {
+                                            handleExtremumMeasure('low');
+                                        } else {
+                                            setSelectedExtremum(prev => prev === 'low' ? null : 'low');
+                                        }
+                                    }}
                                     className={cn(
                                         "inline-flex items-center gap-1.5 px-2 py-0.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-lg landscape:text-lg font-bold",
-                                        selectedExtremum === 'low'
-                                            ? "bg-rose-500/20 border-rose-500 text-foreground shadow-sm"
-                                            : "border-transparent hover:bg-muted/60 text-foreground"
+                                        isMeasureMode
+                                            ? lowMeasureIdx >= 0
+                                                ? "bg-blue-600 text-white border-blue-400 shadow-md ring-2 ring-blue-400/50"
+                                                : "border-blue-400/60 bg-blue-500/10 hover:bg-blue-500/20 text-foreground"
+                                            : selectedExtremum === 'low'
+                                                ? "bg-rose-500/20 border-rose-500 text-foreground shadow-sm"
+                                                : "border-transparent hover:bg-muted/60 text-foreground"
                                     )}
-                                    title="Klicken, um das Tief im Chart zu markieren"
+                                    title={
+                                        isMeasureMode
+                                            ? lowMeasureIdx >= 0
+                                                ? `Tief ist Messpunkt ${lowMeasureIdx + 1} (Klicken zum Entfernen)`
+                                                : measurePoints.length === 0
+                                                    ? "Tief als 1. Messpunkt wählen"
+                                                    : "Tief als 2. Messpunkt wählen"
+                                            : "Klicken, um das Tief im Chart zu markieren"
+                                    }
                                 >
-                                    <span className="font-extrabold text-rose-500 dark:text-rose-400">T:</span>
-                                    <span className="font-bold text-foreground">{formatCurrency(minPrice, displayCurrency, false)}</span>
+                                    <span className={cn(
+                                        "font-extrabold",
+                                        isMeasureMode && lowMeasureIdx >= 0 ? "text-rose-300" : "text-rose-500 dark:text-rose-400"
+                                    )}>T:</span>
+                                    <span className={cn("font-bold", isMeasureMode && lowMeasureIdx >= 0 ? "text-white" : "text-foreground")}>
+                                        {formatCurrency(minPrice, displayCurrency, false)}
+                                    </span>
+                                    {isMeasureMode && (
+                                        <span className={cn(
+                                            "text-[10px] px-1.5 py-0.2 rounded-full font-black ml-0.5",
+                                            lowMeasureIdx >= 0
+                                                ? "bg-white text-blue-700 shadow-sm"
+                                                : "bg-blue-500/20 text-blue-400 border border-blue-400/40"
+                                        )}>
+                                            {lowMeasureIdx >= 0 ? `P${lowMeasureIdx + 1}` : 'Messpunkt'}
+                                        </span>
+                                    )}
                                 </button>
                             </div>
                         </div>
@@ -651,17 +774,19 @@ export function PriceHistoryChart({
                         <button
                             onClick={() => {
                                 setIsMeasureMode(prev => {
+                                    const next = !prev;
                                     setMeasurePoints([]);
-                                    return !prev;
+                                    if (next) setSelectedExtremum(null);
+                                    return next;
                                 });
                             }}
                             className={cn(
                                 "px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 border font-medium text-[10px] sm:text-xs shadow-sm",
                                 isMeasureMode
-                                    ? "bg-blue-600 text-white border-blue-700 shadow-md"
+                                    ? "bg-blue-600 text-white border-blue-700 shadow-md ring-2 ring-blue-400/50"
                                     : "bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/20"
                             )}
-                            title="Messmodus: Zwei Punkte im Chart klicken für %-Vergleich"
+                            title="Messmodus: Punkte im Chart anklicken oder Hoch (H) / Tief (T) wählen"
                         >
                             <Ruler className="size-3.5" />
                             <span className="text-[10px] font-bold hidden sm:inline">Messen</span>
@@ -727,11 +852,14 @@ export function PriceHistoryChart({
 
             {isMeasureMode && (
                 <div className="absolute top-2 right-2 z-20 animate-in fade-in slide-in-from-right-2 max-w-[calc(100%-1rem)]">
-                    <div className="bg-blue-600 dark:bg-blue-500 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-2xl border border-blue-400/30 flex items-center gap-3 sm:gap-4 text-xs sm:text-sm">
+                    <div className="bg-blue-600 dark:bg-blue-500 text-white px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-2xl border border-blue-400/30 flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
                         {measurement ? (
-                            <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="flex items-center gap-2 sm:gap-3">
                                 <div className="flex flex-col items-center leading-tight">
-                                    <span className="text-base sm:text-lg font-black whitespace-nowrap">
+                                    <span className={cn(
+                                        "text-base sm:text-lg font-black whitespace-nowrap",
+                                        measurement.percent > 0 ? "text-green-300" : measurement.percent < 0 ? "text-red-300" : "text-white"
+                                    )}>
                                         {measurement.percent > 0 ? '+' : ''}{measurement.percent.toFixed(2)}%
                                     </span>
                                     <span className="text-[11px] sm:text-xs font-bold text-blue-100 whitespace-nowrap">
@@ -740,34 +868,55 @@ export function PriceHistoryChart({
                                 </div>
                                 <div className="h-7 w-px bg-white/20" />
                                 <div className="flex flex-col text-[10px] sm:text-xs text-white font-medium leading-tight">
-                                    <div className="flex justify-between gap-3">
-                                        <span className="font-bold text-blue-100">Von:</span>
+                                    <div className="flex justify-between items-center gap-2 sm:gap-3">
+                                        <span className="font-bold text-blue-100 flex items-center gap-1">
+                                            <span>Von:</span>
+                                            {measurement.p1.extremumType === 'high' && <span className="bg-emerald-500 text-white text-[9px] px-1 rounded font-black">H</span>}
+                                            {measurement.p1.extremumType === 'low' && <span className="bg-rose-500 text-white text-[9px] px-1 rounded font-black">T</span>}
+                                        </span>
                                         <span>
                                             {formatCurrency(measurement.p1.value, displayCurrency, false)}
                                             <span className="ml-1 text-[10px] sm:text-[11px] text-blue-200 font-bold">
-                                                {new Date(measurement.p1.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })}
+                                                {formatPointDate(measurement.p1.date)}
                                             </span>
                                         </span>
                                     </div>
-                                    <div className="flex justify-between gap-3">
-                                        <span className="font-bold text-blue-100">Bis:</span>
+                                    <div className="flex justify-between items-center gap-2 sm:gap-3">
+                                        <span className="font-bold text-blue-100 flex items-center gap-1">
+                                            <span>Bis:</span>
+                                            {measurement.p2.extremumType === 'high' && <span className="bg-emerald-500 text-white text-[9px] px-1 rounded font-black">H</span>}
+                                            {measurement.p2.extremumType === 'low' && <span className="bg-rose-500 text-white text-[9px] px-1 rounded font-black">T</span>}
+                                        </span>
                                         <span>
                                             {formatCurrency(measurement.p2.value, displayCurrency, false)}
                                             <span className="ml-1 text-[10px] sm:text-[11px] text-blue-200 font-bold">
-                                                {new Date(measurement.p2.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })}
+                                                {formatPointDate(measurement.p2.date)}
                                             </span>
                                         </span>
                                     </div>
                                 </div>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setMeasurePoints(prev => [prev[1], prev[0]]);
+                                    }}
+                                    className="bg-white/20 hover:bg-white/30 p-1.5 rounded-lg transition-colors flex items-center justify-center text-white shrink-0"
+                                    title="Richtung umkehren (Start ⇄ Ziel)"
+                                >
+                                    <ArrowLeftRight className="size-3.5" />
+                                </button>
                             </div>
                         ) : measurePoints.length === 1 ? (
                             <div className="flex items-center gap-2">
                                 <div className="size-2 rounded-full bg-amber-300 animate-pulse shrink-0" />
                                 <div className="flex flex-col leading-tight">
-                                    <span className="text-xs font-bold whitespace-nowrap">
-                                        1. Punkt: {formatCurrency(measurePoints[0].value, displayCurrency, false)}
+                                    <span className="text-xs font-bold whitespace-nowrap flex items-center gap-1">
+                                        <span>1. Punkt:</span>
+                                        {measurePoints[0].extremumType === 'high' && <span className="bg-emerald-500 text-white text-[9px] px-1 rounded font-black">H</span>}
+                                        {measurePoints[0].extremumType === 'low' && <span className="bg-rose-500 text-white text-[9px] px-1 rounded font-black">T</span>}
+                                        <span>{formatCurrency(measurePoints[0].value, displayCurrency, false)}</span>
                                     </span>
-                                    <span className="text-[10px] text-blue-100">Jetzt 2. Punkt (Endpunkt) im Chart anklicken</span>
+                                    <span className="text-[10px] text-blue-100">Jetzt 2. Punkt wählen: [H], [T] oder im Chart</span>
                                 </div>
                             </div>
                         ) : (
@@ -775,11 +924,67 @@ export function PriceHistoryChart({
                                 <Ruler className="size-4 text-blue-200 shrink-0" />
                                 <div className="flex flex-col leading-tight">
                                     <span className="text-xs font-bold whitespace-nowrap">Messmodus aktiv</span>
-                                    <span className="text-[10px] text-blue-100">1. Punkt im Chart anklicken</span>
+                                    <span className="text-[10px] text-blue-100">1. Punkt wählen: [H], [T] oder im Chart</span>
                                 </div>
                             </div>
                         )}
-                        <div className="flex items-center gap-1 ml-1 pl-2 border-l border-white/20">
+
+                        {/* Quick H / T selection buttons in toolbar */}
+                        <div className="flex items-center gap-1 pl-1.5 sm:pl-2 border-l border-white/20">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleExtremumMeasure('high');
+                                }}
+                                className={cn(
+                                    "px-1.5 sm:px-2 py-1 rounded text-[10px] font-black transition-all flex items-center gap-1 border",
+                                    highMeasureIdx >= 0
+                                        ? "bg-emerald-500 text-white border-white/50 shadow"
+                                        : "bg-white/20 hover:bg-white/30 text-white border-white/20"
+                                )}
+                                title={
+                                    highMeasureIdx >= 0
+                                        ? `Hoch ist Messpunkt ${highMeasureIdx + 1}`
+                                        : measurePoints.length === 0
+                                            ? "Hoch als 1. Messpunkt wählen"
+                                            : "Hoch als 2. Messpunkt wählen"
+                                }
+                            >
+                                <span className="text-emerald-300 font-extrabold">H</span>
+                                <span className="hidden sm:inline">och</span>
+                                {highMeasureIdx >= 0 && (
+                                    <span className="bg-blue-900/60 text-white px-1 rounded text-[9px] font-black">P{highMeasureIdx + 1}</span>
+                                )}
+                            </button>
+
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleExtremumMeasure('low');
+                                }}
+                                className={cn(
+                                    "px-1.5 sm:px-2 py-1 rounded text-[10px] font-black transition-all flex items-center gap-1 border",
+                                    lowMeasureIdx >= 0
+                                        ? "bg-rose-500 text-white border-white/50 shadow"
+                                        : "bg-white/20 hover:bg-white/30 text-white border-white/20"
+                                )}
+                                title={
+                                    lowMeasureIdx >= 0
+                                        ? `Tief ist Messpunkt ${lowMeasureIdx + 1}`
+                                        : measurePoints.length === 0
+                                            ? "Tief als 1. Messpunkt wählen"
+                                            : "Tief als 2. Messpunkt wählen"
+                                }
+                            >
+                                <span className="text-rose-300 font-extrabold">T</span>
+                                <span className="hidden sm:inline">ief</span>
+                                {lowMeasureIdx >= 0 && (
+                                    <span className="bg-blue-900/60 text-white px-1 rounded text-[9px] font-black">P{lowMeasureIdx + 1}</span>
+                                )}
+                            </button>
+                        </div>
+
+                        <div className="flex items-center gap-1 pl-1.5 sm:pl-2 border-l border-white/20">
                             {measurePoints.length > 0 && (
                                 <button
                                     onClick={(e) => {
@@ -842,9 +1047,17 @@ export function PriceHistoryChart({
                                 }
 
                                 if (point) {
+                                    const isHigh = maxPoint && point.date === maxPoint.date && Math.abs(point.value - maxPoint.value) < 0.0001;
+                                    const isLow = minPoint && point.date === minPoint.date && Math.abs(point.value - minPoint.value) < 0.0001;
+                                    const newPoint: MeasurePoint = {
+                                        date: point.date,
+                                        value: point.value,
+                                        extremumType: isHigh ? 'high' : isLow ? 'low' : undefined,
+                                        label: isHigh ? 'Hoch (H)' : isLow ? 'Tief (T)' : undefined
+                                    };
                                     setMeasurePoints(prev => {
-                                        if (prev.length >= 2) return [point];
-                                        return [...prev, point];
+                                        if (prev.length >= 2) return [newPoint];
+                                        return [...prev, newPoint];
                                     });
                                 }
                             }}
@@ -1159,45 +1372,71 @@ export function PriceHistoryChart({
                             })()}
 
                             {/* Measurement Reference Lines & Dots */}
-                            {measurePoints.map((p, i) => (
-                                <Fragment key={`measure-pt-${i}`}>
-                                    <ReferenceLine
-                                        x={p.date}
-                                        stroke="#3b82f6"
-                                        strokeWidth={2}
-                                        strokeOpacity={1}
-                                    />
-                                    <ReferenceDot
-                                        x={p.date}
-                                        y={p.value}
-                                        r={6}
-                                        shape={(props: any) => {
-                                            const { cx, cy } = props;
-                                            if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
-                                            return (
-                                                <g className="pointer-events-none select-none" style={{ outline: 'none' }} tabIndex={-1}>
-                                                    <circle cx={cx} cy={cy} r={11} fill="#3b82f6" fillOpacity={0.25} />
-                                                    <circle cx={cx} cy={cy} r={5} fill="#3b82f6" stroke="#ffffff" strokeWidth={2} />
-                                                </g>
-                                            );
-                                        }}
-                                    />
-                                </Fragment>
-                            ))}
+                            {measurePoints.map((p, i) => {
+                                const dotColor = p.extremumType === 'high' ? '#10b981' : p.extremumType === 'low' ? '#f43f5e' : '#3b82f6';
+                                const badgeText = p.extremumType === 'high' ? `H (${i + 1})` : p.extremumType === 'low' ? `T (${i + 1})` : `P${i + 1}`;
+                                return (
+                                    <Fragment key={`measure-pt-${i}-${p.date}`}>
+                                        <ReferenceLine
+                                            x={p.date}
+                                            stroke={dotColor}
+                                            strokeWidth={2}
+                                            strokeDasharray={p.extremumType ? '3 3' : undefined}
+                                            strokeOpacity={0.9}
+                                        />
+                                        <ReferenceDot
+                                            x={p.date}
+                                            y={p.value}
+                                            r={6}
+                                            shape={(props: any) => {
+                                                const { cx, cy } = props;
+                                                if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
+                                                return (
+                                                    <g className="pointer-events-none select-none" style={{ outline: 'none' }} tabIndex={-1}>
+                                                        <circle cx={cx} cy={cy} r={12} fill={dotColor} fillOpacity={0.25} />
+                                                        <circle cx={cx} cy={cy} r={6} fill={dotColor} stroke="#ffffff" strokeWidth={2} />
+                                                        <rect
+                                                            x={cx - 18}
+                                                            y={cy - 26}
+                                                            width={36}
+                                                            height={17}
+                                                            rx={4}
+                                                            fill="#0f172a"
+                                                            fillOpacity={0.9}
+                                                            stroke={dotColor}
+                                                            strokeWidth={1.2}
+                                                        />
+                                                        <text
+                                                            x={cx}
+                                                            y={cy - 14}
+                                                            textAnchor="middle"
+                                                            fill="#ffffff"
+                                                            fontSize={10}
+                                                            fontWeight="bold"
+                                                        >
+                                                            {badgeText}
+                                                        </text>
+                                                    </g>
+                                                );
+                                            }}
+                                        />
+                                    </Fragment>
+                                );
+                            })}
                             {measurement && (
                                 <ReferenceLine
                                     y={measurement.p1.value}
-                                    stroke="#3b82f6"
+                                    stroke={measurement.p1.extremumType === 'high' ? '#10b981' : measurement.p1.extremumType === 'low' ? '#f43f5e' : '#3b82f6'}
                                     strokeDasharray="4 4"
-                                    strokeOpacity={0.6}
+                                    strokeOpacity={0.7}
                                 />
                             )}
                             {measurement && (
                                 <ReferenceLine
                                     y={measurement.p2.value}
-                                    stroke="#3b82f6"
+                                    stroke={measurement.p2.extremumType === 'high' ? '#10b981' : measurement.p2.extremumType === 'low' ? '#f43f5e' : '#3b82f6'}
                                     strokeDasharray="4 4"
-                                    strokeOpacity={0.6}
+                                    strokeOpacity={0.7}
                                 />
                             )}
                             <Tooltip
