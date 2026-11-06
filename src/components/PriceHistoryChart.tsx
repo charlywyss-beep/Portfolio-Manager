@@ -473,12 +473,12 @@ export function PriceHistoryChart({
         try {
             const d = new Date(dateStr);
             if (selectedRange === '1D') {
-                return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr';
+                return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + (isNarrowPortrait ? '' : ' Uhr');
             }
             if (selectedRange === '1W') {
                 const weekday = d.toLocaleDateString('de-DE', { weekday: 'short' });
                 const date = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
-                return `${weekday} ${date}`;
+                return isNarrowPortrait ? date : `${weekday} ${date}`;
             }
             return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
         } catch {
@@ -540,7 +540,7 @@ export function PriceHistoryChart({
                                         }
                                     }}
                                     className={cn(
-                                        "inline-flex items-center gap-1.5 px-2 py-0.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-lg landscape:text-lg font-bold",
+                                        "inline-flex items-center gap-1.5 px-2 py-0.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-sm sm:text-lg landscape:text-sm md:landscape:text-lg font-bold",
                                         isMeasureMode
                                             ? highMeasureIdx >= 0
                                                 ? "bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-400/50"
@@ -590,7 +590,7 @@ export function PriceHistoryChart({
                                         }
                                     }}
                                     className={cn(
-                                        "inline-flex items-center gap-1.5 px-2 py-0.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-lg landscape:text-lg font-bold",
+                                        "inline-flex items-center gap-1.5 px-2 py-0.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-sm sm:text-lg landscape:text-sm md:landscape:text-lg font-bold",
                                         isMeasureMode
                                             ? lowMeasureIdx >= 0
                                                 ? "bg-rose-600 text-white border-rose-500 shadow-md ring-2 ring-rose-400/50"
@@ -851,8 +851,8 @@ export function PriceHistoryChart({
             </div>
 
             {isMeasureMode && (
-                <div className="absolute top-2 right-2 z-20 animate-in fade-in slide-in-from-right-2 max-w-[calc(100%-1rem)]">
-                    <div className="bg-blue-600 dark:bg-blue-500 text-white px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-2xl border border-blue-400/30 flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+                <div className="w-full sm:w-auto relative sm:absolute sm:top-2 sm:right-2 z-20 my-2 sm:my-0 animate-in fade-in slide-in-from-right-2 max-w-full sm:max-w-none">
+                    <div className="bg-blue-600 dark:bg-blue-500 text-white px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-xl shadow-2xl border border-blue-400/30 flex items-center justify-between sm:justify-start gap-1.5 sm:gap-3 text-xs sm:text-sm overflow-x-auto scroller-none">
                         {measurement ? (
                             <div className="flex items-center gap-2 sm:gap-3">
                                 <div className="flex flex-col items-center leading-tight">
