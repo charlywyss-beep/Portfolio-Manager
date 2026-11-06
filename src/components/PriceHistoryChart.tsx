@@ -543,7 +543,7 @@ export function PriceHistoryChart({
                                         "inline-flex items-center gap-1.5 px-2 py-0.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-lg landscape:text-lg font-bold",
                                         isMeasureMode
                                             ? highMeasureIdx >= 0
-                                                ? "bg-blue-600 text-white border-blue-400 shadow-md ring-2 ring-blue-400/50"
+                                                ? "bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-400/50"
                                                 : "border-blue-400/60 bg-blue-500/10 hover:bg-blue-500/20 text-foreground"
                                             : selectedExtremum === 'high'
                                                 ? "bg-emerald-500/20 border-emerald-500 text-foreground shadow-sm"
@@ -561,16 +561,16 @@ export function PriceHistoryChart({
                                 >
                                     <span className={cn(
                                         "font-extrabold",
-                                        isMeasureMode && highMeasureIdx >= 0 ? "text-emerald-300" : "text-emerald-500 dark:text-emerald-400"
+                                        isMeasureMode && highMeasureIdx >= 0 ? "text-white" : "text-emerald-500 dark:text-emerald-400"
                                     )}>H:</span>
                                     <span className={cn("font-bold", isMeasureMode && highMeasureIdx >= 0 ? "text-white" : "text-foreground")}>
                                         {formatCurrency(maxPrice, displayCurrency, false)}
                                     </span>
                                     {isMeasureMode && (
                                         <span className={cn(
-                                            "text-[10px] px-1.5 py-0.2 rounded-full font-black ml-0.5",
+                                            "text-[10px] px-1.5 py-0.5 rounded font-bold ml-0.5 leading-none",
                                             highMeasureIdx >= 0
-                                                ? "bg-white text-blue-700 shadow-sm"
+                                                ? "bg-black/30 text-white shadow-sm"
                                                 : "bg-blue-500/20 text-blue-400 border border-blue-400/40"
                                         )}>
                                             {highMeasureIdx >= 0 ? `P${highMeasureIdx + 1}` : 'Messpunkt'}
@@ -593,7 +593,7 @@ export function PriceHistoryChart({
                                         "inline-flex items-center gap-1.5 px-2 py-0.5 -mx-1 rounded-lg transition-all cursor-pointer active:scale-95 border text-lg landscape:text-lg font-bold",
                                         isMeasureMode
                                             ? lowMeasureIdx >= 0
-                                                ? "bg-blue-600 text-white border-blue-400 shadow-md ring-2 ring-blue-400/50"
+                                                ? "bg-rose-600 text-white border-rose-500 shadow-md ring-2 ring-rose-400/50"
                                                 : "border-blue-400/60 bg-blue-500/10 hover:bg-blue-500/20 text-foreground"
                                             : selectedExtremum === 'low'
                                                 ? "bg-rose-500/20 border-rose-500 text-foreground shadow-sm"
@@ -611,16 +611,16 @@ export function PriceHistoryChart({
                                 >
                                     <span className={cn(
                                         "font-extrabold",
-                                        isMeasureMode && lowMeasureIdx >= 0 ? "text-rose-300" : "text-rose-500 dark:text-rose-400"
+                                        isMeasureMode && lowMeasureIdx >= 0 ? "text-white" : "text-rose-500 dark:text-rose-400"
                                     )}>T:</span>
                                     <span className={cn("font-bold", isMeasureMode && lowMeasureIdx >= 0 ? "text-white" : "text-foreground")}>
                                         {formatCurrency(minPrice, displayCurrency, false)}
                                     </span>
                                     {isMeasureMode && (
                                         <span className={cn(
-                                            "text-[10px] px-1.5 py-0.2 rounded-full font-black ml-0.5",
+                                            "text-[10px] px-1.5 py-0.5 rounded font-bold ml-0.5 leading-none",
                                             lowMeasureIdx >= 0
-                                                ? "bg-white text-blue-700 shadow-sm"
+                                                ? "bg-black/30 text-white shadow-sm"
                                                 : "bg-blue-500/20 text-blue-400 border border-blue-400/40"
                                         )}>
                                             {lowMeasureIdx >= 0 ? `P${lowMeasureIdx + 1}` : 'Messpunkt'}
