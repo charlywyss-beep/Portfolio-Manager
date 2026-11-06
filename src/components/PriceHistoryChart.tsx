@@ -1032,7 +1032,7 @@ export function PriceHistoryChart({
                     <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
                         <AreaChart
                             data={displayData}
-                            margin={{ top: 5, right: 5, left: 0, bottom: 8 }}
+                            margin={{ top: 14, right: 6, left: 0, bottom: 18 }}
                             onMouseMove={(data: any) => {
                                 if (data?.activePayload?.[0]?.payload) {
                                     setHoveredData(data.activePayload[0].payload);
@@ -1403,24 +1403,29 @@ export function PriceHistoryChart({
                                             shape={(props: any) => {
                                                 const { cx, cy } = props;
                                                 if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
+
+                                                // Beide Markierungen (H und T) einheitlich unterhalb des Punktes platzieren
+                                                const rectY = cy + 10;
+                                                const textY = cy + 22;
+
                                                 return (
                                                     <g className="pointer-events-none select-none" style={{ outline: 'none' }} tabIndex={-1}>
                                                         <circle cx={cx} cy={cy} r={12} fill={dotColor} fillOpacity={0.25} />
                                                         <circle cx={cx} cy={cy} r={6} fill={dotColor} stroke="#ffffff" strokeWidth={2} />
                                                         <rect
                                                             x={cx - 18}
-                                                            y={cy - 26}
+                                                            y={rectY}
                                                             width={36}
                                                             height={17}
                                                             rx={4}
                                                             fill="#0f172a"
-                                                            fillOpacity={0.9}
+                                                            fillOpacity={0.92}
                                                             stroke={dotColor}
                                                             strokeWidth={1.2}
                                                         />
                                                         <text
                                                             x={cx}
-                                                            y={cy - 14}
+                                                            y={textY}
                                                             textAnchor="middle"
                                                             fill="#ffffff"
                                                             fontSize={10}
