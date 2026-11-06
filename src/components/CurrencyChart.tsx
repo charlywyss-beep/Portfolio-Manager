@@ -156,6 +156,24 @@ export function CurrencyChart({ inverse = false }: Props) {
         }
     };
 
+    const formatXAxisDate = (date: string) => {
+        if (!date) return '';
+        const d = new Date(date.includes('T') ? date : date + 'T12:00:00');
+        if (isNaN(d.getTime())) return date;
+        if (timeRange === '1W') {
+            const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+            const w = days[d.getDay()];
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yy = String(d.getFullYear()).slice(-2);
+            return `${w} ${dd}.${mm}.${yy}`;
+        }
+        if (timeRange === '1M' || timeRange === '3M') {
+            return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+        }
+        return d.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
+    };
+
     return (
         <div className="p-6 rounded-xl bg-card border border-border shadow-sm h-full flex flex-col">
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 md:gap-0">
@@ -267,7 +285,7 @@ export function CurrencyChart({ inverse = false }: Props) {
                 ) : (
                     hasMounted && (
                         <ResponsiveContainer width="100%" height="100%" debounce={100} minWidth={1} minHeight={1}>
-                            <AreaChart data={historyData} margin={{ top: 10, right: 35, left: -10, bottom: 0 }}>
+                            <AreaChart data={historyData} margin={{ top: 10, right: 6, left: -20, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id={inverse ? "colorRateInverse" : "colorRateDirect"} x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
@@ -277,28 +295,28 @@ export function CurrencyChart({ inverse = false }: Props) {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
                                 <XAxis
                                     dataKey="date"
-                                    tickFormatter={(date) => {
-                                        if (!date) return '';
-                                        const d = new Date(date.includes('T') ? date : date + 'T12:00:00');
-                                        if (isNaN(d.getTime())) return date;
-                                        if (timeRange === '1W') {
-                                            const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
-                                            const w = days[d.getDay()];
-                                            const dd = String(d.getDate()).padStart(2, '0');
-                                            const mm = String(d.getMonth() + 1).padStart(2, '0');
-                                            const yy = String(d.getFullYear()).slice(-2);
-                                            return `${w} ${dd}.${mm}.${yy}`;
-                                        }
-                                        if (timeRange === '1M' || timeRange === '3M') {
-                                            return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
-                                        }
-                                        return d.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
-                                    }}
                                     interval={timeRange === '1W' ? 0 : 'preserveEnd'}
                                     minTickGap={timeRange === '1W' ? 0 : 30}
-                                    tick={{ fontSize: timeRange === '1W' ? 10 : 11, fill: 'currentColor', opacity: 0.6 }}
                                     tickLine={false}
                                     axisLine={false}
+                                    tick={(props: any) => {
+                                        const { x, y, payload, index } = props;
+                                        const isFirst = index === 0;
+                                        const isLast = index === (historyData.length - 1);
+                                        const anchor = isLast ? 'end' : isFirst ? 'start' : 'middle';
+                                        return (
+                                            <text
+                                                x={x}
+                                                y={y + 12}
+                                                textAnchor={anchor}
+                                                fill="currentColor"
+                                                opacity={0.6}
+                                                fontSize={timeRange === '1W' ? 10 : 11}
+                                            >
+                                                {formatXAxisDate(payload.value)}
+                                            </text>
+                                        );
+                                    }}
                                 />
                                 <YAxis
                                     domain={domain}
