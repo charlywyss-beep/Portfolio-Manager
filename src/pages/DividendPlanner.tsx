@@ -298,8 +298,8 @@ export function DividendPlanner() {
     const displayAnnualLabel = activeDivTab === 'bank'
         ? 'Jährlich Zinsen'
         : activeDivTab === 'calendar'
-            ? (isNet ? 'Gesamtertrag (Netto)' : 'Gesamtertrag (Brutto)')
-            : (isNet ? 'Jährlich (Netto)' : 'Jährlich (Brutto)');
+            ? (isNet ? 'Gesamtertrag Netto' : 'Gesamtertrag Brutto')
+            : (isNet ? 'Jährlich Netto' : 'Jährlich Brutto');
 
     const displaySubtitle = activeDivTab === 'bank'
         ? (bankRows.length + ' Konten')
@@ -486,7 +486,7 @@ export function DividendPlanner() {
                         <div className="size-6 sm:size-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
                             <Percent className="size-3.5 sm:size-4" />
                         </div>
-                        <span className="text-xs sm:text-sm font-medium text-muted-foreground">{isNet ? 'Ø Rendite (Netto)' : 'Ø Rendite'}</span>
+                        <span className="text-xs sm:text-sm font-medium text-muted-foreground">{isNet ? 'Ø Rendite Netto' : 'Ø Rendite'}</span>
                     </div>
                     <div className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground tabular-nums tracking-tight">
                         {(projectedDividends.reduce((acc, curr) => {
