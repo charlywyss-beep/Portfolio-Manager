@@ -5,44 +5,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF, useCurrencyFormatter } from '../utils/currency';
 import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
-
-// Helper for Country Normalization
-const normalizeCountry = (country?: string): string => {
-    if (!country) return 'Unbekannt';
-    const c = country.toLowerCase().trim();
-    if (c === 'switzerland' || c === 'schweiz' || c === 'ch') return 'Schweiz';
-    if (c === 'united states' || c === 'usa' || c === 'us' || c === 'vereinigte staaten') return 'USA';
-    if (c === 'germany' || c === 'deutschland' || c === 'de') return 'Deutschland';
-    if (c === 'united kingdom' || c === 'uk' || c === 'britain' || c === 'großbritannien' || c === 'grossbritannien') return 'Grossbritannien';
-    if (c === 'france' || c === 'frankreich' || c === 'fr') return 'Frankreich';
-    if (c === 'ireland' || c === 'irland') return 'Irland';
-    if (c === 'netherlands' || c === 'niederlande') return 'Niederlande';
-    if (c === 'china' || c === 'cn') return 'China';
-    if (c === 'japan' || c === 'jp') return 'Japan';
-    if (c === 'world' || c === 'welt' || c === 'global' || c === 'international') return 'Welt';
-    if (c === 'australia' || c === 'australien') return 'Australien';
-    if (c === 'italy' || c === 'italien') return 'Italien';
-    if (c === 'spain' || c === 'spanien') return 'Spanien';
-    if (c === 'sweden' || c === 'schweden') return 'Schweden';
-    if (c === 'denmark' || c === 'dänemark') return 'Dänemark';
-    if (c === 'norway' || c === 'norwegen') return 'Norwegen';
-    if (c === 'finland' || c === 'finnland') return 'Finnland';
-    if (c === 'india' || c === 'indien') return 'Indien';
-    if (c === 'russia' || c === 'russland') return 'Russland';
-    if (c === 'brazil' || c === 'brasilien') return 'Brasilien';
-    if (c === 'korea' || c === 'südkorea' || c === 'south korea') return 'Südkorea';
-    if (c === 'taiwan') return 'Taiwan';
-    if (c === 'hong kong' || c === 'hongkong') return 'Hongkong';
-    if (c === 'singapore' || c === 'singapur') return 'Singapur';
-    if (c === 'south africa' || c === 'südafrika') return 'Südafrika';
-    if (c === 'other' || c === 'andere') return 'Andere';
-
-    // Capitalize first letter as fallback
-    if (country) {
-        return country.charAt(0).toUpperCase() + country.slice(1).toLowerCase();
-    }
-    return country; // Fallback to original
-};
+import { normalizeCountry, normalizeSector, resolveStockCountry, resolveStockSector } from '../utils/stockMetadata';
 
 export function AssetAllocationChart() {
     const { positions } = usePortfolioData(); // Use enriched positions
@@ -72,16 +35,6 @@ export function AssetAllocationChart() {
 
         // 1. Add Stocks/ETFs
         positions.forEach(pos => {
-            // Find stock for position (enrichment)
-            // const stock = stocks.find(s => s.id === pos.stockId);
-            // If stock not found in context (rare sync issue), skip or use basic pos data? 
-            // Better to rely on the enriched 'pos.stock' if we trust usePortfolioData hook, 
-            // BUT usePortfolioData hook might not have the latest weights if they were just patched.
-            // Let's rely on 'pos.stock' from the hook as the base, but enrich weights from fallback.
-
-            // Wait, 'pos' in this file comes from 'usePortfolioData()', which merges 'positions' and 'stocks'.
-            // So 'pos.stock' IS the stock object.
-
             const valCHF = convertToCHF(pos.currentValue, pos.stock.currency, rates);
 
             // FALLBACK LOGIC (View-Time)
@@ -102,38 +55,25 @@ export function AssetAllocationChart() {
                             'consumer_defensive': 'Nicht-zykl. Konsum',
                             'technology': 'Technologie',
                             'utilities': 'Versorger',
-                            'financial': 'Finanzen',
+                            'financial': 'Finanzdienstleistungen',
                             'communication_services': 'Kommunikation',
                             'energy': 'Energie',
                             'industrials': 'Industrie'
                         };
                         const name = rawName.toLowerCase().replace(/\s/g, '_');
-                        const displayName = displayNames[name] || rawName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        const displayName = displayNames[name] || normalizeSector(rawName);
 
                         addToMap(displayName, valCHF * (weight / 100), pos.stock.name);
                     });
                 } else {
                     // Regular Stock or ETF without weights
-                    let key = pos.stock.sector || 'Andere';
+                    let key = pos.stock.sector || resolveStockSector(pos.stock);
                     if (pos.stock.type === 'etf' && !effectiveSectorWeights) {
                         key = 'ETF';
                     }
 
-                    // Normalize stock sector names to match ETF German names
-                    const stockSectorMap: Record<string, string> = {
-                        'Technology': 'Technologie',
-                        'Healthcare': 'Gesundheitswesen',
-                        'Real Estate': 'Immobilien',
-                        'Financial Services': 'Finanzdienstleistungen',
-                        'Consumer Staples': 'Nicht-zykl. Konsum',
-                        'Consumer Discretionary': 'Zykl. Konsumgüter',
-                        'Industrials': 'Industrie',
-                        'Energy': 'Energie',
-                        'Utilities': 'Versorger',
-                        'Materials': 'Rohstoffe',
-                        'Communication Services': 'Kommunikation'
-                    };
-                    key = stockSectorMap[key] || key;
+                    // Normalize stock sector names to match standard German names
+                    key = normalizeSector(key);
 
                     addToMap(key, valCHF, pos.stock.name);
                 }
@@ -171,17 +111,15 @@ export function AssetAllocationChart() {
                     // Distribute ETF value across countries
                     Object.entries(effectiveCountryWeights).forEach(([rawName, weight]) => {
                         const name = rawName.toLowerCase().replace(/\s/g, '_');
-                        // Fix: Handle 'other' or missing keys gracefully
                         let displayName = displayNames[name] || rawName;
-                        // Further normalize with helper (handles 'USA' vs 'United States' etc.)
                         displayName = normalizeCountry(displayName);
 
                         addToMap(displayName, valCHF * (weight / 100), pos.stock.name);
                     });
                 } else {
                     // Regular Stock or ETF without weights
-                    const country = pos.stock.country || 'Unbekannt';
-                    addToMap(normalizeCountry(country), valCHF, pos.stock.name);
+                    const rawCountry = pos.stock.country || resolveStockCountry(pos.stock);
+                    addToMap(normalizeCountry(rawCountry), valCHF, pos.stock.name);
                 }
             } else if (activeTab === 'currency') {
                 addToMap(pos.stock.currency, valCHF, pos.stock.name);
@@ -328,7 +266,7 @@ export function AssetAllocationChart() {
                                             style={{ backgroundColor: COLORS[index % COLORS.length] }}
                                         />
                                         <span className="truncate text-foreground/90 font-medium text-xs" title={item.name}>
-                                            {item.name}
+                                             {item.name}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-1.5 shrink-0">

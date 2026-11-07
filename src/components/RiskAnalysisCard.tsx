@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
+import { usePortfolio } from '../context/PortfolioContext';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { analyzePortfolioRisk } from '../utils/risk-analysis';
 import { convertToCHF } from '../utils/currency';
@@ -8,6 +9,7 @@ import { cn } from '../utils';
 
 export function RiskAnalysisCard() {
     const { positions } = usePortfolioData();
+    const { fixedDeposits } = usePortfolio();
     const { rates } = useExchangeRates();
 
     const analysis = useMemo(() => {
@@ -16,18 +18,27 @@ export function RiskAnalysisCard() {
             stock: p.stock,
             currentValue: convertToCHF(p.currentValue, p.stock.currency, rates)
         }));
-        return analyzePortfolioRisk(positionsCHF);
-    }, [positions, rates]);
+
+        // Convert fixed deposits to CHF
+        const fixedDepositsCHF = (fixedDeposits || []).map(fd => ({
+            amount: fd.amount,
+            currency: fd.currency,
+            accountType: fd.accountType,
+            currentValueCHF: convertToCHF(fd.amount, fd.currency, rates)
+        }));
+
+        return analyzePortfolioRisk(positionsCHF, fixedDepositsCHF);
+    }, [positions, fixedDeposits, rates]);
 
     const { score, clusters } = analysis;
 
-    // Determine color based on score
+    // Determine color based on score and clusters
     let scoreColor = 'text-green-500';
     let ScoreIcon = ShieldCheck;
-    if (score < 50) {
+    if (score < 50 || clusters.some(c => c.severity === 'high')) {
         scoreColor = 'text-red-500';
         ScoreIcon = ShieldAlert;
-    } else if (score < 75) {
+    } else if (score < 75 || clusters.length > 0) {
         scoreColor = 'text-yellow-500';
         ScoreIcon = AlertTriangle;
     }
@@ -47,9 +58,11 @@ export function RiskAnalysisCard() {
             <div className="flex-1 flex flex-col gap-2">
                 {/* Score Description */}
                 <div className="text-xs text-muted-foreground">
-                    {score >= 80 ? 'Dein Portfolio ist gut diversifiziert.' :
-                        score >= 50 ? 'Einige Klumpenrisiken vorhanden.' :
-                            'Starke Konzentration in wenigen Bereichen.'}
+                    {score >= 80 && clusters.length === 0
+                        ? 'Dein Portfolio ist gut diversifiziert.'
+                        : score >= 50
+                            ? 'Einige Klumpenrisiken vorhanden.'
+                            : 'Starke Konzentration in wenigen Bereichen.'}
                 </div>
 
                 {/* Cluster Warnings */}
@@ -86,14 +99,18 @@ export function RiskAnalysisCard() {
                 <div className="pt-2 border-t border-border grid grid-cols-2 gap-2 text-[10px] sm:text-xs mt-auto">
                     <div>
                         <p className="text-muted-foreground">Dominanter Sektor</p>
-                        <p className="font-semibold truncate" title={analysis.sectorDominance?.sector}>
-                            {analysis.sectorDominance?.sector || '-'} ({analysis.sectorDominance?.percent.toFixed(0)}%)
+                        <p className="font-semibold truncate" title={analysis.sectorDominance?.sector || 'Ausgeglichen'}>
+                            {analysis.sectorDominance
+                                ? `${analysis.sectorDominance.sector} (${analysis.sectorDominance.percent.toFixed(0)}%)`
+                                : 'Ausgeglichen'}
                         </p>
                     </div>
                     <div>
                         <p className="text-muted-foreground">Dominantes Land</p>
-                        <p className="font-semibold truncate" title={analysis.countryDominance?.country}>
-                            {analysis.countryDominance?.country || '-'} ({analysis.countryDominance?.percent.toFixed(0)}%)
+                        <p className="font-semibold truncate" title={analysis.countryDominance?.country || 'Ausgeglichen'}>
+                            {analysis.countryDominance
+                                ? `${analysis.countryDominance.country} (${analysis.countryDominance.percent.toFixed(0)}%)`
+                                : 'Ausgeglichen'}
                         </p>
                     </div>
                 </div>

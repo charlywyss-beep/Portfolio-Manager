@@ -6,6 +6,7 @@ import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { estimateMarketState } from '../utils/market';
 import { processMonthlyContributions } from '../utils/vorsorge';
 import { translateSector } from '../utils/sectorTranslation';
+import { resolveStockCountry, resolveStockSector, normalizeCountry, enrichStockMetadata } from '../utils/stockMetadata';
 
 interface PortfolioContextType {
     positions: Position[];
@@ -140,13 +141,9 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
     const [stocks, setStocks] = useState<Stock[]>(() => {
         const loaded = safeJSONParse('portfolio_stocks', MOCK_STOCKS);
-        // Data Sanitation: Remove 'Simuliert' from sector, translate English terms, and ensure Swiss (.SW) stocks default to CHF
+        // Data Sanitation: Auto-enrich country and sector, remove 'Simuliert', and ensure Swiss (.SW) stocks default to CHF
         if (loaded && Array.isArray(loaded)) {
-            return loaded.map((s: Stock) => ({
-                ...s,
-                sector: s.sector === 'Simuliert' ? '' : (s.sector ? translateSector(s.sector) : ''),
-                currency: (s.symbol?.toUpperCase().endsWith('.SW') && s.currency === 'EUR') ? 'CHF' : s.currency
-            }));
+            return loaded.map((s: Stock) => enrichStockMetadata(s));
         }
         return loaded;
     });
@@ -635,6 +632,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                     ? update.sector
                     : (s.sector ? translateSector(s.sector) : s.sector);
 
+                const finalCountry = (!s.country || s.country === 'Unbekannt') ? resolveStockCountry(s) : normalizeCountry(s.country);
+                const finalSector = (!currentSector || currentSector === 'Andere') ? resolveStockSector(s) : currentSector;
                 return {
                     ...s,
                     currentPrice: update.price,
@@ -645,7 +644,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                     forwardPE: update.forwardPE !== undefined ? update.forwardPE : s.forwardPE,
                     eps: update.eps !== undefined ? update.eps : s.eps,
                     dividendYield: update.dividendYield !== undefined ? (update.dividendYield !== null ? parseFloat(update.dividendYield.toFixed(2)) : undefined) : s.dividendYield,
-                    sector: currentSector
+                    sector: finalSector,
+                    country: finalCountry !== 'Unbekannt' ? finalCountry : s.country
                 };
             } else {
                 // Helpful log for debugging why a stock won't update

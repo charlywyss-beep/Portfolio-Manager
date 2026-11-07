@@ -1,5 +1,6 @@
-
 import type { Stock } from '../types';
+import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
+import { normalizeCountry, normalizeSector, resolveStockCountry, resolveStockSector } from './stockMetadata';
 
 export interface RiskAnalysisResult {
     totalValue: number;
@@ -31,103 +32,182 @@ export interface RiskCluster {
     severity: 'low' | 'medium' | 'high';
 }
 
-// Helpers
-const normalizeCountry = (country?: string): string => {
-    if (!country) return 'Unbekannt';
-    const c = country.toLowerCase().trim();
-    if (c === 'switzerland' || c === 'schweiz' || c === 'ch') return 'Schweiz';
-    if (c === 'united states' || c === 'usa' || c === 'us' || c === 'vereinigte staaten') return 'USA';
-    if (c === 'germany' || c === 'deutschland' || c === 'de') return 'Deutschland';
-    if (['uk', 'britain', 'united kingdom'].includes(c)) return 'Großbritannien';
-    if (['welt', 'world', 'global'].includes(c)) return 'Welt';
-    return country;
+export interface FixedDepositItem {
+    amount: number;
+    currency: string;
+    accountType?: string;
+    currentValueCHF?: number;
+}
+
+const ETF_SECTOR_MAP: Record<string, string> = {
+    'realestate': 'Immobilien',
+    'healthcare': 'Gesundheitswesen',
+    'basic_materials': 'Rohstoffe',
+    'consumer_cyclical': 'Zykl. Konsumgüter',
+    'financial_services': 'Finanzdienstleistungen',
+    'consumer_defensive': 'Nicht-zykl. Konsum',
+    'technology': 'Technologie',
+    'utilities': 'Versorger',
+    'financial': 'Finanzdienstleistungen',
+    'communication_services': 'Kommunikation',
+    'energy': 'Energie',
+    'industrials': 'Industrie'
+};
+
+const ETF_COUNTRY_MAP: Record<string, string> = {
+    'us': 'USA',
+    'uk': 'Grossbritannien',
+    'united_kingdom': 'Grossbritannien',
+    'japan': 'Japan',
+    'china': 'China',
+    'canada': 'Kanada',
+    'france': 'Frankreich',
+    'germany': 'Deutschland',
+    'switzerland': 'Schweiz',
+    'eurozone': 'Eurozone',
+    'australia': 'Australien',
+    'taiwan': 'Taiwan',
+    'india': 'Indien',
+    'korea': 'Südkorea',
+    'italy': 'Italien',
+    'sweden': 'Schweden',
+    'denmark': 'Dänemark',
+    'netherlands': 'Niederlande',
+    'spain': 'Spanien',
+    'other': 'Andere'
 };
 
 export const analyzePortfolioRisk = (
-    positions: { stock: Stock; currentValue: number }[]
+    positions: { stock: Stock; currentValue: number }[],
+    fixedDeposits: FixedDepositItem[] = []
 ): RiskAnalysisResult => {
-    const totalValue = positions.reduce((sum, p) => sum + p.currentValue, 0);
+    const positionsValue = positions.reduce((sum, p) => sum + p.currentValue, 0);
+    const fixedDepositsValue = fixedDeposits.reduce((sum, fd) => sum + (fd.currentValueCHF ?? fd.amount), 0);
+    const totalValue = positionsValue + fixedDepositsValue;
 
     if (totalValue === 0) {
         return { totalValue: 0, topHolding: null, sectorDominance: null, countryDominance: null, clusters: [], score: 100 };
     }
 
-    // 1. Top Holding Analysis
+    // 1. Top Holding Analysis (excluding ETFs from single stock risk)
     const sortedByValue = [...positions].sort((a, b) => b.currentValue - a.currentValue);
     const topPos = sortedByValue[0];
-    const topHolding = {
+    const topHolding = topPos ? {
         symbol: topPos.stock.symbol,
         name: topPos.stock.name,
         value: topPos.currentValue,
         percent: (topPos.currentValue / totalValue) * 100
-    };
+    } : null;
 
     // 2. Sector & Country Maps
     const sectors = new Map<string, number>();
     const countries = new Map<string, number>();
 
-    // Cluster: US Tech
     let usTechValue = 0;
-    // Virtual USA Value (includes 100% of US Stocks + ~60% of World ETFs)
     let virtualUSAValue = 0;
 
+    // Process positions
     positions.forEach(p => {
-        const sector = p.stock.sector || 'Andere';
-        const country = normalizeCountry(p.stock.country);
+        const fallback = FALLBACK_ALLOCATIONS[p.stock.symbol];
+        const effectiveSectorWeights = p.stock.sectorWeights || fallback?.sectorWeights;
+        const effectiveCountryWeights = p.stock.countryWeights || fallback?.countryWeights;
 
-        sectors.set(sector, (sectors.get(sector) || 0) + p.currentValue);
-        countries.set(country, (countries.get(country) || 0) + p.currentValue);
-
-        // Virtual USA Calculation
-        if (country === 'USA') {
-            virtualUSAValue += p.currentValue;
-        } else if (country === 'Welt') {
-            virtualUSAValue += (p.currentValue * 0.6); // Assume ~60% USA in World ETFs
+        // Sectors
+        if (p.stock.type === 'etf' && effectiveSectorWeights) {
+            Object.entries(effectiveSectorWeights).forEach(([rawName, weight]) => {
+                const name = rawName.toLowerCase().replace(/\s/g, '_');
+                const displayName = ETF_SECTOR_MAP[name] || normalizeSector(rawName);
+                const val = p.currentValue * (weight / 100);
+                sectors.set(displayName, (sectors.get(displayName) || 0) + val);
+            });
+        } else {
+            const rawSector = p.stock.sector || resolveStockSector(p.stock);
+            const sector = normalizeSector(rawSector);
+            sectors.set(sector, (sectors.get(sector) || 0) + p.currentValue);
         }
 
-        // Check US Tech Cluster
-        if (country === 'USA' && sector === 'Technology') {
+        // Countries
+        if (p.stock.type === 'etf' && effectiveCountryWeights) {
+            Object.entries(effectiveCountryWeights).forEach(([rawName, weight]) => {
+                const name = rawName.toLowerCase().replace(/\s/g, '_');
+                const rawDisplay = ETF_COUNTRY_MAP[name] || rawName;
+                const displayName = normalizeCountry(rawDisplay);
+                const val = p.currentValue * (weight / 100);
+                countries.set(displayName, (countries.get(displayName) || 0) + val);
+
+                if (displayName === 'USA') {
+                    virtualUSAValue += val;
+                }
+            });
+        } else {
+            const rawCountry = p.stock.country || resolveStockCountry(p.stock);
+            const country = normalizeCountry(rawCountry);
+            countries.set(country, (countries.get(country) || 0) + p.currentValue);
+
+            if (country === 'USA') {
+                virtualUSAValue += p.currentValue;
+            } else if (country === 'Welt') {
+                virtualUSAValue += (p.currentValue * 0.6); // ~60% USA in generic World ETF
+            }
+        }
+
+        // US Tech cluster check
+        const resolvedCountry = normalizeCountry(p.stock.country || resolveStockCountry(p.stock));
+        const resolvedSector = normalizeSector(p.stock.sector || resolveStockSector(p.stock));
+        if (resolvedCountry === 'USA' && resolvedSector === 'Technologie') {
             usTechValue += p.currentValue;
         }
-        // QQQ / Nasdaq ETFs often fall here if manually mapped, or we can check symbol/name for common tech ETFs
         if (p.stock.symbol === 'EQQQ.DE' || p.stock.symbol.includes('QQQ')) {
             usTechValue += p.currentValue;
         }
     });
 
-    // Find dominants
-    const getDominant = (map: Map<string, number>) => {
+    // Process Fixed Deposits (Cash & Vorsorge)
+    fixedDeposits.forEach(fd => {
+        const val = fd.currentValueCHF ?? fd.amount;
+        const sector = fd.accountType === 'vorsorge' ? 'Vorsorge' : 'Liquidität';
+        const country = 'Schweiz';
+
+        sectors.set(sector, (sectors.get(sector) || 0) + val);
+        countries.set(country, (countries.get(country) || 0) + val);
+    });
+
+    // Find Dominants - Exclude generic/unclassified categories from being the "dominant" choice
+    const GENERIC_SECTOR_BUCKETS = new Set(['Andere', 'Unbekannt', 'Sonstige', 'ETF', 'Liquidität', 'Vorsorge', '']);
+    const GENERIC_COUNTRY_BUCKETS = new Set(['Unbekannt', 'Andere', 'Sonstige', 'Welt', '']);
+
+    const getDominant = (map: Map<string, number>, excludeSet: Set<string>) => {
         let maxName = '';
         let maxVal = 0;
         map.forEach((val, name) => {
-            if (val > maxVal) {
+            if (!excludeSet.has(name) && val > maxVal) {
                 maxVal = val;
                 maxName = name;
             }
         });
+        if (!maxName) return null;
         return { name: maxName, value: maxVal, percent: (maxVal / totalValue) * 100 };
     };
 
-    const domSector = getDominant(sectors);
-    const domCountry = getDominant(countries);
+    const domSector = getDominant(sectors, GENERIC_SECTOR_BUCKETS);
+    const domCountry = getDominant(countries, GENERIC_COUNTRY_BUCKETS);
 
     // 3. Identify Clusters / Warnings
     const clusters: RiskCluster[] = [];
 
-    // Single Position Risk
-    // Exclude ETFs from "Single Position" risk because they are inherently diversified buckets
-    if (topHolding.percent > 15 && topPos.stock.type !== 'etf') {
+    // Single Position Risk (>15% in a single non-ETF stock)
+    if (topHolding && topHolding.percent > 15 && topPos?.stock.type !== 'etf') {
         clusters.push({
             name: 'Klumpenrisiko Einzelposition',
-            description: `Die Position "${topHolding.name}" macht ${topHolding.percent.toFixed(1)}% deines Portfolios aus.`,
+            description: `Die Position "${topHolding.name}" macht ${topHolding.percent.toFixed(1)}% deines Gesamtvermögens aus.`,
             value: topHolding.value,
             percent: topHolding.percent,
             severity: topHolding.percent > 25 ? 'high' : 'medium'
         });
     }
 
-    // Sector Risk (exclude 'ETF' or 'Andere' which are generic)
-    if (domSector.name !== 'ETF' && domSector.name !== 'Andere' && domSector.percent > 25) {
+    // Sector Risk (>25% in a single economic sector, excluding generic buckets)
+    if (domSector && domSector.percent > 25) {
         clusters.push({
             name: `Sektor-Wette: ${domSector.name}`,
             description: `${domSector.percent.toFixed(1)}% sind im Sektor "${domSector.name}" investiert.`,
@@ -142,14 +222,12 @@ export const analyzePortfolioRisk = (
     if (virtualUSAPercent > 55) {
         clusters.push({
             name: 'Hoher USA-Fokus',
-            description: `Ca. ${virtualUSAPercent.toFixed(0)}% deines Portfolios hängen vom US-Markt ab (inkl. ~60% Anteil aus Welt-ETFs).`,
+            description: `Ca. ${virtualUSAPercent.toFixed(0)}% deines Gesamtportfolios hängen vom US-Markt ab (inkl. ETF-Anteilen).`,
             value: virtualUSAValue,
             percent: virtualUSAPercent,
             severity: virtualUSAPercent > 70 ? 'high' : 'medium'
         });
-    }
-    // Fallback normal country risk (if not USA)
-    else if (domCountry.name !== 'Welt' && domCountry.name !== 'USA' && domCountry.percent > 40) {
+    } else if (domCountry && domCountry.name !== 'Schweiz' && domCountry.name !== 'USA' && domCountry.percent > 40) {
         clusters.push({
             name: `Länder-Fokus: ${domCountry.name}`,
             description: `${domCountry.percent.toFixed(1)}% liegen in ${domCountry.name}.`,
@@ -171,20 +249,34 @@ export const analyzePortfolioRisk = (
         });
     }
 
-    // Calculate Score
-    // Base 100, subtract penalties
+    // Calculate Score (Base 100, penalize for real risks)
     let score = 100;
-    if (topHolding.percent > 10 && topPos.stock.type !== 'etf') score -= (topHolding.percent - 10) * 1.5;
-    if (domSector.percent > 20 && domSector.name !== 'ETF') score -= (domSector.percent - 20);
-    if (usTechPercent > 20) score -= (usTechPercent - 15);
-    if (virtualUSAPercent > 60) score -= (virtualUSAPercent - 60);
+    if (topHolding && topHolding.percent > 10 && topPos?.stock.type !== 'etf') {
+        score -= (topHolding.percent - 10) * 1.5;
+    }
+    if (domSector && domSector.percent > 25) {
+        score -= (domSector.percent - 20);
+    }
+    if (usTechPercent > 20) {
+        score -= (usTechPercent - 15);
+    }
+    if (virtualUSAPercent > 60) {
+        score -= (virtualUSAPercent - 60);
+    }
+
+    // Consistency guarantee: If no risk clusters are triggered, the portfolio is well diversified
+    if (clusters.length === 0) {
+        score = Math.max(88, Math.min(100, Math.round(score)));
+    } else {
+        score = Math.max(0, Math.min(100, Math.round(score)));
+    }
 
     return {
         totalValue,
         topHolding,
-        sectorDominance: { sector: domSector.name, value: domSector.value, percent: domSector.percent },
-        countryDominance: { country: domCountry.name, value: domCountry.value, percent: domCountry.percent },
+        sectorDominance: domSector ? { sector: domSector.name, value: domSector.value, percent: domSector.percent } : null,
+        countryDominance: domCountry ? { country: domCountry.name, value: domCountry.value, percent: domCountry.percent } : null,
         clusters,
-        score: Math.max(0, Math.round(score))
+        score
     };
 };

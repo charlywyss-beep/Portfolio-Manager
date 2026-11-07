@@ -1,5 +1,6 @@
 
 import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
+import { resolveStockCountry, resolveStockSector } from '../utils/stockMetadata';
 import { translateSector } from '../utils/sectorTranslation';
 
 // Basic type for a chart data point
@@ -478,7 +479,12 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
         const batchResult = batchMap[symbol];
 
         if (batchResult && batchResult.price) {
-            let country = MANUAL_COUNTRY_OVERRIDES[symbol] || null;
+            let country = MANUAL_COUNTRY_OVERRIDES[symbol] || resolveStockCountry({
+                symbol,
+                isin: batchResult.isin || undefined,
+                currency: (batchResult as any).currency || undefined,
+                name: (batchResult.longName || batchResult.shortName) || undefined
+            }) || null;
 
             // Try to reuse allocation fallback logic
             let sectorWeights = null;
@@ -505,7 +511,10 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
                 previousClose: batchResult.previousClose || null,
                 sectorWeights: sectorWeights,
                 countryWeights: countryWeights,
-                sector: (batchResult as any).sector || null,
+                sector: (batchResult as any).sector || resolveStockSector({
+                    symbol,
+                    name: (batchResult.longName || batchResult.shortName) || undefined
+                }) || null,
                 name: batchResult.longName || batchResult.shortName || batchResult.displayName || initialName || symbol,
                 isin: batchResult.isin || null,
                 exDividendDate: (batchResult as any).exDividendDate ? new Date((batchResult as any).exDividendDate * 1000) : null,
