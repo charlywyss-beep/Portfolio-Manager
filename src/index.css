@@ -1369,7 +1369,17 @@
   .iphone-landscape-portfolio-header-wrap:has(.iphone-landscape-portfolio-actions > :nth-child(2)) .iphone-landscape-portfolio-actions {
     width: 100% !important;
     margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .iphone-landscape-portfolio-header-wrap .iphone-refresh-btn-wrap {
+    width: 4.85rem !important;
+    display: flex !important;
     justify-content: center !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
   }
 
   .iphone-landscape-portfolio-header-wrap .iphone-landscape-portfolio-actions button,

@@ -200,8 +200,8 @@ export function Portfolio() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto sm:ml-auto -ml-10 sm:ml-0 iphone-landscape-portfolio-actions">
-                                <div className="w-[93px] sm:w-auto flex justify-center shrink-0">
+                            <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto sm:ml-auto iphone-landscape-portfolio-actions">
+                                <div className="iphone-refresh-btn-wrap sm:w-auto flex justify-center shrink-0">
                                     <button
                                         onClick={() => refreshAllPrices(true)}
                                         disabled={isGlobalRefreshing}
