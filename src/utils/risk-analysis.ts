@@ -1,5 +1,5 @@
 import type { Stock } from '../types';
-import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
+import { FALLBACK_ALLOCATIONS, getFallbackAllocation } from '../data/fallbackAllocations';
 import { normalizeCountry, normalizeSector, resolveStockCountry, resolveStockSector } from './stockMetadata';
 
 export interface RiskAnalysisResult {
@@ -91,7 +91,7 @@ export const analyzePortfolioRisk = (
 
     // 1. Top Holding Analysis (excluding ETFs from single stock risk)
     const sortedByValue = [...positions].sort((a, b) => b.currentValue - a.currentValue);
-    const topPos = sortedByValue[0];
+    const topPos = sortedByValue.find(p => p.stock.type !== 'etf' && !getFallbackAllocation(p.stock)) || sortedByValue[0];
     const topHolding = topPos ? {
         symbol: topPos.stock.symbol,
         name: topPos.stock.name,
@@ -108,7 +108,7 @@ export const analyzePortfolioRisk = (
 
     // Process positions
     positions.forEach(p => {
-        const fallback = FALLBACK_ALLOCATIONS[p.stock.symbol];
+        const fallback = getFallbackAllocation(p.stock) || FALLBACK_ALLOCATIONS[p.stock.symbol];
         const effectiveSectorWeights = p.stock.sectorWeights || fallback?.sectorWeights;
         const effectiveCountryWeights = p.stock.countryWeights || fallback?.countryWeights;
 
@@ -117,7 +117,7 @@ export const analyzePortfolioRisk = (
             Object.entries(effectiveSectorWeights).forEach(([rawName, weight]) => {
                 const name = rawName.toLowerCase().replace(/\s/g, '_');
                 const displayName = ETF_SECTOR_MAP[name] || normalizeSector(rawName);
-                const val = p.currentValue * (weight / 100);
+                const val = p.currentValue * (Number(weight) / 100);
                 sectors.set(displayName, (sectors.get(displayName) || 0) + val);
             });
         } else {
@@ -132,7 +132,7 @@ export const analyzePortfolioRisk = (
                 const name = rawName.toLowerCase().replace(/\s/g, '_');
                 const rawDisplay = ETF_COUNTRY_MAP[name] || rawName;
                 const displayName = normalizeCountry(rawDisplay);
-                const val = p.currentValue * (weight / 100);
+                const val = p.currentValue * (Number(weight) / 100);
                 countries.set(displayName, (countries.get(displayName) || 0) + val);
 
                 if (displayName === 'USA') {

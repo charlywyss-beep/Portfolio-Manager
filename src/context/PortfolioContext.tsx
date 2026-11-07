@@ -806,7 +806,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 localStorage.setItem('portfolio_positions', JSON.stringify(data.positions));
             }
             if (data.stocks) {
-                setStocks(data.stocks);
+                setStocks(data.stocks.map((s: Stock) => enrichStockMetadata(s)));
                 localStorage.setItem('portfolio_stocks', JSON.stringify(data.stocks));
             }
             if (data.fixedDeposits) {

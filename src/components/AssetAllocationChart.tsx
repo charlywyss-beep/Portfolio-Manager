@@ -4,7 +4,7 @@ import { usePortfolioData } from '../hooks/usePortfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF, useCurrencyFormatter } from '../utils/currency';
-import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
+import { getFallbackAllocation } from '../data/fallbackAllocations';
 import { normalizeCountry, normalizeSector, resolveStockCountry, resolveStockSector } from '../utils/stockMetadata';
 
 export function AssetAllocationChart() {
@@ -38,7 +38,7 @@ export function AssetAllocationChart() {
             const valCHF = convertToCHF(pos.currentValue, pos.stock.currency, rates);
 
             // FALLBACK LOGIC (View-Time)
-            const fallback = FALLBACK_ALLOCATIONS[pos.stock.symbol];
+            const fallback = getFallbackAllocation(pos.stock);
             const effectiveSectorWeights = pos.stock.sectorWeights || fallback?.sectorWeights;
             const effectiveCountryWeights = pos.stock.countryWeights || fallback?.countryWeights;
 
@@ -122,7 +122,9 @@ export function AssetAllocationChart() {
                     addToMap(normalizeCountry(rawCountry), valCHF, pos.stock.name);
                 }
             } else if (activeTab === 'currency') {
-                addToMap(pos.stock.currency, valCHF, pos.stock.name);
+                const rawCurr = pos.stock.currency || 'CHF';
+                const curr = (rawCurr === 'GBp' || rawCurr.toUpperCase() === 'GBP' || rawCurr.toUpperCase() === 'GBX') ? 'GBP' : rawCurr.toUpperCase();
+                addToMap(curr, valCHF, pos.stock.name);
             }
         });
 
@@ -135,7 +137,8 @@ export function AssetAllocationChart() {
                 } else if (activeTab === 'country') {
                     key = 'Schweiz'; // Default for local accounts
                 } else if (activeTab === 'currency') {
-                    key = fd.currency;
+                    const rawCurr = fd.currency || 'CHF';
+                    key = (rawCurr === 'GBp' || rawCurr.toUpperCase() === 'GBP' || rawCurr.toUpperCase() === 'GBX') ? 'GBP' : rawCurr.toUpperCase();
                 }
 
                 const valCHF = convertToCHF(fd.amount, fd.currency, rates);
