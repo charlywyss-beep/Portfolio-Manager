@@ -105,7 +105,7 @@ export function PositionTable({
                                 {/* 1. Anzahl */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        "pl-1 pr-3.5 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
                                         mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -136,7 +136,7 @@ export function PositionTable({
                                 {/* 2. Ø Kauf */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        "pl-1 pr-3.5 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
                                         mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -167,7 +167,7 @@ export function PositionTable({
                                 {/* 3. Invest */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        "pl-1 pr-3.5 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
                                         mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -198,7 +198,7 @@ export function PositionTable({
                                 {/* 4. Kurs */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
+                                        "pl-1 pr-3.5 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle",
                                         mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -229,7 +229,7 @@ export function PositionTable({
                                 {/* 5. Wert */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle iphone-landscape-col-desktop-only",
+                                        "pl-1 pr-3.5 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle iphone-landscape-col-desktop-only",
                                         mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -260,7 +260,7 @@ export function PositionTable({
                                 {/* 6. % */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle iphone-landscape-col-desktop-only",
+                                        "pl-1 pr-3.5 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle iphone-landscape-col-desktop-only",
                                         mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -291,7 +291,7 @@ export function PositionTable({
                                 {/* 7. +/- */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle iphone-landscape-col-desktop-only",
+                                        "pl-1 pr-3.5 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-right sticky top-0 z-30 bg-card align-middle iphone-landscape-col-desktop-only",
                                         mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -322,7 +322,7 @@ export function PositionTable({
                                 {/* 8. Aktion */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-2 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:text-right sticky top-0 md:sticky md:top-0 md:-right-px bg-card z-30 md:z-40 md:w-[80px] md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle",
+                                        "pl-1 pr-3.5 md:px-2 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:text-right sticky top-0 md:sticky md:top-0 md:-right-px bg-card z-30 md:z-40 md:w-[80px] md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle",
                                         mobileColIndex === 7 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -395,12 +395,12 @@ export function PositionTable({
                                         </td>
 
                                         {/* 1. Anzahl */}
-                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right font-medium align-middle", mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell")}>
+                                        <td className={cn("pl-1 pr-3.5 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right font-medium align-middle", mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell")}>
                                             {pos.shares}
                                         </td>
 
                                         {/* 2. Kauf Kurs */}
-                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell")}>
+                                        <td className={cn("pl-1 pr-3.5 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell")}>
                                             <div className="flex flex-col items-end">
                                                 <span className="font-medium whitespace-nowrap">{formatCurrency(pos.buyPriceAvg, pos.stock.currency, false)}</span>
                                                 {pos.stock.currency !== 'CHF' && (
@@ -412,7 +412,7 @@ export function PositionTable({
                                         </td>
 
                                         {/* 3. Invest */}
-                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right font-medium align-middle", mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell")}>
+                                        <td className={cn("pl-1 pr-3.5 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right font-medium align-middle", mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell")}>
                                             <div className="flex flex-col items-end">
                                                 <span className="font-medium whitespace-nowrap">{formatCurrency(pos.buyValue, pos.stock.currency, false)}</span>
                                                 {pos.stock.currency !== 'CHF' && (
@@ -424,7 +424,7 @@ export function PositionTable({
                                         </td>
 
                                         {/* 4. Aktueller Kurs */}
-                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell")}>
+                                        <td className={cn("pl-1 pr-3.5 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right align-middle", mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell")}>
                                             <div className="flex flex-col items-end">
                                                 <span className="font-medium whitespace-nowrap">{formatCurrency(pos.stock.currentPrice, pos.stock.currency, false)}</span>
                                                 {pos.stock.currency !== 'CHF' && (
@@ -436,7 +436,7 @@ export function PositionTable({
                                         </td>
 
                                         {/* 5. Aktueller Wert */}
-                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right font-bold align-middle iphone-landscape-col-desktop-only", mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell")}>
+                                        <td className={cn("pl-1 pr-3.5 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right font-bold align-middle iphone-landscape-col-desktop-only", mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell")}>
                                             <div className="flex flex-col items-end">
                                                 <span className="font-medium whitespace-nowrap">{formatCurrency(pos.currentValue, pos.stock.currency, false)}</span>
                                                 {pos.stock.currency !== 'CHF' && (
@@ -448,7 +448,7 @@ export function PositionTable({
                                         </td>
 
                                         {/* 6. % */}
-                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right align-middle iphone-landscape-col-desktop-only", mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell")}>
+                                        <td className={cn("pl-1 pr-3.5 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right align-middle iphone-landscape-col-desktop-only", mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell")}>
                                             <div className={cn(
                                                 "flex items-center justify-end gap-1 font-medium",
                                                 pos.gainLossTotal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
@@ -459,7 +459,7 @@ export function PositionTable({
                                         </td>
 
                                         {/* 7. Gesamt +/- */}
-                                        <td className={cn("px-2 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right align-middle iphone-landscape-col-desktop-only", mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell")}>
+                                        <td className={cn("pl-1 pr-3.5 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto text-right align-middle iphone-landscape-col-desktop-only", mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell")}>
                                             <div className="flex flex-col items-end gap-0.5">
                                                 {(() => {
                                                     const nativeGain = pos.gainLossTotal;
@@ -517,7 +517,7 @@ export function PositionTable({
 
                                         {/* 8. Aktion */}
                                         <td className={cn(
-                                            "text-center py-1.5 md:py-2 px-1 h-[60px] md:h-auto md:w-[80px] md:min-w-[80px] md:max-w-[80px] md:sticky md:-right-px z-10 md:z-20 group-hover:bg-muted transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle",
+                                            "text-center py-1.5 md:py-2 pl-1 pr-3.5 md:px-1 h-[60px] md:h-auto md:w-[80px] md:min-w-[80px] md:max-w-[80px] md:sticky md:-right-px z-10 md:z-20 group-hover:bg-muted transition-colors md:shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle",
                                             mobileColIndex === 7 ? "table-cell" : "hidden md:table-cell"
                                         )}>
                                             <div className="absolute inset-0 bg-card -z-10" />
