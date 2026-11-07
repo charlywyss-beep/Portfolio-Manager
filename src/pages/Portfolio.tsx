@@ -201,46 +201,42 @@ export function Portfolio() {
                             </div>
 
                             <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto sm:ml-auto iphone-landscape-portfolio-actions">
-                                <div className="iphone-refresh-btn-wrap sm:w-auto flex justify-center shrink-0">
-                                    <button
-                                        onClick={() => refreshAllPrices(true)}
-                                        disabled={isGlobalRefreshing}
-                                        className={cn(
-                                            "flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg border font-medium transition-all shadow-sm shrink-0 iphone-landscape-btn",
-                                            "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
-                                            "active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        )}
-                                        title="Alle Aktienpreise aktualisieren"
-                                    >
-                                        <RefreshCw className={cn("size-4", isGlobalRefreshing && "animate-spin")} />
-                                        <span className="hidden md:inline">
-                                            {isGlobalRefreshing
-                                                ? 'Aktualisiere...'
-                                                : lastGlobalRefresh
-                                                    ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
-                                                    : 'Aktualisieren'}
-                                        </span>
-                                    </button>
-                                </div>
-                                <div className="flex items-center justify-end gap-2 shrink-0">
-                                    <select
-                                        className="w-auto min-w-0 px-3 py-2 rounded-lg border border-border bg-card text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer text-center iphone-landscape-select"
-                                        value={sortConfig.key}
-                                        onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
-                                    >
-                                        <option value="name">Name: A-Z</option>
-                                        <option value="currency">Währung</option>
-                                        <option value="value">Wert: Hoch-Tief</option>
-                                        <option value="performance">Performance: Beste</option>
-                                    </select>
-                                    <button
-                                        onClick={() => setIsAddChoiceModalOpen(true)}
-                                        className="flex items-center justify-center gap-1.5 sm:gap-2 bg-primary text-primary-foreground px-3.5 sm:px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm shrink-0 whitespace-nowrap iphone-landscape-btn"
-                                    >
-                                        <Plus className="size-4" />
-                                        <span>Neu</span>
-                                    </button>
-                                </div>
+                                <button
+                                    onClick={() => refreshAllPrices(true)}
+                                    disabled={isGlobalRefreshing}
+                                    className={cn(
+                                        "flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg border font-medium transition-all shadow-sm shrink-0 iphone-landscape-btn iphone-action-refresh-btn",
+                                        "bg-blue-600 text-white border-blue-700 hover:bg-blue-700 hover:border-blue-800",
+                                        "active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    )}
+                                    title="Alle Aktienpreise aktualisieren"
+                                >
+                                    <RefreshCw className={cn("size-4", isGlobalRefreshing && "animate-spin")} />
+                                    <span className="hidden md:inline">
+                                        {isGlobalRefreshing
+                                            ? 'Aktualisiere...'
+                                            : lastGlobalRefresh
+                                                ? `Vor ${Math.floor((new Date().getTime() - lastGlobalRefresh.getTime()) / 60000)} Min`
+                                                : 'Aktualisieren'}
+                                    </span>
+                                </button>
+                                <select
+                                    className="flex-1 sm:flex-none sm:w-auto min-w-0 px-3 py-2 rounded-lg border border-border bg-card text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer text-center iphone-landscape-select"
+                                    value={sortConfig.key}
+                                    onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
+                                >
+                                    <option value="name">Name: A-Z</option>
+                                    <option value="currency">Währung</option>
+                                    <option value="value">Wert: Hoch-Tief</option>
+                                    <option value="performance">Performance: Beste</option>
+                                </select>
+                                <button
+                                    onClick={() => setIsAddChoiceModalOpen(true)}
+                                    className="flex items-center justify-center gap-1.5 sm:gap-2 bg-primary text-primary-foreground px-3.5 sm:px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm shrink-0 whitespace-nowrap iphone-landscape-btn iphone-action-add-btn"
+                                >
+                                    <Plus className="size-4" />
+                                    <span>Neu</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -254,7 +250,7 @@ export function Portfolio() {
                     className={cn(
                         "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all border shadow-sm shrink-0",
                         activeTab === 'stocks'
-                            ? "bg-primary text-primary-foreground border-primary"
+                            ? "bg-primary text-primary-foreground border-primary iphone-subtab-aktien"
                             : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
                     )}
                 >
@@ -293,7 +289,7 @@ export function Portfolio() {
                     className={cn(
                         "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all border shadow-sm shrink-0",
                         activeTab === 'bank'
-                            ? "bg-primary text-primary-foreground border-primary"
+                            ? "bg-primary text-primary-foreground border-primary iphone-subtab-bank"
                             : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-foreground"
                     )}
                 >
