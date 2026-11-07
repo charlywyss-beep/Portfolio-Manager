@@ -109,7 +109,7 @@ export function PositionTable({
                                         mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-center gap-1 w-full h-12">
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
@@ -118,7 +118,7 @@ export function PositionTable({
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center px-1">
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
                                             Anzahl
                                         </span>
                                         <button
@@ -140,7 +140,7 @@ export function PositionTable({
                                         mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-center gap-1 w-full h-12">
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
@@ -149,7 +149,7 @@ export function PositionTable({
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center px-1">
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
                                             Ø Kauf
                                         </span>
                                         <button
@@ -171,7 +171,7 @@ export function PositionTable({
                                         mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-center gap-1 w-full h-12">
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
@@ -180,7 +180,7 @@ export function PositionTable({
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center px-1">
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
                                             Invest
                                         </span>
                                         <button
@@ -202,7 +202,7 @@ export function PositionTable({
                                         mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-center gap-1 w-full h-12">
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
@@ -211,7 +211,7 @@ export function PositionTable({
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center px-1">
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
                                             Kurs
                                         </span>
                                         <button
@@ -233,7 +233,7 @@ export function PositionTable({
                                         mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-center gap-1 w-full h-12">
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
@@ -242,7 +242,7 @@ export function PositionTable({
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center px-1">
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
                                             Wert
                                         </span>
                                         <button
@@ -264,7 +264,7 @@ export function PositionTable({
                                         mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-center gap-1 w-full h-12">
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
@@ -273,7 +273,7 @@ export function PositionTable({
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center px-1">
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
                                             %
                                         </span>
                                         <button
@@ -295,7 +295,7 @@ export function PositionTable({
                                         mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-center gap-1 w-full h-12">
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
@@ -304,7 +304,7 @@ export function PositionTable({
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center px-1">
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
                                             +/-
                                         </span>
                                         <button
@@ -326,7 +326,7 @@ export function PositionTable({
                                         mobileColIndex === 7 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-center gap-1 w-full h-12">
+                                    <div className="flex md:hidden items-center justify-between w-full h-12">
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
@@ -335,7 +335,7 @@ export function PositionTable({
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center px-1">
+                                        <span className="whitespace-nowrap text-center flex-1 px-1">
                                             Aktion
                                         </span>
                                         <button
