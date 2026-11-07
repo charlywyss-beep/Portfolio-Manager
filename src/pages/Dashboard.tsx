@@ -391,9 +391,15 @@ export function Dashboard() {
 
                             <div className="mt-4 pt-4 border-t border-border flex flex-col gap-1.5">
                                 <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
-                                    <span className="text-muted-foreground truncate">Aktien/ETF:</span>
+                                    <span className="text-muted-foreground truncate">Aktien:</span>
                                     <span className="font-medium text-foreground whitespace-nowrap shrink-0">
-                                        {totals.totalValueStock.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                        {totals.stockValue.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                                    <span className="text-muted-foreground truncate">ETFs:</span>
+                                    <span className="font-medium text-foreground whitespace-nowrap shrink-0">
+                                        {totals.etfValue.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">

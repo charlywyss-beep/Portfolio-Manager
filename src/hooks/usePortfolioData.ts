@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
+import { isLikelyEtf } from '../utils/stockMetadata';
 
 // Helper to get frequency multiplication factor
 const getFrequencyFactor = (freq?: string) => {
@@ -83,8 +84,9 @@ export function usePortfolioData() {
 
     const totals = useMemo(() => {
         // Separate Stock vs ETF
-        const stockPositions = positions.filter(p => !p.stock.type || p.stock.type === 'stock');
-        const etfPositions = positions.filter(p => p.stock.type === 'etf');
+        const isEtfPos = (p: any) => p.stock?.type?.toLowerCase() === 'etf' || isLikelyEtf(p.stock);
+        const stockPositions = positions.filter(p => !isEtfPos(p));
+        const etfPositions = positions.filter(isEtfPos);
 
         const totalValueStockOnly = stockPositions.reduce((sum, p) => sum + convertToCHF(p.currentValue, p.stock.currency, rates), 0);
         const totalValueEtf = etfPositions.reduce((sum, p) => sum + convertToCHF(p.currentValue, p.stock.currency, rates), 0);
