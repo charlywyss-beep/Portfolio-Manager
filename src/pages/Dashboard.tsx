@@ -822,7 +822,7 @@ export function Dashboard() {
                 < div className="grid grid-cols-1 lg:grid-cols-2 gap-6" >
                     {/* Dividend Calendar */}
                     {/* Dividend Calendar */}
-                    <div className="p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+                    <div className="p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm overflow-visible relative">
                         <div className="flex items-center justify-between mb-4 md:mb-6">
                             <div className="flex items-center gap-2">
                                 <Calendar className="size-5 text-blue-500" />
@@ -833,7 +833,7 @@ export function Dashboard() {
                     </div>
 
                     {/* Asset Allocation */}
-                    <div className="p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm overflow-hidden">
+                    <div className="p-3 md:p-6 rounded-xl bg-card border border-border shadow-sm overflow-visible relative">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-2">
                                 <PieChartIcon className="size-5 text-purple-500" />

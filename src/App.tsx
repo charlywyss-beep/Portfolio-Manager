@@ -111,6 +111,29 @@ function App() {
     localStorage.setItem('sidebar_open', String(isSidebarOpen));
   }, [isSidebarOpen]);
 
+  // Auto-close mobile drawer & remove backdrop-blur overlay when zooming in past 150% (e.g. 175% -> innerWidth < 1280px)
+  useEffect(() => {
+    let lastWidth = window.innerWidth;
+    if (lastWidth < 1280 && window.screen.width >= 1280) {
+      setIsSidebarOpen(false);
+    }
+
+    const handleResize = () => {
+      const currentWidth = window.innerWidth;
+      if (lastWidth >= 1280 && currentWidth < 1280) {
+        setIsSidebarOpen(false);
+        document.body.style.overflow = '';
+      } else if (lastWidth < 1280 && currentWidth >= 1280) {
+        setIsSidebarOpen(true);
+        document.body.style.overflow = '';
+      }
+      lastWidth = currentWidth;
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Prevent body scroll on mobile/tablet when sidebar is open so drawer scrolling is smooth and uninterrupted
   useEffect(() => {
     if (isSidebarOpen && window.innerWidth < 1280) {

@@ -115,6 +115,27 @@ const KNOWN_STOCK_METADATA: Record<string, KnownMetadata> = {
     'AVGO': { country: 'USA', sector: 'Technologie' },
     'GOOG': { country: 'USA', sector: 'Kommunikation' },
     'GOOGL': { country: 'USA', sector: 'Kommunikation' },
+    'ABEA.DE': { country: 'USA', sector: 'Kommunikation' },
+    'ABEC.DE': { country: 'USA', sector: 'Kommunikation' },
+    'ABEA.F': { country: 'USA', sector: 'Kommunikation' },
+    'ABEC.F': { country: 'USA', sector: 'Kommunikation' },
+    'MSF.DE': { country: 'USA', sector: 'Technologie' },
+    'MSF.F': { country: 'USA', sector: 'Technologie' },
+    'APC.DE': { country: 'USA', sector: 'Technologie' },
+    'APC.F': { country: 'USA', sector: 'Technologie' },
+    'NVD.DE': { country: 'USA', sector: 'Technologie' },
+    'NVD.F': { country: 'USA', sector: 'Technologie' },
+    'AMZ.DE': { country: 'USA', sector: 'Zykl. Konsumgüter' },
+    'AMZ.F': { country: 'USA', sector: 'Zykl. Konsumgüter' },
+    'FB2A.DE': { country: 'USA', sector: 'Kommunikation' },
+    'FB2A.F': { country: 'USA', sector: 'Kommunikation' },
+    'TL0.DE': { country: 'USA', sector: 'Zykl. Konsumgüter' },
+    'TL0.F': { country: 'USA', sector: 'Zykl. Konsumgüter' },
+    'BRYN.DE': { country: 'USA', sector: 'Finanzdienstleistungen' },
+    'BRYN.F': { country: 'USA', sector: 'Finanzdienstleistungen' },
+    'CCC3.DE': { country: 'USA', sector: 'Nicht-zykl. Konsum' },
+    'PEP.DE': { country: 'USA', sector: 'Nicht-zykl. Konsum' },
+    'PEP.F': { country: 'USA', sector: 'Nicht-zykl. Konsum' },
     'META': { country: 'USA', sector: 'Kommunikation' },
     'AMZN': { country: 'USA', sector: 'Zykl. Konsumgüter' },
     'TSLA': { country: 'USA', sector: 'Zykl. Konsumgüter' },
@@ -386,9 +407,54 @@ export function isLikelyEtf(stock: Pick<Stock, 'type' | 'symbol' | 'name' | 'isi
     return false;
 }
 
+const KNOWN_NAME_METADATA: Array<{ pattern: RegExp; meta: KnownMetadata }> = [
+    { pattern: /\balphabet\b/i, meta: { country: 'USA', sector: 'Kommunikation' } },
+    { pattern: /\bgoogle\b/i, meta: { country: 'USA', sector: 'Kommunikation' } },
+    { pattern: /\bmicrosoft\b/i, meta: { country: 'USA', sector: 'Technologie' } },
+    { pattern: /\bnvidia\b/i, meta: { country: 'USA', sector: 'Technologie' } },
+    { pattern: /\bapple\b/i, meta: { country: 'USA', sector: 'Technologie' } },
+    { pattern: /\bamazon\b/i, meta: { country: 'USA', sector: 'Zykl. Konsumgüter' } },
+    { pattern: /\bmeta platforms\b/i, meta: { country: 'USA', sector: 'Kommunikation' } },
+    { pattern: /\btesla\b/i, meta: { country: 'USA', sector: 'Zykl. Konsumgüter' } },
+    { pattern: /\bberkshire hathaway\b/i, meta: { country: 'USA', sector: 'Finanzdienstleistungen' } },
+    { pattern: /\bpepsico\b/i, meta: { country: 'USA', sector: 'Nicht-zykl. Konsum' } },
+    { pattern: /\bcoca-cola\b|\bcoca cola\b/i, meta: { country: 'USA', sector: 'Nicht-zykl. Konsum' } },
+    { pattern: /\bgeneral mills\b/i, meta: { country: 'USA', sector: 'Nicht-zykl. Konsum' } },
+    { pattern: /\bkraft heinz\b/i, meta: { country: 'USA', sector: 'Nicht-zykl. Konsum' } },
+    { pattern: /\baltria\b|\bphilip morris\b/i, meta: { country: 'USA', sector: 'Tabak' } },
+    { pattern: /\brealty income\b/i, meta: { country: 'USA', sector: 'Immobilien' } },
+    { pattern: /\bchevron\b|\bconocophillips\b|\bconoco phillips\b|\bexxon\b/i, meta: { country: 'USA', sector: 'Energie' } },
+    { pattern: /\bjp\s*morgan\b|\bjpmorgan\b|\bpaypal\b/i, meta: { country: 'USA', sector: 'Finanzdienstleistungen' } },
+    { pattern: /\btexas instruments\b|\bbroadcom\b/i, meta: { country: 'USA', sector: 'Technologie' } },
+    { pattern: /\btotalenergies\b|\btotal energies\b/i, meta: { country: 'Frankreich', sector: 'Energie' } },
+    { pattern: /\blvmh\b|\bhermes\b|\bhermès\b/i, meta: { country: 'Frankreich', sector: 'Zykl. Konsumgüter' } },
+    { pattern: /\bvinci\b/i, meta: { country: 'Frankreich', sector: 'Industrie' } },
+    { pattern: /\baxa\b/i, meta: { country: 'Frankreich', sector: 'Finanzdienstleistungen' } },
+    { pattern: /\bshell\b/i, meta: { country: 'Grossbritannien', sector: 'Energie' } },
+    { pattern: /\brio tinto\b/i, meta: { country: 'Grossbritannien', sector: 'Rohstoffe' } },
+    { pattern: /\bbritish american tobacco\b|^bat$/i, meta: { country: 'Grossbritannien', sector: 'Tabak' } },
+    { pattern: /\blegal\s*&\s*general\b/i, meta: { country: 'Grossbritannien', sector: 'Finanzdienstleistungen' } },
+    { pattern: /\bnestl[eé]\b/i, meta: { country: 'Schweiz', sector: 'Nicht-zykl. Konsum' } },
+    { pattern: /\bzurich\b|\bzürich versicherung\b|\bswiss re\b|\bswiss life\b/i, meta: { country: 'Schweiz', sector: 'Finanzdienstleistungen' } },
+    { pattern: /\bswisscom\b|\bsunrise\b/i, meta: { country: 'Schweiz', sector: 'Kommunikation' } },
+    { pattern: /\bnovo nordisk\b/i, meta: { country: 'Dänemark', sector: 'Gesundheitswesen' } },
+    { pattern: /\bscandinavian tobacco\b/i, meta: { country: 'Dänemark', sector: 'Tabak' } },
+    { pattern: /\basml\b/i, meta: { country: 'Niederlande', sector: 'Technologie' } },
+    { pattern: /\bdbs\b/i, meta: { country: 'Singapur', sector: 'Finanzdienstleistungen' } },
+    { pattern: /\bkaspi\b/i, meta: { country: 'Kasachstan', sector: 'Finanzdienstleistungen' } },
+    { pattern: /\bpetrobras\b/i, meta: { country: 'Brasilien', sector: 'Energie' } }
+];
+
+function findKnownByName(name?: string | null): KnownMetadata | undefined {
+    if (!name) return undefined;
+    const trimmed = name.replace(/\s+/g, ' ').trim();
+    return KNOWN_NAME_METADATA.find(entry => entry.pattern.test(trimmed))?.meta;
+}
+
 export function enrichStockMetadata(stock: Stock): Stock {
     const sym = (stock.symbol || '').trim().toUpperCase();
-    const known = KNOWN_STOCK_METADATA[sym];
+    const baseSym = sym.split('.')[0];
+    const known = KNOWN_STOCK_METADATA[sym] || KNOWN_STOCK_METADATA[baseSym] || findKnownByName(stock.name);
     const etf = isLikelyEtf(stock);
     const resolvedType: 'stock' | 'etf' = etf ? 'etf' : (known?.type || stock.type || 'stock');
 
@@ -402,9 +468,13 @@ export function enrichStockMetadata(stock: Stock): Stock {
         }
     }
 
-    // 2. Resolve Country
+    // 2. Resolve Country (Authoritative company homeland overrides exchange listing / purchase currency)
     let resolvedCountry = normalizeCountryName(stock.country);
-    // Fix common fund-domicile misassignments where an ETF got 'Irland' or 'Luxemburg'
+    const isinPrefix = (stock.isin || '').trim().toUpperCase().slice(0, 2);
+    const authoritativeStockCountry = resolvedType !== 'etf'
+        ? (known?.country || (isinPrefix && isinPrefix !== 'IE' && isinPrefix !== 'LU' ? ISIN_COUNTRY_PREFIX[isinPrefix] : undefined))
+        : undefined;
+
     if (resolvedType === 'etf' && (resolvedCountry === 'Unbekannt' || resolvedCountry === 'Irland' || resolvedCountry === 'Luxemburg')) {
         const fb = getFallbackAllocation(stock);
         if (fb && fb.countryWeights.us && fb.countryWeights.us >= 95) {
@@ -412,27 +482,23 @@ export function enrichStockMetadata(stock: Stock): Stock {
         } else {
             resolvedCountry = 'Welt';
         }
-    }
-
-    if (resolvedCountry === 'Unbekannt') {
-        if (known?.country) {
-            resolvedCountry = known.country;
-        } else {
-            const isinPrefix = (stock.isin || '').trim().toUpperCase().slice(0, 2);
-            if (isinPrefix && ISIN_COUNTRY_PREFIX[isinPrefix]) {
-                resolvedCountry = ISIN_COUNTRY_PREFIX[isinPrefix];
-            } else if (sym.includes('.')) {
-                const suffix = sym.split('.').pop() || '';
-                if (TICKER_SUFFIX_COUNTRY[suffix]) {
-                    resolvedCountry = TICKER_SUFFIX_COUNTRY[suffix];
-                }
-            } else if (sym && stock.currency === 'USD') {
-                resolvedCountry = 'USA';
-            } else if (sym && stock.currency === 'CHF') {
-                resolvedCountry = 'Schweiz';
-            } else if (sym && (stock.currency === 'GBP' || stock.currency === 'GBp')) {
-                resolvedCountry = 'Grossbritannien';
+    } else if (authoritativeStockCountry) {
+        // Always prefer true company domicile (e.g. Alphabet bought in EUR on Xetra -> USA, not Deutschland)
+        resolvedCountry = authoritativeStockCountry;
+    } else if (resolvedCountry === 'Unbekannt') {
+        if (isinPrefix && ISIN_COUNTRY_PREFIX[isinPrefix]) {
+            resolvedCountry = ISIN_COUNTRY_PREFIX[isinPrefix];
+        } else if (sym.includes('.')) {
+            const suffix = sym.split('.').pop() || '';
+            if (TICKER_SUFFIX_COUNTRY[suffix]) {
+                resolvedCountry = TICKER_SUFFIX_COUNTRY[suffix];
             }
+        } else if (sym && stock.currency === 'USD') {
+            resolvedCountry = 'USA';
+        } else if (sym && stock.currency === 'CHF') {
+            resolvedCountry = 'Schweiz';
+        } else if (sym && (stock.currency === 'GBP' || stock.currency === 'GBp')) {
+            resolvedCountry = 'Grossbritannien';
         }
     }
 

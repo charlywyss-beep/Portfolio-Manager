@@ -140,7 +140,7 @@ export const analyzePortfolioRisk = (
                 }
             });
         } else {
-            const rawCountry = p.stock.country || resolveStockCountry(p.stock);
+            const rawCountry = resolveStockCountry(p.stock);
             const country = normalizeCountry(rawCountry);
             countries.set(country, (countries.get(country) || 0) + p.currentValue);
 
@@ -152,7 +152,7 @@ export const analyzePortfolioRisk = (
         }
 
         // US Tech cluster check
-        const resolvedCountry = normalizeCountry(p.stock.country || resolveStockCountry(p.stock));
+        const resolvedCountry = normalizeCountry(resolveStockCountry(p.stock));
         const resolvedSector = normalizeSector(p.stock.sector || resolveStockSector(p.stock));
         if (resolvedCountry === 'USA' && resolvedSector === 'Technologie') {
             usTechValue += p.currentValue;
