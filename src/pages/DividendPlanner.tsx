@@ -1264,41 +1264,45 @@ export function DividendPlanner() {
                                             {/* 5. Frequenzweise */}
                                             <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right align-middle whitespace-nowrap", mobilePage === 2 ? "table-cell" : "hidden xl:table-cell")}>
                                                 <div className="flex flex-col items-center xl:items-end justify-center">
-                                                    <div className="flex items-center gap-1.5 justify-center xl:justify-end">
-                                                        <span className="font-semibold text-[13px] xl:text-sm tabular-nums leading-tight">{frequencyFormatted}</span>
-                                                        {taxRate > 0 && (
-                                                            <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 leading-none">
-                                                                -{taxRate}%
+                                                    <div className="inline-flex flex-col items-end">
+                                                        <div className="flex items-center gap-1.5 justify-end">
+                                                            {isNet && taxRate > 0 && (
+                                                                <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 leading-none shrink-0">
+                                                                    -{taxRate}%
+                                                                </span>
+                                                            )}
+                                                            <span className="font-semibold text-[13px] xl:text-sm tabular-nums font-mono tracking-tight leading-tight">{frequencyFormatted}</span>
+                                                        </div>
+                                                        {divCurrency !== 'CHF' && frequencyCHFFormatted && (
+                                                            <span className="text-[13px] xl:text-sm font-semibold text-green-600 dark:text-green-400 tabular-nums font-mono tracking-tight leading-tight mt-0.5">
+                                                                {frequencyCHFFormatted}
+                                                            </span>
+                                                        )}
+                                                        {!isNet && taxRate > 0 && perPaymentCHFNet > 0 && (
+                                                            <span className="text-[11px] text-muted-foreground font-mono leading-none mt-0.5">
+                                                                Netto: {perPaymentCHFNet.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                                             </span>
                                                         )}
                                                     </div>
-                                                    {divCurrency !== 'CHF' && frequencyCHFFormatted && (
-                                                        <span className="text-[13px] xl:text-sm font-semibold text-green-600 dark:text-green-400 tabular-nums leading-tight mt-0.5">
-                                                            {frequencyCHFFormatted}
-                                                        </span>
-                                                    )}
-                                                    {!isNet && taxRate > 0 && divCurrency !== 'CHF' && (
-                                                        <span className="text-[11px] text-muted-foreground font-mono leading-none mt-0.5">
-                                                            Netto: {perPaymentCHFNet.toFixed(2)} CHF
-                                                        </span>
-                                                    )}
                                                 </div>
                                             </td>
 
                                             {/* 6. Jährlich */}
                                             <td className={cn("px-2 xl:px-4 py-1.5 xl:py-3 h-[60px] xl:h-auto text-center xl:text-right align-middle whitespace-nowrap", mobilePage === 2 ? "table-cell" : "hidden xl:table-cell")}>
                                                 <div className="flex flex-col items-center xl:items-end justify-center">
-                                                    <span className="font-bold text-[13px] xl:text-sm tabular-nums leading-tight">{annualFormatted}</span>
-                                                    {divCurrency !== 'CHF' && (
-                                                        <span className="text-[13px] xl:text-sm font-bold text-green-600 dark:text-green-400 tabular-nums leading-tight mt-0.5">
-                                                            {annualCHFFormatted}
-                                                        </span>
-                                                    )}
-                                                    {!isNet && taxRate > 0 && (
-                                                        <span className="text-[11px] text-muted-foreground font-mono leading-none mt-0.5">
-                                                            Netto: {annualCHFNetFormatted}
-                                                        </span>
-                                                    )}
+                                                    <div className="inline-flex flex-col items-end">
+                                                        <span className="font-bold text-[13px] xl:text-sm tabular-nums font-mono tracking-tight leading-tight">{annualFormatted}</span>
+                                                        {divCurrency !== 'CHF' && (
+                                                            <span className="text-[13px] xl:text-sm font-bold text-green-600 dark:text-green-400 tabular-nums font-mono tracking-tight leading-tight mt-0.5">
+                                                                {annualCHFFormatted}
+                                                            </span>
+                                                        )}
+                                                        {!isNet && taxRate > 0 && (
+                                                            <span className="text-[11px] text-muted-foreground font-mono leading-none mt-0.5">
+                                                                Netto: {annualCHFNetFormatted}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </td>
 
