@@ -93,6 +93,14 @@ const NavItem = ({ to, icon: Icon, label, onClick }: NavItemProps) => {
 
 function App() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Automatically close mobile drawer when navigating to a new page
+  useEffect(() => {
+    if (window.innerWidth < 1280) {
+      setIsSidebarOpen(false);
+    }
+  }, [location.pathname]);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isCloudSyncOpen, setIsCloudSyncOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
@@ -235,7 +243,7 @@ function App() {
                       window.location.href = url.toString();
                     }}
                     className="text-[11px] font-bold bg-blue-600/40 text-white px-2.5 py-0.5 rounded-full hover:bg-blue-600/60 transition-colors border border-blue-400/50 cursor-pointer shadow-sm"
-                    title="App neu laden (Cache leeren)"
+                    
                   >
                     v{packageJson.version}
                   </span>
@@ -247,7 +255,7 @@ function App() {
                       setIsCloudSyncOpen(true);
                     }}
                     className="flex items-center gap-1.5 text-[11px] font-bold bg-blue-600/40 hover:bg-blue-600/60 text-white px-2.5 py-0.5 rounded-full transition-all border border-blue-400/50 shadow-sm"
-                    title="☁️ GitHub Cloud-Sync"
+                    
                   >
                     <Cloud className="size-3 text-white" />
                     <span>Cloud-Sync</span>
@@ -269,9 +277,6 @@ function App() {
                 <NavItem to="/mortgage" icon={Landmark} label="Budget" onClick={closeSidebarOnMobile} />
                 <NavItem to="/seasonality" icon={BarChart2} label="Saisonalität" onClick={closeSidebarOnMobile} />
                 <NavItem to="/market-overview" icon={Globe} label="Marktübersicht" onClick={closeSidebarOnMobile} />
-
-                <div className="my-1 border-t border-border/80" />
-
                 <NavItem to="/exchange-rates" icon={ArrowLeftRight} label="Finanz Rechner" onClick={closeSidebarOnMobile} />
                 <NavItem to="/settings" icon={SettingsIcon} label="Einstellungen" onClick={closeSidebarOnMobile} />
               </nav>
