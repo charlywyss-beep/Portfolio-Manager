@@ -1111,10 +1111,8 @@ export function DividendPlanner() {
                                     const activePaymentNative = isNet ? perPaymentNativeNet : perPaymentNativeGross;
 
                                     let displayPaymentNative = activePaymentNative;
-                                    let displayPaymentNativeNet = perPaymentNativeNet;
                                     if (divCurrency === 'GBp') {
                                         displayPaymentNative /= 100;
-                                        displayPaymentNativeNet /= 100;
                                     }
                                     const frequencyFormatted = activePaymentNative > 0
                                         ? `${displayPaymentNative.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${displayAnnualCurrency}`
@@ -1130,7 +1128,6 @@ export function DividendPlanner() {
 
                                     const activeAnnualCHF = isNet ? (annualDividendCHF * taxFactor) : annualDividendCHF;
                                     const annualCHFFormatted = `${activeAnnualCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`;
-                                    const annualCHFNetFormatted = `${(annualDividendCHF * taxFactor).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`;
 
                                     let displayAnnualNative = isNet ? (annualNative * taxFactor) : annualNative;
                                     if (divCurrency === 'GBp') {
@@ -1278,11 +1275,6 @@ export function DividendPlanner() {
                                                                 {frequencyCHFFormatted}
                                                             </span>
                                                         )}
-                                                        {!isNet && taxRate > 0 && perPaymentCHFNet > 0 && (
-                                                            <span className="text-[11px] text-muted-foreground font-mono leading-none mt-0.5">
-                                                                Netto: {perPaymentCHFNet.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
-                                                            </span>
-                                                        )}
                                                     </div>
                                                 </div>
                                             </td>
@@ -1295,11 +1287,6 @@ export function DividendPlanner() {
                                                         {divCurrency !== 'CHF' && (
                                                             <span className="text-[13px] xl:text-sm font-bold text-green-600 dark:text-green-400 tabular-nums font-mono tracking-tight leading-tight mt-0.5">
                                                                 {annualCHFFormatted}
-                                                            </span>
-                                                        )}
-                                                        {!isNet && taxRate > 0 && (
-                                                            <span className="text-[11px] text-muted-foreground font-mono leading-none mt-0.5">
-                                                                Netto: {annualCHFNetFormatted}
                                                             </span>
                                                         )}
                                                     </div>
