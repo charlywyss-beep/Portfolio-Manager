@@ -172,7 +172,6 @@ export function DividendPlanner() {
     const totalAnnualDividendsNet = projectedDividends.reduce((sum, d) => sum + d!.annualDividendCHFNet, 0);
     const totalAnnualDividends = isNet ? totalAnnualDividendsNet : totalAnnualDividendsGross;
     const totalAnnualNet = totalAnnualDividends + annualBankNet; // Sum of Dividends + Net Bank Impact
-    const totalMonthly = totalAnnualNet / 12;
 
     // Prepare Bank Rows Data
     const bankRows = fixedDeposits.map(deposit => {
@@ -286,6 +285,31 @@ export function DividendPlanner() {
     useEffect(() => {
         localStorage.setItem('dividend_active_tab', activeDivTab);
     }, [activeDivTab]);
+
+    // Tab-specific metrics so Dividenden shows pure stock dividends matching table & dashboard
+    const displayAnnualAmount = activeDivTab === 'bank'
+        ? annualBankNet
+        : activeDivTab === 'calendar'
+            ? totalAnnualNet
+            : totalAnnualDividends;
+
+    const displayMonthlyAmount = displayAnnualAmount / 12;
+
+    const displayAnnualLabel = activeDivTab === 'bank'
+        ? 'Jährlich Zinsen'
+        : activeDivTab === 'calendar'
+            ? (isNet ? 'Gesamtertrag (Netto)' : 'Gesamtertrag (Brutto)')
+            : (isNet ? 'Jährlich (Netto)' : 'Jährlich (Brutto)');
+
+    const displaySubtitle = activeDivTab === 'bank'
+        ? (bankRows.length + ' Konten')
+        : activeDivTab === 'calendar'
+            ? (isNet
+                ? ('Brutto: ' + (totalAnnualDividendsGross + annualBankNet).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' CHF')
+                : ('Netto: ~' + (totalAnnualDividendsNet + annualBankNet).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' CHF'))
+            : (isNet
+                ? ('Brutto: ' + totalAnnualDividendsGross.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' CHF')
+                : ('Netto: ~' + totalAnnualDividendsNet.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' CHF'));
 
     projectedDividends.sort((a, b) => {
         if (!a || !b) return 0;
@@ -433,14 +457,14 @@ export function DividendPlanner() {
                         <div className="size-6 sm:size-7 rounded-lg bg-green-500/10 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
                             <TrendingUp className="size-3.5 sm:size-4" />
                         </div>
-                        <span className="text-xs sm:text-sm font-medium text-muted-foreground">{isNet ? 'Jährlich (Netto)' : 'Jährlich (Brutto)'}</span>
+                        <span className="text-xs sm:text-sm font-medium text-muted-foreground">{displayAnnualLabel}</span>
                     </div>
                     <div className="text-xl sm:text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400 tabular-nums tracking-tight">
-                        {totalAnnualNet.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+                        {displayAnnualAmount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
                         <span className="text-xs sm:text-sm font-normal text-muted-foreground">CHF</span>
                     </div>
                     <span className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 font-medium tabular-nums">
-                        {isNet ? `Brutto: ${(totalAnnualDividendsGross + annualBankNet).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF` : `Netto: ~${(totalAnnualDividendsNet + annualBankNet).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`}
+                        {displaySubtitle}
                     </span>
                 </div>
 
@@ -452,7 +476,7 @@ export function DividendPlanner() {
                         <span className="text-xs sm:text-sm font-medium text-muted-foreground">Ø Monatlich</span>
                     </div>
                     <div className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight">
-                        {totalMonthly.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+                        {displayMonthlyAmount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
                         <span className="text-xs sm:text-sm font-normal text-muted-foreground">CHF</span>
                     </div>
                 </div>
@@ -480,11 +504,11 @@ export function DividendPlanner() {
                         <div className="size-6 sm:size-7 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
                             <Building2 className="size-3.5 sm:size-4" />
                         </div>
-                        <span className="text-xs sm:text-sm font-medium text-muted-foreground">Zahler</span>
+                        <span className="text-xs sm:text-sm font-medium text-muted-foreground">{activeDivTab === 'bank' ? 'Konten' : 'Zahler'}</span>
                     </div>
                     <div className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground tabular-nums tracking-tight">
-                        {projectedDividends.length}{' '}
-                        <span className="text-xs sm:text-sm font-normal text-muted-foreground">Aktien</span>
+                        {activeDivTab === 'bank' ? bankRows.length : projectedDividends.length}{' '}
+                        <span className="text-xs sm:text-sm font-normal text-muted-foreground">{activeDivTab === 'bank' ? 'Konten' : 'Aktien'}</span>
                     </div>
                 </div>
             </div>
