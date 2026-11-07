@@ -386,7 +386,7 @@ export function Dashboard() {
                             <p className={cn("text-sm mt-2 font-medium",
                                 totals.gainLoss >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                             )}>
-                                {totals.gainLoss >= 0 ? '+' : ''}{totals.gainLoss.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF Gewinn/Verlust
+                                {totals.gainLoss >= 0 ? '+' : ''}{totals.gainLoss.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF {totals.gainLoss >= 0 ? 'Gewinn' : 'Verlust'}
                             </p>
 
                             <div className="mt-4 pt-4 border-t border-border flex flex-col gap-1.5">
