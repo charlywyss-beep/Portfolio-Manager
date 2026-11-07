@@ -22,6 +22,7 @@ import { Logo } from '../components/Logo';
 import { PieChart as PieChartIcon } from 'lucide-react';
 import { fetchHistoricalClose } from '../services/yahoo-finance';
 import { estimateMarketState } from '../utils/market';
+import { getWithholdingTaxRate } from '../utils/tax';
 
 // Helper to translate frequency to German
 const translateFrequency = (freq?: string) => {
@@ -47,7 +48,7 @@ export function Dashboard() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { totals, upcomingDividends, positions, upcomingWatchlistDividends, bankRisks } = usePortfolioData();
-    const { history, deleteHistoryEntry, stocks, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh, refreshTick } = usePortfolio(); // Added refreshTick
+    const { history, deleteHistoryEntry, stocks, fixedDeposits, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh, refreshTick } = usePortfolio(); // Added refreshTick
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [editingHistoryEntry, setEditingHistoryEntry] = useState<any>(null);
@@ -397,22 +398,130 @@ export function Dashboard() {
                     </div>
 
                     {/* Projected Dividends */}
-                    <div className="p-6 rounded-xl bg-card border border-border shadow-sm order-4 md:order-3">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                                <TrendingUp className="size-6" />
+                    {(() => {
+                        const getFreqFactor = (freq?: string) => {
+                            switch (freq?.toLowerCase()) {
+                                case 'monthly':
+                                case 'monatlich': return 12;
+                                case 'quarterly':
+                                case 'quartalsweise':
+                                case 'im quartal': return 4;
+                                case 'semi-annually':
+                                case 'halbjährlich': return 2;
+                                default: return 1;
+                            }
+                        };
+
+                        const projectedYearlyDividendsNet = positions.reduce((sum, p) => {
+                            let divVal = 0;
+                            if (p.stock.dividendAmount) {
+                                divVal = p.stock.dividendAmount * p.shares * getFreqFactor(p.stock.dividendFrequency);
+                            } else if (p.stock.dividendYield) {
+                                divVal = p.currentValue * (p.stock.dividendYield / 100);
+                            }
+                            const divCurr = p.stock.dividendCurrency || p.stock.currency;
+                            const grossCHF = convertToCHF(divVal, divCurr);
+                            const taxRate = getWithholdingTaxRate(p.stock);
+                            return sum + grossCHF * (1 - taxRate / 100);
+                        }, 0);
+
+                        const annualBankNet = (fixedDeposits || []).reduce((sum, deposit) => {
+                            const interest = deposit.amount * (deposit.interestRate / 100);
+                            let fee = 0;
+                            if (deposit.monthlyFee && deposit.monthlyFee > 0) {
+                                if (deposit.feeFrequency === 'annually') fee = deposit.monthlyFee;
+                                else if (deposit.feeFrequency === 'quarterly') fee = deposit.monthlyFee * 4;
+                                else fee = deposit.monthlyFee * 12;
+                            }
+                            return sum + convertToCHF(interest - fee, deposit.currency || 'CHF');
+                        }, 0);
+
+                        const totalNetAnnualIncome = projectedYearlyDividendsNet + annualBankNet;
+                        const currentYieldPercent = totals.totalValueStock > 0
+                            ? (totals.projectedYearlyDividends / totals.totalValueStock) * 100
+                            : 0;
+                        const yieldOnCostPercent = totals.totalCostStock > 0
+                            ? (totals.projectedYearlyDividends / totals.totalCostStock) * 100
+                            : 0;
+
+                        const nextDiv = upcomingDividends[0] || null;
+                        const nextDivCHF = nextDiv ? convertToCHF(nextDiv.amount, nextDiv.currency) : 0;
+                        const nextDivDateLabel = nextDiv
+                            ? new Date(nextDiv.payDate).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })
+                            : '';
+                        const nextDivShortName = nextDiv
+                            ? (nextDiv.stock.name?.split(' ')[0] || nextDiv.stock.symbol)
+                            : '';
+
+                        return (
+                            <div
+                                onClick={() => navigate('/dividends')}
+                                className="p-5 sm:p-6 rounded-xl bg-card border border-border shadow-sm order-4 md:order-3 cursor-pointer hover:border-primary/40 transition-colors"
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                                        <TrendingUp className="size-6" />
+                                    </div>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <span className="flex items-center text-sm font-medium px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                            <ArrowUpRight className="size-4 mr-1" />
+                                            {currentYieldPercent.toFixed(2)}%
+                                        </span>
+                                        {yieldOnCostPercent > 0 && (
+                                            <span className="text-[11px] text-muted-foreground font-medium">
+                                                Kaufrendite {yieldOnCostPercent.toFixed(2)}%
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground font-medium">Erwartete Dividende im Jahr</p>
+                                    <h3 className="text-xl lg:text-2xl font-bold mt-1 tracking-tight text-green-600 dark:text-green-400">
+                                        +{totals.projectedYearlyDividends.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                    </h3>
+                                    <p className="text-sm mt-2 font-medium text-green-600 dark:text-green-400">
+                                        Ø +{(totals.projectedYearlyDividends / 12).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF / Monat
+                                    </p>
+
+                                    <div className="mt-4 pt-4 border-t border-border flex flex-col gap-1.5">
+                                        <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                                            <span className="text-muted-foreground truncate">Dividende Netto:</span>
+                                            <span className="font-medium text-green-600 dark:text-green-400 whitespace-nowrap shrink-0">
+                                                +{projectedYearlyDividendsNet.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                                            <span className="text-muted-foreground truncate">Bank- & Vorsorgezinsen:</span>
+                                            <span className={cn(
+                                                "font-medium whitespace-nowrap shrink-0",
+                                                annualBankNet >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                            )}>
+                                                {annualBankNet >= 0 ? '+' : ''}{annualBankNet.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                                            <span className="text-muted-foreground truncate font-medium">Total Netto Jahr:</span>
+                                            <span className={cn(
+                                                "font-semibold whitespace-nowrap shrink-0",
+                                                totalNetAnnualIncome >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                            )}>
+                                                {totalNetAnnualIncome >= 0 ? '+' : ''}{totalNetAnnualIncome.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                            </span>
+                                        </div>
+                                        <div className="h-px bg-border my-0.5 opacity-50" />
+                                        <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                                            <span className="text-muted-foreground truncate">
+                                                {nextDiv ? 'Nächste: ' + nextDivShortName + ' · ' + nextDivDateLabel : 'Nächste Zahlung:'}
+                                            </span>
+                                            <span className="font-medium text-green-600 dark:text-green-400 whitespace-nowrap shrink-0">
+                                                {nextDiv ? '+' + nextDivCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' CHF' : '-'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground font-medium">Erwartete Dividende (Jahr)</p>
-                            <h3 className="text-xl lg:text-2xl font-bold mt-1 tracking-tight">
-                                {totals.projectedYearlyDividends.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
-                            </h3>
-                            <p className="text-base font-medium text-foreground mt-2">
-                                Ø {(totals.projectedYearlyDividends / 12).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF / Monat
-                            </p>
-                        </div>
-                    </div>
+                        );
+                    })()}
 
                     {/* Performance Card with Timeframe Selection */}
                     <div className="p-6 rounded-xl bg-card border border-border shadow-sm order-2 md:order-2">
