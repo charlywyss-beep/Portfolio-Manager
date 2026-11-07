@@ -6,6 +6,7 @@ import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { Logo } from './Logo';
 import { estimateMarketState } from '../utils/market';
+import { isLikelyEtf } from '../utils/stockMetadata';
 import { usePortfolio } from '../context/PortfolioContext';
 
 interface PerformanceDetailsModalProps {
@@ -20,6 +21,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     const navigate = useNavigate();
 
     // 0: Kurs, 1: % am DD.MM., 2: CHF am DD.MM., 3: Performance %, 4: Performance CHF
+    const [assetFilter, setAssetFilter] = useState<'all' | 'stock' | 'etf'>('all');
     const [mobileColIndex, setMobileColIndex] = useState(0);
     const [sortConfig, setSortConfig] = useState<{
         key: 'default' | 'dailyPct' | 'dailyChf' | 'totalPct' | 'totalChf';
@@ -111,7 +113,14 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     // 1. Priorität: Geöffnete Börsen zuerst (Live-Handel), danach geschlossene Börsen
     // 2. Priorität: Aktien vor ETFs
     // 3. Priorität: Alphabetisch A - Z
-    const sortedPositions = [...positions].sort((a, b) => {
+    const isPositionEtf = (p: any) => p.stock?.type?.toLowerCase() === 'etf' || isLikelyEtf(p.stock);
+    const filteredPositions = positions.filter((p) => {
+        if (assetFilter === 'stock') return !isPositionEtf(p);
+        if (assetFilter === 'etf') return isPositionEtf(p);
+        return true;
+    });
+
+    const sortedPositions = [...filteredPositions].sort((a, b) => {
         if (sortConfig.key !== 'default') {
             const mA = getPositionMetrics(a);
             const mB = getPositionMetrics(b);
@@ -221,6 +230,45 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         </h2>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
+                        {/* Filter Tabs: Alle / Aktien / ETFs */}
+                        <div className="flex items-center bg-secondary/80 p-0.5 rounded-lg border border-border">
+                            <button
+                                type="button"
+                                onClick={() => setAssetFilter('all')}
+                                className={cn(
+                                    "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                                    assetFilter === 'all'
+                                        ? "bg-primary text-primary-foreground shadow-sm"
+                                        : "text-muted-foreground hover:text-foreground"
+                                )}
+                            >
+                                Alle
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setAssetFilter('stock')}
+                                className={cn(
+                                    "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                                    assetFilter === 'stock'
+                                        ? "bg-primary text-primary-foreground shadow-sm"
+                                        : "text-muted-foreground hover:text-foreground"
+                                )}
+                            >
+                                Aktien
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setAssetFilter('etf')}
+                                className={cn(
+                                    "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                                    assetFilter === 'etf'
+                                        ? "bg-primary text-primary-foreground shadow-sm"
+                                        : "text-muted-foreground hover:text-foreground"
+                                )}
+                            >
+                                ETFs
+                            </button>
+                        </div>
                         <button
                             onClick={() => refreshAllPrices(true)}
                             disabled={isGlobalRefreshing}
