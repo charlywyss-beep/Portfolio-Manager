@@ -451,15 +451,6 @@ export function Dashboard() {
                             ? (totals.projectedYearlyDividends / divPositionsCostCHF) * 100
                             : 0;
 
-                        const nextDiv = upcomingDividends[0] || null;
-                        const nextDivCHF = nextDiv ? convertToCHF(nextDiv.amount, nextDiv.currency) : 0;
-                        const nextDivDateLabel = nextDiv
-                            ? new Date(nextDiv.payDate).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' })
-                            : '';
-                        const nextDivShortName = nextDiv
-                            ? (nextDiv.stock.name?.split(' ')[0] || nextDiv.stock.symbol)
-                            : '';
-
                         return (
                             <div
                                 onClick={() => navigate('/dividends')}
@@ -512,6 +503,7 @@ export function Dashboard() {
                                                 {annualBankNet >= 0 ? '+' : ''}{annualBankNet.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                             </span>
                                         </div>
+                                        <div className="h-px bg-border my-0.5 opacity-50" />
                                         <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
                                             <span className="text-muted-foreground truncate font-medium">Total Netto Jahr:</span>
                                             <span className={cn(
@@ -519,15 +511,6 @@ export function Dashboard() {
                                                 totalNetAnnualIncome >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                             )}>
                                                 {totalNetAnnualIncome >= 0 ? '+' : ''}{totalNetAnnualIncome.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
-                                            </span>
-                                        </div>
-                                        <div className="h-px bg-border my-0.5 opacity-50" />
-                                        <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
-                                            <span className="text-muted-foreground truncate">
-                                                {nextDiv ? 'Nächste: ' + nextDivShortName + ' · ' + nextDivDateLabel : 'Nächste Zahlung:'}
-                                            </span>
-                                            <span className="font-medium text-green-600 dark:text-green-400 whitespace-nowrap shrink-0">
-                                                {nextDiv ? '+' + nextDivCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' CHF' : '-'}
                                             </span>
                                         </div>
                                     </div>
