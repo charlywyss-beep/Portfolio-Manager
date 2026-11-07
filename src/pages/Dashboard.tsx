@@ -498,6 +498,12 @@ export function Dashboard() {
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                                            <span className="text-muted-foreground truncate">Ø Dividende Netto / Monat:</span>
+                                            <span className="font-medium text-green-600 dark:text-green-400 whitespace-nowrap shrink-0">
+                                                +{(projectedYearlyDividendsNet / 12).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
                                             <span className="text-muted-foreground truncate">Bank- & Vorsorgezinsen:</span>
                                             <span className={cn(
                                                 "font-medium whitespace-nowrap shrink-0",
