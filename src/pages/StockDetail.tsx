@@ -4,7 +4,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, Pencil } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, Pencil, Landmark } from 'lucide-react';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
 import { estimateMarketState } from '../utils/market';
@@ -793,6 +793,15 @@ export function StockDetail() {
                                             {isPositiveNative ? '+' : ''}{formatCurrency(totalDiffNative, stock.currency, false)}
                                         </span>
                                     </div>
+                                </div>
+                                <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px] gap-2">
+                                    <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
+                                        <Landmark className="size-3.5 text-primary shrink-0" />
+                                        Bank / Broker
+                                    </span>
+                                    <span className="font-medium text-foreground text-right truncate max-w-[200px] sm:max-w-[280px]" title={pos.broker || '-'}>
+                                        {pos.broker || '-'}
+                                    </span>
                                 </div>
                             </>
                         );
