@@ -412,6 +412,8 @@ export function Dashboard() {
                             }
                         };
 
+                        let divPositionsValueCHF = 0;
+                        let divPositionsCostCHF = 0;
                         const projectedYearlyDividendsNet = positions.reduce((sum, p) => {
                             let divVal = 0;
                             if (p.stock.dividendAmount) {
@@ -421,6 +423,11 @@ export function Dashboard() {
                             }
                             const divCurr = p.stock.dividendCurrency || p.stock.currency;
                             const grossCHF = convertToCHF(divVal, divCurr);
+                            if (grossCHF > 0) {
+                                divPositionsValueCHF += convertToCHF(p.currentValue, p.stock.currency);
+                                const entryFxRate = p.averageEntryFxRate || (p.stock.currency !== 'CHF' ? convertToCHF(1, p.stock.currency) : 1);
+                                divPositionsCostCHF += p.costBasis * entryFxRate;
+                            }
                             const taxRate = getWithholdingTaxRate(p.stock);
                             return sum + grossCHF * (1 - taxRate / 100);
                         }, 0);
@@ -437,11 +444,11 @@ export function Dashboard() {
                         }, 0);
 
                         const totalNetAnnualIncome = projectedYearlyDividendsNet + annualBankNet;
-                        const currentYieldPercent = totals.totalValueStock > 0
-                            ? (totals.projectedYearlyDividends / totals.totalValueStock) * 100
+                        const currentYieldPercent = divPositionsValueCHF > 0
+                            ? (totals.projectedYearlyDividends / divPositionsValueCHF) * 100
                             : 0;
-                        const yieldOnCostPercent = totals.totalCostStock > 0
-                            ? (totals.projectedYearlyDividends / totals.totalCostStock) * 100
+                        const yieldOnCostPercent = divPositionsCostCHF > 0
+                            ? (totals.projectedYearlyDividends / divPositionsCostCHF) * 100
                             : 0;
 
                         const nextDiv = upcomingDividends[0] || null;
