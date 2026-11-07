@@ -98,7 +98,7 @@ export function PositionTable({
                         <thead>
                             <tr className="border-b border-border bg-muted/20 iphone-landscape-table-header-row">
                                 {/* 0. Aktie */}
-                                <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[230px] md:min-w-[230px] md:max-w-[250px] touch-pan-y align-middle iphone-landscape-col-stock">
+                                <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[225px] min-w-[220px] max-w-[250px] md:w-[230px] md:min-w-[230px] md:max-w-[250px] touch-pan-y align-middle iphone-landscape-col-stock">
                                     Aktie
                                 </th>
 
@@ -109,23 +109,23 @@ export function PositionTable({
                                         mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                    <div className="flex md:hidden items-center justify-center gap-1 w-full h-12">
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
                                             disabled={mobileColIndex === 0}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                        <span className="whitespace-nowrap text-center px-1">
                                             Anzahl
                                         </span>
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(7, i + 1)); }}
                                             disabled={mobileColIndex === 7}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                         >
                                             <ChevronRight className="size-4" />
                                         </button>
@@ -140,23 +140,23 @@ export function PositionTable({
                                         mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                    <div className="flex md:hidden items-center justify-center gap-1 w-full h-12">
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
                                             disabled={mobileColIndex === 0}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                        <span className="whitespace-nowrap text-center px-1">
                                             Ø Kauf
                                         </span>
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(7, i + 1)); }}
                                             disabled={mobileColIndex === 7}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                         >
                                             <ChevronRight className="size-4" />
                                         </button>
@@ -171,23 +171,23 @@ export function PositionTable({
                                         mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                    <div className="flex md:hidden items-center justify-center gap-1 w-full h-12">
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
                                             disabled={mobileColIndex === 0}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                        <span className="whitespace-nowrap text-center px-1">
                                             Invest
                                         </span>
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(7, i + 1)); }}
                                             disabled={mobileColIndex === 7}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                         >
                                             <ChevronRight className="size-4" />
                                         </button>
@@ -202,23 +202,23 @@ export function PositionTable({
                                         mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                    <div className="flex md:hidden items-center justify-center gap-1 w-full h-12">
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
                                             disabled={mobileColIndex === 0}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                        <span className="whitespace-nowrap text-center px-1">
                                             Kurs
                                         </span>
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(7, i + 1)); }}
                                             disabled={mobileColIndex === 7}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                         >
                                             <ChevronRight className="size-4" />
                                         </button>
@@ -233,23 +233,23 @@ export function PositionTable({
                                         mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                    <div className="flex md:hidden items-center justify-center gap-1 w-full h-12">
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
                                             disabled={mobileColIndex === 0}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                        <span className="whitespace-nowrap text-center px-1">
                                             Wert
                                         </span>
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(7, i + 1)); }}
                                             disabled={mobileColIndex === 7}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                         >
                                             <ChevronRight className="size-4" />
                                         </button>
@@ -264,23 +264,23 @@ export function PositionTable({
                                         mobileColIndex === 5 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                    <div className="flex md:hidden items-center justify-center gap-1 w-full h-12">
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
                                             disabled={mobileColIndex === 0}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                        <span className="whitespace-nowrap text-center px-1">
                                             %
                                         </span>
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(7, i + 1)); }}
                                             disabled={mobileColIndex === 7}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                         >
                                             <ChevronRight className="size-4" />
                                         </button>
@@ -295,23 +295,23 @@ export function PositionTable({
                                         mobileColIndex === 6 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                    <div className="flex md:hidden items-center justify-center gap-1 w-full h-12">
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
                                             disabled={mobileColIndex === 0}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                        <span className="whitespace-nowrap text-center px-1">
                                             +/-
                                         </span>
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(7, i + 1)); }}
                                             disabled={mobileColIndex === 7}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                         >
                                             <ChevronRight className="size-4" />
                                         </button>
@@ -326,23 +326,23 @@ export function PositionTable({
                                         mobileColIndex === 7 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
-                                    <div className="flex md:hidden items-center justify-between w-full h-12">
+                                    <div className="flex md:hidden items-center justify-center gap-1 w-full h-12">
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.max(0, i - 1)); }}
                                             disabled={mobileColIndex === 0}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                         >
                                             <ChevronLeft className="size-4" />
                                         </button>
-                                        <span className="whitespace-nowrap text-center flex-1 px-1">
+                                        <span className="whitespace-nowrap text-center px-1">
                                             Aktion
                                         </span>
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setMobileColIndex((i) => Math.min(7, i + 1)); }}
                                             disabled={mobileColIndex === 7}
-                                            className="p-1.5 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
+                                            className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-opacity shrink-0"
                                         >
                                             <ChevronRight className="size-4" />
                                         </button>
@@ -356,7 +356,7 @@ export function PositionTable({
                                 return (
                                     <tr key={pos.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors group snap-start snap-always h-[60px] md:h-auto iphone-landscape-table-row">
                                         {/* 0. Aktie */}
-                                        <td className="px-3 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[160px] min-w-[160px] max-w-[160px] md:w-[230px] md:min-w-[230px] md:max-w-[250px] touch-pan-y align-middle iphone-landscape-col-stock">
+                                        <td className="px-3 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[225px] min-w-[220px] max-w-[250px] md:w-[230px] md:min-w-[230px] md:max-w-[250px] touch-pan-y align-middle iphone-landscape-col-stock">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center gap-2.5 sm:gap-3">
                                                 <Logo
