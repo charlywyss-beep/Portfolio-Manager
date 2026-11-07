@@ -645,14 +645,6 @@ export function Dashboard() {
                             const etfPrevValCHF = etfCurrentValCHF - etfDailyGainCHF;
                             const etfDailyGainPct = etfPrevValCHF > 0 ? (etfDailyGainCHF / etfPrevValCHF) * 100 : 0;
 
-                            let upCount = 0;
-                            let downCount = 0;
-                            positions.forEach(p => {
-                                const g = p.dailyGain || 0;
-                                if (g > 0.01) upCount++;
-                                else if (g < -0.01) downCount++;
-                            });
-
                             return (
                                 <div>
                                     <p className="text-sm text-muted-foreground font-medium">Performance</p>
@@ -676,27 +668,21 @@ export function Dashboard() {
                                         {performancePeriod === '1D' ? (
                                             <>
                                                 <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
-                                                    <span className="text-muted-foreground truncate">Aktien ({stockPositions.length}):</span>
+                                                    <span className="text-muted-foreground truncate">Aktien:</span>
                                                     <span className={cn(
                                                         "font-medium whitespace-nowrap shrink-0",
                                                         stockDailyGainCHF >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                                     )}>
-                                                        {stockDailyGainCHF >= 0 ? '+' : ''}{stockDailyGainCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
-                                                        <span className="text-[11px] opacity-80 ml-1">
-                                                            ({stockDailyGainPct >= 0 ? '+' : ''}{stockDailyGainPct.toFixed(2)}%)
-                                                        </span>
+                                                        {stockDailyGainCHF >= 0 ? '+' : ''}{stockDailyGainCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF • {stockDailyGainPct >= 0 ? '+' : ''}{stockDailyGainPct.toFixed(2)}%
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
-                                                    <span className="text-muted-foreground truncate">ETFs ({etfPositions.length}):</span>
+                                                    <span className="text-muted-foreground truncate">ETFs:</span>
                                                     <span className={cn(
                                                         "font-medium whitespace-nowrap shrink-0",
                                                         etfDailyGainCHF >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                                     )}>
-                                                        {etfDailyGainCHF >= 0 ? '+' : ''}{etfDailyGainCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
-                                                        <span className="text-[11px] opacity-80 ml-1">
-                                                            ({etfDailyGainPct >= 0 ? '+' : ''}{etfDailyGainPct.toFixed(2)}%)
-                                                        </span>
+                                                        {etfDailyGainCHF >= 0 ? '+' : ''}{etfDailyGainCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF • {etfDailyGainPct >= 0 ? '+' : ''}{etfDailyGainPct.toFixed(2)}%
                                                     </span>
                                                 </div>
                                             </>
@@ -719,30 +705,6 @@ export function Dashboard() {
                                                 </div>
                                             </>
                                         )}
-
-                                        <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
-                                            <span className="text-muted-foreground truncate font-medium">Gewinner / Verlierer:</span>
-                                            <span className="font-semibold text-foreground whitespace-nowrap shrink-0">
-                                                <span className="text-green-600 dark:text-green-400">{upCount} im Plus</span>
-                                                <span className="text-muted-foreground mx-1">·</span>
-                                                <span className="text-red-600 dark:text-red-400">{downCount} im Minus</span>
-                                            </span>
-                                        </div>
-
-                                        <div className="h-px bg-border my-0.5 opacity-50" />
-
-                                        <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
-                                            <span className="text-muted-foreground truncate font-medium">Gesamtgewinn (All-Time):</span>
-                                            <span className={cn(
-                                                "font-semibold whitespace-nowrap shrink-0",
-                                                totals.gainLoss >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                            )}>
-                                                {totals.gainLoss >= 0 ? '+' : ''}{totals.gainLoss.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
-                                                <span className="text-[11px] opacity-80 ml-1">
-                                                    ({totals.gainLossPercent >= 0 ? '+' : ''}{totals.gainLossPercent.toFixed(2)}%)
-                                                </span>
-                                            </span>
-                                        </div>
                                     </div>
                                 </div>
                             );
