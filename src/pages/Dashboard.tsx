@@ -130,7 +130,7 @@ export function Dashboard() {
     const [watchlistTimeframe, setWatchlistTimeframe] = useState<number>(90); // Default 90 days
     const [upcomingTimeframe, setUpcomingTimeframe] = useState<number>(90); // Default 90 days
     const [performancePeriod, setPerformancePeriod] = useState<string>('1D'); // Performance Period selection
-    const [periodPerformance, setPeriodPerformance] = useState<Record<string, { gainCHF: number; gainPercent: number; startDate: string }>>({});
+    const [periodPerformance, setPeriodPerformance] = useState<Record<string, { gainCHF: number; gainPercent: number; startDate: string; stockGainCHF: number; stockGainPercent: number; etfGainCHF: number; etfGainPercent: number }>>({});
     const [isPeriodLoading, setIsPeriodLoading] = useState(false);
 
     // Reset cached period performance when portfolio is refreshed
@@ -188,6 +188,10 @@ export function Dashboard() {
 
                 let totalPastCHF = 0;
                 let totalCurrentCHF = 0;
+                let stockPastCHF = 0;
+                let stockCurrentCHF = 0;
+                let etfPastCHF = 0;
+                let etfCurrentCHF = 0;
                 let earliestDate: string | null = null;
 
                 for (const r of results) {
@@ -201,6 +205,15 @@ export function Dashboard() {
                     totalPastCHF += pastValCHF;
                     totalCurrentCHF += currValCHF;
 
+                    const isEtf = r.pos.stock.type?.toLowerCase() === 'etf' || isLikelyEtf(r.pos.stock);
+                    if (isEtf) {
+                        etfPastCHF += pastValCHF;
+                        etfCurrentCHF += currValCHF;
+                    } else {
+                        stockPastCHF += pastValCHF;
+                        stockCurrentCHF += currValCHF;
+                    }
+
                     if (r.startDate) {
                         if (!earliestDate || new Date(r.startDate) < new Date(earliestDate)) {
                             earliestDate = r.startDate;
@@ -210,6 +223,10 @@ export function Dashboard() {
 
                 const gainCHF = totalCurrentCHF - totalPastCHF;
                 const gainPercent = totalPastCHF > 0 ? (gainCHF / totalPastCHF) * 100 : 0;
+                const stockGainCHF = stockCurrentCHF - stockPastCHF;
+                const stockGainPercent = stockPastCHF > 0 ? (stockGainCHF / stockPastCHF) * 100 : 0;
+                const etfGainCHF = etfCurrentCHF - etfPastCHF;
+                const etfGainPercent = etfPastCHF > 0 ? (etfGainCHF / etfPastCHF) * 100 : 0;
 
                 let formattedStartDate = '';
                 if (earliestDate) {
@@ -227,7 +244,11 @@ export function Dashboard() {
                     [performancePeriod]: {
                         gainCHF,
                         gainPercent,
-                        startDate: formattedStartDate
+                        startDate: formattedStartDate,
+                        stockGainCHF,
+                        stockGainPercent,
+                        etfGainCHF,
+                        etfGainPercent
                     }
                 }));
             } catch (err) {
@@ -605,16 +626,38 @@ export function Dashboard() {
                                 : new Date();
                             const shortDateLabel = effectiveDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
 
+                            const stockPositions = positions.filter(p => !(p.stock.type?.toLowerCase() === 'etf' || isLikelyEtf(p.stock)));
+                            const etfPositions = positions.filter(p => p.stock.type?.toLowerCase() === 'etf' || isLikelyEtf(p.stock));
+
+                            const stockDailyGainCHF = stockPositions.reduce((sum, p) => sum + convertToCHF(p.dailyGain || 0, p.stock.currency), 0);
+                            const stockCurrentValCHF = stockPositions.reduce((sum, p) => sum + convertToCHF(p.shares * p.stock.currentPrice, p.stock.currency), 0);
+                            const stockPrevValCHF = stockCurrentValCHF - stockDailyGainCHF;
+                            const stockDailyGainPct = stockPrevValCHF > 0 ? (stockDailyGainCHF / stockPrevValCHF) * 100 : 0;
+
+                            const etfDailyGainCHF = etfPositions.reduce((sum, p) => sum + convertToCHF(p.dailyGain || 0, p.stock.currency), 0);
+                            const etfCurrentValCHF = etfPositions.reduce((sum, p) => sum + convertToCHF(p.shares * p.stock.currentPrice, p.stock.currency), 0);
+                            const etfPrevValCHF = etfCurrentValCHF - etfDailyGainCHF;
+                            const etfDailyGainPct = etfPrevValCHF > 0 ? (etfDailyGainCHF / etfPrevValCHF) * 100 : 0;
+
+                            let stockBreakCHF = stockDailyGainCHF;
+                            let stockBreakPct = stockDailyGainPct;
+                            let etfBreakCHF = etfDailyGainCHF;
+                            let etfBreakPct = etfDailyGainPct;
+
                             if (performancePeriod === '1D') {
                                 displayValue = totals.dailyGain;
                                 displayPercent = totals.dailyGainPercent;
-                                displayLabel = isAnyMarketOpen ? `Live (${shortDateLabel})` : `Schlusskurse vom ${shortDateLabel}`;
+                                displayLabel = isAnyMarketOpen ? `Live · ${shortDateLabel}` : `Schlusskurse vom ${shortDateLabel}`;
                             } else {
                                 const perf = periodPerformance[performancePeriod];
                                 if (perf) {
                                     displayValue = perf.gainCHF;
                                     displayPercent = perf.gainPercent;
                                     displayLabel = perf.startDate;
+                                    stockBreakCHF = perf.stockGainCHF;
+                                    stockBreakPct = perf.stockGainPercent;
+                                    etfBreakCHF = perf.etfGainCHF;
+                                    etfBreakPct = perf.etfGainPercent;
                                 } else {
                                     isLoading = isPeriodLoading;
                                 }
@@ -631,19 +674,6 @@ export function Dashboard() {
                                     </div>
                                 );
                             }
-
-                            const stockPositions = positions.filter(p => !(p.stock.type?.toLowerCase() === 'etf' || isLikelyEtf(p.stock)));
-                            const etfPositions = positions.filter(p => p.stock.type?.toLowerCase() === 'etf' || isLikelyEtf(p.stock));
-
-                            const stockDailyGainCHF = stockPositions.reduce((sum, p) => sum + convertToCHF(p.dailyGain || 0, p.stock.currency), 0);
-                            const stockCurrentValCHF = stockPositions.reduce((sum, p) => sum + convertToCHF(p.shares * p.stock.currentPrice, p.stock.currency), 0);
-                            const stockPrevValCHF = stockCurrentValCHF - stockDailyGainCHF;
-                            const stockDailyGainPct = stockPrevValCHF > 0 ? (stockDailyGainCHF / stockPrevValCHF) * 100 : 0;
-
-                            const etfDailyGainCHF = etfPositions.reduce((sum, p) => sum + convertToCHF(p.dailyGain || 0, p.stock.currency), 0);
-                            const etfCurrentValCHF = etfPositions.reduce((sum, p) => sum + convertToCHF(p.shares * p.stock.currentPrice, p.stock.currency), 0);
-                            const etfPrevValCHF = etfCurrentValCHF - etfDailyGainCHF;
-                            const etfDailyGainPct = etfPrevValCHF > 0 ? (etfDailyGainCHF / etfPrevValCHF) * 100 : 0;
 
                             return (
                                 <div>
@@ -665,46 +695,24 @@ export function Dashboard() {
                                     </div>
 
                                     <div className="mt-4 pt-4 border-t border-border flex flex-col gap-1.5">
-                                        {performancePeriod === '1D' ? (
-                                            <>
-                                                <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
-                                                    <span className="text-muted-foreground truncate">Aktien:</span>
-                                                    <span className={cn(
-                                                        "font-medium whitespace-nowrap shrink-0",
-                                                        stockDailyGainCHF >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                                    )}>
-                                                        {stockDailyGainCHF >= 0 ? '+' : ''}{stockDailyGainCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF • {stockDailyGainPct >= 0 ? '+' : ''}{stockDailyGainPct.toFixed(2)}%
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
-                                                    <span className="text-muted-foreground truncate">ETFs:</span>
-                                                    <span className={cn(
-                                                        "font-medium whitespace-nowrap shrink-0",
-                                                        etfDailyGainCHF >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                                    )}>
-                                                        {etfDailyGainCHF >= 0 ? '+' : ''}{etfDailyGainCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF • {etfDailyGainPct >= 0 ? '+' : ''}{etfDailyGainPct.toFixed(2)}%
-                                                    </span>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
-                                                    <span className="text-muted-foreground truncate">Zeitraum:</span>
-                                                    <span className="font-medium text-foreground whitespace-nowrap shrink-0">
-                                                        {displayLabel}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
-                                                    <span className="text-muted-foreground truncate">Tagesveränderung:</span>
-                                                    <span className={cn(
-                                                        "font-medium whitespace-nowrap shrink-0",
-                                                        totals.dailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                                    )}>
-                                                        {totals.dailyGain >= 0 ? '+' : ''}{totals.dailyGain.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
-                                                    </span>
-                                                </div>
-                                            </>
-                                        )}
+                                        <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                                            <span className="text-muted-foreground truncate">Aktien:</span>
+                                            <span className={cn(
+                                                "font-medium whitespace-nowrap shrink-0 tabular-nums",
+                                                stockBreakCHF >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                            )}>
+                                                {stockBreakCHF >= 0 ? '+' : ''}{stockBreakCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF · {stockBreakPct >= 0 ? '+' : ''}{stockBreakPct.toFixed(2)}%
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                                            <span className="text-muted-foreground truncate">ETFs:</span>
+                                            <span className={cn(
+                                                "font-medium whitespace-nowrap shrink-0 tabular-nums",
+                                                etfBreakCHF >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                            )}>
+                                                {etfBreakCHF >= 0 ? '+' : ''}{etfBreakCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF · {etfBreakPct >= 0 ? '+' : ''}{etfBreakPct.toFixed(2)}%
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             );
