@@ -26,6 +26,168 @@ const getStampDutyForStock = (stock: { currency?: string; symbol?: string; isin?
     return 0.075;
 };
 
+const getStockLimits = (stock: any) => {
+    if (!stock) return { limitA: null, limitB: null, manualLimit: null, activeType: null, targetPrice: null };
+
+    const symKey = (stock.symbol || '').trim().toUpperCase();
+    let activeParams = stock.fairValueParams;
+    if (!activeParams && symKey) {
+        try {
+            const map = JSON.parse(localStorage.getItem('fair_value_params_map') || '{}');
+            if (map[symKey]) activeParams = map[symKey];
+        } catch {
+            // ignore
+        }
+    }
+
+    const effectivePrice = stock.currentPrice || stock.price || 0;
+    let limitA: number | null = null;
+    let limitB: number | null = null;
+
+    if (effectivePrice > 0 && symKey) {
+        try {
+            const smartC = computeSmartAutoParams({ price: effectivePrice, dividendYield: stock.dividendYield }, null, stock, symKey, 'conservative');
+            const dcfC = calculateDcfFairValue(
+                activeParams?.valuationMode === 'conservative' && !activeParams?.isCustom && (activeParams?.eps ?? 0) > 0
+                    ? activeParams
+                    : smartC,
+                effectivePrice
+            );
+            if (dcfC.buyPrice > 0) {
+                limitA = parseFloat(dcfC.buyPrice.toFixed(2));
+            }
+        } catch {
+            // ignore
+        }
+
+        try {
+            const smartQ = computeSmartAutoParams({ price: effectivePrice, dividendYield: stock.dividendYield }, null, stock, symKey, 'quality');
+            const dcfQ = calculateDcfFairValue(
+                activeParams?.valuationMode === 'quality' && !activeParams?.isCustom && (activeParams?.eps ?? 0) > 0
+                    ? activeParams
+                    : smartQ,
+                effectivePrice
+            );
+            if (dcfQ.buyPrice > 0) {
+                limitB = parseFloat(dcfQ.buyPrice.toFixed(2));
+            }
+        } catch {
+            // ignore
+        }
+    }
+
+    let manualLimit: number | null = null;
+    let activeType: 'limitA' | 'limitB' | 'manual' | null = null;
+
+    if (stock.targetPrice && stock.targetPrice > 0) {
+        const tp = parseFloat(stock.targetPrice.toFixed(2));
+        if (activeParams?.isCustom) {
+            activeType = 'manual';
+            manualLimit = tp;
+        } else if (limitA !== null && Math.abs(tp - limitA) < 0.05) {
+            activeType = 'limitA';
+        } else if (limitB !== null && Math.abs(tp - limitB) < 0.05) {
+            activeType = 'limitB';
+        } else if (activeParams?.valuationMode === 'quality') {
+            activeType = 'limitB';
+        } else if (activeParams?.valuationMode === 'conservative') {
+            activeType = 'limitA';
+        } else {
+            activeType = 'manual';
+            manualLimit = tp;
+        }
+    }
+
+    return { limitA, limitB, manualLimit, activeType, targetPrice: stock.targetPrice };
+};
+
+const getPriceClassification = (
+    currentPrice: number,
+    marketPrice: number | undefined,
+    limits: ReturnType<typeof getStockLimits>,
+    currency?: string
+) => {
+    if (!currentPrice || currentPrice <= 0) return null;
+
+    const isGbp = currency === 'GBp' || currency === 'GBP';
+    const matchesVal = (a: number, b: number) => {
+        if (Math.abs(a - b) < 0.02) return true;
+        if (isGbp && (Math.abs(a - b / 100) < 0.001 || Math.abs(a * 100 - b) < 0.1)) return true;
+        return false;
+    };
+
+    // 1. Matches Limit A
+    if (limits.limitA !== null && matchesVal(currentPrice, limits.limitA)) {
+        return {
+            type: 'limitA' as const,
+            label: 'Limit A',
+            detail: 'Sicherheit A',
+            colorClass: 'text-blue-400 font-bold',
+            badgeClass: 'text-blue-400 bg-blue-500/15 border-blue-500/30',
+        };
+    }
+
+    // 2. Matches Limit B
+    if (limits.limitB !== null && matchesVal(currentPrice, limits.limitB)) {
+        return {
+            type: 'limitB' as const,
+            label: 'Limit B',
+            detail: 'Qualität B',
+            colorClass: 'text-purple-400 font-bold',
+            badgeClass: 'text-purple-400 bg-purple-500/15 border-purple-500/30',
+        };
+    }
+
+    // 3. Matches stock.targetPrice (could be A, B, or Manual)
+    if (limits.targetPrice !== null && limits.targetPrice !== undefined && matchesVal(currentPrice, limits.targetPrice)) {
+        if (limits.activeType === 'limitA') {
+            return {
+                type: 'limitA' as const,
+                label: 'Limit A',
+                detail: 'Sicherheit A',
+                colorClass: 'text-blue-400 font-bold',
+                badgeClass: 'text-blue-400 bg-blue-500/15 border-blue-500/30',
+            };
+        }
+        if (limits.activeType === 'limitB') {
+            return {
+                type: 'limitB' as const,
+                label: 'Limit B',
+                detail: 'Qualität B',
+                colorClass: 'text-purple-400 font-bold',
+                badgeClass: 'text-purple-400 bg-purple-500/15 border-purple-500/30',
+            };
+        }
+        return {
+            type: 'manual' as const,
+            label: 'Manuell',
+            detail: 'Eigenes Kauflimit',
+            colorClass: 'text-amber-400 font-bold',
+            badgeClass: 'text-amber-400 bg-amber-500/15 border-amber-500/30',
+        };
+    }
+
+    // 4. Matches current market price
+    if (marketPrice !== undefined && marketPrice > 0 && matchesVal(currentPrice, marketPrice)) {
+        return {
+            type: 'market' as const,
+            label: 'Marktkurs',
+            detail: 'Aktueller Kurs',
+            colorClass: 'text-foreground',
+            badgeClass: 'text-muted-foreground bg-muted/30 border-border/50',
+        };
+    }
+
+    // 5. Otherwise: user entered a custom price manually!
+    return {
+        type: 'manual' as const,
+        label: 'Manuell',
+        detail: 'Eigener Kaufkurs',
+        colorClass: 'text-amber-400 font-bold',
+        badgeClass: 'text-amber-400 bg-amber-500/15 border-amber-500/30',
+    };
+};
+
 // Helper component for comma-friendly number input
 const LocalNumberInput = ({ value, onChange, className, step = "any", title, placeholder }: {
     value: number | undefined;
@@ -1894,19 +2056,72 @@ export function DividendCalculator() {
                                     const stock = stocks.find(s => s.id === selectedStockId);
                                     if (!stock?.targetPrice && !stock?.symbol) return null;
                                     const limitCurr = (stock?.currency === 'GBp' || stock?.currency === 'GBP') ? 'GBp' : (stock?.currency || 'CHF');
+                                    const limits = getStockLimits(stock);
                                     return (
                                         <div className="flex items-center justify-center gap-2 -mt-2 mb-3 flex-wrap">
                                             {stock?.targetPrice ? (
                                                 <button
                                                     type="button"
                                                     onClick={() => updateSimulatorState({ price: stock.targetPrice! })}
-                                                    className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-3.5 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs active:scale-95 flex items-center gap-1.5"
-                                                    title="Kauflimit als Kaufpreis übernehmen"
+                                                    className={cn(
+                                                        "text-xs font-semibold px-3.5 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs active:scale-95 flex items-center gap-1.5 border",
+                                                        limits.activeType === 'limitA'
+                                                            ? "text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30"
+                                                            : limits.activeType === 'limitB'
+                                                                ? "text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30"
+                                                                : "text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30"
+                                                    )}
+                                                    title={
+                                                        limits.activeType === 'limitA'
+                                                            ? "Kauflimit A (Sicherheit) als Kaufpreis übernehmen"
+                                                            : limits.activeType === 'limitB'
+                                                                ? "Kauflimit B (Qualität) als Kaufpreis übernehmen"
+                                                                : "Manuelles Kauflimit als Kaufpreis übernehmen"
+                                                    }
                                                 >
-                                                    <Target className="size-3.5 text-emerald-400" />
-                                                    <span>Kauflimit übernehmen : {stock.targetPrice.toFixed(2)} {limitCurr}</span>
+                                                    <Target className={cn(
+                                                        "size-3.5",
+                                                        limits.activeType === 'limitA'
+                                                            ? "text-blue-400"
+                                                            : limits.activeType === 'limitB'
+                                                                ? "text-purple-400"
+                                                                : "text-amber-400"
+                                                    )} />
+                                                    <span>
+                                                        {limits.activeType === 'limitA'
+                                                            ? `Kauflimit A übernehmen : ${stock.targetPrice.toFixed(2)} ${limitCurr}`
+                                                            : limits.activeType === 'limitB'
+                                                                ? `Kauflimit B übernehmen : ${stock.targetPrice.toFixed(2)} ${limitCurr}`
+                                                                : `Kauflimit (Manuell) übernehmen : ${stock.targetPrice.toFixed(2)} ${limitCurr}`}
+                                                    </span>
                                                 </button>
                                             ) : null}
+
+                                            {/* If Limit A is calculable and different from active targetPrice */}
+                                            {limits.limitA !== null && (!stock?.targetPrice || Math.abs(stock.targetPrice - limits.limitA) >= 0.02) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateSimulatorState({ price: limits.limitA! })}
+                                                    className="text-xs font-semibold text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs active:scale-95 flex items-center gap-1.5"
+                                                    title="Limit A (Sicherheit) als Kaufpreis übernehmen"
+                                                >
+                                                    <Target className="size-3.5 text-blue-400" />
+                                                    <span>Limit A : {limits.limitA.toFixed(2)} {limitCurr}</span>
+                                                </button>
+                                            )}
+
+                                            {/* If Limit B is calculable and different from active targetPrice and limitA */}
+                                            {limits.limitB !== null && (!stock?.targetPrice || Math.abs(stock.targetPrice - limits.limitB) >= 0.02) && (limits.limitA === null || Math.abs(limits.limitA - limits.limitB) >= 0.02) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateSimulatorState({ price: limits.limitB! })}
+                                                    className="text-xs font-semibold text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs active:scale-95 flex items-center gap-1.5"
+                                                    title="Limit B (Qualität) als Kaufpreis übernehmen"
+                                                >
+                                                    <Target className="size-3.5 text-purple-400" />
+                                                    <span>Limit B : {limits.limitB.toFixed(2)} {limitCurr}</span>
+                                                </button>
+                                            )}
 
                                             {stock?.symbol ? (
                                                 <button
@@ -1941,41 +2156,56 @@ export function DividendCalculator() {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-1">
-                                        <div className="h-5 flex items-center justify-between gap-1 overflow-hidden">
-                                            <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap shrink-0">
-                                                {mode === 'buy' ? 'Kaufpreis' : 'Verkaufspreis'} {simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')}
-                                            </label>
-                                            {(stocks.find(s => s.id === selectedStockId)?.symbol) && (
-                                                <button
-                                                    type="button"
-                                                    onClick={async () => {
-                                                        const stock = stocks.find(s => s.id === selectedStockId);
-                                                        if (!stock?.symbol) return;
-                                                        const res = await fetchStockHistory(stock.symbol, '1D');
-                                                        if (res.data && res.data.length > 0) {
-                                                            let val = res.data[res.data.length - 1].value;
-                                                            updateSimulatorState({ price: val });
-                                                        }
-                                                    }}
-                                                    className="text-[9px] sm:text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-1.5 py-0.5 rounded-md transition-colors whitespace-nowrap shrink leading-none min-w-0"
-                                                    title="Aktuellen Kurs laden"
-                                                >
-                                                    <RefreshCw className="size-2.5 sm:size-3 shrink-0" />
-                                                    <span className="truncate">Kurs laden</span>
-                                                </button>
-                                            )}
-                                        </div>
-                                        <LocalNumberInput
-                                            step="0.01"
-                                            value={simCurrency === 'GBp' || simCurrency === 'GBP' ? parseFloat(price.toFixed(4)) : parseFloat(price.toFixed(2))}
-                                            onChange={(val) => updateSimulatorState({ price: val })}
-                                            className="w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-foreground text-right font-mono focus:ring-1 focus:ring-primary no-spinner"
-                                        />
-                                        <div className="text-xs text-muted-foreground text-right mt-1.5 h-5 font-medium">
-                                            pro Anteil
-                                        </div>
-                                    </div>
+                                    {(() => {
+                                        const stock = stocks.find(s => s.id === selectedStockId);
+                                        const limits = getStockLimits(stock);
+                                        const priceClass = getPriceClassification(price, stock?.currentPrice || (stock as any)?.price, limits, simCurrency || stock?.currency);
+                                        return (
+                                            <div className="space-y-1">
+                                                <div className="h-5 flex items-center justify-between gap-1 overflow-hidden">
+                                                    <label className="text-[10px] uppercase font-medium text-muted-foreground whitespace-nowrap shrink-0">
+                                                        {mode === 'buy' ? 'Kaufpreis' : 'Verkaufspreis'} {simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF')}
+                                                    </label>
+                                                    {(stocks.find(s => s.id === selectedStockId)?.symbol) && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={async () => {
+                                                                const stock = stocks.find(s => s.id === selectedStockId);
+                                                                if (!stock?.symbol) return;
+                                                                const res = await fetchStockHistory(stock.symbol, '1D');
+                                                                if (res.data && res.data.length > 0) {
+                                                                    let val = res.data[res.data.length - 1].value;
+                                                                    updateSimulatorState({ price: val });
+                                                                }
+                                                            }}
+                                                            className="text-[9px] sm:text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 px-1.5 py-0.5 rounded-md transition-colors whitespace-nowrap shrink leading-none min-w-0"
+                                                            title="Aktuellen Kurs laden"
+                                                        >
+                                                            <RefreshCw className="size-2.5 sm:size-3 shrink-0" />
+                                                            <span className="truncate">Kurs laden</span>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <LocalNumberInput
+                                                    step="0.01"
+                                                    value={simCurrency === 'GBp' || simCurrency === 'GBP' ? parseFloat(price.toFixed(4)) : parseFloat(price.toFixed(2))}
+                                                    onChange={(val) => updateSimulatorState({ price: val })}
+                                                    className={cn(
+                                                        "w-full px-2 py-1.5 text-lg rounded-md border border-input bg-background/50 text-right font-mono focus:ring-1 focus:ring-primary no-spinner transition-colors",
+                                                        mode === 'buy' && priceClass?.colorClass ? priceClass.colorClass : "text-foreground"
+                                                    )}
+                                                />
+                                                <div className="text-xs text-muted-foreground text-right mt-1.5 h-5 font-medium flex items-center justify-end gap-1.5">
+                                                    <span>pro Anteil</span>
+                                                    {mode === 'buy' && priceClass && priceClass.type !== 'market' && (
+                                                        <span className={cn("text-[10px] px-1.5 py-0.5 rounded border font-semibold leading-none shadow-2xs", priceClass.badgeClass)}>
+                                                            {priceClass.label}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
 
                                     <div className="space-y-1">
                                         <div className="h-5 flex items-center justify-between gap-1 overflow-hidden">
