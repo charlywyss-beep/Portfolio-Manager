@@ -60,6 +60,7 @@ interface PortfolioContextType {
         simSector: string;
         simValor: string;
         simFrequency?: 'annually' | 'semi-annually' | 'quarterly' | 'monthly';
+        simDistributionPolicy?: 'distributing' | 'accumulating';
         mode: 'buy' | 'sell';
         fees: {
             courtagePercent: number;
@@ -85,7 +86,7 @@ interface PortfolioContextType {
     refreshAllPrices: (force?: boolean, skipThrottleUpdate?: boolean) => Promise<void>;
 }
 
-const defaultSimulatorState = {
+const defaultSimulatorState: PortfolioContextType['simulatorState'] = {
     shares: 150,
     price: 90.50,
     dividend: 3.05,
@@ -98,6 +99,7 @@ const defaultSimulatorState = {
     simSector: '',
     simValor: '',
     simFrequency: 'annually' as const,
+    simDistributionPolicy: 'distributing' as 'distributing' | 'accumulating' | undefined,
     mode: 'buy',
     fees: {
         courtagePercent: 0.5,
@@ -126,7 +128,7 @@ const safeJSONParse = <T,>(key: string, defaultValue: T): T => {
 };
 
 // Helper to load simulator default
-const getInitialSimulatorState = () => {
+const getInitialSimulatorState = (): PortfolioContextType['simulatorState'] => {
     const parsed = safeJSONParse('portfolio_simulator_state', null as any);
     if (parsed) {
         // Merge with default to ensure new fields (like fees) exist

@@ -155,6 +155,7 @@ export function DividendCalculator() {
                     : (stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice);
 
                 const stampDutyParam = getStampDutyForStock(stock);
+                const stockIsAccumulating = stock.distributionPolicy === 'accumulating';
                 if (stock.plannedPurchase) {
                     // Load with planned purchase data
                     const pp = stock.plannedPurchase;
@@ -162,17 +163,18 @@ export function DividendCalculator() {
                         selectedStockId: stock.id,
                         shares: pp.shares,
                         price: effectivePrice,
-                        dividend: pp.dividendPerShare,
+                        dividend: stockIsAccumulating ? 0 : pp.dividendPerShare,
                         simCurrency: pp.currency === 'GBp' ? 'GBP' : pp.currency,
                         mode: 'buy',
                         simName: stock.name,
                         simSymbol: stock.symbol,
                         simIsin: stock.isin || '',
+                        simDistributionPolicy: stock.distributionPolicy || (stockIsAccumulating ? 'accumulating' : 'distributing'),
+                        simFrequency: stockIsAccumulating ? undefined : (stock.dividendFrequency && stock.dividendFrequency !== 'none' ? stock.dividendFrequency : 'annually'),
                         fees: { ...simulatorState.fees, stampDutyPercent: stampDutyParam }
                     });
                 } else {
                     // Load stock selection without planned data
-                    // Calculate Annual Dividend
                     let annualDiv = stock.dividendAmount || 0;
                     const stockFreq = stock.dividendFrequency && stock.dividendFrequency !== 'none' ? stock.dividendFrequency : 'annually';
                     if (stockFreq === 'quarterly') annualDiv *= 4;
@@ -187,9 +189,10 @@ export function DividendCalculator() {
                         simIsin: stock.isin || '',
                         simCurrency: stock.currency === 'GBp' ? 'GBP' : stock.currency,
                         simType: stock.type,
-                        simFrequency: stockFreq,
+                        simDistributionPolicy: stock.distributionPolicy || (stockIsAccumulating ? 'accumulating' : 'distributing'),
+                        simFrequency: stockIsAccumulating ? undefined : stockFreq,
                         price: effectivePrice,
-                        dividend: annualDiv,
+                        dividend: stockIsAccumulating ? 0 : annualDiv,
                         fees: { ...simulatorState.fees, stampDutyPercent: stampDutyParam }
                     });
                 }
@@ -259,10 +262,14 @@ export function DividendCalculator() {
 
         doc.setFontSize(10);
         doc.setTextColor('#1e293b');
-        const freqTextHeader = (simFrequency || 'annually') === 'monthly' ? 'Monatlich' : (simFrequency || 'annually') === 'quarterly' ? 'Quartalsweise' : (simFrequency || 'annually') === 'semi-annually' ? 'Halbjährlich' : 'Jährlich';
         const metaParts = [];
         if (stockIsin) metaParts.push(`ISIN: ${stockIsin}`);
-        metaParts.push(`Ausschüttung: ${freqTextHeader}`);
+        if (isAccumulating) {
+            metaParts.push('Ausschüttung: Thesaurierend (Automatische Reinvestition)');
+        } else {
+            const freqTextHeader = (simFrequency || 'annually') === 'monthly' ? 'Monatlich' : (simFrequency || 'annually') === 'quarterly' ? 'Quartalsweise' : (simFrequency || 'annually') === 'semi-annually' ? 'Halbjährlich' : 'Jährlich';
+            metaParts.push(`Ausschüttung: ${freqTextHeader}`);
+        }
         doc.text(metaParts.join('  •  '), 20, 54);
 
 
@@ -483,8 +490,8 @@ export function DividendCalculator() {
         const pdfFreqFactor = pdfFreq === 'monthly' ? 12 : pdfFreq === 'quarterly' ? 4 : pdfFreq === 'semi-annually' ? 2 : 1;
         const pdfFreqName = pdfFreq === 'monthly' ? 'Monats' : pdfFreq === 'quarterly' ? 'Quartals' : pdfFreq === 'semi-annually' ? 'Halbjahres' : 'Jahres';
 
-        // Yield Info (Buy Only)
-        if (mode === 'buy') {
+        // Yield Info (Buy Only) - Omit if accumulating or zero dividend
+        if (mode === 'buy' && !isAccumulating && annualDividendCHF > 0) {
 
             const hasForeignCurr = simCurrency && simCurrency !== 'CHF';
             const fmtNative = (amt: number) => fmtMoney(simCurrency === 'GBp' ? amt / 100 : amt, displayCurr);
@@ -597,7 +604,11 @@ export function DividendCalculator() {
     };
 
     // Destructure Simulator State
-    const { shares, price, dividend, selectedStockId, simName, simSymbol, simIsin, simCurrency, simFrequency, fees, mode } = simulatorState;
+    const { shares, price, dividend, selectedStockId, simName, simSymbol, simIsin, simCurrency, simFrequency, simDistributionPolicy, fees, mode } = simulatorState;
+    const selectedStock = stocks.find(s => s.id === selectedStockId);
+    const isAccumulating = (selectedStock?.distributionPolicy === 'accumulating') ||
+        ((simDistributionPolicy as any) === 'accumulating') ||
+        ((selectedStock?.type === 'etf' || simulatorState.simType === 'etf') && dividend === 0);
     const frequency = simFrequency || 'annually';
     const freqFactor = frequency === 'quarterly' ? 4 : frequency === 'semi-annually' ? 2 : frequency === 'monthly' ? 12 : 1;
 
@@ -777,6 +788,7 @@ export function DividendCalculator() {
         if (stock) {
             // Determine Stamp Duty (CH: 0.075%, UK+CH: 0.65%, Foreign: 0.15%)
             const newStamp = getStampDutyForStock(stock);
+            const stockIsAccumulating = stock.distributionPolicy === 'accumulating';
 
             // Calculate Annual Dividend
             let annualDiv = stock.dividendAmount || 0;
@@ -790,9 +802,10 @@ export function DividendCalculator() {
                 simSymbol: stock.symbol,
                 simIsin: stock.isin || '',
                 simCurrency: stock.currency === 'GBp' ? 'GBP' : stock.currency,
-                simFrequency: stockFreq,
+                simDistributionPolicy: stock.distributionPolicy || (stockIsAccumulating ? 'accumulating' : 'distributing'),
+                simFrequency: stockIsAccumulating ? undefined : stockFreq,
                 price: stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice,
-                dividend: (stock.distributionPolicy === 'accumulating') ? 0 : (stock.currency === 'GBp' ? annualDiv / 100 : annualDiv),
+                dividend: stockIsAccumulating ? 0 : (stock.currency === 'GBp' ? annualDiv / 100 : annualDiv),
                 fees: { ...fees, stampDutyPercent: newStamp },
             });
         }
@@ -899,7 +912,7 @@ export function DividendCalculator() {
     const totalInvestNative = mode === 'buy' ? volumeNative + totalFeesNative : 0;
     const totalProceedsNative = mode === 'sell' ? volumeNative - totalFeesNative : 0;
 
-    const selectedStock = stocks.find(s => s.id === selectedStockId);
+    // selectedStock declared above
     const curStockPrice = selectedStock ? (selectedStock.currency === 'GBp' ? selectedStock.currentPrice / 100 : selectedStock.currentPrice) : 0;
     const priceRatio = (curStockPrice > 0 && price > 0) ? (curStockPrice / price) : 1;
     const annualDivNative = (shares * dividend) * priceRatio;
@@ -941,13 +954,13 @@ export function DividendCalculator() {
             setActiveTab('search');
             const newStamp = getStampDutyForStock(stock);
 
+            const stockIsAccumulating = stock.distributionPolicy === 'accumulating';
             // Calculate Annual Dividend based on Frequency
             let annualDiv = stock.dividendAmount || 0;
             if (stock.dividendFrequency === 'quarterly') annualDiv *= 4;
             else if (stock.dividendFrequency === 'monthly') annualDiv *= 12;
             else if (stock.dividendFrequency === 'semi-annually') annualDiv *= 2;
 
-            // REVERTED CONVERSION: Use Native Values
             updateSimulatorState({
                 selectedStockId: stock.id,
                 simName: stock.name,
@@ -957,8 +970,9 @@ export function DividendCalculator() {
                 simType: stock.type || 'stock',
                 simSector: stock.sector || '',
                 simValor: stock.valor || '',
-                // If it's accumulating, ignore dividends
-                dividend: (stock.distributionPolicy === 'accumulating') ? 0 : (stock.currency === 'GBp' ? annualDiv / 100 : annualDiv),
+                simDistributionPolicy: stock.distributionPolicy || (stockIsAccumulating ? 'accumulating' : 'distributing'),
+                simFrequency: stockIsAccumulating ? undefined : (stock.dividendFrequency && stock.dividendFrequency !== 'none' ? stock.dividendFrequency : 'annually'),
+                dividend: stockIsAccumulating ? 0 : (stock.currency === 'GBp' ? annualDiv / 100 : annualDiv),
                 price: stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice,
                 fees: { ...fees, stampDutyPercent: newStamp },
             });
@@ -2047,38 +2061,72 @@ export function DividendCalculator() {
                                     </div>
                                 </div>
 
-                                {/* Ausschüttungs-Frequenz Selector */}
-                                <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-muted/30 border border-border/50 rounded-xl">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="text-xs font-semibold text-foreground">Ausschüttungs-Frequenz:</span>
-                                    </div>
-                                    <div className="flex items-center gap-1 bg-muted p-1 rounded-lg border border-border/50">
-                                        {(['annually', 'semi-annually', 'quarterly', 'monthly'] as const).map((freq) => {
-                                            const labels: Record<string, string> = {
-                                                'annually': 'Jährlich',
-                                                'semi-annually': 'Halbjährlich',
-                                                'quarterly': 'Quartalsweise',
-                                                'monthly': 'Monatlich'
-                                            };
-                                            const isSelected = frequency === freq;
-                                            return (
+                                {/* Ausschüttungs-Frequenz & Art Selector */}
+                                {isAccumulating ? (
+                                    <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-semibold text-foreground">Ausschüttungs-Art:</span>
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-amber-500/20 text-amber-500">
+                                                Thesaurierend (Accumulating)
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[11px] text-muted-foreground italic hidden sm:inline">
+                                                Erträge werden automatisch reinvestiert
+                                            </span>
+                                            {(selectedStock?.type === 'etf' || simulatorState.simType === 'etf') && (
                                                 <button
-                                                    key={freq}
                                                     type="button"
-                                                    onClick={() => updateSimulatorState({ simFrequency: freq })}
-                                                    className={cn(
-                                                        "px-2.5 py-1 text-xs rounded-md transition-all font-medium",
-                                                        isSelected
-                                                            ? "bg-primary text-primary-foreground shadow-xs font-bold"
-                                                            : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                                                    )}
+                                                    onClick={() => updateSimulatorState({ simDistributionPolicy: 'distributing', simFrequency: 'quarterly', dividend: 1.0 })}
+                                                    className="text-[10px] text-primary hover:underline font-semibold"
                                                 >
-                                                    {labels[freq]}
+                                                    Zu Ausschüttend wechseln
                                                 </button>
-                                            );
-                                        })}
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-muted/30 border border-border/50 rounded-xl">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-semibold text-foreground">Ausschüttungs-Frequenz:</span>
+                                            {(selectedStock?.type === 'etf' || simulatorState.simType === 'etf') && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateSimulatorState({ simDistributionPolicy: 'accumulating', dividend: 0 })}
+                                                    className="text-[10px] text-amber-500 hover:underline font-semibold"
+                                                >
+                                                    (Thesaurierend?)
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-1 bg-muted p-1 rounded-lg border border-border/50">
+                                            {(['annually', 'semi-annually', 'quarterly', 'monthly'] as const).map((freq) => {
+                                                const labels: Record<string, string> = {
+                                                    'annually': 'Jährlich',
+                                                    'semi-annually': 'Halbjährlich',
+                                                    'quarterly': 'Quartalsweise',
+                                                    'monthly': 'Monatlich'
+                                                };
+                                                const isSelected = frequency === freq;
+                                                return (
+                                                    <button
+                                                        key={freq}
+                                                        type="button"
+                                                        onClick={() => updateSimulatorState({ simFrequency: freq })}
+                                                        className={cn(
+                                                            "px-2.5 py-1 text-xs rounded-md transition-all font-medium",
+                                                            isSelected
+                                                                ? "bg-primary text-primary-foreground shadow-xs font-bold"
+                                                                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                                                        )}
+                                                    >
+                                                        {labels[freq]}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Manual Currency Select - Only show if New Simulation */}
                                 {(selectedStockId === 'new' || !selectedStockId) && (
@@ -2433,8 +2481,8 @@ export function DividendCalculator() {
                                         </div>
                                     </div>
 
-                                    {/* Field 2: Brutto & Netto Rendite */}
-                                    {mode === 'buy' && (
+                                    {/* Field 2: Brutto & Netto Rendite (Only for distributing assets) */}
+                                    {mode === 'buy' && !isAccumulating && dividend > 0 && (
                                         <div className="p-2 px-3 bg-blue-600 text-white rounded-lg space-y-1 text-xs shadow-sm">
                                             <div className="flex justify-between items-center w-full">
                                                 <span className="font-semibold text-white">Brutto-Rendite:</span>
@@ -2452,7 +2500,7 @@ export function DividendCalculator() {
                                     )}
 
                                     {/* Field 3: Native Foreign Currency Dividend (e.g. EUR / USD) */}
-                                    {mode === 'buy' && simCurrency && simCurrency !== 'CHF' && (
+                                    {mode === 'buy' && !isAccumulating && dividend > 0 && simCurrency && simCurrency !== 'CHF' && (
                                         <div className="p-2 px-3 bg-blue-600 text-white rounded-lg space-y-1 text-xs shadow-sm">
                                             <div className="flex justify-between items-center w-full">
                                                 <span className="font-semibold text-white">
