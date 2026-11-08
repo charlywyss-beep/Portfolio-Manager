@@ -1549,7 +1549,7 @@ export function DividendCalculator() {
                                                         <div className="flex-1">
                                                             <div className="font-semibold">{stocks.find(s => s.id === selectedStockId)?.name}</div>
                                                             <div className="text-sm text-muted-foreground">
-                                                                {stocks.find(s => s.id === selectedStockId)?.symbol} • {stocks.find(s => s.id === selectedStockId)?.currentPrice.toLocaleString('de-CH', { style: 'currency', currency: stocks.find(s => s.id === selectedStockId)?.currency === 'GBp' ? 'GBP' : stocks.find(s => s.id === selectedStockId)?.currency })}
+                                                                {stocks.find(s => s.id === selectedStockId)?.symbol}
                                                             </div>
                                                         </div>
                                                     </div>
