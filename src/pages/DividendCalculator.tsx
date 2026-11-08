@@ -2061,12 +2061,12 @@ export function DividendCalculator() {
                                     </div>
                                 </div>
 
-                                {/* Ausschüttungs-Frequenz & Art Selector */}
+                                {/* Ausschüttungs-Frequenz & Art Selector (Strictly single-line) */}
                                 {isETF ? (
-                                    <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-muted/30 border border-border/50 rounded-xl">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs font-semibold text-foreground">Ausschüttungs-Art:</span>
-                                            <div className="flex bg-muted p-0.5 rounded-lg border border-border/50">
+                                    <div className="flex items-center justify-between gap-1.5 p-2 bg-muted/30 border border-border/50 rounded-xl whitespace-nowrap overflow-x-auto">
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            <span className="text-xs font-semibold text-foreground whitespace-nowrap">Ausschüttung:</span>
+                                            <div className="flex bg-muted p-0.5 rounded-lg border border-border/50 shrink-0">
                                                 <button
                                                     type="button"
                                                     onClick={() => {
@@ -2074,7 +2074,7 @@ export function DividendCalculator() {
                                                         updateSimulatorState({ simDistributionPolicy: 'distributing', dividend: defaultDiv, simFrequency: frequency || 'quarterly' });
                                                     }}
                                                     className={cn(
-                                                        "px-2.5 py-1 text-xs rounded-md transition-all font-medium",
+                                                        "px-2 py-0.5 text-xs rounded-md transition-all font-medium whitespace-nowrap",
                                                         !isAccumulating
                                                             ? "bg-primary text-primary-foreground shadow-xs font-bold"
                                                             : "text-muted-foreground hover:text-foreground"
@@ -2086,7 +2086,7 @@ export function DividendCalculator() {
                                                     type="button"
                                                     onClick={() => updateSimulatorState({ simDistributionPolicy: 'accumulating', dividend: 0 })}
                                                     className={cn(
-                                                        "px-2.5 py-1 text-xs rounded-md transition-all font-medium",
+                                                        "px-2 py-0.5 text-xs rounded-md transition-all font-medium whitespace-nowrap",
                                                         isAccumulating
                                                             ? "bg-amber-500 text-white shadow-xs font-bold"
                                                             : "text-muted-foreground hover:text-foreground"
@@ -2098,17 +2098,17 @@ export function DividendCalculator() {
                                         </div>
 
                                         {isAccumulating ? (
-                                            <span className="text-xs text-muted-foreground italic">
-                                                Erträge werden im Fonds reinvestiert
+                                            <span className="text-xs text-muted-foreground italic truncate whitespace-nowrap pl-2">
+                                                Erträge verbleiben im Fonds
                                             </span>
                                         ) : (
-                                            <div className="flex items-center gap-1 bg-muted p-1 rounded-lg border border-border/50">
+                                            <div className="flex items-center gap-0.5 bg-muted p-0.5 rounded-lg border border-border/50 shrink-0">
                                                 {(['annually', 'semi-annually', 'quarterly', 'monthly'] as const).map((freq) => {
                                                     const labels: Record<string, string> = {
-                                                        'annually': 'Jährlich',
-                                                        'semi-annually': 'Halbjährlich',
-                                                        'quarterly': 'Quartalsweise',
-                                                        'monthly': 'Monatlich'
+                                                        'annually': 'Jährl.',
+                                                        'semi-annually': 'Halbj.',
+                                                        'quarterly': 'Quartal',
+                                                        'monthly': 'Monat'
                                                     };
                                                     const isSelected = frequency === freq;
                                                     return (
@@ -2116,8 +2116,9 @@ export function DividendCalculator() {
                                                             key={freq}
                                                             type="button"
                                                             onClick={() => updateSimulatorState({ simFrequency: freq })}
+                                                            title={freq === 'annually' ? 'Jährlich' : freq === 'semi-annually' ? 'Halbjährlich' : freq === 'quarterly' ? 'Quartalsweise' : 'Monatlich'}
                                                             className={cn(
-                                                                "px-2.5 py-1 text-xs rounded-md transition-all font-medium",
+                                                                "px-2 py-0.5 text-xs rounded transition-all font-medium whitespace-nowrap",
                                                                 isSelected
                                                                     ? "bg-primary text-primary-foreground shadow-xs font-bold"
                                                                     : "text-muted-foreground hover:text-foreground hover:bg-background/50"
@@ -2131,11 +2132,11 @@ export function DividendCalculator() {
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-muted/30 border border-border/50 rounded-xl">
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="text-xs font-semibold text-foreground">Ausschüttungs-Frequenz:</span>
+                                    <div className="flex items-center justify-between gap-1.5 p-2 bg-muted/30 border border-border/50 rounded-xl whitespace-nowrap overflow-x-auto">
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            <span className="text-xs font-semibold text-foreground whitespace-nowrap">Ausschüttungs-Frequenz:</span>
                                         </div>
-                                        <div className="flex items-center gap-1 bg-muted p-1 rounded-lg border border-border/50">
+                                        <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg border border-border/50 shrink-0">
                                             {(['annually', 'semi-annually', 'quarterly', 'monthly'] as const).map((freq) => {
                                                 const labels: Record<string, string> = {
                                                     'annually': 'Jährlich',
@@ -2150,7 +2151,7 @@ export function DividendCalculator() {
                                                         type="button"
                                                         onClick={() => updateSimulatorState({ simFrequency: freq })}
                                                         className={cn(
-                                                            "px-2.5 py-1 text-xs rounded-md transition-all font-medium",
+                                                            "px-2.5 py-1 text-xs rounded-md transition-all font-medium whitespace-nowrap",
                                                             isSelected
                                                                 ? "bg-primary text-primary-foreground shadow-xs font-bold"
                                                                 : "text-muted-foreground hover:text-foreground hover:bg-background/50"
