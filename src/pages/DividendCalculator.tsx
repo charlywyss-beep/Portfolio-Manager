@@ -162,8 +162,8 @@ const getPriceClassification = (
             type: 'manual' as const,
             label: 'Manuell',
             detail: 'Eigenes Kauflimit',
-            colorClass: 'text-amber-400 font-bold',
-            badgeClass: 'text-amber-400 bg-amber-500/15 border-amber-500/30',
+            colorClass: 'text-emerald-400 font-bold',
+            badgeClass: 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30',
         };
     }
 
@@ -183,8 +183,8 @@ const getPriceClassification = (
         type: 'manual' as const,
         label: 'Manuell',
         detail: 'Eigener Kaufkurs',
-        colorClass: 'text-amber-400 font-bold',
-        badgeClass: 'text-amber-400 bg-amber-500/15 border-amber-500/30',
+        colorClass: 'text-emerald-400 font-bold',
+        badgeClass: 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30',
     };
 };
 
@@ -2069,7 +2069,7 @@ export function DividendCalculator() {
                                                             ? "text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30"
                                                             : limits.activeType === 'limitB'
                                                                 ? "text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30"
-                                                                : "text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30"
+                                                                : "text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30"
                                                     )}
                                                     title={
                                                         limits.activeType === 'limitA'
@@ -2085,7 +2085,7 @@ export function DividendCalculator() {
                                                             ? "text-blue-400"
                                                             : limits.activeType === 'limitB'
                                                                 ? "text-purple-400"
-                                                                : "text-amber-400"
+                                                                : "text-emerald-400"
                                                     )} />
                                                     <span>
                                                         {limits.activeType === 'limitA'
@@ -2096,32 +2096,6 @@ export function DividendCalculator() {
                                                     </span>
                                                 </button>
                                             ) : null}
-
-                                            {/* If Limit A is calculable and different from active targetPrice */}
-                                            {limits.limitA !== null && (!stock?.targetPrice || Math.abs(stock.targetPrice - limits.limitA) >= 0.02) && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => updateSimulatorState({ price: limits.limitA! })}
-                                                    className="text-xs font-semibold text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs active:scale-95 flex items-center gap-1.5"
-                                                    title="Limit A (Sicherheit) als Kaufpreis übernehmen"
-                                                >
-                                                    <Target className="size-3.5 text-blue-400" />
-                                                    <span>Limit A : {limits.limitA.toFixed(2)} {limitCurr}</span>
-                                                </button>
-                                            )}
-
-                                            {/* If Limit B is calculable and different from active targetPrice and limitA */}
-                                            {limits.limitB !== null && (!stock?.targetPrice || Math.abs(stock.targetPrice - limits.limitB) >= 0.02) && (limits.limitA === null || Math.abs(limits.limitA - limits.limitB) >= 0.02) && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => updateSimulatorState({ price: limits.limitB! })}
-                                                    className="text-xs font-semibold text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs active:scale-95 flex items-center gap-1.5"
-                                                    title="Limit B (Qualität) als Kaufpreis übernehmen"
-                                                >
-                                                    <Target className="size-3.5 text-purple-400" />
-                                                    <span>Limit B : {limits.limitB.toFixed(2)} {limitCurr}</span>
-                                                </button>
-                                            )}
 
                                             {stock?.symbol ? (
                                                 <button
