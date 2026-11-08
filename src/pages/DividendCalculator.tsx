@@ -243,10 +243,10 @@ export function DividendCalculator() {
         doc.setFont('helvetica', 'bold');
         doc.text(mode === 'buy' ? 'KAUF' : 'VERKAUF', 170, 26, { align: 'center' });
 
-        // Stock Details
+        // Stock Details (Dynamic multi-line positioning to prevent overlap)
         doc.setTextColor(primaryColor);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(13);
         let stockName = simName || 'Unbekannte Aktie';
         let stockSymbol = simSymbol || 'N/A';
 
@@ -258,10 +258,15 @@ export function DividendCalculator() {
             }
         }
 
-        doc.text(`${stockName} (${stockSymbol})`, 20, 48);
+        let headerY = 46;
+        const titleText = `${stockName} (${stockSymbol})`;
+        const titleLines = doc.splitTextToSize(titleText, 170);
+        doc.text(titleLines, 20, headerY);
+        headerY += (titleLines.length * 5.5) + 2;
 
-        doc.setFontSize(10);
-        doc.setTextColor('#1e293b');
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor('#475569');
         const metaParts = [];
         if (stockIsin) metaParts.push(`ISIN: ${stockIsin}`);
         if (isAccumulating) {
@@ -270,7 +275,9 @@ export function DividendCalculator() {
             const freqTextHeader = (simFrequency || 'annually') === 'monthly' ? 'Monatlich' : (simFrequency || 'annually') === 'quarterly' ? 'Quartalsweise' : (simFrequency || 'annually') === 'semi-annually' ? 'Halbjährlich' : 'Jährlich';
             metaParts.push(`Ausschüttung: ${freqTextHeader}`);
         }
-        doc.text(metaParts.join('  •  '), 20, 54);
+        const metaLines = doc.splitTextToSize(metaParts.join('  •  '), 170);
+        doc.text(metaLines, 20, headerY);
+        headerY += (metaLines.length * 4.5) + 6;
 
 
 
@@ -379,8 +386,8 @@ export function DividendCalculator() {
         const grossYield = price > 0 ? (dividend / price) * 100 : 0;
         // const netYield = totalInvestCHF > 0 ? (annualDividendCHF / totalInvestCHF) * 100 : 0; // Not used in PDF
 
-        // Table Data
-        const startY = 65;
+        // Table Data (Dynamically positioned below title and metadata)
+        const startY = Math.max(headerY, 68);
         const col1 = 20;
         const rowHeight = 10;
 
