@@ -606,9 +606,11 @@ export function DividendCalculator() {
     // Destructure Simulator State
     const { shares, price, dividend, selectedStockId, simName, simSymbol, simIsin, simCurrency, simFrequency, simDistributionPolicy, fees, mode } = simulatorState;
     const selectedStock = stocks.find(s => s.id === selectedStockId);
+    const isManual = !selectedStockId || selectedStockId === 'new';
     const isETF = (selectedStock?.type === 'etf') || (simulatorState.simType === 'etf');
-    const isAccumulating = simDistributionPolicy === 'accumulating' ||
-        (simDistributionPolicy === undefined && (selectedStock?.distributionPolicy === 'accumulating' || (isETF && dividend === 0)));
+    const isAccumulating = isManual
+        ? simDistributionPolicy === 'accumulating'
+        : selectedStock?.distributionPolicy === 'accumulating';
     const frequency = simFrequency || 'annually';
     const freqFactor = frequency === 'quarterly' ? 4 : frequency === 'semi-annually' ? 2 : frequency === 'monthly' ? 12 : 1;
 
@@ -2061,20 +2063,17 @@ export function DividendCalculator() {
                                     </div>
                                 </div>
 
-                                {/* Ausschüttungs-Frequenz & Art Selector (Strictly single-line) */}
-                                {isETF ? (
+                                {/* Ausschüttungs-Frequenz & Art Selector */}
+                                {isManual && isETF ? (
                                     <div className="flex items-center justify-between gap-1.5 p-2 bg-muted/30 border border-border/50 rounded-xl whitespace-nowrap overflow-x-auto">
                                         <div className="flex items-center gap-1.5 shrink-0">
                                             <span className="text-xs font-semibold text-foreground whitespace-nowrap">Ausschüttung:</span>
                                             <div className="flex bg-muted p-0.5 rounded-lg border border-border/50 shrink-0">
                                                 <button
                                                     type="button"
-                                                    onClick={() => {
-                                                        const defaultDiv = selectedStock?.dividendAmount || (price > 0 ? parseFloat(((price * 0.02)).toFixed(2)) : 1.0);
-                                                        updateSimulatorState({ simDistributionPolicy: 'distributing', dividend: defaultDiv, simFrequency: frequency || 'quarterly' });
-                                                    }}
+                                                    onClick={() => updateSimulatorState({ simDistributionPolicy: 'distributing', simFrequency: frequency || 'quarterly' })}
                                                     className={cn(
-                                                        "px-2 py-0.5 text-xs rounded-md transition-all font-medium whitespace-nowrap",
+                                                        "px-2.5 py-1 text-xs rounded-md transition-all font-medium whitespace-nowrap",
                                                         !isAccumulating
                                                             ? "bg-primary text-primary-foreground shadow-xs font-bold"
                                                             : "text-muted-foreground hover:text-foreground"
@@ -2086,7 +2085,7 @@ export function DividendCalculator() {
                                                     type="button"
                                                     onClick={() => updateSimulatorState({ simDistributionPolicy: 'accumulating', dividend: 0 })}
                                                     className={cn(
-                                                        "px-2 py-0.5 text-xs rounded-md transition-all font-medium whitespace-nowrap",
+                                                        "px-2.5 py-1 text-xs rounded-md transition-all font-medium whitespace-nowrap",
                                                         isAccumulating
                                                             ? "bg-amber-500 text-white shadow-xs font-bold"
                                                             : "text-muted-foreground hover:text-foreground"
@@ -2096,19 +2095,18 @@ export function DividendCalculator() {
                                                 </button>
                                             </div>
                                         </div>
-
                                         {isAccumulating ? (
-                                            <span className="text-xs text-muted-foreground italic truncate whitespace-nowrap pl-2">
+                                            <span className="text-xs text-muted-foreground italic truncate pl-2">
                                                 Erträge verbleiben im Fonds
                                             </span>
                                         ) : (
-                                            <div className="flex items-center gap-0.5 bg-muted p-0.5 rounded-lg border border-border/50 shrink-0">
+                                            <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg border border-border/50 shrink-0">
                                                 {(['annually', 'semi-annually', 'quarterly', 'monthly'] as const).map((freq) => {
                                                     const labels: Record<string, string> = {
-                                                        'annually': 'Jährl.',
-                                                        'semi-annually': 'Halbj.',
-                                                        'quarterly': 'Quartal',
-                                                        'monthly': 'Monat'
+                                                        'annually': 'Jährlich',
+                                                        'semi-annually': 'Halbjährlich',
+                                                        'quarterly': 'Quartalsweise',
+                                                        'monthly': 'Monatlich'
                                                     };
                                                     const isSelected = frequency === freq;
                                                     return (
@@ -2116,9 +2114,8 @@ export function DividendCalculator() {
                                                             key={freq}
                                                             type="button"
                                                             onClick={() => updateSimulatorState({ simFrequency: freq })}
-                                                            title={freq === 'annually' ? 'Jährlich' : freq === 'semi-annually' ? 'Halbjährlich' : freq === 'quarterly' ? 'Quartalsweise' : 'Monatlich'}
                                                             className={cn(
-                                                                "px-2 py-0.5 text-xs rounded transition-all font-medium whitespace-nowrap",
+                                                                "px-2.5 py-1 text-xs rounded-md transition-all font-medium whitespace-nowrap",
                                                                 isSelected
                                                                     ? "bg-primary text-primary-foreground shadow-xs font-bold"
                                                                     : "text-muted-foreground hover:text-foreground hover:bg-background/50"
@@ -2130,6 +2127,18 @@ export function DividendCalculator() {
                                                 })}
                                             </div>
                                         )}
+                                    </div>
+                                ) : isAccumulating ? (
+                                    <div className="flex items-center justify-between gap-1.5 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl whitespace-nowrap overflow-x-auto">
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <span className="text-xs font-semibold text-foreground">Ausschüttungs-Art:</span>
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-amber-500/20 text-amber-500">
+                                                Thesaurierend (Accumulating)
+                                            </span>
+                                        </div>
+                                        <span className="text-xs text-muted-foreground italic truncate pl-2">
+                                            Erträge verbleiben im Fonds (keine Barausschüttung)
+                                        </span>
                                     </div>
                                 ) : (
                                     <div className="flex items-center justify-between gap-1.5 p-2 bg-muted/30 border border-border/50 rounded-xl whitespace-nowrap overflow-x-auto">
