@@ -344,10 +344,13 @@ export function DividendCalculator() {
         const totalInvestCHF = mode === 'buy' ? volumeCHF + totalFees : 0;
         const totalProceedsCHF = mode === 'sell' ? volumeCHF - totalFees : 0;
 
+        const selectedStock = stocks.find(s => s.id === selectedStockId);
+        const curStockPrice = selectedStock ? (selectedStock.currency === 'GBp' ? selectedStock.currentPrice / 100 : selectedStock.currentPrice) : 0;
+        const priceRatio = (curStockPrice > 0 && price > 0) ? (curStockPrice / price) : 1;
+        const annualDivNative = (shares * dividend) * priceRatio;
+        const annualDividendCHF = getCHF(annualDivNative, simCurrency || 'CHF');
+
         const grossYield = price > 0 ? (dividend / price) * 100 : 0;
-        // Net yield: (Annual Dividend * Shares) / Total Invested (CHF)
-        // Annual Dividend in CHF
-        const annualDividendCHF = getCHF(shares * dividend, simCurrency || 'CHF');
         // const netYield = totalInvestCHF > 0 ? (annualDividendCHF / totalInvestCHF) * 100 : 0; // Not used in PDF
 
         // Table Data
@@ -709,11 +712,14 @@ export function DividendCalculator() {
     const totalInvestNative = mode === 'buy' ? volumeNative + totalFeesNative : 0;
     const totalProceedsNative = mode === 'sell' ? volumeNative - totalFeesNative : 0;
 
+    const selectedStock = stocks.find(s => s.id === selectedStockId);
+    const curStockPrice = selectedStock ? (selectedStock.currency === 'GBp' ? selectedStock.currentPrice / 100 : selectedStock.currentPrice) : 0;
+    const priceRatio = (curStockPrice > 0 && price > 0) ? (curStockPrice / price) : 1;
+    const annualDivNative = (shares * dividend) * priceRatio;
+    const annualDividendCHF = getCHF(annualDivNative, simCurrency || 'CHF');
+
     const grossYield = price > 0 ? (dividend / price) * 100 : 0;
-    // Net yield: (Annual Dividend * Shares) / Total Invested (CHF)
-    // Annual Dividend in CHF
-    const annualDividendCHF = getCHF(shares * dividend, simCurrency || 'CHF');
-    const netYield = totalInvestCHF > 0 ? (annualDividendCHF / totalInvestCHF) * 100 : 0;
+    const netYield = totalInvestCHF > 0 ? (getCHF(shares * dividend, simCurrency || 'CHF') / totalInvestCHF) * 100 : 0;
 
     // Handle Stock Selection
     const handleStockSelect = (stockId: string) => {
@@ -2227,7 +2233,7 @@ export function DividendCalculator() {
                                                 <span className="font-semibold text-white">Erw. Jährliche Dividende:</span>
                                                 <span className="text-lg font-bold text-white leading-tight">
                                                     {(() => {
-                                                        const annualDivNative = shares * dividend;
+                                                        // Scaled by price ratio
                                                         if (simCurrency === 'GBp') {
                                                             return (annualDivNative / 100).toLocaleString('de-CH', { style: 'currency', currency: 'GBP' });
                                                         }
@@ -2241,7 +2247,7 @@ export function DividendCalculator() {
                                                 </span>
                                                 <span className="font-bold text-xs text-white">
                                                     {frequency !== 'annually' && dividend > 0 && shares > 0 ? (() => {
-                                                        const payoutNative = (shares * dividend) / freqFactor;
+                                                        const payoutNative = annualDivNative / freqFactor;
                                                         if (simCurrency === 'GBp') {
                                                             return (payoutNative / 100).toLocaleString('de-CH', { style: 'currency', currency: 'GBP' });
                                                         }
