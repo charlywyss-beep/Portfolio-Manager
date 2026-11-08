@@ -281,9 +281,13 @@ export function DividendCalculator() {
 
 
 
-        // Helper for currency formatting
+        // Helper for currency formatting (Currency suffix at the end for clean, calm right-alignment)
         const fmtMoney = (val: number, curr: string) => {
-            return new Intl.NumberFormat('de-CH', { style: 'currency', currency: curr }).format(val);
+            const formattedNum = new Intl.NumberFormat('de-CH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(val);
+            return `${formattedNum} ${curr}`;
         };
 
         // Derived Logic & Currency Conversion for TOTALS only

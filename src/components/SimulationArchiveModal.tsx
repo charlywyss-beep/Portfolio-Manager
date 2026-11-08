@@ -36,7 +36,11 @@ export function SimulationArchiveModal({ isOpen, onClose, onLoadSimulation, onEx
 
     const fmtMoney = (val: number | undefined, curr: string) => {
         if (val === undefined || isNaN(val)) return '–';
-        return new Intl.NumberFormat('de-CH', { style: 'currency', currency: curr }).format(val);
+        const formattedNum = new Intl.NumberFormat('de-CH', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(val);
+        return `${formattedNum} ${curr}`;
     };
 
     const formatDate = (iso: string) => {
