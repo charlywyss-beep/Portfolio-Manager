@@ -15,6 +15,17 @@ import { cn } from '../utils';
 import { computeSmartAutoParams, calculateDcfFairValue } from '../utils/fairValue';
 import { getWithholdingTaxRate } from '../utils/tax';
 
+const getStampDutyForStock = (stock: { currency?: string; symbol?: string; isin?: string } | null | undefined): number => {
+    if (!stock) return 0.075;
+    const curr = (stock.currency || '').toUpperCase();
+    const sym = (stock.symbol || '').toUpperCase();
+    const isin = (stock.isin || '').toUpperCase();
+    const isUK = curr === 'GBP' || curr === 'GBP' || sym.endsWith('.L') || isin.startsWith('GB');
+    if (isUK) return 0.65;
+    if (curr !== 'CHF' && curr !== '') return 0.15;
+    return 0.075;
+};
+
 // Helper component for comma-friendly number input
 const LocalNumberInput = ({ value, onChange, className, step = "any", title, placeholder }: {
     value: number | undefined;
@@ -143,6 +154,7 @@ export function DividendCalculator() {
                     ? stock.plannedPurchase.pricePerShare
                     : (stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice);
 
+                const stampDutyParam = getStampDutyForStock(stock);
                 if (stock.plannedPurchase) {
                     // Load with planned purchase data
                     const pp = stock.plannedPurchase;
@@ -151,11 +163,12 @@ export function DividendCalculator() {
                         shares: pp.shares,
                         price: effectivePrice,
                         dividend: pp.dividendPerShare,
-                        simCurrency: pp.currency,
+                        simCurrency: pp.currency === 'GBp' ? 'GBP' : pp.currency,
                         mode: 'buy',
                         simName: stock.name,
                         simSymbol: stock.symbol,
-                        simIsin: stock.isin || ''
+                        simIsin: stock.isin || '',
+                        fees: { ...simulatorState.fees, stampDutyPercent: stampDutyParam }
                     });
                 } else {
                     // Load stock selection without planned data
@@ -166,8 +179,6 @@ export function DividendCalculator() {
                     else if (stockFreq === 'monthly') annualDiv *= 12;
                     else if (stockFreq === 'semi-annually') annualDiv *= 2;
 
-                    const isUKStockParam = stock.currency === 'GBP' || stock.currency === 'GBp' || (stock.symbol && stock.symbol.toUpperCase().endsWith('.L')) || (stock.isin && stock.isin.toUpperCase().startsWith('GB'));
-                    const stampDutyParam = isUKStockParam ? 0.65 : (stock.currency !== 'CHF' ? 0.15 : 0.075);
                     updateSimulatorState({
                         selectedStockId: stock.id,
                         mode: 'buy',
@@ -764,9 +775,8 @@ export function DividendCalculator() {
 
         const stock = stocks.find(s => s.id === selectedStockId);
         if (stock) {
-            // Determine Stamp Duty
-            let newStamp = 0.075;
-            if (stock.currency !== 'CHF') newStamp = 0.15;
+            // Determine Stamp Duty (CH: 0.075%, UK+CH: 0.65%, Foreign: 0.15%)
+            const newStamp = getStampDutyForStock(stock);
 
             // Calculate Annual Dividend
             let annualDiv = stock.dividendAmount || 0;
@@ -779,10 +789,10 @@ export function DividendCalculator() {
                 simName: stock.name,
                 simSymbol: stock.symbol,
                 simIsin: stock.isin || '',
-                simCurrency: stock.currency,
+                simCurrency: stock.currency === 'GBp' ? 'GBP' : stock.currency,
                 simFrequency: stockFreq,
-                price: stock.currentPrice,
-                dividend: (stock.distributionPolicy === 'accumulating') ? 0 : annualDiv,
+                price: stock.currency === 'GBp' ? stock.currentPrice / 100 : stock.currentPrice,
+                dividend: (stock.distributionPolicy === 'accumulating') ? 0 : (stock.currency === 'GBp' ? annualDiv / 100 : annualDiv),
                 fees: { ...fees, stampDutyPercent: newStamp },
             });
         }
@@ -929,10 +939,7 @@ export function DividendCalculator() {
         const stock = stocks.find(s => s.id === stockId);
         if (stock) {
             setActiveTab('search');
-            const isUKStock = stock.currency === 'GBP' || stock.currency === 'GBp' || (stock.symbol && stock.symbol.toUpperCase().endsWith('.L')) || (stock.isin && stock.isin.toUpperCase().startsWith('GB'));
-            let newStamp = 0.075; // Default CH
-            if (isUKStock) newStamp = 0.65; // UK SDRT (0.50%) + CH Stempel (0.15%)
-            else if (stock.currency !== 'CHF') newStamp = 0.15; // Foreign
+            const newStamp = getStampDutyForStock(stock);
 
             // Calculate Annual Dividend based on Frequency
             let annualDiv = stock.dividendAmount || 0;
