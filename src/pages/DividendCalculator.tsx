@@ -11,6 +11,7 @@ import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
 import { cn } from '../utils';
 import { computeSmartAutoParams, calculateDcfFairValue } from '../utils/fairValue';
+import { getWithholdingTaxRate } from '../utils/tax';
 
 // Helper component for comma-friendly number input
 const LocalNumberInput = ({ value, onChange, className, step = "any", title, placeholder }: {
@@ -240,11 +241,13 @@ export function DividendCalculator() {
 
         doc.text(`${stockName} (${stockSymbol})`, 20, 48);
 
-        if (stockIsin) {
-            doc.setFontSize(10);
-            doc.setTextColor('#1e293b');
-            doc.text(`ISIN: ${stockIsin}`, 20, 54);
-        }
+        doc.setFontSize(10);
+        doc.setTextColor('#1e293b');
+        const freqTextHeader = (simFrequency || 'annually') === 'monthly' ? 'Monatlich' : (simFrequency || 'annually') === 'quarterly' ? 'Quartalsweise' : (simFrequency || 'annually') === 'semi-annually' ? 'Halbjährlich' : 'Jährlich';
+        const metaParts = [];
+        if (stockIsin) metaParts.push(`ISIN: ${stockIsin}`);
+        metaParts.push(`Ausschüttung: ${freqTextHeader}`);
+        doc.text(metaParts.join('  •  '), 20, 54);
 
 
 
@@ -455,29 +458,88 @@ export function DividendCalculator() {
 
         // Yield Info (Buy Only)
         if (mode === 'buy') {
-            currentY += 25;
-            doc.setFontSize(11);
+            const stockForTaxPdf = selectedStock || { isin: simIsin, symbol: simSymbol, currency: simCurrency as any };
+            const taxRatePdf = getWithholdingTaxRate(stockForTaxPdf);
+            const taxFactorPdf = 1 - (taxRatePdf / 100);
+            const annualDivNativeNetPdf = annualDivNative * taxFactorPdf;
+            const annualDividendCHFNetPdf = annualDividendCHF * taxFactorPdf;
+
+            const pdfFreq = simFrequency || 'annually';
+            const pdfFreqFactor = pdfFreq === 'monthly' ? 12 : pdfFreq === 'quarterly' ? 4 : pdfFreq === 'semi-annually' ? 2 : 1;
+            const pdfFreqName = pdfFreq === 'monthly' ? 'Monats' : pdfFreq === 'quarterly' ? 'Quartals' : pdfFreq === 'semi-annually' ? 'Halbjahres' : 'Jahres';
+
+            const hasForeignCurr = simCurrency && simCurrency !== 'CHF';
+            const fmtNative = (amt: number) => fmtMoney(simCurrency === 'GBp' ? amt / 100 : amt, displayCurr);
+
+            currentY += 20;
+            doc.setFontSize(10);
             doc.setTextColor('#1e293b');
             doc.setFont('helvetica', 'normal');
-            doc.text('Jährl. Ausschüttung:', 20, currentY);
+
+            // Gross Annual Dividend
+            doc.text(taxRatePdf > 0 ? 'Jährl. Ausschüttung (Brutto):' : 'Jährl. Ausschüttung:', 20, currentY);
             doc.setTextColor(primaryColor);
+            const grossPdfStr = hasForeignCurr
+                ? `${fmtMoney(annualDividendCHF, 'CHF')} (${fmtNative(annualDivNative)})`
+                : fmtMoney(annualDividendCHF, 'CHF');
+            doc.text(grossPdfStr, 190, currentY, { align: 'right' });
 
-            doc.text(fmtMoney(annualDividendCHF, 'CHF'), 190, currentY, { align: 'right' });
+            // Withholding Tax Row (if applicable)
+            if (taxRatePdf > 0) {
+                currentY += 6;
+                doc.setFontSize(9);
+                doc.setTextColor('#dc2626');
+                const taxCHFPdf = annualDividendCHF - annualDividendCHFNetPdf;
+                const taxNativePdf = annualDivNative - annualDivNativeNetPdf;
+                const taxStr = hasForeignCurr
+                    ? `- ${fmtMoney(taxCHFPdf, 'CHF')} (- ${fmtNative(taxNativePdf)})`
+                    : `- ${fmtMoney(taxCHFPdf, 'CHF')}`;
+                doc.text(`Quellensteuer (${taxRatePdf}%):`, 20, currentY);
+                doc.text(taxStr, 190, currentY, { align: 'right' });
 
-            // Quarterly (Derived)
+                currentY += 6;
+                doc.setFontSize(10);
+                doc.setTextColor('#1e293b');
+                doc.setFont('helvetica', 'bold');
+                doc.text('Jährl. Ausschüttung (Netto):', 20, currentY);
+                doc.setTextColor(primaryColor);
+                const netPdfStr = hasForeignCurr
+                    ? `${fmtMoney(annualDividendCHFNetPdf, 'CHF')} (${fmtNative(annualDivNativeNetPdf)})`
+                    : fmtMoney(annualDividendCHFNetPdf, 'CHF');
+                doc.text(netPdfStr, 190, currentY, { align: 'right' });
+                doc.setFont('helvetica', 'normal');
+            }
+
+            // Periodic Payout (e.g. Monatlich)
+            if (pdfFreq !== 'annually') {
+                currentY += 6;
+                doc.setFontSize(9);
+                doc.setTextColor('#52525b');
+                const periodicCHFPdf = (taxRatePdf > 0 ? annualDividendCHFNetPdf : annualDividendCHF) / pdfFreqFactor;
+                const periodicNativePdf = (taxRatePdf > 0 ? annualDivNativeNetPdf : annualDivNative) / pdfFreqFactor;
+                const periodicStr = hasForeignCurr
+                    ? `${fmtMoney(periodicCHFPdf, 'CHF')} (${fmtNative(periodicNativePdf)})`
+                    : fmtMoney(periodicCHFPdf, 'CHF');
+                doc.text(`Ø ${pdfFreqName}-Ausschüttung${taxRatePdf > 0 ? ' (Netto)' : ''}:`, 20, currentY);
+                doc.text(periodicStr, 190, currentY, { align: 'right' });
+            }
+
+            currentY += 4;
             currentY += 6;
-            doc.setFontSize(9);
-            doc.setTextColor('#52525b'); // Darker gray for quarterly
-            doc.text('Ø Quartals-Ausschüttung:', 20, currentY);
-            doc.text(fmtMoney(annualDividendCHF / 4, 'CHF'), 190, currentY, { align: 'right' });
-
-            currentY += 4; // Extra spacing before Yield
-
-            currentY += 8;
+            doc.setFontSize(10);
             doc.setTextColor('#1e293b');
             doc.text('Brutto-Rendite:', 20, currentY);
             doc.setTextColor(primaryColor);
             doc.text(`${grossYield.toFixed(2)}%`, 190, currentY, { align: 'right' });
+
+            if (taxRatePdf > 0) {
+                currentY += 6;
+                doc.setFontSize(10);
+                doc.setTextColor('#1e293b');
+                doc.text(`Netto-Rendite (nach ${taxRatePdf}% QSt):`, 20, currentY);
+                doc.setTextColor(primaryColor);
+                doc.text(`${(grossYield * taxFactorPdf).toFixed(2)}%`, 190, currentY, { align: 'right' });
+            }
         }
 
         // Footer
@@ -717,6 +779,12 @@ export function DividendCalculator() {
     const priceRatio = (curStockPrice > 0 && price > 0) ? (curStockPrice / price) : 1;
     const annualDivNative = (shares * dividend) * priceRatio;
     const annualDividendCHF = getCHF(annualDivNative, simCurrency || 'CHF');
+
+    const stockForTax = selectedStock || { isin: simIsin, symbol: simSymbol, currency: simCurrency as any };
+    const taxRate = getWithholdingTaxRate(stockForTax);
+    const taxFactor = 1 - (taxRate / 100);
+    const annualDivNativeNet = annualDivNative * taxFactor;
+    const annualDividendCHFNet = annualDividendCHF * taxFactor;
 
     const grossYield = price > 0 ? (dividend / price) * 100 : 0;
     const netYield = totalInvestCHF > 0 ? (getCHF(shares * dividend, simCurrency || 'CHF') / totalInvestCHF) * 100 : 0;
@@ -2218,43 +2286,54 @@ export function DividendCalculator() {
                                                 </span>
                                             </div>
                                             <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1 border-t border-white/20">
-                                                <span>Netto-Rendite:</span>
+                                                <span>{taxRate > 0 ? `Netto-Rendite (nach ${taxRate}% QSt):` : 'Netto-Rendite:'}</span>
                                                 <span className="font-bold text-xs text-white">
-                                                    {netYield.toFixed(2)}%
+                                                    {(taxRate > 0 ? (grossYield * taxFactor) : netYield).toFixed(2)}%
                                                 </span>
                                             </div>
                                         </div>
                                     )}
 
-                                    {/* Field 3: Native Foreign Currency Dividend (e.g. EUR) */}
+                                    {/* Field 3: Native Foreign Currency Dividend (e.g. EUR / USD) */}
                                     {mode === 'buy' && simCurrency && simCurrency !== 'CHF' && (
                                         <div className="p-2 px-3 bg-blue-600 text-white rounded-lg space-y-1 text-xs shadow-sm">
                                             <div className="flex justify-between items-center w-full">
-                                                <span className="font-semibold text-white">Erw. Jährliche Dividende:</span>
+                                                <span className="font-semibold text-white">
+                                                    {taxRate > 0 ? 'Erw. Jährl. Dividende (Brutto):' : 'Erw. Jährliche Dividende:'}
+                                                </span>
                                                 <span className="text-lg font-bold text-white leading-tight">
                                                     {(() => {
-                                                        // Scaled by price ratio
-                                                        if (simCurrency === 'GBp') {
-                                                            return (annualDivNative / 100).toLocaleString('de-CH', { style: 'currency', currency: 'GBP' });
-                                                        }
-                                                        return annualDivNative.toLocaleString('de-CH', { style: 'currency', currency: simCurrency });
+                                                        const val = simCurrency === 'GBp' ? (annualDivNative / 100) : annualDivNative;
+                                                        return val.toLocaleString('de-CH', { style: 'currency', currency: displayNativeCurrency });
                                                     })()}
                                                 </span>
                                             </div>
-                                            <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1 border-t border-white/20">
-                                                <span>
-                                                    {frequency !== 'annually' ? `Auszahlung pro ${frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'}:` : 'Ausschüttung:'}
-                                                </span>
-                                                <span className="font-bold text-xs text-white">
-                                                    {frequency !== 'annually' && dividend > 0 && shares > 0 ? (() => {
-                                                        const payoutNative = annualDivNative / freqFactor;
-                                                        if (simCurrency === 'GBp') {
-                                                            return (payoutNative / 100).toLocaleString('de-CH', { style: 'currency', currency: 'GBP' });
-                                                        }
-                                                        return payoutNative.toLocaleString('de-CH', { style: 'currency', currency: simCurrency });
-                                                    })() : '1x pro Jahr'}
-                                                </span>
-                                            </div>
+                                            {taxRate > 0 ? (
+                                                <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1 border-t border-white/20">
+                                                    <span>Netto (nach {taxRate}% QSt):</span>
+                                                    <span className="font-bold text-xs text-white">
+                                                        {(() => {
+                                                            const valNet = simCurrency === 'GBp' ? (annualDivNativeNet / 100) : annualDivNativeNet;
+                                                            const payoutNet = valNet / freqFactor;
+                                                            const suffix = frequency !== 'annually' ? ` (${payoutNet.toLocaleString('de-CH', { style: 'currency', currency: displayNativeCurrency })} / ${frequency === 'monthly' ? 'Monat' : frequency === 'quarterly' ? 'Quartal' : 'Halbjahr'})` : '';
+                                                            return `${valNet.toLocaleString('de-CH', { style: 'currency', currency: displayNativeCurrency })}${suffix}`;
+                                                        })()}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1 border-t border-white/20">
+                                                    <span>
+                                                        {frequency !== 'annually' ? `Auszahlung pro ${frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'}:` : 'Ausschüttung:'}
+                                                    </span>
+                                                    <span className="font-bold text-xs text-white">
+                                                        {frequency !== 'annually' && dividend > 0 && shares > 0 ? (() => {
+                                                            const payoutNative = annualDivNative / freqFactor;
+                                                            const val = simCurrency === 'GBp' ? (payoutNative / 100) : payoutNative;
+                                                            return val.toLocaleString('de-CH', { style: 'currency', currency: displayNativeCurrency });
+                                                        })() : '1x pro Jahr'}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
@@ -2262,21 +2341,36 @@ export function DividendCalculator() {
                                     {mode === 'buy' && (
                                         <div className="p-2 px-3 bg-blue-600 text-white rounded-lg space-y-1 text-xs shadow-sm">
                                             <div className="flex justify-between items-center w-full">
-                                                <span className="font-semibold text-white">Erw. Jährliche Dividende:</span>
+                                                <span className="font-semibold text-white">
+                                                    {taxRate > 0 ? 'Erw. Jährl. Dividende (Brutto):' : 'Erw. Jährliche Dividende:'}
+                                                </span>
                                                 <span className="text-lg font-bold text-white leading-tight">
                                                     {annualDividendCHF.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}
                                                 </span>
                                             </div>
-                                            <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1 border-t border-white/20">
-                                                <span>
-                                                    {frequency !== 'annually' ? `Auszahlung pro ${frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'}:` : 'Ausschüttung:'}
-                                                </span>
-                                                <span className="font-bold text-xs text-white">
-                                                    {frequency !== 'annually' && annualDividendCHF > 0
-                                                        ? (annualDividendCHF / freqFactor).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })
-                                                        : '1x pro Jahr'}
-                                                </span>
-                                            </div>
+                                            {taxRate > 0 ? (
+                                                <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1 border-t border-white/20">
+                                                    <span>Netto (nach {taxRate}% QSt):</span>
+                                                    <span className="font-bold text-xs text-white">
+                                                        {(() => {
+                                                            const payoutNet = annualDividendCHFNet / freqFactor;
+                                                            const suffix = frequency !== 'annually' ? ` (${payoutNet.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })} / ${frequency === 'monthly' ? 'Monat' : frequency === 'quarterly' ? 'Quartal' : 'Halbjahr'})` : '';
+                                                            return `${annualDividendCHFNet.toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })}${suffix}`;
+                                                        })()}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex justify-between items-center w-full text-xs text-white/95 pt-1 border-t border-white/20">
+                                                    <span>
+                                                        {frequency !== 'annually' ? `Auszahlung pro ${frequency === 'semi-annually' ? 'Halbjahr' : frequency === 'quarterly' ? 'Quartal' : 'Monat'}:` : 'Ausschüttung:'}
+                                                    </span>
+                                                    <span className="font-bold text-xs text-white">
+                                                        {frequency !== 'annually' && annualDividendCHF > 0
+                                                            ? (annualDividendCHF / freqFactor).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })
+                                                            : '1x pro Jahr'}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
