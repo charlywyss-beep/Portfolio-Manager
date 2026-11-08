@@ -42,6 +42,11 @@ interface PortfolioContextType {
 
 
     // Simulator Persistence
+    simulations: import('../types').SavedSimulation[];
+    addSimulation: (sim: Omit<import('../types').SavedSimulation, 'id' | 'createdAt'>) => string;
+    deleteSimulation: (id: string) => void;
+    clearSimulations: () => void;
+
     simulatorState: {
         shares: number;
         price: number;
@@ -851,6 +856,37 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const [simulations, setSimulations] = useState<import('../types').SavedSimulation[]>(() => {
+        try {
+            const raw = localStorage.getItem('portfolio_simulations');
+            return raw ? JSON.parse(raw) : [];
+        } catch {
+            return [];
+        }
+    });
+
+    useEffect(() => {
+        localStorage.setItem('portfolio_simulations', JSON.stringify(simulations));
+    }, [simulations]);
+
+    const addSimulation = (sim: Omit<import('../types').SavedSimulation, 'id' | 'createdAt'>) => {
+        const newSim: import('../types').SavedSimulation = {
+            ...sim,
+            id: `sim_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+            createdAt: new Date().toISOString()
+        };
+        setSimulations(prev => [newSim, ...prev]);
+        return newSim.id;
+    };
+
+    const deleteSimulation = (id: string) => {
+        setSimulations(prev => prev.filter(s => s.id !== id));
+    };
+
+    const clearSimulations = () => {
+        setSimulations([]);
+    };
+
     const [simulatorState, setSimulatorState] = useState<PortfolioContextType['simulatorState']>(getInitialSimulatorState);
 
     useEffect(() => {
@@ -892,7 +928,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 } catch { return null; }
             })()
         };
-    }, [positions, stocks, fixedDeposits, history, watchlists, mortgageData, simulatorState]);
+    }, [positions, stocks, fixedDeposits, history, watchlists, mortgageData, simulatorState, simulations]);
 
     return (
         <PortfolioContext.Provider
@@ -936,7 +972,11 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 lastGlobalRefresh,
                 refreshTick,
                 isGlobalRefreshing,
-                refreshAllPrices
+                refreshAllPrices,
+                simulations,
+                addSimulation,
+                deleteSimulation,
+                clearSimulations
             }}
         >
             {children}

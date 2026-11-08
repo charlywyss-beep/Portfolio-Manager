@@ -286,3 +286,29 @@ export interface WaterReading { // Deprecated but keeping for type safety during
     date: string;
     value: number;
 }
+
+
+export interface SavedSimulation {
+    id: string;
+    createdAt: string;
+    mode: 'buy' | 'sell';
+    stockId?: string;
+    stockName: string;
+    stockSymbol: string;
+    stockIsin?: string;
+    shares: number;
+    price: number;
+    currency: string;
+    volumeNative: number;
+    volumeCHF: number;
+    totalFeesCHF: number;
+    totalInvestOrProceedsCHF: number;
+    dividendPerShare?: number;
+    dividendFrequency?: 'annually' | 'semi-annually' | 'quarterly' | 'monthly';
+    grossYield?: number;
+    netYield?: number;
+    taxRate?: number;
+    annualDividendCHF?: number;
+    annualDividendNative?: number;
+    feesConfig?: any;
+}

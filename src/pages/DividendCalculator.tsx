@@ -1,8 +1,10 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
+import { SimulationArchiveModal } from '../components/SimulationArchiveModal';
+import type { SavedSimulation } from '../types';
 
-import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, HelpCircle, BookOpen, AlertTriangle, Target, Telescope } from 'lucide-react';
+import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, HelpCircle, BookOpen, AlertTriangle, Target, Telescope, FolderArchive, BookmarkPlus } from 'lucide-react';
 import { fetchStockHistory, searchStocks, fetchStockQuote } from '../services/yahoo-finance';
 
 import { jsPDF } from 'jspdf';
@@ -114,7 +116,7 @@ const StockListItem = ({ stock, onClick, subtitle }: { stock: any; onClick: () =
 export function DividendCalculator() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { stocks, watchlists, addStock, addToWatchlist, updateStock, simulatorState, updateSimulatorState, positions, addPosition, updatePosition, deletePosition } = usePortfolio();
+    const { stocks, watchlists, addStock, addToWatchlist, updateStock, simulatorState, updateSimulatorState, positions, addPosition, updatePosition, deletePosition, simulations, addSimulation } = usePortfolio();
     const { rates } = useExchangeRates();
 
     // Catch-all: Ensure GBp is always converted to GBP on mount/update
@@ -459,17 +461,19 @@ export function DividendCalculator() {
         // Always display Total in CHF
         doc.text(fmtMoney(totalValue, 'CHF'), 185, currentY + 5, { align: 'right' });
 
+        // Precalculate Tax & Frequency for PDF and Simulation Archive
+        const stockForTaxPdf = selectedStock || { isin: simIsin, symbol: simSymbol, currency: simCurrency as any };
+        const taxRatePdf = getWithholdingTaxRate(stockForTaxPdf);
+        const taxFactorPdf = 1 - (taxRatePdf / 100);
+        const annualDivNativeNetPdf = annualDivNative * taxFactorPdf;
+        const annualDividendCHFNetPdf = annualDividendCHF * taxFactorPdf;
+
+        const pdfFreq = simFrequency || 'annually';
+        const pdfFreqFactor = pdfFreq === 'monthly' ? 12 : pdfFreq === 'quarterly' ? 4 : pdfFreq === 'semi-annually' ? 2 : 1;
+        const pdfFreqName = pdfFreq === 'monthly' ? 'Monats' : pdfFreq === 'quarterly' ? 'Quartals' : pdfFreq === 'semi-annually' ? 'Halbjahres' : 'Jahres';
+
         // Yield Info (Buy Only)
         if (mode === 'buy') {
-            const stockForTaxPdf = selectedStock || { isin: simIsin, symbol: simSymbol, currency: simCurrency as any };
-            const taxRatePdf = getWithholdingTaxRate(stockForTaxPdf);
-            const taxFactorPdf = 1 - (taxRatePdf / 100);
-            const annualDivNativeNetPdf = annualDivNative * taxFactorPdf;
-            const annualDividendCHFNetPdf = annualDividendCHF * taxFactorPdf;
-
-            const pdfFreq = simFrequency || 'annually';
-            const pdfFreqFactor = pdfFreq === 'monthly' ? 12 : pdfFreq === 'quarterly' ? 4 : pdfFreq === 'semi-annually' ? 2 : 1;
-            const pdfFreqName = pdfFreq === 'monthly' ? 'Monats' : pdfFreq === 'quarterly' ? 'Quartals' : pdfFreq === 'semi-annually' ? 'Halbjahres' : 'Jahres';
 
             const hasForeignCurr = simCurrency && simCurrency !== 'CHF';
             const fmtNative = (amt: number) => fmtMoney(simCurrency === 'GBp' ? amt / 100 : amt, displayCurr);
@@ -550,6 +554,34 @@ export function DividendCalculator() {
         doc.setTextColor('#52525b');
         doc.text('Portfolio Manager - Simulation', 105, 290, { align: 'center' });
 
+        // Automatically archive this simulation
+        try {
+            addSimulation({
+                mode,
+                stockId: selectedStockId,
+                stockName,
+                stockSymbol,
+                stockIsin: stockIsin || '',
+                shares,
+                price,
+                currency: displayCurr,
+                volumeNative,
+                volumeCHF,
+                totalFeesCHF,
+                totalInvestOrProceedsCHF: mode === 'buy' ? totalInvestCHF : totalProceedsCHF,
+                dividendPerShare: dividend > 0 ? (dividend / pdfFreqFactor) : 0,
+                dividendFrequency: pdfFreq,
+                grossYield,
+                netYield: taxRatePdf > 0 ? (grossYield * taxFactorPdf) : (totalInvestCHF > 0 ? (annualDividendCHFNetPdf / totalInvestCHF) * 100 : 0),
+                taxRate: taxRatePdf,
+                annualDividendCHF,
+                annualDividendNative: annualDivNative,
+                feesConfig: { ...fees }
+            });
+        } catch (e) {
+            console.error('Failed to auto-archive simulation', e);
+        }
+
         doc.save(`${mode === 'buy' ? 'Kauf' : 'Verkauf'}_${stockName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
     };
 
@@ -558,11 +590,91 @@ export function DividendCalculator() {
     const frequency = simFrequency || 'annually';
     const freqFactor = frequency === 'quarterly' ? 4 : frequency === 'semi-annually' ? 2 : frequency === 'monthly' ? 12 : 1;
 
-    // Watchlist Feedback
+    // Watchlist & Archive Feedback
     const [showSuccess, setShowSuccess] = useState(false);
     const [showGuide, setShowGuide] = useState(false);
+    const [showArchive, setShowArchive] = useState(false);
+    const [showSavedFeedback, setShowSavedFeedback] = useState(false);
     const [dividendInputMode, setDividendInputMode] = useState<'annual' | 'periodic'>('annual');
     const [yieldInputMode, setYieldInputMode] = useState<'annual' | 'periodic'>('annual');
+
+
+    const handleLoadSimulation = (sim: SavedSimulation) => {
+        if (sim.stockId && sim.stockId !== 'new') {
+            setActiveTab('search');
+        } else {
+            setActiveTab('manual');
+        }
+        const freqFactor = sim.dividendFrequency === 'quarterly' ? 4 : sim.dividendFrequency === 'monthly' ? 12 : sim.dividendFrequency === 'semi-annually' ? 2 : 1;
+        let annualDiv = 0;
+        if (sim.dividendPerShare) {
+            annualDiv = sim.dividendPerShare * freqFactor;
+        } else if (sim.grossYield && sim.price) {
+            annualDiv = (sim.grossYield / 100) * sim.price;
+        }
+
+        updateSimulatorState({
+            mode: sim.mode,
+            selectedStockId: sim.stockId || '',
+            simName: sim.stockName,
+            simSymbol: sim.stockSymbol,
+            simIsin: sim.stockIsin || '',
+            shares: sim.shares,
+            price: sim.price,
+            simCurrency: sim.currency as any,
+            dividend: parseFloat(annualDiv.toFixed(4)),
+            simFrequency: sim.dividendFrequency || 'annually',
+            fees: sim.feesConfig ? { ...fees, ...sim.feesConfig } : fees
+        });
+    };
+
+    const handleSaveCurrentSimulation = () => {
+        let stockName = simName || 'Unbekannte Aktie';
+        let stockSymbol = simSymbol || 'N/A';
+        let stockIsin = simIsin || '';
+
+        if (selectedStockId && selectedStockId !== 'new') {
+            const stock = stocks.find(s => s.id === selectedStockId);
+            if (stock) {
+                stockName = stock.name;
+                stockSymbol = stock.symbol;
+                stockIsin = stock.isin || '';
+            }
+        }
+
+        addSimulation({
+            mode,
+            stockId: selectedStockId,
+            stockName,
+            stockSymbol,
+            stockIsin,
+            shares,
+            price,
+            currency: simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF'),
+            volumeNative,
+            volumeCHF,
+            totalFeesCHF,
+            totalInvestOrProceedsCHF: mode === 'buy' ? totalInvestCHF : totalProceedsCHF,
+            dividendPerShare: dividend > 0 ? (dividend / freqFactor) : 0,
+            dividendFrequency: frequency,
+            grossYield,
+            netYield: taxRate > 0 ? (grossYield * taxFactor) : netYield,
+            taxRate,
+            annualDividendCHF,
+            annualDividendNative: annualDivNative,
+            feesConfig: { ...fees }
+        });
+
+        setShowSavedFeedback(true);
+        setTimeout(() => setShowSavedFeedback(false), 2200);
+    };
+
+    const handleExportPdfFromSim = (sim: SavedSimulation) => {
+        handleLoadSimulation(sim);
+        setTimeout(() => {
+            handleExportPDF();
+        }, 100);
+    };
 
     // Price Editing State
     const [activeTab, setActiveTab] = useState<'search' | 'manual'>(selectedStockId === 'new' ? 'manual' : 'search');
@@ -1227,6 +1339,19 @@ export function DividendCalculator() {
                                 >
                                     <FileText size={14} />
                                     <span className="hidden sm:inline">PDF</span>
+                                </button>
+                                <button
+                                    onClick={() => setShowArchive(true)}
+                                    title="Simulations-Archiv öffnen"
+                                    className="text-xs flex items-center gap-1.5 border border-border px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors font-medium bg-background relative shadow-xs active:scale-95"
+                                >
+                                    <FolderArchive size={14} className="text-amber-500" />
+                                    <span className="hidden sm:inline">Archiv</span>
+                                    {simulations && simulations.length > 0 && (
+                                        <span className="inline-flex items-center justify-center px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-400">
+                                            {simulations.length}
+                                        </span>
+                                    )}
                                 </button>
                                 <button
                                     onClick={() => updateSimulatorState({ fees: { ...fees, showAdvanced: !fees.showAdvanced } })}
@@ -1989,6 +2114,28 @@ export function DividendCalculator() {
                                     </button>
                                 </div>
 
+                                {/* Archive Simulation Action */}
+                                <button
+                                    onClick={handleSaveCurrentSimulation}
+                                    className={`w-full py-2 rounded-md font-medium text-xs flex items-center justify-center gap-2 border transition-all ${
+                                        showSavedFeedback
+                                            ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                                            : 'border-border bg-background hover:bg-muted text-foreground shadow-xs'
+                                    }`}
+                                >
+                                    {showSavedFeedback ? (
+                                        <>
+                                            <Check size={14} className="text-emerald-400" />
+                                            <span>Im Simulations-Archiv gespeichert!</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <BookmarkPlus size={14} className="text-amber-400" />
+                                            <span>Simulation archivieren</span>
+                                        </>
+                                    )}
+                                </button>
+
                                 {/* Watchlist Action */}
                                 {mode === 'buy' && (
                                     <div className="relative">
@@ -2390,6 +2537,14 @@ export function DividendCalculator() {
                     <div className="hidden"></div>
                 </div>
             </div>
+
+            {/* Simulations-Archiv Modal */}
+            <SimulationArchiveModal
+                isOpen={showArchive}
+                onClose={() => setShowArchive(false)}
+                onLoadSimulation={handleLoadSimulation}
+                onExportPdf={handleExportPdfFromSim}
+            />
 
             {/* Guide / Anleitung Modal */}
             {showGuide && (
