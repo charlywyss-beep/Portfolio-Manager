@@ -209,7 +209,7 @@ export function DividendCalculator() {
 
 
     // PDF Export Handler
-    const handleExportPDF = () => {
+    const handleExportPDF = (skipAutoArchive = false) => {
         const doc = new jsPDF();
         const { shares, price, dividend, selectedStockId, simName, simSymbol, fees, mode, simCurrency } = simulatorState;
 
@@ -579,32 +579,45 @@ export function DividendCalculator() {
         doc.setTextColor('#52525b');
         doc.text('Portfolio Manager - Simulation', 105, 290, { align: 'center' });
 
-        // Automatically archive this simulation
-        try {
-            addSimulation({
-                mode,
-                stockId: selectedStockId,
-                stockName,
-                stockSymbol,
-                stockIsin: stockIsin || '',
-                shares,
-                price,
-                currency: displayCurr,
-                volumeNative,
-                volumeCHF,
-                totalFeesCHF,
-                totalInvestOrProceedsCHF: mode === 'buy' ? totalInvestCHF : totalProceedsCHF,
-                dividendPerShare: dividend > 0 ? (dividend / pdfFreqFactor) : 0,
-                dividendFrequency: pdfFreq,
-                grossYield,
-                netYield: taxRatePdf > 0 ? (grossYield * taxFactorPdf) : (totalInvestCHF > 0 ? (annualDividendCHFNetPdf / totalInvestCHF) * 100 : 0),
-                taxRate: taxRatePdf,
-                annualDividendCHF,
-                annualDividendNative: annualDivNative,
-                feesConfig: { ...fees }
-            });
-        } catch (e) {
-            console.error('Failed to auto-archive simulation', e);
+        // Automatically archive this simulation (skip if opened from archive modal or already identical recent simulation exists)
+        if (!skipAutoArchive) {
+            try {
+                const isDuplicate = simulations && simulations.some(s =>
+                    s.mode === mode &&
+                    s.stockSymbol === stockSymbol &&
+                    s.shares === shares &&
+                    s.price === price &&
+                    Math.abs(new Date(s.createdAt).getTime() - Date.now()) < 5 * 60 * 1000
+                );
+
+                if (!isDuplicate) {
+                    addSimulation({
+                        mode,
+                        stockId: selectedStockId,
+                        stockName,
+                        stockSymbol,
+                        stockIsin: stockIsin || '',
+                        shares,
+                        price,
+                        currency: displayCurr,
+                        volumeNative,
+                        volumeCHF,
+                        totalFeesCHF,
+                        totalInvestOrProceedsCHF: mode === 'buy' ? totalInvestCHF : totalProceedsCHF,
+                        dividendPerShare: dividend > 0 ? (dividend / pdfFreqFactor) : 0,
+                        dividendFrequency: isAccumulating ? undefined : pdfFreq,
+                        distributionPolicy: isAccumulating ? 'accumulating' : 'distributing',
+                        grossYield,
+                        netYield: taxRatePdf > 0 ? (grossYield * taxFactorPdf) : (totalInvestCHF > 0 ? (annualDividendCHFNetPdf / totalInvestCHF) * 100 : 0),
+                        taxRate: taxRatePdf,
+                        annualDividendCHF,
+                        annualDividendNative: annualDivNative,
+                        feesConfig: { ...fees }
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to auto-archive simulation', e);
+            }
         }
 
         doc.save(`${mode === 'buy' ? 'Kauf' : 'Verkauf'}_${stockName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -673,28 +686,39 @@ export function DividendCalculator() {
             }
         }
 
-        addSimulation({
-            mode,
-            stockId: selectedStockId,
-            stockName,
-            stockSymbol,
-            stockIsin,
-            shares,
-            price,
-            currency: simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF'),
-            volumeNative,
-            volumeCHF,
-            totalFeesCHF,
-            totalInvestOrProceedsCHF: mode === 'buy' ? totalInvestCHF : totalProceedsCHF,
-            dividendPerShare: dividend > 0 ? (dividend / freqFactor) : 0,
-            dividendFrequency: frequency,
-            grossYield,
-            netYield: taxRate > 0 ? (grossYield * taxFactor) : netYield,
-            taxRate,
-            annualDividendCHF,
-            annualDividendNative: annualDivNative,
-            feesConfig: { ...fees }
-        });
+        const isDuplicate = simulations && simulations.some(s =>
+            s.mode === mode &&
+            s.stockSymbol === stockSymbol &&
+            s.shares === shares &&
+            s.price === price &&
+            Math.abs(new Date(s.createdAt).getTime() - Date.now()) < 5 * 60 * 1000
+        );
+
+        if (!isDuplicate) {
+            addSimulation({
+                mode,
+                stockId: selectedStockId,
+                stockName,
+                stockSymbol,
+                stockIsin,
+                shares,
+                price,
+                currency: simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF'),
+                volumeNative,
+                volumeCHF,
+                totalFeesCHF,
+                totalInvestOrProceedsCHF: mode === 'buy' ? totalInvestCHF : totalProceedsCHF,
+                dividendPerShare: dividend > 0 ? (dividend / freqFactor) : 0,
+                dividendFrequency: isAccumulating ? undefined : frequency,
+                distributionPolicy: isAccumulating ? 'accumulating' : 'distributing',
+                grossYield,
+                netYield: taxRate > 0 ? (grossYield * taxFactor) : netYield,
+                taxRate,
+                annualDividendCHF,
+                annualDividendNative: annualDivNative,
+                feesConfig: { ...fees }
+            });
+        }
 
         setShowSavedFeedback(true);
         setTimeout(() => setShowSavedFeedback(false), 2200);
@@ -703,7 +727,7 @@ export function DividendCalculator() {
     const handleExportPdfFromSim = (sim: SavedSimulation) => {
         handleLoadSimulation(sim);
         setTimeout(() => {
-            handleExportPDF();
+            handleExportPDF(true); // skipAutoArchive = true because it's already in the archive!
         }, 100);
     };
 
@@ -1363,7 +1387,7 @@ export function DividendCalculator() {
                                     </button>
                                 </div>
                                 <button
-                                    onClick={handleExportPDF}
+                                    onClick={() => handleExportPDF()}
                                     title="Als PDF speichern"
                                     className="text-xs flex items-center gap-1 border border-border px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors font-medium bg-background"
                                 >

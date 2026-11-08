@@ -305,6 +305,7 @@ export interface SavedSimulation {
     totalInvestOrProceedsCHF: number;
     dividendPerShare?: number;
     dividendFrequency?: 'annually' | 'semi-annually' | 'quarterly' | 'monthly';
+    distributionPolicy?: 'distributing' | 'accumulating';
     grossYield?: number;
     netYield?: number;
     taxRate?: number;
