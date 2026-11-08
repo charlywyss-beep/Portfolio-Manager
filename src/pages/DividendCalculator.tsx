@@ -2589,7 +2589,7 @@ export function DividendCalculator() {
                                     )}
 
                                     {/* Field 4: CHF Dividend */}
-                                    {mode === 'buy' && (
+                                    {mode === 'buy' && !isAccumulating && dividend > 0 && (
                                         <div className="p-2 px-3 bg-blue-600 text-white rounded-lg space-y-1 text-xs shadow-sm">
                                             <div className="flex justify-between items-center w-full">
                                                 <span className="font-semibold text-white">
@@ -2622,6 +2622,22 @@ export function DividendCalculator() {
                                                     </span>
                                                 </div>
                                             )}
+                                        </div>
+                                    )}
+
+                                    {/* Info Badge for Accumulating (Thesaurierend) / Zero Dividend */}
+                                    {mode === 'buy' && (isAccumulating || dividend === 0) && (
+                                        <div className="p-3 bg-muted/40 border border-border/60 rounded-xl space-y-1 text-xs">
+                                            <div className="flex items-center gap-1.5 font-semibold text-foreground">
+                                                <Coins size={14} className="text-amber-500" />
+                                                <span>{isAccumulating ? 'Thesaurierender ETF (Accumulating)' : 'Keine Dividende'}</span>
+                                            </div>
+                                            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                                {isAccumulating
+                                                    ? 'Erträge werden direkt im Fonds reinvestiert (Kurswachstum). Es fallen keine periodischen Dividenden-Auszahlungen an.'
+                                                    : 'Dieser Titel zahlt keine laufende Dividende. Rendite- und Ausschüttungsfelder entfallen.'
+                                                }
+                                            </p>
                                         </div>
                                     )}
                                 </div>
