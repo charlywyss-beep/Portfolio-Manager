@@ -164,6 +164,8 @@ export function DividendCalculator() {
                     else if (stockFreq === 'monthly') annualDiv *= 12;
                     else if (stockFreq === 'semi-annually') annualDiv *= 2;
 
+                    const isUKStockParam = stock.currency === 'GBP' || stock.currency === 'GBp' || (stock.symbol && stock.symbol.toUpperCase().endsWith('.L')) || (stock.isin && stock.isin.toUpperCase().startsWith('GB'));
+                    const stampDutyParam = isUKStockParam ? 0.65 : (stock.currency !== 'CHF' ? 0.15 : 0.075);
                     updateSimulatorState({
                         selectedStockId: stock.id,
                         mode: 'buy',
@@ -174,7 +176,8 @@ export function DividendCalculator() {
                         simType: stock.type,
                         simFrequency: stockFreq,
                         price: effectivePrice,
-                        dividend: annualDiv
+                        dividend: annualDiv,
+                        fees: { ...simulatorState.fees, stampDutyPercent: stampDutyParam }
                     });
                 }
                 lastLoadedParamRef.current = currentParamKey;
@@ -547,7 +550,7 @@ export function DividendCalculator() {
         doc.setTextColor('#52525b');
         doc.text('Portfolio Manager - Simulation', 105, 290, { align: 'center' });
 
-        doc.save(`Simulation_${stockName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+        doc.save(`${mode === 'buy' ? 'Kauf' : 'Verkauf'}_${stockName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
     };
 
     // Destructure Simulator State
@@ -814,8 +817,10 @@ export function DividendCalculator() {
         const stock = stocks.find(s => s.id === stockId);
         if (stock) {
             setActiveTab('search');
+            const isUKStock = stock.currency === 'GBP' || stock.currency === 'GBp' || (stock.symbol && stock.symbol.toUpperCase().endsWith('.L')) || (stock.isin && stock.isin.toUpperCase().startsWith('GB'));
             let newStamp = 0.075; // Default CH
-            if (stock.currency !== 'CHF') newStamp = 0.15; // Foreign
+            if (isUKStock) newStamp = 0.65; // UK SDRT (0.50%) + CH Stempel (0.15%)
+            else if (stock.currency !== 'CHF') newStamp = 0.15; // Foreign
 
             // Calculate Annual Dividend based on Frequency
             let annualDiv = stock.dividendAmount || 0;
