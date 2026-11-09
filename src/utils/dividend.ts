@@ -76,8 +76,27 @@ export function getCurrentDividendPeriod(stock: Stock): CurrentDividendInfo {
         }
 
         // If we fall through here, ALL dates are past the buffer. 
-        // We assume the current cycle is done, so we display the start of the NEXT cycle (e.g. Q1).
-        // We don't have the new dates yet, so we return undefined dates.
+        // Like single-date stocks (e.g. Nestlé), display the last paid dividend (with 'paid' status) 
+        // instead of clearing it to '-', until new future dates are entered!
+        const validDates = periods.filter(p => Boolean(p.payDate || p.exDate));
+        if (validDates.length > 0) {
+            const sortedValid = validDates.sort((a, b) =>
+                (a.payDate || a.exDate || '').localeCompare(b.payDate || b.exDate || '')
+            );
+            const lastPeriod = sortedValid[sortedValid.length - 1];
+            let label = '';
+            if (stock.dividendFrequency === 'quarterly') label = `Q${lastPeriod.originalIndex + 1}`;
+            else if (stock.dividendFrequency === 'semi-annually') label = `H${lastPeriod.originalIndex + 1}`;
+            else if (stock.dividendFrequency === 'annually') label = 'Jahr';
+
+            return {
+                exDate: lastPeriod.exDate,
+                payDate: lastPeriod.payDate,
+                status: 'paid',
+                periodLabel: label
+            };
+        }
+
         return {
             exDate: undefined,
             payDate: undefined,
