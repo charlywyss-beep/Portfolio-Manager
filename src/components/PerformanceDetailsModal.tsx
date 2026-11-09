@@ -212,7 +212,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card z-10 iphone-modal-header-card">
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
                         <button
                             type="button"
                             onClick={onClose}
@@ -230,14 +230,14 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                             <span className="sm:hidden">Performance</span>
                         </h2>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                         {/* Filter Tabs: Alle / Aktien / ETFs */}
                         <div className="flex items-center bg-secondary/80 p-0.5 rounded-lg border border-border">
                             <button
                                 type="button"
                                 onClick={() => setAssetFilter('all')}
                                 className={cn(
-                                    "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                                    "px-2 sm:px-2.5 py-0.5 sm:py-1 text-[11px] sm:text-xs font-semibold rounded-md transition-all cursor-pointer",
                                     assetFilter === 'all'
                                         ? "bg-primary text-primary-foreground shadow-sm"
                                         : "text-muted-foreground hover:text-foreground"
@@ -249,7 +249,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 type="button"
                                 onClick={() => setAssetFilter('stock')}
                                 className={cn(
-                                    "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                                    "px-2 sm:px-2.5 py-0.5 sm:py-1 text-[11px] sm:text-xs font-semibold rounded-md transition-all cursor-pointer",
                                     assetFilter === 'stock'
                                         ? "bg-primary text-primary-foreground shadow-sm"
                                         : "text-muted-foreground hover:text-foreground"
@@ -261,7 +261,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 type="button"
                                 onClick={() => setAssetFilter('etf')}
                                 className={cn(
-                                    "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                                    "px-2 sm:px-2.5 py-0.5 sm:py-1 text-[11px] sm:text-xs font-semibold rounded-md transition-all cursor-pointer",
                                     assetFilter === 'etf'
                                         ? "bg-primary text-primary-foreground shadow-sm"
                                         : "text-muted-foreground hover:text-foreground"
