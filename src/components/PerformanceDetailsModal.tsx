@@ -186,6 +186,16 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
         return sum + (currentValueCHF - purchaseValueCHF);
     }, 0);
 
+    const totalPurchaseValueCHF = sortedPositions.reduce((sum, p) => {
+        const purchaseValue = (p.purchases || []).reduce((pSum: number, purchase: any) =>
+            pSum + (purchase.shares * purchase.price), 0);
+        const entryFxRate = p.averageEntryFxRate || 1;
+        return sum + (p.stock.currency !== 'CHF' ? purchaseValue * entryFxRate : purchaseValue);
+    }, 0);
+    const totalPerformanceGainPercent = totalPurchaseValueCHF > 0
+        ? (totalPerformanceGain / totalPurchaseValueCHF) * 100
+        : 0;
+
     const handleRowClick = (stockId: string) => {
         navigate(`/stock/${stockId}?from=performance`);
         onClose();
@@ -297,7 +307,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                 {/* Summary Totals */}
                 <div className="grid grid-cols-2 gap-2 p-2.5 sm:gap-3 sm:p-3 bg-muted/20 border-b border-border shrink-0">
                     <div className="bg-card py-2.5 px-2.5 sm:p-3 sm:px-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between">
-                        <div className="flex items-center justify-between mb-1 gap-1.5 flex-wrap">
+                        <div className="flex items-center justify-between mb-1 gap-1.5 flex-wrap min-h-[1.75rem]">
                             <span className="text-[13px] sm:text-base text-white font-semibold tracking-tight whitespace-nowrap">Tages-Performance</span>
                             <span title={fullDateLabel} className="text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 bg-secondary/80 border border-border px-1.5 py-0.5 rounded-md tabular-nums whitespace-nowrap shadow-xs">
                                 {isAnyMarketOpen ? `Live ${todayDateLabel}` : `Schlusskurse vom ${todayDateLabel}`}
@@ -321,13 +331,28 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         </div>
                     </div>
                     <div className="bg-card py-2.5 px-2.5 sm:p-3 sm:px-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between items-end text-right">
-                        <span className="text-[13px] sm:text-base text-white font-semibold tracking-tight whitespace-nowrap mb-1">Gesamt-Performance</span>
-                        <span className={cn(
-                            "text-[18px] sm:text-xl md:text-2xl font-bold font-sans tabular-nums tracking-tight whitespace-nowrap",
-                            totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
-                        )}>
-                            {totalPerformanceGain >= 0 ? '+' : ''}{formatCurrency(totalPerformanceGain, 'CHF')}
-                        </span>
+                        <div className="flex items-center justify-end mb-1 gap-1.5 flex-wrap w-full min-h-[1.75rem]">
+                            <span className="text-[13px] sm:text-base text-white font-semibold tracking-tight whitespace-nowrap">Gesamt-Performance</span>
+                            <span className="text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 bg-secondary/80 border border-border px-1.5 py-0.5 rounded-md tabular-nums whitespace-nowrap shadow-xs">
+                                Seit Kauf
+                            </span>
+                        </div>
+                        <div className="flex items-baseline justify-end gap-2 flex-wrap w-full">
+                            <span className={cn(
+                                "text-[18px] sm:text-xl md:text-2xl font-bold font-sans tabular-nums tracking-tight whitespace-nowrap",
+                                totalPerformanceGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
+                            )}>
+                                {totalPerformanceGain >= 0 ? '+' : ''}{formatCurrency(totalPerformanceGain, 'CHF')}
+                            </span>
+                            <span className={cn(
+                                "text-xs sm:text-sm font-bold tabular-nums px-1.5 py-0.5 rounded-md inline-flex items-center gap-0.5 whitespace-nowrap",
+                                totalPerformanceGain >= 0
+                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                    : "bg-rose-500/10 text-rose-600 dark:text-[#ff3b30]"
+                            )}>
+                                {totalPerformanceGain >= 0 ? '+' : ''}{totalPerformanceGainPercent.toFixed(2)}%
+                            </span>
+                        </div>
                     </div>
                 </div>
 
