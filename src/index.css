@@ -1620,8 +1620,8 @@
 
   .iphone-modal-header-card {
     position: relative !important;
-    margin: 0 0 0 2.8rem !important;
-    width: calc(100% - 2.8rem) !important;
+    margin: 0 !important;
+    width: 100% !important;
     height: 2.35rem !important;
     min-height: 2.35rem !important;
     max-height: 2.35rem !important;

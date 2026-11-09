@@ -199,8 +199,9 @@ export function WatchlistPerformanceModal({ isOpen, onClose, activeWatchlistId }
                             <TrendingUp className="size-5" />
                         </div>
                         <div className="min-w-0">
-                            <h2 className="text-lg font-bold truncate iphone-landscape-portfolio-title">
-                                Watchlist Performance
+                            <h2 className="text-base sm:text-lg font-bold truncate iphone-landscape-portfolio-title">
+                                <span className="hidden sm:inline">Watchlist Performance</span>
+                                <span className="sm:hidden">Performance</span>
                             </h2>
                             <p className="text-xs text-muted-foreground hidden md:block">Detailansicht deiner beobachteten Aktien — <span className="font-semibold text-foreground">{activeTabName}</span></p>
                         </div>

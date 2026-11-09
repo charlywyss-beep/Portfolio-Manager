@@ -225,8 +225,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-blue-600 dark:text-blue-400 shrink-0 iphone-landscape-portfolio-icon">
                             <TrendingUp className="size-5" />
                         </div>
-                        <h2 className="text-lg font-bold truncate iphone-landscape-portfolio-title">
-                            Performance Details
+                        <h2 className="text-base sm:text-lg font-bold truncate iphone-landscape-portfolio-title">
+                            <span className="hidden sm:inline">Performance Details</span>
+                            <span className="sm:hidden">Performance</span>
                         </h2>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
