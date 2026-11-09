@@ -1647,7 +1647,22 @@
   }
 
   .iphone-modal-header-card .iphone-landscape-portfolio-icon {
-    display: none !important;
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+    min-width: 1.75rem !important;
+    min-height: 1.75rem !important;
+    max-width: 1.75rem !important;
+    max-height: 1.75rem !important;
+    padding: 0 !important;
+    border-radius: 0.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .iphone-modal-header-card .iphone-landscape-portfolio-icon svg {
+    width: 1rem !important;
+    height: 1rem !important;
   }
 
   .iphone-modal-header-card .iphone-landscape-portfolio-title {
