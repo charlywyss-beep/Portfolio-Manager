@@ -974,7 +974,7 @@ function WatchlistTable({
                                         />
                                         <div className="flex flex-col min-w-0 flex-1 justify-center">
                                             <span
-                                                className="font-bold text-[13px] xl:text-sm truncate block group-hover:text-primary transition-colors cursor-pointer"
+                                                className="font-bold text-[13px] xl:text-sm whitespace-pre-line line-clamp-2 block group-hover:text-primary transition-colors cursor-pointer"
                                                 onClick={() => onNavigate(stock.id)}
                                                 title={stock.name}
                                             >

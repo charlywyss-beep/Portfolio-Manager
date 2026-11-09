@@ -366,7 +366,7 @@ export function PositionTable({
                                                 />
                                                 <div className="min-w-0 flex-1 flex flex-col items-start gap-0.5">
                                                     <div
-                                                        className="font-semibold text-foreground cursor-pointer hover:text-primary transition-colors text-xs sm:text-sm whitespace-pre-line truncate max-w-full iphone-landscape-stock-name"
+                                                        className="font-semibold text-foreground cursor-pointer hover:text-primary transition-colors text-xs sm:text-sm whitespace-pre-line line-clamp-2 max-w-full iphone-landscape-stock-name"
                                                         onClick={() => navigate(`/stock/${pos.stock.id}?from=portfolio`)}
                                                     >
                                                         {pos.stock.name}

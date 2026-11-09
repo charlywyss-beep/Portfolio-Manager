@@ -1197,7 +1197,7 @@ export function DividendPlanner() {
                                                     </div>
                                                     <div className="flex flex-col min-w-0 flex-1 justify-center">
                                                         <div
-                                                            className="font-bold text-[13px] xl:text-sm text-foreground truncate block leading-tight cursor-pointer hover:text-primary transition-colors"
+                                                            className="font-bold text-[13px] xl:text-sm text-foreground whitespace-pre-line line-clamp-2 block leading-tight cursor-pointer hover:text-primary transition-colors"
                                                             title={stock.name}
                                                             onClick={() => navigate(`/stock/${stock.id}?from=dividends`)}
                                                         >

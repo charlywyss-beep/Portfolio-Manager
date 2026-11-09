@@ -52,6 +52,7 @@ export function EditDividendPage() {
 
     const [selectedStockId, setSelectedStockId] = useState(''); // Local state for selection
     const [stockNameOverride, setStockNameOverride] = useState<string | undefined>(undefined);
+
     const [symbol, setSymbol] = useState(''); // NEW: Allow editing symbol
     const [isin, setIsin] = useState(''); // NEW: Allow editing ISIN
     const [sector, setSector] = useState(''); // NEW: Allow editing Sector
@@ -94,7 +95,27 @@ export function EditDividendPage() {
 
     const currentStockId = stock?.id || rawId;
 
-    const inputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
+
+    // Auto-resize stock name textarea
+    useEffect(() => {
+        if (inputRef.current) {
+            inputRef.current.style.height = '0px';
+            const scrollHeight = inputRef.current.scrollHeight;
+            inputRef.current.style.height = `${Math.max(32, scrollHeight)}px`;
+            inputRef.current.style.overflow = 'hidden';
+        }
+    }, [stockNameOverride, stock?.name]);
+
+    // Auto-resize stock name textarea
+    useEffect(() => {
+        if (inputRef.current) {
+            inputRef.current.style.height = '0px';
+            const scrollHeight = inputRef.current.scrollHeight;
+            inputRef.current.style.height = `${Math.max(32, scrollHeight)}px`;
+            inputRef.current.style.overflow = 'hidden';
+        }
+    }, [stockNameOverride, stock?.name]);
 
     const handleBack = () => {
         if (isDirty) {
@@ -526,18 +547,18 @@ export function EditDividendPage() {
                     <div className="flex-1 min-w-0">
                         {stock ? (
                             <div className="flex items-center gap-1.5 group/edit max-w-xl">
-                                <input
+                                <textarea
                                     ref={inputRef}
-                                    type="text"
-                                    className="text-lg sm:text-xl md:text-2xl font-bold bg-transparent border border-transparent hover:border-border/80 focus:border-primary focus:bg-background/80 focus:ring-1 focus:ring-primary rounded-lg px-2 py-0.5 -ml-1 transition-all outline-none text-foreground placeholder:text-muted-foreground truncate leading-tight"
-                                    value={stockNameOverride !== undefined ? stockNameOverride : stock.name}
+                                    rows={1}
+                                    className="w-full text-lg sm:text-xl md:text-2xl font-bold bg-transparent border border-transparent hover:border-border/80 focus:border-primary focus:bg-background/80 focus:ring-1 focus:ring-primary rounded-lg px-2 py-0.5 -ml-1 transition-all outline-none resize-none overflow-hidden text-foreground placeholder:text-muted-foreground leading-tight"
+                                    value={stockNameOverride !== undefined ? stockNameOverride : (stock?.name || '')}
                                     onChange={(e) => {
                                         setStockNameOverride(e.target.value);
                                         setIsDirty(true);
                                     }}
-                                    placeholder="Name der Position"
+                                    placeholder="Name der Position (Enter für Zeilenumbruch)"
                                     onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
+                                        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                                             handleSubmit(e);
                                         }
                                     }}
