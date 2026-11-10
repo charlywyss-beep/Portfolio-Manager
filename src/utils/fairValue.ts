@@ -18,6 +18,8 @@ export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number
     'BRK-B': { eps: 21.0, growth: 8.5, pe: 18.0, pe10: 16.5, div: 0, mos: 15, label: 'Operativer Gewinn' },
     'BRK.B': { eps: 21.0, growth: 8.5, pe: 18.0, pe10: 16.5, div: 0, mos: 15, label: 'Operativer Gewinn' },
     'TSLA': { eps: 3.50, growth: 22.0, pe: 38.0, pe10: 30.0, div: 0, mos: 20, label: 'Konsens EPS (Forward 2025/26)' },
+    'NVDA': { eps: 4.80, growth: 18.0, pe: 20.0, pe10: 17.0, div: 0.02, mos: 20, label: 'Konsens EPS (Forward FY26)' },
+    'NVD.DE': { eps: 4.45, growth: 18.0, pe: 20.0, pe10: 17.0, div: 0.02, mos: 20, label: 'Konsens EPS in EUR' },
     'CVX': { eps: 13.0, growth: 4.5, pe: 13.0, pe10: 11.5, div: 3.17, mos: 15, label: 'Mid-Cycle EPS (Normalisiert)' },
     'XOM': { eps: 8.50, growth: 4.5, pe: 13.0, pe10: 11.5, div: 3.3, mos: 15, label: 'Mid-Cycle EPS (Normalisiert)' },
     'SHEL': { eps: 4.00, growth: 3.5, pe: 10.0, pe10: 9.0, div: 4.2, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
@@ -179,6 +181,9 @@ export function computeSmartAutoParams(
     if (symUpper === 'TSLA') {
         autoGrowth = isQualityMode ? 26.0 : 22.0;
         growthLabel = isQualityMode ? 'KI / Robotaxi Wachstums-Szenario' : 'Konsens-Prognose';
+    } else if (symUpper === 'NVDA' || symUpper === 'NVD.DE') {
+        autoGrowth = isQualityMode ? 24.0 : 18.0;
+        growthLabel = isQualityMode ? 'KI / Rechenzentren (Markt-Konsens)' : 'Konservative Abkühlung (5J)';
     } else if (preset) {
         autoGrowth = isQualityMode
             ? parseFloat((preset.growth + (preset.growth <= 3.5 ? 1.0 : preset.growth <= 7.0 ? 0.5 : preset.growth >= 18.0 ? 2.0 : 1.0)).toFixed(1))
@@ -272,7 +277,7 @@ export function computeSmartAutoParams(
 
     if (isQualityMode) {
         if (preset) {
-            if (symUpper === 'AMZN' || symUpper === 'MSFT' || symUpper === 'NVO' || symUpper === 'NOVO-B.CO') {
+            if (symUpper === 'AMZN' || symUpper === 'MSFT' || symUpper === 'NVDA' || symUpper === 'NVD.DE' || symUpper === 'NVO' || symUpper === 'NOVO-B.CO') {
                 rawExitPe = 25.0;
             } else if (symUpper === 'TSLA') {
                 rawExitPe = 48.0;
