@@ -107,6 +107,20 @@ export function usePortfolioData() {
         const totalValueStockOnly = stockPositions.reduce((sum, p) => sum + convertToCHF(p.currentValue, p.stock.currency, rates), 0);
         const totalValueEtf = etfPositions.reduce((sum, p) => sum + convertToCHF(p.currentValue, p.stock.currency, rates), 0);
 
+        const totalCostStockOnly = stockPositions.reduce((sum, p) => {
+            const entryFxRate = p.averageEntryFxRate ?? 1;
+            return sum + (p.costBasis * entryFxRate);
+        }, 0);
+        const stockGain = totalValueStockOnly - totalCostStockOnly;
+        const stockGainPercent = totalCostStockOnly > 0 ? (stockGain / totalCostStockOnly) * 100 : 0;
+
+        const totalCostEtf = etfPositions.reduce((sum, p) => {
+            const entryFxRate = p.averageEntryFxRate ?? 1;
+            return sum + (p.costBasis * entryFxRate);
+        }, 0);
+        const etfGain = totalValueEtf - totalCostEtf;
+        const etfGainPercent = totalCostEtf > 0 ? (etfGain / totalCostEtf) * 100 : 0;
+
         const totalValueStock = positions.reduce((sum, p) => sum + convertToCHF(p.currentValue, p.stock.currency, rates), 0);
 
         // Cost Basis: Use Historical FX Rate (averageEntryFxRate)
@@ -195,6 +209,12 @@ export function usePortfolioData() {
             totalValueVorsorge,  // NEW
             totalInterestFixed,
             stockValue: totalValueStockOnly,
+            stockCost: totalCostStockOnly,
+            stockGain,
+            stockGainPercent,
+            etfCost: totalCostEtf,
+            etfGain,
+            etfGainPercent,
             etfValue: totalValueEtf,
             cashValue: totalValueBank,
             vorsorgeValue: totalValueVorsorge, // Also exposing this if needed explicitly

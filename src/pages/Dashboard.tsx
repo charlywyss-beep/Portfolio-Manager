@@ -392,15 +392,37 @@ export function Dashboard() {
                             <div className="mt-4 pt-4 border-t border-border flex flex-col gap-1.5">
                                 <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
                                     <span className="text-muted-foreground truncate">Aktien:</span>
-                                    <span className="font-medium text-foreground whitespace-nowrap shrink-0">
-                                        {totals.stockValue.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
-                                    </span>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                        <span className="font-medium text-foreground whitespace-nowrap">
+                                            {totals.stockValue.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                        </span>
+                                        <span
+                                            className={cn(
+                                                "text-[10px] sm:text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-md",
+                                                (totals.stockGain ?? 0) >= 0 ? "text-green-600 dark:text-green-400 bg-green-500/10" : "text-red-600 dark:text-red-400 bg-red-500/10"
+                                            )}
+                                            title={`Gewinn seit Kauf: ${(totals.stockGain ?? 0) >= 0 ? '+' : ''}${(totals.stockGain ?? 0).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`}
+                                        >
+                                            {(totals.stockGainPercent ?? 0) >= 0 ? '+' : ''}{(totals.stockGainPercent ?? 0).toFixed(1)}%
+                                        </span>
+                                    </div>
                                 </div>
                                 <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
                                     <span className="text-muted-foreground truncate">ETFs:</span>
-                                    <span className="font-medium text-foreground whitespace-nowrap shrink-0">
-                                        {totals.etfValue.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
-                                    </span>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                        <span className="font-medium text-foreground whitespace-nowrap">
+                                            {totals.etfValue.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                        </span>
+                                        <span
+                                            className={cn(
+                                                "text-[10px] sm:text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-md",
+                                                (totals.etfGain ?? 0) >= 0 ? "text-green-600 dark:text-green-400 bg-green-500/10" : "text-red-600 dark:text-red-400 bg-red-500/10"
+                                            )}
+                                            title={`Gewinn seit Kauf: ${(totals.etfGain ?? 0) >= 0 ? '+' : ''}${(totals.etfGain ?? 0).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`}
+                                        >
+                                            {(totals.etfGainPercent ?? 0) >= 0 ? '+' : ''}{(totals.etfGainPercent ?? 0).toFixed(1)}%
+                                        </span>
+                                    </div>
                                 </div>
                                 <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
                                     <span className="text-muted-foreground truncate">Bankguthaben:</span>
