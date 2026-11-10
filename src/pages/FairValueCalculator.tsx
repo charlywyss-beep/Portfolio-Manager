@@ -7,7 +7,7 @@ import { cn } from '../utils';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { fetchStockQuote, fetchStockAnalysis, searchStocks } from '../services/yahoo-finance';
-import { computeSmartAutoParams, adjustForReportingCurrency, WIDE_MOAT_QUALITY, FUNDAMENTAL_FALLBACKS, isEtfAsset } from '../utils/fairValue';
+import { computeSmartAutoParams, adjustForReportingCurrency, WIDE_MOAT_QUALITY, FUNDAMENTAL_FALLBACKS, isEtfAsset, calculateDcfFairValue, computeStockSupportZones } from '../utils/fairValue';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { translateSector } from '../utils/sectorTranslation';
 
@@ -974,6 +974,28 @@ export function FairValueCalculator() {
             equivalentTerminalGrowth
         };
     }, [eps, growthRate, pe, discountRate, mos, dividendYield, quote?.price, valuationProfile, selectedSymbol]);
+
+    // 🎯 Unterstützungs- & Kaufzonen (Berechnet für jede Aktie & ETF: Zone 1, Zone 2, Zone 3)
+    const supportZones = useMemo(() => {
+        const curPrice = quote?.price || 0;
+        if (curPrice <= 0 || !selectedSymbol) return [];
+
+        const smartSafety = computeSmartAutoParamsFx(quote, analysis, currentStock, selectedSymbol, 'conservative');
+        const smartQuality = computeSmartAutoParamsFx(quote, analysis, currentStock, selectedSymbol, 'quality');
+
+        const dcfSafety = smartSafety ? calculateDcfFairValue(smartSafety, curPrice) : null;
+        const dcfQuality = smartQuality ? calculateDcfFairValue(smartQuality, curPrice) : null;
+
+        return computeStockSupportZones({
+            currentPrice: curPrice,
+            dcfSafety,
+            dcfQuality,
+            fiftyDayAverage: (quote as any)?.fiftyDayAverage,
+            twoHundredDayAverage: (quote as any)?.twoHundredDayAverage,
+            fiftyTwoWeekHigh: (quote as any)?.fiftyTwoWeekHigh,
+            fiftyTwoWeekLow: (quote as any)?.fiftyTwoWeekLow
+        });
+    }, [quote, analysis, currentStock, selectedSymbol]);
 
     // Fundamentale Risikoprofil- / Abwärtsabsicherungs-Einschätzung (Downside Protection)
     const downsideProtection = useMemo(() => {
@@ -2711,6 +2733,99 @@ export function FairValueCalculator() {
                                     </div>
                                     );
                                     })()}
+
+                                {/* 🎯 Unterstützungs- & Kaufzonen (Für alle Aktien & ETFs) */}
+                                {supportZones && supportZones.length > 0 && (
+                                    <div className="fair-value-support-zones-box my-2 p-2 sm:p-2.5 rounded-xl border border-border/80 bg-muted/25 shadow-2xs space-y-2 shrink-0">
+                                        <div className="flex items-center justify-between gap-1.5 border-b border-border/40 pb-1.5">
+                                            <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm text-foreground">
+                                                <Target className="size-3.5 text-primary shrink-0" />
+                                                <span>🎯 Unterstützungs- & Kaufzonen</span>
+                                            </div>
+                                            <span className="text-[10px] text-muted-foreground font-medium hidden sm:inline">
+                                                Kauf-Staffelung
+                                            </span>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            {supportZones.map((zone) => {
+                                                const activeTarget = (currentStock?.targetPrice && currentStock.targetPrice > 0)
+                                                    ? currentStock.targetPrice
+                                                    : (parseFloat(buyLimitInput.replace(',', '.')) || 0);
+                                                const isActive = Boolean(
+                                                    activeTarget > 0 &&
+                                                    (Math.abs(activeTarget - zone.targetPrice) < 0.25 ||
+                                                     (activeTarget >= zone.minPrice && activeTarget <= zone.maxPrice))
+                                                );
+
+                                                return (
+                                                    <div
+                                                        key={zone.id}
+                                                        className={cn(
+                                                            "p-2 rounded-lg border transition-all text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2",
+                                                            zone.id === 'zone1'
+                                                                ? "bg-blue-500/5 border-blue-500/25 hover:border-blue-500/40"
+                                                                : zone.id === 'zone2'
+                                                                    ? "bg-purple-500/5 border-purple-500/25 hover:border-purple-500/40"
+                                                                    : "bg-emerald-500/5 border-emerald-500/25 hover:border-emerald-500/40"
+                                                        )}
+                                                    >
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <span className="font-bold text-foreground text-xs">{zone.level}</span>
+                                                                {zone.badgeText && (
+                                                                    <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                                                        {zone.badgeText}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className="text-[10.5px] text-muted-foreground leading-tight mt-0.5">
+                                                                {zone.description}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-1 sm:pt-0 border-t sm:border-0 border-border/30">
+                                                            <div className="text-left sm:text-right">
+                                                                <div className="font-mono font-bold text-xs sm:text-sm text-foreground">
+                                                                    ~{zone.minPrice.toFixed(2)} – {zone.maxPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency}
+                                                                </div>
+                                                                <div className={cn(
+                                                                    "text-[10px] font-mono font-semibold",
+                                                                    zone.distancePct > 0
+                                                                        ? "text-emerald-400"
+                                                                        : zone.distancePct < -22
+                                                                            ? "text-amber-400"
+                                                                            : "text-muted-foreground"
+                                                                )}>
+                                                                    {zone.distancePct > 0 ? `+${zone.distancePct}%` : `${zone.distancePct}%`} vom Kurs
+                                                                </div>
+                                                            </div>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const val = zone.targetPrice.toFixed(2);
+                                                                    setBuyLimitInput(val);
+                                                                    handleSaveBuyLimit(val);
+                                                                }}
+                                                                className={cn(
+                                                                    "px-2 py-1 text-[11px] font-semibold rounded-md border transition-all cursor-pointer whitespace-nowrap active:scale-95 flex items-center gap-1",
+                                                                    isActive
+                                                                        ? "bg-emerald-600 text-white border-emerald-500 shadow-xs"
+                                                                        : "bg-card hover:bg-muted text-foreground border-border hover:border-primary/50 shadow-2xs"
+                                                                )}
+                                                                title={`Kauflimit ${zone.targetPrice.toFixed(2)} ${quote.currency} übernehmen`}
+                                                            >
+                                                                <Check className={cn("size-3", isActive ? "opacity-100" : "opacity-0")} />
+                                                                <span>{isActive ? 'Aktiv' : zone.buttonLabel}</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Zielkurs (5 Jahre) - zuunterst ins Feld */}
                                 <div className="fair-value-target-box pt-2 border-t border-border/50 shrink-0">

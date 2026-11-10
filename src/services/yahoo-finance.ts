@@ -313,6 +313,10 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
     displayName?: string | null,
     isin?: string | null,
     kcv?: number | null,
+    fiftyDayAverage?: number | null,
+    twoHundredDayAverage?: number | null,
+    fiftyTwoWeekHigh?: number | null,
+    fiftyTwoWeekLow?: number | null,
     sector?: string | null
 }>> {
     if (symbols.length === 0) return {};
@@ -366,6 +370,10 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
             displayName?: string | null,
             isin?: string | null,
             kcv?: number | null,
+            fiftyDayAverage?: number | null,
+            twoHundredDayAverage?: number | null,
+            fiftyTwoWeekHigh?: number | null,
+            fiftyTwoWeekLow?: number | null,
             sector?: string | null
         }> = {};
 
@@ -433,6 +441,10 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
                     displayName: res.displayName || null,
                     isin: res.isin || null,
                     kcv: res.kcv || null,
+                    fiftyDayAverage: res.fiftyDayAverage ? normalizeYahooPrice(extractValue(res.fiftyDayAverage), res.currency, res.symbol) : null,
+                    twoHundredDayAverage: res.twoHundredDayAverage ? normalizeYahooPrice(extractValue(res.twoHundredDayAverage), res.currency, res.symbol) : null,
+                    fiftyTwoWeekHigh: res.fiftyTwoWeekHigh ? normalizeYahooPrice(extractValue(res.fiftyTwoWeekHigh), res.currency, res.symbol) : null,
+                    fiftyTwoWeekLow: res.fiftyTwoWeekLow ? normalizeYahooPrice(extractValue(res.fiftyTwoWeekLow), res.currency, res.symbol) : null,
                     sector: translateSector(res.sector, res.industry) || null
                 };
             }
@@ -469,6 +481,10 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
     isin?: string | null,
     exDividendDate?: Date | null,
     kcv?: number | null,
+    fiftyDayAverage?: number | null,
+    twoHundredDayAverage?: number | null,
+    fiftyTwoWeekHigh?: number | null,
+    fiftyTwoWeekLow?: number | null,
     error?: string
 }> {
     try {
@@ -519,6 +535,10 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
                 isin: batchResult.isin || null,
                 exDividendDate: (batchResult as any).exDividendDate ? new Date((batchResult as any).exDividendDate * 1000) : null,
                 kcv: batchResult.kcv || null,
+                fiftyDayAverage: (batchResult as any).fiftyDayAverage || null,
+                twoHundredDayAverage: (batchResult as any).twoHundredDayAverage || null,
+                fiftyTwoWeekHigh: (batchResult as any).fiftyTwoWeekHigh || null,
+                fiftyTwoWeekLow: (batchResult as any).fiftyTwoWeekLow || null,
                 error: undefined
             };
         }

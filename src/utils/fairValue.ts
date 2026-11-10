@@ -462,3 +462,155 @@ export function adjustForReportingCurrency(
 // Reporting-currency overrides for EPS conversion. Intentionally empty: Yahoo already delivers CHF-denominated
 // EPS for .SW listings (e.g. ALC.SW). Only add symbols here after verifying that Yahoo's EPS is in the reporting currency.
 export const REPORTING_CURRENCY_OVERRIDES: Record<string, string> = {};
+
+
+export interface SupportZone {
+    id: 'zone1' | 'zone2' | 'zone3';
+    title: string;
+    level: string;
+    minPrice: number;
+    maxPrice: number;
+    targetPrice: number;
+    distancePct: number;
+    status: 'above' | 'in_range' | 'below';
+    description: string;
+    buttonLabel: string;
+    badgeText?: string;
+}
+
+export function computeStockSupportZones(params: {
+    currentPrice: number;
+    dcfSafety?: { fairValue: number; buyPrice: number } | null;
+    dcfQuality?: { fairValue: number; buyPrice: number } | null;
+    fiftyDayAverage?: number | null;
+    twoHundredDayAverage?: number | null;
+    fiftyTwoWeekHigh?: number | null;
+    fiftyTwoWeekLow?: number | null;
+}): SupportZone[] {
+    const price = Number(params.currentPrice) || 0;
+    if (price <= 0) return [];
+
+    const safetyBuy = params.dcfSafety?.buyPrice && params.dcfSafety.buyPrice > 0 ? params.dcfSafety.buyPrice : 0;
+    const safetyFair = params.dcfSafety?.fairValue && params.dcfSafety.fairValue > 0 ? params.dcfSafety.fairValue : 0;
+    const qualityBuy = params.dcfQuality?.buyPrice && params.dcfQuality.buyPrice > 0 ? params.dcfQuality.buyPrice : 0;
+    const gd50 = params.fiftyDayAverage && params.fiftyDayAverage > 0 ? params.fiftyDayAverage : null;
+    const gd200 = params.twoHundredDayAverage && params.twoHundredDayAverage > 0 ? params.twoHundredDayAverage : null;
+    const low52 = params.fiftyTwoWeekLow && params.fiftyTwoWeekLow > 0 ? params.fiftyTwoWeekLow : null;
+
+    // --- ZONE 3: Panik- / Crash-Zone (Maximaler Kapitalschutz) ---
+    // Basis: Kauflimit Sicherheit (A) oder Bärenmarkt-Drawdown (-30% bis -35%) / 52W-Tief
+    let anchor3 = safetyBuy > 0 ? safetyBuy : (low52 && low52 < price * 0.85 ? low52 : price * 0.70);
+    // Plausibilitätscheck: Zone 3 sollte nie über 90% des aktuellen Kurses liegen, es sei denn Aktie ist extrem crash-bewertet
+    if (anchor3 > price * 0.90) {
+        anchor3 = Math.min(anchor3, price * 0.82);
+    }
+    const min3 = Math.max(0.01, Math.round(anchor3 * 0.96 * 10) / 10);
+    const max3 = Math.round(anchor3 * 1.02 * 10) / 10;
+    const target3 = parseFloat(anchor3.toFixed(2));
+
+    // --- ZONE 2: Starke Unterstützung (Institutionelle Kaufzone) ---
+    // Basis: GD200 (200-Tage-Linie) oder ca. -20% / Mittelwert zwischen Z3 und aktuellem Kurs
+    let anchor2: number;
+    if (gd200 && gd200 > anchor3 * 1.03 && gd200 < price * 0.96) {
+        anchor2 = gd200;
+    } else if (qualityBuy > 0 && qualityBuy > anchor3 * 1.04 && qualityBuy < price * 0.95) {
+        anchor2 = qualityBuy;
+    } else {
+        anchor2 = Math.max(anchor3 * 1.12, price * 0.80);
+    }
+    // Sicherheitsabstand zu Zone 3 garantieren
+    if (anchor2 <= anchor3 * 1.04) {
+        anchor2 = anchor3 * 1.10;
+    }
+    const min2 = Math.round(anchor2 * 0.97 * 10) / 10;
+    const max2 = Math.round(anchor2 * 1.02 * 10) / 10;
+    const target2 = parseFloat(anchor2.toFixed(2));
+
+    // --- ZONE 1: Erste Unterstützung (Moderater Rücksetzer / 1. Tranche) ---
+    // Basis: GD50 (50-Tage-Linie) oder gesunder Rücksetzer (-10% bis -14% vom aktuellen Kurs)
+    let anchor1: number;
+    if (gd50 && gd50 > anchor2 * 1.03 && gd50 < price * 0.98) {
+        anchor1 = gd50;
+    } else if (safetyFair > 0 && safetyFair > anchor2 * 1.03 && safetyFair < price * 0.98) {
+        anchor1 = safetyFair;
+    } else {
+        anchor1 = Math.max(anchor2 * 1.08, price * 0.88);
+    }
+    // Sicherheitsabstand zu Zone 2 garantieren
+    if (anchor1 <= anchor2 * 1.04) {
+        anchor1 = (anchor2 + price) / 2;
+    }
+    const min1 = Math.round(anchor1 * 0.97 * 10) / 10;
+    const max1 = Math.round(anchor1 * 1.02 * 10) / 10;
+    const target1 = parseFloat(anchor1.toFixed(2));
+
+    const buildZone = (
+        id: 'zone1' | 'zone2' | 'zone3',
+        level: string,
+        title: string,
+        minP: number,
+        maxP: number,
+        targetP: number,
+        desc: string,
+        btnLabel: string
+    ): SupportZone => {
+        const distPct = parseFloat((((targetP - price) / price) * 100).toFixed(1));
+        let status: 'above' | 'in_range' | 'below' = 'above';
+        let badgeText: string | undefined;
+
+        if (price >= minP && price <= maxP) {
+            status = 'in_range';
+            badgeText = '🟢 Aktuell in dieser Zone!';
+        } else if (price < minP) {
+            status = 'below';
+            badgeText = '⚡ Bereits unterboten (Stark korrigiert)';
+        }
+
+        return {
+            id,
+            level,
+            title,
+            minPrice: minP,
+            maxPrice: maxP,
+            targetPrice: targetP,
+            distancePct: distPct,
+            status,
+            description: desc,
+            buttonLabel: btnLabel,
+            badgeText
+        };
+    };
+
+    return [
+        buildZone(
+            'zone1',
+            '1. Erste Unterstützung',
+            'Moderater Rücksetzer (1. Tranche)',
+            min1,
+            max1,
+            target1,
+            'Gesunder Rücksetzer (-10% bis -15% oder GD50). Ideal für eine erste Position oder Trend-Käufe.',
+            'Als 1. Tranche setzen'
+        ),
+        buildZone(
+            'zone2',
+            '2. Starke Unterstützung',
+            'Institutionelle Kaufzone (2. Tranche)',
+            min2,
+            max2,
+            target2,
+            'Solider Rebound-Bereich (GD200 / Mittelwert). Hier greifen Grossanleger und Value-Fonds wieder zu.',
+            'Als 2. Tranche setzen'
+        ),
+        buildZone(
+            'zone3',
+            '3. Panik- / Crash-Zone',
+            'Maximaler Kapitalschutz (Limit)',
+            min3,
+            max3,
+            target3,
+            'Entspricht dem strikten Kauflimit aus Sicherheit A. Historische Ausverkaufs- und Panikpreise.',
+            'Als Kauflimit setzen'
+        )
+    ];
+}
