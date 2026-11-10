@@ -393,9 +393,6 @@ export function Dashboard() {
                                 <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
                                     <span className="text-muted-foreground truncate">Aktien:</span>
                                     <div className="flex items-center gap-1.5 shrink-0">
-                                        <span className="font-medium text-foreground whitespace-nowrap">
-                                            {totals.stockValue.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
-                                        </span>
                                         <span
                                             className={cn(
                                                 "text-[10px] sm:text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-md",
@@ -405,14 +402,14 @@ export function Dashboard() {
                                         >
                                             {(totals.stockGainPercent ?? 0) >= 0 ? '+' : ''}{(totals.stockGainPercent ?? 0).toFixed(1)}%
                                         </span>
+                                        <span className="font-medium text-foreground whitespace-nowrap">
+                                            {totals.stockValue.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                        </span>
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
                                     <span className="text-muted-foreground truncate">ETFs:</span>
                                     <div className="flex items-center gap-1.5 shrink-0">
-                                        <span className="font-medium text-foreground whitespace-nowrap">
-                                            {totals.etfValue.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
-                                        </span>
                                         <span
                                             className={cn(
                                                 "text-[10px] sm:text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded-md",
@@ -421,6 +418,9 @@ export function Dashboard() {
                                             title={`Gewinn seit Kauf: ${(totals.etfGain ?? 0) >= 0 ? '+' : ''}${(totals.etfGain ?? 0).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`}
                                         >
                                             {(totals.etfGainPercent ?? 0) >= 0 ? '+' : ''}{(totals.etfGainPercent ?? 0).toFixed(1)}%
+                                        </span>
+                                        <span className="font-medium text-foreground whitespace-nowrap">
+                                            {totals.etfValue.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                         </span>
                                     </div>
                                 </div>
