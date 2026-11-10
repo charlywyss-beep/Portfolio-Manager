@@ -18,8 +18,8 @@ export const FUNDAMENTAL_FALLBACKS: Record<string, { eps: number; growth: number
     'BRK-B': { eps: 21.0, growth: 8.5, pe: 18.0, pe10: 16.5, div: 0, mos: 15, label: 'Operativer Gewinn' },
     'BRK.B': { eps: 21.0, growth: 8.5, pe: 18.0, pe10: 16.5, div: 0, mos: 15, label: 'Operativer Gewinn' },
     'TSLA': { eps: 3.50, growth: 22.0, pe: 38.0, pe10: 30.0, div: 0, mos: 20, label: 'Konsens EPS (Forward 2025/26)' },
-    'NVDA': { eps: 4.80, growth: 18.0, pe: 20.0, pe10: 17.0, div: 0.02, mos: 20, label: 'Konsens EPS (Forward FY26)' },
-    'NVD.DE': { eps: 4.45, growth: 18.0, pe: 20.0, pe10: 17.0, div: 0.02, mos: 20, label: 'Konsens EPS in EUR' },
+    'NVDA': { eps: 4.80, growth: 18.0, pe: 20.0, pe10: 17.0, div: 0, mos: 20, label: 'Konsens EPS (Forward FY26)' },
+    'NVD.DE': { eps: 4.45, growth: 18.0, pe: 20.0, pe10: 17.0, div: 0, mos: 20, label: 'Konsens EPS in EUR' },
     'CVX': { eps: 13.0, growth: 4.5, pe: 13.0, pe10: 11.5, div: 3.17, mos: 15, label: 'Mid-Cycle EPS (Normalisiert)' },
     'XOM': { eps: 8.50, growth: 4.5, pe: 13.0, pe10: 11.5, div: 3.3, mos: 15, label: 'Mid-Cycle EPS (Normalisiert)' },
     'SHEL': { eps: 4.00, growth: 3.5, pe: 10.0, pe10: 9.0, div: 4.2, mos: 20, label: 'Mid-Cycle (Europa-KGV)' },
@@ -87,8 +87,8 @@ export function computeSmartAutoParams(
         autoDiv = (Number(stockObj.dividendAmount) / price) * 100;
     }
 
-    // Handle decimal yield if reported as ratio (e.g. 0.003 -> 0.3%)
-    if (autoDiv > 0 && autoDiv < 0.1) {
+    // Handle decimal yield if reported as ratio (e.g. 0.003 -> 0.3%) - only for API quotes, never presets
+    if (!preset && autoDiv > 0.0005 && autoDiv < 0.1) {
         autoDiv = autoDiv * 100;
     }
 
