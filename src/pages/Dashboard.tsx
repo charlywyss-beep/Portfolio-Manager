@@ -383,10 +383,15 @@ export function Dashboard() {
                             <h3 className="text-xl lg:text-2xl font-bold mt-1 tracking-tight">
                                 {totals.totalValue.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                             </h3>
-                            <p className={cn("text-sm mt-2 font-medium",
+                            <p className={cn("text-sm mt-2 font-medium flex items-center gap-2.5 sm:gap-3 flex-wrap",
                                 totals.gainLoss >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                             )}>
-                                {totals.gainLoss >= 0 ? '+' : ''}{totals.gainLoss.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF {totals.gainLoss >= 0 ? 'Depot Gewinn' : 'Depot Verlust'}
+                                <span className="tabular-nums">
+                                    {totals.gainLoss >= 0 ? '+' : ''}{totals.gainLoss.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                </span>
+                                <span>
+                                    {totals.gainLoss >= 0 ? 'Depot Gewinn' : 'Depot Verlust'}
+                                </span>
                             </p>
 
                             <div className="mt-4 pt-4 border-t border-border flex flex-col gap-1.5">
