@@ -423,7 +423,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 {/* 0. Aktie / ETF */}
                                 <th
                                     onClick={() => setSortConfig({ key: 'default', direction: 'desc' })}
-                                    className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[170px] md:min-w-[160px] md:max-w-[170px] touch-pan-y align-middle cursor-pointer select-none"
+                                    className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[280px] md:min-w-[260px] lg:w-[340px] lg:min-w-[320px] md:max-w-none touch-pan-y align-middle cursor-pointer select-none"
                                     title="Standard-Sortierung (Offene Börsen zuerst, A-Z)"
                                 >
                                     Aktie / ETF
@@ -690,7 +690,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         className="hover:bg-muted/30 transition-colors cursor-pointer group border-b border-border/50 snap-start snap-always h-[60px] md:h-auto"
                                     >
                                         {/* 0. Aktie / ETF */}
-                                        <td className="px-3 py-1.5 md:py-2.5 md:px-4 h-[60px] md:h-auto font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[170px] md:min-w-[160px] md:max-w-[170px] overflow-hidden touch-pan-y align-middle">
+                                        <td className="px-3 py-1.5 md:py-2.5 md:px-4 h-[60px] md:h-auto font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[280px] md:min-w-[260px] lg:w-[340px] lg:min-w-[320px] md:max-w-none overflow-hidden touch-pan-y align-middle">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="flex items-center gap-2 md:gap-3 relative">
                                                 <Logo
@@ -701,7 +701,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                                 />
                                                 <div className="flex flex-col min-w-0 flex-1 justify-center">
                                                     <span
-                                                        className="font-bold text-[13px] md:text-sm truncate block group-hover:text-primary transition-colors cursor-pointer leading-tight"
+                                                        className="font-bold text-[13px] md:text-sm truncate md:whitespace-normal md:line-clamp-2 block group-hover:text-primary transition-colors cursor-pointer leading-tight"
                                                         title={p.stock.name}
                                                     >
                                                         {p.stock.name}
