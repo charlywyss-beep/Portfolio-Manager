@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { Logo } from './Logo';
-import { estimateMarketState } from '../utils/market';
+import { estimateMarketState, hasMarketOpenedToday, isAnyStockMarketActiveToday, getMarketOpeningTimeHint } from '../utils/market';
 import { isLikelyEtf } from '../utils/stockMetadata';
 import { usePortfolio } from '../context/PortfolioContext';
 
@@ -202,12 +202,14 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
         onClose();
     };
 
+    const stockItems = sortedPositions.map(p => ({ symbol: p.stock.symbol, currency: p.stock.currency }));
+    const isAnyActiveToday = isAnyStockMarketActiveToday(stockItems);
     const isAnyMarketOpen = sortedPositions.some(p => estimateMarketState(p.stock.symbol, p.stock.currency) === 'REGULAR');
     const validTimestamps = sortedPositions
         .map(p => p.stock?.lastQuoteDate ? new Date(p.stock.lastQuoteDate).getTime() : 0)
         .filter(t => t > 0);
     const latestTimestamp = validTimestamps.length > 0 ? Math.max(...validTimestamps) : 0;
-    const effectiveDate = (!isAnyMarketOpen && latestTimestamp > 0)
+    const effectiveDate = (!isAnyActiveToday && latestTimestamp > 0)
         ? new Date(latestTimestamp)
         : new Date();
     const todayDateLabel = effectiveDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
@@ -311,7 +313,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         <div className="flex items-center justify-between mb-1 gap-1.5 flex-wrap min-h-[1.75rem]">
                             <span className="text-[13px] sm:text-base text-white font-semibold tracking-tight whitespace-nowrap">Tages-Performance</span>
                             <span title={fullDateLabel} className="text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 bg-secondary/80 border border-border px-1.5 py-0.5 rounded-md tabular-nums whitespace-nowrap shadow-xs">
-                                {isAnyMarketOpen ? `Live ${todayDateLabel}` : `Schlusskurse vom ${todayDateLabel}`}
+                                {isAnyActiveToday ? (isAnyMarketOpen ? `Live ${todayDateLabel}` : `Schlusskurse vom ${todayDateLabel}`) : `Schlusskurse vom ${todayDateLabel}`}
                             </span>
                         </div>
                         <div className="flex items-baseline gap-2 flex-wrap">
@@ -601,6 +603,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                             {sortedPositions.map((p) => {
                                 const dailyGainCHF = convertToCHF(p.dailyGain, p.stock.currency);
                                 const isDailyPositive = dailyGainCHF >= 0;
+                                const isDailyZero = Math.abs(dailyGainCHF) < 0.005;
 
                                 // Calculate total performance with proper FX handling
                                 const currentValue = p.shares * p.stock.currentPrice;
@@ -620,6 +623,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 // Market State Logic (v3.11.481):
                                 const calcState = estimateMarketState(p.stock.symbol, p.stock.currency);
                                 const isMarketOpen = calcState === 'REGULAR'; // Only Regular Trading Hours = Green
+                                const hasOpened = hasMarketOpenedToday(p.stock.symbol, p.stock.currency);
+                                const isWaitingForOpen = isAnyActiveToday && !hasOpened;
+                                const openingHint = getMarketOpeningTimeHint(p.stock.symbol, p.stock.currency);
 
                                 return (
                                     <tr
@@ -649,7 +655,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                                         {isMarketOpen ? (
                                                             <div className="size-2 flex-shrink-0 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
                                                         ) : (
-                                                            <div className="size-2 flex-shrink-0 rounded-full bg-red-500 border border-background" title={`Markt geschlossen (${calcState})`} />
+                                                            <div className="size-2 flex-shrink-0 rounded-full bg-red-500 border border-background" title={isWaitingForOpen ? `${openingHint} (${calcState})` : `Markt geschlossen (${calcState})`} />
                                                         )}
                                                     </div>
                                                 </div>
@@ -673,10 +679,17 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                             className={cn(
                                                 "px-3 py-1.5 md:py-2.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[95px]",
                                                 mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell",
-                                                isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
+                                                isWaitingForOpen
+                                                    ? "text-muted-foreground/60 dark:text-slate-500"
+                                                    : isDailyZero
+                                                        ? "text-muted-foreground"
+                                                        : isDailyPositive
+                                                            ? "text-green-600 dark:text-green-400"
+                                                            : "text-red-600 dark:text-[#ff3b30]"
                                             )}
+                                            title={isWaitingForOpen ? openingHint : undefined}
                                         >
-                                            <span className="tabular-nums">{isDailyPositive ? '+' : ''}{p.dailyGainPercent.toFixed(2)}%</span>
+                                            <span className="tabular-nums">{isWaitingForOpen || isDailyZero ? '0.00%' : `${isDailyPositive ? '+' : ''}${p.dailyGainPercent.toFixed(2)}%`}</span>
                                         </td>
 
                                         {/* 3. Daily Performance CHF */}
@@ -684,10 +697,17 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                             className={cn(
                                                 "px-3 py-1.5 md:py-2.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[105px]",
                                                 mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell",
-                                                isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
+                                                isWaitingForOpen
+                                                    ? "text-muted-foreground/60 dark:text-slate-500"
+                                                    : isDailyZero
+                                                        ? "text-muted-foreground"
+                                                        : isDailyPositive
+                                                            ? "text-green-600 dark:text-green-400"
+                                                            : "text-red-600 dark:text-[#ff3b30]"
                                             )}
+                                            title={isWaitingForOpen ? openingHint : undefined}
                                         >
-                                            <span className="tabular-nums">{isDailyPositive ? '+' : ''}{formatCurrency(dailyGainCHF, 'CHF').replace('CHF', '').trim()} CHF</span>
+                                            <span className="tabular-nums">{isWaitingForOpen || isDailyZero ? '0.00 CHF' : `${isDailyPositive ? '+' : ''}${formatCurrency(dailyGainCHF, 'CHF').replace('CHF', '').trim()} CHF`}</span>
                                         </td>
 
                                         {/* Spacer (Desktop only) */}

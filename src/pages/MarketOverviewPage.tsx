@@ -19,7 +19,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
-import { estimateMarketState } from '../utils/market';
+import { estimateMarketState, isAnyStockMarketActiveToday } from '../utils/market';
 import { cn } from '../utils';
 import { PerformanceDetailsModal } from '../components/PerformanceDetailsModal';
 
@@ -160,6 +160,17 @@ export function MarketOverviewPage() {
     const portfolioDailyGainPercent = totals.dailyGainPercent || 0;
     const isPortfolioPositive = portfolioDailyGain >= 0;
 
+    const stockItems = useMemo(() => {
+        return (positions || [])
+            .map(p => stocks.find(st => st.id === p.stockId))
+            .filter((s): s is NonNullable<typeof s> => !!s)
+            .map(s => ({ symbol: s.symbol, currency: s.currency }));
+    }, [positions, stocks]);
+
+    const isAnyActiveToday = useMemo(() => {
+        return isAnyStockMarketActiveToday(stockItems);
+    }, [stockItems]);
+
     const isAnyMarketOpen = useMemo(() => {
         return (positions || []).some(p => {
             const s = stocks.find(st => st.id === p.stockId);
@@ -175,15 +186,19 @@ export function MarketOverviewPage() {
             })
             .filter(t => t > 0);
         const latestTimestamp = validTimestamps.length > 0 ? Math.max(...validTimestamps) : 0;
-        const effectiveDate = (!isAnyMarketOpen && latestTimestamp > 0)
+        const effectiveDate = (!isAnyActiveToday && latestTimestamp > 0)
             ? new Date(latestTimestamp)
             : new Date();
         const shortDateLabel = effectiveDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
         return {
-            short: isAnyMarketOpen ? `Live ${shortDateLabel}` : `vom ${shortDateLabel}`,
-            full: isAnyMarketOpen ? `Live (${shortDateLabel})` : `Schlusskurse vom ${shortDateLabel}`
+            short: isAnyActiveToday
+                ? (isAnyMarketOpen ? `Live ${shortDateLabel}` : `vom ${shortDateLabel}`)
+                : `vom ${shortDateLabel}`,
+            full: isAnyActiveToday
+                ? (isAnyMarketOpen ? `Live (${shortDateLabel})` : `Schlusskurse vom ${shortDateLabel}`)
+                : `Schlusskurse vom ${shortDateLabel}`
         };
-    }, [positions, stocks, isAnyMarketOpen]);
+    }, [positions, stocks, isAnyActiveToday, isAnyMarketOpen]);
 
     // Tab types
     const VALID_TABS = useMemo(() => ['all', 'portfolio', 'indices', 'commodities', 'forex', 'stocks', 'crypto'] as const, []);

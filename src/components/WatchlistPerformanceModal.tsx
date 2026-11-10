@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { Logo } from './Logo';
-import { estimateMarketState } from '../utils/market';
+import { estimateMarketState, hasMarketOpenedToday, isAnyStockMarketActiveToday, getMarketOpeningTimeHint } from '../utils/market';
 import { usePortfolio } from '../context/PortfolioContext';
 
 interface WatchlistPerformanceModalProps {
@@ -56,16 +56,27 @@ export function WatchlistPerformanceModal({ isOpen, onClose, activeWatchlistId }
         ? 'Bestand'
         : activeWatchlist?.name || 'Alle Aktien';
 
+    const isAnyActiveToday = isAnyStockMarketActiveToday(
+        stocks.map(s => ({ symbol: s.symbol, currency: s.currency }))
+    );
+
     // Get watchlist stocks and enrich them
     const watchlistData = stocks
         .filter(s => watchlistStockIds.includes(s.id))
         .map(stock => {
             const pos = positions.find(p => String(p.stockId) === String(stock.id));
-            const dailyChange = stock.currentPrice - (stock.previousClose || stock.currentPrice);
-            const dailyGainPercent = stock.previousClose ? (dailyChange / stock.previousClose) * 100 : 0;
+            const hasOpenedToday = hasMarketOpenedToday(stock.symbol, stock.currency);
+            const shouldCalcDaily = !isAnyActiveToday || hasOpenedToday;
 
-            // If owned, dailyGain in CHF
-            const dailyGainCHF = pos ? dailyChange * pos.shares : 0;
+            let dailyChange = 0;
+            let dailyGainPercent = 0;
+            let dailyGainCHF = 0;
+
+            if (shouldCalcDaily) {
+                dailyChange = stock.currentPrice - (stock.previousClose || stock.currentPrice);
+                dailyGainPercent = stock.previousClose ? (dailyChange / stock.previousClose) * 100 : 0;
+                dailyGainCHF = pos ? dailyChange * pos.shares : 0;
+            }
 
             // Total Performance if owned (FX-aware)
             let totalGainPercent = 0;
@@ -109,6 +120,10 @@ export function WatchlistPerformanceModal({ isOpen, onClose, activeWatchlistId }
         const calcState = estimateMarketState(stock.symbol, stock.currency);
         const isMarketOpen = calcState === 'REGULAR';
         const isDailyPositive = dailyGainPercent >= 0;
+        const isDailyZero = Math.abs(dailyGainPercent) < 0.005;
+        const hasOpenedToday = hasMarketOpenedToday(stock.symbol, stock.currency);
+        const isWaitingForOpen = isAnyActiveToday && !hasOpenedToday;
+        const openingHint = getMarketOpeningTimeHint(stock.symbol, stock.currency);
 
         const targetPrice = stock.targetPrice;
         const buyGap = targetPrice ? ((stock.currentPrice - targetPrice) / targetPrice * 100) : null;
@@ -134,7 +149,7 @@ export function WatchlistPerformanceModal({ isOpen, onClose, activeWatchlistId }
                                 {isMarketOpen ? (
                                     <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0 border border-background shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
                                 ) : (
-                                    <div className="size-2 rounded-full bg-red-500 shrink-0 border border-background" />
+                                    <div className="size-2 rounded-full bg-red-500 shrink-0 border border-background" title={isWaitingForOpen ? `${openingHint} (${calcState})` : `Markt geschlossen (${calcState})`} />
                                 )}
                             </div>
                             <span className="text-[10px] text-muted-foreground uppercase font-mono">{stock.symbol}</span>
@@ -144,12 +159,38 @@ export function WatchlistPerformanceModal({ isOpen, onClose, activeWatchlistId }
                 <td className="py-4 px-2 text-right font-bold font-mono whitespace-nowrap">
                     {formatCurrency(stock.currentPrice, stock.currency)}
                 </td>
-                <td className={cn("py-4 px-2 text-right font-bold font-mono whitespace-nowrap", isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
-                    {isDailyPositive ? '+' : ''}{dailyGainPercent.toFixed(2)}%
+                <td
+                    className={cn(
+                        "py-4 px-2 text-right font-bold font-mono whitespace-nowrap",
+                        isWaitingForOpen
+                            ? "text-muted-foreground/60 dark:text-slate-500"
+                            : isDailyZero
+                                ? "text-muted-foreground"
+                                : isDailyPositive
+                                    ? "text-green-600 dark:text-green-400"
+                                    : "text-red-600 dark:text-red-400"
+                    )}
+                    title={isWaitingForOpen ? openingHint : undefined}
+                >
+                    {isWaitingForOpen || isDailyZero ? '0.00%' : `${isDailyPositive ? '+' : ''}${dailyGainPercent.toFixed(2)}%`}
                 </td>
-                <td className={cn("py-4 px-2 text-right font-semibold font-mono whitespace-nowrap opacity-80", isDailyPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                <td
+                    className={cn(
+                        "py-4 px-2 text-right font-semibold font-mono whitespace-nowrap opacity-80",
+                        isWaitingForOpen
+                            ? "text-muted-foreground/60 dark:text-slate-500"
+                            : isDailyZero
+                                ? "text-muted-foreground"
+                                : isDailyPositive
+                                    ? "text-green-600 dark:text-green-400"
+                                    : "text-red-600 dark:text-red-400"
+                    )}
+                    title={isWaitingForOpen ? openingHint : undefined}
+                >
                     {isOwned ? (
-                        <>{isDailyPositive ? '+' : ''}{formatCurrency(convertToCHF(dailyGainCHF, stock.currency), 'CHF').replace('CHF', '').trim()}</>
+                        isWaitingForOpen || isDailyZero
+                            ? '0.00'
+                            : <>{isDailyPositive ? '+' : ''}{formatCurrency(convertToCHF(dailyGainCHF, stock.currency), 'CHF').replace('CHF', '').trim()}</>
                     ) : (
                         <span className="text-muted-foreground/30">-</span>
                     )}

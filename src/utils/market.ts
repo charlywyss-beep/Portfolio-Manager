@@ -68,8 +68,7 @@ function isUSMarketHoliday(now: Date): boolean {
     return false;
 }
 
-export function estimateMarketState(symbol: string, currency: string): MarketState {
-    const now = new Date();
+export function estimateMarketState(symbol: string, currency: string, now: Date = new Date()): MarketState {
     const sym = (symbol || '').toUpperCase();
     const curr = (currency || '').toUpperCase();
     const suffix = sym.includes('.') ? sym.split('.').pop() : '';
@@ -257,4 +256,191 @@ export function estimateMarketState(symbol: string, currency: string): MarketSta
     }
 
     return 'CLOSED';
+}
+
+/**
+ * Checks whether an asset is a stock or ETF (as opposed to 24/7 crypto, commodities, forex).
+ */
+export function isStockOrEtf(symbol: string): boolean {
+    const s = (symbol || '').toUpperCase();
+    if (
+        s.startsWith('BTC') ||
+        s.startsWith('ETH') ||
+        s.startsWith('SOL') ||
+        s.includes('BTC-') ||
+        s.includes('ETH-') ||
+        s.includes('SOL-') ||
+        s.includes('=F') ||
+        s.includes('=X')
+    ) {
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Checks whether the specific market for this stock has opened today (regular session started).
+ * For example:
+ * - European/Swiss markets open at 09:00 CET.
+ * - US markets open at 09:30 ET (15:30 CET).
+ * On a trading day before the regular market open (e.g. US stocks at 10:00 CET),
+ * this returns false, meaning yesterday's closing change must not be counted as today's live gain.
+ */
+export function hasMarketOpenedToday(symbol: string, currency: string, now: Date = new Date()): boolean {
+    const sym = (symbol || '').toUpperCase();
+    const curr = (currency || '').toUpperCase();
+    const suffix = sym.includes('.') ? sym.split('.').pop() : '';
+
+    // 1. Krypto (24/7)
+    if (
+        sym.startsWith('BTC') ||
+        sym.startsWith('ETH') ||
+        sym.startsWith('SOL') ||
+        sym.includes('BTC-') ||
+        sym.includes('ETH-') ||
+        sym.includes('SOL-')
+    ) {
+        return true;
+    }
+
+    // 2. Rohstoffe / Futures (=F)
+    if (sym.includes('=F')) {
+        const { day, timeInMinutes } = getLocalTimeInZone('America/New_York', now);
+        if (day === 6) return false;
+        if (day === 0 && timeInMinutes < 18 * 60) return false;
+        if (day === 5 && timeInMinutes >= 17 * 60) return false;
+        return true;
+    }
+
+    // 3. Forex (=X)
+    if (sym.includes('=X')) {
+        const { day, timeInMinutes } = getLocalTimeInZone('America/New_York', now);
+        if (day === 6) return false;
+        if (day === 0 && timeInMinutes < 17 * 60) return false;
+        if (day === 5 && timeInMinutes >= 17 * 60) return false;
+        return true;
+    }
+
+    // 4. Asien
+    if (sym === '^N225' || suffix === 'T' || curr === 'JPY') {
+        const { day, timeInMinutes } = getLocalTimeInZone('Asia/Tokyo', now);
+        if (day === 0 || day === 6) return false;
+        return timeInMinutes >= 9 * 60;
+    }
+    if (sym === '^HSI' || suffix === 'HK' || curr === 'HKD') {
+        const { day, timeInMinutes } = getLocalTimeInZone('Asia/Hong_Kong', now);
+        if (day === 0 || day === 6) return false;
+        return timeInMinutes >= 9 * 60 + 30;
+    }
+    if (sym.startsWith('000') || suffix === 'SS' || suffix === 'SZ' || curr === 'CNY') {
+        const { day, timeInMinutes } = getLocalTimeInZone('Asia/Shanghai', now);
+        if (day === 0 || day === 6) return false;
+        return timeInMinutes >= 9 * 60 + 30;
+    }
+    if (sym === '^KS11' || suffix === 'KS' || curr === 'KRW') {
+        const { day, timeInMinutes } = getLocalTimeInZone('Asia/Seoul', now);
+        if (day === 0 || day === 6) return false;
+        return timeInMinutes >= 9 * 60;
+    }
+    if (sym === '^TWII' || suffix === 'TW' || curr === 'TWD') {
+        const { day, timeInMinutes } = getLocalTimeInZone('Asia/Taipei', now);
+        if (day === 0 || day === 6) return false;
+        return timeInMinutes >= 9 * 60;
+    }
+    if (sym === '^NSEI' || sym === '^BSESN' || suffix === 'NS' || suffix === 'BO' || curr === 'INR') {
+        const { day, timeInMinutes } = getLocalTimeInZone('Asia/Kolkata', now);
+        if (day === 0 || day === 6) return false;
+        return timeInMinutes >= 9 * 60 + 15;
+    }
+    if (sym === '^AXJO' || suffix === 'AX' || curr === 'AUD') {
+        const { day, timeInMinutes } = getLocalTimeInZone('Australia/Sydney', now);
+        if (day === 0 || day === 6) return false;
+        return timeInMinutes >= 10 * 60;
+    }
+
+    // 5. Schweiz (SIX) - Handelszeiten 09:00 - 17:30 CET
+    const isSwiss = sym === '^SSMI' || suffix === 'SW' || curr === 'CHF';
+    if (isSwiss) {
+        const { day, timeInMinutes } = getLocalTimeInZone('Europe/Zurich', now);
+        if (day === 0 || day === 6) return false;
+        const month = now.getUTCMonth();
+        const date = now.getUTCDate();
+        if (month === 0 && (date === 1 || date === 2)) return false;
+        if (month === 4 && date === 1) return false;
+        if (month === 7 && date === 1) return false;
+        if (month === 11 && (date === 25 || date === 26)) return false;
+        return timeInMinutes >= 9 * 60;
+    }
+
+    // 6. Deutschland & Europa (Frankfurt XETRA, Euronext) - Handelszeiten 09:00 - 17:30 CET
+    if (sym === '^GDAXI' || sym === '^STOXX50E' || suffix === 'DE' || ['F', 'AS', 'PA', 'MI', 'MC'].includes(suffix || '')) {
+        const { day, timeInMinutes } = getLocalTimeInZone('Europe/Berlin', now);
+        if (day === 0 || day === 6) return false;
+        const month = now.getUTCMonth();
+        const date = now.getUTCDate();
+        if (month === 0 && date === 1) return false;
+        if (month === 11 && (date === 25 || date === 26)) return false;
+        return timeInMinutes >= 9 * 60;
+    }
+
+    // 7. Grossbritannien (London Stock Exchange LSE) - Handelszeiten 08:00 - 16:30 GMT (09:00 - 17:30 CET)
+    if (suffix === 'L' || curr === 'GBP' || curr === 'GBp' || symbol === '^FTSE') {
+        const { day, timeInMinutes } = getLocalTimeInZone('Europe/London', now);
+        if (day === 0 || day === 6) return false;
+        return timeInMinutes >= 8 * 60;
+    }
+
+    // 8. USA (NYSE & NASDAQ) - Handelszeiten 09:30 - 16:00 ET (15:30 - 22:00 MEZ)
+    if (sym === '^NDX' || sym === '^GSPC' || sym === '^DJI' || curr === 'USD' || !sym.includes('.')) {
+        const { day, timeInMinutes } = getLocalTimeInZone('America/New_York', now);
+        if (day === 0 || day === 6) return false;
+        if (isUSMarketHoliday(now)) return false;
+        return timeInMinutes >= 9 * 60 + 30;
+    }
+
+    // 9. Fallback EUR
+    if (curr === 'EUR') {
+        const { day, timeInMinutes } = getLocalTimeInZone('Europe/Berlin', now);
+        if (day === 0 || day === 6) return false;
+        return timeInMinutes >= 9 * 60;
+    }
+
+    return false;
+}
+
+/**
+ * Checks whether ANY equity market in the provided stock list has opened today.
+ * If true, today's trading day has begun (e.g. 09:00 CET European open).
+ * If false (e.g. at 06:00 CET before European open or on weekends), no market has opened today yet.
+ */
+export function isAnyStockMarketActiveToday(
+    stocks: { symbol: string; currency: string }[],
+    now: Date = new Date()
+): boolean {
+    const equityStocks = stocks.filter(s => isStockOrEtf(s.symbol));
+    const list = equityStocks.length > 0 ? equityStocks : stocks;
+    return list.some(s => hasMarketOpenedToday(s.symbol, s.currency, now));
+}
+
+/**
+ * Returns a human-friendly hint of when the market will open today.
+ */
+export function getMarketOpeningTimeHint(symbol: string, currency: string): string {
+    const sym = (symbol || '').toUpperCase();
+    const curr = (currency || '').toUpperCase();
+    const suffix = sym.includes('.') ? sym.split('.').pop() : '';
+
+    if (suffix === 'L' || curr === 'GBP' || curr === 'GBp') {
+        return 'Börse öffnet um 09:00 Uhr MEZ (LSE)';
+    }
+    if (sym === '^NDX' || sym === '^GSPC' || sym === '^DJI' || curr === 'USD' || !sym.includes('.')) {
+        return 'Börse öffnet um 15:30 Uhr MEZ (US)';
+    }
+    if (sym === '^SSMI' || suffix === 'SW' || curr === 'CHF') {
+        return 'Börse öffnet um 09:00 Uhr (SIX)';
+    }
+    if (curr === 'EUR' || suffix === 'DE' || ['F', 'AS', 'PA', 'MI', 'MC'].includes(suffix || '')) {
+        return 'Börse öffnet um 09:00 Uhr (EU)';
+    }
+    return 'Börse noch geschlossen';
 }

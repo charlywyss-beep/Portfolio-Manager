@@ -21,7 +21,7 @@ import { ConfirmModal } from '../components/ConfirmModal';
 import { Logo } from '../components/Logo';
 import { PieChart as PieChartIcon } from 'lucide-react';
 import { fetchHistoricalClose } from '../services/yahoo-finance';
-import { estimateMarketState } from '../utils/market';
+import { estimateMarketState, isAnyStockMarketActiveToday } from '../utils/market';
 import { isLikelyEtf } from '../utils/stockMetadata';
 import { getWithholdingTaxRate } from '../utils/tax';
 
@@ -622,12 +622,14 @@ export function Dashboard() {
                             let displayLabel = 'seit gestern';
                             let isLoading = false;
 
+                            const stockItems = positions.map(p => ({ symbol: p.stock.symbol, currency: p.stock.currency }));
+                            const isAnyActiveToday = isAnyStockMarketActiveToday(stockItems);
                             const isAnyMarketOpen = positions.some(p => estimateMarketState(p.stock.symbol, p.stock.currency) === 'REGULAR');
                             const validTimestamps = positions
                                 .map(p => p.stock?.lastQuoteDate ? new Date(p.stock.lastQuoteDate).getTime() : 0)
                                 .filter(t => t > 0);
                             const latestTimestamp = validTimestamps.length > 0 ? Math.max(...validTimestamps) : 0;
-                            const effectiveDate = (!isAnyMarketOpen && latestTimestamp > 0)
+                            const effectiveDate = (!isAnyActiveToday && latestTimestamp > 0)
                                 ? new Date(latestTimestamp)
                                 : new Date();
                             const shortDateLabel = effectiveDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
@@ -653,7 +655,9 @@ export function Dashboard() {
                             if (performancePeriod === '1D') {
                                 displayValue = totals.dailyGain;
                                 displayPercent = totals.dailyGainPercent;
-                                displayLabel = isAnyMarketOpen ? `Live · ${shortDateLabel}` : `Schlusskurse vom ${shortDateLabel}`;
+                                displayLabel = isAnyActiveToday
+                                    ? (isAnyMarketOpen ? `Live · ${shortDateLabel}` : `Schlusskurse vom ${shortDateLabel}`)
+                                    : `Schlusskurse vom ${shortDateLabel}`;
                             } else {
                                 const perf = periodPerformance[performancePeriod];
                                 if (perf) {

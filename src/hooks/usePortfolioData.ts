@@ -3,6 +3,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
 import { isLikelyEtf } from '../utils/stockMetadata';
+import { hasMarketOpenedToday, isAnyStockMarketActiveToday } from '../utils/market';
 
 // Helper to get frequency multiplication factor
 const getFrequencyFactor = (freq?: string) => {
@@ -20,6 +21,15 @@ export function usePortfolioData() {
     const { rates } = useExchangeRates();
 
     const positions = useMemo(() => {
+        const heldStocks = rawPositions
+            .map((pos) => stocks.find((s) => s.id === pos.stockId))
+            .filter((s): s is NonNullable<typeof s> => !!s)
+            .map((s) => ({ symbol: s.symbol, currency: s.currency }));
+
+        const isAnyActiveToday = isAnyStockMarketActiveToday(
+            heldStocks.length > 0 ? heldStocks : stocks.map((s) => ({ symbol: s.symbol, currency: s.currency }))
+        );
+
         return rawPositions.map((pos) => {
             const stock = stocks.find((s) => s.id === pos.stockId);
             if (!stock) return null;
@@ -61,13 +71,17 @@ export function usePortfolioData() {
 
             let dailyGain = 0;
             let dailyGainPercent = 0;
+            const hasOpenedToday = hasMarketOpenedToday(stock.symbol, stock.currency);
 
-            
-            // Only calculate daily gain if market has opened today (REGULAR or POST/CLOSED after session)
-            // If it's PRE (Before Open), the price is still Friday's close, so daily change is 0.
-            const dailyChangePerShare = stock.currentPrice - prevClose;
-            dailyGain = dailyChangePerShare * pos.shares;
-            dailyGainPercent = prevClose > 0 ? (dailyChangePerShare / prevClose) * 100 : 0;
+            // When trading has begun today (isAnyActiveToday === true), ONLY stocks whose market has opened today
+            // contribute to today's daily performance. Stocks whose market hasn't opened yet (e.g. US stocks before 15:30 CET)
+            // have dailyGain = 0 and dailyGainPercent = 0 so yesterday's gain/loss is NOT mixed into today's performance.
+            // If NO market has opened today yet (e.g. early morning 00:00-09:00 or weekends), show yesterday's closing results.
+            if (!isAnyActiveToday || hasOpenedToday) {
+                const dailyChangePerShare = stock.currentPrice - prevClose;
+                dailyGain = dailyChangePerShare * pos.shares;
+                dailyGainPercent = prevClose > 0 ? (dailyChangePerShare / prevClose) * 100 : 0;
+            }
 
             return {
                 ...pos,
@@ -77,7 +91,8 @@ export function usePortfolioData() {
                 gainLoss,
                 gainLossPercent,
                 dailyGain, // Exported for Detail View
-                dailyGainPercent
+                dailyGainPercent,
+                hasMarketOpenedToday: hasOpenedToday
             };
         }).filter((p): p is NonNullable<typeof p> => p !== null);
     }, [rawPositions, stocks]);
@@ -183,7 +198,8 @@ export function usePortfolioData() {
             cashValue: totalValueBank,
             vorsorgeValue: totalValueVorsorge, // Also exposing this if needed explicitly
             dailyGain: totalDailyGainForStocks, // NEW
-            dailyGainPercent: totalDailyGainPercent // NEW
+            dailyGainPercent: totalDailyGainPercent, // NEW
+            isAnyMarketActiveToday: positions.some(p => p.hasMarketOpenedToday)
         };
     }, [positions, rates, fixedDeposits]);
 
