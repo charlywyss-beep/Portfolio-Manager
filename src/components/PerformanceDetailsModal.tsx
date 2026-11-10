@@ -97,6 +97,22 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
     if (!isOpen) return null;
 
+    const stockItems = positions.map(p => ({ symbol: p.stock.symbol, currency: p.stock.currency }));
+    const isAnyActiveToday = isAnyStockMarketActiveToday(stockItems);
+    const isAnyMarketOpen = positions.some(p => estimateMarketState(p.stock.symbol, p.stock.currency) === 'REGULAR');
+    const validTimestamps = positions
+        .map(p => p.stock?.lastQuoteDate ? new Date(p.stock.lastQuoteDate).getTime() : 0)
+        .filter(t => t > 0);
+    const latestTimestamp = validTimestamps.length > 0 ? Math.max(...validTimestamps) : 0;
+    const effectiveDate = (!isAnyActiveToday && latestTimestamp > 0)
+        ? new Date(latestTimestamp)
+        : new Date();
+    const todayDateLabel = new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
+    const yesterdayDateLabel = yesterdaySnapshot?.displayDate || effectiveDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
+    const fullDateLabel = effectiveDate.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+    const isViewingYesterday = isAnyActiveToday && viewMode === 'yesterday';
+    const activeDateLabel = (isViewingYesterday || !isAnyActiveToday) ? yesterdayDateLabel : todayDateLabel;
+
     const getPositionMetrics = (p: any) => {
         const dailyGainCHF = convertToCHF(p.dailyGain, p.stock.currency);
         const currentValue = p.shares * p.stock.currentPrice;
@@ -135,11 +151,15 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                 const sB = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[b.stock.id] : null;
                 valA = sA ? sA.dailyGainPercent : (a.dailyGainPercent || 0);
                 valB = sB ? sB.dailyGainPercent : (b.dailyGainPercent || 0);
+                valA = Number.isFinite(valA) ? valA : 0;
+                valB = Number.isFinite(valB) ? valB : 0;
             } else if (sortConfig.key === 'dailyChf') {
                 const sA = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[a.stock.id] : null;
                 const sB = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[b.stock.id] : null;
                 valA = sA ? sA.dailyGainCHF : mA.dailyGainCHF;
                 valB = sB ? sB.dailyGainCHF : mB.dailyGainCHF;
+                valA = Number.isFinite(valA) ? valA : 0;
+                valB = Number.isFinite(valB) ? valB : 0;
             } else if (sortConfig.key === 'totalPct') {
                 valA = mA.totalGainPercent;
                 valB = mB.totalGainPercent;
@@ -208,22 +228,6 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
         navigate(`/stock/${stockId}?from=performance`);
         onClose();
     };
-
-    const stockItems = sortedPositions.map(p => ({ symbol: p.stock.symbol, currency: p.stock.currency }));
-    const isAnyActiveToday = isAnyStockMarketActiveToday(stockItems);
-    const isAnyMarketOpen = sortedPositions.some(p => estimateMarketState(p.stock.symbol, p.stock.currency) === 'REGULAR');
-    const validTimestamps = sortedPositions
-        .map(p => p.stock?.lastQuoteDate ? new Date(p.stock.lastQuoteDate).getTime() : 0)
-        .filter(t => t > 0);
-    const latestTimestamp = validTimestamps.length > 0 ? Math.max(...validTimestamps) : 0;
-    const effectiveDate = (!isAnyActiveToday && latestTimestamp > 0)
-        ? new Date(latestTimestamp)
-        : new Date();
-    const todayDateLabel = new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
-    const yesterdayDateLabel = yesterdaySnapshot?.displayDate || effectiveDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
-    const fullDateLabel = effectiveDate.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
-    const isViewingYesterday = isAnyActiveToday && viewMode === 'yesterday';
-    const activeDateLabel = (isViewingYesterday || !isAnyActiveToday) ? yesterdayDateLabel : todayDateLabel;
 
     const displayedDailyGain = isViewingYesterday && yesterdaySnapshot
         ? yesterdaySnapshot.totalDailyGainCHF
