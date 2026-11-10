@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
 import { isLikelyEtf } from '../utils/stockMetadata';
-import { hasMarketOpenedToday, isAnyStockMarketActiveToday } from '../utils/market';
+import { estimateMarketState, hasMarketOpenedToday, isAnyStockMarketActiveToday } from '../utils/market';
+import { saveYesterdaySnapshot, type PositionDailySnapshot } from '../utils/dailyPerformanceSnapshot';
 
 // Helper to get frequency multiplication factor
 const getFrequencyFactor = (freq?: string) => {
@@ -322,6 +323,49 @@ export function usePortfolioData() {
             .filter((item): item is NonNullable<typeof item> => item !== null)
             .sort((a, b) => new Date(a.exDates[0]).getTime() - new Date(b.exDates[0]).getTime()); // Sort by earliest date
     }, [stocks, watchlists]);
+
+    // Save snapshot of completed trading session whenever no equity market is in REGULAR session
+    // (e.g. before European open 00:00-09:00 CET, or after US close 22:00 CET).
+    // This snapshot captures yesterday's completed results and will be available for viewing during today's live session.
+    useEffect(() => {
+        if (positions.length === 0) return;
+
+        const isAnyRegular = positions.some(p => estimateMarketState(p.stock.symbol, p.stock.currency) === 'REGULAR');
+        if (!isAnyRegular) {
+            const validTimestamps = positions
+                .map(p => p.stock?.lastQuoteDate ? new Date(p.stock.lastQuoteDate).getTime() : 0)
+                .filter(t => t > 0);
+            const latestTimestamp = validTimestamps.length > 0 ? Math.max(...validTimestamps) : 0;
+            const effectiveDate = latestTimestamp > 0 ? new Date(latestTimestamp) : new Date();
+            const dateKey = effectiveDate.toISOString().split('T')[0];
+            const displayDate = effectiveDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
+            const fullDate = effectiveDate.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+
+            const posRecord: Record<string, PositionDailySnapshot> = {};
+            positions.forEach(p => {
+                posRecord[p.stock.id] = {
+                    stockId: p.stock.id,
+                    symbol: p.stock.symbol,
+                    name: p.stock.name,
+                    currency: p.stock.currency,
+                    currentPrice: p.stock.currentPrice,
+                    dailyGain: p.dailyGain,
+                    dailyGainPercent: p.dailyGainPercent,
+                    dailyGainCHF: convertToCHF(p.dailyGain, p.stock.currency, rates)
+                };
+            });
+
+            saveYesterdaySnapshot({
+                dateKey,
+                displayDate,
+                fullDate,
+                totalDailyGainCHF: totals.dailyGain,
+                totalDailyGainPercent: totals.dailyGainPercent,
+                positions: posRecord,
+                savedAt: Date.now()
+            });
+        }
+    }, [positions, totals.dailyGain, totals.dailyGainPercent, rates]);
 
     return {
         positions,

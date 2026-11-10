@@ -1,11 +1,12 @@
 import { ArrowLeft, TrendingUp, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { Logo } from './Logo';
 import { estimateMarketState, hasMarketOpenedToday, isAnyStockMarketActiveToday, getMarketOpeningTimeHint } from '../utils/market';
+import { loadYesterdaySnapshot } from '../utils/dailyPerformanceSnapshot';
 import { isLikelyEtf } from '../utils/stockMetadata';
 import { usePortfolio } from '../context/PortfolioContext';
 
@@ -23,6 +24,8 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     // 0: Kurs, 1: % am DD.MM., 2: CHF am DD.MM., 3: Performance %, 4: Performance CHF
     const [assetFilter, setAssetFilter] = useState<'all' | 'stock' | 'etf'>('all');
     const [mobileColIndex, setMobileColIndex] = useState(0);
+    const [viewMode, setViewMode] = useState<'live' | 'yesterday'>('live');
+    const yesterdaySnapshot = useMemo(() => loadYesterdaySnapshot(), [isOpen, refreshTick]);
     const [sortConfig, setSortConfig] = useState<{
         key: 'default' | 'dailyPct' | 'dailyChf' | 'totalPct' | 'totalChf';
         direction: 'desc' | 'asc';
@@ -128,11 +131,15 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
             let valA = 0;
             let valB = 0;
             if (sortConfig.key === 'dailyPct') {
-                valA = a.dailyGainPercent || 0;
-                valB = b.dailyGainPercent || 0;
+                const sA = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[a.stock.id] : null;
+                const sB = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[b.stock.id] : null;
+                valA = sA ? sA.dailyGainPercent : (a.dailyGainPercent || 0);
+                valB = sB ? sB.dailyGainPercent : (b.dailyGainPercent || 0);
             } else if (sortConfig.key === 'dailyChf') {
-                valA = mA.dailyGainCHF;
-                valB = mB.dailyGainCHF;
+                const sA = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[a.stock.id] : null;
+                const sB = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[b.stock.id] : null;
+                valA = sA ? sA.dailyGainCHF : mA.dailyGainCHF;
+                valB = sB ? sB.dailyGainCHF : mB.dailyGainCHF;
             } else if (sortConfig.key === 'totalPct') {
                 valA = mA.totalGainPercent;
                 valB = mB.totalGainPercent;
@@ -212,8 +219,18 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     const effectiveDate = (!isAnyActiveToday && latestTimestamp > 0)
         ? new Date(latestTimestamp)
         : new Date();
-    const todayDateLabel = effectiveDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
+    const todayDateLabel = new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
+    const yesterdayDateLabel = yesterdaySnapshot?.displayDate || effectiveDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
     const fullDateLabel = effectiveDate.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+    const isViewingYesterday = isAnyActiveToday && viewMode === 'yesterday';
+    const activeDateLabel = (isViewingYesterday || !isAnyActiveToday) ? yesterdayDateLabel : todayDateLabel;
+
+    const displayedDailyGain = isViewingYesterday && yesterdaySnapshot
+        ? yesterdaySnapshot.totalDailyGainCHF
+        : totalDailyGain;
+    const displayedDailyGainPercent = isViewingYesterday && yesterdaySnapshot
+        ? yesterdaySnapshot.totalDailyGainPercent
+        : totalDailyGainPercent;
 
     return createPortal(
         <div
@@ -312,24 +329,56 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                     <div className="bg-card py-2.5 px-2.5 sm:p-3 sm:px-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between">
                         <div className="flex items-center justify-between mb-1 gap-1.5 flex-wrap min-h-[1.75rem]">
                             <span className="text-[13px] sm:text-base text-white font-semibold tracking-tight whitespace-nowrap">Tages-Performance</span>
-                            <span title={fullDateLabel} className="text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 bg-secondary/80 border border-border px-1.5 py-0.5 rounded-md tabular-nums whitespace-nowrap shadow-xs">
-                                {isAnyActiveToday ? (isAnyMarketOpen ? `Live ${todayDateLabel}` : `Schlusskurse vom ${todayDateLabel}`) : `Schlusskurse vom ${todayDateLabel}`}
-                            </span>
+                            {isAnyActiveToday ? (
+                                <div className="inline-flex items-center bg-secondary/80 p-0.5 rounded-md border border-border text-[10px] sm:text-xs font-bold tabular-nums shadow-xs">
+                                    <button
+                                        type="button"
+                                        onClick={() => setViewMode('live')}
+                                        className={cn(
+                                            "px-2 py-0.5 rounded transition-all cursor-pointer flex items-center gap-1",
+                                            viewMode === 'live'
+                                                ? "bg-emerald-600 text-white shadow-xs font-bold"
+                                                : "text-muted-foreground hover:text-foreground"
+                                        )}
+                                        title="Heutige Live-Sitzung"
+                                    >
+                                        {isAnyMarketOpen && <span className="size-1.5 rounded-full bg-white animate-pulse" />}
+                                        Live {todayDateLabel}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setViewMode('yesterday')}
+                                        className={cn(
+                                            "px-2 py-0.5 rounded transition-all cursor-pointer flex items-center gap-1",
+                                            viewMode === 'yesterday'
+                                                ? "bg-blue-600 text-white shadow-xs font-bold"
+                                                : "text-muted-foreground hover:text-foreground"
+                                        )}
+                                        title={`Schlusskurse vom Vortag (${yesterdayDateLabel}) anzeigen`}
+                                    >
+                                        {yesterdayDateLabel}
+                                    </button>
+                                </div>
+                            ) : (
+                                <span title={fullDateLabel} className="text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 bg-secondary/80 border border-border px-1.5 py-0.5 rounded-md tabular-nums whitespace-nowrap shadow-xs">
+                                    Schlusskurse vom {yesterdayDateLabel}
+                                </span>
+                            )}
                         </div>
                         <div className="flex items-baseline gap-2 flex-wrap">
                             <span className={cn(
                                 "text-[18px] sm:text-xl md:text-2xl font-bold font-sans tabular-nums tracking-tight whitespace-nowrap",
-                                totalDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
+                                displayedDailyGain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
                             )}>
-                                {totalDailyGain >= 0 ? '+' : ''}{formatCurrency(totalDailyGain, 'CHF')}
+                                {displayedDailyGain >= 0 ? '+' : ''}{formatCurrency(displayedDailyGain, 'CHF')}
                             </span>
                             <span className={cn(
                                 "text-xs sm:text-sm font-bold tabular-nums px-1.5 py-0.5 rounded-md inline-flex items-center gap-0.5 whitespace-nowrap",
-                                totalDailyGain >= 0
+                                displayedDailyGain >= 0
                                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                                     : "bg-rose-500/10 text-rose-600 dark:text-[#ff3b30]"
                             )}>
-                                {totalDailyGain >= 0 ? '+' : ''}{totalDailyGainPercent.toFixed(2)}%
+                                {displayedDailyGain >= 0 ? '+' : ''}{displayedDailyGainPercent.toFixed(2)}%
                             </span>
                         </div>
                     </div>
@@ -431,7 +480,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                                 sortConfig.key === 'dailyPct' && "text-blue-400"
                                             )}
                                         >
-                                            % am {todayDateLabel}{sortConfig.key === 'dailyPct' ? (sortConfig.direction === 'desc' ? ' ↓' : ' ↑') : ''}
+                                            % am {activeDateLabel}{sortConfig.key === 'dailyPct' ? (sortConfig.direction === 'desc' ? ' ↓' : ' ↑') : ''}
                                         </button>
                                         <button
                                             type="button"
@@ -450,7 +499,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                             sortConfig.key === 'dailyPct' && "text-blue-400"
                                         )}
                                     >
-                                        % am {todayDateLabel}{sortConfig.key === 'dailyPct' ? (sortConfig.direction === 'desc' ? ' ↓' : ' ↑') : ''}
+                                        % am {activeDateLabel}{sortConfig.key === 'dailyPct' ? (sortConfig.direction === 'desc' ? ' ↓' : ' ↑') : ''}
                                     </button>
                                 </th>
 
@@ -478,7 +527,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                                 sortConfig.key === 'dailyChf' && "text-blue-400"
                                             )}
                                         >
-                                            CHF am {todayDateLabel}{sortConfig.key === 'dailyChf' ? (sortConfig.direction === 'desc' ? ' ↓' : ' ↑') : ''}
+                                            CHF am {activeDateLabel}{sortConfig.key === 'dailyChf' ? (sortConfig.direction === 'desc' ? ' ↓' : ' ↑') : ''}
                                         </button>
                                         <button
                                             type="button"
@@ -497,7 +546,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                             sortConfig.key === 'dailyChf' && "text-blue-400"
                                         )}
                                     >
-                                        CHF am {todayDateLabel}{sortConfig.key === 'dailyChf' ? (sortConfig.direction === 'desc' ? ' ↓' : ' ↑') : ''}
+                                        CHF am {activeDateLabel}{sortConfig.key === 'dailyChf' ? (sortConfig.direction === 'desc' ? ' ↓' : ' ↑') : ''}
                                     </button>
                                 </th>
 
@@ -601,7 +650,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         </thead>
                         <tbody className="divide-y divide-border">
                             {sortedPositions.map((p) => {
-                                const dailyGainCHF = convertToCHF(p.dailyGain, p.stock.currency);
+                                const snap = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[p.stock.id] : null;
+                                const dailyGainCHF = snap ? snap.dailyGainCHF : convertToCHF(p.dailyGain, p.stock.currency);
+                                const dailyGainPercent = snap ? snap.dailyGainPercent : p.dailyGainPercent;
+                                const displayPrice = snap ? snap.currentPrice : p.stock.currentPrice;
                                 const isDailyPositive = dailyGainCHF >= 0;
                                 const isDailyZero = Math.abs(dailyGainCHF) < 0.005;
 
@@ -622,9 +674,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
                                 // Market State Logic (v3.11.481):
                                 const calcState = estimateMarketState(p.stock.symbol, p.stock.currency);
-                                const isMarketOpen = calcState === 'REGULAR'; // Only Regular Trading Hours = Green
+                                const isMarketOpen = isViewingYesterday ? false : (calcState === 'REGULAR');
                                 const hasOpened = hasMarketOpenedToday(p.stock.symbol, p.stock.currency);
-                                const isWaitingForOpen = isAnyActiveToday && !hasOpened;
+                                const isWaitingForOpen = isViewingYesterday ? false : (isAnyActiveToday && !hasOpened);
                                 const openingHint = getMarketOpeningTimeHint(p.stock.symbol, p.stock.currency);
 
                                 return (
@@ -655,7 +707,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                                         {isMarketOpen ? (
                                                             <div className="size-2 flex-shrink-0 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)] border border-background" title={`Markt geöffnet (${calcState})`} />
                                                         ) : (
-                                                            <div className="size-2 flex-shrink-0 rounded-full bg-red-500 border border-background" title={isWaitingForOpen ? `${openingHint} (${calcState})` : `Markt geschlossen (${calcState})`} />
+                                                            <div className="size-2 flex-shrink-0 rounded-full bg-red-500 border border-background" title={isViewingYesterday ? `Schlusskurs vom ${yesterdayDateLabel}` : isWaitingForOpen ? `${openingHint} (${calcState})` : `Markt geschlossen (${calcState})`} />
                                                         )}
                                                     </div>
                                                 </div>
@@ -670,7 +722,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                             )}
                                         >
                                             <span className="font-bold text-[15px] md:text-sm text-foreground">
-                                                {formatCurrency(p.stock.currentPrice, p.stock.currency, false)}
+                                                {formatCurrency(displayPrice, p.stock.currency, false)}
                                             </span>
                                         </td>
 
@@ -689,7 +741,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                             )}
                                             title={isWaitingForOpen ? openingHint : undefined}
                                         >
-                                            <span className="tabular-nums">{isWaitingForOpen || isDailyZero ? '0.00%' : `${isDailyPositive ? '+' : ''}${p.dailyGainPercent.toFixed(2)}%`}</span>
+                                            <span className="tabular-nums">{isWaitingForOpen || isDailyZero ? '0.00%' : `${isDailyPositive ? '+' : ''}${dailyGainPercent.toFixed(2)}%`}</span>
                                         </td>
 
                                         {/* 3. Daily Performance CHF */}
