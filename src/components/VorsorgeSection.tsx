@@ -30,6 +30,7 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
     if (filteredVorsorge.length === 0 && searchTerm) return null;
 
     const totalVorsorge = vorsorgeDeposits.reduce((sum, fd) => sum + fd.amount, 0);
+    const totalVorsorgeInterest = vorsorgeDeposits.reduce((sum, fd) => sum + (fd.amount * (fd.interestRate || 0)) / 100, 0);
 
     return (
         <div className="flex-1 min-h-0 flex flex-col space-y-3 overflow-hidden">
@@ -47,8 +48,13 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                     </div>
                     <div className="text-right">
                         <span className="text-xl font-bold block text-white">
-                            {totalVorsorge.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
+                            {totalVorsorge.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                         </span>
+                        {totalVorsorgeInterest > 0 && (
+                            <span className="text-xs font-mono text-emerald-400 font-semibold block mt-0.5">
+                                +{totalVorsorgeInterest.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF Zinsertrag p.a.
+                            </span>
+                        )}
                     </div>
                 </div>
             </div>
@@ -67,8 +73,8 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                         </thead>
                         <tbody className="divide-y divide-border">
                             {filteredVorsorge.map(fd => {
-                                // Maximal möglicher Säule 3a Jahresbeitrag 2026
-                                const limit = 7528;
+                                // Offizieller gesetzlicher Säule 3a Jahresbeitrag 2026
+                                const limit = 7258;
 
                                 // Berechne aktuell basierend auf manuell oder auto
                                 // Nur abgeschlossene Monate zählen (Januar = 0, wenn wir im Januar sind, z.B. Nov = 10 abgeschlossene Monate)
@@ -104,14 +110,28 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                             </div>
                                         </td>
                                         <td className="px-4 py-3 align-middle w-[120px] lg:w-[140px] min-w-[120px]">
-                                            <span className="px-2 py-0.5 rounded-md text-xs font-medium border bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50">
-                                                Vorsorge 3a
-                                            </span>
+                                            <div className="flex flex-col gap-1 items-start">
+                                                <span className="px-2 py-0.5 rounded-md text-xs font-medium border bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50">
+                                                    Vorsorge 3a
+                                                </span>
+                                                {fd.interestRate !== undefined && fd.interestRate > 0 && (
+                                                    <span className="text-[11px] font-mono font-medium text-emerald-400">
+                                                        {fd.interestRate.toFixed(3).replace(/\.?0+$/, '')}% Zins
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-4 py-3 text-right font-medium align-middle whitespace-nowrap w-[220px] lg:w-[260px] min-w-[200px]">
-                                            <span className="text-base font-bold text-white tracking-tight">
-                                                {fd.amount.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
-                                            </span>
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-base font-bold text-white tracking-tight">
+                                                    {fd.amount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                                </span>
+                                                {fd.interestRate !== undefined && fd.interestRate > 0 && (
+                                                    <span className="text-xs font-mono text-muted-foreground">
+                                                        +{(fd.amount * (fd.interestRate / 100)).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF/J.
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-4 py-3 align-middle min-w-[280px]">
                                             <div className="flex flex-col gap-1.5 py-0.5 max-w-lg">

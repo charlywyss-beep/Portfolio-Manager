@@ -304,7 +304,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                         </div>
                                     </div>
                                     <p className="text-[10px] text-muted-foreground">
-                                        Total {new Date().getFullYear()}: <strong>{(Number(monthlyContribution) * (new Date().getMonth() + 1)).toLocaleString('de-CH', { minimumFractionDigits: 2 })}</strong> (wird automatisch jeden Monat angepasst)
+                                        Total {new Date().getFullYear()}: <strong>{(Number(monthlyContribution) * new Date().getMonth()).toLocaleString('de-CH', { minimumFractionDigits: 2 })}</strong> (wird automatisch jeden Monat angepasst)
                                     </p>
                                 </div>
                             ) : (
