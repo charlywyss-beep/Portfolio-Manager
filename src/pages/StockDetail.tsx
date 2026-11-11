@@ -1,11 +1,11 @@
 import { StockName } from '../components/StockName';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, Pencil, Landmark } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, Pencil, Landmark, Calendar } from 'lucide-react';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
 import { estimateMarketState } from '../utils/market';
@@ -126,6 +126,68 @@ export function StockDetail() {
         }
         return prev;
     })();
+
+    // Navigation directly to edit section
+    const navigateToEditSection = (section: 'stammdaten' | 'kursdaten' | 'termine') => {
+        const from = searchParams.get('from') || 'dividends';
+        const query = from ? `?from=${from}&section=${section}` : `?section=${section}`;
+        const targetId = stockFromContext?.id || stock?.id || stock?.symbol || id;
+        navigate(`/dividends/edit/${encodeURIComponent(String(targetId))}${query}`);
+    };
+
+    // Next Ex-Date and Payment Date calculation
+    const upcomingDividendDates = useMemo(() => {
+        if (!stock) return { exDate: '-', payDate: '-' };
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        const pairs: { exDate?: string; payDate?: string }[] = [];
+        if (stock.dividendDates && Array.isArray(stock.dividendDates)) {
+            pairs.push(...stock.dividendDates);
+        }
+        if (stock.dividendExDate || stock.dividendPayDate) {
+            pairs.push({ exDate: stock.dividendExDate, payDate: stock.dividendPayDate });
+        }
+
+        let nextPair: { exDate?: string; payDate?: string } | null = null;
+        let minFutureDiff = Infinity;
+
+        for (const p of pairs) {
+            const exTime = p.exDate ? new Date(p.exDate).getTime() : NaN;
+            const payTime = p.payDate ? new Date(p.payDate).getTime() : NaN;
+            const targetTime = !isNaN(exTime) ? exTime : payTime;
+
+            if (!isNaN(targetTime)) {
+                const diff = targetTime - now.getTime();
+                if (diff >= 0 && diff < minFutureDiff) {
+                    minFutureDiff = diff;
+                    nextPair = p;
+                }
+            }
+        }
+
+        if (!nextPair && pairs.length > 0) {
+            nextPair = pairs.filter(p => p.exDate || p.payDate).pop() || null;
+        }
+
+        const fmt = (d?: string) => {
+            if (!d) return '-';
+            try {
+                const parts = d.split('-');
+                if (parts.length === 3) {
+                    return `${parts[2]}.${parts[1]}.${parts[0]}`;
+                }
+                return new Date(d).toLocaleDateString('de-CH');
+            } catch {
+                return d;
+            }
+        };
+
+        return {
+            exDate: fmt(nextPair?.exDate),
+            payDate: fmt(nextPair?.payDate)
+        };
+    }, [stock]);
 
     // Get position to determine buy date
     const position = positions.find(p => p.stockId === stock?.id);
@@ -1162,85 +1224,140 @@ export function StockDetail() {
                     })()}
                 </div>
 
-                {/* Stammdaten */}
-                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm flex flex-col justify-between h-full overflow-hidden">
-                    <h3 className="font-bold text-base md:text-lg landscape:text-xs mb-2 md:mb-4 landscape:mb-1 flex items-center gap-1.5 md:gap-2">
-                        <TrendingUp className="size-4 md:size-5 text-blue-500" />
-                        Stammdaten
-                    </h3>
-                    <div className="space-y-1.5 md:space-y-3 landscape:space-y-0 flex-1 flex flex-col justify-between">
-                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                            <span className="text-muted-foreground">Name</span>
-                            <span className="font-medium text-right truncate max-w-[180px] sm:max-w-[240px]">{stock.name}</span>
-                        </div>
-                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                            <span className="text-muted-foreground">Symbol</span>
-                            <span className="font-medium font-mono">{stock.symbol}</span>
-                        </div>
-                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                            <span className="text-muted-foreground">ISIN</span>
-                            <span className="font-medium font-mono">{stock.isin || '-'}</span>
-                        </div>
-                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                            <span className="text-muted-foreground">Typ</span>
-                            <span className="font-medium capitalize">{stock.type || 'Aktie'}</span>
-                        </div>
-                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                            <span className="text-muted-foreground">Währung</span>
-                            <span className="font-medium">{stock.currency}</span>
-                        </div>
-                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                            <span className="text-muted-foreground">KGV (P/E)</span>
-                            <span className="font-medium">
-                                {stock.trailingPE
-                                    ? stock.trailingPE.toFixed(2)
-                                    : (stock.forwardPE ? `${stock.forwardPE.toFixed(2)} (Fwd)` : (stock.eps && stock.eps > 0 ? (stock.currentPrice / stock.eps).toFixed(2) : '-'))}
+                {/* Stammdaten (Unterteilt in 3 einzeln anklickbare Abschnitte) */}
+                <div className="bg-card border border-border rounded-xl p-3 sm:p-5 shadow-sm flex flex-col justify-between h-full overflow-hidden space-y-3">
+                    {/* Bereich 1: Basisdaten */}
+                    <div
+                        onClick={() => navigateToEditSection('stammdaten')}
+                        className="p-3 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-muted/30 cursor-pointer transition-all group"
+                        title="Basisdaten bearbeiten (Öffnet Stammdaten)"
+                    >
+                        <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-border/50 group-hover:text-primary transition-colors">
+                            <span className="font-bold text-xs sm:text-sm uppercase tracking-wider text-muted-foreground group-hover:text-primary flex items-center gap-1.5">
+                                <TrendingUp className="size-3.5 text-blue-500" />
+                                Basisdaten
                             </span>
+                            <Pencil className="size-3 text-muted-foreground group-hover:text-primary transition-colors" />
                         </div>
-                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                            <span className="text-muted-foreground">KCV (P/CF)</span>
-                            <span className="font-medium">
-                                {stock.kcv ? stock.kcv.toFixed(2) : '-'}
-                            </span>
+                        <div className="space-y-1.5 text-xs sm:text-sm">
+                            <div className="flex justify-between py-0.5 border-b border-border/30">
+                                <span className="text-muted-foreground">Name</span>
+                                <span className="font-medium text-right truncate max-w-[180px] sm:max-w-[240px]">{stock.name}</span>
+                            </div>
+                            <div className="flex justify-between py-0.5 border-b border-border/30">
+                                <span className="text-muted-foreground">Symbol</span>
+                                <span className="font-medium font-mono">{stock.symbol}</span>
+                            </div>
+                            <div className="flex justify-between py-0.5 border-b border-border/30">
+                                <span className="text-muted-foreground">ISIN</span>
+                                <span className="font-medium font-mono">{stock.isin || '-'}</span>
+                            </div>
+                            <div className="flex justify-between py-0.5 border-b border-border/30">
+                                <span className="text-muted-foreground">Typ</span>
+                                <span className="font-medium capitalize">{stock.type || 'Aktie'}</span>
+                            </div>
+                            <div className="flex justify-between py-0.5">
+                                <span className="text-muted-foreground">Währung</span>
+                                <span className="font-medium">{stock.currency}</span>
+                            </div>
                         </div>
-                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                            <span className="text-muted-foreground">Div. Frequenz</span>
-                            <span className="font-medium capitalize">
-                                {stock.dividendFrequency ? (
-                                    stock.dividendFrequency === 'quarterly' ? 'Quartalsweise' :
-                                        stock.dividendFrequency === 'monthly' ? 'Monatlich' :
-                                            stock.dividendFrequency === 'semi-annually' ? 'Halbjährlich' : 'Jährlich'
-                                ) : '-'}
-                            </span>
-                        </div>
-                        <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                            <span className="text-muted-foreground">Div. Rendite</span>
-                            <span className="font-medium text-right">
-                                {(() => {
-                                    const pos = positions.find(p => p.stockId === stock.id);
-                                    const freqFactor = stock.dividendFrequency === 'quarterly' ? 4 : stock.dividendFrequency === 'semi-annually' ? 2 : stock.dividendFrequency === 'monthly' ? 12 : 1;
-                                    const annualPayout = (stock.dividendAmount && stock.dividendAmount > 0) ? stock.dividendAmount * freqFactor : 0;
-                                    const yieldCost = (annualPayout > 0 && pos && pos.buyPriceAvg > 0) ? (annualPayout / pos.buyPriceAvg) * 100 : null;
-                                    const marketYield = (annualPayout > 0 && stock.currentPrice > 0) ? (annualPayout / stock.currentPrice) * 100 : (stock.dividendYield || null);
+                    </div>
 
-                                    let annualDividendNative = 0;
-                                    if (pos && pos.shares > 0) {
-                                        if (annualPayout > 0) {
-                                            annualDividendNative = annualPayout * pos.shares;
-                                        } else if (marketYield) {
-                                            annualDividendNative = pos.shares * stock.currentPrice * (marketYield / 100);
+                    {/* Bereich 2: Bewertung & Kennzahlen */}
+                    <div
+                        onClick={() => navigateToEditSection('kursdaten')}
+                        className="p-3 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-muted/30 cursor-pointer transition-all group"
+                        title="Bewertung & Kennzahlen bearbeiten (Öffnet Kursdaten)"
+                    >
+                        <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-border/50 group-hover:text-primary transition-colors">
+                            <span className="font-bold text-xs sm:text-sm uppercase tracking-wider text-muted-foreground group-hover:text-primary flex items-center gap-1.5">
+                                <BarChart2 className="size-3.5 text-emerald-500" />
+                                Bewertung & Kennzahlen
+                            </span>
+                            <Pencil className="size-3 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                        <div className="space-y-1.5 text-xs sm:text-sm">
+                            <div className="flex justify-between py-0.5 border-b border-border/30">
+                                <span className="text-muted-foreground">KGV (P/E)</span>
+                                <span className="font-medium">
+                                    {stock.trailingPE
+                                        ? stock.trailingPE.toFixed(2)
+                                        : (stock.forwardPE ? `${stock.forwardPE.toFixed(2)} (Fwd)` : (stock.eps && stock.eps > 0 ? (stock.currentPrice / stock.eps).toFixed(2) : '-'))}
+                                </span>
+                            </div>
+                            <div className="flex justify-between py-0.5">
+                                <span className="text-muted-foreground">KCV (P/CF)</span>
+                                <span className="font-medium">
+                                    {stock.kcv ? stock.kcv.toFixed(2) : '-'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bereich 3: Dividenden & Termine */}
+                    <div
+                        onClick={() => navigateToEditSection('termine')}
+                        className="p-3 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-muted/30 cursor-pointer transition-all group"
+                        title="Dividenden & Termine bearbeiten (Öffnet direkt auf Höhe von Terminen)"
+                    >
+                        <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-border/50 group-hover:text-primary transition-colors">
+                            <span className="font-bold text-xs sm:text-sm uppercase tracking-wider text-muted-foreground group-hover:text-primary flex items-center gap-1.5">
+                                <Calendar className="size-3.5 text-amber-500" />
+                                Dividenden & Termine
+                            </span>
+                            <Pencil className="size-3 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                        <div className="space-y-1.5 text-xs sm:text-sm">
+                            <div className="flex justify-between py-0.5 border-b border-border/30">
+                                <span className="text-muted-foreground">Div. Frequenz</span>
+                                <span className="font-medium capitalize">
+                                    {stock.dividendFrequency ? (
+                                        stock.dividendFrequency === 'quarterly' ? 'Quartalsweise' :
+                                            stock.dividendFrequency === 'monthly' ? 'Monatlich' :
+                                                stock.dividendFrequency === 'semi-annually' ? 'Halbjährlich' : 'Jährlich'
+                                    ) : '-'}
+                                </span>
+                            </div>
+                            <div className="flex justify-between py-0.5 border-b border-border/30">
+                                <span className="text-muted-foreground">Div. Rendite</span>
+                                <span className="font-medium text-right">
+                                    {(() => {
+                                        const pos = positions.find(p => p.stockId === stock.id);
+                                        const freqFactor = stock.dividendFrequency === 'quarterly' ? 4 : stock.dividendFrequency === 'semi-annually' ? 2 : stock.dividendFrequency === 'monthly' ? 12 : 1;
+                                        const annualPayout = (stock.dividendAmount && stock.dividendAmount > 0) ? stock.dividendAmount * freqFactor : 0;
+                                        const yieldCost = (annualPayout > 0 && pos && pos.buyPriceAvg > 0) ? (annualPayout / pos.buyPriceAvg) * 100 : null;
+                                        const marketYield = (annualPayout > 0 && stock.currentPrice > 0) ? (annualPayout / stock.currentPrice) * 100 : (stock.dividendYield || null);
+
+                                        let annualDividendNative = 0;
+                                        if (pos && pos.shares > 0) {
+                                            if (annualPayout > 0) {
+                                                annualDividendNative = annualPayout * pos.shares;
+                                            } else if (marketYield) {
+                                                annualDividendNative = pos.shares * stock.currentPrice * (marketYield / 100);
+                                            }
                                         }
-                                    }
-                                    const divCurrency = stock.dividendCurrency || stock.currency;
-                                    const annualDividendCHF = annualDividendNative > 0 ? convertToCHF(annualDividendNative, divCurrency) : 0;
+                                        const divCurrency = stock.dividendCurrency || stock.currency;
+                                        const annualDividendCHF = annualDividendNative > 0 ? convertToCHF(annualDividendNative, divCurrency) : 0;
 
-                                    if (!marketYield && !yieldCost && annualDividendCHF === 0) return '-';
+                                        if (!marketYield && !yieldCost && annualDividendCHF === 0) return '-';
 
-                                    if (yieldCost !== null && marketYield !== null && Math.abs(yieldCost - marketYield) > 0.01) {
+                                        if (yieldCost !== null && marketYield !== null && Math.abs(yieldCost - marketYield) > 0.01) {
+                                            return (
+                                                <div className="flex flex-col items-end leading-tight gap-0.5">
+                                                    <span className="font-medium text-xs text-foreground/80">{marketYield.toFixed(2)}% Kurs</span>
+                                                    <span className="font-bold text-green-600 dark:text-green-400">{yieldCost.toFixed(2)}% Käufe</span>
+                                                    {annualDividendCHF > 0 && (
+                                                        <span className="font-bold text-xs text-green-600 dark:text-green-400" title={`Erwartete Jahresdividende für ${pos?.shares} Stk.: ${annualDividendCHF.toFixed(2)} CHF`}>
+                                                            {annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            );
+                                        }
+
                                         return (
                                             <div className="flex flex-col items-end leading-tight gap-0.5">
-                                                <span className="font-medium text-xs text-foreground/80">{marketYield.toFixed(2)}% Kurs</span>
-                                                <span className="font-bold text-green-600 dark:text-green-400">{yieldCost.toFixed(2)}% Käufe</span>
+                                                <span className="font-medium text-xs text-foreground/80">{(marketYield ?? yieldCost)?.toFixed(2)}% Kurs</span>
                                                 {annualDividendCHF > 0 && (
                                                     <span className="font-bold text-xs text-green-600 dark:text-green-400" title={`Erwartete Jahresdividende für ${pos?.shares} Stk.: ${annualDividendCHF.toFixed(2)} CHF`}>
                                                         {annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
@@ -1248,20 +1365,17 @@ export function StockDetail() {
                                                 )}
                                             </div>
                                         );
-                                    }
-
-                                    return (
-                                        <div className="flex flex-col items-end leading-tight gap-0.5">
-                                            <span className="font-medium text-xs text-foreground/80">{(marketYield ?? yieldCost)?.toFixed(2)}% Kurs</span>
-                                            {annualDividendCHF > 0 && (
-                                                <span className="font-bold text-xs text-green-600 dark:text-green-400" title={`Erwartete Jahresdividende für ${pos?.shares} Stk.: ${annualDividendCHF.toFixed(2)} CHF`}>
-                                                    {annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
-                                                </span>
-                                            )}
-                                        </div>
-                                    );
-                                })()}
-                            </span>
+                                    })()}
+                                </span>
+                            </div>
+                            <div className="flex justify-between py-0.5 border-b border-border/30">
+                                <span className="text-muted-foreground">Nächster Ex-Tag</span>
+                                <span className="font-medium font-mono text-foreground">{upcomingDividendDates.exDate}</span>
+                            </div>
+                            <div className="flex justify-between py-0.5">
+                                <span className="text-muted-foreground">Nächster Zahltag</span>
+                                <span className="font-medium font-mono text-emerald-400">{upcomingDividendDates.payDate}</span>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Trash2, Search, Pencil, Check, Calculator, ShieldCheck, Sparkles, Sliders, Save, AlertTriangle, Calendar, RefreshCw, ExternalLink } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import type { Stock, Currency } from '../types';
 import { useCurrencyFormatter, convertToCHF } from '../utils/currency';
 import { getWithholdingTaxRate, detectStockCountry, COUNTRY_TAX_RATES } from '../utils/tax';
@@ -47,8 +47,23 @@ const sanitizeDateYear = (dateStr: string, referenceDate?: string): string => {
 
 export function EditDividendPage() {
     const { stockId } = useParams();
+    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { stocks, positions, updateStockDividend, updateStockPrice, updateStock } = usePortfolio();
+
+    // Scroll directly to target section if requested via query or hash
+    useEffect(() => {
+        const section = searchParams.get('section') || (window.location.hash ? window.location.hash.replace('#', '') : null);
+        if (section) {
+            const timer = setTimeout(() => {
+                const el = document.getElementById(`section-${section}`) || document.getElementById(section);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 300);
+            return () => clearTimeout(timer);
+        }
+    }, [searchParams]);
 
     const [selectedStockId, setSelectedStockId] = useState(''); // Local state for selection
     const [stockNameOverride, setStockNameOverride] = useState<string | undefined>(undefined);
@@ -651,7 +666,7 @@ export function EditDividendPage() {
                     ) : (
                         <>
                             {/* Stock Definition Section (Symbol & Logo) */}
-                            <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4">
+                            <div id="section-stammdaten" className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4 scroll-mt-20">
                                 <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Stammdaten</h3>
                                 <div className="space-y-4">
                                     <div className="space-y-2">
@@ -849,7 +864,7 @@ export function EditDividendPage() {
                             </div>
 
                             {/* Price Section */}
-                            <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4">
+                            <div id="section-kursdaten" className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4 scroll-mt-20">
                                 <div className="flex items-center justify-between">
                                     <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Kursdaten</h3>
                                     {currentStockId && (
@@ -1654,7 +1669,7 @@ export function EditDividendPage() {
 
                             {/* Dates Section - Only show if frequency is not 'none' */}
                             {frequency !== 'none' && (
-                                <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4">
+                                <div id="section-termine" className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-4 scroll-mt-20">
                                     <div className="flex flex-wrap justify-between items-center gap-2">
                                         <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Termine</h3>
                                         <div className="flex items-center gap-2 flex-wrap">
