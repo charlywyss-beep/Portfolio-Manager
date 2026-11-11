@@ -568,9 +568,15 @@ export const MortgageCalculator = () => {
         + ((waterStats?.avgCostPerYear || 0) / 12);
 
     // --- Pensions-Tragbarkeit & Zins-Stresstest ---
-    const pensionIncome = mortgageData.pensionIncome ?? 65000;
-    const pensionFrequency = mortgageData.pensionIncomeFrequency ?? 'yearly';
-    const annualPensionIncome = pensionFrequency === 'monthly' ? pensionIncome * 12 : pensionIncome;
+    const ahvIncome = mortgageData.ahvPensionIncome ?? 2200;
+    const pkIncome = mortgageData.pkPensionIncome ?? 3300;
+    const pensionFrequency = mortgageData.pensionIncomeFrequency ?? 'monthly';
+
+    const monthlyTotalPension = pensionFrequency === 'monthly'
+        ? (ahvIncome + pkIncome)
+        : (ahvIncome + pkIncome) / 12;
+
+    const annualPensionIncome = monthlyTotalPension * 12;
 
     // Schweizer Banken-Standard (Raiffeisen Tragbarkeitsprüfung)
     const calcInterest5Pct = totalDebt * 0.05;
@@ -583,7 +589,7 @@ export const MortgageCalculator = () => {
     const maxAllowedMortgageAtPension = maxAllowedInterestAt5Pct / 0.05;
     const requiredPensionAmortization = Math.max(0, totalDebt - maxAllowedMortgageAtPension);
 
-    const [sliderRate, setSliderRate] = useState<number>(mortgageData.stressTestRate ?? 1.5);
+    const [sliderRate, setSliderRate] = useState<number>(mortgageData.stressTestRate ?? (weightedRate > 0 ? weightedRate : 0.9));
     const currentMonthlyMortgageInterest = yearlyInterest / 12;
     const simulatedMonthlyMortgageInterest = (totalDebt * (sliderRate / 100)) / 12;
     const stressMonthlyDiff = simulatedMonthlyMortgageInterest - currentMonthlyMortgageInterest;
@@ -1304,141 +1310,161 @@ export const MortgageCalculator = () => {
                                 Pensions-Tragbarkeit & Zins-Stresstest
                                 {isPensionTestOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
                             </h2>
-                            <span className="text-xs font-mono font-medium px-2.5 py-0.5 rounded-full border bg-primary/10 text-primary border-primary/20">
-                                Ruhestand & Zinsrisiko
-                            </span>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsPensionTestOpen(true);
+                                }}
+                                className="text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1"
+                            >
+                                <Plus className="size-4" /> Eingabe
+                            </button>
                         </div>
                         {isPensionTestOpen && (
-                            <div className="p-6 space-y-6">
-                                {/* TEIL 1: PENSIONS-TRAGBARKEIT */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between border-b border-border/60 pb-2">
-                                        <div className="flex items-center gap-2">
-                                            <CircleUser className="size-4 text-primary" />
-                                            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">
-                                                1. Tragbarkeitsprüfung im Ruhestand (Banken-Standard)
-                                            </h3>
+                            <div className="p-6 space-y-4">
+                                {/* Eingabe AHV & Pensionskasse separat */}
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-1.5">
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-sm font-medium">AHV-Rente</label>
+                                            <span className="text-xs text-muted-foreground">pro {pensionFrequency === 'monthly' ? 'Monat' : 'Jahr'}</span>
                                         </div>
-                                        <span className="text-xs text-muted-foreground hidden sm:inline">
-                                            5% kalk. Zins + 1% Nebenkosten (max. 33.3% Einkommen)
-                                        </span>
-                                    </div>
-
-                                    {/* Eingabe Renteneinkommen */}
-                                    <div className="bg-accent/20 p-4 rounded-lg border border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                        <div className="space-y-0.5">
-                                            <label className="text-xs font-semibold text-foreground">
-                                                Geschätztes Renteneinkommen (AHV + PK)
-                                            </label>
-                                            <p className="text-[11px] text-muted-foreground">
-                                                Brutto-Einkommen pro {pensionFrequency === 'monthly' ? 'Monat' : 'Jahr'} nach der Pensionierung
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                                            <select
-                                                value={pensionFrequency}
-                                                onChange={(e) => updateMortgageData({ pensionIncomeFrequency: e.target.value as 'monthly' | 'yearly' })}
-                                                className="bg-background border border-input rounded px-2.5 py-1.5 text-xs h-9 cursor-pointer"
-                                            >
-                                                <option value="yearly">Jährlich</option>
-                                                <option value="monthly">Monatlich</option>
-                                            </select>
-                                            <div className="relative w-36">
-                                                <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs font-medium">CHF</div>
-                                                <DecimalInput
-                                                    value={pensionIncome}
-                                                    onChange={(val) => updateMortgageData({ pensionIncome: parseFloat(val) || 0 })}
-                                                    className="w-full h-9 bg-background border border-input rounded px-2.5 pl-11 text-sm font-bold font-mono text-right"
-                                                />
+                                        <div className="relative">
+                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-8 h-4 flex items-center justify-center text-xs">
+                                                CHF
                                             </div>
+                                            <DecimalInput
+                                                value={ahvIncome}
+                                                onChange={(val) => updateMortgageData({ ahvPensionIncome: parseFloat(val) || 0 })}
+                                                className={cn(inputClass, "pl-14")}
+                                            />
                                         </div>
                                     </div>
 
-                                    {/* Kennzahlen Grid */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                        <div className="bg-accent/20 rounded-lg p-3 border border-border/50">
-                                            <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Kalkulatorische Kosten</div>
-                                            <div className="text-lg font-bold font-mono text-foreground">
-                                                {formatCHF(totalCalcPensionCosts)} <span className="text-xs font-normal text-muted-foreground">/ J.</span>
-                                            </div>
-                                            <div className="text-[10px] text-muted-foreground mt-0.5">
-                                                5% Zins ({formatCHF(calcInterest5Pct)}) + 1% NK ({formatCHF(calcMaintenance1Pct)})
-                                            </div>
+                                    <div className="space-y-1.5">
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-sm font-medium">Pensionskassen-Rente (PK)</label>
+                                            <span className="text-xs text-muted-foreground">pro {pensionFrequency === 'monthly' ? 'Monat' : 'Jahr'}</span>
                                         </div>
-
-                                        <div className="bg-accent/20 rounded-lg p-3 border border-border/50">
-                                            <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Tragbarkeits-Quote</div>
-                                            <div className={cn(
-                                                "text-lg font-bold font-mono",
-                                                pensionTragbarkeitPct <= 33.33 ? "text-emerald-400" : pensionTragbarkeitPct <= 40 ? "text-amber-400" : "text-rose-400"
-                                            )}>
-                                                {pensionTragbarkeitPct.toFixed(1)}%
+                                        <div className="relative">
+                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-8 h-4 flex items-center justify-center text-xs">
+                                                CHF
                                             </div>
-                                            <div className="text-[10px] text-muted-foreground mt-0.5">
-                                                Banken-Richtwert: max. 33.3%
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-accent/20 rounded-lg p-3 border border-border/50">
-                                            <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Amortisationsbedarf</div>
-                                            <div className={cn(
-                                                "text-lg font-bold font-mono",
-                                                requiredPensionAmortization > 0 ? "text-amber-400" : "text-emerald-400"
-                                            )}>
-                                                {requiredPensionAmortization > 0 ? formatCHF(requiredPensionAmortization) : "0 CHF"}
-                                            </div>
-                                            <div className="text-[10px] text-muted-foreground mt-0.5">
-                                                {requiredPensionAmortization > 0 ? `Ziel-Schuld: ${formatCHF(maxAllowedMortgageAtPension)}` : "Volle Tragbarkeit gegeben"}
-                                            </div>
+                                            <DecimalInput
+                                                value={pkIncome}
+                                                onChange={(val) => updateMortgageData({ pkPensionIncome: parseFloat(val) || 0 })}
+                                                className={cn(inputClass, "pl-14")}
+                                            />
                                         </div>
                                     </div>
-
-                                    {/* Auswertung & Handlungsempfehlung */}
-                                    {pensionTragbarkeitPct <= 33.33 ? (
-                                        <div className="p-3.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-xs flex items-start gap-2.5">
-                                            <Check className="size-4 text-emerald-400 shrink-0 mt-0.5" />
-                                            <div>
-                                                <span className="font-bold text-emerald-400 block mb-0.5">Hypothek im Ruhestand tragbar!</span>
-                                                <span className="text-muted-foreground">
-                                                    Mit einem Renteneinkommen von {formatCHF(annualPensionIncome)}/Jahr liegt Ihre kalkulatorische Belastung bei {pensionTragbarkeitPct.toFixed(1)}%. Es ist von Bankenseite keine Amortisation bei Pensionierung erforderlich.
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="p-3.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-xs flex items-start gap-2.5">
-                                            <ShieldAlert className="size-4 text-amber-400 shrink-0 mt-0.5" />
-                                            <div>
-                                                <span className="font-bold text-amber-400 block mb-0.5">
-                                                    Empfohlene Teilamortisation zur Pensionierung: ca. {formatCHF(requiredPensionAmortization)}
-                                                </span>
-                                                <span className="text-muted-foreground">
-                                                    Um die kalkulatorische 33.3%-Grenze im Ruhestand einzuhalten, verlangt die Bank voraussichtlich eine Reduktion der Hypothek auf <strong>{formatCHF(maxAllowedMortgageAtPension)}</strong>.
-                                                    <br />
-                                                    <span className="text-foreground/90 font-medium mt-1 block">
-                                                        💡 Tipp: Dieses Kapital müssen Sie heute nicht direkt abbezahlen! Sie können es steueroptimiert bis zur Pensionierung in der Säule 3a ansparen und erst bei Rentenantritt gezielt als Einmalzahlung verwenden.
-                                                    </span>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
 
-                                {/* TEIL 2: ZINS-STRESSTEST */}
-                                <div className="space-y-4 pt-4 border-t border-border/60">
-                                    <div className="flex items-center justify-between border-b border-border/60 pb-2">
-                                        <div className="flex items-center gap-2">
-                                            <Activity className="size-4 text-primary" />
-                                            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">
-                                                2. Zins-Stresstest (SARON-Szenarien & Schieberegler)
-                                            </h3>
+                                {/* Summenzeile & Zahlweise */}
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg bg-accent/20 border border-border/50 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-muted-foreground font-medium">Total Renteneinkommen:</span>
+                                        <span className="font-mono font-bold text-foreground">
+                                            {formatCHF(monthlyTotalPension)} / Monat
+                                        </span>
+                                        <span className="text-xs text-muted-foreground font-mono">
+                                            ({formatCHF(annualPensionIncome)} / Jahr)
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-xs text-muted-foreground">Zahlweise:</span>
+                                        <select
+                                            value={pensionFrequency}
+                                            onChange={(e) => updateMortgageData({ pensionIncomeFrequency: e.target.value as 'monthly' | 'yearly' })}
+                                            className="bg-background border border-input rounded px-2.5 py-1 text-xs h-8 cursor-pointer"
+                                        >
+                                            <option value="monthly">Monatlich</option>
+                                            <option value="yearly">Jährlich</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Kennzahlen Raster */}
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div className="bg-accent/20 rounded-lg p-3 border border-border/50">
+                                        <div className="text-xs uppercase font-bold text-muted-foreground mb-1">Kalk. Kosten (Bank)</div>
+                                        <div className="text-lg font-bold font-mono text-foreground">
+                                            {formatCHF(totalCalcPensionCosts)} <span className="text-xs font-normal text-muted-foreground">/ J.</span>
                                         </div>
-                                        <span className="text-xs text-muted-foreground">
-                                            Basis: {formatCHF(totalDebt)} Hypothek
+                                        <div className="text-xs text-muted-foreground mt-0.5">
+                                            5% Zins + 1% NK ({formatCHF(totalCalcPensionCosts / 12)}/Mt.)
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-accent/20 rounded-lg p-3 border border-border/50">
+                                        <div className="text-xs uppercase font-bold text-muted-foreground mb-1">Tragbarkeits-Quote</div>
+                                        <div className={cn(
+                                            "text-lg font-bold font-mono",
+                                            pensionTragbarkeitPct <= 33.33 ? "text-emerald-400" : pensionTragbarkeitPct <= 40 ? "text-amber-400" : "text-rose-400"
+                                        )}>
+                                            {pensionTragbarkeitPct.toFixed(1)}%
+                                        </div>
+                                        <div className="text-xs text-muted-foreground mt-0.5">
+                                            Banken-Richtwert: max. 33.3%
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-accent/20 rounded-lg p-3 border border-border/50">
+                                        <div className="text-xs uppercase font-bold text-muted-foreground mb-1">Amortisationsbedarf</div>
+                                        <div className={cn(
+                                            "text-lg font-bold font-mono",
+                                            requiredPensionAmortization > 0 ? "text-amber-400" : "text-emerald-400"
+                                        )}>
+                                            {requiredPensionAmortization > 0 ? formatCHF(requiredPensionAmortization) : "0 CHF"}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground mt-0.5">
+                                            {requiredPensionAmortization > 0 ? `Ziel-Hypothek: ${formatCHF(maxAllowedMortgageAtPension)}` : "Volle Tragbarkeit gegeben"}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Auswertung & Empfehlung */}
+                                {pensionTragbarkeitPct <= 33.33 ? (
+                                    <div className="p-3 rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-sm flex items-start gap-2.5">
+                                        <Check className="size-4 text-emerald-400 shrink-0 mt-0.5" />
+                                        <div>
+                                            <span className="font-bold text-emerald-400 block mb-0.5">Hypothek im Ruhestand tragbar ({pensionTragbarkeitPct.toFixed(1)}%)</span>
+                                            <span className="text-muted-foreground text-xs leading-relaxed">
+                                                Mit einem Renteneinkommen von {formatCHF(annualPensionIncome)}/Jahr liegt Ihre kalkulatorische Belastung unter der 33.3%-Grenze. Keine Pflicht-Amortisation bei Pensionierung nötig.
+                                            </span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-sm flex items-start gap-2.5">
+                                        <ShieldAlert className="size-4 text-amber-400 shrink-0 mt-0.5" />
+                                        <div>
+                                            <span className="font-bold text-amber-400 block mb-0.5">
+                                                Empfohlene Teilamortisation zur Pensionierung: ca. {formatCHF(requiredPensionAmortization)}
+                                            </span>
+                                            <span className="text-muted-foreground text-xs leading-relaxed block">
+                                                Um die bankenübliche 33.3%-Grenze im Ruhestand einzuhalten, verlangt die Bank voraussichtlich eine Reduktion der Hypothek auf <strong>{formatCHF(maxAllowedMortgageAtPension)}</strong>.
+                                                <br />
+                                                <span className="text-foreground/90 font-medium mt-1 inline-block">
+                                                    💡 Tipp: Dieses Kapital müssen Sie heute nicht direkt abbezahlen! Sie können es steueroptimiert bis zur Pensionierung in der Säule 3a ansparen und erst bei Rentenantritt gezielt als Einmalzahlung verwenden.
+                                                </span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Zins-Stresstest */}
+                                <div className="space-y-3 pt-3 border-t border-border">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                                            <Activity className="size-4 text-primary" />
+                                            Zins-Stresstest (Szenarien auf {formatCHF(totalDebt)} Hypothek)
+                                        </span>
+                                        <span className="text-xs text-muted-foreground font-mono">
+                                            Aktuell: {weightedRate.toFixed(2)}% ({formatCHF(currentMonthlyMortgageInterest)} / Mt.)
                                         </span>
                                     </div>
 
                                     {/* 4 Szenarien Kacheln */}
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                         {[
                                             { label: 'Aktuell', rate: weightedRate > 0 ? weightedRate : 0.9, isCurrent: true },
                                             { label: 'Moderat', rate: 1.5, isCurrent: false },
@@ -1455,23 +1481,23 @@ export const MortgageCalculator = () => {
                                                         updateMortgageData({ stressTestRate: scen.rate });
                                                     }}
                                                     className={cn(
-                                                        "p-2.5 rounded-lg border transition-all cursor-pointer",
+                                                        "p-2.5 rounded-lg border transition-all cursor-pointer text-left",
                                                         Math.abs(sliderRate - scen.rate) < 0.05
                                                             ? "bg-primary/10 border-primary shadow-xs"
                                                             : "bg-accent/20 border-border/50 hover:border-border"
                                                     )}
                                                 >
                                                     <div className="flex justify-between items-center mb-1">
-                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{scen.label}</span>
+                                                        <span className="text-xs font-semibold text-muted-foreground">{scen.label}</span>
                                                         <span className={cn("text-xs font-bold font-mono", scen.isCurrent ? "text-emerald-400" : "text-foreground")}>
                                                             {scen.rate.toFixed(2)}%
                                                         </span>
                                                     </div>
                                                     <div className="text-sm font-bold font-mono text-foreground">
-                                                        {formatCHF(scenMonthly)} <span className="text-[10px] font-normal text-muted-foreground">/ Mt.</span>
+                                                        {formatCHF(scenMonthly)} <span className="text-xs font-normal text-muted-foreground">/ Mt.</span>
                                                     </div>
-                                                    <div className="text-[10px] font-mono text-muted-foreground mt-0.5">
-                                                        {scen.isCurrent ? 'Ihre aktuelle Rate' : `${diffToCurrent >= 0 ? '+' : ''}${formatCHF(diffToCurrent)}/Mt.`}
+                                                    <div className="text-xs font-mono text-muted-foreground mt-0.5">
+                                                        {scen.isCurrent ? 'Aktuelle Rate' : `${diffToCurrent >= 0 ? '+' : ''}${formatCHF(diffToCurrent)}/Mt.`}
                                                     </div>
                                                 </div>
                                             );
@@ -1479,13 +1505,13 @@ export const MortgageCalculator = () => {
                                     </div>
 
                                     {/* Interaktiver Schieberegler */}
-                                    <div className="bg-accent/20 p-4 rounded-lg border border-border/50 space-y-3">
-                                        <div className="flex justify-between items-center">
-                                            <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                                                <SlidersHorizontal className="size-3.5 text-primary" />
-                                                <span>Frei wählbarer Zinssatz (0.5% – 5.0%)</span>
+                                    <div className="bg-accent/20 p-3 rounded-lg border border-border/50 space-y-2">
+                                        <div className="flex justify-between items-center text-sm">
+                                            <div className="flex items-center gap-1.5 font-medium text-foreground">
+                                                <SlidersHorizontal className="size-4 text-primary" />
+                                                <span>Zinssatz stufenlos testen</span>
                                             </div>
-                                            <span className="text-base font-bold font-mono text-primary px-2.5 py-0.5 rounded bg-primary/10 border border-primary/20">
+                                            <span className="font-bold font-mono text-primary px-2 py-0.5 rounded bg-primary/10 border border-primary/20 text-sm">
                                                 {sliderRate.toFixed(2)}%
                                             </span>
                                         </div>
@@ -1502,14 +1528,14 @@ export const MortgageCalculator = () => {
                                             }}
                                             className="w-full accent-primary cursor-pointer h-2 bg-muted rounded-lg"
                                         />
-                                        <div className="flex justify-between items-center text-xs pt-1 border-t border-border/40">
-                                            <span className="text-muted-foreground">Monatliche Zinskosten bei {sliderRate.toFixed(2)}%:</span>
+                                        <div className="flex justify-between items-center text-xs pt-1 border-t border-border/30">
+                                            <span className="text-muted-foreground">Zinskosten bei {sliderRate.toFixed(2)}%:</span>
                                             <div className="text-right">
                                                 <span className="font-mono font-bold text-foreground text-sm">
                                                     {formatCHF(simulatedMonthlyMortgageInterest)} / Mt.
                                                 </span>
                                                 <span className={cn(
-                                                    "text-[11px] font-mono ml-2",
+                                                    "text-xs font-mono ml-2 font-semibold",
                                                     stressMonthlyDiff > 0 ? "text-amber-400" : "text-emerald-400"
                                                 )}>
                                                     ({stressMonthlyDiff >= 0 ? '+' : ''}{formatCHF(stressMonthlyDiff)} / Mt.)

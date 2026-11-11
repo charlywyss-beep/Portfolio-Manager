@@ -270,6 +270,8 @@ export interface MortgageData {
     waterMeterNumber?: string;
 
     // Pensions-Tragbarkeit & Zins-Stresstest
+    ahvPensionIncome?: number;
+    pkPensionIncome?: number;
     pensionIncome?: number;
     pensionIncomeFrequency?: 'monthly' | 'yearly';
     stressTestRate?: number;
