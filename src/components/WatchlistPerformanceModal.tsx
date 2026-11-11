@@ -24,13 +24,15 @@ interface WatchlistPerformanceModalProps {
     onClose: () => void;
     activeWatchlistId?: string;
     initialPeriod?: WatchlistPeriod;
+    initialAssetFilter?: 'all' | 'stock' | 'etf';
 }
 
 export function WatchlistPerformanceModal({
     isOpen,
     onClose,
     activeWatchlistId,
-    initialPeriod = '1D'
+    initialPeriod = '1D',
+    initialAssetFilter = 'stock'
 }: WatchlistPerformanceModalProps) {
     const { convertToCHF, formatCurrency } = useCurrencyFormatter();
     const { stocks, watchlists, positions, refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh } = usePortfolio();
@@ -66,19 +68,18 @@ export function WatchlistPerformanceModal({
         ? watchlists.find(w => w.id === currentWatchlistId)
         : null;
 
-    let watchlistStockIds: string[];
-    if (currentWatchlistId === 'owned' || !currentWatchlistId) {
-        // "Bestand" mode or no specific tab: show all stocks that have positions
-        watchlistStockIds = stocks
-            .filter(s => positions.some(p => String(p.stockId) === String(s.id)))
-            .map(s => s.id);
-    } else if (activeWatchlist) {
-        watchlistStockIds = activeWatchlist.stockIds || [];
-    } else {
-        // Fallback to default watchlist
+    const watchlistStockIds = useMemo(() => {
+        if (currentWatchlistId === 'owned' || !currentWatchlistId) {
+            return stocks
+                .filter(s => positions.some(p => String(p.stockId) === String(s.id)))
+                .map(s => s.id);
+        }
+        if (activeWatchlist) {
+            return activeWatchlist.stockIds || [];
+        }
         const defaultWatchlist = watchlists.find(w => w.isDefault) || watchlists[0];
-        watchlistStockIds = defaultWatchlist?.stockIds || [];
-    }
+        return defaultWatchlist?.stockIds || [];
+    }, [currentWatchlistId, activeWatchlist, stocks, positions, watchlists]);
 
     // Determine active tab name for the subtitle
     const activeTabName = currentWatchlistId === 'owned'
@@ -90,10 +91,21 @@ export function WatchlistPerformanceModal({
     );
 
     const relevantStocks = useMemo(() => {
-        return stocks.filter(s => watchlistStockIds.includes(s.id));
+        const idSet = new Set(watchlistStockIds);
+        return stocks.filter(s => idSet.has(s.id));
     }, [stocks, watchlistStockIds]);
 
-    const [assetFilter, setAssetFilter] = useState<'all' | 'stock' | 'etf'>('stock');
+    const relevantSymbolsKey = useMemo(() => {
+        return relevantStocks.map(s => s.symbol).sort().join(',');
+    }, [relevantStocks]);
+
+    const [assetFilter, setAssetFilter] = useState<'all' | 'stock' | 'etf'>(() => initialAssetFilter);
+
+    useEffect(() => {
+        if (initialAssetFilter) {
+            setAssetFilter(initialAssetFilter);
+        }
+    }, [initialAssetFilter]);
 
     const stockCount = useMemo(() => relevantStocks.filter(s => !s.type || s.type === 'stock').length, [relevantStocks]);
     const etfCount = useMemo(() => relevantStocks.filter(s => s.type === 'etf').length, [relevantStocks]);
@@ -158,7 +170,7 @@ export function WatchlistPerformanceModal({
         return () => {
             isCancelled = true;
         };
-    }, [isOpen, selectedPeriod, relevantStocks]);
+    }, [isOpen, selectedPeriod, relevantSymbolsKey]);
 
     // Enrich stock data
     const enrichedData = useMemo(() => {

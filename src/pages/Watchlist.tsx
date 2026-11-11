@@ -223,6 +223,9 @@ export function Watchlist() {
     const currentTab = subTabs.find(t => t.id === activeSubTab) || subTabs[0];
     const currentTabStocks = currentTab?.stocks || [];
 
+    const isCurrentEtf = activeSubTab.toLowerCase().includes('etf');
+    const initialAssetFilter = isCurrentEtf ? 'etf' : 'stock';
+
     if (isPerformanceModalOpen) {
         return (
             <div className="h-full flex flex-col p-4 md:p-6 space-y-3 bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden iphone-landscape-page-root">
@@ -231,6 +234,7 @@ export function Watchlist() {
                     onClose={() => setIsPerformanceModalOpen(false)}
                     activeWatchlistId={activeWatchlistId}
                     initialPeriod={modalInitialPeriod}
+                    initialAssetFilter={initialAssetFilter}
                 />
             </div>
         );
