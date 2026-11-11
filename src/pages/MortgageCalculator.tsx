@@ -568,15 +568,33 @@ export const MortgageCalculator = () => {
         + ((waterStats?.avgCostPerYear || 0) / 12);
 
     // --- Pensions-Tragbarkeit & Zins-Stresstest ---
-    const ahvIncome = mortgageData.ahvPensionIncome ?? 2200;
-    const pkIncome = mortgageData.pkPensionIncome ?? 3300;
     const pensionFrequency = mortgageData.pensionIncomeFrequency ?? 'monthly';
+    const ahvIncome = mortgageData.ahvPensionIncome ?? (pensionFrequency === 'yearly' ? 26400 : 2200);
+    const pkIncome = mortgageData.pkPensionIncome ?? (pensionFrequency === 'yearly' ? 39600 : 3300);
 
-    const monthlyTotalPension = pensionFrequency === 'monthly'
+    const annualPensionIncome = pensionFrequency === 'yearly'
         ? (ahvIncome + pkIncome)
-        : (ahvIncome + pkIncome) / 12;
+        : (ahvIncome + pkIncome) * 12;
 
-    const annualPensionIncome = monthlyTotalPension * 12;
+    const monthlyTotalPension = annualPensionIncome / 12;
+
+    const handlePensionFrequencyChange = (newFreq: 'monthly' | 'yearly') => {
+        if (newFreq === pensionFrequency) return;
+        let newAhv = ahvIncome;
+        let newPk = pkIncome;
+        if (newFreq === 'monthly') {
+            newAhv = Math.round(ahvIncome / 12);
+            newPk = Math.round(pkIncome / 12);
+        } else {
+            newAhv = Math.round(ahvIncome * 12);
+            newPk = Math.round(pkIncome * 12);
+        }
+        updateMortgageData({
+            pensionIncomeFrequency: newFreq,
+            ahvPensionIncome: newAhv,
+            pkPensionIncome: newPk,
+        });
+    };
 
     // Schweizer Banken-Standard (Raiffeisen Tragbarkeitsprüfung)
     const calcInterest5Pct = totalDebt * 0.05;
@@ -1364,25 +1382,57 @@ export const MortgageCalculator = () => {
                                     <div className="flex flex-col sm:flex-row sm:items-baseline gap-2">
                                         <span className="text-base font-semibold text-foreground">Total Renteneinkommen:</span>
                                         <div className="flex items-baseline gap-2">
-                                            <span className="text-xl font-bold text-white tracking-tight">
-                                                {formatCHF(monthlyTotalPension)}
-                                                <span className="text-sm font-normal text-muted-foreground ml-1">/ Monat</span>
-                                            </span>
-                                            <span className="text-sm font-medium text-muted-foreground">
-                                                ({formatCHF(annualPensionIncome)} / Jahr)
-                                            </span>
+                                            {pensionFrequency === 'yearly' ? (
+                                                <>
+                                                    <span className="text-xl font-bold text-white tracking-tight">
+                                                        {formatCHF(annualPensionIncome)}
+                                                        <span className="text-sm font-normal text-muted-foreground ml-1">/ Jahr</span>
+                                                    </span>
+                                                    <span className="text-sm font-medium text-muted-foreground">
+                                                        ({formatCHF(monthlyTotalPension)} / Monat)
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className="text-xl font-bold text-white tracking-tight">
+                                                        {formatCHF(monthlyTotalPension)}
+                                                        <span className="text-sm font-normal text-muted-foreground ml-1">/ Monat</span>
+                                                    </span>
+                                                    <span className="text-sm font-medium text-muted-foreground">
+                                                        ({formatCHF(annualPensionIncome)} / Jahr)
+                                                    </span>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Zahlweise:</span>
-                                        <select
-                                            value={pensionFrequency}
-                                            onChange={(e) => updateMortgageData({ pensionIncomeFrequency: e.target.value as 'monthly' | 'yearly' })}
-                                            className="bg-background border border-input rounded-md px-3 py-1.5 text-sm font-medium h-9 cursor-pointer"
-                                        >
-                                            <option value="monthly">Monatlich</option>
-                                            <option value="yearly">Jährlich</option>
-                                        </select>
+                                        <div className="inline-flex rounded-lg bg-background p-0.5 border border-input">
+                                            <button
+                                                type="button"
+                                                onClick={() => handlePensionFrequencyChange('monthly')}
+                                                className={cn(
+                                                    "px-3 py-1.5 text-xs font-semibold rounded-md transition-all",
+                                                    pensionFrequency === 'monthly'
+                                                        ? "bg-primary text-primary-foreground shadow-sm"
+                                                        : "text-muted-foreground hover:text-foreground"
+                                                )}
+                                            >
+                                                Monatlich
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handlePensionFrequencyChange('yearly')}
+                                                className={cn(
+                                                    "px-3 py-1.5 text-xs font-semibold rounded-md transition-all",
+                                                    pensionFrequency === 'yearly'
+                                                        ? "bg-primary text-primary-foreground shadow-sm"
+                                                        : "text-muted-foreground hover:text-foreground"
+                                                )}
+                                            >
+                                                Jährlich
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
