@@ -138,9 +138,9 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                             <ClipboardList className="size-5" />
                         </div>
                         <div>
-                            <div className="flex items-center gap-2">
-                                <h2 className="text-lg font-bold">Auftragsbuch</h2>
-                                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                <h2 className="text-base sm:text-lg font-bold">Auftragsbuch</h2>
+                                <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 whitespace-nowrap">
                                     Offene Aufträge & Limite
                                 </span>
                             </div>
@@ -161,10 +161,10 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                 <div className="p-4 border-b border-border bg-card space-y-3 shrink-0">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         {/* Status Filter Tabs */}
-                        <div className="flex items-center gap-1.5 bg-muted/50 p-1 rounded-xl text-xs font-medium">
+                        <div className="flex items-center gap-1 sm:gap-1.5 bg-muted/50 p-1 rounded-xl text-xs font-medium overflow-x-auto no-scrollbar w-full sm:w-auto shrink-0">
                             <button
                                 onClick={() => setFilter('all')}
-                                className={`px-3 py-1.5 rounded-lg transition-all ${filter === 'all'
+                                className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all whitespace-nowrap text-[11px] sm:text-xs ${filter === 'all'
                                     ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
                                     : 'text-muted-foreground hover:text-foreground'
                                     }`}
@@ -173,32 +173,32 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                             </button>
                             <button
                                 onClick={() => setFilter('open')}
-                                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${filter === 'open'
+                                className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-[11px] sm:text-xs ${filter === 'open'
                                     ? 'bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/40 shadow-xs'
                                     : 'text-muted-foreground hover:text-foreground'
                                     }`}
                             >
-                                <Clock className="size-3 text-amber-400" />
+                                <Clock className="size-3 text-amber-400 shrink-0" />
                                 <span>Wartend ({counts.open})</span>
                             </button>
                             <button
                                 onClick={() => setFilter('executed')}
-                                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${filter === 'executed'
+                                className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-[11px] sm:text-xs ${filter === 'executed'
                                     ? 'bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/40 shadow-xs'
                                     : 'text-muted-foreground hover:text-foreground'
                                     }`}
                             >
-                                <CheckCircle2 className="size-3 text-emerald-400" />
+                                <CheckCircle2 className="size-3 text-emerald-400 shrink-0" />
                                 <span>Ausgeführt ({counts.executed})</span>
                             </button>
                             <button
                                 onClick={() => setFilter('expired')}
-                                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${filter === 'expired'
+                                className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-[11px] sm:text-xs ${filter === 'expired'
                                     ? 'bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/40 shadow-xs'
                                     : 'text-muted-foreground hover:text-foreground'
                                     }`}
                             >
-                                <AlertCircle className="size-3 text-rose-400" />
+                                <AlertCircle className="size-3 text-rose-400 shrink-0" />
                                 <span>Abgelaufen ({counts.expired})</span>
                             </button>
                         </div>
@@ -416,7 +416,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                             )}
                                         </div>
 
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 flex-wrap">
                                             {/* Load into Simulator */}
                                             {onLoadIntoSimulator && (
                                                 <button
@@ -424,10 +424,10 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                                         onLoadIntoSimulator(order);
                                                         onClose();
                                                     }}
-                                                    className="px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground font-medium flex items-center gap-1.5 transition-colors border border-border/60"
+                                                    className="px-2.5 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground font-medium flex items-center gap-1.5 transition-colors border border-border/60 text-xs whitespace-nowrap"
                                                     title="In den Simulator laden"
                                                 >
-                                                    <ArrowDownToLine className="size-3.5 text-blue-400" />
+                                                    <ArrowDownToLine className="size-3.5 text-blue-400 shrink-0" />
                                                     <span>In Simulator laden</span>
                                                 </button>
                                             )}
@@ -436,10 +436,10 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                             {isOpen && (
                                                 <button
                                                     onClick={() => handleExecuteDirectly(order.id)}
-                                                    className="px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 font-medium flex items-center gap-1.5 transition-colors"
+                                                    className="px-2.5 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 font-medium flex items-center gap-1.5 transition-colors text-xs whitespace-nowrap"
                                                     title="Manuell als ausgeführt ins Depot buchen"
                                                 >
-                                                    <Check className="size-3.5" />
+                                                    <Check className="size-3.5 shrink-0" />
                                                     <span>Jetzt ausführen</span>
                                                 </button>
                                             )}
