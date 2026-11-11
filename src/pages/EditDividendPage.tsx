@@ -375,8 +375,8 @@ export function EditDividendPage() {
         const updates: Partial<Stock> = {};
 
         // Name Update
-        if (stockNameOverride !== undefined && stockNameOverride.trim() !== stock?.name) {
-            updates.name = stockNameOverride;
+        if (stockNameOverride !== undefined && stockNameOverride.trim().replace(/\r\n/g, '\n') !== (stock?.name || '').replace(/\r\n/g, '\n')) {
+            updates.name = stockNameOverride.trim();
         }
 
         // Symbol update

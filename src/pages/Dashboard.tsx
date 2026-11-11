@@ -1,3 +1,4 @@
+import { StockName } from '../components/StockName';
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
 
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -828,7 +829,7 @@ export function Dashboard() {
                                                             }}
                                                             title={div.stock.name}
                                                         >
-                                                            {div.stock.name}
+                                                            <StockName name={div.stock.name} />
                                                         </p>
                                                         <span className="text-[11px] font-mono text-muted-foreground truncate block">
                                                             {div.stock.symbol}

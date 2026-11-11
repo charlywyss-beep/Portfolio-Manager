@@ -536,7 +536,13 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
     const updateStock = (id: string, updates: Partial<Stock>) => {
         setStocks(prev => {
-            const index = prev.findIndex(s => s.id === id);
+            const trimmedId = String(id).trim();
+            const upperId = trimmedId.toUpperCase();
+            const index = prev.findIndex(s =>
+                String(s.id) === trimmedId ||
+                (s.symbol && s.symbol.toUpperCase() === upperId) ||
+                (s.isin && s.isin.toUpperCase() === upperId)
+            );
             if (index === -1) return prev;
 
             const stock = prev[index];
@@ -567,7 +573,13 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
     const updateStockPrice = (id: string, newPrice: number, newPreviousClose?: number, lastQuoteDate?: string) => {
         setStocks(prev => {
-            const index = prev.findIndex(s => s.id === id);
+            const trimmedId = String(id).trim();
+            const upperId = trimmedId.toUpperCase();
+            const index = prev.findIndex(s =>
+                String(s.id) === trimmedId ||
+                (s.symbol && s.symbol.toUpperCase() === upperId) ||
+                (s.isin && s.isin.toUpperCase() === upperId)
+            );
             if (index === -1) return prev;
 
             const s = prev[index];
@@ -740,17 +752,25 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     });
 
     const updateStockDividendYield = (stockId: string, dividendYield: number) => {
+        const trimmedId = String(stockId).trim();
+        const upperId = trimmedId.toUpperCase();
         setStocks((prev) =>
             prev.map((s) =>
-                s.id === stockId ? { ...s, dividendYield } : s
+                (String(s.id) === trimmedId || (s.symbol && s.symbol.toUpperCase() === upperId) || (s.isin && s.isin.toUpperCase() === upperId))
+                    ? { ...s, dividendYield }
+                    : s
             )
         );
     };
 
     const updateStockDividend = (stockId: string, dividendData: Partial<Pick<Stock, 'dividendYield' | 'dividendAmount' | 'dividendCurrency' | 'dividendExDate' | 'dividendPayDate' | 'dividendDates' | 'dividendFrequency' | 'withholdingTaxRate'>>) => {
+        const trimmedId = String(stockId).trim();
+        const upperId = trimmedId.toUpperCase();
         setStocks((prev) =>
             prev.map((s) =>
-                s.id === stockId ? { ...s, ...dividendData } : s
+                (String(s.id) === trimmedId || (s.symbol && s.symbol.toUpperCase() === upperId) || (s.isin && s.isin.toUpperCase() === upperId))
+                    ? { ...s, ...dividendData }
+                    : s
             )
         );
     };

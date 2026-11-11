@@ -1661,10 +1661,10 @@ export function FairValueCalculator() {
                             <div className="flex-1 min-w-0">
                                 <Link
                                     to={`/stock/${selectedSymbol}`}
-                                    className="font-bold text-sm sm:text-base lg:text-sm truncate hover:text-primary transition-colors block leading-tight"
+                                    className="font-bold text-sm sm:text-base lg:text-sm hover:text-primary transition-colors block leading-tight"
                                     title="Zur Detailansicht"
                                 >
-                                    <StockName name={quote?.name || stocks.find(s => s.symbol === selectedSymbol)?.name || selectedSymbol} />
+                                    <StockName name={stocks.find(s => s.symbol?.toUpperCase() === selectedSymbol?.toUpperCase() || s.id === selectedSymbol)?.name || quote?.name || selectedSymbol} />
                                 </Link>
                                 <div className="flex items-center gap-1.5 text-muted-foreground mt-0.5 text-xs">
                                     <span className="font-bold text-foreground">{selectedSymbol}</span>
