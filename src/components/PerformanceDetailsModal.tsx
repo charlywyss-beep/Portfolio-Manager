@@ -242,7 +242,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
             onClick={onClose}
         >
             <div
-                className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-[95vw] md:max-w-4xl max-h-[96vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10 overflow-hidden iphone-modal-shell"
+                className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-[96vw] md:max-w-5xl lg:max-w-6xl xl:max-w-7xl max-h-[96vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10 overflow-hidden iphone-modal-shell"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card z-10 iphone-modal-header-card">
@@ -415,7 +415,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                 <div
                     onTouchStart={handleTouchStart}
                     onTouchEnd={handleTouchEnd}
-                    className="overflow-y-auto overflow-x-hidden p-0 flex-1 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
+                    className="overflow-y-auto overflow-x-auto p-0 flex-1 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0"
                 >
                     <table className="w-full text-xs md:text-sm border-collapse table-fixed md:table-auto">
                         <thead>
@@ -432,7 +432,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 {/* 1. Kurs */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-2 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:text-right sticky top-0 z-30 bg-card align-middle md:w-[80px] whitespace-nowrap",
+                                        "px-1 md:px-2 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:text-right sticky top-0 z-30 bg-card align-middle md:w-[90px] lg:w-[100px] whitespace-nowrap",
                                         mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -463,7 +463,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 {/* 2. % am Datum */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-2 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:text-right sticky top-0 z-30 bg-card align-middle md:w-[95px] whitespace-nowrap",
+                                        "px-1 md:px-2 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:text-right sticky top-0 z-30 bg-card align-middle md:w-[105px] lg:w-[115px] whitespace-nowrap",
                                         mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -510,7 +510,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 {/* 3. CHF am Datum */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-2 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:text-right sticky top-0 z-30 bg-card align-middle md:w-[105px] whitespace-nowrap",
+                                        "px-1 md:px-2 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:text-right sticky top-0 z-30 bg-card align-middle md:w-[120px] lg:w-[130px] whitespace-nowrap",
                                         mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -555,12 +555,12 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 </th>
 
                                 {/* Spacer (Desktop only) */}
-                                <th className="hidden lg:table-cell lg:w-[20px] sticky top-0 z-30 bg-card"></th>
+                                <th className="hidden lg:table-cell lg:w-[16px] sticky top-0 z-30 bg-card"></th>
 
                                 {/* 4. Performance % */}
                                 <th
                                     className={cn(
-                                        "px-1 md:px-2 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:text-right sticky top-0 z-30 bg-card align-middle md:w-[100px] whitespace-nowrap",
+                                        "px-1 md:px-2 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:text-right sticky top-0 z-30 bg-card align-middle md:w-[110px] lg:w-[120px] whitespace-nowrap",
                                         mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -607,7 +607,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 {/* 5. Performance CHF */}
                                 <th
                                     className={cn(
-                                        "px-1 md:pr-4 md:pl-2 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:text-right sticky top-0 z-30 bg-card align-middle md:w-[115px] whitespace-nowrap",
+                                        "px-1 md:pr-4 md:pl-2 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[13px] md:text-xs uppercase tracking-wider text-center md:text-right sticky top-0 z-30 bg-card align-middle md:w-[140px] lg:w-[155px] whitespace-nowrap",
                                         mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell"
                                     )}
                                 >
@@ -721,7 +721,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 1. Current Price (Original currency only) */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-2.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-medium whitespace-nowrap align-middle md:w-[80px]",
+                                                "px-3 py-1.5 md:py-2.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-medium whitespace-nowrap align-middle md:w-[90px] lg:w-[100px]",
                                                 mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
                                             )}
                                         >
@@ -733,7 +733,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 2. Daily Performance % */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-2.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[95px]",
+                                                "px-3 py-1.5 md:py-2.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[105px] lg:w-[115px]",
                                                 mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell",
                                                 isWaitingForOpen
                                                     ? "text-muted-foreground/60 dark:text-slate-500"
@@ -751,7 +751,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 3. Daily Performance CHF */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-2.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[105px]",
+                                                "px-3 py-1.5 md:py-2.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[120px] lg:w-[130px]",
                                                 mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell",
                                                 isWaitingForOpen
                                                     ? "text-muted-foreground/60 dark:text-slate-500"
@@ -767,12 +767,12 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         </td>
 
                                         {/* Spacer (Desktop only) */}
-                                        <td className="hidden lg:table-cell lg:w-[20px]"></td>
+                                        <td className="hidden lg:table-cell lg:w-[16px]"></td>
 
                                         {/* 4. Total Performance % */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-2.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[100px]",
+                                                "px-3 py-1.5 md:py-2.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[110px] lg:w-[120px]",
                                                 mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell",
                                                 isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
                                             )}
@@ -783,7 +783,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 5. Total Performance CHF */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-2.5 md:pr-4 md:pl-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[115px]",
+                                                "px-3 py-1.5 md:py-2.5 md:pr-4 md:pl-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[140px] lg:w-[155px]",
                                                 mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell",
                                                 isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
                                             )}
