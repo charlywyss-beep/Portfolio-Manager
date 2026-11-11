@@ -887,6 +887,12 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 setOrderBook(data.orderBook);
                 localStorage.setItem('portfolio_order_book', JSON.stringify(data.orderBook));
             }
+            if (data.yesterdayClosingSnapshot) {
+                localStorage.setItem('portfolio_yesterday_closing_snapshot', JSON.stringify(data.yesterdayClosingSnapshot));
+            }
+            if (data.closingSnapshotsHistory) {
+                localStorage.setItem('portfolio_closing_snapshots_history', JSON.stringify(data.closingSnapshotsHistory));
+            }
             return true;
         } catch (e) {
             console.error("Import failed", e);
@@ -1063,6 +1069,18 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
             marketOverviewQuotes: (() => {
                 try {
                     const raw = localStorage.getItem('portfolio_market_overview_quotes');
+                    return raw ? JSON.parse(raw) : null;
+                } catch { return null; }
+            })(),
+            yesterdayClosingSnapshot: (() => {
+                try {
+                    const raw = localStorage.getItem('portfolio_yesterday_closing_snapshot');
+                    return raw ? JSON.parse(raw) : null;
+                } catch { return null; }
+            })(),
+            closingSnapshotsHistory: (() => {
+                try {
+                    const raw = localStorage.getItem('portfolio_closing_snapshots_history');
                     return raw ? JSON.parse(raw) : null;
                 } catch { return null; }
             })()

@@ -6,7 +6,7 @@ import { useCurrencyFormatter } from '../utils/currency';
 import { cn } from '../utils';
 import { Logo } from './Logo';
 import { estimateMarketState, hasMarketOpenedToday, isAnyStockMarketActiveToday, getMarketOpeningTimeHint } from '../utils/market';
-import { loadYesterdaySnapshot } from '../utils/dailyPerformanceSnapshot';
+import { loadYesterdaySnapshot, getPreviousTradingDate } from '../utils/dailyPerformanceSnapshot';
 import { isLikelyEtf } from '../utils/stockMetadata';
 import { usePortfolio } from '../context/PortfolioContext';
 
@@ -108,7 +108,17 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
         ? new Date(latestTimestamp)
         : new Date();
     const todayDateLabel = new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
-    const yesterdayDateLabel = yesterdaySnapshot?.displayDate || effectiveDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
+    const prevTradingDate = getPreviousTradingDate(new Date());
+    const fallbackYesterdayLabel = prevTradingDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
+
+    // Ensure yesterdayDateLabel is strictly from a past day and NEVER equal to today
+    let yesterdayDateLabel = (yesterdaySnapshot?.displayDate && yesterdaySnapshot.displayDate !== todayDateLabel)
+        ? yesterdaySnapshot.displayDate
+        : fallbackYesterdayLabel;
+    if (yesterdayDateLabel === todayDateLabel) {
+        yesterdayDateLabel = fallbackYesterdayLabel;
+    }
+
     const fullDateLabel = effectiveDate.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
     const isViewingYesterday = isAnyActiveToday && viewMode === 'yesterday';
     const activeDateLabel = (isViewingYesterday || !isAnyActiveToday) ? yesterdayDateLabel : todayDateLabel;

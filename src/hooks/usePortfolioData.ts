@@ -4,7 +4,7 @@ import { useExchangeRates } from '../context/ExchangeRateContext';
 import { convertToCHF } from '../utils/currency';
 import { isLikelyEtf } from '../utils/stockMetadata';
 import { estimateMarketState, hasMarketOpenedToday, isAnyStockMarketActiveToday } from '../utils/market';
-import { saveYesterdaySnapshot, type PositionDailySnapshot } from '../utils/dailyPerformanceSnapshot';
+import { saveYesterdaySnapshot, getLocalDateKey, type PositionDailySnapshot } from '../utils/dailyPerformanceSnapshot';
 
 // Helper to get frequency multiplication factor
 const getFrequencyFactor = (freq?: string) => {
@@ -351,13 +351,24 @@ export function usePortfolioData() {
         if (positions.length === 0) return;
 
         const isAnyRegular = positions.some(p => estimateMarketState(p.stock.symbol, p.stock.currency) === 'REGULAR');
-        if (!isAnyRegular) {
-            const validTimestamps = positions
-                .map(p => p.stock?.lastQuoteDate ? new Date(p.stock.lastQuoteDate).getTime() : 0)
-                .filter(t => t > 0);
-            const latestTimestamp = validTimestamps.length > 0 ? Math.max(...validTimestamps) : 0;
-            const effectiveDate = latestTimestamp > 0 ? new Date(latestTimestamp) : new Date();
-            const dateKey = effectiveDate.toISOString().split('T')[0];
+        if (isAnyRegular) return;
+
+        const validTimestamps = positions
+            .map(p => p.stock?.lastQuoteDate ? new Date(p.stock.lastQuoteDate).getTime() : 0)
+            .filter(t => t > 0);
+        const latestTimestamp = validTimestamps.length > 0 ? Math.max(...validTimestamps) : 0;
+        const effectiveDate = latestTimestamp > 0 ? new Date(latestTimestamp) : new Date();
+        const dateKey = getLocalDateKey(effectiveDate);
+        const todayKey = getLocalDateKey(new Date());
+
+        const now = new Date();
+        const currentHour = now.getHours();
+        const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+        const isPastDate = dateKey < todayKey;
+        const hasUsStocks = positions.some(p => p.stock.currency === 'USD' || !p.stock.symbol.includes('.'));
+        const isMarketDayClosed = isWeekend || (hasUsStocks ? currentHour >= 22 : currentHour >= 18);
+
+        if (isPastDate || isMarketDayClosed) {
             const displayDate = effectiveDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
             const fullDate = effectiveDate.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
 
