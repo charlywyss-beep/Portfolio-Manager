@@ -1,4 +1,4 @@
-import { ArrowLeft, TrendingUp, RefreshCw, ShoppingBag, Trophy, Flame, Target, ChevronUp, ChevronDown } from 'lucide-react';
+import { ArrowLeft, TrendingUp, RefreshCw, ShoppingBag, Trophy, Flame, Target, ChevronUp, ChevronDown, TrendingDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
 import { useCurrencyFormatter } from '../utils/currency';
@@ -408,7 +408,7 @@ export function WatchlistPerformanceModal({
                         </div>
 
                         <div className="flex items-center gap-2 p-1.5 rounded-lg bg-card/60 border border-border/50">
-                            <div className="size-4 text-muted-foreground flex items-center justify-center font-bold text-xs">#</div>
+                            <TrendingDown className="size-4 text-red-400 shrink-0" />
                             <div className="min-w-0">
                                 <div className="text-[10px] text-muted-foreground uppercase font-semibold">Schlusslicht</div>
                                 <div className="font-bold truncate text-foreground flex items-center gap-1">
@@ -548,12 +548,36 @@ export function WatchlistPerformanceModal({
                                     // Medal for rank
                                     const rankNumber = idx + 1;
                                     const rankBadge = rankNumber === 1
-                                        ? <span className="text-base" title="1. Platz">🥇</span>
+                                        ? (
+                                            <div className="size-6 sm:size-7 rounded-full bg-gradient-to-br from-amber-400/25 to-yellow-600/15 border border-amber-400/40 flex items-center justify-center text-sm shadow-xs" title="1. Platz">
+                                                🥇
+                                            </div>
+                                        )
                                         : rankNumber === 2
-                                            ? <span className="text-base" title="2. Platz">🥈</span>
+                                            ? (
+                                                <div className="size-6 sm:size-7 rounded-full bg-gradient-to-br from-slate-300/25 to-slate-500/15 border border-slate-300/40 flex items-center justify-center text-sm shadow-xs" title="2. Platz">
+                                                    🥈
+                                                </div>
+                                            )
                                             : rankNumber === 3
-                                                ? <span className="text-base" title="3. Platz">🥉</span>
-                                                : <span className="font-mono text-xs text-muted-foreground font-semibold">#{rankNumber}</span>;
+                                                ? (
+                                                    <div className="size-6 sm:size-7 rounded-full bg-gradient-to-br from-amber-700/25 to-amber-900/15 border border-amber-600/40 flex items-center justify-center text-sm shadow-xs" title="3. Platz">
+                                                        🥉
+                                                    </div>
+                                                )
+                                                : (
+                                                    <div
+                                                        className={cn(
+                                                            "size-6 sm:size-7 rounded-full font-mono font-bold text-xs flex items-center justify-center shadow-2xs border transition-colors",
+                                                            isPos
+                                                                ? "bg-green-500/10 border-green-500/25 text-green-400"
+                                                                : "bg-muted/70 border-border/80 text-foreground/80 group-hover:border-primary/50 group-hover:text-primary"
+                                                        )}
+                                                        title={`${rankNumber}. Platz`}
+                                                    >
+                                                        {rankNumber}
+                                                    </div>
+                                                );
 
                                     // Bar calculation relative to maximum absolute gain
                                     const barWidth = stats?.maxAbsGain
