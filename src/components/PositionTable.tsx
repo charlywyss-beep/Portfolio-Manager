@@ -104,18 +104,37 @@ export function PositionTable({
                             <tr className="border-b border-border bg-muted/20 iphone-landscape-table-header-row">
                                 {/* 0. Aktie */}
                                 <th
-                                    onClick={() => onSort?.('name')}
-                                    className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[225px] min-w-[220px] max-w-[250px] md:w-[380px] md:min-w-[380px] md:max-w-[380px] touch-pan-y align-middle iphone-landscape-col-stock cursor-pointer hover:text-foreground select-none transition-colors"
-                                    title="Nach Name sortieren (Klick für A-Z / Z-A)"
+                                    onClick={() => onSort?.('aktie_toggle')}
+                                    className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[225px] min-w-[220px] max-w-[250px] md:w-[380px] md:min-w-[380px] md:max-w-[380px] touch-pan-y align-middle iphone-landscape-col-stock cursor-pointer select-none transition-colors"
+                                    title="Klick: Wechselt zwischen Geöffnet (A-Z / Z-A) und rein Alphabetisch"
                                 >
-                                    <div className="flex items-center gap-1.5">
-                                        <span>Aktie</span>
-                                        {sortConfig?.key === 'name' && (
-                                            <span className="text-primary font-bold">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-                                        )}
-                                        {sortConfig?.key === 'market' && (
-                                            <span className="text-emerald-500 font-bold text-xs" title="Geöffnete Börsen zuerst">🟢</span>
-                                        )}
+                                    <div className="flex items-center justify-between gap-1.5 w-full pr-1">
+                                        <div className="flex items-center gap-1.5 hover:text-foreground">
+                                            <span>Aktie</span>
+                                            {sortConfig?.key === 'name' && (
+                                                <span className="text-primary font-bold">{sortConfig.direction === 'asc' ? 'A-Z ↑' : 'Z-A ↓'}</span>
+                                            )}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onSort?.('market');
+                                            }}
+                                            className={cn(
+                                                "text-[10px] px-2 py-0.5 rounded font-semibold transition-all border shrink-0 flex items-center gap-1 cursor-pointer",
+                                                sortConfig?.key === 'market'
+                                                    ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-xs"
+                                                    : "bg-muted/60 text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+                                            )}
+                                            title="Geöffnete Börsen zuerst (A-Z)"
+                                        >
+                                            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                            <span>Geöffnet zuerst</span>
+                                            {sortConfig?.key === 'market' && (
+                                                <span className="font-bold">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                            )}
+                                        </button>
                                     </div>
                                 </th>
 

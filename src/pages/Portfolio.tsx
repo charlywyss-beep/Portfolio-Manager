@@ -141,7 +141,7 @@ export function Portfolio() {
         if (saved) {
             try { return JSON.parse(saved); } catch {}
         }
-        return { key: 'name', direction: 'asc' };
+        return { key: 'market', direction: 'asc' };
     });
 
     useEffect(() => {
@@ -150,6 +150,12 @@ export function Portfolio() {
 
     const handleSort = (key: string) => {
         setSortConfig(prev => {
+            if (key === 'aktie_toggle') {
+                if (prev.key === 'market' && prev.direction === 'asc') return { key: 'market', direction: 'desc' };
+                if (prev.key === 'market' && prev.direction === 'desc') return { key: 'name', direction: 'asc' };
+                if (prev.key === 'name' && prev.direction === 'asc') return { key: 'name', direction: 'desc' };
+                return { key: 'market', direction: 'asc' };
+            }
             if (prev.key === key) {
                 return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
             }
@@ -160,18 +166,17 @@ export function Portfolio() {
 
     const getSortedPositions = (posList: any[]) => {
         return [...posList].sort((a, b) => {
-            // 1. Geöffnete Börsen zuerst
+            // 1. Geöffnete Börsen zuerst, innerhalb alphabetisch
             if (sortConfig.key === 'market') {
                 const stateA = estimateMarketState(a.stock.symbol, a.stock.currency);
                 const stateB = estimateMarketState(b.stock.symbol, b.stock.currency);
                 const isOpenA = stateA === 'REGULAR';
                 const isOpenB = stateB === 'REGULAR';
                 if (isOpenA !== isOpenB) {
-                    return sortConfig.direction === 'asc'
-                        ? (isOpenA ? -1 : 1)
-                        : (isOpenA ? 1 : -1);
+                    return isOpenA ? -1 : 1;
                 }
-                return a.stock.name.localeCompare(b.stock.name);
+                const cmp = a.stock.name.localeCompare(b.stock.name);
+                return sortConfig.direction === 'asc' ? cmp : -cmp;
             }
 
             if (sortConfig.key === 'name') {
@@ -288,8 +293,8 @@ export function Portfolio() {
                                     value={sortConfig.key}
                                     onChange={(e) => handleSort(e.target.value)}
                                 >
-                                    <option value="name">Name (A-Z)</option>
-                                    <option value="market">🟢 Börsen geöffnet zuerst</option>
+                                    <option value="market">🟢 Börsen geöffnet zuerst (A-Z)</option>
+                                    <option value="name">Name (A-Z, alle Börsen)</option>
                                     <option value="value">Wert: Hoch-Tief</option>
                                     <option value="performance">Performance: Beste (%)</option>
                                     <option value="gainLoss">Gewinn / Verlust (+/-)</option>
