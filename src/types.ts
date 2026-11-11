@@ -320,3 +320,36 @@ export interface SavedSimulation {
     annualDividendNative?: number;
     feesConfig?: any;
 }
+
+export interface OrderBookEntry {
+    id: string;
+    createdAt: string;
+    validUntil: string; // YYYY-MM-DD
+    mode: 'buy' | 'sell';
+    stockId?: string;
+    stockName: string;
+    stockSymbol: string;
+    stockIsin?: string;
+    shares: number;
+    limitPrice: number;
+    currency: string;
+    volumeNative: number;
+    volumeCHF: number;
+    totalFeesCHF: number;
+    totalInvestOrProceedsCHF: number;
+    status: 'open' | 'executed' | 'expired';
+    executedAt?: string;
+    executedPrice?: number;
+    dividendPerShare?: number;
+    dividendFrequency?: 'annually' | 'semi-annually' | 'quarterly' | 'monthly';
+    distributionPolicy?: 'distributing' | 'accumulating';
+    grossYield?: number;
+    netYield?: number;
+    taxRate?: number;
+    annualDividendCHF?: number;
+    annualDividendNative?: number;
+    feesConfig?: any;
+    exchange?: string;
+    note?: string;
+}
+

@@ -47,6 +47,14 @@ interface PortfolioContextType {
     deleteSimulation: (id: string) => void;
     clearSimulations: () => void;
 
+    // Auftragsbuch (Order Book)
+    orderBook: import('../types').OrderBookEntry[];
+    addOrderBookEntry: (entry: Omit<import('../types').OrderBookEntry, 'id' | 'createdAt' | 'status'>) => string;
+    updateOrderBookEntry: (id: string, updates: Partial<import('../types').OrderBookEntry>) => void;
+    deleteOrderBookEntry: (id: string) => void;
+    clearOrderBook: () => void;
+    executeOrderBookEntry: (id: string) => boolean;
+
     simulatorState: {
         shares: number;
         price: number;
@@ -871,6 +879,14 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
             if (data.marketOverviewQuotes) {
                 localStorage.setItem('portfolio_market_overview_quotes', JSON.stringify(data.marketOverviewQuotes));
             }
+            if (data.simulations) {
+                setSimulations(data.simulations);
+                localStorage.setItem('portfolio_simulations', JSON.stringify(data.simulations));
+            }
+            if (data.orderBook) {
+                setOrderBook(data.orderBook);
+                localStorage.setItem('portfolio_order_book', JSON.stringify(data.orderBook));
+            }
             return true;
         } catch (e) {
             console.error("Import failed", e);
@@ -909,6 +925,105 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         setSimulations([]);
     };
 
+    const [orderBook, setOrderBook] = useState<import('../types').OrderBookEntry[]>(() => {
+        try {
+            const raw = localStorage.getItem('portfolio_order_book');
+            return raw ? JSON.parse(raw) : [];
+        } catch {
+            return [];
+        }
+    });
+
+    useEffect(() => {
+        localStorage.setItem('portfolio_order_book', JSON.stringify(orderBook));
+    }, [orderBook]);
+
+    const addOrderBookEntry = (entry: Omit<import('../types').OrderBookEntry, 'id' | 'createdAt' | 'status'>) => {
+        const newEntry: import('../types').OrderBookEntry = {
+            ...entry,
+            id: `order_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+            createdAt: new Date().toISOString(),
+            status: 'open'
+        };
+        setOrderBook(prev => [newEntry, ...prev]);
+        return newEntry.id;
+    };
+
+    const updateOrderBookEntry = (id: string, updates: Partial<import('../types').OrderBookEntry>) => {
+        setOrderBook(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o));
+    };
+
+    const deleteOrderBookEntry = (id: string) => {
+        setOrderBook(prev => prev.filter(o => o.id !== id));
+    };
+
+    const clearOrderBook = () => {
+        setOrderBook([]);
+    };
+
+    const executeOrderBookEntry = (id: string) => {
+        const entry = orderBook.find(o => o.id === id);
+        if (!entry) return false;
+
+        if (entry.mode === 'buy') {
+            let targetStockId = entry.stockId;
+            if (!targetStockId || targetStockId === 'new') {
+                const existing = stocks.find(s => s.symbol === entry.stockSymbol || (entry.stockIsin && s.isin === entry.stockIsin));
+                if (existing) {
+                    targetStockId = existing.id;
+                } else {
+                    targetStockId = addStock({
+                        symbol: entry.stockSymbol,
+                        name: entry.stockName,
+                        isin: entry.stockIsin,
+                        currency: (entry.currency as any) || 'CHF',
+                        currentPrice: entry.limitPrice,
+                        previousClose: entry.limitPrice,
+                        sector: '',
+                        dividendAmount: entry.dividendPerShare || 0,
+                        dividendYield: entry.limitPrice > 0 && entry.dividendPerShare ? (entry.dividendPerShare / entry.limitPrice) * 100 : 0,
+                        dividendFrequency: entry.dividendFrequency || 'annually'
+                    });
+                }
+            }
+
+            let effectivePrice = entry.limitPrice;
+            if (entry.volumeCHF > 0 && entry.totalFeesCHF > 0) {
+                const feeRatio = entry.totalFeesCHF / entry.volumeCHF;
+                effectivePrice = entry.limitPrice * (1 + feeRatio);
+            }
+
+            let effectiveFxRate = 1;
+            if (entry.currency && entry.currency !== 'CHF' && entry.volumeNative > 0) {
+                effectiveFxRate = entry.volumeCHF / entry.volumeNative;
+            }
+
+            addPosition({
+                stockId: targetStockId,
+                shares: entry.shares,
+                buyPriceAvg: effectivePrice,
+                averageEntryFxRate: effectiveFxRate
+            });
+        } else if (entry.mode === 'sell') {
+            const position = positions.find(p => p.stockId === entry.stockId || (entry.stockSymbol && stocks.find(s => s.id === p.stockId)?.symbol === entry.stockSymbol));
+            if (position) {
+                const remainingShares = position.shares - entry.shares;
+                if (remainingShares <= 0) {
+                    deletePosition(position.id);
+                } else {
+                    updatePosition(position.id, { shares: remainingShares });
+                }
+            }
+        }
+
+        updateOrderBookEntry(id, {
+            status: 'executed',
+            executedAt: new Date().toISOString(),
+            executedPrice: entry.limitPrice
+        });
+        return true;
+    };
+
     const [simulatorState, setSimulatorState] = useState<PortfolioContextType['simulatorState']>(getInitialSimulatorState);
 
     useEffect(() => {
@@ -937,6 +1052,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
             watchlists,
             mortgageData,
             simulatorState,
+            simulations,
+            orderBook,
             marketOverviewItems: (() => {
                 try {
                     const raw = localStorage.getItem('portfolio_market_overview_items');
@@ -950,7 +1067,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 } catch { return null; }
             })()
         };
-    }, [positions, stocks, fixedDeposits, history, watchlists, mortgageData, simulatorState, simulations]);
+    }, [positions, stocks, fixedDeposits, history, watchlists, mortgageData, simulatorState, simulations, orderBook]);
 
     return (
         <PortfolioContext.Provider
@@ -998,7 +1115,13 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 simulations,
                 addSimulation,
                 deleteSimulation,
-                clearSimulations
+                clearSimulations,
+                orderBook,
+                addOrderBookEntry,
+                updateOrderBookEntry,
+                deleteOrderBookEntry,
+                clearOrderBook,
+                executeOrderBookEntry
             }}
         >
             {children}

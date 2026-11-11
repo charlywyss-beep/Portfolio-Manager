@@ -2,9 +2,10 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { SimulationArchiveModal } from '../components/SimulationArchiveModal';
-import type { SavedSimulation } from '../types';
+import { OrderBookModal } from '../components/OrderBookModal';
+import type { SavedSimulation, OrderBookEntry } from '../types';
 
-import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, HelpCircle, BookOpen, AlertTriangle, Target, Telescope, FolderArchive, BookmarkPlus } from 'lucide-react';
+import { Coins, Settings2, Plus, Check, Eye, Pencil, FileText, Search, PlusCircle, X, BarChart3, PieChart, RefreshCw, HelpCircle, BookOpen, AlertTriangle, Target, Telescope, FolderArchive, BookmarkPlus, ClipboardList, Calendar } from 'lucide-react';
 import { fetchStockHistory, searchStocks, fetchStockQuote } from '../services/yahoo-finance';
 
 import { jsPDF } from 'jspdf';
@@ -289,7 +290,7 @@ const StockListItem = ({ stock, onClick, subtitle }: { stock: any; onClick: () =
 export function DividendCalculator() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { stocks, watchlists, addStock, addToWatchlist, updateStock, simulatorState, updateSimulatorState, positions, addPosition, updatePosition, deletePosition, simulations, addSimulation } = usePortfolio();
+    const { stocks, watchlists, addStock, addToWatchlist, updateStock, simulatorState, updateSimulatorState, positions, addPosition, updatePosition, deletePosition, simulations, addSimulation, addOrderBookEntry } = usePortfolio();
     const { rates } = useExchangeRates();
 
     // Catch-all: Ensure GBp is always converted to GBP on mount/update
@@ -804,7 +805,14 @@ export function DividendCalculator() {
     const [showSuccess, setShowSuccess] = useState(false);
     const [showGuide, setShowGuide] = useState(false);
     const [showArchive, setShowArchive] = useState(false);
+    const [showOrderBook, setShowOrderBook] = useState(false);
     const [showSavedFeedback, setShowSavedFeedback] = useState(false);
+    const [showOrderBookSavedFeedback, setShowOrderBookSavedFeedback] = useState(false);
+    const [orderValidUntil, setOrderValidUntil] = useState<string>(() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 14);
+        return d.toISOString().split('T')[0];
+    });
     const [dividendInputMode, setDividendInputMode] = useState<'annual' | 'periodic'>('annual');
     const [yieldInputMode, setYieldInputMode] = useState<'annual' | 'periodic'>('annual');
 
@@ -895,6 +903,81 @@ export function DividendCalculator() {
         setTimeout(() => {
             handleExportPDF(true); // skipAutoArchive = true because it's already in the archive!
         }, 100);
+    };
+
+    const handleLoadOrderIntoSimulator = (order: OrderBookEntry) => {
+        if (order.stockId && order.stockId !== 'new') {
+            setActiveTab('search');
+        } else {
+            setActiveTab('manual');
+        }
+        const fFactor = order.dividendFrequency === 'quarterly' ? 4 : order.dividendFrequency === 'monthly' ? 12 : order.dividendFrequency === 'semi-annually' ? 2 : 1;
+        let annualDiv = 0;
+        if (order.dividendPerShare) {
+            annualDiv = order.dividendPerShare * fFactor;
+        } else if (order.grossYield && order.limitPrice) {
+            annualDiv = (order.grossYield / 100) * order.limitPrice;
+        }
+
+        updateSimulatorState({
+            mode: order.mode,
+            selectedStockId: order.stockId || '',
+            simName: order.stockName,
+            simSymbol: order.stockSymbol,
+            simIsin: order.stockIsin || '',
+            shares: order.shares,
+            price: order.limitPrice,
+            simCurrency: (order.currency as any) || 'CHF',
+            dividend: parseFloat(annualDiv.toFixed(4)),
+            simFrequency: order.dividendFrequency || 'annually',
+            fees: order.feesConfig ? { ...fees, ...order.feesConfig } : fees
+        });
+        if (order.validUntil) {
+            setOrderValidUntil(order.validUntil);
+        }
+    };
+
+    const handleSaveToOrderBook = () => {
+        let stockName = simName || 'Unbekannte Aktie';
+        let stockSymbol = simSymbol || 'N/A';
+        let stockIsin = simIsin || '';
+
+        if (selectedStockId && selectedStockId !== 'new') {
+            const stock = stocks.find(s => s.id === selectedStockId);
+            if (stock) {
+                stockName = stock.name;
+                stockSymbol = stock.symbol;
+                stockIsin = stock.isin || '';
+            }
+        }
+
+        addOrderBookEntry({
+            validUntil: orderValidUntil,
+            mode,
+            stockId: selectedStockId,
+            stockName,
+            stockSymbol,
+            stockIsin,
+            shares,
+            limitPrice: price,
+            currency: simCurrency === 'GBp' ? 'GBP' : (simCurrency || 'CHF'),
+            volumeNative,
+            volumeCHF,
+            totalFeesCHF,
+            totalInvestOrProceedsCHF: mode === 'buy' ? totalInvestCHF : totalProceedsCHF,
+            dividendPerShare: dividend > 0 ? (dividend / freqFactor) : 0,
+            dividendFrequency: isAccumulating ? undefined : frequency,
+            distributionPolicy: isAccumulating ? 'accumulating' : 'distributing',
+            grossYield,
+            netYield: taxRate > 0 ? (grossYield * taxFactor) : netYield,
+            taxRate,
+            annualDividendCHF,
+            annualDividendNative: annualDivNative,
+            feesConfig: { ...fees }
+        });
+
+        setShowOrderBookSavedFeedback(true);
+        setTimeout(() => setShowOrderBookSavedFeedback(false), 2200);
     };
 
     // Price Editing State
@@ -1572,6 +1655,14 @@ export function DividendCalculator() {
                                             {simulations.length}
                                         </span>
                                     )}
+                                </button>
+                                <button
+                                    onClick={() => setShowOrderBook(true)}
+                                    title="Auftragsbuch öffnen"
+                                    className="text-xs flex items-center gap-1.5 border border-border px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors font-medium bg-background relative shadow-xs active:scale-95"
+                                >
+                                    <ClipboardList size={14} className="text-blue-400" />
+                                    <span className="hidden sm:inline">Auftragsbuch</span>
                                 </button>
                                 <button
                                     onClick={() => updateSimulatorState({ fees: { ...fees, showAdvanced: !fees.showAdvanced } })}
@@ -2455,6 +2546,7 @@ export function DividendCalculator() {
                                 </div>
 
                                 {/* Archive Simulation Action */}
+                                {/* Archive Simulation Action */}
                                 <button
                                     onClick={handleSaveCurrentSimulation}
                                     className={`w-full py-2 rounded-md font-medium text-xs flex items-center justify-center gap-2 border transition-all ${
@@ -2476,6 +2568,88 @@ export function DividendCalculator() {
                                     )}
                                 </button>
 
+                                {/* Auftragsbuch Action & Gültigkeit */}
+                                <div className="p-2.5 rounded-lg bg-blue-950/20 border border-blue-500/25 space-y-2">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="text-muted-foreground font-medium flex items-center gap-1.5">
+                                            <Calendar size={13} className="text-blue-400" />
+                                            Gültig bis:
+                                        </span>
+                                        <input
+                                            type="date"
+                                            value={orderValidUntil}
+                                            onChange={e => setOrderValidUntil(e.target.value)}
+                                            className="px-2 py-0.5 text-xs bg-background border border-border rounded font-mono text-foreground focus:outline-hidden focus:border-primary"
+                                        />
+                                    </div>
+                                    <div className="flex items-center gap-1 text-[10px]">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const d = new Date();
+                                                d.setDate(d.getDate() + 7);
+                                                setOrderValidUntil(d.toISOString().split('T')[0]);
+                                            }}
+                                            className="px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                            +7 T.
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const d = new Date();
+                                                d.setDate(d.getDate() + 14);
+                                                setOrderValidUntil(d.toISOString().split('T')[0]);
+                                            }}
+                                            className="px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                            +14 T.
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const d = new Date();
+                                                d.setDate(d.getDate() + 30);
+                                                setOrderValidUntil(d.toISOString().split('T')[0]);
+                                            }}
+                                            className="px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                            +30 T.
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const d = new Date();
+                                                const ultimo = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+                                                setOrderValidUntil(ultimo.toISOString().split('T')[0]);
+                                            }}
+                                            className="px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                            Ultimo
+                                        </button>
+                                    </div>
+                                    <button
+                                        onClick={handleSaveToOrderBook}
+                                        disabled={shares <= 0 || price <= 0}
+                                        className={`w-full py-2 rounded-md font-medium text-xs flex items-center justify-center gap-2 border transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                                            showOrderBookSavedFeedback
+                                                ? 'bg-blue-500/25 border-blue-500 text-blue-300'
+                                                : 'bg-blue-600/15 hover:bg-blue-600/25 border-blue-500/30 text-blue-300 shadow-xs active:scale-95'
+                                        }`}
+                                    >
+                                        {showOrderBookSavedFeedback ? (
+                                            <>
+                                                <Check size={14} className="text-blue-400" />
+                                                <span>Im Auftragsbuch angelegt!</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <ClipboardList size={14} className="text-blue-400" />
+                                                <span>Als Auftrag ins Auftragsbuch</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                                 {/* Watchlist Action */}
                                 {mode === 'buy' && (
                                     <div className="relative">
@@ -2898,6 +3072,13 @@ export function DividendCalculator() {
                 onClose={() => setShowArchive(false)}
                 onLoadSimulation={handleLoadSimulation}
                 onExportPdf={handleExportPdfFromSim}
+            />
+
+            {/* Auftragsbuch Modal */}
+            <OrderBookModal
+                isOpen={showOrderBook}
+                onClose={() => setShowOrderBook(false)}
+                onLoadIntoSimulator={handleLoadOrderIntoSimulator}
             />
 
             {/* Guide / Anleitung Modal */}
