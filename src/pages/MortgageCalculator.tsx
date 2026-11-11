@@ -1360,22 +1360,25 @@ export const MortgageCalculator = () => {
                                 </div>
 
                                 {/* Summenzeile & Zahlweise */}
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg bg-accent/20 border border-border/50 text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-muted-foreground font-medium">Total Renteneinkommen:</span>
-                                        <span className="font-mono font-bold text-foreground">
-                                            {formatCHF(monthlyTotalPension)} / Monat
-                                        </span>
-                                        <span className="text-xs text-muted-foreground font-mono">
-                                            ({formatCHF(annualPensionIncome)} / Jahr)
-                                        </span>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-accent/30 border border-border">
+                                    <div className="flex flex-col sm:flex-row sm:items-baseline gap-2">
+                                        <span className="text-base font-semibold text-foreground">Total Renteneinkommen:</span>
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-xl font-bold text-white tracking-tight">
+                                                {formatCHF(monthlyTotalPension)}
+                                                <span className="text-sm font-normal text-muted-foreground ml-1">/ Monat</span>
+                                            </span>
+                                            <span className="text-sm font-medium text-muted-foreground">
+                                                ({formatCHF(annualPensionIncome)} / Jahr)
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="text-xs text-muted-foreground">Zahlweise:</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Zahlweise:</span>
                                         <select
                                             value={pensionFrequency}
                                             onChange={(e) => updateMortgageData({ pensionIncomeFrequency: e.target.value as 'monthly' | 'yearly' })}
-                                            className="bg-background border border-input rounded px-2.5 py-1 text-xs h-8 cursor-pointer"
+                                            className="bg-background border border-input rounded-md px-3 py-1.5 text-sm font-medium h-9 cursor-pointer"
                                         >
                                             <option value="monthly">Monatlich</option>
                                             <option value="yearly">Jährlich</option>
