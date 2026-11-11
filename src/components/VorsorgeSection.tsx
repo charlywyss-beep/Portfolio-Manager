@@ -11,7 +11,7 @@ interface VorsorgeSectionProps {
 }
 
 export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, setEditingFixedDeposit }: VorsorgeSectionProps) {
-    const { fixedDeposits, deleteFixedDeposit, mortgageData } = usePortfolio();
+    const { fixedDeposits, deleteFixedDeposit } = usePortfolio();
     const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean, fdId: string | null, name: string }>({ isOpen: false, fdId: null, name: '' });
 
     const now = new Date();
@@ -58,24 +58,17 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                     <table className="w-full text-sm text-left">
                         <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
                             <tr>
-                                <th className="px-4 py-3 sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] lg:w-[250px] min-w-[180px] lg:min-w-[250px] max-w-[180px] lg:max-w-[250px]">Bank / Institut</th>
-                                <th className="px-4 py-3 sticky top-0 z-30 bg-card w-[130px] lg:w-[150px] min-w-[130px] lg:min-w-[150px] max-w-[130px] lg:max-w-[150px]">Konto-Typ</th>
-                                <th className="px-4 py-3 sticky top-0 z-30 bg-card text-right whitespace-nowrap min-w-[140px]">Vorsorgekapital Stand {currentMonthShort} {currentYear}</th>
-                                <th className="px-4 py-3 sticky top-0 z-30 bg-card min-w-[300px]">Einzahlung {currentYear} Fortschritt</th>
-                                <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky top-0 md:sticky md:-right-px bg-card z-30 md:z-40 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
+                                <th className="px-4 py-3 sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] lg:w-[250px] min-w-[180px] lg:min-w-[250px] max-w-[180px] lg:max-w-[250px] align-middle">Bank / Institut</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card w-[130px] lg:w-[150px] min-w-[130px] lg:min-w-[150px] max-w-[130px] lg:max-w-[150px] align-middle">Konto-Typ</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card text-right whitespace-nowrap min-w-[160px] align-middle">Vorsorgekapital Stand {currentMonthShort} {currentYear}</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card min-w-[280px] align-middle">Einzahlung {currentYear} Fortschritt</th>
+                                <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky top-0 md:sticky md:-right-px bg-card z-30 md:z-40 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">Aktion</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
                             {filteredVorsorge.map(fd => {
-                                // Säule 3a Betrag / Limit aus Budgetplaner ermitteln oder offizielles 2026er Limit (7'528 CHF)
-                                const pillar3aBudgetItem = mortgageData?.budgetItems?.find((item: any) =>
-                                    item.name && (/3a/i.test(item.name) || /säule/i.test(item.name) || /vorsorge/i.test(item.name))
-                                );
-                                const budgetYearlyAmount = pillar3aBudgetItem
-                                    ? (pillar3aBudgetItem.frequency === 'yearly' ? pillar3aBudgetItem.amount : pillar3aBudgetItem.amount * 12)
-                                    : undefined;
-
-                                const limit = (budgetYearlyAmount && budgetYearlyAmount > 0) ? budgetYearlyAmount : 7528;
+                                // Maximal möglicher Säule 3a Jahresbeitrag 2026
+                                const limit = 7528;
 
                                 // Berechne aktuell basierend auf manuell oder auto
                                 // Nur abgeschlossene Monate zählen (Januar = 0, wenn wir im Januar sind, z.B. Nov = 10 abgeschlossene Monate)
@@ -89,10 +82,11 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                     : (fd.currentYearContribution || 0);
 
                                 const percent = Math.min((current / limit) * 100, 100);
+                                const remaining = Math.max(0, limit - current);
 
                                 return (
                                     <tr key={fd.id} className="group hover:bg-muted/30 transition-colors">
-                                        <td className="px-4 py-3 font-medium sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <td className="px-4 py-3 font-medium sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center gap-3">
                                                 <Logo
@@ -110,32 +104,49 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3">
+                                        <td className="px-4 py-3 align-middle">
                                             <span className="px-2 py-0.5 rounded-md text-xs font-medium border bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50">
                                                 Vorsorge 3a
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-right font-medium">
-                                            <span className="text-white">
+                                        <td className="px-4 py-3 text-right font-medium align-middle whitespace-nowrap">
+                                            <span className="text-base font-bold text-white tracking-tight">
                                                 {fd.amount.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex flex-col gap-1.5">
-                                                <div className="flex justify-between text-xs font-medium">
-                                                    <span>
-                                                        <span className="!text-white">{current.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span> <span className="uppercase text-muted-foreground ml-1">von {limit.toLocaleString('de-CH', { minimumFractionDigits: 0 })}</span>
+                                        <td className="px-4 py-3 align-middle">
+                                            <div className="flex flex-col gap-1.5 py-0.5 max-w-xl">
+                                                <div className="flex justify-between items-baseline">
+                                                    <span className="text-sm font-bold !text-white tracking-tight">
+                                                        {current.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
+                                                    </span>
+                                                    <span className="text-xs font-mono font-semibold text-emerald-400">
+                                                        {percent.toFixed(1)}%
                                                     </span>
                                                 </div>
-                                                <div className="h-2.5 w-full bg-green-100 dark:bg-green-900/30 rounded-full overflow-hidden border border-green-200 dark:border-green-800">
+                                                <div className="h-2 w-full bg-green-100 dark:bg-green-900/30 rounded-full overflow-hidden border border-green-200 dark:border-green-800">
                                                     <div
                                                         className="h-full bg-green-600 dark:bg-green-500 rounded-full transition-all duration-500 w-[var(--width)]"
                                                         style={{ '--width': `${percent}%` } as React.CSSProperties}
                                                     />
                                                 </div>
+                                                <div className="flex justify-between items-center text-xs text-muted-foreground">
+                                                    <span>
+                                                        von möglichen <span className="font-medium text-foreground/90">{limit.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF</span>
+                                                    </span>
+                                                    {remaining > 0 ? (
+                                                        <span className="font-mono text-[11px] text-muted-foreground/80">
+                                                            noch {remaining.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF offen
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-emerald-400 font-medium text-[11px]">
+                                                            Maximalbetrag erreicht
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
-                                        <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px z-40 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">
+                                        <td className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky -right-px z-40 group-hover:bg-muted/30 transition-colors shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center justify-center gap-1">
                                                 <button
