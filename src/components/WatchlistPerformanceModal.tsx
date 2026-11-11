@@ -1,4 +1,4 @@
-import { ArrowLeft, TrendingUp, RefreshCw, ShoppingBag, Trophy, Flame, Target, ChevronUp, ChevronDown, TrendingDown } from 'lucide-react';
+import { ArrowLeft, TrendingUp, RefreshCw, ShoppingBag, Trophy, Flame, Target, ChevronUp, ChevronDown, TrendingDown, PieChart, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
 import { useCurrencyFormatter } from '../utils/currency';
@@ -93,6 +93,24 @@ export function WatchlistPerformanceModal({
         return stocks.filter(s => watchlistStockIds.includes(s.id));
     }, [stocks, watchlistStockIds]);
 
+    const [assetFilter, setAssetFilter] = useState<'all' | 'stock' | 'etf'>('stock');
+
+    const stockCount = useMemo(() => relevantStocks.filter(s => !s.type || s.type === 'stock').length, [relevantStocks]);
+    const etfCount = useMemo(() => relevantStocks.filter(s => s.type === 'etf').length, [relevantStocks]);
+
+    // Filter stocks based on assetFilter
+    const filteredStocks = useMemo(() => {
+        if (stockCount > 0 && etfCount > 0) {
+            if (assetFilter === 'stock') {
+                return relevantStocks.filter(s => !s.type || s.type === 'stock');
+            }
+            if (assetFilter === 'etf') {
+                return relevantStocks.filter(s => s.type === 'etf');
+            }
+        }
+        return relevantStocks;
+    }, [relevantStocks, assetFilter, stockCount, etfCount]);
+
     // Fetch historical data for periods other than '1D'
     useEffect(() => {
         if (!isOpen || selectedPeriod === '1D' || relevantStocks.length === 0) {
@@ -144,7 +162,7 @@ export function WatchlistPerformanceModal({
 
     // Enrich stock data
     const enrichedData = useMemo(() => {
-        return relevantStocks.map(stock => {
+        return filteredStocks.map(stock => {
             const pos = positions.find(p => String(p.stockId) === String(stock.id));
             const hasOpenedToday = hasMarketOpenedToday(stock.symbol, stock.currency);
             const shouldCalcDaily = !isAnyActiveToday || hasOpenedToday;
@@ -208,7 +226,7 @@ export function WatchlistPerformanceModal({
                 isLimitReached
             };
         });
-    }, [relevantStocks, positions, periodData, selectedPeriod, isAnyActiveToday, convertToCHF]);
+    }, [filteredStocks, positions, periodData, selectedPeriod, isAnyActiveToday, convertToCHF]);
 
     // Sorting
     const sortedData = useMemo(() => {
@@ -409,6 +427,71 @@ export function WatchlistPerformanceModal({
                     </button>
                 ))}
             </div>
+
+            {/* Sub-Tabs: Trennung Aktien / ETFs (wenn beides vorhanden ist) */}
+            {stockCount > 0 && etfCount > 0 && (
+                <div className="px-3 sm:px-4 py-1.5 border-b border-border/70 bg-card/60 flex items-center gap-2 overflow-x-auto scroller-none shrink-0 pl-14 xl:pl-4">
+                    <button
+                        type="button"
+                        onClick={() => setAssetFilter('stock')}
+                        className={cn(
+                            "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all border shadow-2xs shrink-0 cursor-pointer",
+                            assetFilter === 'stock'
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+                        )}
+                    >
+                        <ShoppingBag className="size-3.5" />
+                        <span>Aktien</span>
+                        <span className={cn(
+                            "text-[10px] px-1.5 py-0.2 rounded-full font-mono",
+                            assetFilter === 'stock' ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                        )}>
+                            {stockCount}
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setAssetFilter('etf')}
+                        className={cn(
+                            "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all border shadow-2xs shrink-0 cursor-pointer",
+                            assetFilter === 'etf'
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+                        )}
+                    >
+                        <PieChart className="size-3.5" />
+                        <span>ETFs</span>
+                        <span className={cn(
+                            "text-[10px] px-1.5 py-0.2 rounded-full font-mono",
+                            assetFilter === 'etf' ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                        )}>
+                            {etfCount}
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setAssetFilter('all')}
+                        className={cn(
+                            "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all border shadow-2xs shrink-0 cursor-pointer",
+                            assetFilter === 'all'
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+                        )}
+                    >
+                        <Layers className="size-3.5" />
+                        <span>Alle</span>
+                        <span className={cn(
+                            "text-[10px] px-1.5 py-0.2 rounded-full font-mono",
+                            assetFilter === 'all' ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                        )}>
+                            {relevantStocks.length}
+                        </span>
+                    </button>
+                </div>
+            )}
 
             {/* KPI Highlight Strip */}
                 {stats && (
@@ -702,14 +785,14 @@ export function WatchlistPerformanceModal({
                                                     {isLoadingPeriod ? (
                                                         <span className="animate-pulse">...</span>
                                                     ) : (
-                                                        formatCurrency(baselinePrice, stock.currency)
+                                                        formatCurrency(baselinePrice, stock.currency, false)
                                                     )}
                                                 </td>
                                             )}
 
                                             {/* Current Price */}
                                             <td className="py-3 px-2 text-right font-bold font-mono whitespace-nowrap">
-                                                {formatCurrency(stock.currentPrice, stock.currency)}
+                                                {formatCurrency(stock.currentPrice, stock.currency, false)}
                                             </td>
 
                                             {/* Gain / Performance */}
@@ -775,7 +858,7 @@ export function WatchlistPerformanceModal({
                                                 {targetPrice ? (
                                                     <div className="flex flex-col items-end">
                                                         <div className="font-mono text-xs font-medium text-foreground">
-                                                            {formatCurrency(targetPrice, stock.currency)}
+                                                            {formatCurrency(targetPrice, stock.currency, false)}
                                                         </div>
                                                         <div className={cn(
                                                             "font-mono text-[11px] font-bold flex items-center gap-0.5",
@@ -801,7 +884,7 @@ export function WatchlistPerformanceModal({
                                                             "font-bold text-xs font-mono",
                                                             totalGainPercent >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                                         )}>
-                                                            {totalGainPercent >= 0 ? '+' : ''}{totalGainPercent.toFixed(1)}% ({formatCurrency(totalGainCHF, 'CHF')})
+                                                            {totalGainPercent >= 0 ? '+' : ''}{totalGainPercent.toFixed(1)}% ({formatCurrency(totalGainCHF, 'CHF', false)})
                                                         </div>
                                                     </div>
                                                 ) : (
@@ -821,7 +904,7 @@ export function WatchlistPerformanceModal({
 
                     {/* Footer */}
                     <div className="p-3 bg-muted/20 border-t border-border text-[10px] text-muted-foreground flex justify-between items-center flex-wrap gap-2">
-                        <div>{relevantStocks.length} Titel in <strong className="text-foreground">{activeTabName}</strong></div>
+                        <div>{filteredStocks.length} Titel in <strong className="text-foreground">{activeTabName}</strong>{stockCount > 0 && etfCount > 0 && assetFilter !== 'all' ? ` (${assetFilter === 'stock' ? 'Aktien' : 'ETFs'})` : ''}</div>
                         <div className="flex items-center gap-2">
                             <span>Klick auf eine Zeile öffnet die Detailanalyse & den Fairen Wert</span>
                         </div>
