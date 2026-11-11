@@ -6,7 +6,7 @@ import { useCurrencyFormatter } from '../utils/currency';
 
 import { getCurrentDividendPeriod, translateFrequency } from '../utils/dividend';
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
-import { Eye, Plus, Trash2, Edit, ShoppingBag, RefreshCw, TrendingUp, ChevronRight, ChevronLeft, PieChart } from 'lucide-react';
+import { Eye, Plus, Trash2, Edit, ShoppingBag, RefreshCw, TrendingUp, ChevronRight, ChevronLeft, PieChart, Trophy } from 'lucide-react';
 
 import { Logo } from '../components/Logo';
 import { cn } from '../utils';
@@ -15,7 +15,7 @@ import { translateSector } from '../utils/sectorTranslation';
 
 import { AddPositionModal } from '../components/AddPositionModal'; // Import AddPositionModal
 import { EditPositionModal } from '../components/EditPositionModal';
-import { WatchlistPerformanceModal } from '../components/WatchlistPerformanceModal';
+import { WatchlistPerformanceModal, type WatchlistPeriod } from '../components/WatchlistPerformanceModal';
 import type { Stock } from '../types';
 
 export function Watchlist() {
@@ -25,6 +25,7 @@ export function Watchlist() {
     const [buyStock, setBuyStock] = useState<Stock | null>(null); // State for buying stock
     const [editPosition, setEditPosition] = useState<any>(null); // State for editing position
     const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
+    const [modalInitialPeriod, setModalInitialPeriod] = useState<WatchlistPeriod>('1D');
 
 
     // Multi-Watchlist State - Persist in localStorage to survive navigation
@@ -243,8 +244,11 @@ export function Watchlist() {
 
                             <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto sm:ml-auto iphone-landscape-portfolio-actions">
                                 <button
-                                    onClick={() => setIsPerformanceModalOpen(true)}
-                                    className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-3.5 sm:px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors font-medium border border-border shadow-sm whitespace-nowrap"
+                                    onClick={() => {
+                                        setModalInitialPeriod('1D');
+                                        setIsPerformanceModalOpen(true);
+                                    }}
+                                    className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-3.5 sm:px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors font-medium border border-border shadow-sm whitespace-nowrap cursor-pointer active:scale-95"
                                 >
                                     <TrendingUp className="size-4 text-blue-500 shrink-0" />
                                     <span>Details</span>
@@ -408,10 +412,22 @@ export function Watchlist() {
             <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border bg-card shadow-sm overflow-hidden">
                 {/* Header / Legend Bar */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 sm:p-3 border-b bg-muted/20 shrink-0 gap-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         {currentTab?.icon && <currentTab.icon className="size-4 text-primary" />}
                         <h2 className="text-sm sm:text-base font-bold">{currentTab?.label}</h2>
                         <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{currentTabStocks.length}</span>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setModalInitialPeriod('1M');
+                                setIsPerformanceModalOpen(true);
+                            }}
+                            className="ml-1 sm:ml-2 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/25 text-xs font-semibold transition-all active:scale-95 cursor-pointer shadow-2xs"
+                            title="Rangliste & Performance-Vergleich (Woche, Monat, 3 Monate) für diese Watchlist öffnen"
+                        >
+                            <Trophy className="size-3.5 text-amber-400 shrink-0" />
+                            <span>Rangliste (1W / 1M / 3M)</span>
+                        </button>
                     </div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-xs font-medium text-muted-foreground bg-background/50 px-2.5 py-1 rounded-lg border border-border/50">
                         <span className="hidden sm:inline">Legende:</span>
@@ -462,6 +478,7 @@ export function Watchlist() {
                     isOpen={isPerformanceModalOpen}
                     onClose={() => setIsPerformanceModalOpen(false)}
                     activeWatchlistId={activeWatchlistId}
+                    initialPeriod={modalInitialPeriod}
                 />
 
                 {/* EditPositionModal for editing owned stocks from watchlist */}

@@ -150,7 +150,7 @@ export function clearHistoricalCloseCache(): void {
 
 export async function fetchHistoricalClose(
     symbol: string,
-    range: '1W' | '1M' | '6M' | '1Y'
+    range: '1W' | '1M' | '3M' | '6M' | '1Y'
 ): Promise<HistoricalCloseData | null> {
     if (!symbol) return null;
 
@@ -163,6 +163,7 @@ export async function fetchHistoricalClose(
     const rangeParamMap: Record<string, string> = {
         '1W': '5d',
         '1M': '1mo',
+        '3M': '3mo',
         '6M': '6mo',
         '1Y': '1y'
     };
@@ -171,11 +172,32 @@ export async function fetchHistoricalClose(
 
     try {
         const url = `/api/yahoo-finance?symbol=${encodeURIComponent(symbol)}&period=${period}&interval=1d&_=${Date.now()}`;
-        const response = await fetch(url);
-        if (!response.ok) return null;
+        let data: any = null;
 
-        const data = await response.json();
-        const result = data.chart?.result?.[0];
+        try {
+            const response = await fetch(url);
+            if (response.ok) {
+                data = await response.json();
+            }
+        } catch {
+            // Local proxy unavailable
+        }
+
+        // Fallback proxy (e.g. for GitHub Pages / CORS):
+        if (!data || !data.chart?.result?.[0]) {
+            try {
+                const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period=${period}&interval=1d&_=${Date.now()}`;
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+                const fallbackRes = await fetch(proxyUrl);
+                if (fallbackRes.ok) {
+                    data = await fallbackRes.json();
+                }
+            } catch (fbErr) {
+                console.warn('[fetchHistoricalClose Fallback Error]:', fbErr);
+            }
+        }
+
+        const result = data?.chart?.result?.[0];
         if (!result || !result.timestamp || !result.indicators?.quote?.[0]?.close) {
             return null;
         }
@@ -211,6 +233,28 @@ export async function fetchHistoricalClose(
         console.warn(`[fetchHistoricalClose] Failed to fetch for ${symbol} (${range}):`, e);
         return null;
     }
+}
+
+/**
+ * Batch fetch historical baseline close data for a list of symbols
+ */
+export async function fetchMultipleHistoricalCloses(
+    symbols: string[],
+    range: '1W' | '1M' | '3M' | '6M' | '1Y'
+): Promise<Record<string, HistoricalCloseData>> {
+    if (!symbols || symbols.length === 0) return {};
+    const uniqueSymbols = Array.from(new Set(symbols.filter(Boolean)));
+    const entries = await Promise.all(
+        uniqueSymbols.map(async (sym) => {
+            const data = await fetchHistoricalClose(sym, range);
+            return [sym.toUpperCase(), data] as const;
+        })
+    );
+    const result: Record<string, HistoricalCloseData> = {};
+    for (const [sym, data] of entries) {
+        if (data) result[sym] = data;
+    }
+    return result;
 }
 
 // Helper to find logo
