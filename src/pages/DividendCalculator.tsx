@@ -808,11 +808,15 @@ export function DividendCalculator() {
     const [showOrderBook, setShowOrderBook] = useState(false);
     const [showSavedFeedback, setShowSavedFeedback] = useState(false);
     const [showOrderBookSavedFeedback, setShowOrderBookSavedFeedback] = useState(false);
-    const [orderValidUntil, setOrderValidUntil] = useState<string>(() => {
+    const getEndOfWeekDate = () => {
         const d = new Date();
-        d.setDate(d.getDate() + 14);
+        const day = d.getDay();
+        let diff = 5 - day;
+        if (diff < 0) diff += 7;
+        d.setDate(d.getDate() + diff);
         return d.toISOString().split('T')[0];
-    });
+    };
+    const [orderValidUntil, setOrderValidUntil] = useState<string>(getEndOfWeekDate);
     const [dividendInputMode, setDividendInputMode] = useState<'annual' | 'periodic'>('annual');
     const [yieldInputMode, setYieldInputMode] = useState<'annual' | 'periodic'>('annual');
 
@@ -2582,7 +2586,14 @@ export function DividendCalculator() {
                                             className="px-2 py-0.5 text-xs bg-background border border-border rounded font-mono text-foreground focus:outline-hidden focus:border-primary"
                                         />
                                     </div>
-                                    <div className="flex items-center gap-1 text-[10px]">
+                                    <div className="flex items-center gap-1 text-[10px] flex-wrap">
+                                        <button
+                                            type="button"
+                                            onClick={() => setOrderValidUntil(getEndOfWeekDate())}
+                                            className="px-2 py-0.5 rounded bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 font-semibold hover:text-white border border-blue-500/30 transition-colors"
+                                        >
+                                            Wochenende
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={() => {
@@ -2631,21 +2642,21 @@ export function DividendCalculator() {
                                     <button
                                         onClick={handleSaveToOrderBook}
                                         disabled={shares <= 0 || price <= 0}
-                                        className={`w-full py-2 rounded-md font-medium text-xs flex items-center justify-center gap-2 border transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                                        className={`w-full py-2.5 rounded-md font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
                                             showOrderBookSavedFeedback
-                                                ? 'bg-blue-500/25 border-blue-500 text-blue-300'
-                                                : 'bg-blue-600/15 hover:bg-blue-600/25 border-blue-500/30 text-blue-300 shadow-xs active:scale-95'
+                                                ? 'bg-emerald-600 text-white shadow-emerald-900/30'
+                                                : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/30'
                                         }`}
                                     >
                                         {showOrderBookSavedFeedback ? (
                                             <>
-                                                <Check size={14} className="text-blue-400" />
-                                                <span>Im Auftragsbuch angelegt!</span>
+                                                <Check size={15} className="text-white" />
+                                                <span className="text-white">Im Auftragsbuch angelegt!</span>
                                             </>
                                         ) : (
                                             <>
-                                                <ClipboardList size={14} className="text-blue-400" />
-                                                <span>Als Auftrag ins Auftragsbuch</span>
+                                                <ClipboardList size={15} className="text-white" />
+                                                <span className="text-white">Als Auftrag ins Auftragsbuch</span>
                                             </>
                                         )}
                                     </button>
