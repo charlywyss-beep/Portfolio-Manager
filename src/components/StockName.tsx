@@ -57,7 +57,7 @@ export function StockName({ name, className, lineClassName, title }: StockNamePr
         return (
             <span className={cn("block leading-snug", className)} title={title || name.replace(/\r?\n/g, ' ')}>
                 {lines.map((line, idx) => (
-                    <span key={idx} className={cn("block leading-snug break-words", lineClassName)}>
+                    <span key={idx} className={cn("block leading-snug md:whitespace-nowrap break-words md:break-normal", lineClassName)}>
                         {line}
                     </span>
                 ))}

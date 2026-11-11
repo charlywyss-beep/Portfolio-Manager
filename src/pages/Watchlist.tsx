@@ -655,7 +655,7 @@ function WatchlistTable({
                 <thead>
                     <tr className="border-b bg-muted/20">
                         {/* 0. Aktie */}
-                        <th className="px-3 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[15px] xl:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] sm:w-[240px] md:w-[260px] min-w-[180px] sm:min-w-[240px] md:min-w-[260px] max-w-[220px] sm:max-w-[260px] md:max-w-[280px] xl:w-[260px] xl:min-w-[260px] xl:max-w-[320px] touch-pan-y align-middle">
+                        <th className="px-3 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[15px] xl:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] sm:w-[240px] md:w-[260px] min-w-[180px] sm:min-w-[240px] md:min-w-[260px] max-w-[220px] sm:max-w-[260px] md:max-w-[280px] xl:w-auto xl:min-w-[360px] xl:max-w-none touch-pan-y align-middle">
                             <button
                                 type="button"
                                 onClick={() => handleSort('name')}
@@ -991,7 +991,7 @@ function WatchlistTable({
 
                         return (
                             <tr key={stock.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors group snap-start snap-always h-[60px] xl:h-auto">
-                                <td className="px-3 py-1.5 xl:p-4 h-[60px] xl:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] overflow-hidden w-[180px] sm:w-[240px] md:w-[260px] min-w-[180px] sm:min-w-[240px] md:min-w-[260px] max-w-[220px] sm:max-w-[260px] md:max-w-[280px] xl:w-[260px] xl:min-w-[260px] xl:max-w-[320px] touch-pan-y align-middle">
+                                <td className="px-3 py-1.5 xl:p-4 h-[60px] xl:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] overflow-hidden w-[180px] sm:w-[240px] md:w-[260px] min-w-[180px] sm:min-w-[240px] md:min-w-[260px] max-w-[220px] sm:max-w-[260px] md:max-w-[280px] xl:w-auto xl:min-w-[360px] xl:max-w-none touch-pan-y align-middle">
                                     <div className="absolute inset-0 bg-card -z-10" />
                                     <div className="flex items-center gap-2 xl:gap-3 relative">
                                         <Logo

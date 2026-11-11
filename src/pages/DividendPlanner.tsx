@@ -625,7 +625,7 @@ export function DividendPlanner() {
                         <thead>
                             <tr className="border-b border-border bg-muted/20">
                                 {/* 0. Aktie */}
-                                <th className="text-left px-3 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[15px] xl:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] min-w-[180px] max-w-[220px] sm:w-[220px] sm:min-w-[220px] sm:max-w-[260px] xl:w-[260px] xl:min-w-[260px] xl:max-w-[320px] touch-pan-y align-middle">
+                                <th className="text-left px-3 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[15px] xl:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] min-w-[180px] max-w-[220px] sm:w-[220px] sm:min-w-[220px] sm:max-w-[260px] xl:w-auto xl:min-w-[340px] xl:max-w-none touch-pan-y align-middle">
                                     <button
                                         type="button"
                                         onClick={() => handleSort('name')}
@@ -1167,7 +1167,7 @@ export function DividendPlanner() {
                                     return (
                                         <tr key={position.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors group snap-start snap-always h-[60px] xl:h-auto">
                                             {/* 0. Aktie */}
-                                            <td className="px-3 py-1.5 xl:py-3 xl:px-4 h-[60px] xl:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] min-w-[180px] max-w-[220px] sm:w-[220px] sm:min-w-[220px] sm:max-w-[260px] xl:w-[260px] xl:min-w-[260px] xl:max-w-[320px] touch-pan-y align-middle">
+                                            <td className="px-3 py-1.5 xl:py-3 xl:px-4 h-[60px] xl:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] min-w-[180px] max-w-[220px] sm:w-[220px] sm:min-w-[220px] sm:max-w-[260px] xl:w-auto xl:min-w-[340px] xl:max-w-none touch-pan-y align-middle">
                                                 <div className="absolute inset-0 bg-card -z-10" />
                                                 <div className="relative flex items-center gap-2 xl:gap-3">
                                                     <div
@@ -1408,7 +1408,7 @@ export function DividendPlanner() {
                             <thead>
                                 <tr className="border-b border-border bg-muted/20">
                                     {/* 0. Bank / Institut */}
-                                    <th className="text-left px-3 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[15px] xl:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] min-w-[180px] max-w-[220px] sm:w-[220px] sm:min-w-[220px] sm:max-w-[260px] xl:w-[260px] xl:min-w-[260px] xl:max-w-[320px] touch-pan-y align-middle">
+                                    <th className="text-left px-3 xl:px-4 py-0 xl:py-2 h-12 xl:h-auto font-semibold text-foreground xl:text-muted-foreground text-[15px] xl:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] min-w-[180px] max-w-[220px] sm:w-[220px] sm:min-w-[220px] sm:max-w-[260px] xl:w-auto xl:min-w-[340px] xl:max-w-none touch-pan-y align-middle">
                                         Bank / Institut
                                     </th>
 
@@ -1630,7 +1630,7 @@ export function DividendPlanner() {
                                     const isNegative = data.isNegative;
                                     return (
                                         <tr key={data.id} className="border-b border-border/50 last:border-0 hover:bg-muted/50 transition-colors group snap-start snap-always h-[60px] xl:h-auto">
-                                            <td className="px-3 py-1.5 xl:py-3 xl:px-4 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] h-[60px] xl:h-auto align-middle w-[180px] min-w-[180px] max-w-[220px] sm:w-[220px] sm:min-w-[220px] sm:max-w-[260px] xl:w-[260px] xl:min-w-[260px] xl:max-w-[320px]">
+                                            <td className="px-3 py-1.5 xl:py-3 xl:px-4 font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] h-[60px] xl:h-auto align-middle w-[180px] min-w-[180px] max-w-[220px] sm:w-[220px] sm:min-w-[220px] sm:max-w-[260px] xl:w-auto xl:min-w-[340px] xl:max-w-none">
                                                     <div className="absolute inset-0 bg-card -z-10" />
                                                     <div className="flex items-center gap-3 iphone-landscape-portfolio-title-group">
                                                         <Logo

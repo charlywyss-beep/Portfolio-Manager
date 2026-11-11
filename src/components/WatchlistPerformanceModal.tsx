@@ -580,7 +580,7 @@ export function WatchlistPerformanceModal({
 
                                     <th
                                         onClick={() => handleSort('name')}
-                                        className="text-left py-3 px-4 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 z-30 bg-card align-middle cursor-pointer hover:text-foreground min-w-[220px]"
+                                        className="text-left py-3 px-4 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 z-30 bg-card align-middle cursor-pointer hover:text-foreground min-w-[220px] md:min-w-[340px]"
                                     >
                                         <div className="flex items-center gap-1">
                                             <span>Aktie</span>
@@ -757,7 +757,7 @@ export function WatchlistPerformanceModal({
                                             </td>
 
                                             {/* Stock Info */}
-                                            <td className="py-2.5 sm:py-3 px-3 sm:px-4 bg-card group-hover:bg-muted/30 transition-colors min-w-[220px]">
+                                            <td className="py-2.5 sm:py-3 px-3 sm:px-4 bg-card group-hover:bg-muted/30 transition-colors min-w-[220px] md:min-w-[340px]">
                                                 <div className="flex items-center gap-2.5 sm:gap-3">
                                                     <Logo
                                                         url={stock.logoUrl}

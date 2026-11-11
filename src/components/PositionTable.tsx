@@ -99,7 +99,7 @@ export function PositionTable({
                         <thead>
                             <tr className="border-b border-border bg-muted/20 iphone-landscape-table-header-row">
                                 {/* 0. Aktie */}
-                                <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[225px] min-w-[220px] max-w-[250px] md:w-[230px] md:min-w-[230px] md:max-w-[250px] touch-pan-y align-middle iphone-landscape-col-stock">
+                                <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[225px] min-w-[220px] max-w-[250px] md:w-auto md:min-w-[340px] xl:min-w-[400px] md:max-w-none touch-pan-y align-middle iphone-landscape-col-stock">
                                     Aktie
                                 </th>
 
@@ -357,7 +357,7 @@ export function PositionTable({
                                 return (
                                     <tr key={pos.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors group snap-start snap-always h-[60px] md:h-auto iphone-landscape-table-row">
                                         {/* 0. Aktie */}
-                                        <td className="px-3 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[225px] min-w-[220px] max-w-[250px] md:w-[230px] md:min-w-[230px] md:max-w-[250px] touch-pan-y align-middle iphone-landscape-col-stock">
+                                        <td className="px-3 md:px-4 py-1.5 md:py-2 h-[60px] md:h-auto sticky left-0 z-20 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[225px] min-w-[220px] max-w-[250px] md:w-auto md:min-w-[340px] xl:min-w-[400px] md:max-w-none touch-pan-y align-middle iphone-landscape-col-stock">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center gap-2.5 sm:gap-3">
                                                 <Logo
