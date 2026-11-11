@@ -16,6 +16,13 @@ interface PerformanceDetailsModalProps {
     positions: any[]; // Using any to avoid complex import of Position type extended with dailyGain
 }
 
+function formatDate2Digit(d: Date): string {
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = String(d.getFullYear()).slice(-2);
+    return `${day}.${month}.${year}`;
+}
+
 export function PerformanceDetailsModal({ isOpen, onClose, positions }: PerformanceDetailsModalProps) {
     const { convertToCHF, formatCurrency } = useCurrencyFormatter();
     const { refreshAllPrices, isGlobalRefreshing, lastGlobalRefresh, refreshTick } = usePortfolio();
@@ -107,13 +114,27 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     const effectiveDate = (!isAnyActiveToday && latestTimestamp > 0)
         ? new Date(latestTimestamp)
         : new Date();
-    const todayDateLabel = new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
+    const todayDateLabel = formatDate2Digit(new Date());
     const prevTradingDate = getPreviousTradingDate(new Date());
-    const fallbackYesterdayLabel = prevTradingDate.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' });
+    const fallbackYesterdayLabel = formatDate2Digit(prevTradingDate);
+
+    // Format snapshot date with 2-digit year (e.g. '10.11.26')
+    let formattedSnapshotLabel: string | null = null;
+    if (yesterdaySnapshot?.dateKey) {
+        try {
+            const parts = yesterdaySnapshot.dateKey.split('-');
+            if (parts.length === 3) {
+                const yr = parts[0].slice(-2);
+                formattedSnapshotLabel = `${parts[2]}.${parts[1]}.${yr}`;
+            }
+        } catch {
+            // ignore
+        }
+    }
 
     // Ensure yesterdayDateLabel is strictly from a past day and NEVER equal to today
-    let yesterdayDateLabel = (yesterdaySnapshot?.displayDate && yesterdaySnapshot.displayDate !== todayDateLabel)
-        ? yesterdaySnapshot.displayDate
+    let yesterdayDateLabel = (formattedSnapshotLabel && formattedSnapshotLabel !== todayDateLabel)
+        ? formattedSnapshotLabel
         : fallbackYesterdayLabel;
     if (yesterdayDateLabel === todayDateLabel) {
         yesterdayDateLabel = fallbackYesterdayLabel;
@@ -125,18 +146,29 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
     const getPositionMetrics = (p: any) => {
         const snap = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[p.stock.id] : null;
-        const displayPrice = snap ? snap.currentPrice : (isViewingYesterday && p.stock.previousClose ? p.stock.previousClose : p.stock.currentPrice);
-        const dailyGainCHF = snap ? snap.dailyGainCHF : convertToCHF(p.dailyGain, p.stock.currency);
-        const currentValue = p.shares * displayPrice;
+        const displayPrice = isViewingYesterday
+            ? ((p.stock.previousClose && p.stock.previousClose > 0) ? p.stock.previousClose : (snap ? snap.currentPrice : p.stock.currentPrice))
+            : p.stock.currentPrice;
+
         const purchaseValue = (p.purchases || []).reduce((pSum: number, purchase: any) =>
             pSum + (purchase.shares * purchase.price), 0);
-        const currentValueCHF = convertToCHF(currentValue, p.stock.currency);
         const entryFxRate = p.averageEntryFxRate || 1;
         const purchaseValueCHF = p.stock.currency !== 'CHF'
             ? purchaseValue * entryFxRate
             : purchaseValue;
-        const totalGainCHF = currentValueCHF - purchaseValueCHF;
+
+        const liveCurrentValueCHF = convertToCHF(p.shares * p.stock.currentPrice, p.stock.currency);
+        const liveTotalGainCHF = liveCurrentValueCHF - purchaseValueCHF;
+        const liveDailyGainCHF = convertToCHF(p.dailyGain, p.stock.currency);
+
+        // Mathematical perfection: Yesterday total gain = Live total gain minus today's live daily gain
+        const totalGainCHF = isViewingYesterday
+            ? (liveTotalGainCHF - liveDailyGainCHF)
+            : liveTotalGainCHF;
+
         const totalGainPercent = purchaseValueCHF > 0 ? (totalGainCHF / purchaseValueCHF) * 100 : 0;
+        const dailyGainCHF = snap ? snap.dailyGainCHF : (isViewingYesterday ? 0 : liveDailyGainCHF);
+
         return { dailyGainCHF, totalGainCHF, totalGainPercent, displayPrice };
     };
 
@@ -658,26 +690,11 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         </thead>
                         <tbody className="divide-y divide-border">
                             {sortedPositions.map((p) => {
+                                const { dailyGainCHF, totalGainCHF, totalGainPercent, displayPrice } = getPositionMetrics(p);
                                 const snap = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[p.stock.id] : null;
-                                const dailyGainCHF = snap ? snap.dailyGainCHF : convertToCHF(p.dailyGain, p.stock.currency);
                                 const dailyGainPercent = snap ? snap.dailyGainPercent : p.dailyGainPercent;
-                                const displayPrice = snap ? snap.currentPrice : (isViewingYesterday && p.stock.previousClose ? p.stock.previousClose : p.stock.currentPrice);
                                 const isDailyPositive = dailyGainCHF >= 0;
                                 const isDailyZero = Math.abs(dailyGainCHF) < 0.005;
-
-                                // Calculate total performance with proper FX handling (using displayPrice to reflect 10.11. close vs Live 11.11.)
-                                const currentValue = p.shares * displayPrice;
-                                const purchaseValue = (p.purchases || []).reduce((sum: number, purchase: any) =>
-                                    sum + (purchase.shares * purchase.price), 0);
-                                
-                                // CHF values: current value at today's FX rate, purchase at historical FX rate
-                                const currentValueCHF = convertToCHF(currentValue, p.stock.currency);
-                                const entryFxRate = p.averageEntryFxRate || 1;
-                                const purchaseValueCHF = p.stock.currency !== 'CHF'
-                                    ? purchaseValue * entryFxRate
-                                    : purchaseValue;
-                                const totalGainCHF = currentValueCHF - purchaseValueCHF;
-                                const totalGainPercent = purchaseValueCHF > 0 ? (totalGainCHF / purchaseValueCHF) * 100 : 0;
                                 const isTotalPositive = totalGainCHF >= 0;
 
                                 // Market State Logic (v3.11.481):
