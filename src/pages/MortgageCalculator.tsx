@@ -1374,8 +1374,7 @@ export const MortgageCalculator = () => {
                                             {pensionFrequency === 'yearly' ? (
                                                 <>
                                                     <span className="text-xl font-bold text-white tracking-tight">
-                                                        {formatCHF(annualPensionIncome)}
-                                                        <span className="text-sm font-normal text-muted-foreground ml-1">/ Jahr</span>
+                                                        {formatCHF(annualPensionIncome)} / Jahr
                                                     </span>
                                                     <span className="text-sm font-medium text-muted-foreground">
                                                         ({formatCHF(monthlyTotalPension)} / Monat)
@@ -1384,8 +1383,7 @@ export const MortgageCalculator = () => {
                                             ) : (
                                                 <>
                                                     <span className="text-xl font-bold text-white tracking-tight">
-                                                        {formatCHF(monthlyTotalPension)}
-                                                        <span className="text-sm font-normal text-muted-foreground ml-1">/ Monat</span>
+                                                        {formatCHF(monthlyTotalPension)} / Monat
                                                     </span>
                                                     <span className="text-sm font-medium text-muted-foreground">
                                                         ({formatCHF(annualPensionIncome)} / Jahr)
