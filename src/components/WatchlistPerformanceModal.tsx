@@ -287,8 +287,8 @@ export function WatchlistPerformanceModal({
     const isPeriodMode = selectedPeriod !== '1D';
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-2 sm:p-4 md:p-6 iphone-modal-overlay" onClick={onClose}>
-            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-[98vw] lg:max-w-[1300px] xl:max-w-[1500px] 2xl:max-w-[1650px] max-h-[94vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10 overflow-hidden iphone-modal-shell" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-[9999] p-3 sm:p-6 iphone-modal-overlay" onClick={onClose}>
+            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-[96vw] xl:max-w-[1440px] max-h-[92vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10 overflow-hidden iphone-modal-shell" onClick={(e) => e.stopPropagation()}>
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 sm:p-4 border-b border-border bg-card z-10 gap-3 iphone-modal-header-card">
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -430,7 +430,7 @@ export function WatchlistPerformanceModal({
                                 <tr className="border-b border-border bg-muted/20">
                                     <th
                                         onClick={() => handleSort('gain')}
-                                        className="text-center py-3 px-2 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 left-0 z-40 bg-card align-middle cursor-pointer hover:text-foreground w-12"
+                                        className="text-center py-3 px-2 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 z-30 bg-card align-middle cursor-pointer hover:text-foreground w-12"
                                         title="Nach Rang sortieren"
                                     >
                                         <div className="flex items-center justify-center gap-0.5">
@@ -443,7 +443,7 @@ export function WatchlistPerformanceModal({
 
                                     <th
                                         onClick={() => handleSort('name')}
-                                        className="text-left py-3 px-4 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 z-30 bg-card align-middle cursor-pointer hover:text-foreground min-w-[180px] max-w-[260px] sm:max-w-[320px] lg:max-w-[380px]"
+                                        className="text-left py-3 px-4 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 z-30 bg-card align-middle cursor-pointer hover:text-foreground min-w-[220px]"
                                     >
                                         <div className="flex items-center gap-1">
                                             <span>Aktie</span>
@@ -613,14 +613,14 @@ export function WatchlistPerformanceModal({
                                             className="hover:bg-muted/30 transition-colors cursor-pointer group"
                                         >
                                             {/* Rank */}
-                                            <td className="py-2.5 sm:py-3 px-2 text-center sticky left-0 z-10 bg-card group-hover:bg-muted/30 transition-colors">
+                                            <td className="py-2.5 sm:py-3 px-2 text-center bg-card group-hover:bg-muted/30 transition-colors w-12">
                                                 <div className="flex items-center justify-center">
                                                     {rankBadge}
                                                 </div>
                                             </td>
 
                                             {/* Stock Info */}
-                                            <td className="py-2.5 sm:py-3 px-3 sm:px-4 bg-card group-hover:bg-muted/30 transition-colors min-w-[180px] max-w-[260px] sm:max-w-[320px] lg:max-w-[380px]">
+                                            <td className="py-2.5 sm:py-3 px-3 sm:px-4 bg-card group-hover:bg-muted/30 transition-colors min-w-[220px]">
                                                 <div className="flex items-center gap-2.5 sm:gap-3">
                                                     <Logo
                                                         url={stock.logoUrl}
