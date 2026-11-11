@@ -5,7 +5,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, Pencil, Landmark } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, Pencil, Landmark, Activity, BarChart3, Calendar, Layers, Link2 } from 'lucide-react';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
 import { estimateMarketState } from '../utils/market';
@@ -784,10 +784,13 @@ export function StockDetail() {
                 </div>
             </div>
 
-            {/* Kursdaten & Stammdaten - Darunter nebeneinander */}
+            {/* Kursdaten, Stammdaten, Quick Links & Notizen - Harmonisches 2-Spalten-Layout mit nachrückenden Feldern */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 landscape:gap-3 items-start iphone-landscape-section">
-                {/* Kursdaten */}
-                <div
+                {/* Linke Spalte: Kursdaten & nachrückendes Quick-Links-Feld (kein Loch darunter!) */}
+                <div className="contents md:flex md:flex-col md:gap-4 md:gap-6 landscape:gap-3">
+                    <div className="order-1 md:order-none">
+                        {/* Kursdaten */}
+                        <div
                     onClick={() => {
                         const from = searchParams.get('from') || 'dividends';
                         const query = from ? `?from=${from}` : '';
@@ -799,6 +802,7 @@ export function StockDetail() {
                 >
                     <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 landscape:mb-1">
                         <div className="flex items-center gap-1.5 md:gap-2 group-hover:text-primary transition-colors">
+                            <Activity className="size-4 md:size-5 text-blue-500 shrink-0" />
                             <h3 className="font-bold text-base md:text-lg landscape:text-xs">Kursdaten</h3>
                             <Pencil className="size-3 md:size-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                         </div>
@@ -1223,12 +1227,94 @@ export function StockDetail() {
                         );
                     })()}
                 </div>
+            </div>
 
+            {/* Quick Links Card - rückt in der linken Spalte direkt unter Kursdaten nach! */}
+            <div className="order-3 md:order-none">
+                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm flex flex-col justify-start overflow-hidden">
+                    <h3 className="font-bold text-base md:text-lg landscape:text-xs mb-2 md:mb-4 landscape:mb-1 flex items-center gap-1.5 md:gap-2">
+                        <Link2 className="size-4 md:size-5 text-blue-500 shrink-0" />
+                        Quick Links
+                    </h3>
+                    <div className="space-y-3">
+                        {/* Input for adding new links */}
+                        <div className="flex gap-2">
+                            <input
+                                type="url"
+                                placeholder="URL einfügen oder reinziehen..."
+                                className="flex-1 px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && stock && e.currentTarget.value.trim()) {
+                                        const url = e.currentTarget.value.trim();
+                                        addQuickLink(stock.id, url);
+                                        e.currentTarget.value = '';
+                                    }
+                                }}
+                            />
+                            <button
+                                onClick={(e) => {
+                                    const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                                    if (stock && input.value.trim()) {
+                                        addQuickLink(stock.id, input.value.trim());
+                                        input.value = '';
+                                    }
+                                }}
+                                className="px-3 md:px-4 py-2 text-xs sm:text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
+                            >
+                                + Hinzufügen
+                            </button>
+                        </div>
+
+                        {/* List of saved links */}
+                        {stock?.quickLinks && stock.quickLinks.length > 0 && (
+                            <div className="space-y-2">
+                                {stock.quickLinks.map((link: any) => (
+                                    <div
+                                        key={link.id}
+                                        className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group"
+                                    >
+                                        <a
+                                            href={link.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex-1 text-xs sm:text-sm text-primary hover:underline truncate"
+                                        >
+                                            {link.label || link.url}
+                                        </a>
+                                        <button
+                                            onClick={() => removeQuickLink(stock.id, link.id)}
+                                            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all opacity-70 hover:opacity-100"
+                                            title="Link entfernen"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Empty state */}
+                        {(!stock?.quickLinks || stock.quickLinks.length === 0) && (
+                            <div className="flex items-center justify-center text-center py-6 px-4">
+                                <p className="text-xs sm:text-sm text-muted-foreground">
+                                    Keine Links gespeichert.<br />
+                                    Füge Chart- oder Finanz-URLs hinzu.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* Rechte Spalte: Stammdaten & nachrückendes Notizen-Feld */}
+        <div className="contents md:flex md:flex-col md:gap-4 md:gap-6 landscape:gap-3">
+            <div className="order-2 md:order-none">
                 {/* Stammdaten */}
-                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm flex flex-col justify-start overflow-hidden space-y-4">
+                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm flex flex-col justify-start overflow-hidden space-y-2.5">
                     <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 landscape:mb-1">
                         <div className="flex items-center gap-1.5 md:gap-2">
-                            <TrendingUp className="size-4 md:size-5 text-blue-500" />
+                            <Layers className="size-4 md:size-5 text-blue-500 shrink-0" />
                             <h3 className="font-bold text-base md:text-lg landscape:text-xs">Stammdaten</h3>
                         </div>
                     </div>
@@ -1236,35 +1322,36 @@ export function StockDetail() {
                     {/* Bereich 1: Basisdaten */}
                     <div
                         onClick={() => navigateToEditSection('stammdaten')}
-                        className="group cursor-pointer rounded-lg p-1.5 -mx-1.5 hover:bg-muted/40 transition-colors"
+                        className="group/sec cursor-pointer transition-colors"
                         title="Basisdaten bearbeiten (Öffnet Stammdaten)"
                     >
-                        <div className="flex items-center justify-between pb-1 mb-1 border-b border-border/40">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-primary transition-colors">
+                        <div className="flex items-center justify-between pb-1 mb-1 border-b border-border/70 group-hover/sec:border-primary/50 transition-colors">
+                            <span className="text-xs sm:text-sm font-semibold text-primary flex items-center gap-1.5 transition-colors">
+                                <TrendingUp className="size-3.5 text-blue-400 shrink-0" />
                                 Basisdaten
                             </span>
-                            <Pencil className="size-3 text-muted-foreground group-hover:text-primary transition-colors opacity-60 group-hover:opacity-100" />
+                            <Pencil className="size-3 text-muted-foreground group-hover/sec:text-primary transition-colors opacity-60 group-hover/sec:opacity-100" />
                         </div>
-                        <div className="space-y-0.5">
+                        <div>
                             <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">Name</span>
-                                <span className="font-medium text-right truncate max-w-[180px] sm:max-w-[240px]">{stock.name}</span>
+                                <span className="font-medium text-foreground text-right truncate max-w-[180px] sm:max-w-[240px]">{stock.name}</span>
                             </div>
                             <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">Symbol</span>
-                                <span className="font-medium font-mono">{stock.symbol}</span>
+                                <span className="font-medium font-mono text-foreground">{stock.symbol}</span>
                             </div>
                             <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">ISIN</span>
-                                <span className="font-medium font-mono">{stock.isin || '-'}</span>
+                                <span className="font-medium font-mono text-foreground">{stock.isin || '-'}</span>
                             </div>
                             <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">Typ</span>
-                                <span className="font-medium capitalize">{stock.type || 'Aktie'}</span>
+                                <span className="font-medium capitalize text-foreground">{stock.type || 'Aktie'}</span>
                             </div>
-                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 text-xs sm:text-sm landscape:text-[11px]">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">Währung</span>
-                                <span className="font-medium">{stock.currency}</span>
+                                <span className="font-medium text-foreground">{stock.currency}</span>
                             </div>
                         </div>
                     </div>
@@ -1272,27 +1359,28 @@ export function StockDetail() {
                     {/* Bereich 2: Bewertung & Kennzahlen */}
                     <div
                         onClick={() => navigateToEditSection('kursdaten')}
-                        className="group cursor-pointer rounded-lg p-1.5 -mx-1.5 hover:bg-muted/40 transition-colors"
+                        className="group/sec cursor-pointer transition-colors"
                         title="Bewertung & Kennzahlen bearbeiten (Öffnet Kursdaten)"
                     >
-                        <div className="flex items-center justify-between pb-1 mb-1 border-b border-border/40">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-primary transition-colors">
+                        <div className="flex items-center justify-between pb-1 mb-1 border-b border-border/70 group-hover/sec:border-primary/50 transition-colors">
+                            <span className="text-xs sm:text-sm font-semibold text-primary flex items-center gap-1.5 transition-colors">
+                                <BarChart3 className="size-3.5 text-blue-400 shrink-0" />
                                 Bewertung & Kennzahlen
                             </span>
-                            <Pencil className="size-3 text-muted-foreground group-hover:text-primary transition-colors opacity-60 group-hover:opacity-100" />
+                            <Pencil className="size-3 text-muted-foreground group-hover/sec:text-primary transition-colors opacity-60 group-hover/sec:opacity-100" />
                         </div>
-                        <div className="space-y-0.5">
+                        <div>
                             <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">KGV (P/E)</span>
-                                <span className="font-medium">
+                                <span className="font-medium text-foreground tabular-nums">
                                     {stock.trailingPE
                                         ? stock.trailingPE.toFixed(2)
                                         : (stock.forwardPE ? `${stock.forwardPE.toFixed(2)} (Fwd)` : (stock.eps && stock.eps > 0 ? (stock.currentPrice / stock.eps).toFixed(2) : '-'))}
                                 </span>
                             </div>
-                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 text-xs sm:text-sm landscape:text-[11px]">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">KCV (P/CF)</span>
-                                <span className="font-medium">
+                                <span className="font-medium text-foreground tabular-nums">
                                     {stock.kcv ? stock.kcv.toFixed(2) : '-'}
                                 </span>
                             </div>
@@ -1302,19 +1390,20 @@ export function StockDetail() {
                     {/* Bereich 3: Dividenden & Termine */}
                     <div
                         onClick={() => navigateToEditSection('termine')}
-                        className="group cursor-pointer rounded-lg p-1.5 -mx-1.5 hover:bg-muted/40 transition-colors"
+                        className="group/sec cursor-pointer transition-colors"
                         title="Dividenden & Termine bearbeiten (Öffnet direkt auf Höhe von Terminen)"
                     >
-                        <div className="flex items-center justify-between pb-1 mb-1 border-b border-border/40">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-primary transition-colors">
+                        <div className="flex items-center justify-between pb-1 mb-1 border-b border-border/70 group-hover/sec:border-primary/50 transition-colors">
+                            <span className="text-xs sm:text-sm font-semibold text-primary flex items-center gap-1.5 transition-colors">
+                                <Calendar className="size-3.5 text-blue-400 shrink-0" />
                                 Dividenden & Termine
                             </span>
-                            <Pencil className="size-3 text-muted-foreground group-hover:text-primary transition-colors opacity-60 group-hover:opacity-100" />
+                            <Pencil className="size-3 text-muted-foreground group-hover/sec:text-primary transition-colors opacity-60 group-hover/sec:opacity-100" />
                         </div>
-                        <div className="space-y-0.5">
+                        <div>
                             <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">Div. Frequenz</span>
-                                <span className="font-medium capitalize">
+                                <span className="font-medium capitalize text-foreground">
                                     {stock.dividendFrequency ? (
                                         stock.dividendFrequency === 'quarterly' ? 'Quartalsweise' :
                                             stock.dividendFrequency === 'monthly' ? 'Monatlich' :
@@ -1348,10 +1437,10 @@ export function StockDetail() {
                                         if (yieldCost !== null && marketYield !== null && Math.abs(yieldCost - marketYield) > 0.01) {
                                             return (
                                                 <div className="flex flex-col items-end leading-tight gap-0.5">
-                                                    <span className="font-medium text-xs text-foreground/80">{marketYield.toFixed(2)}% Kurs</span>
-                                                    <span className="font-bold text-green-600 dark:text-green-400">{yieldCost.toFixed(2)}% Käufe</span>
+                                                    <span className="font-medium text-xs sm:text-sm text-foreground/80 tabular-nums">{marketYield.toFixed(2)}% Kurs</span>
+                                                    <span className="font-bold text-xs sm:text-sm text-green-600 dark:text-green-400 tabular-nums">{yieldCost.toFixed(2)}% Käufe</span>
                                                     {annualDividendCHF > 0 && (
-                                                        <span className="font-bold text-xs text-green-600 dark:text-green-400" title={`Erwartete Jahresdividende für ${pos?.shares} Stk.: ${annualDividendCHF.toFixed(2)} CHF`}>
+                                                        <span className="font-bold text-xs sm:text-sm text-green-600 dark:text-green-400 tabular-nums" title={`Erwartete Jahresdividende für ${pos?.shares} Stk.: ${annualDividendCHF.toFixed(2)} CHF`}>
                                                             {annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                                         </span>
                                                     )}
@@ -1361,9 +1450,9 @@ export function StockDetail() {
 
                                         return (
                                             <div className="flex flex-col items-end leading-tight gap-0.5">
-                                                <span className="font-medium text-xs text-foreground/80">{(marketYield ?? yieldCost)?.toFixed(2)}% Kurs</span>
+                                                <span className="font-medium text-xs sm:text-sm text-foreground/80 tabular-nums">{(marketYield ?? yieldCost)?.toFixed(2)}% Kurs</span>
                                                 {annualDividendCHF > 0 && (
-                                                    <span className="font-bold text-xs text-green-600 dark:text-green-400" title={`Erwartete Jahresdividende für ${pos?.shares} Stk.: ${annualDividendCHF.toFixed(2)} CHF`}>
+                                                    <span className="font-bold text-xs sm:text-sm text-green-600 dark:text-green-400 tabular-nums" title={`Erwartete Jahresdividende für ${pos?.shares} Stk.: ${annualDividendCHF.toFixed(2)} CHF`}>
                                                         {annualDividendCHF.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                                                     </span>
                                                 )}
@@ -1374,16 +1463,50 @@ export function StockDetail() {
                             </div>
                             <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">Nächster Ex-Tag</span>
-                                <span className="font-medium font-mono text-foreground">{upcomingDividendDates.exDate}</span>
+                                <span className="font-medium font-mono text-foreground tabular-nums">{upcomingDividendDates.exDate}</span>
                             </div>
                             <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">Nächster Zahltag</span>
-                                <span className="font-medium font-mono text-emerald-400">{upcomingDividendDates.payDate}</span>
+                                <span className="font-medium font-mono text-emerald-400 tabular-nums">{upcomingDividendDates.payDate}</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Notes Card - rückt in der rechten Spalte direkt unter Stammdaten nach! */}
+            <div className="order-4 md:order-none">
+                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm flex flex-col justify-start overflow-hidden">
+                    <div className="flex items-center justify-between mb-2 md:mb-4 landscape:mb-1">
+                        <h3 className="font-bold text-base md:text-lg landscape:text-xs flex items-center gap-1.5 md:gap-2">
+                            <Save className="size-4 md:size-5 text-purple-500 shrink-0" />
+                            Persönliche Notizen & Analyse
+                        </h3>
+                        <button
+                            onClick={handleSaveNotes}
+                            className={cn(
+                                'px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-medium text-xs sm:text-sm transition-all',
+                                isSaving
+                                    ? 'bg-green-500 text-white'
+                                    : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                            )}
+                        >
+                            {isSaving ? 'Gespeichert!' : 'Speichern'}
+                        </button>
+                    </div>
+                    <textarea
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Schreiben Sie hier Ihre Gedanken zur Aktie (z.B. Kaufgrund, Burggraben, Risiken)..."
+                        className="min-h-[160px] md:min-h-[220px] landscape:min-h-0 w-full p-2.5 md:p-4 text-xs sm:text-sm rounded-lg border border-border bg-background/50 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                    <p className="text-[10px] md:text-xs text-muted-foreground mt-1 landscape:mt-0.5">
+                        * Notizen werden nur lokal gespeichert.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
 
             {/* NEW: ETF Allocation Breakdown */}
             {stock.type === 'etf' && (() => {
@@ -1516,110 +1639,7 @@ export function StockDetail() {
                 );
             })()}
 
-            {/* Quick Links & Notes */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 landscape:gap-3 items-stretch iphone-landscape-section">
-                {/* Quick Links Card */}
-                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm flex flex-col justify-between h-full overflow-hidden">
-                    <h3 className="font-bold text-base md:text-lg landscape:text-xs mb-2 md:mb-4 landscape:mb-1">Quick Links</h3>
-                    <div className="space-y-3 flex-1">
-                        {/* Input for adding new links */}
-                        <div className="flex gap-2">
-                            <input
-                                type="url"
-                                placeholder="URL einfügen oder reinziehen..."
-                                className="flex-1 px-3 py-2 text-sm rounded-lg border border-border bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && stock && e.currentTarget.value.trim()) {
-                                        const url = e.currentTarget.value.trim();
-                                        addQuickLink(stock.id, url);
-                                        e.currentTarget.value = '';
-                                    }
-                                }}
-                            />
-                            <button
-                                onClick={(e) => {
-                                    const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                                    if (stock && input.value.trim()) {
-                                        addQuickLink(stock.id, input.value.trim());
-                                        input.value = '';
-                                    }
-                                }}
-                                className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
-                            >
-                                + Hinzufügen
-                            </button>
-                        </div>
 
-                        {/* List of saved links */}
-                        {stock?.quickLinks && stock.quickLinks.length > 0 && (
-                            <div className="space-y-2">
-                                {stock.quickLinks.map((link: any) => (
-                                    <div
-                                        key={link.id}
-                                        className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group"
-                                    >
-                                        <a
-                                            href={link.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex-1 text-sm text-primary hover:underline truncate"
-                                        >
-                                            {link.label || link.url}
-                                        </a>
-                                        <button
-                                            onClick={() => removeQuickLink(stock.id, link.id)}
-                                            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all opacity-70 hover:opacity-100"
-                                            title="Link entfernen"
-                                        >
-                                            <Trash2 className="size-4" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Empty state */}
-                        {(!stock?.quickLinks || stock.quickLinks.length === 0) && (
-                            <div className="flex-1 flex items-center justify-center text-center p-8">
-                                <p className="text-sm text-muted-foreground">
-                                    Keine Links gespeichert.<br />
-                                    Füge Chart- oder Finanz-URLs hinzu.
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Notes Card */}
-                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm flex flex-col justify-between h-full overflow-hidden">
-                    <div className="flex items-center justify-between mb-2 md:mb-4 landscape:mb-1">
-                        <h3 className="font-bold text-base md:text-lg landscape:text-xs flex items-center gap-1.5 md:gap-2">
-                            <Save className="size-4 md:size-5 text-purple-500" />
-                            Persönliche Notizen & Analyse
-                        </h3>
-                        <button
-                            onClick={handleSaveNotes}
-                            className={cn(
-                                'px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-medium text-xs sm:text-sm transition-all',
-                                isSaving
-                                    ? 'bg-green-500 text-white'
-                                    : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                            )}
-                        >
-                            {isSaving ? 'Gespeichert!' : 'Speichern'}
-                        </button>
-                    </div>
-                    <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        placeholder="Schreiben Sie hier Ihre Gedanken zur Aktie (z.B. Kaufgrund, Burggraben, Risiken)..."
-                        className="flex-1 min-h-[160px] md:min-h-[300px] landscape:min-h-0 w-full p-2.5 md:p-4 text-xs sm:text-sm rounded-lg border border-border bg-background/50 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
-                    <p className="text-[10px] md:text-xs text-muted-foreground mt-1 landscape:mt-0.5">
-                        * Notizen werden nur lokal gespeichert.
-                    </p>
-                </div>
-            </div>
             {
                 stock && (
                     <AddToWatchlistModal
