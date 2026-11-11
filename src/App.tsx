@@ -78,14 +78,14 @@ const NavItem = ({ to, icon: Icon, label, onClick }: NavItemProps) => {
           : (isActive || isCustomActive());
 
         return cn(
-          "flex items-center gap-2.5 md:gap-3 px-2.5 md:px-3 py-1.5 landscape:py-1 md:py-1.5 rounded-lg transition-colors whitespace-nowrap text-sm font-medium",
+          "flex items-center gap-2.5 md:gap-3 xl:gap-3.5 px-2.5 md:px-3 xl:px-3.5 py-1.5 landscape:py-1 md:py-1.5 xl:py-2.5 rounded-lg transition-colors whitespace-nowrap text-sm xl:text-[15px] font-medium xl:font-semibold",
           active
             ? "bg-primary text-white shadow-sm font-semibold"
             : "text-foreground hover:bg-accent dark:text-white dark:hover:text-white dark:hover:bg-white/10"
         );
       }}
     >
-      <Icon className="size-4 shrink-0" />
+      <Icon className="size-4 xl:size-5 shrink-0" />
       <span className="truncate">{label}</span>
     </NavLink>
   );
@@ -202,23 +202,23 @@ function App() {
             {/* Sidebar */}
             <aside className={cn(
               "border-r border-border bg-card shadow-lg flex flex-col transition-all duration-300 ease-in-out app-sidebar-landscape-safe",
-              "fixed xl:relative z-[1001] top-[max(env(safe-area-inset-top,0px),2.35rem)] xl:top-0 bottom-0 h-[calc(100dvh-max(env(safe-area-inset-top,0px),2.35rem))] xl:h-full w-64 xl:w-60 shrink-0",
+              "fixed xl:relative z-[1001] top-[max(env(safe-area-inset-top,0px),2.35rem)] xl:top-0 bottom-0 h-[calc(100dvh-max(env(safe-area-inset-top,0px),2.35rem))] xl:h-full w-64 xl:w-[264px] shrink-0",
               isSidebarOpen
                 ? "translate-x-0"
                 : "-translate-x-full xl:translate-x-0"
             )}>
               {/* Header: Title + Close Button */}
-              <div className="px-3.5 py-2.5 landscape:py-1.5 border-b border-border shrink-0">
+              <div className="px-3.5 py-2.5 xl:py-3.5 xl:px-4 landscape:py-1.5 border-b border-border shrink-0">
                 <div className="flex items-center justify-between">
                   <Link
                     to="/portfolio"
                     className="flex items-center gap-2.5 cursor-pointer group hover:opacity-85 transition-opacity"
                     onClick={closeSidebarOnMobile}
                   >
-                    <div className="size-7 rounded-lg bg-primary flex items-center justify-center group-hover:scale-105 transition-transform shadow-sm shrink-0">
-                      <Wallet className="text-primary-foreground size-4" />
+                    <div className="size-7 xl:size-8 rounded-lg bg-primary flex items-center justify-center group-hover:scale-105 transition-transform shadow-sm shrink-0">
+                      <Wallet className="text-primary-foreground size-4 xl:size-4.5" />
                     </div>
-                    <h1 className="text-lg font-bold tracking-tight text-foreground dark:text-white group-hover:text-primary transition-colors">Portfolio</h1>
+                    <h1 className="text-lg xl:text-xl font-bold tracking-tight text-foreground dark:text-white group-hover:text-primary transition-colors">Portfolio</h1>
                   </Link>
 
                   {/* Close Button (Mobile / Tablet) */}
@@ -242,8 +242,7 @@ function App() {
                       url.searchParams.set('v', Date.now().toString());
                       window.location.href = url.toString();
                     }}
-                    className="text-[11px] font-bold bg-blue-600/40 text-white px-2.5 py-0.5 rounded-full hover:bg-blue-600/60 transition-colors border border-blue-400/50 cursor-pointer shadow-sm"
-                    
+                    className="text-[11px] xl:text-xs font-bold bg-blue-600/40 text-white px-2.5 xl:px-3 py-0.5 xl:py-1 rounded-full hover:bg-blue-600/60 transition-colors border border-blue-400/50 cursor-pointer shadow-sm"
                   >
                     v{packageJson.version}
                   </span>
@@ -254,10 +253,9 @@ function App() {
                       closeSidebarOnMobile();
                       setIsCloudSyncOpen(true);
                     }}
-                    className="flex items-center gap-1.5 text-[11px] font-bold bg-blue-600/40 hover:bg-blue-600/60 text-white px-2.5 py-0.5 rounded-full transition-all border border-blue-400/50 shadow-sm"
-                    
+                    className="flex items-center gap-1.5 text-[11px] xl:text-xs font-bold bg-blue-600/40 hover:bg-blue-600/60 text-white px-2.5 xl:px-3 py-0.5 xl:py-1 rounded-full transition-all border border-blue-400/50 shadow-sm"
                   >
-                    <Cloud className="size-3 text-white" />
+                    <Cloud className="size-3 xl:size-3.5 text-white" />
                     <span>Cloud-Sync</span>
                   </button>
                 </div>
@@ -265,7 +263,7 @@ function App() {
 
               {/* Navigation links: uniform spacing, perfectly sized, scrollable with touch momentum */}
               <nav
-                className="flex-1 px-2.5 py-2 flex flex-col gap-1 overflow-y-auto overscroll-contain scroller-none touch-pan-y"
+                className="flex-1 px-2.5 xl:px-3 py-2 xl:py-3 flex flex-col gap-1 xl:gap-1.5 overflow-y-auto overscroll-contain scroller-none touch-pan-y"
                 style={{ WebkitOverflowScrolling: 'touch' }}
               >
                 <NavItem to="/" icon={LayoutDashboard} label="Übersicht" onClick={closeSidebarOnMobile} />
@@ -282,12 +280,12 @@ function App() {
               </nav>
 
               {/* Footer with Dark Mode Toggle */}
-              <div className="p-2 landscape:py-1 border-t border-border mt-auto shrink-0 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
+              <div className="p-2 xl:p-2.5 landscape:py-1 border-t border-border mt-auto shrink-0 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
                 <button
                   onClick={toggleDarkMode}
-                  className="flex items-center gap-2.5 md:gap-3 text-sm font-medium text-foreground hover:bg-accent/60 dark:text-white dark:hover:text-white dark:hover:bg-white/10 transition-colors w-full px-2.5 md:px-3 py-1.5 landscape:py-1 md:py-1.5 rounded-lg"
+                  className="flex items-center gap-2.5 md:gap-3 xl:gap-3.5 text-sm xl:text-[15px] font-medium text-foreground hover:bg-accent/60 dark:text-white dark:hover:text-white dark:hover:bg-white/10 transition-colors w-full px-2.5 md:px-3 xl:px-3.5 py-1.5 landscape:py-1 md:py-1.5 xl:py-2.5 rounded-lg"
                 >
-                  {isDarkMode ? <Sun className="size-4 shrink-0" /> : <Moon className="size-4 shrink-0" />}
+                  {isDarkMode ? <Sun className="size-4 xl:size-5 shrink-0" /> : <Moon className="size-4 xl:size-5 shrink-0" />}
                   <span>{isDarkMode ? "Light Mode" : "Dark Mode"}</span>
                 </button>
               </div>
