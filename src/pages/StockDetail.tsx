@@ -5,7 +5,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, Pencil, Landmark, Calendar } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, Pencil, Landmark } from 'lucide-react';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
 import { estimateMarketState } from '../utils/market';
@@ -785,7 +785,7 @@ export function StockDetail() {
             </div>
 
             {/* Kursdaten & Stammdaten - Darunter nebeneinander */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 landscape:gap-3 items-stretch iphone-landscape-section">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 landscape:gap-3 items-start iphone-landscape-section">
                 {/* Kursdaten */}
                 <div
                     onClick={() => {
@@ -794,7 +794,7 @@ export function StockDetail() {
                         const targetId = stockFromContext?.id || stock?.id || stock?.symbol || id;
                         navigate(`/dividends/edit/${encodeURIComponent(String(targetId))}${query}`);
                     }}
-                    className="bg-card border border-border hover:border-primary/50 rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm cursor-pointer transition-colors group flex flex-col justify-between h-full overflow-hidden"
+                    className="bg-card border border-border hover:border-primary/50 rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm cursor-pointer transition-colors group flex flex-col justify-start overflow-hidden"
                     title="Daten bearbeiten"
                 >
                     <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 landscape:mb-1">
@@ -1224,39 +1224,45 @@ export function StockDetail() {
                     })()}
                 </div>
 
-                {/* Stammdaten (Unterteilt in 3 einzeln anklickbare Abschnitte) */}
-                <div className="bg-card border border-border rounded-xl p-3 sm:p-5 shadow-sm flex flex-col justify-between h-full overflow-hidden space-y-3">
+                {/* Stammdaten */}
+                <div className="bg-card border border-border rounded-xl p-4 md:p-6 landscape:p-3 landscape:py-2.5 shadow-sm flex flex-col justify-start overflow-hidden space-y-4">
+                    <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 landscape:mb-1">
+                        <div className="flex items-center gap-1.5 md:gap-2">
+                            <TrendingUp className="size-4 md:size-5 text-blue-500" />
+                            <h3 className="font-bold text-base md:text-lg landscape:text-xs">Stammdaten</h3>
+                        </div>
+                    </div>
+
                     {/* Bereich 1: Basisdaten */}
                     <div
                         onClick={() => navigateToEditSection('stammdaten')}
-                        className="p-3 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-muted/30 cursor-pointer transition-all group"
+                        className="group cursor-pointer rounded-lg p-1.5 -mx-1.5 hover:bg-muted/40 transition-colors"
                         title="Basisdaten bearbeiten (Öffnet Stammdaten)"
                     >
-                        <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-border/50 group-hover:text-primary transition-colors">
-                            <span className="font-bold text-xs sm:text-sm uppercase tracking-wider text-muted-foreground group-hover:text-primary flex items-center gap-1.5">
-                                <TrendingUp className="size-3.5 text-blue-500" />
+                        <div className="flex items-center justify-between pb-1 mb-1 border-b border-border/40">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-primary transition-colors">
                                 Basisdaten
                             </span>
-                            <Pencil className="size-3 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <Pencil className="size-3 text-muted-foreground group-hover:text-primary transition-colors opacity-60 group-hover:opacity-100" />
                         </div>
-                        <div className="space-y-1.5 text-xs sm:text-sm">
-                            <div className="flex justify-between py-0.5 border-b border-border/30">
+                        <div className="space-y-0.5">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">Name</span>
                                 <span className="font-medium text-right truncate max-w-[180px] sm:max-w-[240px]">{stock.name}</span>
                             </div>
-                            <div className="flex justify-between py-0.5 border-b border-border/30">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">Symbol</span>
                                 <span className="font-medium font-mono">{stock.symbol}</span>
                             </div>
-                            <div className="flex justify-between py-0.5 border-b border-border/30">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">ISIN</span>
                                 <span className="font-medium font-mono">{stock.isin || '-'}</span>
                             </div>
-                            <div className="flex justify-between py-0.5 border-b border-border/30">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">Typ</span>
                                 <span className="font-medium capitalize">{stock.type || 'Aktie'}</span>
                             </div>
-                            <div className="flex justify-between py-0.5">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">Währung</span>
                                 <span className="font-medium">{stock.currency}</span>
                             </div>
@@ -1266,18 +1272,17 @@ export function StockDetail() {
                     {/* Bereich 2: Bewertung & Kennzahlen */}
                     <div
                         onClick={() => navigateToEditSection('kursdaten')}
-                        className="p-3 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-muted/30 cursor-pointer transition-all group"
+                        className="group cursor-pointer rounded-lg p-1.5 -mx-1.5 hover:bg-muted/40 transition-colors"
                         title="Bewertung & Kennzahlen bearbeiten (Öffnet Kursdaten)"
                     >
-                        <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-border/50 group-hover:text-primary transition-colors">
-                            <span className="font-bold text-xs sm:text-sm uppercase tracking-wider text-muted-foreground group-hover:text-primary flex items-center gap-1.5">
-                                <BarChart2 className="size-3.5 text-emerald-500" />
+                        <div className="flex items-center justify-between pb-1 mb-1 border-b border-border/40">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-primary transition-colors">
                                 Bewertung & Kennzahlen
                             </span>
-                            <Pencil className="size-3 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <Pencil className="size-3 text-muted-foreground group-hover:text-primary transition-colors opacity-60 group-hover:opacity-100" />
                         </div>
-                        <div className="space-y-1.5 text-xs sm:text-sm">
-                            <div className="flex justify-between py-0.5 border-b border-border/30">
+                        <div className="space-y-0.5">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">KGV (P/E)</span>
                                 <span className="font-medium">
                                     {stock.trailingPE
@@ -1285,7 +1290,7 @@ export function StockDetail() {
                                         : (stock.forwardPE ? `${stock.forwardPE.toFixed(2)} (Fwd)` : (stock.eps && stock.eps > 0 ? (stock.currentPrice / stock.eps).toFixed(2) : '-'))}
                                 </span>
                             </div>
-                            <div className="flex justify-between py-0.5">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">KCV (P/CF)</span>
                                 <span className="font-medium">
                                     {stock.kcv ? stock.kcv.toFixed(2) : '-'}
@@ -1297,18 +1302,17 @@ export function StockDetail() {
                     {/* Bereich 3: Dividenden & Termine */}
                     <div
                         onClick={() => navigateToEditSection('termine')}
-                        className="p-3 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-muted/30 cursor-pointer transition-all group"
+                        className="group cursor-pointer rounded-lg p-1.5 -mx-1.5 hover:bg-muted/40 transition-colors"
                         title="Dividenden & Termine bearbeiten (Öffnet direkt auf Höhe von Terminen)"
                     >
-                        <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-border/50 group-hover:text-primary transition-colors">
-                            <span className="font-bold text-xs sm:text-sm uppercase tracking-wider text-muted-foreground group-hover:text-primary flex items-center gap-1.5">
-                                <Calendar className="size-3.5 text-amber-500" />
+                        <div className="flex items-center justify-between pb-1 mb-1 border-b border-border/40">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-primary transition-colors">
                                 Dividenden & Termine
                             </span>
-                            <Pencil className="size-3 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <Pencil className="size-3 text-muted-foreground group-hover:text-primary transition-colors opacity-60 group-hover:opacity-100" />
                         </div>
-                        <div className="space-y-1.5 text-xs sm:text-sm">
-                            <div className="flex justify-between py-0.5 border-b border-border/30">
+                        <div className="space-y-0.5">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">Div. Frequenz</span>
                                 <span className="font-medium capitalize">
                                     {stock.dividendFrequency ? (
@@ -1318,7 +1322,7 @@ export function StockDetail() {
                                     ) : '-'}
                                 </span>
                             </div>
-                            <div className="flex justify-between py-0.5 border-b border-border/30">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">Div. Rendite</span>
                                 <span className="font-medium text-right">
                                     {(() => {
@@ -1368,11 +1372,11 @@ export function StockDetail() {
                                     })()}
                                 </span>
                             </div>
-                            <div className="flex justify-between py-0.5 border-b border-border/30">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">Nächster Ex-Tag</span>
                                 <span className="font-medium font-mono text-foreground">{upcomingDividendDates.exDate}</span>
                             </div>
-                            <div className="flex justify-between py-0.5">
+                            <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 text-xs sm:text-sm landscape:text-[11px]">
                                 <span className="text-muted-foreground">Nächster Zahltag</span>
                                 <span className="font-medium font-mono text-emerald-400">{upcomingDividendDates.payDate}</span>
                             </div>
