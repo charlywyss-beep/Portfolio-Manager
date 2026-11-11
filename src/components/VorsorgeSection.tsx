@@ -54,13 +54,13 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
             </div>
 
             <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-                <div className="overflow-y-auto flex-1 min-h-0 p-0 w-full">
+                <div className="overflow-auto flex-1 min-h-0 p-0 w-full">
                     <table className="w-full text-sm text-left">
                         <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
                             <tr>
-                                <th className="px-4 py-3 sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] lg:w-[250px] min-w-[180px] lg:min-w-[250px] max-w-[180px] lg:max-w-[250px] align-middle">Bank / Institut</th>
-                                <th className="px-4 py-3 sticky top-0 z-30 bg-card w-[130px] lg:w-[150px] min-w-[130px] lg:min-w-[150px] max-w-[130px] lg:max-w-[150px] align-middle">Konto-Typ</th>
-                                <th className="px-4 py-3 sticky top-0 z-30 bg-card text-right whitespace-nowrap min-w-[160px] align-middle">Vorsorgekapital Stand {currentMonthShort} {currentYear}</th>
+                                <th className="px-4 py-3 sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[220px] lg:w-[260px] min-w-[200px] align-middle">Bank / Institut</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card w-[120px] lg:w-[140px] min-w-[120px] align-middle">Konto-Typ</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card text-right whitespace-nowrap w-[220px] lg:w-[260px] min-w-[200px] align-middle">Vorsorgekapital Stand {currentMonthShort} {currentYear}</th>
                                 <th className="px-4 py-3 sticky top-0 z-30 bg-card min-w-[280px] align-middle">Einzahlung {currentYear} Fortschritt</th>
                                 <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky top-0 md:sticky md:-right-px bg-card z-30 md:z-40 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">Aktion</th>
                             </tr>
@@ -82,11 +82,10 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                     : (fd.currentYearContribution || 0);
 
                                 const percent = Math.min((current / limit) * 100, 100);
-                                const remaining = Math.max(0, limit - current);
 
                                 return (
                                     <tr key={fd.id} className="group hover:bg-muted/30 transition-colors">
-                                        <td className="px-4 py-3 font-medium sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">
+                                        <td className="px-4 py-3 font-medium sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle w-[220px] lg:w-[260px] min-w-[200px]">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center gap-3">
                                                 <Logo
@@ -104,18 +103,18 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 align-middle">
+                                        <td className="px-4 py-3 align-middle w-[120px] lg:w-[140px] min-w-[120px]">
                                             <span className="px-2 py-0.5 rounded-md text-xs font-medium border bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50">
                                                 Vorsorge 3a
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-right font-medium align-middle whitespace-nowrap">
+                                        <td className="px-4 py-3 text-right font-medium align-middle whitespace-nowrap w-[220px] lg:w-[260px] min-w-[200px]">
                                             <span className="text-base font-bold text-white tracking-tight">
                                                 {fd.amount.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 align-middle">
-                                            <div className="flex flex-col gap-1.5 py-0.5 max-w-xl">
+                                        <td className="px-4 py-3 align-middle min-w-[280px]">
+                                            <div className="flex flex-col gap-1.5 py-0.5 max-w-lg">
                                                 <div className="flex justify-between items-baseline">
                                                     <span className="text-sm font-bold !text-white tracking-tight">
                                                         {current.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
@@ -130,19 +129,10 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                                         style={{ '--width': `${percent}%` } as React.CSSProperties}
                                                     />
                                                 </div>
-                                                <div className="flex justify-between items-center text-xs text-muted-foreground">
+                                                <div className="text-xs text-muted-foreground">
                                                     <span>
                                                         von möglichen <span className="font-medium text-foreground/90">{limit.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF</span>
                                                     </span>
-                                                    {remaining > 0 ? (
-                                                        <span className="font-mono text-[11px] text-muted-foreground/80">
-                                                            noch {remaining.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF offen
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-emerald-400 font-medium text-[11px]">
-                                                            Maximalbetrag erreicht
-                                                        </span>
-                                                    )}
                                                 </div>
                                             </div>
                                         </td>
