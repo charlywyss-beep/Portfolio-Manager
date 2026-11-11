@@ -124,8 +124,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     const activeDateLabel = (isViewingYesterday || !isAnyActiveToday) ? yesterdayDateLabel : todayDateLabel;
 
     const getPositionMetrics = (p: any) => {
-        const dailyGainCHF = convertToCHF(p.dailyGain, p.stock.currency);
-        const currentValue = p.shares * p.stock.currentPrice;
+        const snap = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[p.stock.id] : null;
+        const displayPrice = snap ? snap.currentPrice : (isViewingYesterday && p.stock.previousClose ? p.stock.previousClose : p.stock.currentPrice);
+        const dailyGainCHF = snap ? snap.dailyGainCHF : convertToCHF(p.dailyGain, p.stock.currency);
+        const currentValue = p.shares * displayPrice;
         const purchaseValue = (p.purchases || []).reduce((pSum: number, purchase: any) =>
             pSum + (purchase.shares * purchase.price), 0);
         const currentValueCHF = convertToCHF(currentValue, p.stock.currency);
@@ -135,7 +137,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
             : purchaseValue;
         const totalGainCHF = currentValueCHF - purchaseValueCHF;
         const totalGainPercent = purchaseValueCHF > 0 ? (totalGainCHF / purchaseValueCHF) * 100 : 0;
-        return { dailyGainCHF, totalGainCHF, totalGainPercent };
+        return { dailyGainCHF, totalGainCHF, totalGainPercent, displayPrice };
     };
 
     // Sort positions:
@@ -212,16 +214,8 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     const totalDailyGainPercent = previousTotalValue > 0 ? (totalDailyGain / previousTotalValue) * 100 : 0;
 
     const totalPerformanceGain = sortedPositions.reduce((sum, p) => {
-        const currentValue = p.shares * p.stock.currentPrice;
-        const purchaseValue = (p.purchases || []).reduce((pSum: number, purchase: any) =>
-            pSum + (purchase.shares * purchase.price), 0);
-        // Use FX-aware CHF calculation
-        const currentValueCHF = convertToCHF(currentValue, p.stock.currency);
-        const entryFxRate = p.averageEntryFxRate || 1;
-        const purchaseValueCHF = p.stock.currency !== 'CHF'
-            ? purchaseValue * entryFxRate
-            : purchaseValue;
-        return sum + (currentValueCHF - purchaseValueCHF);
+        const m = getPositionMetrics(p);
+        return sum + m.totalGainCHF;
     }, 0);
 
     const totalPurchaseValueCHF = sortedPositions.reduce((sum, p) => {
@@ -400,7 +394,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         <div className="flex items-center justify-end mb-1 gap-1.5 flex-wrap w-full min-h-[1.75rem]">
                             <span className="text-[13px] sm:text-base text-white font-semibold tracking-tight whitespace-nowrap">Gesamt-Performance</span>
                             <span className="text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 bg-secondary/80 border border-border px-1.5 py-0.5 rounded-md tabular-nums whitespace-nowrap shadow-xs">
-                                Seit Kauf
+                                {isViewingYesterday ? `Seit Kauf per ${yesterdayDateLabel} Schlusskurs` : `Seit Kauf Live ${todayDateLabel}`}
                             </span>
                         </div>
                         <div className="flex items-baseline justify-end gap-2 flex-wrap w-full">
@@ -667,12 +661,12 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                 const snap = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[p.stock.id] : null;
                                 const dailyGainCHF = snap ? snap.dailyGainCHF : convertToCHF(p.dailyGain, p.stock.currency);
                                 const dailyGainPercent = snap ? snap.dailyGainPercent : p.dailyGainPercent;
-                                const displayPrice = snap ? snap.currentPrice : p.stock.currentPrice;
+                                const displayPrice = snap ? snap.currentPrice : (isViewingYesterday && p.stock.previousClose ? p.stock.previousClose : p.stock.currentPrice);
                                 const isDailyPositive = dailyGainCHF >= 0;
                                 const isDailyZero = Math.abs(dailyGainCHF) < 0.005;
 
-                                // Calculate total performance with proper FX handling
-                                const currentValue = p.shares * p.stock.currentPrice;
+                                // Calculate total performance with proper FX handling (using displayPrice to reflect 10.11. close vs Live 11.11.)
+                                const currentValue = p.shares * displayPrice;
                                 const purchaseValue = (p.purchases || []).reduce((sum: number, purchase: any) =>
                                     sum + (purchase.shares * purchase.price), 0);
                                 
