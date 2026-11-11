@@ -53,25 +53,21 @@ export function WatchlistPerformanceModal({
         }
     }, [initialPeriod]);
 
-    // Prevent body scroll when modal is open
+    const [currentWatchlistId, setCurrentWatchlistId] = useState(activeWatchlistId || 'owned');
+
     useEffect(() => {
-        if (isOpen) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'unset';
+        if (activeWatchlistId) {
+            setCurrentWatchlistId(activeWatchlistId);
         }
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
-    }, [isOpen]);
+    }, [activeWatchlistId]);
 
     // Get stock IDs based on the active watchlist
-    const activeWatchlist = activeWatchlistId && activeWatchlistId !== 'owned'
-        ? watchlists.find(w => w.id === activeWatchlistId)
+    const activeWatchlist = currentWatchlistId && currentWatchlistId !== 'owned'
+        ? watchlists.find(w => w.id === currentWatchlistId)
         : null;
 
     let watchlistStockIds: string[];
-    if (activeWatchlistId === 'owned' || !activeWatchlistId) {
+    if (currentWatchlistId === 'owned' || !currentWatchlistId) {
         // "Bestand" mode or no specific tab: show all stocks that have positions
         watchlistStockIds = stocks
             .filter(s => positions.some(p => String(p.stockId) === String(s.id)))
@@ -85,7 +81,7 @@ export function WatchlistPerformanceModal({
     }
 
     // Determine active tab name for the subtitle
-    const activeTabName = activeWatchlistId === 'owned'
+    const activeTabName = currentWatchlistId === 'owned'
         ? 'Bestand'
         : activeWatchlist?.name || 'Alle Aktien';
 
@@ -287,10 +283,9 @@ export function WatchlistPerformanceModal({
     const isPeriodMode = selectedPeriod !== '1D';
 
     return (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-[9999] p-3 sm:p-6 iphone-modal-overlay" onClick={onClose}>
-            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-[96vw] xl:max-w-[1440px] max-h-[92vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10 overflow-hidden iphone-modal-shell" onClick={(e) => e.stopPropagation()}>
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 sm:p-4 border-b border-border bg-card z-10 gap-3 iphone-modal-header-card">
+        <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border bg-card shadow-sm overflow-hidden w-full h-full animate-in fade-in duration-150">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 sm:p-4 border-b border-border bg-card z-10 gap-3 pl-14 xl:pl-4">
                     <div className="flex items-center gap-2.5 min-w-0">
                         <button
                             type="button"
@@ -369,7 +364,53 @@ export function WatchlistPerformanceModal({
                     </div>
                 </div>
 
-                {/* KPI Highlight Strip */}
+                {/* Watchlist Tabs Bar */}
+            <div className="px-3 sm:px-4 py-2 border-b border-border/70 bg-muted/20 flex items-center gap-1.5 overflow-x-auto scroller-none shrink-0 pl-14 xl:pl-4">
+                <button
+                    type="button"
+                    onClick={() => setCurrentWatchlistId('owned')}
+                    className={cn(
+                        "px-3 py-1 rounded-full text-xs font-semibold transition-all border shrink-0 cursor-pointer",
+                        currentWatchlistId === 'owned'
+                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                            : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+                    )}
+                >
+                    Bestand
+                </button>
+                {watchlists.filter(wl => !wl.isDefault).map(wl => (
+                    <button
+                        key={wl.id}
+                        type="button"
+                        onClick={() => setCurrentWatchlistId(wl.id)}
+                        className={cn(
+                            "px-3 py-1 rounded-full text-xs font-semibold transition-all border shrink-0 cursor-pointer whitespace-nowrap",
+                            currentWatchlistId === wl.id
+                                ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                                : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+                        )}
+                    >
+                        {wl.name}
+                    </button>
+                ))}
+                {watchlists.filter(wl => wl.isDefault).map(wl => (
+                    <button
+                        key={wl.id}
+                        type="button"
+                        onClick={() => setCurrentWatchlistId(wl.id)}
+                        className={cn(
+                            "px-3 py-1 rounded-full text-xs font-semibold transition-all border shrink-0 cursor-pointer whitespace-nowrap",
+                            currentWatchlistId === wl.id
+                                ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                                : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+                        )}
+                    >
+                        {wl.name}
+                    </button>
+                ))}
+            </div>
+
+            {/* KPI Highlight Strip */}
                 {stats && (
                     <div className="px-4 py-2.5 bg-muted/30 border-b border-border/70 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs shrink-0">
                         <div className="flex items-center gap-2 p-1.5 rounded-lg bg-card/60 border border-border/50">
@@ -786,7 +827,6 @@ export function WatchlistPerformanceModal({
                         </div>
                     </div>
                 </div>
-            </div>
         </div>
     );
 }

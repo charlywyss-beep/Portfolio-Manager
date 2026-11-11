@@ -223,6 +223,19 @@ export function Watchlist() {
     const currentTab = subTabs.find(t => t.id === activeSubTab) || subTabs[0];
     const currentTabStocks = currentTab?.stocks || [];
 
+    if (isPerformanceModalOpen) {
+        return (
+            <div className="h-full flex flex-col p-4 md:p-6 space-y-3 bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden iphone-landscape-page-root">
+                <WatchlistPerformanceModal
+                    isOpen={true}
+                    onClose={() => setIsPerformanceModalOpen(false)}
+                    activeWatchlistId={activeWatchlistId}
+                    initialPeriod={modalInitialPeriod}
+                />
+            </div>
+        );
+    }
+
     return (
         <div className="h-full flex flex-col p-4 md:p-6 space-y-3 bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden iphone-landscape-page-root">
             {/* Header + Tabs Container - Fixed Height */}
@@ -473,13 +486,6 @@ export function Watchlist() {
                         preSelectedStock={buyStock}
                     />
                 )}
-                {/* WatchlistPerformanceModal */}
-                <WatchlistPerformanceModal
-                    isOpen={isPerformanceModalOpen}
-                    onClose={() => setIsPerformanceModalOpen(false)}
-                    activeWatchlistId={activeWatchlistId}
-                    initialPeriod={modalInitialPeriod}
-                />
 
                 {/* EditPositionModal for editing owned stocks from watchlist */}
                 {editPosition && (
