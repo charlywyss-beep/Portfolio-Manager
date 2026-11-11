@@ -108,7 +108,7 @@ export const MortgageCalculator = () => {
     const [isIncomeOpen, setIsIncomeOpen] = useState(false);
     const [isPropertyOpen, setIsPropertyOpen] = useState(false);
     const [isFinanceOpen, setIsFinanceOpen] = useState(false);
-    const [isPensionTestOpen, setIsPensionTestOpen] = useState(true);
+    const [isPensionTestOpen, setIsPensionTestOpen] = useState(false);
     const [isAutoOpen, setIsAutoOpen] = useState(false);
     const [isHeatingCalcOpen, setIsHeatingCalcOpen] = useState(false);
     const [isElectricityOpen, setIsElectricityOpen] = useState(false);
