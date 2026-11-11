@@ -158,13 +158,13 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                 </div>
 
                 {/* Filter and Search Bar */}
-                <div className="p-4 border-b border-border bg-card space-y-3 shrink-0">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="p-3 sm:p-4 border-b border-border bg-card space-y-3 shrink-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
                         {/* Status Filter Tabs */}
-                        <div className="flex items-center gap-1 sm:gap-1.5 bg-muted/50 p-1 rounded-xl text-xs font-medium overflow-x-auto no-scrollbar w-full sm:w-auto shrink-0">
+                        <div className="grid grid-cols-4 sm:flex items-center gap-1 sm:gap-1.5 bg-muted/50 p-1 rounded-xl text-xs font-medium w-full sm:w-auto shrink-0">
                             <button
                                 onClick={() => setFilter('all')}
-                                className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all whitespace-nowrap text-[11px] sm:text-xs ${filter === 'all'
+                                className={`flex-1 justify-center px-1.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg transition-all whitespace-nowrap text-[10px] sm:text-xs text-center ${filter === 'all'
                                     ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
                                     : 'text-muted-foreground hover:text-foreground'
                                     }`}
@@ -173,7 +173,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                             </button>
                             <button
                                 onClick={() => setFilter('open')}
-                                className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-[11px] sm:text-xs ${filter === 'open'
+                                className={`flex-1 justify-center px-1.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1 whitespace-nowrap text-[10px] sm:text-xs text-center ${filter === 'open'
                                     ? 'bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/40 shadow-xs'
                                     : 'text-muted-foreground hover:text-foreground'
                                     }`}
@@ -183,7 +183,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                             </button>
                             <button
                                 onClick={() => setFilter('executed')}
-                                className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-[11px] sm:text-xs ${filter === 'executed'
+                                className={`flex-1 justify-center px-1.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1 whitespace-nowrap text-[10px] sm:text-xs text-center ${filter === 'executed'
                                     ? 'bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/40 shadow-xs'
                                     : 'text-muted-foreground hover:text-foreground'
                                     }`}
@@ -193,7 +193,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                             </button>
                             <button
                                 onClick={() => setFilter('expired')}
-                                className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-[11px] sm:text-xs ${filter === 'expired'
+                                className={`flex-1 justify-center px-1.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg transition-all flex items-center gap-1 whitespace-nowrap text-[10px] sm:text-xs text-center ${filter === 'expired'
                                     ? 'bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/40 shadow-xs'
                                     : 'text-muted-foreground hover:text-foreground'
                                     }`}
@@ -204,7 +204,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                         </div>
 
                         {/* Search Input */}
-                        <div className="relative flex-1 min-w-[200px] max-w-xs">
+                        <div className="relative w-full sm:flex-1 sm:max-w-xs">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                             <input
                                 type="text"
