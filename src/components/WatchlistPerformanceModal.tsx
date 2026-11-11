@@ -287,8 +287,8 @@ export function WatchlistPerformanceModal({
     const isPeriodMode = selectedPeriod !== '1D';
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4 iphone-modal-overlay" onClick={onClose}>
-            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-[95vw] md:max-w-6xl max-h-[92vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10 overflow-hidden iphone-modal-shell" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-2 sm:p-4 md:p-6 iphone-modal-overlay" onClick={onClose}>
+            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-[98vw] lg:max-w-[1300px] xl:max-w-[1500px] 2xl:max-w-[1650px] max-h-[94vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10 overflow-hidden iphone-modal-shell" onClick={(e) => e.stopPropagation()}>
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 sm:p-4 border-b border-border bg-card z-10 gap-3 iphone-modal-header-card">
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -369,13 +369,13 @@ export function WatchlistPerformanceModal({
                     </div>
                 </div>
 
-                {/* KPI Highlight Strip for Period Mode */}
-                {isPeriodMode && stats && (
+                {/* KPI Highlight Strip */}
+                {stats && (
                     <div className="px-4 py-2.5 bg-muted/30 border-b border-border/70 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs shrink-0">
                         <div className="flex items-center gap-2 p-1.5 rounded-lg bg-card/60 border border-border/50">
                             <Trophy className="size-4 text-amber-400 shrink-0" />
                             <div className="min-w-0">
-                                <div className="text-[10px] text-muted-foreground uppercase font-semibold">1. Platz ({selectedPeriod})</div>
+                                <div className="text-[10px] text-muted-foreground uppercase font-semibold">1. Platz ({selectedPeriod === '1D' ? 'Heute' : selectedPeriod})</div>
                                 <div className="font-bold truncate text-foreground flex items-center gap-1">
                                     <span className="truncate">{stats.best.stock.name}</span>
                                     <span className={cn("font-mono font-bold text-xs shrink-0", stats.best.effectiveGainPercent >= 0 ? "text-green-500" : "text-red-500")}>
@@ -428,27 +428,22 @@ export function WatchlistPerformanceModal({
                         <table className="w-full text-xs md:text-sm border-collapse">
                             <thead>
                                 <tr className="border-b border-border bg-muted/20">
-                                    {isPeriodMode && (
-                                        <th
-                                            onClick={() => handleSort('gain')}
-                                            className="text-center py-3 px-2 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 left-0 z-40 bg-card align-middle cursor-pointer hover:text-foreground w-12"
-                                            title="Nach Rang sortieren"
-                                        >
-                                            <div className="flex items-center justify-center gap-0.5">
-                                                <span>Rang</span>
-                                                {sortConfig.key === 'gain' && (
-                                                    sortConfig.direction === 'desc' ? <ChevronDown className="size-3 text-primary" /> : <ChevronUp className="size-3 text-primary" />
-                                                )}
-                                            </div>
-                                        </th>
-                                    )}
+                                    <th
+                                        onClick={() => handleSort('gain')}
+                                        className="text-center py-3 px-2 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 left-0 z-40 bg-card align-middle cursor-pointer hover:text-foreground w-12"
+                                        title="Nach Rang sortieren"
+                                    >
+                                        <div className="flex items-center justify-center gap-0.5">
+                                            <span>Rang</span>
+                                            {sortConfig.key === 'gain' && (
+                                                sortConfig.direction === 'desc' ? <ChevronDown className="size-3 text-primary" /> : <ChevronUp className="size-3 text-primary" />
+                                            )}
+                                        </div>
+                                    </th>
 
                                     <th
                                         onClick={() => handleSort('name')}
-                                        className={cn(
-                                            "text-left py-3 px-4 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 z-30 bg-card align-middle cursor-pointer hover:text-foreground",
-                                            !isPeriodMode && "left-0 z-40 shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]"
-                                        )}
+                                        className="text-left py-3 px-4 font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 z-30 bg-card align-middle cursor-pointer hover:text-foreground min-w-[180px] max-w-[260px] sm:max-w-[320px] lg:max-w-[380px]"
                                     >
                                         <div className="flex items-center gap-1">
                                             <span>Aktie</span>
@@ -542,26 +537,51 @@ export function WatchlistPerformanceModal({
                                     const isWaitingForOpen = isAnyActiveToday && !hasOpenedToday;
                                     const openingHint = getMarketOpeningTimeHint(stock.symbol, stock.currency);
 
-                                    const isPos = effectiveGainPercent >= 0;
-                                    const isZero = Math.abs(effectiveGainPercent) < 0.005;
+                                    const isPos = effectiveGainPercent > 0.005;
+                                    const isNeg = effectiveGainPercent < -0.005;
+                                    const isZero = !isPos && !isNeg;
 
                                     // Medal for rank
                                     const rankNumber = idx + 1;
                                     const rankBadge = rankNumber === 1
                                         ? (
-                                            <div className="size-6 sm:size-7 rounded-full bg-gradient-to-br from-amber-400/25 to-yellow-600/15 border border-amber-400/40 flex items-center justify-center text-sm shadow-xs" title="1. Platz">
+                                            <div
+                                                className={cn(
+                                                    "size-6 sm:size-7 rounded-full border flex items-center justify-center text-sm shadow-xs",
+                                                    isNeg
+                                                        ? "bg-red-500/15 border-red-500/40 text-red-400"
+                                                        : "bg-gradient-to-br from-amber-400/25 to-yellow-600/15 border-amber-400/40"
+                                                )}
+                                                title="1. Platz"
+                                            >
                                                 🥇
                                             </div>
                                         )
                                         : rankNumber === 2
                                             ? (
-                                                <div className="size-6 sm:size-7 rounded-full bg-gradient-to-br from-slate-300/25 to-slate-500/15 border border-slate-300/40 flex items-center justify-center text-sm shadow-xs" title="2. Platz">
+                                                <div
+                                                    className={cn(
+                                                        "size-6 sm:size-7 rounded-full border flex items-center justify-center text-sm shadow-xs",
+                                                        isNeg
+                                                            ? "bg-red-500/15 border-red-500/40 text-red-400"
+                                                            : "bg-gradient-to-br from-slate-300/25 to-slate-500/15 border-slate-300/40"
+                                                    )}
+                                                    title="2. Platz"
+                                                >
                                                     🥈
                                                 </div>
                                             )
                                             : rankNumber === 3
                                                 ? (
-                                                    <div className="size-6 sm:size-7 rounded-full bg-gradient-to-br from-amber-700/25 to-amber-900/15 border border-amber-600/40 flex items-center justify-center text-sm shadow-xs" title="3. Platz">
+                                                    <div
+                                                        className={cn(
+                                                            "size-6 sm:size-7 rounded-full border flex items-center justify-center text-sm shadow-xs",
+                                                            isNeg
+                                                                ? "bg-red-500/15 border-red-500/40 text-red-400"
+                                                                : "bg-gradient-to-br from-amber-700/25 to-amber-900/15 border-amber-600/40"
+                                                        )}
+                                                        title="3. Platz"
+                                                    >
                                                         🥉
                                                     </div>
                                                 )
@@ -570,10 +590,12 @@ export function WatchlistPerformanceModal({
                                                         className={cn(
                                                             "size-6 sm:size-7 rounded-full font-mono font-bold text-xs flex items-center justify-center shadow-2xs border transition-colors",
                                                             isPos
-                                                                ? "bg-green-500/10 border-green-500/25 text-green-400"
-                                                                : "bg-muted/70 border-border/80 text-foreground/80 group-hover:border-primary/50 group-hover:text-primary"
+                                                                ? "bg-green-500/15 border-green-500/35 text-green-600 dark:text-green-400"
+                                                                : isNeg
+                                                                    ? "bg-red-500/15 border-red-500/35 text-red-600 dark:text-red-400"
+                                                                    : "bg-muted/70 border-border/80 text-muted-foreground"
                                                         )}
-                                                        title={`${rankNumber}. Platz`}
+                                                        title={`${rankNumber}. Platz (${isPos ? 'Im Plus' : isNeg ? 'Im Minus' : 'Neutral'})`}
                                                     >
                                                         {rankNumber}
                                                     </div>
@@ -590,44 +612,42 @@ export function WatchlistPerformanceModal({
                                             onClick={() => handleRowClick(stock.id)}
                                             className="hover:bg-muted/30 transition-colors cursor-pointer group"
                                         >
-                                            {/* Rank (Period Mode) */}
-                                            {isPeriodMode && (
-                                                <td className="py-3 px-2 text-center sticky left-0 z-10 bg-card group-hover:bg-muted/30 transition-colors">
-                                                    <div className="flex items-center justify-center">
-                                                        {rankBadge}
-                                                    </div>
-                                                </td>
-                                            )}
+                                            {/* Rank */}
+                                            <td className="py-2.5 sm:py-3 px-2 text-center sticky left-0 z-10 bg-card group-hover:bg-muted/30 transition-colors">
+                                                <div className="flex items-center justify-center">
+                                                    {rankBadge}
+                                                </div>
+                                            </td>
 
                                             {/* Stock Info */}
-                                            <td className={cn(
-                                                "py-3 px-4 bg-card group-hover:bg-muted/30 transition-colors",
-                                                !isPeriodMode && "sticky left-0 z-10 shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)]"
-                                            )}>
-                                                <div className="flex items-center gap-3">
+                                            <td className="py-2.5 sm:py-3 px-3 sm:px-4 bg-card group-hover:bg-muted/30 transition-colors min-w-[180px] max-w-[260px] sm:max-w-[320px] lg:max-w-[380px]">
+                                                <div className="flex items-center gap-2.5 sm:gap-3">
                                                     <Logo
                                                         url={stock.logoUrl}
                                                         alt={stock.name}
                                                         fallback={stock.symbol.slice(0, 2)}
-                                                        size="size-9"
+                                                        size="size-8 sm:size-9"
                                                     />
-                                                    <div className="flex flex-col min-w-0">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <span className="font-bold text-sm truncate group-hover:text-primary transition-colors leading-tight">
+                                                    <div className="flex flex-col min-w-0 flex-1">
+                                                        <div className="flex items-start gap-1.5">
+                                                            <span
+                                                                className="font-bold text-xs sm:text-sm whitespace-pre-line line-clamp-2 group-hover:text-primary transition-colors leading-snug break-words"
+                                                                title={stock.name}
+                                                            >
                                                                 {stock.name}
                                                             </span>
                                                             {isMarketOpen ? (
-                                                                <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0 border border-background shadow-[0_0_8px_rgba(34,197,94,0.4)]" title="Markt geöffnet" />
+                                                                <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0 mt-1 border border-background shadow-[0_0_8px_rgba(34,197,94,0.4)]" title="Markt geöffnet" />
                                                             ) : (
-                                                                <div className="size-2 rounded-full bg-red-500 shrink-0 border border-background" title={isWaitingForOpen ? `${openingHint} (${calcState})` : `Markt geschlossen (${calcState})`} />
+                                                                <div className="size-2 rounded-full bg-red-500 shrink-0 mt-1 border border-background" title={isWaitingForOpen ? `${openingHint} (${calcState})` : `Markt geschlossen (${calcState})`} />
                                                             )}
                                                         </div>
-                                                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-mono">
-                                                            <span>{stock.symbol}</span>
+                                                        <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] text-muted-foreground font-mono mt-0.5">
+                                                            <span className="shrink-0">{stock.symbol}</span>
                                                             {stock.sector && (
                                                                 <>
                                                                     <span>•</span>
-                                                                    <span className="truncate max-w-[120px]">{stock.sector}</span>
+                                                                    <span className="truncate max-w-[140px]">{stock.sector}</span>
                                                                 </>
                                                             )}
                                                         </div>
