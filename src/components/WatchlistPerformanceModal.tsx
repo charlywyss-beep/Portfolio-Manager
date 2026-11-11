@@ -1,3 +1,4 @@
+import { StockName } from './StockName';
 import { ArrowLeft, TrendingUp, RefreshCw, ShoppingBag, Trophy, Flame, Target, ChevronUp, ChevronDown, TrendingDown, PieChart, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
@@ -513,7 +514,7 @@ export function WatchlistPerformanceModal({
                             <div className="min-w-0">
                                 <div className="text-[10px] text-muted-foreground uppercase font-semibold">1. Platz ({selectedPeriod === '1D' ? 'Heute' : selectedPeriod})</div>
                                 <div className="font-bold truncate text-foreground flex items-center gap-1">
-                                    <span className="truncate">{stats.best.stock.name}</span>
+                                    <span className="truncate">{stats.best.stock.name.replace(/\r?\n/g, ' ')}</span>
                                     <span className={cn("font-mono font-bold text-xs shrink-0", stats.best.effectiveGainPercent >= 0 ? "text-green-500" : "text-red-500")}>
                                         {stats.best.effectiveGainPercent >= 0 ? '+' : ''}{stats.best.effectiveGainPercent.toFixed(1)}%
                                     </span>
@@ -548,7 +549,7 @@ export function WatchlistPerformanceModal({
                             <div className="min-w-0">
                                 <div className="text-[10px] text-muted-foreground uppercase font-semibold">Schlusslicht</div>
                                 <div className="font-bold truncate text-foreground flex items-center gap-1">
-                                    <span className="truncate">{stats.worst.stock.name}</span>
+                                    <span className="truncate">{stats.worst.stock.name.replace(/\r?\n/g, ' ')}</span>
                                     <span className={cn("font-mono font-bold text-xs shrink-0", stats.worst.effectiveGainPercent >= 0 ? "text-green-500" : "text-red-500")}>
                                         {stats.worst.effectiveGainPercent >= 0 ? '+' : ''}{stats.worst.effectiveGainPercent.toFixed(1)}%
                                     </span>
@@ -766,12 +767,7 @@ export function WatchlistPerformanceModal({
                                                     />
                                                     <div className="flex flex-col min-w-0 flex-1">
                                                         <div className="flex items-start gap-1.5">
-                                                            <span
-                                                                className="font-bold text-xs sm:text-sm whitespace-pre-line line-clamp-2 group-hover:text-primary transition-colors leading-snug break-words"
-                                                                title={stock.name}
-                                                            >
-                                                                {stock.name}
-                                                            </span>
+                                                            <StockName name={stock.name} className="font-bold text-xs sm:text-sm group-hover:text-primary transition-colors" />
                                                             {isMarketOpen ? (
                                                                 <div className="size-2 rounded-full bg-green-500 animate-pulse shrink-0 mt-1 border border-background shadow-[0_0_8px_rgba(34,197,94,0.4)]" title="Markt geöffnet" />
                                                             ) : (

@@ -1,3 +1,4 @@
+import { StockName } from '../components/StockName';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
@@ -505,7 +506,9 @@ export function StockDetail() {
                         </div>
                         <div className="min-w-0 flex-1">
                             <div className="flex items-center flex-wrap gap-1.5 md:gap-2.5">
-                                <h1 className="text-base md:text-2xl landscape:text-sm font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 leading-tight truncate max-w-[200px] sm:max-w-md">{stock.name}</h1>
+                                <h1 className="text-base md:text-2xl landscape:text-sm font-bold tracking-tight text-foreground leading-snug">
+                                    <StockName name={stock.name} />
+                                </h1>
                                 {(() => {
                                     const calculatedState = estimateMarketState(stock.symbol, stock.currency);
                                     const isMarketOpen = calculatedState === 'REGULAR';

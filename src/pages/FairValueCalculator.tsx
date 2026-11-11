@@ -1,3 +1,4 @@
+import { StockName } from '../components/StockName';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Search, TriangleAlert, Telescope, X, BookOpen, ExternalLink, Calculator, Check, ChevronDown, ChevronUp, ShieldCheck, Sparkles, Plus, Target } from 'lucide-react';
@@ -1663,7 +1664,7 @@ export function FairValueCalculator() {
                                     className="font-bold text-sm sm:text-base lg:text-sm truncate hover:text-primary transition-colors block leading-tight"
                                     title="Zur Detailansicht"
                                 >
-                                    {quote?.name || stocks.find(s => s.symbol === selectedSymbol)?.name || selectedSymbol}
+                                    <StockName name={quote?.name || stocks.find(s => s.symbol === selectedSymbol)?.name || selectedSymbol} />
                                 </Link>
                                 <div className="flex items-center gap-1.5 text-muted-foreground mt-0.5 text-xs">
                                     <span className="font-bold text-foreground">{selectedSymbol}</span>

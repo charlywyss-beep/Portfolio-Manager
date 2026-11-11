@@ -1,3 +1,4 @@
+import { StockName } from './StockName';
 import { useMemo, useState, useEffect, Fragment, useRef } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
 import { useCurrencyFormatter } from '../utils/currency';
@@ -505,7 +506,7 @@ export function PriceHistoryChart({
                         {stockName && (
                             <div className="flex items-baseline gap-2 mb-1 landscape:mb-0.5">
                                 <h4 className="text-base sm:text-2xl landscape:text-lg font-black tracking-tighter text-foreground drop-shadow-sm">
-                                    {stockName}
+                                    <StockName name={stockName} />
                                 </h4>
                                 {stockSymbol && (
                                     <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-widest">

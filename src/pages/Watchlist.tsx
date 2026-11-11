@@ -1,3 +1,4 @@
+import { StockName } from '../components/StockName';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useNavigate } from 'react-router-dom';
@@ -1000,13 +1001,9 @@ function WatchlistTable({
                                             size="size-8 xl:size-10"
                                         />
                                         <div className="flex flex-col min-w-0 flex-1 justify-center">
-                                            <span
-                                                className="font-bold text-[13px] xl:text-sm whitespace-pre-line line-clamp-2 block group-hover:text-primary transition-colors cursor-pointer"
-                                                onClick={() => onNavigate(stock.id)}
-                                                title={stock.name}
-                                            >
-                                                {stock.name}
-                                            </span>
+                                            <div onClick={() => onNavigate(stock.id)} className="cursor-pointer">
+                                                <StockName name={stock.name} className="font-bold text-[13px] xl:text-sm group-hover:text-primary transition-colors" />
+                                            </div>
                                             <div className="flex items-center gap-1.5 mt-0.5 whitespace-nowrap overflow-hidden max-w-full">
                                                 <span className="text-xs font-mono font-semibold text-foreground/80 uppercase whitespace-nowrap shrink-0">{stock.symbol}</span>
                                                 {stock.sector && stock.sector !== 'Simuliert' && (

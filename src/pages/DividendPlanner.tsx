@@ -1,3 +1,4 @@
+import { StockName } from '../components/StockName';
 import { LandscapeBackButton } from '../components/LandscapeBackButton';
 import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
@@ -1197,11 +1198,11 @@ export function DividendPlanner() {
                                                     </div>
                                                     <div className="flex flex-col min-w-0 flex-1 justify-center">
                                                         <div
-                                                            className="font-bold text-[13px] xl:text-sm text-foreground whitespace-pre-line line-clamp-2 block leading-tight cursor-pointer hover:text-primary transition-colors"
+                                                            className="font-bold text-[13px] xl:text-sm text-foreground block leading-tight cursor-pointer hover:text-primary transition-colors"
                                                             title={stock.name}
                                                             onClick={() => navigate(`/stock/${stock.id}?from=dividends`)}
                                                         >
-                                                            {stock.name}
+                                                            <StockName name={stock.name} />
                                                         </div>
                                                         <div className="flex items-center gap-1.5 mt-0.5 whitespace-nowrap overflow-hidden max-w-full">
                                                             <span className="text-xs font-mono font-semibold text-foreground/80 uppercase whitespace-nowrap shrink-0">{stock.symbol}</span>
