@@ -19,6 +19,8 @@ interface PositionTableProps {
     setIsEditModalOpen: (open: boolean) => void;
     headerAction?: React.ReactNode;
     hideHeader?: boolean;
+    sortConfig?: { key: string; direction: 'asc' | 'desc' };
+    onSort?: (key: string) => void;
 }
 
 export function PositionTable({
@@ -29,7 +31,9 @@ export function PositionTable({
     setSelectedPosition,
     setIsEditModalOpen,
     headerAction,
-    hideHeader
+    hideHeader,
+    sortConfig,
+    onSort
 }: PositionTableProps) {
     const { deletePosition } = usePortfolio();
     const navigate = useNavigate();
@@ -99,8 +103,20 @@ export function PositionTable({
                         <thead>
                             <tr className="border-b border-border bg-muted/20 iphone-landscape-table-header-row">
                                 {/* 0. Aktie */}
-                                <th className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[225px] min-w-[220px] max-w-[250px] md:w-[380px] md:min-w-[380px] md:max-w-[380px] touch-pan-y align-middle iphone-landscape-col-stock">
-                                    Aktie
+                                <th
+                                    onClick={() => onSort?.('name')}
+                                    className="text-left px-3 md:px-4 py-0 md:py-2 h-12 md:h-auto font-semibold text-foreground md:text-muted-foreground text-[15px] md:text-xs uppercase tracking-wider sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[225px] min-w-[220px] max-w-[250px] md:w-[380px] md:min-w-[380px] md:max-w-[380px] touch-pan-y align-middle iphone-landscape-col-stock cursor-pointer hover:text-foreground select-none transition-colors"
+                                    title="Nach Name sortieren (Klick für A-Z / Z-A)"
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Aktie</span>
+                                        {sortConfig?.key === 'name' && (
+                                            <span className="text-primary font-bold">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                        )}
+                                        {sortConfig?.key === 'market' && (
+                                            <span className="text-emerald-500 font-bold text-xs" title="Geöffnete Börsen zuerst">🟢</span>
+                                        )}
+                                    </div>
                                 </th>
 
                                 {/* 1. Anzahl */}
@@ -131,7 +147,16 @@ export function PositionTable({
                                             <ChevronRight className="size-4" />
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline">Anzahl</span>
+                                    <span
+                                        onClick={() => onSort?.('shares')}
+                                        className="hidden md:inline-flex items-center justify-end gap-1 w-full cursor-pointer hover:text-foreground select-none transition-colors"
+                                        title="Nach Anzahl sortieren"
+                                    >
+                                        <span>Anzahl</span>
+                                        {sortConfig?.key === 'shares' && (
+                                            <span className="text-primary font-bold">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                        )}
+                                    </span>
                                 </th>
 
                                 {/* 2. Ø Kauf */}
@@ -162,7 +187,16 @@ export function PositionTable({
                                             <ChevronRight className="size-4" />
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline">Ø Kauf</span>
+                                    <span
+                                        onClick={() => onSort?.('buyPrice')}
+                                        className="hidden md:inline-flex items-center justify-end gap-1 w-full cursor-pointer hover:text-foreground select-none transition-colors"
+                                        title="Nach Kaufkurs sortieren"
+                                    >
+                                        <span>Ø Kauf</span>
+                                        {sortConfig?.key === 'buyPrice' && (
+                                            <span className="text-primary font-bold">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                        )}
+                                    </span>
                                 </th>
 
                                 {/* 3. Invest */}
@@ -193,7 +227,16 @@ export function PositionTable({
                                             <ChevronRight className="size-4" />
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline">Invest</span>
+                                    <span
+                                        onClick={() => onSort?.('invest')}
+                                        className="hidden md:inline-flex items-center justify-end gap-1 w-full cursor-pointer hover:text-foreground select-none transition-colors"
+                                        title="Nach Investitionssumme sortieren"
+                                    >
+                                        <span>Invest</span>
+                                        {sortConfig?.key === 'invest' && (
+                                            <span className="text-primary font-bold">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                        )}
+                                    </span>
                                 </th>
 
                                 {/* 4. Kurs */}
@@ -224,7 +267,16 @@ export function PositionTable({
                                             <ChevronRight className="size-4" />
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline">Kurs</span>
+                                    <span
+                                        onClick={() => onSort?.('price')}
+                                        className="hidden md:inline-flex items-center justify-end gap-1 w-full cursor-pointer hover:text-foreground select-none transition-colors"
+                                        title="Nach aktuellem Kurs sortieren"
+                                    >
+                                        <span>Kurs</span>
+                                        {sortConfig?.key === 'price' && (
+                                            <span className="text-primary font-bold">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                        )}
+                                    </span>
                                 </th>
 
                                 {/* 5. Wert */}
@@ -255,7 +307,16 @@ export function PositionTable({
                                             <ChevronRight className="size-4" />
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline">Wert</span>
+                                    <span
+                                        onClick={() => onSort?.('value')}
+                                        className="hidden md:inline-flex items-center justify-end gap-1 w-full cursor-pointer hover:text-foreground select-none transition-colors"
+                                        title="Nach Wert sortieren"
+                                    >
+                                        <span>Wert</span>
+                                        {sortConfig?.key === 'value' && (
+                                            <span className="text-primary font-bold">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                        )}
+                                    </span>
                                 </th>
 
                                 {/* 6. % */}
@@ -286,7 +347,16 @@ export function PositionTable({
                                             <ChevronRight className="size-4" />
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline">%</span>
+                                    <span
+                                        onClick={() => onSort?.('performance')}
+                                        className="hidden md:inline-flex items-center justify-end gap-1 w-full cursor-pointer hover:text-foreground select-none transition-colors"
+                                        title="Nach Rendite % sortieren"
+                                    >
+                                        <span>%</span>
+                                        {sortConfig?.key === 'performance' && (
+                                            <span className="text-primary font-bold">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                        )}
+                                    </span>
                                 </th>
 
                                 {/* 7. +/- */}
@@ -317,7 +387,16 @@ export function PositionTable({
                                             <ChevronRight className="size-4" />
                                         </button>
                                     </div>
-                                    <span className="hidden md:inline">+/-</span>
+                                    <span
+                                        onClick={() => onSort?.('gainLoss')}
+                                        className="hidden md:inline-flex items-center justify-end gap-1 w-full cursor-pointer hover:text-foreground select-none transition-colors"
+                                        title="Nach Gewinn / Verlust (+/-) sortieren"
+                                    >
+                                        <span>+/-</span>
+                                        {sortConfig?.key === 'gainLoss' && (
+                                            <span className="text-primary font-bold">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                        )}
+                                    </span>
                                 </th>
 
                                 {/* 8. Aktion */}

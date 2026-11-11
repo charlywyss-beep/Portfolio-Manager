@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 import { Plus, PieChart, BarChart3, Landmark, RefreshCw, ShieldCheck, ArrowLeft, ChevronRight } from 'lucide-react';
 import { useCurrencyFormatter } from '../utils/currency';
+import { estimateMarketState } from '../utils/market';
 import { cn } from '../utils'; // Import cn
 import { EditPositionModal } from '../components/EditPositionModal';
 import { AddFixedDepositModal } from '../components/AddFixedDepositModal';
@@ -134,26 +135,88 @@ export function Portfolio() {
         };
     }).filter(Boolean) as any[];
 
-    // Sorting
-    const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'currency' | 'value' | 'performance' | 'broker', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
+    // Sorting with Column Header clicks + Market Open Support
+    const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' }>(() => {
+        const saved = localStorage.getItem('portfolio_positions_sort');
+        if (saved) {
+            try { return JSON.parse(saved); } catch {}
+        }
+        return { key: 'name', direction: 'asc' };
+    });
+
+    useEffect(() => {
+        localStorage.setItem('portfolio_positions_sort', JSON.stringify(sortConfig));
+    }, [sortConfig]);
+
+    const handleSort = (key: string) => {
+        setSortConfig(prev => {
+            if (prev.key === key) {
+                return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
+            }
+            const defaultDir = (key === 'name' || key === 'currency' || key === 'broker' || key === 'market') ? 'asc' : 'desc';
+            return { key, direction: defaultDir };
+        });
+    };
 
     const getSortedPositions = (posList: any[]) => {
         return [...posList].sort((a, b) => {
-            if (sortConfig.key === 'name') {
+            // 1. Geöffnete Börsen zuerst
+            if (sortConfig.key === 'market') {
+                const stateA = estimateMarketState(a.stock.symbol, a.stock.currency);
+                const stateB = estimateMarketState(b.stock.symbol, b.stock.currency);
+                const isOpenA = stateA === 'REGULAR';
+                const isOpenB = stateB === 'REGULAR';
+                if (isOpenA !== isOpenB) {
+                    return sortConfig.direction === 'asc'
+                        ? (isOpenA ? -1 : 1)
+                        : (isOpenA ? 1 : -1);
+                }
                 return a.stock.name.localeCompare(b.stock.name);
+            }
+
+            if (sortConfig.key === 'name') {
+                const cmp = a.stock.name.localeCompare(b.stock.name);
+                return sortConfig.direction === 'asc' ? cmp : -cmp;
+            }
+            if (sortConfig.key === 'shares') {
+                const diff = (a.shares || 0) - (b.shares || 0);
+                return sortConfig.direction === 'asc' ? diff : -diff;
+            }
+            if (sortConfig.key === 'buyPrice') {
+                const diff = (a.buyPriceAvg || 0) - (b.buyPriceAvg || 0);
+                return sortConfig.direction === 'asc' ? diff : -diff;
+            }
+            if (sortConfig.key === 'invest') {
+                const diff = (a.buyValueCHF || 0) - (b.buyValueCHF || 0);
+                return sortConfig.direction === 'asc' ? diff : -diff;
+            }
+            if (sortConfig.key === 'price') {
+                const diff = (a.stock.currentPrice || 0) - (b.stock.currentPrice || 0);
+                return sortConfig.direction === 'asc' ? diff : -diff;
+            }
+            if (sortConfig.key === 'value') {
+                const diff = (a.currentValueCHF || 0) - (b.currentValueCHF || 0);
+                return sortConfig.direction === 'asc' ? diff : -diff;
+            }
+            if (sortConfig.key === 'performance') {
+                const diff = (a.gainLossTotalPercent || 0) - (b.gainLossTotalPercent || 0);
+                return sortConfig.direction === 'asc' ? diff : -diff;
+            }
+            if (sortConfig.key === 'gainLoss') {
+                const diff = (a.gainLossTotalCHF || 0) - (b.gainLossTotalCHF || 0);
+                return sortConfig.direction === 'asc' ? diff : -diff;
             }
             if (sortConfig.key === 'currency') {
                 const currComp = a.stock.currency.localeCompare(b.stock.currency);
-                if (currComp !== 0) return currComp;
+                if (currComp !== 0) return sortConfig.direction === 'asc' ? currComp : -currComp;
                 return a.stock.name.localeCompare(b.stock.name);
             }
-            if (sortConfig.key === 'value') {
-                return b.currentValueCHF - a.currentValueCHF;
+            if (sortConfig.key === 'broker') {
+                const comp = (a.broker || 'ZZZ').localeCompare(b.broker || 'ZZZ');
+                if (comp !== 0) return sortConfig.direction === 'asc' ? comp : -comp;
+                return a.stock.name.localeCompare(b.stock.name);
             }
-            if (sortConfig.key === 'performance') {
-                return b.gainLossTotalPercent - a.gainLossTotalPercent;
-            }
-            if (sortConfig.key === 'broker') { const comp = (a.broker || 'ZZZ').localeCompare(b.broker || 'ZZZ'); if (comp !== 0) return comp; return a.stock.name.localeCompare(b.stock.name); } return 0;
+            return 0;
         });
     };
 
@@ -223,12 +286,19 @@ export function Portfolio() {
                                 <select
                                     className="flex-1 sm:flex-none sm:w-auto min-w-0 px-3 py-2 rounded-lg border border-border bg-card text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer text-center iphone-landscape-select"
                                     value={sortConfig.key}
-                                    onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value as any })}
+                                    onChange={(e) => handleSort(e.target.value)}
                                 >
-                                    <option value="name">Name: A-Z</option>
-                                    <option value="currency">Währung</option>
+                                    <option value="name">Name (A-Z)</option>
+                                    <option value="market">🟢 Börsen geöffnet zuerst</option>
                                     <option value="value">Wert: Hoch-Tief</option>
-                                    <option value="performance">Performance: Beste</option>
+                                    <option value="performance">Performance: Beste (%)</option>
+                                    <option value="gainLoss">Gewinn / Verlust (+/-)</option>
+                                    <option value="invest">Investiertes Kapital</option>
+                                    <option value="price">Aktueller Kurs</option>
+                                    <option value="buyPrice">Ø Kaufkurs</option>
+                                    <option value="shares">Anzahl Anteile</option>
+                                    <option value="currency">Währung</option>
+                                    <option value="broker">Depot / Broker</option>
                                 </select>
                                 <button
                                     onClick={() => setIsAddChoiceModalOpen(true)}
@@ -308,6 +378,8 @@ export function Portfolio() {
                     setSelectedPosition={setSelectedPosition}
                     setIsEditModalOpen={setIsEditModalOpen}
                     hideHeader={true}
+                    sortConfig={sortConfig}
+                    onSort={handleSort}
                 />
             )}
 
@@ -320,6 +392,8 @@ export function Portfolio() {
                     setSelectedPosition={setSelectedPosition}
                     setIsEditModalOpen={setIsEditModalOpen}
                     hideHeader={true}
+                    sortConfig={sortConfig}
+                    onSort={handleSort}
                 />
             )}
 
