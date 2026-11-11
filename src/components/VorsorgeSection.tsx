@@ -3,6 +3,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { Logo } from './Logo';
 import { ConfirmModal } from './ConfirmModal';
 import { useState } from 'react';
+import { cn } from '../utils';
 
 interface VorsorgeSectionProps {
     searchTerm: string;
@@ -64,9 +65,11 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                     <table className="w-full text-sm text-left">
                         <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold border-b border-border">
                             <tr>
-                                <th className="px-4 py-3 sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[220px] lg:w-[260px] min-w-[200px] align-middle">Bank / Institut</th>
-                                <th className="px-4 py-3 sticky top-0 z-30 bg-card w-[120px] lg:w-[140px] min-w-[120px] align-middle">Konto-Typ</th>
-                                <th className="px-4 py-3 sticky top-0 z-30 bg-card text-right whitespace-nowrap w-[220px] lg:w-[260px] min-w-[200px] align-middle">Vorsorgekapital Stand {currentMonthShort} {currentYear}</th>
+                                <th className="px-4 py-3 sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] lg:w-[250px] min-w-[180px] lg:min-w-[250px] max-w-[180px] lg:max-w-[250px] align-middle">Bank / Institut</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card w-[120px] lg:w-[140px] min-w-[120px] lg:min-w-[140px] max-w-[120px] lg:max-w-[140px] align-middle">Konto-Typ</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card text-right whitespace-nowrap min-w-[140px] align-middle">Vorsorgekapital Stand {currentMonthShort} {currentYear}</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card text-right min-w-[100px] align-middle">Zins p.a.</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card text-right whitespace-nowrap min-w-[120px] align-middle">Jährlicher Ertrag</th>
                                 <th className="px-4 py-3 sticky top-0 z-30 bg-card min-w-[280px] align-middle">Einzahlung {currentYear} Fortschritt</th>
                                 <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky top-0 md:sticky md:-right-px bg-card z-30 md:z-40 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle">Aktion</th>
                             </tr>
@@ -89,9 +92,22 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
 
                                 const percent = Math.min((current / limit) * 100, 100);
 
+                                const interestAmount = fd.amount * ((fd.interestRate || 0) / 100);
+
+                                // Jährliche Gebühren abziehen, falls vorhanden
+                                let annualFee = 0;
+                                if (fd.monthlyFee && fd.monthlyFee > 0) {
+                                    if (fd.feeFrequency === 'annually') annualFee = fd.monthlyFee;
+                                    else if (fd.feeFrequency === 'quarterly') annualFee = fd.monthlyFee * 4;
+                                    else annualFee = fd.monthlyFee * 12;
+                                }
+
+                                const netAnnualReturn = interestAmount - annualFee;
+                                const isNegative = netAnnualReturn < 0;
+
                                 return (
                                     <tr key={fd.id} className="group hover:bg-muted/30 transition-colors">
-                                        <td className="px-4 py-3 font-medium sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle w-[220px] lg:w-[260px] min-w-[200px]">
+                                        <td className="px-4 py-3 font-medium sticky -left-px z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] align-middle w-[180px] lg:w-[250px] min-w-[180px] lg:min-w-[250px] max-w-[180px] lg:max-w-[250px]">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="relative flex items-center gap-3">
                                                 <Logo
@@ -110,28 +126,30 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                                             </div>
                                         </td>
                                         <td className="px-4 py-3 align-middle w-[120px] lg:w-[140px] min-w-[120px]">
-                                            <div className="flex flex-col gap-1 items-start">
-                                                <span className="px-2 py-0.5 rounded-md text-xs font-medium border bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50">
-                                                    Vorsorge 3a
-                                                </span>
-                                                {fd.interestRate !== undefined && fd.interestRate > 0 && (
-                                                    <span className="text-[11px] font-mono font-medium text-emerald-400">
-                                                        {fd.interestRate.toFixed(3).replace(/\.?0+$/, '')}% Zins
-                                                    </span>
-                                                )}
-                                            </div>
+                                            <span className="px-2 py-0.5 rounded-md text-xs font-medium border bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50">
+                                                Vorsorge 3a
+                                            </span>
                                         </td>
-                                        <td className="px-4 py-3 text-right font-medium align-middle whitespace-nowrap w-[220px] lg:w-[260px] min-w-[200px]">
-                                            <div className="flex flex-col items-end">
-                                                <span className="text-base font-bold text-white tracking-tight">
-                                                    {fd.amount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
-                                                </span>
-                                                {fd.interestRate !== undefined && fd.interestRate > 0 && (
-                                                    <span className="text-xs font-mono text-muted-foreground">
-                                                        +{(fd.amount * (fd.interestRate / 100)).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF/J.
-                                                    </span>
-                                                )}
-                                            </div>
+                                        <td className="px-4 py-3 text-right font-medium align-middle whitespace-nowrap min-w-[140px]">
+                                            <span className="text-base font-bold text-white tracking-tight">
+                                                {fd.amount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-right align-middle min-w-[100px]">
+                                            <span className={cn(
+                                                "px-2 py-0.5 rounded-full text-xs font-medium border font-mono",
+                                                (fd.interestRate || 0) > 0
+                                                    ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-900/50"
+                                                    : "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-500 dark:border-gray-700"
+                                            )}>
+                                                {(fd.interestRate || 0).toFixed(2)}%
+                                            </span>
+                                        </td>
+                                        <td className={cn(
+                                            "px-4 py-3 text-right font-medium whitespace-nowrap align-middle min-w-[120px] font-mono",
+                                            isNegative ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"
+                                        )}>
+                                            {isNegative ? '-' : '+'}CHF {Math.abs(netAnnualReturn).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </td>
                                         <td className="px-4 py-3 align-middle min-w-[280px]">
                                             <div className="flex flex-col gap-1.5 py-0.5 max-w-lg">
