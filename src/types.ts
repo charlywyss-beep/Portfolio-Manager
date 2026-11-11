@@ -268,6 +268,11 @@ export interface MortgageData {
     waterHistory?: WaterYearlyEntry[];
     waterCustomerNumber?: string;
     waterMeterNumber?: string;
+
+    // Pensions-Tragbarkeit & Zins-Stresstest
+    pensionIncome?: number;
+    pensionIncomeFrequency?: 'monthly' | 'yearly';
+    stressTestRate?: number;
 }
 
 export interface WaterYearlyEntry {
