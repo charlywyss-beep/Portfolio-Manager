@@ -11,8 +11,12 @@ interface VorsorgeSectionProps {
 }
 
 export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, setEditingFixedDeposit }: VorsorgeSectionProps) {
-    const { fixedDeposits, deleteFixedDeposit } = usePortfolio();
+    const { fixedDeposits, deleteFixedDeposit, mortgageData } = usePortfolio();
     const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean, fdId: string | null, name: string }>({ isOpen: false, fdId: null, name: '' });
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonthShort = now.toLocaleString('de-CH', { month: 'short' });
 
     const vorsorgeDeposits = fixedDeposits?.filter(fd => fd.accountType === 'vorsorge') || [];
 
@@ -56,17 +60,26 @@ export function VorsorgeSection({ searchTerm, setIsAddFixedDepositModalOpen, set
                             <tr>
                                 <th className="px-4 py-3 sticky top-0 left-0 z-40 bg-card shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[180px] lg:w-[250px] min-w-[180px] lg:min-w-[250px] max-w-[180px] lg:max-w-[250px]">Bank / Institut</th>
                                 <th className="px-4 py-3 sticky top-0 z-30 bg-card w-[130px] lg:w-[150px] min-w-[130px] lg:min-w-[150px] max-w-[130px] lg:max-w-[150px]">Konto-Typ</th>
-                                <th className="px-4 py-3 sticky top-0 z-30 bg-card text-right whitespace-nowrap min-w-[120px]">Vermögen</th>
-                                <th className="px-4 py-3 sticky top-0 z-30 bg-card min-w-[300px]">Fortschritt 2025</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card text-right whitespace-nowrap min-w-[140px]">Vorsorgekapital Stand {currentMonthShort} {currentYear}</th>
+                                <th className="px-4 py-3 sticky top-0 z-30 bg-card min-w-[300px]">Einzahlung {currentYear} Fortschritt</th>
                                 <th className="text-center py-3 px-1 w-[60px] min-w-[60px] max-w-[60px] sticky top-0 md:sticky md:-right-px bg-card z-30 md:z-40 shadow-[-5px_0_5px_-5px_rgba(0,0,0,0.1)]">Aktion</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
                             {filteredVorsorge.map(fd => {
-                                const limit = 7258;
+                                // Säule 3a Betrag / Limit aus Budgetplaner ermitteln oder offizielles 2026er Limit (7'528 CHF)
+                                const pillar3aBudgetItem = mortgageData?.budgetItems?.find((item: any) =>
+                                    item.name && (/3a/i.test(item.name) || /säule/i.test(item.name) || /vorsorge/i.test(item.name))
+                                );
+                                const budgetYearlyAmount = pillar3aBudgetItem
+                                    ? (pillar3aBudgetItem.frequency === 'yearly' ? pillar3aBudgetItem.amount : pillar3aBudgetItem.amount * 12)
+                                    : undefined;
+
+                                const limit = (budgetYearlyAmount && budgetYearlyAmount > 0) ? budgetYearlyAmount : 7528;
+
                                 // Berechne aktuell basierend auf manuell oder auto
-                                // Nur abgeschlossene Monate zählen (Januar = 0, wenn wir im Januar sind)
-                                const completedMonths = new Date().getMonth();  // 0-11 (nur abgeschlossene Monate)
+                                // Nur abgeschlossene Monate zählen (Januar = 0, wenn wir im Januar sind, z.B. Nov = 10 abgeschlossene Monate)
+                                const completedMonths = now.getMonth();
                                 const calculatedAuto = fd.autoContribution && fd.monthlyContribution
                                     ? fd.monthlyContribution * completedMonths
                                     : 0;

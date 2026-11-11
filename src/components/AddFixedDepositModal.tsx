@@ -300,7 +300,7 @@ export function AddFixedDepositModal({ isOpen, onClose, editingDeposit }: AddFix
                                             aria-label="Monatlicher Beitrag"
                                         />
                                         <div className="absolute right-10 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-                                            × {new Date().getMonth() + 1} Monate
+                                            × {new Date().getMonth()} Monate
                                         </div>
                                     </div>
                                     <p className="text-[10px] text-muted-foreground">
