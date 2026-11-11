@@ -97,7 +97,7 @@ export function PositionTable({
                 <div
                     onTouchStart={handleTouchStart}
                     onTouchEnd={handleTouchEnd}
-                    className="overflow-y-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0 iphone-landscape-table-scroll"
+                    className="overflow-y-auto overflow-x-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0 iphone-landscape-table-scroll"
                 >
                     <table className="w-full text-xs md:text-sm border-collapse table-fixed md:table-auto iphone-landscape-table">
                         <thead>

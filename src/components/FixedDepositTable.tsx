@@ -38,7 +38,7 @@ export function FixedDepositTable({ searchTerm, setIsAddFixedDepositModalOpen, s
                 </button>
             </div>
             <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-                <div className="overflow-y-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0">
+                <div className="overflow-y-auto overflow-x-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] md:snap-none md:scroll-pt-0">
                     <table className="w-full text-sm text-left border-collapse">
                         <thead className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">
                             <tr className="border-b border-border bg-muted/20">

@@ -649,7 +649,7 @@ function WatchlistTable({
         <div
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            className="overflow-y-auto overflow-x-hidden xl:overflow-x-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] xl:snap-none xl:scroll-pt-0"
+            className="overflow-y-auto overflow-x-auto flex-1 min-h-0 p-0 w-full snap-y snap-mandatory scroll-pt-[48px] xl:snap-none xl:scroll-pt-0"
         >
             <table className="w-full text-xs xl:text-sm border-collapse table-fixed xl:table-auto">
                 <thead>

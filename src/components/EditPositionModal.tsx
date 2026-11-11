@@ -243,7 +243,7 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
 
     return (
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none overflow-hidden">
-            <div className="relative pointer-events-auto w-full max-w-4xl px-2 py-4 md:px-4">
+            <div className="relative pointer-events-auto w-full max-w-5xl px-2 py-4 md:px-4">
                 <div className="absolute inset-0 bg-black/50 backdrop-blur-sm rounded-xl"></div>
                 <div className="bg-card border border-border rounded-xl shadow-xl w-full flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative z-10 max-h-[calc(100vh-48px)]">
                     {/* Header */}
@@ -406,8 +406,11 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                 )}
                             </div>
 
-                            {/* Header Row */}
-                            <div className="grid grid-cols-12 gap-3 px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase bg-muted/50 rounded-lg mb-2">
+                            {/* Purchases Table Container */}
+                            <div className="overflow-x-auto min-w-0">
+                                <div className="min-w-[500px]">
+                                    {/* Header Row */}
+                                    <div className="grid grid-cols-12 gap-3 px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase bg-muted/50 rounded-lg mb-2">
                                 <div className="col-span-3">Datum</div>
                                 <div className="col-span-2 text-center">Stück</div>
                                 <div className="col-span-3 text-center">
@@ -552,6 +555,8 @@ export function EditPositionModal({ isOpen, onClose, position, onUpdate, onDelet
                                     </div>
                                 </div>
                             )}
+                                </div>
+                            </div>
 
                             <button
                                 type="button"
