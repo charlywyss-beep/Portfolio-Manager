@@ -2406,17 +2406,15 @@ export function FairValueCalculator() {
                                         Bewertung
                                     </h2>
 
-                                    {/* Traffic Light Badge (Abgerundetes Quadrat) mit Tooltip zu den Bewertungs-Korridoren */}
+                                    {/* Traffic Light Badge (Abgerundetes Quadrat) mit Tooltip zur aktuellen Farbe */}
                                     {(() => {
-                                        const ratingTooltip = `Bewertung & Korridore:\n• Grün (KAUFEN): Kurs liegt unter Kauflimit (inkl. Sicherheitsmarge)\n• Gelb (HOLD): Bis zu +12 % über fairem Wert (Fair bewertet – Bestände halten)\n• Orange (HOLD): +12 % bis +45 % über fairem Wert (Hoch bewertet)\n• Rot (TEUER): Mehr als +45 % über fairem Wert (Überbewertet)\n\nAktueller Status:\n${
-                                            isUndervalued
-                                                ? 'KAUFEN (Unterbewertet) – Kurs liegt unter dem Kauflimit mit attraktiver Sicherheitsmarge.'
-                                                : isFairHold
-                                                    ? 'HOLD (Fair bewertet) – Kurs bewegt sich im Korridor bis +12 % über dem fairen Wert (Bestände entspannt halten).'
-                                                    : isRichHold
-                                                        ? 'HOLD (Hoch bewertet) – Kurs liegt zwischen +12 % und +45 % über dem fairen Wert (Bestände halten, kein Neukauf).'
-                                                        : 'TEUER (Überbewertet) – Kurs liegt mehr als +45 % über dem fairen Wert (hohes Korrekturrisiko).'
-                                        }`;
+                                        const ratingTooltip = isUndervalued
+                                            ? 'KAUFEN (Unterbewertet): Kurs liegt unter dem Kauflimit (inkl. Sicherheitsmarge).'
+                                            : isFairHold
+                                                ? 'HOLD (Fair bewertet): Kurs liegt im Korridor bis zu +12 % über dem fairen Wert. Bestände entspannt halten.'
+                                                : isRichHold
+                                                    ? 'HOLD (Hoch bewertet): Kurs liegt zwischen +12 % und +45 % über dem fairen Wert. Bestände halten, kein Neukauf.'
+                                                    : 'TEUER (Überbewertet): Kurs liegt mehr als +45 % über dem fairen Wert. Hohes Korrekturrisiko.';
 
                                         return (
                                             <div
