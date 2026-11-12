@@ -2513,7 +2513,7 @@ export function FairValueCalculator() {
                                                     </div>
                                                 )}
 
-                                                <div className="text-xs lg:text-[11px] font-medium mt-1.5 mb-1 text-muted-foreground leading-snug">
+                                                <div className="text-[13px] font-medium mt-2 mb-1.5 text-muted-foreground leading-normal">
                                                     {isUndervalued && (
                                                         <>
                                                             <div>Unterbewertet mit attraktiver Sicherheitsmarge für Neukäufe.</div>
@@ -2545,12 +2545,12 @@ export function FairValueCalculator() {
                                                 </div>
                                             </div>
 
-                                            {/* Fundamentale Abwärtsabsicherung / Risikoprofil - Neutral in weißer Schrift */}
-                                            <div className="pt-2 border-t border-border/40 text-[11px] lg:text-[10px] text-left leading-snug flex items-start gap-1.5 text-foreground/90">
-                                                <span className="text-sm shrink-0 select-none mt-0.5">{downsideProtection.icon}</span>
+                                            {/* Fundamentale Abwärtsabsicherung / Risikoprofil - Gut lesbar in Mindestschriftgröße 13px */}
+                                            <div className="pt-2.5 border-t border-border/40 text-[13px] text-left leading-relaxed flex items-start gap-2 text-foreground">
+                                                <span className="text-base shrink-0 select-none mt-0.5">{downsideProtection.icon}</span>
                                                 <div className="min-w-0 flex-1">
-                                                    <strong className="font-semibold text-foreground mr-1.5">{downsideProtection.title}:</strong>
-                                                    <span className="text-foreground/90">{downsideProtection.text}</span>
+                                                    <strong className="font-bold text-foreground mr-1.5 text-[13px]">{downsideProtection.title}:</strong>
+                                                    <span className="text-foreground/95 text-[13px]">{downsideProtection.text}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -3032,27 +3032,27 @@ export function FairValueCalculator() {
                                             const isMixActive = currentStock?.targetPriceType === 'manual' && activeLimit > 0 && Math.abs(activeLimit - pMix) < 0.25;
 
                                             return (
-                                                <div className="pt-1.5 mt-1 border-t border-border/40 flex items-center justify-between gap-2 flex-wrap text-xs">
-                                                    <div className="flex items-center gap-1.5 text-muted-foreground text-[11px]">
+                                                <div className="pt-2 mt-1.5 border-t border-border/40 flex items-center justify-between gap-2 flex-wrap text-[13px]">
+                                                    <div className="flex items-center gap-1.5 text-muted-foreground text-[13px]">
                                                         <span className="font-semibold text-foreground">Kauf bei Ø (1. + 2. Tranche):</span>
                                                         <span>• {mMix}% Marge</span>
                                                     </div>
                                                     <button
                                                         type="button"
                                                         onClick={() => {
-                                                            const val = pMix.toFixed(2);
-                                                            setBuyLimitInput(val);
-                                                            handleSaveBuyLimit(val, 'manual');
+                                                             const val = pMix.toFixed(2);
+                                                             setBuyLimitInput(val);
+                                                             handleSaveBuyLimit(val, 'manual');
                                                         }}
                                                         className={cn(
-                                                            "px-2 py-0.5 text-[11px] font-semibold rounded-md border transition-all cursor-pointer whitespace-nowrap active:scale-95 flex items-center gap-1",
+                                                            "px-2.5 py-1 text-[13px] font-semibold rounded-md border transition-all cursor-pointer whitespace-nowrap active:scale-95 flex items-center gap-1.5",
                                                             isMixActive
                                                                 ? "bg-emerald-600 text-white border-emerald-500 shadow-xs"
                                                                 : "bg-card hover:bg-muted text-foreground border-border hover:border-primary/50 shadow-2xs"
                                                         )}
                                                         title={`Kauf bei Ø ${mMix}% Marge (${formatCurrency(pMix, quote.currency, false)}) als Kauflimit eintragen`}
                                                     >
-                                                        <Check className={cn("size-3", isMixActive ? "opacity-100" : "opacity-0")} />
+                                                        <Check className={cn("size-3.5", isMixActive ? "opacity-100" : "opacity-0")} />
                                                         <span className="font-mono font-bold">{formatCurrency(pMix, quote.currency, false)}</span>
                                                         <span>{isMixActive ? 'Aktiv' : 'Als Kauflimit'}</span>
                                                     </button>
@@ -3063,22 +3063,22 @@ export function FairValueCalculator() {
                                 )}
 
                                 {/* 📈 Zielkurs (5 Jahre) & Portfolio-Projektion - Harmonische Kachel zuunterst */}
-                                <div className="fair-value-target-box p-2 sm:p-2.5 rounded-xl border border-border/70 bg-card/60 shadow-2xs shrink-0 space-y-1.5 mt-2">
+                                <div className="fair-value-target-box p-2.5 sm:p-3 rounded-xl border border-border/70 bg-card/60 shadow-2xs shrink-0 space-y-2 mt-2">
                                     <div className="flex justify-between items-baseline gap-2">
                                         <div>
-                                            <div className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                                            <div className="font-bold text-[13.5px] sm:text-sm text-foreground flex items-center gap-1.5">
                                                 <span>Zielkurs (5 Jahre)</span>
                                             </div>
-                                            <div className="text-[10.5px] text-muted-foreground mt-0.5">
+                                            <div className="text-[13px] text-muted-foreground mt-0.5">
                                                 Gewinn {calculation.futureEps.toFixed(2)} × KGV {calculation.exitPe.toFixed(1)}
                                             </div>
                                         </div>
                                         <div className="text-right shrink-0">
-                                            <div className="font-mono font-bold text-xs sm:text-sm text-foreground">
+                                            <div className="font-mono font-black text-sm sm:text-base text-foreground">
                                                 {formatCurrency(calculation.futurePrice, quote.currency, false)}
                                             </div>
                                             {currentPrice > 0 && calculation.futurePrice > 0 && (
-                                                <div className="font-mono font-semibold text-[10.5px] text-emerald-400">
+                                                <div className="font-mono font-bold text-[13px] text-emerald-400">
                                                     +{((Math.pow(calculation.futurePrice / currentPrice, 0.2) - 1) * 100).toFixed(1)}% p.a.
                                                 </div>
                                             )}
@@ -3097,15 +3097,15 @@ export function FairValueCalculator() {
                                         const gainPct = invested > 0 ? (futureGain / invested) * 100 : 0;
 
                                         return (
-                                            <div className="border-t border-border/40 pt-1.5 space-y-0.5 text-[11px]">
-                                                <div className="flex justify-between items-center text-muted-foreground font-medium">
+                                            <div className="border-t border-border/40 pt-2 space-y-1 text-[13px]">
+                                                <div className="flex justify-between items-center text-muted-foreground font-semibold">
                                                     <span>Ihr Bestand ({activePosition.shares} Stk. • Ø {formatCurrency(activePosition.buyPriceAvg, quote.currency, false)}):</span>
                                                 </div>
                                                 <div className="flex justify-between items-baseline pt-0.5 gap-2">
                                                     <span className="text-muted-foreground">
-                                                        Depotwert in 5J: <strong className="text-foreground font-mono">{formatCurrency(futureVal, quote.currency, false)}</strong>
+                                                        Depotwert in 5J: <strong className="text-foreground font-mono font-bold text-[13px] sm:text-sm">{formatCurrency(futureVal, quote.currency, false)}</strong>
                                                     </span>
-                                                    <span className={cn("font-bold font-mono text-right shrink-0", futureGain >= 0 ? "text-emerald-400" : "text-rose-400")}>
+                                                    <span className={cn("font-bold font-mono text-[13px] sm:text-sm text-right shrink-0", futureGain >= 0 ? "text-emerald-400" : "text-rose-400")}>
                                                         Gewinn: {futureGain >= 0 ? '+' : ''}{formatCurrency(futureGain, quote.currency, false)}
                                                         {' '}({gainPct >= 0 ? '+' : ''}{gainPct.toFixed(1)}%)
                                                     </span>
