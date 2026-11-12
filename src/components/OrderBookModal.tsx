@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Search, Trash2, ClipboardList, CheckCircle2, Clock, AlertCircle, Calendar, ArrowDownToLine, Rocket, Check } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import type { OrderBookEntry } from '../types';
@@ -10,11 +11,19 @@ interface OrderBookModalProps {
 }
 
 export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBookModalProps) {
+    const navigate = useNavigate();
     const { orderBook, deleteOrderBookEntry, clearOrderBook, executeOrderBookEntry, stocks } = usePortfolio();
     const [filter, setFilter] = useState<'all' | 'open' | 'executed' | 'expired'>('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [executedSuccessId, setExecutedSuccessId] = useState<string | null>(null);
+
+    const handleStockClick = (order: OrderBookEntry) => {
+        const target = order.stockSymbol || order.stockId;
+        if (!target) return;
+        onClose();
+        navigate(`/stock/${encodeURIComponent(target)}?from=orderbook`);
+    };
 
     // Compute live status and distances for every order
     const enrichedOrders = useMemo(() => {
@@ -259,13 +268,23 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                             >
                                                 {isBuy ? 'Kauf' : 'Verkauf'}
                                             </span>
-                                            <span className="font-bold text-sm text-foreground">
-                                                {order.stockName || 'Aktie'}
-                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleStockClick(order)}
+                                                className="font-bold text-sm text-foreground hover:text-blue-500 hover:underline transition-colors cursor-pointer text-left inline-flex items-center gap-1 group"
+                                                title={`${order.stockName || 'Aktie'} – Zur Aktie & Chart wechseln`}
+                                            >
+                                                <span>{order.stockName || 'Aktie'}</span>
+                                            </button>
                                             {order.stockSymbol && (
-                                                <span className="font-mono text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleStockClick(order)}
+                                                    className="font-mono text-xs text-muted-foreground bg-muted hover:bg-blue-500/15 hover:text-blue-500 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+                                                    title={`${order.stockSymbol} – Zur Aktie & Chart wechseln`}
+                                                >
                                                     {order.stockSymbol}
-                                                </span>
+                                                </button>
                                             )}
                                             {order.stockIsin && (
                                                 <span className="text-[11px] text-muted-foreground hidden md:inline">

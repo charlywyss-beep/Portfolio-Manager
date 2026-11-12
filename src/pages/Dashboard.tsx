@@ -438,7 +438,7 @@ export function Dashboard() {
                                 </div>
                                 <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
                                     <span className="text-muted-foreground truncate">Vorsorgekapital:</span>
-                                    <span className="font-medium text-white whitespace-nowrap shrink-0">
+                                    <span className="font-medium text-foreground whitespace-nowrap shrink-0">
                                         {totals.totalValueVorsorge.toLocaleString('de-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CHF
                                     </span>
                                 </div>
@@ -893,7 +893,7 @@ export function Dashboard() {
                             <div className="col-span-1 p-3.5 sm:p-4 lg:p-5 rounded-xl bg-card border border-border shadow-sm min-w-0 overflow-hidden flex flex-col">
                                 <div className="flex items-center justify-between mb-4 md:mb-6 gap-2">
                                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                                        <h3 className="text-base md:text-lg font-bold text-white shrink-0" style={{ color: '#ffffff' }}>Watchlist Chancen</h3>
+                                        <h3 className="text-base md:text-lg font-bold shrink-0">Watchlist Chancen</h3>
                                         <Info className="size-4 md:size-5 text-blue-500 flex-shrink-0" />
                                         <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-medium">
                                             {filteredWatchlistDividends.length}
@@ -1019,8 +1019,8 @@ export function Dashboard() {
                                     <span>{filteredWatchlistDividends.length} {filteredWatchlistDividends.length === 1 ? 'Aktie' : 'Aktien'}</span>
                                     <button
                                         onClick={() => navigate('/watchlist')}
-                                        className="hover:underline font-medium text-white"
-                                        style={{ color: '#ffffff' }}
+                                        className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+
                                     >
                                         Zur Watchlist →
                                     </button>
