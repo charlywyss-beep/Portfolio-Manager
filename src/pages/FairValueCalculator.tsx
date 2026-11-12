@@ -216,12 +216,12 @@ export function FairValueCalculator() {
         if (newLimit) {
             if (explicitSource && explicitSource !== 'manual') {
                 resolvedType = explicitSource;
+            } else if (currentStock?.targetPrice && Math.abs(newLimit - currentStock.targetPrice) < 0.01 && currentStock.targetPriceType) {
+                resolvedType = currentStock.targetPriceType;
             } else if (Math.abs(newLimit - calculation.buyPrice) < 0.01) {
                 resolvedType = valuationProfile;
             } else if (Math.abs(newLimit - calculation.fairValue) < 0.01) {
                 resolvedType = 'fairValue';
-            } else if (currentStock?.targetPrice && Math.abs(newLimit - currentStock.targetPrice) < 0.01 && currentStock.targetPriceType) {
-                resolvedType = currentStock.targetPriceType;
             } else {
                 resolvedType = 'manual';
             }
@@ -2878,11 +2878,20 @@ export function FairValueCalculator() {
                                             <div className="flex items-center gap-2">
                                                 {(() => {
                                                     const numInput = parseFloat(buyLimitInput.replace(',', '.')) || (currentStock?.targetPrice || 0);
+                                                    const isMatchingActiveStock = Boolean(currentStock?.targetPrice && Math.abs(numInput - currentStock.targetPrice) < 0.01);
                                                     const isMatchingBuyPrice = Math.abs(numInput - calculation.buyPrice) < 0.01;
                                                     const isMatchingFairValue = Math.abs(numInput - calculation.fairValue) < 0.01;
-                                                    const isCustomInput = numInput > 0 && !isMatchingBuyPrice && !isMatchingFairValue;
 
-                                                    const inputColorType = isCustomInput ? 'manual' : (currentStock?.targetPriceType || valuationProfile);
+                                                    let inputColorType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
+                                                    if (isMatchingActiveStock && currentStock?.targetPriceType) {
+                                                        inputColorType = currentStock.targetPriceType;
+                                                    } else if (isMatchingBuyPrice) {
+                                                        inputColorType = valuationProfile;
+                                                    } else if (isMatchingFairValue) {
+                                                        inputColorType = 'fairValue';
+                                                    } else {
+                                                        inputColorType = 'manual';
+                                                    }
 
                                                     const inputTextColor = inputColorType === 'manual'
                                                         ? "text-pink-400 font-bold"
