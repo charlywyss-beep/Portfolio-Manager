@@ -144,43 +144,29 @@ export function FairValueCalculator() {
     // Wraps computeSmartAutoParams: converts EPS from reporting currency (e.g. USD) into quote currency (e.g. CHF)
     const computeSmartAutoParamsFx = (q: any, a: any, s: any, sym: string, m: any) => {
         const adj = adjustForReportingCurrency(q, a, fxRates as any, sym);
-        return computeSmartAutoParams(adj.quote, adj.analysis, s, sym, m);
+        const baseMode = m === 'risk' ? 'conservative' : m;
+        const result = computeSmartAutoParams(adj.quote, adj.analysis, s, sym, baseMode);
+        if (m === 'risk') {
+            const growthRate = Math.max(3, parseFloat((result.growthRate * 0.75).toFixed(1)));
+            const pe = Math.min(20, Math.max(8, parseFloat((result.pe * 0.8).toFixed(1))));
+            const pe5 = (result as any).pe5 ? Math.min(20, Math.max(8, parseFloat(((result as any).pe5 * 0.8).toFixed(1)))) : pe;
+            const pe10 = (result as any).pe10 ? Math.min(20, Math.max(8, parseFloat(((result as any).pe10 * 0.8).toFixed(1)))) : pe;
+            const mos = Math.max(25, Math.min(50, result.mos + 10));
+            return {
+                ...result,
+                growthRate,
+                pe,
+                pe5,
+                pe10,
+                mos,
+                growthLabel: 'Risiko-Dämpfung (-25% Wachst., +10% Marge)',
+            };
+        }
+        return result;
     };
     const [growthSourceLabel, setGrowthSourceLabel] = useState<string>('Auto-Schätzung');
     const [isSavedForStock, setIsSavedForStock] = useState<boolean>(false);
-    const [valuationProfile, setValuationProfile] = useState<'conservative' | 'quality'>('conservative');
-
-    // Temporärer Risiko-Abschlag State
-    const [isRiskDiscountActive, setIsRiskDiscountActive] = useState(false);
-    const [preRiskBackup, setPreRiskBackup] = useState<{ growthRate: number | string; pe: number | string; mos: number | string } | null>(null);
-
-    const toggleRiskDiscount = () => {
-        if (!isRiskDiscountActive) {
-            setPreRiskBackup({ growthRate, pe, mos });
-
-            const currentGrowth = typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : growthRate;
-            const newGrowth = Math.max(3, parseFloat((currentGrowth * 0.75).toFixed(1)));
-
-            const currentPe = typeof pe === 'string' ? parseFloat(pe) || 0 : pe;
-            const newPe = Math.min(20, Math.max(8, parseFloat((currentPe * 0.8).toFixed(1))));
-
-            const currentMos = typeof mos === 'string' ? parseFloat(mos) || 0 : mos;
-            const newMos = Math.max(25, Math.min(50, currentMos + 10));
-
-            setGrowthRate(newGrowth);
-            setPe(newPe);
-            setMos(newMos);
-            setIsRiskDiscountActive(true);
-        } else {
-            if (preRiskBackup) {
-                setGrowthRate(preRiskBackup.growthRate);
-                setPe(preRiskBackup.pe);
-                setMos(preRiskBackup.mos);
-            }
-            setIsRiskDiscountActive(false);
-            setPreRiskBackup(null);
-        }
-    };
+    const [valuationProfile, setValuationProfile] = useState<'conservative' | 'quality' | 'risk'>('conservative');
 
     // Persistence Ref to avoid cycles
     const isRestoring = useRef(false);
@@ -320,7 +306,7 @@ export function FairValueCalculator() {
         return null;
     };
 
-    const saveSymbolParamsToLocal = (sym: string, params: { eps: number; growthRate: number; pe: number; dividendYield: number; discountRate: number; mos: number; isCustom?: boolean; customBackup?: any; clearCustomBackup?: boolean; valuationMode?: 'conservative' | 'quality'; peHorizon?: '5Y' | '10Y' | 'custom' }) => {
+    const saveSymbolParamsToLocal = (sym: string, params: { eps: number; growthRate: number; pe: number; dividendYield: number; discountRate: number; mos: number; isCustom?: boolean; customBackup?: any; clearCustomBackup?: boolean; valuationMode?: 'conservative' | 'quality' | 'risk'; peHorizon?: '5Y' | '10Y' | 'custom' }) => {
         try {
             const key = sym.toUpperCase();
             const mapRaw = localStorage.getItem('fair_value_params_map');
@@ -427,7 +413,7 @@ export function FairValueCalculator() {
     };
 
     // Handler: Force re-apply automatic realistic values for current stock (while keeping manual values in backup!)
-    const applyAutoValues = (mode: 'conservative' | 'quality' = valuationProfile) => {
+    const applyAutoValues = (mode: 'conservative' | 'quality' | 'risk' = valuationProfile) => {
         if (!selectedSymbol) return;
         setValuationProfile(mode);
         const existingStock = stocks.find(s => s.symbol.toLowerCase() === selectedSymbol.toLowerCase());
@@ -735,8 +721,6 @@ export function FairValueCalculator() {
         setSearchTerm('');
         setSelectedSymbol(symbol);
         setShowStockList(false);
-        setIsRiskDiscountActive(false);
-        setPreRiskBackup(null);
 
         const existingStock = stocks.find(s => s.symbol.toLowerCase() === symbol.toLowerCase());
 
@@ -1731,8 +1715,6 @@ export function FairValueCalculator() {
                                         setSelectedSymbol(null);
                                         setQuote(null);
                                         setAnalysis(null);
-                                        setIsRiskDiscountActive(false);
-                                        setPreRiskBackup(null);
                                         localStorage.removeItem('fair_value_state');
                                     }}
                                     className="p-1 sm:p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-all shrink-0"
@@ -1847,78 +1829,56 @@ export function FairValueCalculator() {
                                         <div className="grid grid-cols-2 rounded-xl border border-border/80 p-0.5 bg-background/60 shadow-2xs gap-1 w-full">
                                             <button
                                                 type="button"
-                                                onClick={() => {
-                                                    setIsRiskDiscountActive(false);
-                                                    setPreRiskBackup(null);
-                                                    applyAutoValues('conservative');
-                                                }}
+                                                onClick={() => applyAutoValues('conservative')}
                                                 className={cn(
                                                     "flex items-center justify-center gap-1.5 text-xs px-2.5 py-1 rounded-lg transition-all whitespace-nowrap font-semibold border cursor-pointer active:scale-[0.98]",
-                                                    !isSavedForStock && valuationProfile === 'conservative' && !isRiskDiscountActive
+                                                    !isSavedForStock && valuationProfile === 'conservative'
                                                         ? "bg-blue-600 text-white border-blue-400 shadow-sm"
                                                         : "bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-blue-400/60 shadow-2xs"
                                                 )}
                                                 title="Sichtweise A: Auto Sicherheit (KGV max. 20, Terminal Growth ≤ 2.0 %, Buffett-Baseline)"
                                             >
-                                                <ShieldCheck className={cn("size-3.5 shrink-0", !isSavedForStock && valuationProfile === 'conservative' && !isRiskDiscountActive ? "text-white" : "text-blue-400")} />
+                                                <ShieldCheck className={cn("size-3.5 shrink-0", !isSavedForStock && valuationProfile === 'conservative' ? "text-white" : "text-blue-400")} />
                                                 <span>Sicherheit (A)</span>
                                             </button>
                                             <button
                                                 type="button"
-                                                onClick={() => {
-                                                    setIsRiskDiscountActive(false);
-                                                    setPreRiskBackup(null);
-                                                    applyAutoValues('quality');
-                                                }}
+                                                onClick={() => applyAutoValues('quality')}
                                                 className={cn(
                                                     "flex items-center justify-center gap-1.5 text-xs px-2.5 py-1 rounded-lg transition-all whitespace-nowrap font-semibold border cursor-pointer active:scale-[0.98]",
-                                                    !isSavedForStock && valuationProfile === 'quality' && !isRiskDiscountActive
+                                                    !isSavedForStock && valuationProfile === 'quality'
                                                         ? "bg-purple-600 text-white border-purple-400 shadow-sm"
                                                         : "bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-purple-400/60 shadow-2xs"
                                                 )}
                                                 title="Sichtweise B: Auto Qualität (Historische Qualitätsbewertung KGV bis 25 für Wide-Moat Compounder)"
                                             >
-                                                <Sparkles className={cn("size-3.5 shrink-0", !isSavedForStock && valuationProfile === 'quality' && !isRiskDiscountActive ? "text-white" : "text-purple-400")} />
+                                                <Sparkles className={cn("size-3.5 shrink-0", !isSavedForStock && valuationProfile === 'quality' ? "text-white" : "text-purple-400")} />
                                                 <span>Qualität (B)</span>
                                             </button>
                                         </div>
 
-                                        {/* Risiko-Abschlag Button */}
+                                        {/* Sichtweise C: Risiko-Abschlag */}
                                         <button
                                             type="button"
-                                            onClick={toggleRiskDiscount}
+                                            onClick={() => applyAutoValues(valuationProfile === 'risk' ? 'conservative' : 'risk')}
                                             className={cn(
-                                                "flex items-center justify-center gap-1.5 text-xs px-3 py-1 rounded-lg transition-all font-semibold border cursor-pointer active:scale-[0.98] w-full",
-                                                isRiskDiscountActive
-                                                    ? "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-xs ring-1 ring-amber-500/30"
-                                                    : "bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-amber-500/40 shadow-2xs"
+                                                "flex items-center text-xs px-3 py-1 rounded-lg transition-all font-semibold border cursor-pointer active:scale-[0.98] w-full",
+                                                !isSavedForStock && valuationProfile === 'risk'
+                                                    ? "justify-between bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-xs ring-1 ring-amber-500/30"
+                                                    : "justify-center bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-amber-500/40 shadow-2xs"
                                             )}
-                                            title="Temporärer Risiko-Abschlag: Dämpft Wachstum (-25%), begrenzt KGV (max. 20) und erhöht Sicherheitsmarge (+10%)"
+                                            title="Sichtweise C: Risiko-Abschlag (Dämpft Wachstum -25%, KGV max. 20, Sicherheitsmarge +10%). Erneuter Klick oder Klick auf Sicherheit (A) schaltet zurück."
                                         >
-                                            <TriangleAlert className={cn("size-3.5 shrink-0", isRiskDiscountActive ? "text-amber-400 animate-pulse" : "text-muted-foreground")} />
-                                            <span>Risiko-Abschlag</span>
-                                            {isRiskDiscountActive && (
-                                                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/30 text-amber-200 border border-amber-500/40 ml-1">
-                                                    Aktiv
+                                            <div className="flex items-center gap-1.5">
+                                                <TriangleAlert className="size-3.5 shrink-0 text-amber-400" />
+                                                <span>Risiko-Abschlag (C)</span>
+                                            </div>
+                                            {!isSavedForStock && valuationProfile === 'risk' && (
+                                                <span className="text-[11px] font-medium text-amber-200/90 tracking-tight">
+                                                    W: {growthRate}% • KGV: {pe} • Marge: {mos}%
                                                 </span>
                                             )}
                                         </button>
-
-                                        {isRiskDiscountActive && (
-                                            <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 flex items-center justify-between gap-2 animate-in fade-in duration-150">
-                                                <div className="flex items-center gap-1.5 text-[11px] leading-tight">
-                                                    <TriangleAlert className="size-3.5 text-amber-400 shrink-0" />
-                                                    <span><strong>Risiko-Abschlag:</strong> W: {growthRate}% • KGV: {pe} • Marge: {mos}%</span>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={toggleRiskDiscount}
-                                                    className="text-[10px] underline text-amber-300 hover:text-amber-100 shrink-0 cursor-pointer"
-                                                >
-                                                    Aus
-                                                </button>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
 
@@ -2291,6 +2251,13 @@ export function FairValueCalculator() {
                                                         <em>Sichtweise A (Sicherheit):</em> KGV gedeckelt, damit ewiges Wachstum strikt &le; 2,0 % (BIP-Grenze) bleibt.
                                                     </div>
                                                 </div>
+                                            ) : valuationProfile === 'risk' ? (
+                                                <div className="flex items-start gap-1 text-amber-400/90 font-medium">
+                                                    <span className="shrink-0 select-none">⚠️</span>
+                                                    <div className="flex-1">
+                                                        <em>Sichtweise C (Risiko-Abschlag):</em> Temporärer Dämpfungsabschlag (Wachstum -25%, KGV max. 20, Sicherheitsmarge +10%).
+                                                    </div>
+                                                </div>
                                             ) : (
                                                 <div className="flex items-start gap-1 text-purple-400/90 font-medium">
                                                     <span className="shrink-0 select-none">⭐</span>
@@ -2597,19 +2564,24 @@ export function FairValueCalculator() {
                                     {/* Fair Value */}
                                     {(() => {
                                         const isQualityMode = !isSavedForStock && valuationProfile === 'quality';
+                                        const isRiskMode = !isSavedForStock && valuationProfile === 'risk';
                                         const isManualMode = isSavedForStock;
 
                                         const profileColor = isManualMode
                                             ? "text-emerald-400"
-                                            : isQualityMode
-                                                ? "text-purple-400"
-                                                : "text-blue-400";
+                                            : isRiskMode
+                                                ? "text-amber-400"
+                                                : isQualityMode
+                                                    ? "text-purple-400"
+                                                    : "text-blue-400";
 
                                         const profileBorderBg = isManualMode
                                             ? "border-emerald-500/35 bg-emerald-500/5"
-                                            : isQualityMode
-                                                ? "border-purple-500/35 bg-purple-500/5"
-                                                : "border-blue-500/35 bg-blue-500/5";
+                                            : isRiskMode
+                                                ? "border-amber-500/40 bg-amber-500/10"
+                                                : isQualityMode
+                                                    ? "border-purple-500/35 bg-purple-500/5"
+                                                    : "border-blue-500/35 bg-blue-500/5";
 
                                         return (
                                             <div className={cn(
@@ -2639,43 +2611,56 @@ export function FairValueCalculator() {
                                     {/* Buy Price */}
                                     {(() => {
                                         const isQualityMode = !isSavedForStock && valuationProfile === 'quality';
+                                        const isRiskMode = !isSavedForStock && valuationProfile === 'risk';
                                         const isManualMode = isSavedForStock;
 
                                         const kaufpreisTextColor = isManualMode
                                             ? "text-emerald-400"
-                                            : isQualityMode
-                                                ? "text-purple-400"
-                                                : "text-blue-400";
+                                            : isRiskMode
+                                                ? "text-amber-400"
+                                                : isQualityMode
+                                                    ? "text-purple-400"
+                                                    : "text-blue-400";
 
                                         const kaufpreisBorderBg = isManualMode
                                             ? "border-emerald-500 bg-emerald-500/5"
-                                            : isQualityMode
-                                                ? "border-purple-500 bg-purple-500/5"
-                                                : "border-blue-500 bg-blue-500/5";
+                                            : isRiskMode
+                                                ? "border-amber-500 bg-amber-500/10"
+                                                : isQualityMode
+                                                    ? "border-purple-500 bg-purple-500/5"
+                                                    : "border-blue-500 bg-blue-500/5";
 
                                         const kaufpreisTargetIconColor = isManualMode
                                             ? "text-emerald-400"
-                                            : isQualityMode
-                                                ? "text-purple-400"
-                                                : "text-blue-500";
+                                            : isRiskMode
+                                                ? "text-amber-400"
+                                                : isQualityMode
+                                                    ? "text-purple-400"
+                                                    : "text-blue-500";
 
                                         const kaufpreisSaveBtnColor = isManualMode
                                             ? "bg-emerald-600 hover:bg-emerald-500"
-                                            : isQualityMode
-                                                ? "bg-purple-600 hover:bg-purple-500"
-                                                : "bg-blue-600 hover:bg-blue-500";
+                                            : isRiskMode
+                                                ? "bg-amber-600 hover:bg-amber-500"
+                                                : isQualityMode
+                                                    ? "bg-purple-600 hover:bg-purple-500"
+                                                    : "bg-blue-600 hover:bg-blue-500";
 
                                         const kaufpreisQuickBtnColor = isManualMode
                                             ? "bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border-emerald-400/30"
-                                            : isQualityMode
-                                                ? "bg-purple-600/20 hover:bg-purple-600/35 text-purple-300 border-purple-400/30"
-                                                : "bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border-blue-400/30";
+                                            : isRiskMode
+                                                ? "bg-amber-600/20 hover:bg-amber-600/35 text-amber-300 border-amber-400/30"
+                                                : isQualityMode
+                                                    ? "bg-purple-600/20 hover:bg-purple-600/35 text-purple-300 border-purple-400/30"
+                                                    : "bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border-blue-400/30";
 
                                         const kaufpreisActiveTextColor = isManualMode
                                             ? "text-emerald-400"
-                                            : isQualityMode
-                                                ? "text-purple-400"
-                                                : "text-blue-400";
+                                            : isRiskMode
+                                                ? "text-amber-400"
+                                                : isQualityMode
+                                                    ? "text-purple-400"
+                                                    : "text-blue-400";
 
                                         return (
                                             <div className={cn(
@@ -2694,7 +2679,7 @@ export function FairValueCalculator() {
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center justify-between flex-wrap gap-1 text-[11px] text-muted-foreground">
-                                                    <span>Maximales Limit inkl. {mos}% Sicherheitsmarge ({isSavedForStock ? 'Manuell' : valuationProfile === 'quality' ? 'Qualität B' : 'Sicherheit A'})</span>
+                                                    <span>Maximales Limit inkl. {mos}% Sicherheitsmarge ({isSavedForStock ? 'Manuell' : valuationProfile === 'quality' ? 'Qualität B' : valuationProfile === 'risk' ? 'Risiko-Abschlag C' : 'Sicherheit A'})</span>
                                                     {quote?.price && calculation.buyPrice > 0 && (() => {
                                                         const activeLimit = (currentStock?.targetPrice && currentStock.targetPrice > 0)
                                                             ? currentStock.targetPrice
@@ -2747,7 +2732,7 @@ export function FairValueCalculator() {
                                                     )}>
                                                         <Check className="size-3" />
                                                         <span>
-                                                            Aktiv: {currentStock.targetPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency} {Math.abs(currentStock.targetPrice - calculation.buyPrice) < 0.01 ? (valuationProfile === 'quality' ? 'Qualität B' : valuationProfile === 'conservative' ? 'Sicherheit A' : 'Manuell') : 'Eigenes Limit'}
+                                                            Aktiv: {currentStock.targetPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency} {Math.abs(currentStock.targetPrice - calculation.buyPrice) < 0.01 ? (isSavedForStock ? 'Manuell' : valuationProfile === 'quality' ? 'Qualität B' : valuationProfile === 'risk' ? 'Risiko-Abschlag C' : 'Sicherheit A') : 'Eigenes Limit'}
                                                         </span>
                                                     </span>
                                                 ) : null}
