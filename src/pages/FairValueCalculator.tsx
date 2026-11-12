@@ -150,6 +150,38 @@ export function FairValueCalculator() {
     const [isSavedForStock, setIsSavedForStock] = useState<boolean>(false);
     const [valuationProfile, setValuationProfile] = useState<'conservative' | 'quality'>('conservative');
 
+    // Temporärer Risiko-Abschlag State
+    const [isRiskDiscountActive, setIsRiskDiscountActive] = useState(false);
+    const [preRiskBackup, setPreRiskBackup] = useState<{ growthRate: number | string; pe: number | string; mos: number | string } | null>(null);
+
+    const toggleRiskDiscount = () => {
+        if (!isRiskDiscountActive) {
+            setPreRiskBackup({ growthRate, pe, mos });
+
+            const currentGrowth = typeof growthRate === 'string' ? parseFloat(growthRate) || 0 : growthRate;
+            const newGrowth = Math.max(3, parseFloat((currentGrowth * 0.75).toFixed(1)));
+
+            const currentPe = typeof pe === 'string' ? parseFloat(pe) || 0 : pe;
+            const newPe = Math.min(20, Math.max(8, parseFloat((currentPe * 0.8).toFixed(1))));
+
+            const currentMos = typeof mos === 'string' ? parseFloat(mos) || 0 : mos;
+            const newMos = Math.max(25, Math.min(50, currentMos + 10));
+
+            setGrowthRate(newGrowth);
+            setPe(newPe);
+            setMos(newMos);
+            setIsRiskDiscountActive(true);
+        } else {
+            if (preRiskBackup) {
+                setGrowthRate(preRiskBackup.growthRate);
+                setPe(preRiskBackup.pe);
+                setMos(preRiskBackup.mos);
+            }
+            setIsRiskDiscountActive(false);
+            setPreRiskBackup(null);
+        }
+    };
+
     // Persistence Ref to avoid cycles
     const isRestoring = useRef(false);
     const [showGuide, setShowGuide] = useState(false);
@@ -703,6 +735,8 @@ export function FairValueCalculator() {
         setSearchTerm('');
         setSelectedSymbol(symbol);
         setShowStockList(false);
+        setIsRiskDiscountActive(false);
+        setPreRiskBackup(null);
 
         const existingStock = stocks.find(s => s.symbol.toLowerCase() === symbol.toLowerCase());
 
@@ -1697,6 +1731,8 @@ export function FairValueCalculator() {
                                         setSelectedSymbol(null);
                                         setQuote(null);
                                         setAnalysis(null);
+                                        setIsRiskDiscountActive(false);
+                                        setPreRiskBackup(null);
                                         localStorage.removeItem('fair_value_state');
                                     }}
                                     className="p-1 sm:p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-all shrink-0"
@@ -1807,35 +1843,82 @@ export function FairValueCalculator() {
                                             )
                                         )}
                                     </div>
-                                    <div className="grid grid-cols-2 rounded-xl border border-border/80 p-0.5 bg-background/60 shadow-2xs gap-1 w-full">
+                                    <div className="flex flex-col gap-1.5 w-full">
+                                        <div className="grid grid-cols-2 rounded-xl border border-border/80 p-0.5 bg-background/60 shadow-2xs gap-1 w-full">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsRiskDiscountActive(false);
+                                                    setPreRiskBackup(null);
+                                                    applyAutoValues('conservative');
+                                                }}
+                                                className={cn(
+                                                    "flex items-center justify-center gap-1.5 text-xs px-2.5 py-1 rounded-lg transition-all whitespace-nowrap font-semibold border cursor-pointer active:scale-[0.98]",
+                                                    !isSavedForStock && valuationProfile === 'conservative' && !isRiskDiscountActive
+                                                        ? "bg-blue-600 text-white border-blue-400 shadow-sm"
+                                                        : "bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-blue-400/60 shadow-2xs"
+                                                )}
+                                                title="Sichtweise A: Auto Sicherheit (KGV max. 20, Terminal Growth ≤ 2.0 %, Buffett-Baseline)"
+                                            >
+                                                <ShieldCheck className={cn("size-3.5 shrink-0", !isSavedForStock && valuationProfile === 'conservative' && !isRiskDiscountActive ? "text-white" : "text-blue-400")} />
+                                                <span>Sicherheit (A)</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsRiskDiscountActive(false);
+                                                    setPreRiskBackup(null);
+                                                    applyAutoValues('quality');
+                                                }}
+                                                className={cn(
+                                                    "flex items-center justify-center gap-1.5 text-xs px-2.5 py-1 rounded-lg transition-all whitespace-nowrap font-semibold border cursor-pointer active:scale-[0.98]",
+                                                    !isSavedForStock && valuationProfile === 'quality' && !isRiskDiscountActive
+                                                        ? "bg-purple-600 text-white border-purple-400 shadow-sm"
+                                                        : "bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-purple-400/60 shadow-2xs"
+                                                )}
+                                                title="Sichtweise B: Auto Qualität (Historische Qualitätsbewertung KGV bis 25 für Wide-Moat Compounder)"
+                                            >
+                                                <Sparkles className={cn("size-3.5 shrink-0", !isSavedForStock && valuationProfile === 'quality' && !isRiskDiscountActive ? "text-white" : "text-purple-400")} />
+                                                <span>Qualität (B)</span>
+                                            </button>
+                                        </div>
+
+                                        {/* Risiko-Abschlag Button */}
                                         <button
                                             type="button"
-                                            onClick={() => applyAutoValues('conservative')}
+                                            onClick={toggleRiskDiscount}
                                             className={cn(
-                                                "flex items-center justify-center gap-1.5 text-xs px-2.5 py-1 rounded-lg transition-all whitespace-nowrap font-semibold border cursor-pointer active:scale-[0.98]",
-                                                !isSavedForStock && valuationProfile === 'conservative'
-                                                    ? "bg-blue-600 text-white border-blue-400 shadow-sm"
-                                                    : "bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-blue-400/60 shadow-2xs"
+                                                "flex items-center justify-center gap-1.5 text-xs px-3 py-1 rounded-lg transition-all font-semibold border cursor-pointer active:scale-[0.98] w-full",
+                                                isRiskDiscountActive
+                                                    ? "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-xs ring-1 ring-amber-500/30"
+                                                    : "bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-amber-500/40 shadow-2xs"
                                             )}
-                                            title="Sichtweise A: Auto Sicherheit (KGV max. 20, Terminal Growth ≤ 2.0 %, Buffett-Baseline)"
+                                            title="Temporärer Risiko-Abschlag: Dämpft Wachstum (-25%), begrenzt KGV (max. 20) und erhöht Sicherheitsmarge (+10%)"
                                         >
-                                            <ShieldCheck className={cn("size-3.5 shrink-0", !isSavedForStock && valuationProfile === 'conservative' ? "text-white" : "text-blue-400")} />
-                                            <span>Sicherheit (A)</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => applyAutoValues('quality')}
-                                            className={cn(
-                                                "flex items-center justify-center gap-1.5 text-xs px-2.5 py-1 rounded-lg transition-all whitespace-nowrap font-semibold border cursor-pointer active:scale-[0.98]",
-                                                !isSavedForStock && valuationProfile === 'quality'
-                                                    ? "bg-purple-600 text-white border-purple-400 shadow-sm"
-                                                    : "bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-purple-400/60 shadow-2xs"
+                                            <TriangleAlert className={cn("size-3.5 shrink-0", isRiskDiscountActive ? "text-amber-400 animate-pulse" : "text-muted-foreground")} />
+                                            <span>Risiko-Abschlag</span>
+                                            {isRiskDiscountActive && (
+                                                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/30 text-amber-200 border border-amber-500/40 ml-1">
+                                                    Aktiv
+                                                </span>
                                             )}
-                                            title="Sichtweise B: Auto Qualität (Historische Qualitätsbewertung KGV bis 25 für Wide-Moat Compounder)"
-                                        >
-                                            <Sparkles className={cn("size-3.5 shrink-0", !isSavedForStock && valuationProfile === 'quality' ? "text-white" : "text-purple-400")} />
-                                            <span>Qualität (B)</span>
                                         </button>
+
+                                        {isRiskDiscountActive && (
+                                            <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 flex items-center justify-between gap-2 animate-in fade-in duration-150">
+                                                <div className="flex items-center gap-1.5 text-[11px] leading-tight">
+                                                    <TriangleAlert className="size-3.5 text-amber-400 shrink-0" />
+                                                    <span><strong>Risiko-Abschlag:</strong> W: {growthRate}% • KGV: {pe} • Marge: {mos}%</span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={toggleRiskDiscount}
+                                                    className="text-[10px] underline text-amber-300 hover:text-amber-100 shrink-0 cursor-pointer"
+                                                >
+                                                    Aus
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
