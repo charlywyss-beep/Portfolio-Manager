@@ -2516,9 +2516,9 @@ export function FairValueCalculator() {
                                                 <div className="text-[13px] font-medium mt-2 mb-1.5 text-muted-foreground leading-normal">
                                                     {isUndervalued && (
                                                         <>
-                                                            <div>Unterbewertet mit attraktiver Sicherheitsmarge für Neukäufe.</div>
-                                                            <div className="mt-0.5 text-muted-foreground/90">
-                                                                Potenzial: <span className="font-bold text-emerald-400">+{potentialPct} %</span> zum fairen Wert.
+                                                            <div className="text-emerald-400 font-medium">Unterbewertet mit attraktiver Sicherheitsmarge für Neukäufe.</div>
+                                                            <div className="mt-0.5 font-bold text-emerald-400">
+                                                                +{potentialPct} % Kurspotenzial
                                                             </div>
                                                         </>
                                                     )}
