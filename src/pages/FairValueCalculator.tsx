@@ -2753,7 +2753,7 @@ export function FairValueCalculator() {
                                                         const diffPct = ((quote.price - activeLimit) / activeLimit) * 100;
 
                                                         return diffPct > 0 ? (
-                                                            <span className="font-medium text-amber-400">
+                                                            <span className={cn("font-medium", !isMatchingBuyPrice && !isMatchingFairValue ? "text-emerald-400" : "text-amber-400")}>
                                                                 Aktueller Kurs +{diffPct.toFixed(1)}% über {limitName}
                                                             </span>
                                                         ) : (
@@ -2806,34 +2806,73 @@ export function FairValueCalculator() {
                                             </div>
 
                                             <div className="flex items-center gap-2">
-                                                <div className="relative flex-1">
-                                                    <input
-                                                        type="text"
-                                                        inputMode="decimal"
-                                                        value={buyLimitInput}
-                                                        onChange={(e) => setBuyLimitInput(e.target.value)}
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === 'Enter') {
-                                                                handleSaveBuyLimit(buyLimitInput);
-                                                            }
-                                                        }}
-                                                        placeholder={calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : "Optional"}
-                                                        className="w-full px-2 py-1 lg:py-0.5 rounded-lg border border-border bg-background text-xs sm:text-sm lg:text-xs font-mono pr-12 focus:ring-1 focus:ring-primary text-foreground h-7 sm:h-8 lg:h-6.5"
-                                                    />
-                                                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-muted-foreground pointer-events-none">
-                                                        {quote.currency === 'GBp' ? 'GBP' : quote.currency}
-                                                    </span>
-                                                </div>
+                                                {(() => {
+                                                    const numInput = parseFloat(buyLimitInput.replace(',', '.')) || (currentStock?.targetPrice || 0);
+                                                    const isMatchingBuyPrice = Math.abs(numInput - calculation.buyPrice) < 0.01;
+                                                    const isMatchingFairValue = Math.abs(numInput - calculation.fairValue) < 0.01;
+                                                    const isCustomLimit = numInput > 0 && !isMatchingBuyPrice && !isMatchingFairValue;
 
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleSaveBuyLimit(buyLimitInput || (calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : ''))}
-                                                    className={cn("px-2.5 py-1 lg:py-0.5 text-white text-xs font-semibold rounded-lg shadow-sm transition-all flex items-center gap-1 shrink-0 active:scale-95 h-7 sm:h-8 lg:h-6.5", kaufpreisSaveBtnColor)}
-                                                    title="In Kursdaten als Kauflimit speichern"
-                                                >
-                                                    <Check className="size-3.5" />
-                                                    <span>Speichern</span>
-                                                </button>
+                                                    const inputTextColor = isCustomLimit
+                                                        ? "text-emerald-400 font-bold"
+                                                        : isRiskMode
+                                                            ? "text-amber-400 font-bold"
+                                                            : isQualityMode
+                                                                ? "text-purple-400 font-bold"
+                                                                : "text-blue-400 font-bold";
+
+                                                    const inputBorderColor = isCustomLimit
+                                                        ? "border-emerald-500/50 focus:ring-emerald-400"
+                                                        : isRiskMode
+                                                            ? "border-amber-500/50 focus:ring-amber-400"
+                                                            : isQualityMode
+                                                                ? "border-purple-500/50 focus:ring-purple-400"
+                                                                : "border-blue-500/50 focus:ring-blue-400";
+
+                                                    const inputCurrencyColor = isCustomLimit
+                                                        ? "text-emerald-400/90 font-bold"
+                                                        : isRiskMode
+                                                            ? "text-amber-400/90 font-bold"
+                                                            : isQualityMode
+                                                                ? "text-purple-400/90 font-bold"
+                                                                : "text-blue-400/90 font-bold";
+
+                                                    const effectiveSaveBtnColor = isCustomLimit
+                                                        ? "bg-emerald-600 hover:bg-emerald-500"
+                                                        : kaufpreisSaveBtnColor;
+
+                                                    return (
+                                                        <>
+                                                            <div className="relative flex-1">
+                                                                <input
+                                                                    type="text"
+                                                                    inputMode="decimal"
+                                                                    value={buyLimitInput}
+                                                                    onChange={(e) => setBuyLimitInput(e.target.value)}
+                                                                    onKeyDown={(e) => {
+                                                                        if (e.key === 'Enter') {
+                                                                            handleSaveBuyLimit(buyLimitInput);
+                                                                        }
+                                                                    }}
+                                                                    placeholder={calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : "Optional"}
+                                                                    className={cn("w-full px-2 py-1 lg:py-0.5 rounded-lg border bg-background text-xs sm:text-sm lg:text-xs font-mono pr-12 focus:ring-1 h-7 sm:h-8 lg:h-6.5 transition-colors", inputBorderColor, inputTextColor)}
+                                                                />
+                                                                <span className={cn("absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-mono pointer-events-none transition-colors", inputCurrencyColor)}>
+                                                                    {quote.currency === 'GBp' ? 'GBP' : quote.currency}
+                                                                </span>
+                                                            </div>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleSaveBuyLimit(buyLimitInput || (calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : ''))}
+                                                                className={cn("px-2.5 py-1 lg:py-0.5 text-white text-xs font-semibold rounded-lg shadow-sm transition-all flex items-center gap-1 shrink-0 active:scale-95 h-7 sm:h-8 lg:h-6.5", effectiveSaveBtnColor)}
+                                                                title="In Kursdaten als Kauflimit speichern"
+                                                            >
+                                                                <Check className="size-3.5" />
+                                                                <span>Speichern</span>
+                                                            </button>
+                                                        </>
+                                                    );
+                                                })()}
                                             </div>
 
 
