@@ -343,6 +343,7 @@ export interface OrderBookEntry {
     executedShares?: number;
     executedTotalCHF?: number;
     executedFxRate?: number;
+    executedBroker?: string;
     dividendPerShare?: number;
     dividendFrequency?: 'annually' | 'semi-annually' | 'quarterly' | 'monthly';
     distributionPolicy?: 'distributing' | 'accumulating';

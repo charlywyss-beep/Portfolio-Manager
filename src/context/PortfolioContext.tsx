@@ -974,7 +974,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         const actualPrice = params?.executedPrice ?? entry.limitPrice;
         const actualShares = params?.shares ?? entry.shares;
         const actualDate = params?.executedDate || new Date().toISOString().split('T')[0];
-        const actualBroker = params?.broker || 'Swissquote';
+        const actualBroker = params?.broker !== undefined ? params.broker : (entry.executedBroker || '');
+        const isAlreadyExecuted = entry.status === 'executed';
 
         if (entry.mode === 'buy') {
             let targetStockId = entry.stockId;
@@ -1035,14 +1036,28 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                 }
             }
 
-            addPosition({
-                stockId: targetStockId,
-                shares: actualShares,
-                buyPriceAvg: effectivePrice,
-                averageEntryFxRate: effectiveFxRate,
-                buyDate: actualDate,
-                broker: actualBroker
-            });
+            if (isAlreadyExecuted) {
+                // Update existing position instead of adding duplicate
+                const existingPos = positions.find(p => p.stockId === targetStockId);
+                if (existingPos) {
+                    updatePosition(existingPos.id, {
+                        broker: actualBroker,
+                        buyPriceAvg: effectivePrice,
+                        averageEntryFxRate: effectiveFxRate,
+                        shares: actualShares,
+                        buyDate: actualDate
+                    });
+                }
+            } else {
+                addPosition({
+                    stockId: targetStockId,
+                    shares: actualShares,
+                    buyPriceAvg: effectivePrice,
+                    averageEntryFxRate: effectiveFxRate,
+                    buyDate: actualDate,
+                    broker: actualBroker
+                });
+            }
         } else if (entry.mode === 'sell') {
             const position = positions.find(p => p.stockId === entry.stockId || (entry.stockSymbol && stocks.find(s => s.id === p.stockId)?.symbol === entry.stockSymbol));
             if (position) {
@@ -1061,7 +1076,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
             executedPrice: actualPrice,
             executedShares: actualShares,
             executedTotalCHF: params?.totalAmountCHF,
-            executedFxRate: params?.fxRate
+            executedFxRate: params?.fxRate,
+            executedBroker: actualBroker
         });
         return true;
     };

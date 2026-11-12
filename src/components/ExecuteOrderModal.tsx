@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { X, Check, Rocket, Calendar, ShieldCheck, Building2 } from 'lucide-react';
 import { Logo } from './Logo';
 import { useExchangeRates } from '../context/ExchangeRateContext';
+import { usePortfolio } from '../context/PortfolioContext';
 import type { OrderBookEntry, ExecuteOrderParams } from '../types';
 
 interface ExecuteOrderModalProps {
@@ -13,16 +14,38 @@ interface ExecuteOrderModalProps {
 
 export function ExecuteOrderModal({ isOpen, onClose, order, onExecute }: ExecuteOrderModalProps) {
     const { rates } = useExchangeRates();
+    const { positions } = usePortfolio();
 
     const isBuy = order?.mode !== 'sell';
     const currency = order?.currency || 'CHF';
     const isForeign = currency !== 'CHF';
+    const isAlreadyExecuted = order?.status === 'executed';
 
-    // Form states
+    // Collect broker suggestions from positions & common Swiss brokers
+    const brokerOptions = useMemo(() => {
+        const list = [
+            'Swissquote',
+            'Saxo Bank',
+            'Interactive Brokers',
+            'PostFinance',
+            'UBS',
+            'Raiffeisen',
+            'Zürcher Kantonalbank',
+            'Neon',
+            'Trade Republic',
+            'DEGIRO'
+        ];
+        (positions || []).forEach(p => {
+            if (p.broker && !list.includes(p.broker)) list.push(p.broker);
+        });
+        return list;
+    }, [positions]);
+
+    // Form states (broker starts EMPTY "")
     const [shares, setShares] = useState<number>(order?.shares || 1);
     const [executedPrice, setExecutedPrice] = useState<number>(order?.limitPrice || 0);
     const [executedDate, setExecutedDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
-    const [broker, setBroker] = useState<string>('Swissquote');
+    const [broker, setBroker] = useState<string>('');
 
     // FX & Fees
     const [fxRate, setFxRate] = useState<number>(1);
@@ -33,38 +56,40 @@ export function ExecuteOrderModal({ isOpen, onClose, order, onExecute }: Execute
     useEffect(() => {
         if (!order) return;
 
-        const initialShares = order.shares || 1;
-        // Pre-fill with rounded currentPrice or limitPrice
-        const rawPrice = order.currentPrice && order.currentPrice > 0 ? order.currentPrice : order.limitPrice;
+        const initialShares = order.executedShares || order.shares || 1;
+        // Pre-fill with rounded executedPrice or currentPrice or limitPrice
+        const rawPrice = order.executedPrice || (order.currentPrice && order.currentPrice > 0 ? order.currentPrice : order.limitPrice);
         const initialPrice = parseFloat(rawPrice.toFixed(2));
         setShares(initialShares);
         setExecutedPrice(initialPrice);
-        setExecutedDate(new Date().toISOString().split('T')[0]);
-        setBroker('Swissquote');
+        setExecutedDate(order.executedAt ? order.executedAt.split('T')[0] : new Date().toISOString().split('T')[0]);
+        // Zu Beginn leer, es sei denn es wurde bereits ein Broker gespeichert
+        setBroker(order.executedBroker || '');
 
         const initialFees = parseFloat((order.totalFeesCHF || 0).toFixed(2));
         setFeesCHF(initialFees);
 
         if (order.currency && order.currency !== 'CHF') {
-            // Determine initial FX rate (CHF per 1 foreign currency unit)
-            let defaultFx = 1;
-            if (order.volumeNative > 0 && order.volumeCHF > 0) {
-                defaultFx = order.volumeCHF / order.volumeNative;
-            } else if (rates && (rates as any)[order.currency]) {
-                const r = (rates as any)[order.currency];
-                defaultFx = r > 0 ? 1 / r : 1;
+            // Determine initial FX rate
+            let defaultFx = order.executedFxRate || 1;
+            if (!order.executedFxRate) {
+                if (order.volumeNative > 0 && order.volumeCHF > 0) {
+                    defaultFx = order.volumeCHF / order.volumeNative;
+                } else if (rates && (rates as any)[order.currency]) {
+                    const r = (rates as any)[order.currency];
+                    defaultFx = r > 0 ? 1 / r : 1;
+                }
             }
-            // Round to 4 decimals (e.g. 0.8505)
             const roundedFx = parseFloat(defaultFx.toFixed(4));
             setFxRate(roundedFx);
 
             const volNative = initialShares * initialPrice;
-            const totalCHF = isBuy ? (volNative * roundedFx + initialFees) : (volNative * roundedFx - initialFees);
+            const totalCHF = order.executedTotalCHF || (isBuy ? (volNative * roundedFx + initialFees) : (volNative * roundedFx - initialFees));
             setTotalAmountCHF(parseFloat(totalCHF.toFixed(2)));
         } else {
             setFxRate(1);
             const volCHF = initialShares * initialPrice;
-            const totalCHF = isBuy ? (volCHF + initialFees) : (volCHF - initialFees);
+            const totalCHF = order.executedTotalCHF || (isBuy ? (volCHF + initialFees) : (volCHF - initialFees));
             setTotalAmountCHF(parseFloat(totalCHF.toFixed(2)));
         }
     }, [order, rates, isBuy]);
@@ -185,7 +210,9 @@ export function ExecuteOrderModal({ isOpen, onClose, order, onExecute }: Execute
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h2 className="text-base sm:text-lg font-bold">Auftrag ins Depot verbuchen</h2>
+                                <h2 className="text-base sm:text-lg font-bold">
+                                    {isAlreadyExecuted ? 'Ausführung & Buchung anpassen' : 'Auftrag ins Depot verbuchen'}
+                                </h2>
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
                                     isBuy ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border-rose-500/40'
                                 }`}>
@@ -376,13 +403,19 @@ export function ExecuteOrderModal({ isOpen, onClose, order, onExecute }: Execute
                                 <Building2 className="size-3.5 text-muted-foreground" />
                                 Broker / Bank
                             </label>
-                            <input
-                                type="text"
+                            <select
                                 value={broker}
                                 onChange={e => setBroker(e.target.value)}
-                                className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground text-xs outline-hidden"
-                                placeholder="z.B. Swissquote"
-                            />
+                                className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground text-xs outline-hidden cursor-pointer"
+                            >
+                                <option value="">-- Kein Broker gewählt --</option>
+                                {brokerOptions.map(b => (
+                                    <option key={b} value={b}>{b}</option>
+                                ))}
+                                {broker && !brokerOptions.includes(broker) && (
+                                    <option value={broker}>{broker}</option>
+                                )}
+                            </select>
                         </div>
                     </div>
 
@@ -427,10 +460,10 @@ export function ExecuteOrderModal({ isOpen, onClose, order, onExecute }: Execute
                         </button>
                         <button
                             type="submit"
-                            className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all active:scale-95"
+                            className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all active:scale-95 cursor-pointer"
                         >
                             <Check className="size-4" />
-                            <span>Im Depot verbuchen</span>
+                            <span>{isAlreadyExecuted ? 'Buchung aktualisieren' : 'Im Depot verbuchen'}</span>
                         </button>
                     </div>
                 </form>

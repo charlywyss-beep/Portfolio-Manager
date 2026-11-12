@@ -376,9 +376,15 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                                     )}
                                                 </button>
                                             ) : (
-                                                <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
-                                                    <Check className="size-3" /> Bereits im Depot verbucht
-                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleExecuteClick(order)}
+                                                    className="text-[11px] text-emerald-300 font-semibold flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 transition-colors cursor-pointer"
+                                                    title="Buchungsdaten & Broker ansehen / anpassen"
+                                                >
+                                                    <Check className="size-3 text-emerald-400" />
+                                                    <span>Bereits im Depot verbucht {order.executedBroker ? `(${order.executedBroker})` : ''}</span>
+                                                </button>
                                             )}
                                         </div>
                                     )}
@@ -465,7 +471,10 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                         <div className="flex items-center gap-3 text-muted-foreground text-[11px]">
                                             <span>Erstellt: {formatDate(order.createdAt)}</span>
                                             {order.status === 'executed' && order.executedAt && (
-                                                <span className="text-emerald-400 font-semibold">• Ausgeführt am: {formatDate(order.executedAt)}</span>
+                                                <span className="text-emerald-400 font-semibold">
+                                                    • Ausgeführt am: {formatDate(order.executedAt)}
+                                                    {order.executedBroker && ` • Broker: ${order.executedBroker}`}
+                                                </span>
                                             )}
                                         </div>
 
