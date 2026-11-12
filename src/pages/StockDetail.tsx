@@ -5,7 +5,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, Pencil, Landmark, Activity, BarChart3, Calendar, Layers, Link2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, Pencil, Landmark, Activity, BarChart3, Calendar, Layers, Link2, ClipboardList } from 'lucide-react';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
 import { estimateMarketState } from '../utils/market';
@@ -44,7 +44,7 @@ export function StockDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { stocks, positions, updateStock, updateStockPrice, addQuickLink, removeQuickLink, watchlists, updatePosition, deletePosition } = usePortfolio();
+    const { stocks, positions, updateStock, updateStockPrice, addQuickLink, removeQuickLink, watchlists, updatePosition, deletePosition, orderBook } = usePortfolio();
     const { formatCurrency, convertToCHF } = useCurrencyFormatter();
     const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false); // Modal State
     const [isEditPositionModalOpen, setIsEditPositionModalOpen] = useState(false);
@@ -88,6 +88,16 @@ export function StockDetail() {
             });
         }
     }, [stockFromContext, id, !!virtualStock, searchParams]);
+
+    const activeOrder = useMemo(() => {
+        if (!stock) return null;
+        return (orderBook || []).find(o => 
+            o.status === 'open' && (
+                o.stockId === stock.id || 
+                (stock.symbol && o.stockSymbol?.toLowerCase() === stock.symbol.toLowerCase())
+            )
+        );
+    }, [orderBook, stock]);
 
     const [notes, setNotes] = useState('');
     const [isSaving, setIsSaving] = useState(false);
@@ -477,7 +487,9 @@ export function StockDetail() {
                         <button
                             onClick={() => {
                                 const from = searchParams.get('from');
-                                if (from === 'watchlist') {
+                                if (from === 'orderbook') {
+                                    navigate('/calculator?orderbook=true');
+                                } else if (from === 'watchlist') {
                                     navigate('/watchlist');
                                 } else if (from === 'portfolio') {
                                     navigate('/portfolio');
@@ -488,28 +500,48 @@ export function StockDetail() {
                                     navigate('/');
                                 }
                             }}
-                            className="flex items-center justify-center gap-1 bg-white text-blue-600 hover:bg-blue-50 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 py-1 px-2.5 text-xs group active:scale-95"
+                            className="flex items-center justify-center gap-1.5 bg-white dark:bg-card text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all font-semibold rounded-lg shadow-sm border border-blue-200 dark:border-blue-800/60 py-1 px-2.5 text-xs group active:scale-95"
                             title={
-                                searchParams.get('from') === 'market-overview'
-                                    ? "Zurück zur Marktübersicht"
-                                    : searchParams.get('from') === 'portfolio'
-                                        ? "Zurück zu Positionen"
-                                        : searchParams.get('from') === 'watchlist'
-                                            ? "Zurück zur Watchlist"
-                                            : "Zurück zur Übersicht"
+                                searchParams.get('from') === 'orderbook'
+                                    ? "Zurück zum Auftragsbuch"
+                                    : searchParams.get('from') === 'market-overview'
+                                        ? "Zurück zur Marktübersicht"
+                                        : searchParams.get('from') === 'portfolio'
+                                            ? "Zurück zu Positionen"
+                                            : searchParams.get('from') === 'watchlist'
+                                                ? "Zurück zur Watchlist"
+                                                : "Zurück zur Übersicht"
                             }
                         >
-                            <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
+                            {searchParams.get('from') === 'orderbook' ? (
+                                <ClipboardList className="size-3.5 text-blue-600 dark:text-blue-400" />
+                            ) : (
+                                <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
+                            )}
                             <span>
-                                {searchParams.get('from') === 'market-overview'
-                                    ? 'Marktübersicht'
-                                    : searchParams.get('from') === 'portfolio'
-                                        ? 'Positionen'
-                                        : searchParams.get('from') === 'watchlist'
-                                            ? 'Watchlist'
-                                            : 'Übersicht'}
+                                {searchParams.get('from') === 'orderbook'
+                                    ? 'Auftragsbuch'
+                                    : searchParams.get('from') === 'market-overview'
+                                        ? 'Marktübersicht'
+                                        : searchParams.get('from') === 'portfolio'
+                                            ? 'Positionen'
+                                            : searchParams.get('from') === 'watchlist'
+                                                ? 'Watchlist'
+                                                : 'Übersicht'}
                             </span>
                         </button>
+
+                        {/* Direct Auftragsbuch Button if active order exists and not coming from orderbook */}
+                        {activeOrder && searchParams.get('from') !== 'orderbook' && (
+                            <button
+                                onClick={() => navigate('/calculator?orderbook=true')}
+                                className="flex items-center justify-center gap-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all font-semibold rounded-lg shadow-sm border border-amber-500/30 py-1 px-2.5 text-xs group active:scale-95 whitespace-nowrap"
+                                title="Zum Auftragsbuch wechseln"
+                            >
+                                <ClipboardList className="size-3.5 text-amber-500" />
+                                <span>Auftragsbuch</span>
+                            </button>
+                        )}
 
                         {/* Saisonalität Button */}
                         <button
@@ -582,6 +614,17 @@ export function StockDetail() {
                                         <div className="size-2 md:size-2.5 rounded-full bg-red-500 cursor-help border border-background shrink-0" title={`Markt geschlossen (${displayLabel})`} />
                                     );
                                 })()}
+                                {activeOrder && (
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate('/calculator?orderbook=true')}
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-0.5 md:py-1 rounded-lg text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/35 hover:bg-amber-500/25 transition-all shadow-xs cursor-pointer"
+                                        title="Aktiver Auftrag im Auftragsbuch – Klicken um Auftragsbuch zu öffnen"
+                                    >
+                                        <ClipboardList className="size-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                                        <span>Auftrag: {activeOrder.mode === 'buy' ? 'Kauf' : 'Verkauf'} {activeOrder.shares} Stk. à {activeOrder.limitPrice.toFixed(2)} {activeOrder.currency}</span>
+                                    </button>
+                                )}
                                 <div className="flex items-center gap-1 ml-auto sm:ml-0">
                                     <button
                                         onClick={() => navigate(`/calculator?stock=${stock.id}&mode=buy`)}
@@ -1090,12 +1133,23 @@ export function StockDetail() {
                         return (
                             <>
                                 <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                                    <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
                                         <span className="text-muted-foreground">Kauflimit</span>
                                         {isCustomLimit && (
                                             <span className="text-[10px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 rounded shadow-xs">
                                                 Eigenes Limit
                                             </span>
+                                        )}
+                                        {activeOrder && (
+                                            <button
+                                                type="button"
+                                                onClick={() => navigate('/calculator?orderbook=true')}
+                                                className="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-500/20 border border-amber-500/40 px-1.5 py-0.5 rounded shadow-xs hover:bg-amber-500/30 transition-colors flex items-center gap-1 cursor-pointer"
+                                                title="Im Auftragsbuch aktiv – Klicken zum Öffnen"
+                                            >
+                                                <ClipboardList className="size-2.5 text-amber-600 dark:text-amber-400" />
+                                                <span>Im Auftragsbuch</span>
+                                            </button>
                                         )}
                                         {isModelLimit && (
                                             <span className={cn(

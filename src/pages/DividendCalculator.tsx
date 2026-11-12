@@ -805,9 +805,15 @@ export function DividendCalculator() {
     const [showSuccess, setShowSuccess] = useState(false);
     const [showGuide, setShowGuide] = useState(false);
     const [showArchive, setShowArchive] = useState(false);
-    const [showOrderBook, setShowOrderBook] = useState(false);
+    const [showOrderBook, setShowOrderBook] = useState(() => searchParams.get('orderbook') === 'true');
     const [showSavedFeedback, setShowSavedFeedback] = useState(false);
     const [showOrderBookSavedFeedback, setShowOrderBookSavedFeedback] = useState(false);
+
+    useEffect(() => {
+        if (searchParams.get('orderbook') === 'true') {
+            setShowOrderBook(true);
+        }
+    }, [searchParams]);
     const getEndOfWeekDate = () => {
         const d = new Date();
         const day = d.getDay();
