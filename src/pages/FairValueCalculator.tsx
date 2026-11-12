@@ -2473,7 +2473,7 @@ export function FairValueCalculator() {
 
                                     return (
                                         <div className={cn(
-                                            "fair-value-bewertung-box p-2.5 sm:p-3 lg:py-2 lg:px-3 rounded-xl border text-center transition-all shrink-0 min-h-[192px] lg:min-h-[182px] xl:min-h-[192px] flex flex-col justify-between",
+                                            "fair-value-bewertung-box p-2.5 sm:p-3 lg:py-2.5 lg:px-3 rounded-xl border text-center transition-all shrink-0 min-h-[148px] lg:min-h-[138px] xl:min-h-[148px] flex flex-col justify-between",
                                             isUndervalued
                                                 ? "bg-emerald-500/10 border-emerald-500/30"
                                                 : isFairHold
@@ -2513,7 +2513,7 @@ export function FairValueCalculator() {
                                                     </div>
                                                 )}
 
-                                                <div className="text-xs lg:text-[11px] font-medium mt-1 mb-0.5 text-muted-foreground leading-snug">
+                                                <div className="text-xs lg:text-[11px] font-medium mt-1.5 mb-1 text-muted-foreground leading-snug">
                                                     {isUndervalued && (
                                                         <>
                                                             <div>Unterbewertet mit attraktiver Sicherheitsmarge für Neukäufe.</div>
@@ -2545,58 +2545,8 @@ export function FairValueCalculator() {
                                                 </div>
                                             </div>
 
-                                            {/* Staffelkauf-Empfehlung (2 Tranchen) - in allen Sichtweisen einheitlich sichtbar */}
-                                            {calculation.fairValue > 0 && (() => {
-                                                const p1 = calculation.fairValue;
-                                                const m2 = Number(mos) || (isEtfAsset(currentStock, quote, selectedSymbol) ? 10 : 15);
-                                                const p2 = calculation.buyPrice > 0 ? calculation.buyPrice : calculation.fairValue * (1 - m2 / 100);
-                                                const pMix = (p1 + p2) / 2;
-                                                const mMix = (m2 / 2).toFixed(1);
-                                                const activeLimit = currentStock?.targetPrice ?? (calculation.buyPrice > 0 ? calculation.buyPrice : 0);
-                                                const isP1Active = activeLimit > 0 && (Math.abs(activeLimit - p1) < 0.50 || Math.abs(activeLimit - p1) / p1 < 0.005);
-                                                const isP2Active = activeLimit > 0 && (Math.abs(activeLimit - p2) < 0.50 || Math.abs(activeLimit - p2) / p2 < 0.005);
-                                                const isMixActive = activeLimit > 0 && (Math.abs(activeLimit - pMix) < 0.50 || Math.abs(activeLimit - pMix) / pMix < 0.005);
-
-                                                return (
-                                                    <div className="pt-1.5 border-t border-border/40 text-[11px] lg:text-[10px] text-muted-foreground flex flex-col items-center justify-center gap-0.5">
-                                                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                                                            <span className="font-semibold text-foreground">Staffelkauf 2 Tranchen</span>
-                                                            <span>•</span>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setBuyLimitInput(p1.toFixed(2))}
-                                                                title="1. Tranche (Fairer Wert - 0%) als Kauflimit eintragen"
-                                                                className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-                                                            >
-                                                                1. Tranche Fairer Wert - 0% : <strong className={cn("font-mono", isP1Active ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(p1, quote.currency, false)}</strong>
-                                                            </button>
-                                                            <span>•</span>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setBuyLimitInput(p2.toFixed(2))}
-                                                                title={`2. Tranche (- ${m2}% Sicherheitsmarge) als Kauflimit eintragen`}
-                                                                className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-                                                            >
-                                                                2. Tranche - {m2}% : <strong className={cn("font-mono", isP2Active ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(p2, quote.currency, false)}</strong>
-                                                            </button>
-                                                        </div>
-                                                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setBuyLimitInput(pMix.toFixed(2))}
-                                                                title={`Kauf bei Ø ${mMix}% Marge als Kauflimit eintragen`}
-                                                                className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-                                                            >
-                                                                <span>Kauf bei Ø • {mMix}% : </span>
-                                                                <strong className={cn("font-mono", isMixActive ? "text-emerald-400 font-bold" : "text-foreground")}>{formatCurrency(pMix, quote.currency, false)}</strong>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })()}
-
                                             {/* Fundamentale Abwärtsabsicherung / Risikoprofil - Neutral in weißer Schrift */}
-                                            <div className="pt-1.5 border-t border-border/40 text-[11px] lg:text-[10px] text-left leading-snug flex items-start gap-1.5 text-foreground/90">
+                                            <div className="pt-2 border-t border-border/40 text-[11px] lg:text-[10px] text-left leading-snug flex items-start gap-1.5 text-foreground/90">
                                                 <span className="text-sm shrink-0 select-none mt-0.5">{downsideProtection.icon}</span>
                                                 <div className="min-w-0 flex-1">
                                                     <strong className="font-semibold text-foreground mr-1.5">{downsideProtection.title}:</strong>
@@ -3070,6 +3020,45 @@ export function FairValueCalculator() {
                                                 );
                                             })}
                                         </div>
+
+                                        {/* Mischkurs / Kauf bei Ø (1. + 2. Tranche) */}
+                                        {calculation.fairValue > 0 && (() => {
+                                            const p1 = calculation.fairValue;
+                                            const m2 = Number(mos) || (isEtfAsset(currentStock, quote, selectedSymbol) ? 10 : 15);
+                                            const p2 = calculation.buyPrice > 0 ? calculation.buyPrice : calculation.fairValue * (1 - m2 / 100);
+                                            const pMix = (p1 + p2) / 2;
+                                            const mMix = (m2 / 2).toFixed(1);
+                                            const activeLimit = currentStock?.targetPrice ?? (calculation.buyPrice > 0 ? calculation.buyPrice : 0);
+                                            const isMixActive = currentStock?.targetPriceType === 'manual' && activeLimit > 0 && Math.abs(activeLimit - pMix) < 0.25;
+
+                                            return (
+                                                <div className="pt-1.5 mt-1 border-t border-border/40 flex items-center justify-between gap-2 flex-wrap text-xs">
+                                                    <div className="flex items-center gap-1.5 text-muted-foreground text-[11px]">
+                                                        <span className="font-semibold text-foreground">Kauf bei Ø (1. + 2. Tranche):</span>
+                                                        <span>• {mMix}% Marge</span>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const val = pMix.toFixed(2);
+                                                            setBuyLimitInput(val);
+                                                            handleSaveBuyLimit(val, 'manual');
+                                                        }}
+                                                        className={cn(
+                                                            "px-2 py-0.5 text-[11px] font-semibold rounded-md border transition-all cursor-pointer whitespace-nowrap active:scale-95 flex items-center gap-1",
+                                                            isMixActive
+                                                                ? "bg-emerald-600 text-white border-emerald-500 shadow-xs"
+                                                                : "bg-card hover:bg-muted text-foreground border-border hover:border-primary/50 shadow-2xs"
+                                                        )}
+                                                        title={`Kauf bei Ø ${mMix}% Marge (${formatCurrency(pMix, quote.currency, false)}) als Kauflimit eintragen`}
+                                                    >
+                                                        <Check className={cn("size-3", isMixActive ? "opacity-100" : "opacity-0")} />
+                                                        <span className="font-mono font-bold">{formatCurrency(pMix, quote.currency, false)}</span>
+                                                        <span>{isMixActive ? 'Aktiv' : 'Als Kauflimit'}</span>
+                                                    </button>
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 )}
 
