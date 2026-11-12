@@ -2424,9 +2424,21 @@ export function FairValueCalculator() {
                                     const potentialPct = curP > 0 ? Math.round(((fv - curP) / curP) * 100) : 0;
                                     const overvaluationPct = Math.round(((curP - fv) / fv) * 100);
 
+                                    const activeLimit = (currentStock?.targetPrice && currentStock.targetPrice > 0)
+                                        ? currentStock.targetPrice
+                                        : calculation.buyPrice;
+                                    const isMatchingBuyPrice = Math.abs(activeLimit - calculation.buyPrice) < 0.01;
+                                    const isMatchingFairValue = Math.abs(activeLimit - calculation.fairValue) < 0.01;
+                                    const limitName = isMatchingBuyPrice
+                                        ? 'Kauflimit'
+                                        : isMatchingFairValue
+                                            ? 'Fairem Wert'
+                                            : 'eigenem Limit';
+                                    const limitDiffPct = activeLimit > 0 ? ((curP - activeLimit) / activeLimit) * 100 : 0;
+
                                     return (
                                         <div className={cn(
-                                            "fair-value-bewertung-box p-2 sm:p-2.5 lg:py-1.5 lg:px-2.5 rounded-xl border text-center transition-all shrink-0",
+                                            "fair-value-bewertung-box p-2 sm:p-2.5 lg:py-1.5 lg:px-2.5 rounded-xl border text-center transition-all shrink-0 min-h-[178px] flex flex-col justify-between",
                                             isUndervalued
                                                 ? "bg-emerald-500/10 border-emerald-500/30"
                                                 : isFairHold
@@ -2435,54 +2447,71 @@ export function FairValueCalculator() {
                                                         ? "bg-amber-500/10 border-amber-500/30"
                                                         : "bg-rose-500/10 border-rose-500/30"
                                         )}>
-                                            <div className={cn(
-                                                "text-xl sm:text-2xl lg:text-lg font-extrabold font-mono tracking-tight flex items-baseline justify-center gap-1.5 flex-wrap",
-                                                isUndervalued
-                                                    ? "text-emerald-400"
-                                                    : isFairHold
-                                                        ? (diffPct >= 0 ? "text-emerald-400" : "text-yellow-400")
-                                                        : isRichHold
-                                                            ? "text-amber-400"
-                                                            : "text-rose-400"
-                                            )}>
-                                                <span>{diffPct > 0 ? `+${diffPct}%` : diffPct < 0 ? `+${overvaluationPct}%` : `0%`}</span>
-                                                <span className="text-sm sm:text-base lg:text-xs font-bold font-sans tracking-normal opacity-90">
-                                                    {diffPct > 0 ? 'unter fairem Wert' : diffPct < 0 ? 'über fairem Wert' : 'Exakt auf fairem Wert'}
-                                                </span>
-                                            </div>
-                                            <div className="text-xs lg:text-[11px] font-medium mt-1 lg:mt-0.5 text-muted-foreground">
-                                                {isUndervalued && (
-                                                    <>
-                                                        <div>Unterbewertet mit attraktiver Sicherheitsmarge für Neukäufe.</div>
-                                                        <div className="mt-0.5 text-xs text-muted-foreground/90">
-                                                            Potenzial: <span className="font-bold text-emerald-400">+{potentialPct} %</span> zum fairen Wert.
-                                                        </div>
-                                                    </>
-                                                )}
-                                                {isFairHold && (
-                                                    <>
-                                                        <div>Kurs im fairen Bewertungskorridor.</div>
-                                                        <div className="mt-0.5 text-xs text-muted-foreground/90"><span className="font-bold text-yellow-400">Bestände halten</span>.</div>
-                                                    </>
-                                                )}
-                                                {isRichHold && (
-                                                    <>
-                                                        <div>Hoch bewertet gegenüber dem fundamentalen Wert.</div>
-                                                        <div className="mt-0.5 text-xs text-muted-foreground/90">
-                                                            Für Bestände: <span className="font-bold text-amber-400">Entspannt halten</span> – aktuell kein Neukauf.
-                                                        </div>
-                                                    </>
-                                                )}
-                                                {isOverheated && (
-                                                    <>
-                                                        <div>Teuer bewertet – hohes Korrekturrisiko bezogen auf fundamentale Kennzahlen.</div>
-                                                        <div className="mt-0.5 text-xs text-muted-foreground/90">Aktuell kein Neukauf.</div>
-                                                    </>
+                                            <div>
+                                                <div className={cn(
+                                                    "text-xl sm:text-2xl lg:text-lg font-extrabold font-mono tracking-tight flex items-baseline justify-center gap-1.5 flex-wrap",
+                                                    isUndervalued
+                                                        ? "text-emerald-400"
+                                                        : isFairHold
+                                                            ? (diffPct >= 0 ? "text-emerald-400" : "text-yellow-400")
+                                                            : isRichHold
+                                                                ? "text-amber-400"
+                                                                : "text-rose-400"
+                                                )}>
+                                                    <span>{diffPct > 0 ? `+${diffPct}%` : diffPct < 0 ? `+${overvaluationPct}%` : `0%`}</span>
+                                                    <span className="text-sm sm:text-base lg:text-xs font-bold font-sans tracking-normal opacity-90">
+                                                        {diffPct > 0 ? 'unter fairem Wert' : diffPct < 0 ? 'über fairem Wert' : 'Exakt auf fairem Wert'}
+                                                    </span>
+                                                </div>
+                                                <div className="text-xs lg:text-[11px] font-medium mt-1 lg:mt-0.5 text-muted-foreground">
+                                                    {isUndervalued && (
+                                                        <>
+                                                            <div>Unterbewertet mit attraktiver Sicherheitsmarge für Neukäufe.</div>
+                                                            <div className="mt-0.5 text-xs text-muted-foreground/90">
+                                                                Potenzial: <span className="font-bold text-emerald-400">+{potentialPct} %</span> zum fairen Wert.
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                    {isFairHold && (
+                                                        <>
+                                                            <div>Kurs im fairen Bewertungskorridor.</div>
+                                                            <div className="mt-0.5 text-xs text-muted-foreground/90"><span className="font-bold text-yellow-400">Bestände halten</span>.</div>
+                                                        </>
+                                                    )}
+                                                    {isRichHold && (
+                                                        <>
+                                                            <div>Hoch bewertet gegenüber dem fundamentalen Wert.</div>
+                                                            <div className="mt-0.5 text-xs text-muted-foreground/90">
+                                                                Für Bestände: <span className="font-bold text-amber-400">Entspannt halten</span> – aktuell kein Neukauf.
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                    {isOverheated && (
+                                                        <>
+                                                            <div>Teuer bewertet – hohes Korrekturrisiko bezogen auf fundamentale Kennzahlen.</div>
+                                                            <div className="mt-0.5 text-xs text-muted-foreground/90">Aktuell kein Neukauf.</div>
+                                                        </>
+                                                    )}
+                                                </div>
+
+                                                {/* Kursabstand zum aktiven Limit / Fairen Wert (nach oben in Bewertung integriert) */}
+                                                {activeLimit > 0 && (
+                                                    <div className="mt-1 text-[11px] text-muted-foreground flex items-center justify-center gap-1.5 flex-wrap">
+                                                        {limitDiffPct > 0 ? (
+                                                            <span>
+                                                                Aktueller Kurs <span className="font-semibold text-amber-400">+{limitDiffPct.toFixed(1)}%</span> über {limitName}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="font-semibold text-emerald-400 animate-pulse">
+                                                                🎯 Aktueller Kurs {Math.abs(limitDiffPct).toFixed(1)}% unter {limitName}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
 
-                                            {/* Staffelkauf-Empfehlung (2 Tranchen) */}
-                                            {!isUndervalued && calculation.fairValue > 0 && (() => {
+                                            {/* Staffelkauf-Empfehlung (2 Tranchen) - in allen Sichtweisen einheitlich sichtbar */}
+                                            {calculation.fairValue > 0 && (() => {
                                                 const p1 = calculation.fairValue;
                                                 const m2 = Number(mos) || (isEtfAsset(currentStock, quote, selectedSymbol) ? 10 : 15);
                                                 const p2 = calculation.buyPrice > 0 ? calculation.buyPrice : calculation.fairValue * (1 - m2 / 100);
@@ -2737,40 +2766,28 @@ export function FairValueCalculator() {
                                                         )}
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center justify-between flex-wrap gap-1 text-[11px]">
+                                                <div className="text-[11px]">
                                                     <span className={cn("font-medium", kaufpreisSubtextColor)}>Maximales Limit inkl. {mos}% Sicherheitsmarge ({modeLabel})</span>
-                                                    {quote?.price && calculation.buyPrice > 0 && (() => {
-                                                        const activeLimit = (currentStock?.targetPrice && currentStock.targetPrice > 0)
-                                                            ? currentStock.targetPrice
-                                                            : calculation.buyPrice;
-                                                        const isMatchingBuyPrice = Math.abs(activeLimit - calculation.buyPrice) < 0.01;
-                                                        const isMatchingFairValue = Math.abs(activeLimit - calculation.fairValue) < 0.01;
-                                                        const limitName = isMatchingBuyPrice
-                                                            ? 'Kauflimit'
-                                                            : isMatchingFairValue
-                                                                ? 'Fairem Wert'
-                                                                : 'eigenem Limit';
-                                                        const diffPct = ((quote.price - activeLimit) / activeLimit) * 100;
-
-                                                        return diffPct > 0 ? (
-                                                            <span className={cn("font-medium", !isMatchingBuyPrice && !isMatchingFairValue ? "text-emerald-400" : "text-amber-400")}>
-                                                                Aktueller Kurs +{diffPct.toFixed(1)}% über {limitName}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="font-semibold text-emerald-400 animate-pulse">
-                                                                🎯 Aktueller Kurs {Math.abs(diffPct).toFixed(1)}% unter {limitName}
-                                                            </span>
-                                                        );
-                                                    })()}
                                                 </div>
 
                                         {/* Kauflimit Integration (Direkt in Kursdaten & Watchlist übernehmen) */}
                                         <div className="mt-2 lg:mt-1 pt-2 lg:pt-1 border-t border-border/50 space-y-1.5 lg:space-y-1">
                                             <div className="flex items-center justify-between text-xs">
-                                                <span className={cn("font-semibold flex items-center gap-1.5", kaufpreisTextColor)}>
-                                                    <Target className={cn("size-3.5", kaufpreisTargetIconColor)} />
-                                                    <span>Aktives Kauflimit:</span>
-                                                </span>
+                                                {(() => {
+                                                    const activeLimit = (currentStock?.targetPrice && currentStock.targetPrice > 0)
+                                                        ? currentStock.targetPrice
+                                                        : calculation.buyPrice;
+                                                    const isMatchingBuyPrice = Math.abs(activeLimit - calculation.buyPrice) < 0.01;
+                                                    const isMatchingFairValue = Math.abs(activeLimit - calculation.fairValue) < 0.01;
+                                                    const isCustomLimit = activeLimit > 0 && !isMatchingBuyPrice && !isMatchingFairValue;
+
+                                                    return (
+                                                        <span className={cn("font-semibold flex items-center gap-1.5", isCustomLimit ? "text-emerald-400" : kaufpreisTextColor)}>
+                                                            <Target className={cn("size-3.5", isCustomLimit ? "text-emerald-400" : kaufpreisTargetIconColor)} />
+                                                            <span>Aktives Kauflimit:</span>
+                                                        </span>
+                                                    );
+                                                })()}
                                                 {buyLimitSavedToast ? (
                                                     <span className="text-[11px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1 animate-pulse">
                                                         <Check className="size-3" />
