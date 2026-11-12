@@ -259,10 +259,10 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                         }`}
                                 >
                                     {/* Top Status Header */}
-                                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-2.5">
-                                        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+                                    <div className="flex items-center justify-between gap-3 border-b border-border/50 pb-3">
+                                        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-wrap sm:flex-nowrap">
                                             <span
-                                                className={`px-2.5 py-1 text-xs font-bold rounded-md uppercase tracking-wider ${isBuy
+                                                className={`px-2.5 py-1 text-xs font-bold rounded-md uppercase tracking-wider shrink-0 ${isBuy
                                                     ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                                                     : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
                                                     }`}
@@ -277,33 +277,35 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                                 className="shrink-0 cursor-pointer hover:opacity-80 transition-opacity rounded-lg"
                                                 onClick={() => handleStockClick(order)}
                                             />
-                                            <button
-                                                type="button"
-                                                onClick={() => handleStockClick(order)}
-                                                className="font-bold text-base sm:text-lg text-foreground hover:text-blue-500 hover:underline transition-colors cursor-pointer text-left inline-flex items-center gap-1 group leading-tight"
-                                                title={`${order.stockName || 'Aktie'} – Zur Aktie & Chart wechseln`}
-                                            >
-                                                <span>{order.stockName || 'Aktie'}</span>
-                                            </button>
-                                            {order.stockSymbol && (
+                                            <div className="flex items-center gap-2 min-w-0">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleStockClick(order)}
-                                                    className="font-mono text-xs sm:text-sm font-semibold text-muted-foreground bg-muted/80 hover:bg-blue-500/15 hover:text-blue-400 px-2 py-0.5 rounded-md transition-colors cursor-pointer"
-                                                    title={`${order.stockSymbol} – Zur Aktie & Chart wechseln`}
+                                                    className="font-bold text-base sm:text-lg text-foreground hover:text-blue-500 hover:underline transition-colors cursor-pointer text-left truncate leading-tight"
+                                                    title={`${order.stockName || 'Aktie'} – Zur Aktie & Chart wechseln`}
                                                 >
-                                                    {order.stockSymbol}
+                                                    <span>{order.stockName || 'Aktie'}</span>
                                                 </button>
-                                            )}
+                                                {order.stockSymbol && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleStockClick(order)}
+                                                        className="font-mono text-xs sm:text-sm font-semibold text-muted-foreground bg-muted/80 hover:bg-blue-500/15 hover:text-blue-400 px-2 py-0.5 rounded-md transition-colors cursor-pointer shrink-0"
+                                                        title={`${order.stockSymbol} – Zur Aktie & Chart wechseln`}
+                                                    >
+                                                        {order.stockSymbol}
+                                                    </button>
+                                                )}
+                                            </div>
                                             {order.stockIsin && (
-                                                <span className="text-[11px] text-muted-foreground hidden md:inline">
+                                                <span className="text-[11px] text-muted-foreground hidden lg:inline shrink-0">
                                                     ISIN: {order.stockIsin}
                                                 </span>
                                             )}
                                         </div>
 
                                         {/* Status Badge */}
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 shrink-0">
                                             {isExecuted && (
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse">
                                                     <CheckCircle2 className="size-3.5" />
@@ -403,48 +405,47 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
 
                                     {/* Metrics Grid */}
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-                                        <div className="p-2 rounded-lg bg-muted/30 border border-border/40">
-                                            <div className="text-[10px] uppercase font-semibold text-muted-foreground">Menge & Limite</div>
-                                            <div className="font-mono font-bold text-foreground">
+                                        <div className="p-2.5 rounded-lg bg-muted/40 border border-border/70 flex flex-col justify-between">
+                                            <div className="text-[11px] uppercase font-semibold text-muted-foreground tracking-wider mb-1">Menge & Limite</div>
+                                            <div className="font-mono font-bold text-sm text-foreground">
                                                 {order.shares} Stk. à {fmtMoney(order.limitPrice, order.currency)}
                                             </div>
                                         </div>
-                                        <div className="p-2 rounded-lg bg-muted/30 border border-border/40">
-                                            <div className="text-[10px] uppercase font-semibold text-muted-foreground">Auftragsvolumen</div>
-                                            <div className="font-mono font-bold text-foreground">
+                                        <div className="p-2.5 rounded-lg bg-muted/40 border border-border/70 flex flex-col justify-between">
+                                            <div className="text-[11px] uppercase font-semibold text-muted-foreground tracking-wider mb-1">Auftragsvolumen</div>
+                                            <div className="font-mono font-bold text-sm text-foreground">
                                                 {fmtMoney(order.volumeNative, order.currency)}
                                             </div>
                                             {order.currency !== 'CHF' && (
-                                                <div className="text-[10px] text-muted-foreground">≈ {fmtMoney(order.volumeCHF, 'CHF')}</div>
+                                                <div className="text-[11px] text-muted-foreground mt-0.5 font-medium">≈ {fmtMoney(order.volumeCHF, 'CHF')}</div>
                                             )}
                                         </div>
-                                        <div className="p-2 rounded-lg bg-muted/30 border border-border/40">
-                                            <div className="text-[10px] uppercase font-semibold text-muted-foreground">Gebühren (CHF)</div>
-                                            <div className="font-mono font-bold text-foreground">
+                                        <div className="p-2.5 rounded-lg bg-muted/40 border border-border/70 flex flex-col justify-between">
+                                            <div className="text-[11px] uppercase font-semibold text-muted-foreground tracking-wider mb-1">Gebühren (CHF)</div>
+                                            <div className="font-mono font-bold text-sm text-foreground">
                                                 {fmtMoney(order.totalFeesCHF, 'CHF')}
                                             </div>
                                         </div>
-                                        <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
-                                            <div className="text-[10px] uppercase font-semibold text-primary">
+                                        <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/30 flex flex-col justify-between">
+                                            <div className="text-[11px] uppercase font-semibold text-primary tracking-wider mb-1">
                                                 {isBuy ? 'Investition Total' : 'Erlös Total'}
                                             </div>
-                                            <div className="font-mono font-bold text-sm text-foreground">
+                                            <div className="font-mono font-bold text-sm sm:text-base text-foreground">
                                                 {fmtMoney(order.totalInvestOrProceedsCHF, 'CHF')}
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Bottom Action Footer */}
-                                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/40 text-xs">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-border/40 text-xs">
                                         <div className="flex items-center gap-3 text-muted-foreground text-[11px]">
                                             <span>Erstellt: {formatDate(order.createdAt)}</span>
-                                            {order.validUntil && <span>• Gültig bis: {formatDate(order.validUntil)}</span>}
                                             {order.status === 'executed' && order.executedAt && (
                                                 <span className="text-emerald-400 font-semibold">• Ausgeführt am: {formatDate(order.executedAt)}</span>
                                             )}
                                         </div>
 
-                                        <div className="flex items-center gap-2 flex-wrap">
+                                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
                                             {/* Load into Simulator */}
                                             {onLoadIntoSimulator && (
                                                 <button
