@@ -212,12 +212,16 @@ export function FairValueCalculator() {
         const parsed = parseFloat(raw.replace(',', '.'));
         const newLimit = !isNaN(parsed) && parsed > 0 ? parsed : undefined;
 
-        let resolvedType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = explicitSource || 'manual';
-        if (!explicitSource && newLimit) {
-            if (Math.abs(newLimit - calculation.buyPrice) < 0.01) {
+        let resolvedType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
+        if (newLimit) {
+            if (explicitSource && explicitSource !== 'manual') {
+                resolvedType = explicitSource;
+            } else if (Math.abs(newLimit - calculation.buyPrice) < 0.01) {
                 resolvedType = valuationProfile;
             } else if (Math.abs(newLimit - calculation.fairValue) < 0.01) {
                 resolvedType = 'fairValue';
+            } else if (currentStock?.targetPrice && Math.abs(newLimit - currentStock.targetPrice) < 0.01 && currentStock.targetPriceType) {
+                resolvedType = currentStock.targetPriceType;
             } else {
                 resolvedType = 'manual';
             }
@@ -2922,7 +2926,7 @@ export function FairValueCalculator() {
                                                                     onChange={(e) => setBuyLimitInput(e.target.value)}
                                                                     onKeyDown={(e) => {
                                                                         if (e.key === 'Enter') {
-                                                                            handleSaveBuyLimit(buyLimitInput, 'manual');
+                                                                            handleSaveBuyLimit(buyLimitInput);
                                                                         }
                                                                     }}
                                                                     placeholder={calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : "Optional"}
@@ -2935,7 +2939,7 @@ export function FairValueCalculator() {
 
                                                             <button
                                                                 type="button"
-                                                                onClick={() => handleSaveBuyLimit(buyLimitInput || (calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : ''), 'manual')}
+                                                                onClick={() => handleSaveBuyLimit(buyLimitInput || (calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : ''))}
                                                                 className={cn("px-2.5 py-1 lg:py-0.5 text-white text-xs font-semibold rounded-lg shadow-sm transition-all flex items-center gap-1 shrink-0 active:scale-95 h-7 sm:h-8 lg:h-6.5", effectiveSaveBtnColor)}
                                                                 title="In Kursdaten als Kauflimit speichern"
                                                             >
