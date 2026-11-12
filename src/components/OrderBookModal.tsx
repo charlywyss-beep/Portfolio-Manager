@@ -138,7 +138,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
             onClick={onClose}
         >
             <div
-                className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-foreground"
+                className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-4xl h-[580px] md:h-[620px] max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-foreground"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
@@ -228,9 +228,9 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                 </div>
 
                 {/* Orders List */}
-                <div className="overflow-y-auto divide-y divide-border/60 flex-1">
+                <div className="overflow-y-auto divide-y divide-border/60 flex-1 min-h-0 flex flex-col">
                     {filteredOrders.length === 0 ? (
-                        <div className="text-center py-12 text-muted-foreground space-y-3">
+                        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-muted-foreground space-y-3">
                             <ClipboardList className="size-12 mx-auto stroke-1 opacity-40 text-blue-400" />
                             <p className="text-sm font-medium">
                                 {enrichedOrders.length === 0
