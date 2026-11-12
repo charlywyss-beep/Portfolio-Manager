@@ -2438,7 +2438,7 @@ export function FairValueCalculator() {
 
                                     return (
                                         <div className={cn(
-                                            "fair-value-bewertung-box p-2 sm:p-2.5 lg:py-1.5 lg:px-2.5 rounded-xl border text-center transition-all shrink-0 min-h-[178px] flex flex-col justify-between",
+                                            "fair-value-bewertung-box p-2.5 sm:p-3 lg:py-2 lg:px-3 rounded-xl border text-center transition-all shrink-0 min-h-[192px] lg:min-h-[182px] xl:min-h-[192px] flex flex-col justify-between",
                                             isUndervalued
                                                 ? "bg-emerald-500/10 border-emerald-500/30"
                                                 : isFairHold
@@ -2447,9 +2447,10 @@ export function FairValueCalculator() {
                                                         ? "bg-amber-500/10 border-amber-500/30"
                                                         : "bg-rose-500/10 border-rose-500/30"
                                         )}>
-                                            <div>
+                                            <div className="flex flex-col items-center justify-center">
+                                                {/* 1. Zeile: Abstand zum fairen Wert */}
                                                 <div className={cn(
-                                                    "text-xl sm:text-2xl lg:text-lg font-extrabold font-mono tracking-tight flex items-baseline justify-center gap-1.5 flex-wrap",
+                                                    "text-base sm:text-lg font-black font-mono tracking-tight flex items-baseline justify-center gap-1.5 flex-wrap",
                                                     isUndervalued
                                                         ? "text-emerald-400"
                                                         : isFairHold
@@ -2459,15 +2460,26 @@ export function FairValueCalculator() {
                                                                 : "text-rose-400"
                                                 )}>
                                                     <span>{diffPct > 0 ? `+${diffPct}%` : diffPct < 0 ? `+${overvaluationPct}%` : `0%`}</span>
-                                                    <span className="text-sm sm:text-base lg:text-xs font-bold font-sans tracking-normal opacity-90">
+                                                    <span className="text-sm sm:text-base font-bold font-sans tracking-normal opacity-90">
                                                         {diffPct > 0 ? 'unter fairem Wert' : diffPct < 0 ? 'über fairem Wert' : 'Exakt auf fairem Wert'}
                                                     </span>
                                                 </div>
-                                                <div className="text-xs lg:text-[11px] font-medium mt-1 lg:mt-0.5 text-muted-foreground">
+
+                                                {/* 2. Zeile direkt darunter: Abstand zum Limit (gleich groß, in Grün) */}
+                                                {activeLimit > 0 && !isMatchingFairValue && (
+                                                    <div className="text-base sm:text-lg font-black font-mono tracking-tight text-emerald-400 flex items-baseline justify-center gap-1.5 flex-wrap mt-0.5">
+                                                        <span>{limitDiffPct > 0 ? `+${limitDiffPct.toFixed(1)}%` : `${limitDiffPct.toFixed(1)}%`}</span>
+                                                        <span className="text-sm sm:text-base font-bold font-sans tracking-normal opacity-90">
+                                                            {limitDiffPct >= 0 ? `über ${limitName}` : `unter ${limitName}`}
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                <div className="text-xs lg:text-[11px] font-medium mt-1 mb-0.5 text-muted-foreground leading-snug">
                                                     {isUndervalued && (
                                                         <>
                                                             <div>Unterbewertet mit attraktiver Sicherheitsmarge für Neukäufe.</div>
-                                                            <div className="mt-0.5 text-xs text-muted-foreground/90">
+                                                            <div className="mt-0.5 text-muted-foreground/90">
                                                                 Potenzial: <span className="font-bold text-emerald-400">+{potentialPct} %</span> zum fairen Wert.
                                                             </div>
                                                         </>
@@ -2475,13 +2487,13 @@ export function FairValueCalculator() {
                                                     {isFairHold && (
                                                         <>
                                                             <div>Kurs im fairen Bewertungskorridor.</div>
-                                                            <div className="mt-0.5 text-xs text-muted-foreground/90"><span className="font-bold text-yellow-400">Bestände halten</span>.</div>
+                                                            <div className="mt-0.5 text-muted-foreground/90"><span className="font-bold text-yellow-400">Bestände halten</span>.</div>
                                                         </>
                                                     )}
                                                     {isRichHold && (
                                                         <>
                                                             <div>Hoch bewertet gegenüber dem fundamentalen Wert.</div>
-                                                            <div className="mt-0.5 text-xs text-muted-foreground/90">
+                                                            <div className="mt-0.5 text-muted-foreground/90">
                                                                 Für Bestände: <span className="font-bold text-amber-400">Entspannt halten</span> – aktuell kein Neukauf.
                                                             </div>
                                                         </>
@@ -2489,25 +2501,10 @@ export function FairValueCalculator() {
                                                     {isOverheated && (
                                                         <>
                                                             <div>Teuer bewertet – hohes Korrekturrisiko bezogen auf fundamentale Kennzahlen.</div>
-                                                            <div className="mt-0.5 text-xs text-muted-foreground/90">Aktuell kein Neukauf.</div>
+                                                            <div className="mt-0.5 text-muted-foreground/90">Aktuell kein Neukauf.</div>
                                                         </>
                                                     )}
                                                 </div>
-
-                                                {/* Kursabstand zum aktiven Limit / Fairen Wert (nach oben in Bewertung integriert) */}
-                                                {activeLimit > 0 && (
-                                                    <div className="mt-1 text-[11px] text-muted-foreground flex items-center justify-center gap-1.5 flex-wrap">
-                                                        {limitDiffPct > 0 ? (
-                                                            <span>
-                                                                Aktueller Kurs <span className="font-semibold text-amber-400">+{limitDiffPct.toFixed(1)}%</span> über {limitName}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="font-semibold text-emerald-400 animate-pulse">
-                                                                🎯 Aktueller Kurs {Math.abs(limitDiffPct).toFixed(1)}% unter {limitName}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                )}
                                             </div>
 
                                             {/* Staffelkauf-Empfehlung (2 Tranchen) - in allen Sichtweisen einheitlich sichtbar */}
@@ -2523,7 +2520,7 @@ export function FairValueCalculator() {
                                                 const isMixActive = activeLimit > 0 && (Math.abs(activeLimit - pMix) < 0.50 || Math.abs(activeLimit - pMix) / pMix < 0.005);
 
                                                 return (
-                                                    <div className="mt-2 lg:mt-1 pt-1.5 lg:pt-1 border-t border-border/40 text-[11px] lg:text-[10px] text-muted-foreground flex flex-col items-center justify-center gap-0.5">
+                                                    <div className="pt-1.5 border-t border-border/40 text-[11px] lg:text-[10px] text-muted-foreground flex flex-col items-center justify-center gap-0.5">
                                                         <div className="flex items-center justify-center gap-1.5 flex-wrap">
                                                             <span className="font-semibold text-foreground">Staffelkauf 2 Tranchen</span>
                                                             <span>•</span>
@@ -2560,19 +2557,12 @@ export function FairValueCalculator() {
                                                 );
                                             })()}
 
-                                            {/* Fundamentale Abwärtsabsicherung / Risikoprofil */}
-                                            <div className={cn(
-                                                "mt-2 lg:mt-1 pt-1.5 lg:pt-1 border-t text-[11px] lg:text-[10px] text-left leading-snug flex items-start gap-1.5",
-                                                downsideProtection.level === 'high'
-                                                    ? "border-emerald-500/25 text-emerald-300/90"
-                                                    : downsideProtection.level === 'low'
-                                                        ? "border-amber-500/25 text-amber-300/90"
-                                                        : "border-border/40 text-muted-foreground"
-                                            )}>
+                                            {/* Fundamentale Abwärtsabsicherung / Risikoprofil - Neutral in weißer Schrift */}
+                                            <div className="pt-1.5 border-t border-border/40 text-[11px] lg:text-[10px] text-left leading-snug flex items-start gap-1.5 text-foreground/90">
                                                 <span className="text-sm shrink-0 select-none mt-0.5">{downsideProtection.icon}</span>
                                                 <div className="min-w-0 flex-1">
                                                     <strong className="font-semibold text-foreground mr-1.5">{downsideProtection.title}:</strong>
-                                                    <span>{downsideProtection.text}</span>
+                                                    <span className="text-foreground/90">{downsideProtection.text}</span>
                                                 </div>
                                             </div>
                                         </div>
