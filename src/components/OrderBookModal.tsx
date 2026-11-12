@@ -174,18 +174,18 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                         <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium w-fit shrink-0">
                             <button
                                 onClick={() => setFilter('all')}
-                                className={`w-[72px] h-[34px] rounded-lg transition-all whitespace-nowrap text-xs font-bold inline-flex items-center justify-center shrink-0 ${filter === 'all'
-                                    ? 'bg-primary text-primary-foreground shadow-xs'
-                                    : 'bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted'
+                                className={`w-[72px] h-[34px] rounded-lg transition-colors whitespace-nowrap text-xs font-bold inline-flex items-center justify-center shrink-0 border ${filter === 'all'
+                                    ? 'bg-blue-600 text-white border-blue-400/60 shadow-xs'
+                                    : 'bg-muted/60 text-muted-foreground border-border/70 hover:text-foreground hover:bg-muted'
                                     }`}
                             >
                                 Alle
                             </button>
                             <button
                                 onClick={() => setFilter('open')}
-                                className={`h-[34px] px-3.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-xs font-bold ${filter === 'open'
-                                    ? 'bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/40 shadow-xs'
-                                    : 'bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted'
+                                className={`h-[34px] px-3.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap text-xs font-bold shrink-0 border ${filter === 'open'
+                                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-xs'
+                                    : 'bg-muted/60 text-muted-foreground border-border/70 hover:text-foreground hover:bg-muted'
                                     }`}
                             >
                                 <Clock className="size-3 text-amber-400 shrink-0" />
@@ -193,9 +193,9 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                             </button>
                             <button
                                 onClick={() => setFilter('executed')}
-                                className={`h-[34px] px-3.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-xs font-bold ${filter === 'executed'
-                                    ? 'bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/40 shadow-xs'
-                                    : 'bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted'
+                                className={`h-[34px] px-3.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap text-xs font-bold shrink-0 border ${filter === 'executed'
+                                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-xs'
+                                    : 'bg-muted/60 text-muted-foreground border-border/70 hover:text-foreground hover:bg-muted'
                                     }`}
                             >
                                 <CheckCircle2 className="size-3 text-emerald-400 shrink-0" />
@@ -203,9 +203,9 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                             </button>
                             <button
                                 onClick={() => setFilter('expired')}
-                                className={`h-[34px] px-3.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-xs font-bold ${filter === 'expired'
-                                    ? 'bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/40 shadow-xs'
-                                    : 'bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted'
+                                className={`h-[34px] px-3.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap text-xs font-bold shrink-0 border ${filter === 'expired'
+                                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-xs'
+                                    : 'bg-muted/60 text-muted-foreground border-border/70 hover:text-foreground hover:bg-muted'
                                     }`}
                             >
                                 <AlertCircle className="size-3 text-rose-400 shrink-0" />
