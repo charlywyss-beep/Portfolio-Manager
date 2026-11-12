@@ -174,7 +174,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                         <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium w-fit shrink-0">
                             <button
                                 onClick={() => setFilter('all')}
-                                className={`h-8 px-3.5 rounded-lg transition-all whitespace-nowrap text-xs font-bold inline-flex items-center justify-center ${filter === 'all'
+                                className={`w-[72px] h-[34px] rounded-lg transition-all whitespace-nowrap text-xs font-bold inline-flex items-center justify-center shrink-0 ${filter === 'all'
                                     ? 'bg-primary text-primary-foreground shadow-xs'
                                     : 'bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted'
                                     }`}
@@ -183,7 +183,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                             </button>
                             <button
                                 onClick={() => setFilter('open')}
-                                className={`h-8 px-3.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-xs font-bold ${filter === 'open'
+                                className={`h-[34px] px-3.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-xs font-bold ${filter === 'open'
                                     ? 'bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/40 shadow-xs'
                                     : 'bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted'
                                     }`}
@@ -193,7 +193,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                             </button>
                             <button
                                 onClick={() => setFilter('executed')}
-                                className={`h-8 px-3.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-xs font-bold ${filter === 'executed'
+                                className={`h-[34px] px-3.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-xs font-bold ${filter === 'executed'
                                     ? 'bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/40 shadow-xs'
                                     : 'bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted'
                                     }`}
@@ -203,7 +203,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                             </button>
                             <button
                                 onClick={() => setFilter('expired')}
-                                className={`h-8 px-3.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-xs font-bold ${filter === 'expired'
+                                className={`h-[34px] px-3.5 rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap text-xs font-bold ${filter === 'expired'
                                     ? 'bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/40 shadow-xs'
                                     : 'bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted'
                                     }`}
@@ -262,7 +262,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                     <div className="flex items-center justify-between gap-3 border-b border-border/50 pb-3">
                                         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-wrap sm:flex-nowrap">
                                             <span
-                                                className={`h-8 px-3.5 text-xs font-bold rounded-lg uppercase tracking-wider inline-flex items-center justify-center shrink-0 ${isBuy
+                                                className={`w-[72px] h-[34px] text-xs font-bold rounded-lg uppercase tracking-wider inline-flex items-center justify-center shrink-0 ${isBuy
                                                     ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                                                     : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
                                                     }`}
@@ -273,7 +273,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                                 url={order.stock?.logoUrl}
                                                 alt={order.stockName || order.stockSymbol}
                                                 fallback={order.stockSymbol?.slice(0, 2) || '••'}
-                                                size="size-8"
+                                                size="size-[34px]"
                                                 className="shrink-0 cursor-pointer hover:opacity-80 transition-opacity rounded-lg"
                                                 onClick={() => handleStockClick(order)}
                                             />
@@ -307,19 +307,19 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                         {/* Status Badge */}
                                         <div className="flex items-center gap-2 shrink-0">
                                             {isExecuted && (
-                                                <span className="h-8 px-3 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse">
+                                                <span className="h-[34px] px-3 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse">
                                                     <CheckCircle2 className="size-3.5" />
                                                     Auftrag ausgeführt
                                                 </span>
                                             )}
                                             {isExpired && (
-                                                <span className="h-8 px-3 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 bg-rose-500/20 text-rose-400 border border-rose-500/40">
+                                                <span className="h-[34px] px-3 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 bg-rose-500/20 text-rose-400 border border-rose-500/40">
                                                     <AlertCircle className="size-3.5" />
                                                     Auftrag abgelaufen
                                                 </span>
                                             )}
                                             {isOpen && (
-                                                <span className="h-8 px-3 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                                                <span className="h-[34px] px-3 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/40">
                                                     <Clock className="size-3.5 text-amber-400" />
                                                     Wartet auf Limite
                                                 </span>
