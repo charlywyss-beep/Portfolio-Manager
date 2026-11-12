@@ -2409,13 +2409,13 @@ export function FairValueCalculator() {
 
                                     {/* Erklärung im freien Raum unter '● Bewertung', linksbündig mit dem unteren Feld */}
                                     {(() => {
-                                        const ratingText = isUndervalued
-                                            ? 'Kurs liegt unter dem Kauflimit (inkl. Sicherheitsmarge).'
+                                        const ratingLines = isUndervalued
+                                            ? { line1: 'Kurs unter dem Kauflimit', line2: '(inkl. Sicherheitsmarge)' }
                                             : isFairHold
-                                                ? 'Kurs liegt im Korridor bis zu +12 % über dem fairen Wert. Bestände entspannt halten.'
+                                                ? { line1: 'Bis zu +12 % über fairem Wert', line2: 'Bestände entspannt halten' }
                                                 : isRichHold
-                                                    ? 'Kurs liegt zwischen +12 % und +45 % über dem fairen Wert. Bestände halten, kein Neukauf.'
-                                                    : 'Kurs liegt mehr als +45 % über dem fairen Wert. Hohes Korrekturrisiko.';
+                                                    ? { line1: '+12 % bis +45 % über fairem Wert', line2: 'Bestände halten, kein Neukauf' }
+                                                    : { line1: 'Mehr als +45 % über fairem Wert', line2: 'Hohes Korrekturrisiko' };
 
                                         const ratingTitle = isUndervalued
                                             ? 'KAUFEN (Unterbewertet)'
@@ -2430,7 +2430,7 @@ export function FairValueCalculator() {
                                                 {/* Eingepasste Erklärung unter '● Bewertung', bündig mit der linken Außenkante des unteren Felds */}
                                                 <div
                                                     className={cn(
-                                                        "pointer-events-none absolute left-0 top-6 xl:top-7 w-[calc(50%-5.5rem)] xl:w-[calc(50%-6.5rem)] min-w-[130px] text-left transition-all duration-200 z-10",
+                                                        "pointer-events-none absolute left-0 top-6 xl:top-6.5 w-[calc(50%-4rem)] xl:w-[calc(50%-5rem)] max-w-[210px] text-left transition-all duration-200 z-10",
                                                         isRatingHovered ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
                                                     )}
                                                 >
@@ -2438,7 +2438,8 @@ export function FairValueCalculator() {
                                                         {ratingTitle}
                                                     </div>
                                                     <div className="text-foreground/90 text-[11px] leading-snug mt-0.5 font-medium">
-                                                        {ratingText}
+                                                        <div>{ratingLines.line1}</div>
+                                                        <div className="text-muted-foreground">{ratingLines.line2}</div>
                                                     </div>
                                                 </div>
 
