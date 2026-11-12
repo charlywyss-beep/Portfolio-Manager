@@ -812,7 +812,7 @@ export function StockDetail() {
                                 e.stopPropagation();
                                 navigate(`/calculator?stock=${encodeURIComponent(String(stock.id))}`);
                             }}
-                            className="flex items-center gap-1 text-xs landscape:text-[10px] font-semibold px-2.5 py-1 landscape:py-0.5 landscape:px-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-400/30 transition-colors shadow-sm"
+                            className="flex items-center gap-1 text-xs landscape:text-[10px] font-semibold px-2.5 py-1 landscape:py-0.5 landscape:px-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 text-blue-700 dark:text-blue-300 border border-blue-500/30 transition-colors shadow-sm"
                             title="Aktie direkt in Kauf / Verkauf öffnen"
                         >
                             <Calculator className="size-3.5 landscape:size-3" />
@@ -1093,7 +1093,7 @@ export function StockDetail() {
                                     <div className="flex items-center gap-1.5">
                                         <span className="text-muted-foreground">Kauflimit</span>
                                         {isCustomLimit && (
-                                            <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 rounded shadow-xs">
+                                            <span className="text-[10px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 rounded shadow-xs">
                                                 Eigenes Limit
                                             </span>
                                         )}
@@ -1101,10 +1101,10 @@ export function StockDetail() {
                                             <span className={cn(
                                                 "text-[10px] font-semibold px-1.5 py-0.5 rounded border shadow-xs",
                                                 currentMode === 'quality'
-                                                    ? "text-purple-400 bg-purple-500/15 border-purple-500/30"
+                                                    ? "text-purple-800 dark:text-purple-300 bg-purple-500/15 border-purple-500/30"
                                                     : currentMode === 'conservative'
-                                                        ? "text-blue-400 bg-blue-500/15 border-blue-500/30"
-                                                        : "text-emerald-400 bg-emerald-500/15 border-emerald-500/30"
+                                                        ? "text-blue-800 dark:text-blue-300 bg-blue-500/15 border-blue-500/30"
+                                                        : "text-emerald-800 dark:text-emerald-300 bg-emerald-500/15 border-emerald-500/30"
                                             )}>
                                                 {currentMode === 'quality' ? 'Qualität B' : currentMode === 'conservative' ? 'Sicherheit A' : 'Manuell'}
                                             </span>
@@ -1113,13 +1113,13 @@ export function StockDetail() {
                                     <span className={cn(
                                         "font-medium tabular-nums",
                                         isCustomLimit
-                                            ? "text-amber-400 font-semibold"
+                                            ? "text-amber-700 dark:text-amber-400 font-semibold"
                                             : isModelLimit
                                                 ? currentMode === 'quality'
-                                                    ? "text-purple-400 font-semibold"
+                                                    ? "text-purple-700 dark:text-purple-400 font-semibold"
                                                     : currentMode === 'conservative'
-                                                        ? "text-blue-400 font-semibold"
-                                                        : "text-emerald-400 font-semibold"
+                                                        ? "text-blue-700 dark:text-blue-400 font-semibold"
+                                                        : "text-emerald-700 dark:text-emerald-400 font-semibold"
                                                 : ""
                                     )}>
                                         {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
@@ -1138,10 +1138,10 @@ export function StockDetail() {
                                         className={cn(
                                             "flex items-center gap-1 text-[11px] sm:text-xs landscape:text-[10px] font-semibold px-1.5 py-0.5 landscape:py-0 landscape:px-1 rounded border transition-colors cursor-pointer",
                                             currentMode === 'manual'
-                                                ? "text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40"
+                                                ? "text-emerald-800 dark:text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/30 dark:border-emerald-500/40"
                                                 : currentMode === 'quality'
-                                                    ? "text-purple-400 bg-purple-500/15 hover:bg-purple-500/25 border-purple-500/40"
-                                                    : "text-blue-400 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/40"
+                                                    ? "text-purple-800 dark:text-purple-300 bg-purple-500/15 hover:bg-purple-500/25 border-purple-500/30 dark:border-purple-500/40"
+                                                    : "text-blue-800 dark:text-blue-300 bg-blue-500/15 hover:bg-blue-500/25 border-blue-500/30 dark:border-blue-500/40"
                                         )}
                                         title={
                                             currentMode === 'conservative'
@@ -1166,10 +1166,10 @@ export function StockDetail() {
                                         "font-medium tabular-nums",
                                         calcBuyPrice !== null
                                             ? currentMode === 'manual'
-                                                ? "text-emerald-400"
+                                                ? "text-emerald-700 dark:text-emerald-400 font-semibold"
                                                 : currentMode === 'quality'
-                                                    ? "text-purple-400"
-                                                    : "text-blue-400"
+                                                    ? "text-purple-700 dark:text-purple-400 font-semibold"
+                                                    : "text-blue-700 dark:text-blue-400 font-semibold"
                                             : ""
                                     )}>
                                         {calcBuyPrice !== null ? formatCurrency(calcBuyPrice, stock.currency, false) : '-'}
@@ -1181,10 +1181,10 @@ export function StockDetail() {
                                         "font-medium tabular-nums",
                                         effectiveFairValue > 0
                                             ? currentMode === 'manual'
-                                                ? "text-emerald-400"
+                                                ? "text-emerald-700 dark:text-emerald-400 font-semibold"
                                                 : currentMode === 'quality'
-                                                    ? "text-purple-400"
-                                                    : "text-blue-400"
+                                                    ? "text-purple-700 dark:text-purple-400 font-semibold"
+                                                    : "text-blue-700 dark:text-blue-400 font-semibold"
                                             : ""
                                     )}>
                                         {effectiveFairValue > 0 ? formatCurrency(effectiveFairValue, stock.currency, false) : '-'}
@@ -1207,16 +1207,16 @@ export function StockDetail() {
                                         : 0;
 
                                     return (
-                                        <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px] bg-emerald-500/10 px-2 rounded mt-0.5">
+                                        <div className="flex justify-between items-center py-1.5 md:py-2 landscape:py-1 border border-emerald-500/30 dark:border-emerald-500/20 text-xs sm:text-sm landscape:text-[11px] bg-emerald-500/15 dark:bg-emerald-500/10 px-2.5 rounded-lg mt-1 shadow-2xs">
                                             <div className="flex flex-col">
-                                                <span className="text-emerald-400 font-semibold text-[11px] sm:text-xs">Gewinn 5J (Bestand)</span>
-                                                <span className="text-[10px] text-muted-foreground">~{cagr.toFixed(1)}% p.a. ab heute</span>
+                                                <span className="text-emerald-900 dark:text-emerald-300 font-bold text-[11px] sm:text-xs">Gewinn 5J (Bestand)</span>
+                                                <span className="text-[10px] text-emerald-800/80 dark:text-muted-foreground">~{cagr.toFixed(1)}% p.a. ab heute</span>
                                             </div>
                                             <div className="text-right">
-                                                <span className="font-bold text-emerald-400 font-mono text-xs sm:text-sm">
+                                                <span className="font-bold text-emerald-800 dark:text-emerald-400 font-mono text-xs sm:text-sm">
                                                     {expectedGain >= 0 ? '+' : ''}{formatCurrency(expectedGain, stock.currency, false)}
                                                 </span>
-                                                <span className="block text-[10px] text-emerald-400/90 font-mono">
+                                                <span className="block text-[10px] text-emerald-700 dark:text-emerald-400/90 font-semibold font-mono">
                                                     ({gainPct >= 0 ? '+' : ''}{gainPct.toFixed(1)}%)
                                                 </span>
                                             </div>
