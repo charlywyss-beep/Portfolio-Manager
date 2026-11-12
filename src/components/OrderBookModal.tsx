@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { X, Search, Trash2, ClipboardList, CheckCircle2, Clock, AlertCircle, Calendar, ArrowDownToLine, Rocket, Check } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { Logo } from './Logo';
-import type { OrderBookEntry } from '../types';
+import { ExecuteOrderModal } from './ExecuteOrderModal';
+import type { OrderBookEntry, ExecuteOrderParams } from '../types';
 
 interface OrderBookModalProps {
     isOpen: boolean;
@@ -18,6 +19,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
     const [searchTerm, setSearchTerm] = useState('');
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [executedSuccessId, setExecutedSuccessId] = useState<string | null>(null);
+    const [executingOrder, setExecutingOrder] = useState<any | null>(null);
 
     const handleStockClick = (order: OrderBookEntry) => {
         const target = order.stockSymbol || order.stockId;
@@ -124,8 +126,12 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
         }
     };
 
-    const handleExecuteDirectly = (orderId: string) => {
-        const success = executeOrderBookEntry(orderId);
+    const handleExecuteClick = (order: any) => {
+        setExecutingOrder(order);
+    };
+
+    const handleExecuteWithParams = (orderId: string, params: ExecuteOrderParams) => {
+        const success = executeOrderBookEntry(orderId, params);
         if (success) {
             setExecutedSuccessId(orderId);
             setTimeout(() => setExecutedSuccessId(null), 2500);
@@ -333,20 +339,29 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                             <div className="flex items-center gap-2">
                                                 <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
                                                 <span>
-                                                    <strong>Meldung:</strong> Limit von <strong>{fmtMoney(order.limitPrice, order.currency)}</strong> erreicht!
-                                                    {order.currentPrice > 0 && (
-                                                        <span className="ml-1 text-emerald-300">
-                                                             (Aktueller Kurs: {fmtMoney(order.currentPrice, order.currency)}
-                                                            {order.dayLow !== undefined && order.dayLow < order.currentPrice ? ` • Tagestief: ${fmtMoney(order.dayLow, order.currency)}` : ''})
-                                                        </span>
+                                                    {order.status === 'executed' ? (
+                                                        <>
+                                                            <strong>Auftrag ausgeführt!</strong> Ausgeführt zu <strong>{fmtMoney(order.executedPrice || order.limitPrice, order.currency)}</strong>
+                                                            {order.executedAt && <span className="ml-1 text-emerald-300">• Am {formatDate(order.executedAt)}</span>}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <strong>Meldung:</strong> Limit von <strong>{fmtMoney(order.limitPrice, order.currency)}</strong> erreicht!
+                                                            {order.currentPrice > 0 && (
+                                                                <span className="ml-1 text-emerald-300">
+                                                                     (Aktueller Kurs: {fmtMoney(order.currentPrice, order.currency)}
+                                                                    {order.dayLow !== undefined && order.dayLow < order.currentPrice ? ` • Tagestief: ${fmtMoney(order.dayLow, order.currency)}` : ''})
+                                                                </span>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </span>
                                             </div>
 
                                             {order.status !== 'executed' ? (
                                                 <button
-                                                    onClick={() => handleExecuteDirectly(order.id)}
-                                                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center gap-1.5 shadow-xs transition-all active:scale-95"
+                                                    onClick={() => handleExecuteClick(order)}
+                                                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer"
                                                 >
                                                     {executedSuccessId === order.id ? (
                                                         <>
@@ -406,18 +421,27 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                     {/* Metrics Grid */}
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                                         <div className="p-2.5 rounded-lg bg-muted/40 border border-border/70 flex flex-col justify-between">
-                                            <div className="text-[11px] uppercase font-semibold text-muted-foreground tracking-wider mb-1">Menge & Limite</div>
-                                            <div className="font-mono font-bold text-sm text-foreground">
-                                                {order.shares} Stk. à {fmtMoney(order.limitPrice, order.currency)}
+                                            <div className="text-[11px] uppercase font-semibold text-muted-foreground tracking-wider mb-1">
+                                                {order.status === 'executed' ? 'Ausführung' : 'Menge & Limite'}
                                             </div>
+                                            <div className="font-mono font-bold text-sm text-foreground">
+                                                {order.executedShares || order.shares} Stk. à {fmtMoney(order.executedPrice || order.limitPrice, order.currency)}
+                                            </div>
+                                            {order.status === 'executed' && order.executedPrice && order.executedPrice !== order.limitPrice && (
+                                                <div className="text-[10px] text-muted-foreground mt-0.5">
+                                                    Limit war {fmtMoney(order.limitPrice, order.currency)}
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="p-2.5 rounded-lg bg-muted/40 border border-border/70 flex flex-col justify-between">
                                             <div className="text-[11px] uppercase font-semibold text-muted-foreground tracking-wider mb-1">Auftragsvolumen</div>
                                             <div className="font-mono font-bold text-sm text-foreground">
-                                                {fmtMoney(order.volumeNative, order.currency)}
+                                                {fmtMoney(order.status === 'executed' && order.executedPrice ? ((order.executedShares || order.shares) * order.executedPrice) : order.volumeNative, order.currency)}
                                             </div>
                                             {order.currency !== 'CHF' && (
-                                                <div className="text-[11px] text-muted-foreground mt-0.5 font-medium">≈ {fmtMoney(order.volumeCHF, 'CHF')}</div>
+                                                <div className="text-[11px] text-muted-foreground mt-0.5 font-medium">
+                                                    ≈ {fmtMoney(order.status === 'executed' && order.executedTotalCHF ? order.executedTotalCHF : order.volumeCHF, 'CHF')}
+                                                </div>
                                             )}
                                         </div>
                                         <div className="p-2.5 rounded-lg bg-muted/40 border border-border/70 flex flex-col justify-between">
@@ -431,7 +455,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                                 {isBuy ? 'Investition Total' : 'Erlös Total'}
                                             </div>
                                             <div className="font-mono font-bold text-sm sm:text-base text-foreground">
-                                                {fmtMoney(order.totalInvestOrProceedsCHF, 'CHF')}
+                                                {fmtMoney(order.status === 'executed' && order.executedTotalCHF ? order.executedTotalCHF : order.totalInvestOrProceedsCHF, 'CHF')}
                                             </div>
                                         </div>
                                     </div>
@@ -462,10 +486,10 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                             )}
 
                                             {/* Manual Execute toggle if needed */}
-                                            {isOpen && (
+                                            {order.status !== 'executed' && (
                                                 <button
-                                                    onClick={() => handleExecuteDirectly(order.id)}
-                                                    className="px-2.5 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 font-medium flex items-center gap-1.5 transition-colors text-xs whitespace-nowrap"
+                                                    onClick={() => handleExecuteClick(order)}
+                                                    className="px-2.5 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 font-medium flex items-center gap-1.5 transition-colors text-xs whitespace-nowrap cursor-pointer"
                                                     title="Manuell als ausgeführt ins Depot buchen"
                                                 >
                                                     <Check className="size-3.5 shrink-0" />
@@ -528,6 +552,14 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                     )}
                 </div>
             </div>
+
+            {/* Execute Order Modal */}
+            <ExecuteOrderModal
+                isOpen={!!executingOrder}
+                onClose={() => setExecutingOrder(null)}
+                order={executingOrder}
+                onExecute={handleExecuteWithParams}
+            />
         </div>
     );
 }

@@ -340,6 +340,9 @@ export interface OrderBookEntry {
     status: 'open' | 'executed' | 'expired';
     executedAt?: string;
     executedPrice?: number;
+    executedShares?: number;
+    executedTotalCHF?: number;
+    executedFxRate?: number;
     dividendPerShare?: number;
     dividendFrequency?: 'annually' | 'semi-annually' | 'quarterly' | 'monthly';
     distributionPolicy?: 'distributing' | 'accumulating';
@@ -351,5 +354,16 @@ export interface OrderBookEntry {
     feesConfig?: any;
     exchange?: string;
     note?: string;
+}
+
+export interface ExecuteOrderParams {
+    executedPrice: number;
+    shares?: number;
+    executedDate?: string;
+    totalAmountCHF?: number;
+    feesCHF?: number;
+    fxRate?: number;
+    effectiveBuyPrice?: number;
+    broker?: string;
 }
 

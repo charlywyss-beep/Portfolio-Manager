@@ -53,7 +53,7 @@ interface PortfolioContextType {
     updateOrderBookEntry: (id: string, updates: Partial<import('../types').OrderBookEntry>) => void;
     deleteOrderBookEntry: (id: string) => void;
     clearOrderBook: () => void;
-    executeOrderBookEntry: (id: string) => boolean;
+    executeOrderBookEntry: (id: string, params?: import('../types').ExecuteOrderParams) => boolean;
 
     simulatorState: {
         shares: number;
@@ -967,9 +967,14 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         setOrderBook([]);
     };
 
-    const executeOrderBookEntry = (id: string) => {
+    const executeOrderBookEntry = (id: string, params?: import('../types').ExecuteOrderParams) => {
         const entry = orderBook.find(o => o.id === id);
         if (!entry) return false;
+
+        const actualPrice = params?.executedPrice ?? entry.limitPrice;
+        const actualShares = params?.shares ?? entry.shares;
+        const actualDate = params?.executedDate || new Date().toISOString().split('T')[0];
+        const actualBroker = params?.broker || 'Swissquote';
 
         if (entry.mode === 'buy') {
             let targetStockId = entry.stockId;
@@ -983,37 +988,65 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
                         name: entry.stockName,
                         isin: entry.stockIsin,
                         currency: (entry.currency as any) || 'CHF',
-                        currentPrice: entry.limitPrice,
-                        previousClose: entry.limitPrice,
+                        currentPrice: actualPrice,
+                        previousClose: actualPrice,
                         sector: '',
                         dividendAmount: entry.dividendPerShare || 0,
-                        dividendYield: entry.limitPrice > 0 && entry.dividendPerShare ? (entry.dividendPerShare / entry.limitPrice) * 100 : 0,
+                        dividendYield: actualPrice > 0 && entry.dividendPerShare ? (entry.dividendPerShare / actualPrice) * 100 : 0,
                         dividendFrequency: entry.dividendFrequency || 'annually'
                     });
                 }
             }
 
-            let effectivePrice = entry.limitPrice;
-            if (entry.volumeCHF > 0 && entry.totalFeesCHF > 0) {
-                const feeRatio = entry.totalFeesCHF / entry.volumeCHF;
-                effectivePrice = entry.limitPrice * (1 + feeRatio);
-            }
+            // Calculation of effective buy price (all-in) and fxRate
+            let effectivePrice = params?.effectiveBuyPrice ?? actualPrice;
+            let effectiveFxRate = params?.fxRate ?? 1;
 
-            let effectiveFxRate = 1;
-            if (entry.currency && entry.currency !== 'CHF' && entry.volumeNative > 0) {
-                effectiveFxRate = entry.volumeCHF / entry.volumeNative;
+            if (params?.totalAmountCHF !== undefined && params.totalAmountCHF > 0) {
+                if (entry.currency === 'CHF') {
+                    effectivePrice = params.totalAmountCHF / actualShares;
+                    effectiveFxRate = 1;
+                } else {
+                    // Currency is foreign (e.g. USD)
+                    if (params.fxRate && params.fxRate > 0) {
+                        effectiveFxRate = params.fxRate;
+                        if (!params.effectiveBuyPrice) {
+                            effectivePrice = (params.totalAmountCHF / params.fxRate) / actualShares;
+                        }
+                    } else if (params.effectiveBuyPrice && params.effectiveBuyPrice > 0) {
+                        effectivePrice = params.effectiveBuyPrice;
+                        effectiveFxRate = params.totalAmountCHF / (actualShares * params.effectiveBuyPrice);
+                    }
+                }
+            } else if (!params?.effectiveBuyPrice) {
+                // Default calculation from entry
+                const volumeNative = actualShares * actualPrice;
+                const feesCHF = params?.feesCHF ?? entry.totalFeesCHF ?? 0;
+                let volumeCHF = volumeNative;
+                if (entry.currency && entry.currency !== 'CHF') {
+                    if (entry.volumeNative > 0 && entry.volumeCHF > 0) {
+                        volumeCHF = volumeNative * (entry.volumeCHF / entry.volumeNative);
+                        effectiveFxRate = entry.volumeCHF / entry.volumeNative;
+                    }
+                }
+                if (volumeCHF > 0 && feesCHF > 0) {
+                    const feeRatio = feesCHF / volumeCHF;
+                    effectivePrice = actualPrice * (1 + feeRatio);
+                }
             }
 
             addPosition({
                 stockId: targetStockId,
-                shares: entry.shares,
+                shares: actualShares,
                 buyPriceAvg: effectivePrice,
-                averageEntryFxRate: effectiveFxRate
+                averageEntryFxRate: effectiveFxRate,
+                buyDate: actualDate,
+                broker: actualBroker
             });
         } else if (entry.mode === 'sell') {
             const position = positions.find(p => p.stockId === entry.stockId || (entry.stockSymbol && stocks.find(s => s.id === p.stockId)?.symbol === entry.stockSymbol));
             if (position) {
-                const remainingShares = position.shares - entry.shares;
+                const remainingShares = position.shares - actualShares;
                 if (remainingShares <= 0) {
                     deletePosition(position.id);
                 } else {
@@ -1024,8 +1057,11 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
         updateOrderBookEntry(id, {
             status: 'executed',
-            executedAt: new Date().toISOString(),
-            executedPrice: entry.limitPrice
+            executedAt: new Date(actualDate).toISOString(),
+            executedPrice: actualPrice,
+            executedShares: actualShares,
+            executedTotalCHF: params?.totalAmountCHF,
+            executedFxRate: params?.fxRate
         });
         return true;
     };
