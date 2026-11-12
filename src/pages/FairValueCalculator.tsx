@@ -2524,15 +2524,15 @@ export function FairValueCalculator() {
                                                     )}
                                                     {isFairHold && (
                                                         <>
-                                                            <div>Kurs im fairen Bewertungskorridor.</div>
-                                                            <div className="mt-0.5 text-muted-foreground/90"><span className="font-bold text-yellow-400">Bestände halten</span>.</div>
+                                                            <div className="text-yellow-400 font-medium">Kurs im fairen Bewertungskorridor.</div>
+                                                            <div className="mt-0.5 font-bold text-yellow-400">Bestände halten.</div>
                                                         </>
                                                     )}
                                                     {isRichHold && (
                                                         <>
-                                                            <div>Hoch bewertet gegenüber dem fundamentalen Wert.</div>
-                                                            <div className="mt-0.5 text-muted-foreground/90">
-                                                                Für Bestände: <span className="font-bold text-amber-400">Entspannt halten</span> – aktuell kein Neukauf.
+                                                            <div className="text-amber-400 font-medium">Hoch bewertet gegenüber dem fundamentalen Wert.</div>
+                                                            <div className="mt-0.5 font-bold text-amber-400">
+                                                                Für Bestände: Entspannt halten – aktuell kein Neukauf.
                                                             </div>
                                                         </>
                                                     )}
