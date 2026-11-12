@@ -2592,9 +2592,35 @@ export function FairValueCalculator() {
                                                     <span className={cn("font-bold text-base sm:text-lg shrink-0 whitespace-nowrap", profileColor)}>
                                                         Fairer Wert
                                                     </span>
-                                                    <span className={cn("font-mono font-black text-base sm:text-lg whitespace-nowrap tabular-nums", profileColor)}>
-                                                        {formatCurrency(calculation.fairValue, quote.currency, false)}
-                                                    </span>
+                                                    <div className="flex items-center gap-1.5 sm:gap-2">
+                                                        <span className={cn("font-mono font-black text-base sm:text-lg whitespace-nowrap tabular-nums", profileColor)}>
+                                                            {formatCurrency(calculation.fairValue, quote.currency, false)}
+                                                        </span>
+                                                        {calculation.fairValue > 0 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const val = calculation.fairValue.toFixed(2);
+                                                                    setBuyLimitInput(val);
+                                                                    handleSaveBuyLimit(val);
+                                                                }}
+                                                                className={cn(
+                                                                    "px-2 py-0.5 text-[11px] font-semibold rounded-md border transition-all flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer whitespace-nowrap",
+                                                                    isManualMode
+                                                                        ? "bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border-emerald-400/30"
+                                                                        : isRiskMode
+                                                                            ? "bg-amber-600/20 hover:bg-amber-600/35 text-amber-300 border-amber-400/30"
+                                                                            : isQualityMode
+                                                                                ? "bg-purple-600/20 hover:bg-purple-600/35 text-purple-300 border-purple-400/30"
+                                                                                : "bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border-blue-400/30"
+                                                                )}
+                                                                title="Fairen Wert (ohne Sicherheitsmarge) direkt als aktives Kauflimit übernehmen"
+                                                            >
+                                                                <Target className="size-3 shrink-0" />
+                                                                <span>Als Kauflimit</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <p className="text-[11px] text-muted-foreground">
                                                     Innerer Wert heute ({discountRate}% Zielrendite + Dividenden)
@@ -2671,12 +2697,32 @@ export function FairValueCalculator() {
                                                     <span className={cn("font-bold text-base sm:text-lg shrink-0 whitespace-nowrap", kaufpreisTextColor)}>
                                                         Kauflimit
                                                     </span>
-                                                    <span className={cn(
-                                                        "font-mono font-black text-base sm:text-lg whitespace-nowrap tabular-nums",
-                                                        kaufpreisTextColor
-                                                    )}>
-                                                        {formatCurrency(calculation.buyPrice, quote.currency, false)}
-                                                    </span>
+                                                    <div className="flex items-center gap-1.5 sm:gap-2">
+                                                        <span className={cn(
+                                                            "font-mono font-black text-base sm:text-lg whitespace-nowrap tabular-nums",
+                                                            kaufpreisTextColor
+                                                        )}>
+                                                            {formatCurrency(calculation.buyPrice, quote.currency, false)}
+                                                        </span>
+                                                        {calculation.buyPrice > 0 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const val = calculation.buyPrice.toFixed(2);
+                                                                    setBuyLimitInput(val);
+                                                                    handleSaveBuyLimit(val);
+                                                                }}
+                                                                className={cn(
+                                                                    "px-2 py-0.5 text-[11px] font-semibold rounded-md border transition-all flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer whitespace-nowrap",
+                                                                    kaufpreisQuickBtnColor
+                                                                )}
+                                                                title="Berechnetes Kauflimit (inkl. Sicherheitsmarge) direkt als aktives Kauflimit übernehmen"
+                                                            >
+                                                                <Target className="size-3 shrink-0" />
+                                                                <span>Als Kauflimit</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="flex items-center justify-between flex-wrap gap-1 text-[11px] text-muted-foreground">
                                                     <span>Maximales Limit inkl. {mos}% Sicherheitsmarge ({isSavedForStock ? 'Manuell' : valuationProfile === 'quality' ? 'Qualität B' : valuationProfile === 'risk' ? 'Risiko-Abschlag C' : 'Sicherheit A'})</span>
@@ -2769,21 +2815,6 @@ export function FairValueCalculator() {
                                                 </button>
                                             </div>
 
-                                            {/* Schnell-Übernahme: Berechneten Kaufpreis mit 1 Klick setzen */}
-                                            {calculation.buyPrice > 0 && Math.abs((parseFloat(buyLimitInput.replace(',', '.')) || 0) - calculation.buyPrice) > 0.01 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        const val = calculation.buyPrice.toFixed(2);
-                                                        setBuyLimitInput(val);
-                                                        handleSaveBuyLimit(val);
-                                                    }}
-                                                    className={cn("w-full py-1.5 px-3 text-xs sm:text-sm font-semibold rounded-lg border transition-all flex items-center justify-center gap-1.5 text-center shadow-sm active:scale-95 cursor-pointer", kaufpreisQuickBtnColor)}
-                                                >
-                                                    <Target className="size-3.5 shrink-0" />
-                                                    <span>Kauflimit {calculation.buyPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency} übernehmen</span>
-                                                </button>
-                                            )}
 
                                             {/* Direkt zu Kauf / Verkauf */}
                                             <button
