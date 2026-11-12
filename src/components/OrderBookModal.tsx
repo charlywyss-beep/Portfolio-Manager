@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Search, Trash2, ClipboardList, CheckCircle2, Clock, AlertCircle, Calendar, ArrowDownToLine, Rocket, Check } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
+import { Logo } from './Logo';
 import type { OrderBookEntry } from '../types';
 
 interface OrderBookModalProps {
@@ -268,6 +269,14 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                             >
                                                 {isBuy ? 'Kauf' : 'Verkauf'}
                                             </span>
+                                            <Logo
+                                                url={order.stock?.logoUrl}
+                                                alt={order.stockName || order.stockSymbol}
+                                                fallback={order.stockSymbol?.slice(0, 2) || '••'}
+                                                size="size-7"
+                                                className="shrink-0 cursor-pointer hover:opacity-80 transition-opacity rounded-md"
+                                                onClick={() => handleStockClick(order)}
+                                            />
                                             <button
                                                 type="button"
                                                 onClick={() => handleStockClick(order)}
