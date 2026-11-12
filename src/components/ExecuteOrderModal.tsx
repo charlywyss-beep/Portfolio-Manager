@@ -34,19 +34,19 @@ export function ExecuteOrderModal({ isOpen, onClose, order, onExecute }: Execute
         if (!order) return;
 
         const initialShares = order.shares || 1;
-        // Pre-fill with dayLow or currentPrice if lower for buy, or limitPrice
-        const initialPrice = order.currentPrice && order.currentPrice > 0 ? order.currentPrice : order.limitPrice;
+        // Pre-fill with rounded currentPrice or limitPrice
+        const rawPrice = order.currentPrice && order.currentPrice > 0 ? order.currentPrice : order.limitPrice;
+        const initialPrice = parseFloat(rawPrice.toFixed(2));
         setShares(initialShares);
         setExecutedPrice(initialPrice);
         setExecutedDate(new Date().toISOString().split('T')[0]);
         setBroker('Swissquote');
 
-        const initialFees = order.totalFeesCHF || 0;
+        const initialFees = parseFloat((order.totalFeesCHF || 0).toFixed(2));
         setFeesCHF(initialFees);
 
         if (order.currency && order.currency !== 'CHF') {
             // Determine initial FX rate (CHF per 1 foreign currency unit)
-            // If rates from context are CHF -> Foreign (e.g. 1 CHF = 1.12 USD): rate is 1 / rates[curr]
             let defaultFx = 1;
             if (order.volumeNative > 0 && order.volumeCHF > 0) {
                 defaultFx = order.volumeCHF / order.volumeNative;
@@ -119,9 +119,10 @@ export function ExecuteOrderModal({ isOpen, onClose, order, onExecute }: Execute
 
     // When user changes fees
     const handleFeesChange = (newFees: number) => {
-        setFeesCHF(newFees);
+        const roundedFees = parseFloat(newFees.toFixed(2));
+        setFeesCHF(roundedFees);
         const baseCHF = isForeign ? (volumeNative * fxRate) : volumeNative;
-        const newTotalCHF = isBuy ? (baseCHF + newFees) : (baseCHF - newFees);
+        const newTotalCHF = isBuy ? (baseCHF + roundedFees) : (baseCHF - roundedFees);
         setTotalAmountCHF(parseFloat(newTotalCHF.toFixed(2)));
     };
 
@@ -236,7 +237,7 @@ export function ExecuteOrderModal({ isOpen, onClose, order, onExecute }: Execute
                                     required
                                     value={executedPrice || ''}
                                     onChange={e => handlePriceOrSharesChange(parseFloat(e.target.value) || 0, shares)}
-                                    className="w-full px-3 py-2 rounded-lg bg-background border border-amber-500/50 focus:border-primary focus:ring-1 focus:ring-primary text-foreground font-mono font-bold text-base outline-hidden"
+                                    className="w-full px-3 py-2 rounded-lg bg-background border border-amber-500/50 focus:border-primary focus:ring-1 focus:ring-primary text-foreground font-mono font-bold text-base outline-hidden [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     placeholder="z.B. 151.00"
                                 />
                                 <span className="absolute right-3 top-2.5 text-xs font-bold text-muted-foreground">
@@ -259,7 +260,7 @@ export function ExecuteOrderModal({ isOpen, onClose, order, onExecute }: Execute
                                 required
                                 value={shares || ''}
                                 onChange={e => handlePriceOrSharesChange(executedPrice, parseFloat(e.target.value) || 0)}
-                                className="w-full px-3 py-2 rounded-lg bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary text-foreground font-mono font-bold text-base outline-hidden"
+                                className="w-full px-3 py-2 rounded-lg bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary text-foreground font-mono font-bold text-base outline-hidden [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 placeholder="z.B. 30"
                             />
                             <span className="text-[11px] text-muted-foreground mt-1 block">
@@ -286,7 +287,7 @@ export function ExecuteOrderModal({ isOpen, onClose, order, onExecute }: Execute
                                         step="any"
                                         value={fxRate || ''}
                                         onChange={e => handleFxRateChange(parseFloat(e.target.value) || 0)}
-                                        className="w-full px-2.5 py-1.5 rounded-lg bg-background border border-border text-foreground font-mono font-semibold text-xs outline-hidden"
+                                        className="w-full px-2.5 py-1.5 rounded-lg bg-background border border-border text-foreground font-mono font-semibold text-xs outline-hidden [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         placeholder="z.B. 0.8505"
                                     />
                                 </div>
@@ -300,7 +301,7 @@ export function ExecuteOrderModal({ isOpen, onClose, order, onExecute }: Execute
                                         step="any"
                                         value={feesCHF || ''}
                                         onChange={e => handleFeesChange(parseFloat(e.target.value) || 0)}
-                                        className="w-full px-2.5 py-1.5 rounded-lg bg-background border border-border text-foreground font-mono font-semibold text-xs outline-hidden"
+                                        className="w-full px-2.5 py-1.5 rounded-lg bg-background border border-border text-foreground font-mono font-semibold text-xs outline-hidden [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         placeholder="z.B. 47.37"
                                     />
                                 </div>
@@ -315,7 +316,7 @@ export function ExecuteOrderModal({ isOpen, onClose, order, onExecute }: Execute
                                         required
                                         value={totalAmountCHF || ''}
                                         onChange={e => handleTotalAmountCHFChange(parseFloat(e.target.value) || 0)}
-                                        className="w-full px-2.5 py-1.5 rounded-lg bg-background border border-emerald-500/50 focus:border-emerald-500 text-foreground font-mono font-bold text-xs outline-hidden"
+                                        className="w-full px-2.5 py-1.5 rounded-lg bg-background border border-emerald-500/50 focus:border-emerald-500 text-foreground font-mono font-bold text-xs outline-hidden [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         placeholder="z.B. 3889.96"
                                     />
                                 </div>
@@ -332,7 +333,7 @@ export function ExecuteOrderModal({ isOpen, onClose, order, onExecute }: Execute
                                     step="any"
                                     value={feesCHF || ''}
                                     onChange={e => handleFeesChange(parseFloat(e.target.value) || 0)}
-                                    className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground font-mono font-semibold text-xs outline-hidden"
+                                    className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground font-mono font-semibold text-xs outline-hidden [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     placeholder="z.B. 25.00"
                                 />
                             </div>
@@ -347,7 +348,7 @@ export function ExecuteOrderModal({ isOpen, onClose, order, onExecute }: Execute
                                     required
                                     value={totalAmountCHF || ''}
                                     onChange={e => handleTotalAmountCHFChange(parseFloat(e.target.value) || 0)}
-                                    className="w-full px-3 py-2 rounded-lg bg-background border border-emerald-500/50 text-foreground font-mono font-bold text-xs outline-hidden"
+                                    className="w-full px-3 py-2 rounded-lg bg-background border border-emerald-500/50 text-foreground font-mono font-bold text-xs outline-hidden [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     placeholder="z.B. 2525.00"
                                 />
                             </div>
