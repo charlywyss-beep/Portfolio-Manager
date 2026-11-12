@@ -1131,17 +1131,6 @@ export function StockDetail() {
                                                 Eigenes Limit
                                             </span>
                                         )}
-                                        {activeOrder && (
-                                            <button
-                                                type="button"
-                                                onClick={() => navigate('/calculator?orderbook=true')}
-                                                className="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-500/20 border border-amber-500/40 px-1.5 py-0.5 rounded shadow-xs hover:bg-amber-500/30 transition-colors flex items-center gap-1 cursor-pointer"
-                                                title="Im Auftragsbuch aktiv – Klicken zum Öffnen"
-                                            >
-                                                <ClipboardList className="size-2.5 text-amber-600 dark:text-amber-400" />
-                                                <span>Im Auftragsbuch</span>
-                                            </button>
-                                        )}
                                         {isModelLimit && (
                                             <span className={cn(
                                                 "text-[10px] font-semibold px-1.5 py-0.5 rounded border shadow-xs",
