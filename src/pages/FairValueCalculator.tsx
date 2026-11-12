@@ -183,6 +183,7 @@ export function FairValueCalculator() {
     // Kauflimit state for direct transfer to Kursdaten
     const [buyLimitInput, setBuyLimitInput] = useState('');
     const [buyLimitSavedToast, setBuyLimitSavedToast] = useState(false);
+    const [isRatingHovered, setIsRatingHovered] = useState(false);
 
     useEffect(() => {
         if (currentStock?.targetPrice) {
@@ -2406,7 +2407,7 @@ export function FairValueCalculator() {
                                         Bewertung
                                     </h2>
 
-                                    {/* Traffic Light Badge (Abgerundetes Quadrat) mit linksbündigem Tooltip */}
+                                    {/* Erklärung im freien Raum unter '● Bewertung', linksbündig mit dem unteren Feld */}
                                     {(() => {
                                         const ratingText = isUndervalued
                                             ? 'Kurs liegt unter dem Kauflimit (inkl. Sicherheitsmarge).'
@@ -2425,8 +2426,26 @@ export function FairValueCalculator() {
                                                     : 'TEUER (Überbewertet)';
 
                                         return (
-                                            <div className="relative group flex flex-col items-center">
+                                            <>
+                                                {/* Eingepasste Erklärung unter '● Bewertung', bündig mit der linken Außenkante des unteren Felds */}
                                                 <div
+                                                    className={cn(
+                                                        "pointer-events-none absolute left-0 top-6 xl:top-7 w-[calc(50%-5.5rem)] xl:w-[calc(50%-6.5rem)] min-w-[130px] text-left transition-all duration-200 z-10",
+                                                        isRatingHovered ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
+                                                    )}
+                                                >
+                                                    <div className={cn("font-bold text-[12px] leading-tight", isUndervalued ? "text-emerald-400" : isFairHold ? "text-yellow-400" : isRichHold ? "text-amber-400" : "text-rose-400")}>
+                                                        {ratingTitle}
+                                                    </div>
+                                                    <div className="text-foreground/90 text-[11px] leading-snug mt-0.5 font-medium">
+                                                        {ratingText}
+                                                    </div>
+                                                </div>
+
+                                                {/* Traffic Light Badge (Abgerundetes Quadrat) */}
+                                                <div
+                                                    onMouseEnter={() => setIsRatingHovered(true)}
+                                                    onMouseLeave={() => setIsRatingHovered(false)}
                                                     className={cn(
                                                         "fair-value-circle fair-value-badge relative w-40 sm:w-48 lg:w-44 xl:w-52 py-2 px-3 sm:py-2.5 sm:px-4 rounded-2xl flex flex-col items-center justify-center border-2 shadow-md transition-all duration-500 text-center cursor-help",
                                                         isUndervalued
@@ -2453,23 +2472,7 @@ export function FairValueCalculator() {
                                                         </div>
                                                     </div>
                                                 </div>
-
-                                                {/* Eigener Tooltip: Nach links ausgerichtet, berührt garantiert nicht den Scroller */}
-                                                <div className="pointer-events-none absolute top-full right-0 mt-1.5 z-50 w-72 sm:w-80 max-w-[85vw] p-2.5 rounded-xl border border-border/80 bg-slate-900/95 text-foreground shadow-2xl opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150 text-left text-xs leading-relaxed backdrop-blur-md">
-                                                    <div className="font-bold flex items-center gap-1.5 mb-0.5">
-                                                        <span className={cn(
-                                                            "size-2 rounded-full shrink-0",
-                                                            isUndervalued ? "bg-emerald-400" : isFairHold ? "bg-yellow-400" : isRichHold ? "bg-amber-400" : "bg-rose-400"
-                                                        )} />
-                                                        <span className={isUndervalued ? "text-emerald-400" : isFairHold ? "text-yellow-400" : isRichHold ? "text-amber-400" : "text-rose-400"}>
-                                                            {ratingTitle}
-                                                        </span>
-                                                    </div>
-                                                    <div className="text-muted-foreground text-[12px] leading-snug">
-                                                        {ratingText}
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            </>
                                         );
                                     })()}
                                 </div>
