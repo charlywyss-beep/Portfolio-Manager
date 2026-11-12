@@ -2997,10 +2997,11 @@ export function FairValueCalculator() {
                                                 const activeTarget = (currentStock?.targetPrice && currentStock.targetPrice > 0)
                                                     ? currentStock.targetPrice
                                                     : (parseFloat(buyLimitInput.replace(',', '.')) || 0);
+                                                const isSetFromSupportZone = currentStock?.targetPriceType === 'manual';
                                                 const isActive = Boolean(
+                                                    isSetFromSupportZone &&
                                                     activeTarget > 0 &&
-                                                    (Math.abs(activeTarget - zone.targetPrice) < 0.25 ||
-                                                     (activeTarget >= zone.minPrice && activeTarget <= zone.maxPrice))
+                                                    Math.abs(activeTarget - zone.targetPrice) < 0.05
                                                 );
 
                                                 return (
