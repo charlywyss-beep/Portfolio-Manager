@@ -52,7 +52,7 @@ export function TopPerformersCard({ className }: { className?: string }) {
     const renderItem = (item: any) => {
         if (!item) return null;
         const isPositive = item.totalGainPercent >= 0;
-        const colorClass = isPositive ? 'text-emerald-400' : 'text-rose-400';
+        const colorClass = isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
 
         return (
             <div
