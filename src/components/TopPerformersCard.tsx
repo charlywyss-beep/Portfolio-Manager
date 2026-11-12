@@ -72,7 +72,7 @@ export function TopPerformersCard({ className }: { className?: string }) {
                     <h4 className="font-bold text-sm truncate text-foreground group-hover:text-primary transition-colors" title={item.stock.name}>
                         {item.stock.name}
                     </h4>
-                    <p className={cn("text-xs font-semibold truncate", colorClass)}>
+                    <p className={cn("text-xs sm:text-sm font-medium truncate tabular-nums", colorClass)}>
                         {isPositive ? '+' : ''}{item.totalGainPercent.toFixed(2)}%
                         <span className="text-muted-foreground mx-1 font-normal">•</span>
                         {item.totalGainCHF >= 0 ? '+' : ''}{formatCurrency(item.totalGainCHF, 'CHF')}
