@@ -2743,28 +2743,22 @@ export function FairValueCalculator() {
                                                         const activeLimit = (currentStock?.targetPrice && currentStock.targetPrice > 0)
                                                             ? currentStock.targetPrice
                                                             : calculation.buyPrice;
-                                                        const isCustomLimit = Boolean(currentStock?.targetPrice && Math.abs(currentStock.targetPrice - calculation.buyPrice) > 0.01);
+                                                        const isMatchingBuyPrice = Math.abs(activeLimit - calculation.buyPrice) < 0.01;
+                                                        const isMatchingFairValue = Math.abs(activeLimit - calculation.fairValue) < 0.01;
+                                                        const limitName = isMatchingBuyPrice
+                                                            ? 'Kauflimit'
+                                                            : isMatchingFairValue
+                                                                ? 'Fairem Wert'
+                                                                : 'eigenem Limit';
                                                         const diffPct = ((quote.price - activeLimit) / activeLimit) * 100;
-
-                                                        if (isCustomLimit) {
-                                                            return diffPct > 0 ? (
-                                                                <span className="font-medium text-amber-400">
-                                                                    Aktueller Kurs +{diffPct.toFixed(1)}% über eigenem Limit
-                                                                </span>
-                                                            ) : (
-                                                                <span className="font-semibold text-emerald-400 animate-pulse">
-                                                                    🎯 Aktueller Kurs {Math.abs(diffPct).toFixed(1)}% unter eigenem Limit
-                                                                </span>
-                                                            );
-                                                        }
 
                                                         return diffPct > 0 ? (
                                                             <span className="font-medium text-amber-400">
-                                                                Aktueller Kurs +{diffPct.toFixed(1)}% über Kauflimit
+                                                                Aktueller Kurs +{diffPct.toFixed(1)}% über {limitName}
                                                             </span>
                                                         ) : (
-                                                            <span className="font-semibold text-emerald-400">
-                                                                🎯 Aktueller Kurs {Math.abs(diffPct).toFixed(1)}% unter Kauflimit
+                                                            <span className="font-semibold text-emerald-400 animate-pulse">
+                                                                🎯 Aktueller Kurs {Math.abs(diffPct).toFixed(1)}% unter {limitName}
                                                             </span>
                                                         );
                                                     })()}
@@ -2773,7 +2767,7 @@ export function FairValueCalculator() {
                                         {/* Kauflimit Integration (Direkt in Kursdaten & Watchlist übernehmen) */}
                                         <div className="mt-2 lg:mt-1 pt-2 lg:pt-1 border-t border-border/50 space-y-1.5 lg:space-y-1">
                                             <div className="flex items-center justify-between text-xs">
-                                                <span className="font-semibold text-foreground flex items-center gap-1.5">
+                                                <span className={cn("font-semibold flex items-center gap-1.5", kaufpreisTextColor)}>
                                                     <Target className={cn("size-3.5", kaufpreisTargetIconColor)} />
                                                     <span>Aktives Kauflimit:</span>
                                                 </span>
@@ -2782,19 +2776,33 @@ export function FairValueCalculator() {
                                                         <Check className="size-3" />
                                                         <span>In Kursdaten übernommen!</span>
                                                     </span>
-                                                ) : currentStock?.targetPrice ? (
-                                                    <span className={cn(
-                                                        "text-[11px] font-medium flex items-center gap-1",
-                                                        Math.abs(currentStock.targetPrice - calculation.buyPrice) < 0.01
-                                                            ? kaufpreisActiveTextColor
-                                                            : "text-amber-400"
-                                                    )}>
-                                                        <Check className="size-3" />
-                                                        <span>
-                                                            Aktiv: {currentStock.targetPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency} {Math.abs(currentStock.targetPrice - calculation.buyPrice) < 0.01 ? modeLabel : 'Eigenes Limit'}
+                                                ) : currentStock?.targetPrice ? (() => {
+                                                    const isMatchingBuyPrice = Math.abs(currentStock.targetPrice - calculation.buyPrice) < 0.01;
+                                                    const isMatchingFairValue = Math.abs(currentStock.targetPrice - calculation.fairValue) < 0.01;
+
+                                                    let badgeLabel = 'Eigenes Limit';
+                                                    let badgeColor = 'text-emerald-400';
+
+                                                    if (isMatchingBuyPrice) {
+                                                        badgeLabel = modeLabel;
+                                                        badgeColor = kaufpreisActiveTextColor;
+                                                    } else if (isMatchingFairValue) {
+                                                        badgeLabel = 'Fairer Wert';
+                                                        badgeColor = kaufpreisActiveTextColor;
+                                                    }
+
+                                                    return (
+                                                        <span className={cn(
+                                                            "text-[11px] font-medium flex items-center gap-1",
+                                                            badgeColor
+                                                        )}>
+                                                            <Check className="size-3" />
+                                                            <span>
+                                                                Aktiv: {currentStock.targetPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency} {badgeLabel}
+                                                            </span>
                                                         </span>
-                                                    </span>
-                                                ) : null}
+                                                    );
+                                                })() : null}
                                             </div>
 
                                             <div className="flex items-center gap-2">
