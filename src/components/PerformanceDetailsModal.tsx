@@ -124,7 +124,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
     const activeDateLabel = (isViewingYesterday || !isAnyActiveToday) ? yesterdayDateLabel : todayDateLabel;
 
     const getPositionMetrics = (p: any) => {
-        const snap = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[p.stock.id] : null;
+        const snap = (isViewingYesterday && yesterdaySnapshot?.positions)
+            ? (yesterdaySnapshot.positions[p.stock.id] || yesterdaySnapshot.positions[p.stock.symbol])
+            : null;
         const displayPrice = isViewingYesterday
             ? ((p.stock.previousClose && p.stock.previousClose > 0) ? p.stock.previousClose : (snap ? snap.currentPrice : p.stock.currentPrice))
             : p.stock.currentPrice;
@@ -170,15 +172,15 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
             let valA = 0;
             let valB = 0;
             if (sortConfig.key === 'dailyPct') {
-                const sA = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[a.stock.id] : null;
-                const sB = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[b.stock.id] : null;
-                valA = sA ? sA.dailyGainPercent : (a.dailyGainPercent || 0);
-                valB = sB ? sB.dailyGainPercent : (b.dailyGainPercent || 0);
+                const sA = (isViewingYesterday && yesterdaySnapshot?.positions) ? (yesterdaySnapshot.positions[a.stock.id] || yesterdaySnapshot.positions[a.stock.symbol]) : null;
+                const sB = (isViewingYesterday && yesterdaySnapshot?.positions) ? (yesterdaySnapshot.positions[b.stock.id] || yesterdaySnapshot.positions[b.stock.symbol]) : null;
+                valA = sA ? sA.dailyGainPercent : (isViewingYesterday ? 0 : (a.dailyGainPercent || 0));
+                valB = sB ? sB.dailyGainPercent : (isViewingYesterday ? 0 : (b.dailyGainPercent || 0));
                 valA = Number.isFinite(valA) ? valA : 0;
                 valB = Number.isFinite(valB) ? valB : 0;
             } else if (sortConfig.key === 'dailyChf') {
-                const sA = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[a.stock.id] : null;
-                const sB = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[b.stock.id] : null;
+                const sA = (isViewingYesterday && yesterdaySnapshot?.positions) ? (yesterdaySnapshot.positions[a.stock.id] || yesterdaySnapshot.positions[a.stock.symbol]) : null;
+                const sB = (isViewingYesterday && yesterdaySnapshot?.positions) ? (yesterdaySnapshot.positions[b.stock.id] || yesterdaySnapshot.positions[b.stock.symbol]) : null;
                 valA = sA ? sA.dailyGainCHF : mA.dailyGainCHF;
                 valB = sB ? sB.dailyGainCHF : mB.dailyGainCHF;
                 valA = Number.isFinite(valA) ? valA : 0;
@@ -670,8 +672,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                         <tbody className="divide-y divide-border">
                             {sortedPositions.map((p) => {
                                 const { dailyGainCHF, totalGainCHF, totalGainPercent, displayPrice } = getPositionMetrics(p);
-                                const snap = (isViewingYesterday && yesterdaySnapshot?.positions) ? yesterdaySnapshot.positions[p.stock.id] : null;
-                                const dailyGainPercent = snap ? snap.dailyGainPercent : p.dailyGainPercent;
+                                const snap = (isViewingYesterday && yesterdaySnapshot?.positions)
+                                    ? (yesterdaySnapshot.positions[p.stock.id] || yesterdaySnapshot.positions[p.stock.symbol])
+                                    : null;
+                                const dailyGainPercent = snap ? snap.dailyGainPercent : (isViewingYesterday ? 0 : p.dailyGainPercent);
                                 const isDailyPositive = dailyGainCHF >= 0;
                                 const isDailyZero = Math.abs(dailyGainCHF) < 0.005;
                                 const isTotalPositive = totalGainCHF >= 0;
