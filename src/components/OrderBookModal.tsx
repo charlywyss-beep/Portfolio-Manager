@@ -260,9 +260,9 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                 >
                                     {/* Top Status Header */}
                                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-2.5">
-                                        <div className="flex items-center gap-2 flex-wrap">
+                                        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
                                             <span
-                                                className={`px-2 py-0.5 text-[11px] font-bold rounded-md uppercase tracking-wider ${isBuy
+                                                className={`px-2.5 py-1 text-xs font-bold rounded-md uppercase tracking-wider ${isBuy
                                                     ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                                                     : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
                                                     }`}
@@ -273,14 +273,14 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                                 url={order.stock?.logoUrl}
                                                 alt={order.stockName || order.stockSymbol}
                                                 fallback={order.stockSymbol?.slice(0, 2) || '••'}
-                                                size="size-7"
-                                                className="shrink-0 cursor-pointer hover:opacity-80 transition-opacity rounded-md"
+                                                size="size-9 sm:size-10"
+                                                className="shrink-0 cursor-pointer hover:opacity-80 transition-opacity rounded-lg"
                                                 onClick={() => handleStockClick(order)}
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => handleStockClick(order)}
-                                                className="font-bold text-sm text-foreground hover:text-blue-500 hover:underline transition-colors cursor-pointer text-left inline-flex items-center gap-1 group"
+                                                className="font-bold text-base sm:text-lg text-foreground hover:text-blue-500 hover:underline transition-colors cursor-pointer text-left inline-flex items-center gap-1 group leading-tight"
                                                 title={`${order.stockName || 'Aktie'} – Zur Aktie & Chart wechseln`}
                                             >
                                                 <span>{order.stockName || 'Aktie'}</span>
@@ -289,7 +289,7 @@ export function OrderBookModal({ isOpen, onClose, onLoadIntoSimulator }: OrderBo
                                                 <button
                                                     type="button"
                                                     onClick={() => handleStockClick(order)}
-                                                    className="font-mono text-xs text-muted-foreground bg-muted hover:bg-blue-500/15 hover:text-blue-500 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+                                                    className="font-mono text-xs sm:text-sm font-semibold text-muted-foreground bg-muted/80 hover:bg-blue-500/15 hover:text-blue-400 px-2 py-0.5 rounded-md transition-colors cursor-pointer"
                                                     title={`${order.stockSymbol} – Zur Aktie & Chart wechseln`}
                                                 >
                                                     {order.stockSymbol}
