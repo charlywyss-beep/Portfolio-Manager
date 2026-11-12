@@ -1825,59 +1825,48 @@ export function FairValueCalculator() {
                                             )
                                         )}
                                     </div>
-                                    <div className="flex flex-col gap-1.5 w-full">
-                                        <div className="grid grid-cols-2 rounded-xl border border-border/80 p-0.5 bg-background/60 shadow-2xs gap-1 w-full">
-                                            <button
-                                                type="button"
-                                                onClick={() => applyAutoValues('conservative')}
-                                                className={cn(
-                                                    "flex items-center justify-center gap-1.5 text-xs px-2.5 py-1 rounded-lg transition-all whitespace-nowrap font-semibold border cursor-pointer active:scale-[0.98]",
-                                                    !isSavedForStock && valuationProfile === 'conservative'
-                                                        ? "bg-blue-600 text-white border-blue-400 shadow-sm"
-                                                        : "bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-blue-400/60 shadow-2xs"
-                                                )}
-                                                title="Sichtweise A: Auto Sicherheit (KGV max. 20, Terminal Growth ≤ 2.0 %, Buffett-Baseline)"
-                                            >
-                                                <ShieldCheck className={cn("size-3.5 shrink-0", !isSavedForStock && valuationProfile === 'conservative' ? "text-white" : "text-blue-400")} />
-                                                <span>Sicherheit (A)</span>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => applyAutoValues('quality')}
-                                                className={cn(
-                                                    "flex items-center justify-center gap-1.5 text-xs px-2.5 py-1 rounded-lg transition-all whitespace-nowrap font-semibold border cursor-pointer active:scale-[0.98]",
-                                                    !isSavedForStock && valuationProfile === 'quality'
-                                                        ? "bg-purple-600 text-white border-purple-400 shadow-sm"
-                                                        : "bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-purple-400/60 shadow-2xs"
-                                                )}
-                                                title="Sichtweise B: Auto Qualität (Historische Qualitätsbewertung KGV bis 25 für Wide-Moat Compounder)"
-                                            >
-                                                <Sparkles className={cn("size-3.5 shrink-0", !isSavedForStock && valuationProfile === 'quality' ? "text-white" : "text-purple-400")} />
-                                                <span>Qualität (B)</span>
-                                            </button>
-                                        </div>
-
-                                        {/* Sichtweise C: Risiko-Abschlag */}
+                                    <div className="grid grid-cols-3 rounded-xl border border-border/80 p-0.5 bg-background/60 shadow-2xs gap-1 w-full">
                                         <button
                                             type="button"
-                                            onClick={() => applyAutoValues(valuationProfile === 'risk' ? 'conservative' : 'risk')}
+                                            onClick={() => applyAutoValues('conservative')}
                                             className={cn(
-                                                "flex items-center text-xs px-3 py-1 rounded-lg transition-all font-semibold border cursor-pointer active:scale-[0.98] w-full",
-                                                !isSavedForStock && valuationProfile === 'risk'
-                                                    ? "justify-between bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-xs ring-1 ring-amber-500/30"
-                                                    : "justify-center bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-amber-500/40 shadow-2xs"
+                                                "flex items-center justify-center gap-1.5 text-xs px-2 py-1 rounded-lg transition-all whitespace-nowrap font-semibold border cursor-pointer active:scale-[0.98]",
+                                                !isSavedForStock && valuationProfile === 'conservative'
+                                                    ? "bg-blue-600 text-white border-blue-400 shadow-sm"
+                                                    : "bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-blue-400/60 shadow-2xs"
                                             )}
-                                            title="Sichtweise C: Risiko-Abschlag (Dämpft Wachstum -25%, KGV max. 20, Sicherheitsmarge +10%). Erneuter Klick oder Klick auf Sicherheit (A) schaltet zurück."
+                                            title="Sichtweise A: Auto Sicherheit (KGV max. 20, Terminal Growth ≤ 2.0 %, Buffett-Baseline)"
                                         >
-                                            <div className="flex items-center gap-1.5">
-                                                <TriangleAlert className="size-3.5 shrink-0 text-amber-400" />
-                                                <span>Risiko-Abschlag (C)</span>
-                                            </div>
-                                            {!isSavedForStock && valuationProfile === 'risk' && (
-                                                <span className="text-[11px] font-medium text-amber-200/90 tracking-tight">
-                                                    W: {growthRate}% • KGV: {pe} • Marge: {mos}%
-                                                </span>
+                                            <ShieldCheck className={cn("size-3.5 shrink-0", !isSavedForStock && valuationProfile === 'conservative' ? "text-white" : "text-blue-400")} />
+                                            <span className="truncate">Sicherheit (A)</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => applyAutoValues('quality')}
+                                            className={cn(
+                                                "flex items-center justify-center gap-1.5 text-xs px-2 py-1 rounded-lg transition-all whitespace-nowrap font-semibold border cursor-pointer active:scale-[0.98]",
+                                                !isSavedForStock && valuationProfile === 'quality'
+                                                    ? "bg-purple-600 text-white border-purple-400 shadow-sm"
+                                                    : "bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-purple-400/60 shadow-2xs"
                                             )}
+                                            title="Sichtweise B: Auto Qualität (Historische Qualitätsbewertung KGV bis 25 für Wide-Moat Compounder)"
+                                        >
+                                            <Sparkles className={cn("size-3.5 shrink-0", !isSavedForStock && valuationProfile === 'quality' ? "text-white" : "text-purple-400")} />
+                                            <span className="truncate">Qualität (B)</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => applyAutoValues('risk')}
+                                            className={cn(
+                                                "flex items-center justify-center gap-1.5 text-xs px-2 py-1 rounded-lg transition-all whitespace-nowrap font-semibold border cursor-pointer active:scale-[0.98]",
+                                                !isSavedForStock && valuationProfile === 'risk'
+                                                    ? "bg-amber-600 text-white border-amber-400 shadow-sm"
+                                                    : "bg-card/80 hover:bg-card text-muted-foreground hover:text-foreground border-border hover:border-amber-400/60 shadow-2xs"
+                                            )}
+                                            title="Sichtweise C: Risiko-Abschlag (Dämpft Wachstum -25%, KGV max. 20, Sicherheitsmarge +10%)"
+                                        >
+                                            <TriangleAlert className={cn("size-3.5 shrink-0", !isSavedForStock && valuationProfile === 'risk' ? "text-white" : "text-amber-400")} />
+                                            <span className="truncate">Risiko-Abschlag (C)</span>
                                         </button>
                                     </div>
                                 </div>
