@@ -1909,14 +1909,14 @@ export function FairValueCalculator() {
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-mono">{quote.currency || 'USD'}</span>
                                     </div>
-                                    <div className="flex gap-3 mt-1 text-[11px] flex-wrap items-center">
+                                    <div className="flex gap-3 mt-1 text-[12px] flex-wrap items-center">
                                         <a
                                             href={`https://finance.yahoo.com/quote/${selectedSymbol}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="text-primary font-medium hover:underline flex items-center gap-1"
                                         >
-                                            <ExternalLink className="size-2.5" />
+                                            <ExternalLink className="size-3" />
                                             Yahoo Summary
                                         </a>
                                         <a
@@ -1926,7 +1926,7 @@ export function FairValueCalculator() {
                                             className="text-primary font-medium hover:underline flex items-center gap-1"
                                             title={quote?.isin ? "Suche via ISIN" : "Direkt zur Fundamentalanalyse"}
                                         >
-                                            <ExternalLink className="size-2.5" />
+                                            <ExternalLink className="size-3" />
                                             finanzen.ch
                                         </a>
                                         <a
@@ -1936,7 +1936,7 @@ export function FairValueCalculator() {
                                             className="text-primary font-medium hover:underline flex items-center gap-1"
                                             title="Raiffeisen Börse: Aktuelle Börsenkurse & globale Märkte"
                                         >
-                                            <ExternalLink className="size-2.5" />
+                                            <ExternalLink className="size-3" />
                                             Raiffeisen Börse
                                         </a>
                                     </div>
@@ -2042,7 +2042,7 @@ export function FairValueCalculator() {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-[11px]">
+                                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-[12px]">
                                         <a
                                             href={`https://finance.yahoo.com/quote/${selectedSymbol}/analysis`}
                                             target="_blank"
@@ -2088,7 +2088,7 @@ export function FairValueCalculator() {
                                     <div className="space-y-1">
                                         <label className="text-xs sm:text-sm font-medium flex justify-between">
                                             <span>Dividende</span>
-                                            <span className="text-[11px] text-muted-foreground font-light">Aktuell</span>
+                                            <span className="text-[12px] text-muted-foreground font-medium">Aktuell</span>
                                         </label>
                                         <div className="relative">
                                             <input
@@ -2109,7 +2109,7 @@ export function FairValueCalculator() {
                                     <div className="space-y-1">
                                         <label className="text-xs sm:text-sm font-medium flex justify-between">
                                             <span>Zielrendite</span>
-                                            <span className="text-[11px] text-muted-foreground font-light">MARR (8%)</span>
+                                            <span className="text-[12px] text-muted-foreground font-medium">MARR (8%)</span>
                                         </label>
                                         <div className="relative">
                                             <input
@@ -2233,7 +2233,7 @@ export function FairValueCalculator() {
                                         )}
                                     </div>
                                     {calculation.equivalentTerminalGrowth !== null && (
-                                        <div className="text-[10px] text-muted-foreground/85 mt-1 space-y-1 leading-snug">
+                                        <div className="text-[12px] text-muted-foreground/90 mt-1.5 space-y-1.5 leading-normal">
                                             <div className="flex items-start gap-1">
                                                 <span className="shrink-0 select-none">💡</span>
                                                 <div className="flex-1">
@@ -2277,7 +2277,7 @@ export function FairValueCalculator() {
                                     )}
 
                                     {/* Custom links for Fair Value / Valuation */}
-                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 pt-1.5 border-t border-border/40 text-[11px]">
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 pt-1.5 border-t border-border/40 text-[12px]">
                                         {(() => {
                                             const savedMap = selectedSymbol ? getSavedSymbolParams(selectedSymbol) : null;
                                             const fvLinks: any[] = currentStock?.fairValueQuickLinks && currentStock.fairValueQuickLinks.length > 0
@@ -2347,7 +2347,7 @@ export function FairValueCalculator() {
                                 <div className="fair-value-mos-box space-y-1 pt-1.5 mt-auto border-t border-border/50">
                                     <label className="text-xs sm:text-sm font-medium flex justify-between items-center">
                                         <span>Sicherheitsmarge</span>
-                                        <span className="text-[11px] text-muted-foreground font-light">
+                                        <span className="text-[12px] text-muted-foreground font-medium">
                                             {(() => {
                                                 const isCurrentEtf = isEtfAsset(currentStock, quote, selectedSymbol);
                                                 if (isCurrentEtf) {
@@ -2545,12 +2545,12 @@ export function FairValueCalculator() {
                                                 </div>
                                             </div>
 
-                                            {/* Fundamentale Abwärtsabsicherung / Risikoprofil - Gut lesbar in Mindestschriftgröße 13px */}
-                                            <div className="pt-2.5 border-t border-border/40 text-[13px] text-left leading-relaxed flex items-start gap-2 text-foreground">
-                                                <span className="text-base shrink-0 select-none mt-0.5">{downsideProtection.icon}</span>
+                                            {/* Fundamentale Abwärtsabsicherung / Risikoprofil - Einheitlich 12px */}
+                                            <div className="pt-2.5 border-t border-border/40 text-[12px] text-left leading-normal flex items-start gap-1.5 text-foreground">
+                                                <span className="text-sm shrink-0 select-none mt-0.5">{downsideProtection.icon}</span>
                                                 <div className="min-w-0 flex-1">
-                                                    <strong className="font-bold text-foreground mr-1.5 text-[13px]">{downsideProtection.title}:</strong>
-                                                    <span className="text-foreground/95 text-[13px]">{downsideProtection.text}</span>
+                                                    <strong className="font-bold text-foreground mr-1.5 text-[12px]">{downsideProtection.title}:</strong>
+                                                    <span className="text-foreground/95 text-[12px]">{downsideProtection.text}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -2975,7 +2975,7 @@ export function FairValueCalculator() {
                                                                     </span>
                                                                 )}
                                                             </div>
-                                                            <div className="text-[10.5px] text-muted-foreground leading-tight mt-0.5">
+                                                            <div className="text-[12px] text-muted-foreground leading-normal mt-0.5">
                                                                 {zone.description}
                                                             </div>
                                                         </div>
