@@ -2575,6 +2575,14 @@ export function FairValueCalculator() {
                                                     ? "text-purple-400"
                                                     : "text-blue-400";
 
+                                        const profileSubtextColor = isManualMode
+                                            ? "text-emerald-300/85"
+                                            : isRiskMode
+                                                ? "text-amber-300/85"
+                                                : isQualityMode
+                                                    ? "text-purple-300/85"
+                                                    : "text-blue-300/85";
+
                                         const profileBorderBg = isManualMode
                                             ? "border-emerald-500/35 bg-emerald-500/5"
                                             : isRiskMode
@@ -2622,7 +2630,7 @@ export function FairValueCalculator() {
                                                         )}
                                                     </div>
                                                 </div>
-                                                <p className="text-[11px] text-muted-foreground">
+                                                <p className={cn("text-[11px]", profileSubtextColor)}>
                                                     Innerer Wert heute ({discountRate}% Zielrendite + Dividenden)
                                                 </p>
                                                 {isYieldGap && (
@@ -2688,6 +2696,22 @@ export function FairValueCalculator() {
                                                     ? "text-purple-400"
                                                     : "text-blue-400";
 
+                                        const kaufpreisSubtextColor = isManualMode
+                                            ? "text-emerald-300/85"
+                                            : isRiskMode
+                                                ? "text-amber-300/85"
+                                                : isQualityMode
+                                                    ? "text-purple-300/85"
+                                                    : "text-blue-300/85";
+
+                                        const modeLabel = isSavedForStock
+                                            ? 'Manuell'
+                                            : valuationProfile === 'quality'
+                                                ? 'Qualität (B)'
+                                                : valuationProfile === 'risk'
+                                                    ? 'Risiko-Abschlag (C)'
+                                                    : 'Sicherheit (A)';
+
                                         return (
                                             <div className={cn(
                                                 "fair-value-kaufpreis-box p-2 sm:p-2.5 lg:py-1.5 lg:px-2.5 rounded-xl border-2 transition-all shadow-sm shrink-0",
@@ -2724,8 +2748,8 @@ export function FairValueCalculator() {
                                                         )}
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center justify-between flex-wrap gap-1 text-[11px] text-muted-foreground">
-                                                    <span>Maximales Limit inkl. {mos}% Sicherheitsmarge ({isSavedForStock ? 'Manuell' : valuationProfile === 'quality' ? 'Qualität B' : valuationProfile === 'risk' ? 'Risiko-Abschlag C' : 'Sicherheit A'})</span>
+                                                <div className="flex items-center justify-between flex-wrap gap-1 text-[11px]">
+                                                    <span className={cn("font-medium", kaufpreisSubtextColor)}>Maximales Limit inkl. {mos}% Sicherheitsmarge ({modeLabel})</span>
                                                     {quote?.price && calculation.buyPrice > 0 && (() => {
                                                         const activeLimit = (currentStock?.targetPrice && currentStock.targetPrice > 0)
                                                             ? currentStock.targetPrice
@@ -2778,7 +2802,7 @@ export function FairValueCalculator() {
                                                     )}>
                                                         <Check className="size-3" />
                                                         <span>
-                                                            Aktiv: {currentStock.targetPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency} {Math.abs(currentStock.targetPrice - calculation.buyPrice) < 0.01 ? (isSavedForStock ? 'Manuell' : valuationProfile === 'quality' ? 'Qualität B' : valuationProfile === 'risk' ? 'Risiko-Abschlag C' : 'Sicherheit A') : 'Eigenes Limit'}
+                                                            Aktiv: {currentStock.targetPrice.toFixed(2)} {quote.currency === 'GBp' ? 'GBP' : quote.currency} {Math.abs(currentStock.targetPrice - calculation.buyPrice) < 0.01 ? modeLabel : 'Eigenes Limit'}
                                                         </span>
                                                     </span>
                                                 ) : null}
