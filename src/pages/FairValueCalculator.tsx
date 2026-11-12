@@ -2406,32 +2406,49 @@ export function FairValueCalculator() {
                                         Bewertung
                                     </h2>
 
-                                    {/* Traffic Light Badge (Abgerundetes Quadrat) */}
-                                    <div className={cn(
-                                        "fair-value-circle fair-value-badge relative w-40 sm:w-48 lg:w-44 xl:w-52 py-2 px-3 sm:py-2.5 sm:px-4 rounded-2xl flex flex-col items-center justify-center border-2 shadow-md transition-all duration-500 text-center",
-                                        isUndervalued
-                                            ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-emerald-500/20"
-                                            : isFairHold
-                                                ? "bg-yellow-500/10 border-yellow-500 text-yellow-500 shadow-yellow-500/20"
-                                                : isRichHold
-                                                    ? "bg-amber-500/10 border-amber-500 text-amber-500 shadow-amber-500/20"
-                                                    : "bg-red-500/10 border-red-500 text-red-500 shadow-red-500/20"
-                                    )}>
-                                        <div className="flex flex-col items-center justify-center w-full">
-                                            <div className="text-sm sm:text-base lg:text-base xl:text-lg font-black leading-tight whitespace-nowrap tabular-nums">
-                                                {formatCurrency(currentPrice, quote.currency, false)}
+                                    {/* Traffic Light Badge (Abgerundetes Quadrat) mit Tooltip zu den Bewertungs-Korridoren */}
+                                    {(() => {
+                                        const ratingTooltip = `Bewertung & Korridore:\n• Grün (KAUFEN): Kurs liegt unter Kauflimit (inkl. Sicherheitsmarge)\n• Gelb (HOLD): Bis zu +12 % über fairem Wert (Fair bewertet – Bestände halten)\n• Orange (HOLD): +12 % bis +45 % über fairem Wert (Hoch bewertet)\n• Rot (TEUER): Mehr als +45 % über fairem Wert (Überbewertet)\n\nAktueller Status:\n${
+                                            isUndervalued
+                                                ? 'KAUFEN (Unterbewertet) – Kurs liegt unter dem Kauflimit mit attraktiver Sicherheitsmarge.'
+                                                : isFairHold
+                                                    ? 'HOLD (Fair bewertet) – Kurs bewegt sich im Korridor bis +12 % über dem fairen Wert (Bestände entspannt halten).'
+                                                    : isRichHold
+                                                        ? 'HOLD (Hoch bewertet) – Kurs liegt zwischen +12 % und +45 % über dem fairen Wert (Bestände halten, kein Neukauf).'
+                                                        : 'TEUER (Überbewertet) – Kurs liegt mehr als +45 % über dem fairen Wert (hohes Korrekturrisiko).'
+                                        }`;
+
+                                        return (
+                                            <div
+                                                className={cn(
+                                                    "fair-value-circle fair-value-badge relative w-40 sm:w-48 lg:w-44 xl:w-52 py-2 px-3 sm:py-2.5 sm:px-4 rounded-2xl flex flex-col items-center justify-center border-2 shadow-md transition-all duration-500 text-center cursor-help",
+                                                    isUndervalued
+                                                        ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-emerald-500/20"
+                                                        : isFairHold
+                                                            ? "bg-yellow-500/10 border-yellow-500 text-yellow-500 shadow-yellow-500/20"
+                                                            : isRichHold
+                                                                ? "bg-amber-500/10 border-amber-500 text-amber-500 shadow-amber-500/20"
+                                                                : "bg-red-500/10 border-red-500 text-red-500 shadow-red-500/20"
+                                                )}
+                                                title={ratingTooltip}
+                                            >
+                                                <div className="flex flex-col items-center justify-center w-full">
+                                                    <div className="text-sm sm:text-base lg:text-base xl:text-lg font-black leading-tight whitespace-nowrap tabular-nums">
+                                                        {formatCurrency(currentPrice, quote.currency, false)}
+                                                    </div>
+                                                    <div className="text-[10px] sm:text-xs font-semibold opacity-85 leading-tight mb-1 sm:mb-1.5">
+                                                        Aktueller Kurs
+                                                    </div>
+                                                    <div className="text-xs sm:text-sm font-black tracking-wider uppercase opacity-90 leading-tight">
+                                                        {isUndervalued ? 'KAUFEN' : (isFairHold || isRichHold) ? 'HOLD' : 'TEUER'}
+                                                    </div>
+                                                    <div className="text-[10px] sm:text-xs font-bold tracking-tight opacity-75 mt-0.5 leading-tight">
+                                                        {isUndervalued ? 'Unterbewertet' : isFairHold ? 'Fair bewertet' : isRichHold ? 'Hoch bewertet' : 'Überbewertet'}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="text-[10px] sm:text-xs font-semibold opacity-85 leading-tight mb-1 sm:mb-1.5">
-                                                Aktueller Kurs
-                                            </div>
-                                            <div className="text-xs sm:text-sm font-black tracking-wider uppercase opacity-90 leading-tight">
-                                                {isUndervalued ? 'KAUFEN' : (isFairHold || isRichHold) ? 'HOLD' : 'TEUER'}
-                                            </div>
-                                            <div className="text-[10px] sm:text-xs font-bold tracking-tight opacity-75 mt-0.5 leading-tight">
-                                                {isUndervalued ? 'Unterbewertet' : isFairHold ? 'Fair bewertet' : isRichHold ? 'Hoch bewertet' : 'Überbewertet'}
-                                            </div>
-                                        </div>
-                                    </div>
+                                        );
+                                    })()}
                                 </div>
 
                                 {/* DeltaValue Style Bewertung Card */}
