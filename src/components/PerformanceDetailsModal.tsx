@@ -255,11 +255,11 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
     return createPortal(
         <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center md:items-start justify-center p-2 sm:p-4 md:pt-6 lg:pt-8 md:pb-6 iphone-modal-overlay"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center md:items-start justify-center p-2 sm:p-4 md:pt-2.5 lg:pt-3 md:pb-2 iphone-modal-overlay"
             onClick={onClose}
         >
             <div
-                className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-[96vw] md:max-w-5xl lg:max-w-6xl xl:max-w-7xl md:h-[88vh] max-h-[96vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10 overflow-hidden iphone-modal-shell"
+                className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-[96vw] md:max-w-5xl lg:max-w-6xl xl:max-w-7xl md:h-[95vh] max-h-[97vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10 overflow-hidden iphone-modal-shell"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card z-10 iphone-modal-header-card">
@@ -346,10 +346,10 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
                 <div className="flex flex-col flex-1 min-h-0 overflow-hidden iphone-modal-body-card iphone-modal-body-flush">
                 {/* Summary Totals */}
-                <div className="grid grid-cols-2 gap-2 p-2.5 sm:gap-3 sm:p-3 bg-muted/20 border-b border-border shrink-0">
-                    <div className="bg-card py-2.5 px-2.5 sm:p-3 sm:px-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between">
+                <div className="grid grid-cols-2 gap-2 p-2 sm:gap-2.5 sm:p-2.5 md:py-2 md:px-3 bg-muted/20 border-b border-border shrink-0">
+                    <div className="bg-card py-2 px-2.5 sm:py-2 sm:px-3 rounded-lg border border-border shadow-sm flex flex-col justify-between">
                         <div className="flex items-center justify-between mb-1 gap-1.5 flex-wrap min-h-[1.75rem]">
-                            <span className="text-[13px] sm:text-base text-white font-semibold tracking-tight whitespace-nowrap">Tages-Performance</span>
+                            <span className="text-[13px] sm:text-base text-foreground font-semibold tracking-tight whitespace-nowrap">Tages-Performance</span>
                             {isAnyActiveToday ? (
                                 <div className="inline-flex items-center bg-secondary/80 p-0.5 rounded-md border border-border text-[10px] sm:text-xs font-bold tabular-nums shadow-xs">
                                     <button
@@ -403,9 +403,9 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                             </span>
                         </div>
                     </div>
-                    <div className="bg-card py-2.5 px-2.5 sm:p-3 sm:px-3.5 rounded-lg border border-border shadow-sm flex flex-col justify-between items-end text-right">
+                    <div className="bg-card py-2 px-2.5 sm:py-2 sm:px-3 rounded-lg border border-border shadow-sm flex flex-col justify-between items-end text-right">
                         <div className="flex items-center justify-end mb-1 gap-1.5 flex-wrap w-full min-h-[1.75rem]">
-                            <span className="text-[13px] sm:text-base text-white font-semibold tracking-tight whitespace-nowrap">Gesamt-Performance</span>
+                            <span className="text-[13px] sm:text-base text-foreground font-semibold tracking-tight whitespace-nowrap">Gesamt-Performance</span>
                             <span className="text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100 bg-secondary/80 border border-border px-1.5 py-0.5 rounded-md tabular-nums whitespace-nowrap shadow-xs">
                                 {isViewingYesterday ? `Seit Kauf per ${yesterdayDateLabel} Schlusskurs` : `Seit Kauf Live ${todayDateLabel}`}
                             </span>
@@ -694,14 +694,14 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         className="hover:bg-muted/30 transition-colors cursor-pointer group border-b border-border/50 snap-start snap-always h-[60px] md:h-auto"
                                     >
                                         {/* 0. Aktie / ETF */}
-                                        <td className="px-3 py-1.5 md:py-2.5 md:px-4 h-[60px] md:h-auto font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[280px] md:min-w-[260px] lg:w-[340px] lg:min-w-[320px] md:max-w-none overflow-hidden touch-pan-y align-middle">
+                                        <td className="px-3 py-1.5 md:py-1.5 md:px-4 h-[60px] md:h-auto font-medium sticky left-0 z-10 group-hover:bg-muted/30 transition-colors shadow-[5px_0_5px_-5px_rgba(0,0,0,0.1)] w-[170px] min-w-[170px] max-w-[170px] md:w-[280px] md:min-w-[260px] lg:w-[340px] lg:min-w-[320px] md:max-w-none overflow-hidden touch-pan-y align-middle">
                                             <div className="absolute inset-0 bg-card -z-10" />
                                             <div className="flex items-center gap-2 md:gap-3 relative">
                                                 <Logo
                                                     url={p.stock.logoUrl}
                                                     alt={p.stock.name}
                                                     fallback={p.stock.symbol.slice(0, 2)}
-                                                    size="size-8 md:size-10"
+                                                    size="size-8 md:size-8"
                                                 />
                                                 <div className="flex flex-col min-w-0 flex-1 justify-center">
                                                     <span
@@ -725,7 +725,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 1. Current Price (Original currency only) */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-2.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-medium whitespace-nowrap align-middle md:w-[90px] lg:w-[100px]",
+                                                "px-3 py-1.5 md:py-1.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-medium whitespace-nowrap align-middle md:w-[90px] lg:w-[100px]",
                                                 mobileColIndex === 0 ? "table-cell" : "hidden md:table-cell"
                                             )}
                                         >
@@ -737,7 +737,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 2. Daily Performance % */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-2.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[105px] lg:w-[115px]",
+                                                "px-3 py-1.5 md:py-1.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[105px] lg:w-[115px]",
                                                 mobileColIndex === 1 ? "table-cell" : "hidden md:table-cell",
                                                 isWaitingForOpen
                                                     ? "text-muted-foreground/60 dark:text-slate-500"
@@ -755,7 +755,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 3. Daily Performance CHF */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-2.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[120px] lg:w-[130px]",
+                                                "px-3 py-1.5 md:py-1.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[120px] lg:w-[130px]",
                                                 mobileColIndex === 2 ? "table-cell" : "hidden md:table-cell",
                                                 isWaitingForOpen
                                                     ? "text-muted-foreground/60 dark:text-slate-500"
@@ -776,7 +776,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 4. Total Performance % */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-2.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[110px] lg:w-[120px]",
+                                                "px-3 py-1.5 md:py-1.5 md:px-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[110px] lg:w-[120px]",
                                                 mobileColIndex === 3 ? "table-cell" : "hidden md:table-cell",
                                                 isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
                                             )}
@@ -787,7 +787,7 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
                                         {/* 5. Total Performance CHF */}
                                         <td
                                             className={cn(
-                                                "px-3 py-1.5 md:py-2.5 md:pr-4 md:pl-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[140px] lg:w-[155px]",
+                                                "px-3 py-1.5 md:py-1.5 md:pr-4 md:pl-2 h-[60px] md:h-auto text-center md:text-right font-bold text-sm whitespace-nowrap align-middle md:w-[140px] lg:w-[155px]",
                                                 mobileColIndex === 4 ? "table-cell" : "hidden md:table-cell",
                                                 isTotalPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-[#ff3b30]"
                                             )}
