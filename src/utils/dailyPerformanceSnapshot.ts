@@ -75,12 +75,14 @@ export function saveYesterdaySnapshot(snapshot: DailyPerformanceSnapshot): void 
 }
 
 /**
- * Loads the last closing snapshot from the PREVIOUS trading day.
- * Ensures that today's date is NEVER returned as yesterday's snapshot.
+ * Loads the closing snapshot from the PREVIOUS trading day.
+ * Strictly verifies that the snapshot matches the previous trading date.
+ * If no snapshot exists for that date (or is older), returns null.
  */
 export function loadYesterdaySnapshot(now: Date = new Date()): DailyPerformanceSnapshot | null {
     try {
-        const todayKey = getLocalDateKey(now);
+        const prevTradingDate = getPreviousTradingDate(now);
+        const expectedPrevKey = getLocalDateKey(prevTradingDate);
         const rawLatest = localStorage.getItem(STORAGE_KEY_LATEST);
         let latest: DailyPerformanceSnapshot | null = null;
         if (rawLatest) {
@@ -91,20 +93,18 @@ export function loadYesterdaySnapshot(now: Date = new Date()): DailyPerformanceS
             }
         }
 
-        // If latest snapshot is strictly from before today, it is indeed yesterday's closing snapshot!
-        if (latest && latest.dateKey && latest.dateKey < todayKey) {
+        // If latest snapshot matches the previous trading date, return it!
+        if (latest && latest.dateKey === expectedPrevKey) {
             return latest;
         }
 
-        // If latest was stored with today's date (or missing), search history for the newest snapshot BEFORE today
+        // Check history for the previous trading date snapshot
         const rawHistory = localStorage.getItem(STORAGE_KEY_HISTORY);
         if (rawHistory) {
             try {
                 const history: Record<string, DailyPerformanceSnapshot> = JSON.parse(rawHistory);
-                const pastKeys = Object.keys(history).filter(k => k < todayKey).sort();
-                if (pastKeys.length > 0) {
-                    const bestKey = pastKeys[pastKeys.length - 1];
-                    return history[bestKey];
+                if (history[expectedPrevKey]) {
+                    return history[expectedPrevKey];
                 }
             } catch {
                 // ignore

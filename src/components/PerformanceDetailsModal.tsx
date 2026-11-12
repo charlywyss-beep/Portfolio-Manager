@@ -116,29 +116,8 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
         : new Date();
     const todayDateLabel = formatDate2Digit(new Date());
     const prevTradingDate = getPreviousTradingDate(new Date());
-    const fallbackYesterdayLabel = formatDate2Digit(prevTradingDate);
-
-    // Format snapshot date with 2-digit year (e.g. '10.11.26')
-    let formattedSnapshotLabel: string | null = null;
-    if (yesterdaySnapshot?.dateKey) {
-        try {
-            const parts = yesterdaySnapshot.dateKey.split('-');
-            if (parts.length === 3) {
-                const yr = parts[0].slice(-2);
-                formattedSnapshotLabel = `${parts[2]}.${parts[1]}.${yr}`;
-            }
-        } catch {
-            // ignore
-        }
-    }
-
-    // Ensure yesterdayDateLabel is strictly from a past day and NEVER equal to today
-    let yesterdayDateLabel = (formattedSnapshotLabel && formattedSnapshotLabel !== todayDateLabel)
-        ? formattedSnapshotLabel
-        : fallbackYesterdayLabel;
-    if (yesterdayDateLabel === todayDateLabel) {
-        yesterdayDateLabel = fallbackYesterdayLabel;
-    }
+    // The previous trading date (e.g. 11.11.26) is always the strict target for the yesterday view
+    const yesterdayDateLabel = formatDate2Digit(prevTradingDate);
 
     const fullDateLabel = effectiveDate.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
     const isViewingYesterday = isAnyActiveToday && viewMode === 'yesterday';
@@ -265,11 +244,11 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
         onClose();
     };
 
-    const displayedDailyGain = isViewingYesterday && yesterdaySnapshot
-        ? yesterdaySnapshot.totalDailyGainCHF
+    const displayedDailyGain = isViewingYesterday
+        ? (yesterdaySnapshot ? yesterdaySnapshot.totalDailyGainCHF : 0)
         : totalDailyGain;
-    const displayedDailyGainPercent = isViewingYesterday && yesterdaySnapshot
-        ? yesterdaySnapshot.totalDailyGainPercent
+    const displayedDailyGainPercent = isViewingYesterday
+        ? (yesterdaySnapshot ? yesterdaySnapshot.totalDailyGainPercent : 0)
         : totalDailyGainPercent;
 
     return createPortal(
