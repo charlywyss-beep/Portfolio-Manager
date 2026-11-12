@@ -78,11 +78,20 @@ const getStockLimits = (stock: any) => {
     }
 
     let manualLimit: number | null = null;
-    let activeType: 'limitA' | 'limitB' | 'manual' | null = null;
+    let activeType: 'limitA' | 'limitB' | 'limitC' | 'manual' | null = null;
 
     if (stock.targetPrice && stock.targetPrice > 0) {
         const tp = parseFloat(stock.targetPrice.toFixed(2));
-        if (activeParams?.isCustom) {
+        if (stock.targetPriceType === 'risk') {
+            activeType = 'limitC';
+        } else if (stock.targetPriceType === 'quality') {
+            activeType = 'limitB';
+        } else if (stock.targetPriceType === 'conservative') {
+            activeType = 'limitA';
+        } else if (stock.targetPriceType === 'manual') {
+            activeType = 'manual';
+            manualLimit = tp;
+        } else if (activeParams?.isCustom) {
             activeType = 'manual';
             manualLimit = tp;
         } else if (limitA !== null && Math.abs(tp - limitA) < 0.05) {
@@ -93,6 +102,8 @@ const getStockLimits = (stock: any) => {
             activeType = 'limitB';
         } else if (activeParams?.valuationMode === 'conservative') {
             activeType = 'limitA';
+        } else if (activeParams?.valuationMode === 'risk') {
+            activeType = 'limitC';
         } else {
             activeType = 'manual';
             manualLimit = tp;
@@ -2170,14 +2181,18 @@ export function DividendCalculator() {
                                                             ? "text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30"
                                                             : limits.activeType === 'limitB'
                                                                 ? "text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30"
-                                                                : "text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30"
+                                                                : limits.activeType === 'limitC'
+                                                                    ? "text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30"
+                                                                    : "text-pink-400 bg-pink-500/10 hover:bg-pink-500/20 border-pink-500/30"
                                                     )}
                                                     title={
                                                         limits.activeType === 'limitA'
                                                             ? "Kauflimit A (Sicherheit) als Kaufpreis übernehmen"
                                                             : limits.activeType === 'limitB'
                                                                 ? "Kauflimit B (Qualität) als Kaufpreis übernehmen"
-                                                                : "Manuelles Kauflimit als Kaufpreis übernehmen"
+                                                                : limits.activeType === 'limitC'
+                                                                    ? "Kauflimit C (Risiko-Abschlag) als Kaufpreis übernehmen"
+                                                                    : "Manuelles Kauflimit als Kaufpreis übernehmen"
                                                     }
                                                 >
                                                     <Target className={cn(
@@ -2186,14 +2201,18 @@ export function DividendCalculator() {
                                                             ? "text-blue-400"
                                                             : limits.activeType === 'limitB'
                                                                 ? "text-purple-400"
-                                                                : "text-emerald-400"
+                                                                : limits.activeType === 'limitC'
+                                                                    ? "text-amber-400"
+                                                                    : "text-pink-400"
                                                     )} />
                                                     <span>
                                                         {limits.activeType === 'limitA'
                                                             ? `Kauflimit A übernehmen : ${stock.targetPrice.toFixed(2)} ${limitCurr}`
                                                             : limits.activeType === 'limitB'
                                                                 ? `Kauflimit B übernehmen : ${stock.targetPrice.toFixed(2)} ${limitCurr}`
-                                                                : `Kauflimit (Manuell) übernehmen : ${stock.targetPrice.toFixed(2)} ${limitCurr}`}
+                                                                : limits.activeType === 'limitC'
+                                                                    ? `Kauflimit C übernehmen : ${stock.targetPrice.toFixed(2)} ${limitCurr}`
+                                                                    : `Kauflimit (Manuell) übernehmen : ${stock.targetPrice.toFixed(2)} ${limitCurr}`}
                                                     </span>
                                                 </button>
                                             ) : null}

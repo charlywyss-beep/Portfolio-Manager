@@ -963,6 +963,12 @@ export function StockDetail() {
                             symKey,
                             'quality'
                         );
+                        const smartAutoRisk = {
+                            ...smartAutoConservative,
+                            growthRate: Math.max(3, parseFloat((smartAutoConservative.growthRate * 0.75).toFixed(1))),
+                            pe: Math.min(20, Math.max(8, parseFloat((smartAutoConservative.pe * 0.8).toFixed(1)))),
+                            mos: Math.max(25, Math.min(50, smartAutoConservative.mos + 10))
+                        };
 
                         const isManualFv = Boolean(activeParams?.isCustom);
                         const currentValuationMode: 'conservative' | 'quality' = activeParams?.valuationMode === 'quality' ? 'quality' : 'conservative';
@@ -1003,8 +1009,27 @@ export function StockDetail() {
                             mosPct = dcf.mos;
                         }
 
-                        const isCustomLimit = Boolean(stock.targetPrice && (calcBuyPrice === null || Math.abs(stock.targetPrice - calcBuyPrice) >= 0.01));
-                        const isModelLimit = Boolean(stock.targetPrice && calcBuyPrice !== null && Math.abs(stock.targetPrice - calcBuyPrice) < 0.01);
+                        const dcfRisk = calculateDcfFairValue(smartAutoRisk, effectivePrice);
+                        const dcfQuality = calculateDcfFairValue(smartAutoQuality, effectivePrice);
+                        const dcfCons = calculateDcfFairValue(smartAutoConservative, effectivePrice);
+
+                        const savedTargetPriceType = (stock as any).targetPriceType;
+                        let resolvedTargetType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
+                        if (savedTargetPriceType) {
+                            resolvedTargetType = savedTargetPriceType;
+                        } else if (stock.targetPrice && stock.targetPrice > 0) {
+                            if (Math.abs(stock.targetPrice - dcfRisk.buyPrice) < 0.05) {
+                                resolvedTargetType = 'risk';
+                            } else if (Math.abs(stock.targetPrice - dcfQuality.buyPrice) < 0.05) {
+                                resolvedTargetType = 'quality';
+                            } else if (Math.abs(stock.targetPrice - dcfCons.buyPrice) < 0.05) {
+                                resolvedTargetType = 'conservative';
+                            } else if (effectiveFairValue > 0 && Math.abs(stock.targetPrice - effectiveFairValue) < 0.05) {
+                                resolvedTargetType = 'fairValue';
+                            } else {
+                                resolvedTargetType = 'manual';
+                            }
+                        }
 
                         const handleToggleFvMode = (e: React.MouseEvent) => {
                             e.stopPropagation();
@@ -1126,35 +1151,42 @@ export function StockDetail() {
                                 <div className="flex justify-between items-center py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
                                     <div className="flex items-center gap-1.5 flex-wrap">
                                         <span className="text-muted-foreground">Kauflimit</span>
-                                        {isCustomLimit && (
-                                            <span className="text-[10px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 rounded shadow-xs">
-                                                Eigenes Limit
-                                            </span>
-                                        )}
-                                        {isModelLimit && (
+                                        {stock.targetPrice ? (
                                             <span className={cn(
                                                 "text-[10px] font-semibold px-1.5 py-0.5 rounded border shadow-xs",
-                                                currentMode === 'quality'
-                                                    ? "text-purple-800 dark:text-purple-300 bg-purple-500/15 border-purple-500/30"
-                                                    : currentMode === 'conservative'
-                                                        ? "text-blue-800 dark:text-blue-300 bg-blue-500/15 border-blue-500/30"
-                                                        : "text-emerald-800 dark:text-emerald-300 bg-emerald-500/15 border-emerald-500/30"
+                                                resolvedTargetType === 'risk'
+                                                    ? "text-amber-800 dark:text-amber-300 bg-amber-500/15 border-amber-500/30"
+                                                    : resolvedTargetType === 'quality'
+                                                        ? "text-purple-800 dark:text-purple-300 bg-purple-500/15 border-purple-500/30"
+                                                        : resolvedTargetType === 'conservative'
+                                                            ? "text-blue-800 dark:text-blue-300 bg-blue-500/15 border-blue-500/30"
+                                                            : resolvedTargetType === 'fairValue'
+                                                                ? "text-blue-800 dark:text-blue-300 bg-blue-500/15 border-blue-500/30"
+                                                                : "text-pink-800 dark:text-pink-300 bg-pink-500/15 border-pink-500/30"
                                             )}>
-                                                {currentMode === 'quality' ? 'Qualität B' : currentMode === 'conservative' ? 'Sicherheit A' : 'Manuell'}
+                                                {resolvedTargetType === 'risk'
+                                                    ? 'Risiko-Abschlag (C)'
+                                                    : resolvedTargetType === 'quality'
+                                                        ? 'Qualität B'
+                                                        : resolvedTargetType === 'conservative'
+                                                            ? 'Sicherheit A'
+                                                            : resolvedTargetType === 'fairValue'
+                                                                ? 'Fairer Wert'
+                                                                : 'Eigenes Limit'}
                                             </span>
-                                        )}
+                                        ) : null}
                                     </div>
                                     <span className={cn(
                                         "font-medium tabular-nums",
-                                        isCustomLimit
+                                        resolvedTargetType === 'risk'
                                             ? "text-amber-700 dark:text-amber-400 font-semibold"
-                                            : isModelLimit
-                                                ? currentMode === 'quality'
-                                                    ? "text-purple-700 dark:text-purple-400 font-semibold"
-                                                    : currentMode === 'conservative'
+                                            : resolvedTargetType === 'quality'
+                                                ? "text-purple-700 dark:text-purple-400 font-semibold"
+                                                : resolvedTargetType === 'conservative'
+                                                    ? "text-blue-700 dark:text-blue-400 font-semibold"
+                                                    : resolvedTargetType === 'fairValue'
                                                         ? "text-blue-700 dark:text-blue-400 font-semibold"
-                                                        : "text-emerald-700 dark:text-emerald-400 font-semibold"
-                                                : ""
+                                                        : "text-pink-700 dark:text-pink-400 font-semibold"
                                     )}>
                                         {stock.targetPrice ? formatCurrency(stock.targetPrice, stock.currency, false) : '-'}
                                     </span>

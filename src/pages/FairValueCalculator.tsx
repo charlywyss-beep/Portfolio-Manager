@@ -207,10 +207,21 @@ export function FairValueCalculator() {
         }
     }, [currentStock?.id, currentStock?.targetPrice, selectedSymbol]);
 
-    const handleSaveBuyLimit = (valToSave?: string) => {
+    const handleSaveBuyLimit = (valToSave?: string, explicitSource?: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual') => {
         const raw = valToSave !== undefined ? valToSave : buyLimitInput;
         const parsed = parseFloat(raw.replace(',', '.'));
         const newLimit = !isNaN(parsed) && parsed > 0 ? parsed : undefined;
+
+        let resolvedType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = explicitSource || 'manual';
+        if (!explicitSource && newLimit) {
+            if (Math.abs(newLimit - calculation.buyPrice) < 0.01) {
+                resolvedType = valuationProfile;
+            } else if (Math.abs(newLimit - calculation.fairValue) < 0.01) {
+                resolvedType = 'fairValue';
+            } else {
+                resolvedType = 'manual';
+            }
+        }
 
         let stockId = currentStock?.id;
         if (!stockId && selectedSymbol) {
@@ -222,11 +233,13 @@ export function FairValueCalculator() {
                 currency: quote?.currency || 'USD',
                 sector: quote?.sector || 'Allgemein',
                 targetPrice: newLimit,
+                targetPriceType: newLimit ? resolvedType : undefined,
                 fairValue: calculation.fairValue
             });
         } else if (stockId) {
             updateStock(stockId, {
                 targetPrice: newLimit,
+                targetPriceType: newLimit ? resolvedType : undefined,
                 fairValue: calculation.fairValue
             });
         }
@@ -239,6 +252,7 @@ export function FairValueCalculator() {
                 map[key] = {
                     ...map[key],
                     targetPrice: newLimit,
+                    targetPriceType: newLimit ? resolvedType : undefined,
                     fairValue: calculation.fairValue
                 };
                 localStorage.setItem('fair_value_params_map', JSON.stringify(map));
@@ -2429,11 +2443,28 @@ export function FairValueCalculator() {
                                         : calculation.buyPrice;
                                     const isMatchingBuyPrice = Math.abs(activeLimit - calculation.buyPrice) < 0.01;
                                     const isMatchingFairValue = Math.abs(activeLimit - calculation.fairValue) < 0.01;
-                                    const limitName = isMatchingBuyPrice
-                                        ? 'Kauflimit'
-                                        : isMatchingFairValue
-                                            ? 'Fairem Wert'
-                                            : 'eigenem Limit';
+
+                                    const savedType = currentStock?.targetPriceType;
+                                    let effectiveLimitType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
+                                    if (savedType) {
+                                        effectiveLimitType = savedType;
+                                    } else if (isMatchingBuyPrice) {
+                                        effectiveLimitType = valuationProfile;
+                                    } else if (isMatchingFairValue) {
+                                        effectiveLimitType = 'fairValue';
+                                    } else {
+                                        effectiveLimitType = 'manual';
+                                    }
+
+                                    const limitName = effectiveLimitType === 'manual'
+                                        ? 'eigenem Limit'
+                                        : effectiveLimitType === 'risk'
+                                            ? 'Kauflimit (C)'
+                                            : effectiveLimitType === 'quality'
+                                                ? 'Kauflimit (B)'
+                                                : effectiveLimitType === 'conservative'
+                                                    ? 'Kauflimit (A)'
+                                                    : 'fairem Wert';
                                     const limitDiffPct = activeLimit > 0 ? ((curP - activeLimit) / activeLimit) * 100 : 0;
 
                                     return (
@@ -2465,9 +2496,12 @@ export function FairValueCalculator() {
                                                     </span>
                                                 </div>
 
-                                                {/* 2. Zeile direkt darunter: Abstand zum Limit (gleich groß, in Grün) */}
+                                                {/* 2. Zeile direkt darunter: Abstand zum Limit (gleich groß, Signal-Farben: Rot wenn über Limit, Grün wenn unter Limit) */}
                                                 {activeLimit > 0 && !isMatchingFairValue && (
-                                                    <div className="text-base sm:text-lg font-black font-mono tracking-tight text-emerald-400 flex items-baseline justify-center gap-1.5 flex-wrap mt-0.5">
+                                                    <div className={cn(
+                                                        "text-base sm:text-lg font-black font-mono tracking-tight flex items-baseline justify-center gap-1.5 flex-wrap mt-0.5",
+                                                        limitDiffPct > 0 ? "text-rose-400" : "text-emerald-400"
+                                                    )}>
                                                         <span>{limitDiffPct > 0 ? `+${limitDiffPct.toFixed(1)}%` : `${limitDiffPct.toFixed(1)}%`}</span>
                                                         <span className="text-sm sm:text-base font-bold font-sans tracking-normal opacity-90">
                                                             {limitDiffPct >= 0 ? `über ${limitName}` : `unter ${limitName}`}
@@ -2576,7 +2610,7 @@ export function FairValueCalculator() {
                                         const isManualMode = isSavedForStock;
 
                                         const profileColor = isManualMode
-                                            ? "text-emerald-400"
+                                            ? "text-pink-400"
                                             : isRiskMode
                                                 ? "text-amber-400"
                                                 : isQualityMode
@@ -2584,7 +2618,7 @@ export function FairValueCalculator() {
                                                     : "text-blue-400";
 
                                         const profileSubtextColor = isManualMode
-                                            ? "text-emerald-300/85"
+                                            ? "text-pink-300/85"
                                             : isRiskMode
                                                 ? "text-amber-300/85"
                                                 : isQualityMode
@@ -2592,7 +2626,7 @@ export function FairValueCalculator() {
                                                     : "text-blue-300/85";
 
                                         const profileBorderBg = isManualMode
-                                            ? "border-emerald-500/35 bg-emerald-500/5"
+                                            ? "border-pink-500/35 bg-pink-500/5"
                                             : isRiskMode
                                                 ? "border-amber-500/40 bg-amber-500/10"
                                                 : isQualityMode
@@ -2618,12 +2652,12 @@ export function FairValueCalculator() {
                                                                 onClick={() => {
                                                                     const val = calculation.fairValue.toFixed(2);
                                                                     setBuyLimitInput(val);
-                                                                    handleSaveBuyLimit(val);
+                                                                    handleSaveBuyLimit(val, 'fairValue');
                                                                 }}
                                                                 className={cn(
                                                                     "px-2 py-0.5 text-[11px] font-semibold rounded-md border transition-all flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer whitespace-nowrap",
                                                                     isManualMode
-                                                                        ? "bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border-emerald-400/30"
+                                                                        ? "bg-pink-600/20 hover:bg-pink-600/35 text-pink-300 border-pink-400/30"
                                                                         : isRiskMode
                                                                             ? "bg-amber-600/20 hover:bg-amber-600/35 text-amber-300 border-amber-400/30"
                                                                             : isQualityMode
@@ -2657,7 +2691,7 @@ export function FairValueCalculator() {
                                         const isManualMode = isSavedForStock;
 
                                         const kaufpreisTextColor = isManualMode
-                                            ? "text-emerald-400"
+                                            ? "text-pink-400"
                                             : isRiskMode
                                                 ? "text-amber-400"
                                                 : isQualityMode
@@ -2665,47 +2699,23 @@ export function FairValueCalculator() {
                                                     : "text-blue-400";
 
                                         const kaufpreisBorderBg = isManualMode
-                                            ? "border-emerald-500 bg-emerald-500/5"
+                                            ? "border-pink-500 bg-pink-500/5"
                                             : isRiskMode
                                                 ? "border-amber-500 bg-amber-500/10"
                                                 : isQualityMode
                                                     ? "border-purple-500 bg-purple-500/5"
                                                     : "border-blue-500 bg-blue-500/5";
 
-                                        const kaufpreisTargetIconColor = isManualMode
-                                            ? "text-emerald-400"
-                                            : isRiskMode
-                                                ? "text-amber-400"
-                                                : isQualityMode
-                                                    ? "text-purple-400"
-                                                    : "text-blue-500";
-
-                                        const kaufpreisSaveBtnColor = isManualMode
-                                            ? "bg-emerald-600 hover:bg-emerald-500"
-                                            : isRiskMode
-                                                ? "bg-amber-600 hover:bg-amber-500"
-                                                : isQualityMode
-                                                    ? "bg-purple-600 hover:bg-purple-500"
-                                                    : "bg-blue-600 hover:bg-blue-500";
-
                                         const kaufpreisQuickBtnColor = isManualMode
-                                            ? "bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border-emerald-400/30"
+                                            ? "bg-pink-600/20 hover:bg-pink-600/35 text-pink-300 border-pink-400/30"
                                             : isRiskMode
                                                 ? "bg-amber-600/20 hover:bg-amber-600/35 text-amber-300 border-amber-400/30"
                                                 : isQualityMode
                                                     ? "bg-purple-600/20 hover:bg-purple-600/35 text-purple-300 border-purple-400/30"
                                                     : "bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border-blue-400/30";
 
-                                        const kaufpreisActiveTextColor = isManualMode
-                                            ? "text-emerald-400"
-                                            : isRiskMode
-                                                ? "text-amber-400"
-                                                : isQualityMode
-                                                    ? "text-purple-400"
-                                                    : "text-blue-400";
-
                                         const kaufpreisSubtextColor = isManualMode
-                                            ? "text-emerald-300/85"
+                                            ? "text-pink-300/85"
                                             : isRiskMode
                                                 ? "text-amber-300/85"
                                                 : isQualityMode
@@ -2742,7 +2752,7 @@ export function FairValueCalculator() {
                                                                 onClick={() => {
                                                                     const val = calculation.buyPrice.toFixed(2);
                                                                     setBuyLimitInput(val);
-                                                                    handleSaveBuyLimit(val);
+                                                                    handleSaveBuyLimit(val, valuationProfile);
                                                                 }}
                                                                 className={cn(
                                                                     "px-2 py-0.5 text-[11px] font-semibold rounded-md border transition-all flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer whitespace-nowrap",
@@ -2769,33 +2779,82 @@ export function FairValueCalculator() {
                                                         : calculation.buyPrice;
                                                     const isMatchingBuyPrice = Math.abs(activeLimit - calculation.buyPrice) < 0.01;
                                                     const isMatchingFairValue = Math.abs(activeLimit - calculation.fairValue) < 0.01;
-                                                    const isCustomLimit = activeLimit > 0 && !isMatchingBuyPrice && !isMatchingFairValue;
+
+                                                    const savedType = currentStock?.targetPriceType;
+                                                    let effectiveLimitType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
+                                                    if (savedType) {
+                                                        effectiveLimitType = savedType;
+                                                    } else if (isMatchingBuyPrice) {
+                                                        effectiveLimitType = valuationProfile;
+                                                    } else if (isMatchingFairValue) {
+                                                        effectiveLimitType = 'fairValue';
+                                                    } else {
+                                                        effectiveLimitType = 'manual';
+                                                    }
+
+                                                    const isCustom = effectiveLimitType === 'manual';
+                                                    const iconAndLabelColor = isCustom
+                                                        ? "text-pink-400"
+                                                        : effectiveLimitType === 'risk'
+                                                            ? "text-amber-400"
+                                                            : effectiveLimitType === 'quality'
+                                                                ? "text-purple-400"
+                                                                : "text-blue-400";
 
                                                     return (
-                                                        <span className={cn("font-semibold flex items-center gap-1.5", isCustomLimit ? "text-emerald-400" : kaufpreisTextColor)}>
-                                                            <Target className={cn("size-3.5", isCustomLimit ? "text-emerald-400" : kaufpreisTargetIconColor)} />
+                                                        <span className={cn("font-semibold flex items-center gap-1.5", iconAndLabelColor)}>
+                                                            <Target className="size-3.5" />
                                                             <span>Aktives Kauflimit:</span>
                                                         </span>
                                                     );
                                                 })()}
-                                                {buyLimitSavedToast ? (
-                                                    <span className="text-[11px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1 animate-pulse">
-                                                        <Check className="size-3" />
-                                                        <span>In Kursdaten übernommen!</span>
-                                                    </span>
-                                                ) : currentStock?.targetPrice ? (() => {
+                                                {buyLimitSavedToast ? (() => {
+                                                    const savedType = currentStock?.targetPriceType || valuationProfile;
+                                                    const toastColor = savedType === 'manual'
+                                                        ? "text-pink-400 bg-pink-500/10 border-pink-500/30"
+                                                        : savedType === 'risk'
+                                                            ? "text-amber-400 bg-amber-500/10 border-amber-500/30"
+                                                            : savedType === 'quality'
+                                                                ? "text-purple-400 bg-purple-500/10 border-purple-500/30"
+                                                                : "text-blue-400 bg-blue-500/10 border-blue-500/30";
+
+                                                    return (
+                                                        <span className={cn("text-[11px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 animate-pulse", toastColor)}>
+                                                            <Check className="size-3" />
+                                                            <span>In Kursdaten übernommen!</span>
+                                                        </span>
+                                                    );
+                                                })() : currentStock?.targetPrice ? (() => {
+                                                    const savedType = currentStock?.targetPriceType;
                                                     const isMatchingBuyPrice = Math.abs(currentStock.targetPrice - calculation.buyPrice) < 0.01;
                                                     const isMatchingFairValue = Math.abs(currentStock.targetPrice - calculation.fairValue) < 0.01;
 
-                                                    let badgeLabel = 'Eigenes Limit';
-                                                    let badgeColor = 'text-emerald-400';
-
-                                                    if (isMatchingBuyPrice) {
-                                                        badgeLabel = modeLabel;
-                                                        badgeColor = kaufpreisActiveTextColor;
+                                                    let effectiveLimitType: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual' = 'manual';
+                                                    if (savedType) {
+                                                        effectiveLimitType = savedType;
+                                                    } else if (isMatchingBuyPrice) {
+                                                        effectiveLimitType = valuationProfile;
                                                     } else if (isMatchingFairValue) {
+                                                        effectiveLimitType = 'fairValue';
+                                                    } else {
+                                                        effectiveLimitType = 'manual';
+                                                    }
+
+                                                    let badgeLabel = 'Eigenes Limit';
+                                                    let badgeColor = 'text-pink-400';
+
+                                                    if (effectiveLimitType === 'risk') {
+                                                        badgeLabel = 'Risiko-Abschlag (C)';
+                                                        badgeColor = 'text-amber-400';
+                                                    } else if (effectiveLimitType === 'quality') {
+                                                        badgeLabel = 'Qualität (B)';
+                                                        badgeColor = 'text-purple-400';
+                                                    } else if (effectiveLimitType === 'conservative') {
+                                                        badgeLabel = 'Sicherheit (A)';
+                                                        badgeColor = 'text-blue-400';
+                                                    } else if (effectiveLimitType === 'fairValue') {
                                                         badgeLabel = 'Fairer Wert';
-                                                        badgeColor = kaufpreisActiveTextColor;
+                                                        badgeColor = 'text-blue-300';
                                                     }
 
                                                     return (
@@ -2817,35 +2876,41 @@ export function FairValueCalculator() {
                                                     const numInput = parseFloat(buyLimitInput.replace(',', '.')) || (currentStock?.targetPrice || 0);
                                                     const isMatchingBuyPrice = Math.abs(numInput - calculation.buyPrice) < 0.01;
                                                     const isMatchingFairValue = Math.abs(numInput - calculation.fairValue) < 0.01;
-                                                    const isCustomLimit = numInput > 0 && !isMatchingBuyPrice && !isMatchingFairValue;
+                                                    const isCustomInput = numInput > 0 && !isMatchingBuyPrice && !isMatchingFairValue;
 
-                                                    const inputTextColor = isCustomLimit
-                                                        ? "text-emerald-400 font-bold"
-                                                        : isRiskMode
+                                                    const inputColorType = isCustomInput ? 'manual' : (currentStock?.targetPriceType || valuationProfile);
+
+                                                    const inputTextColor = inputColorType === 'manual'
+                                                        ? "text-pink-400 font-bold"
+                                                        : inputColorType === 'risk'
                                                             ? "text-amber-400 font-bold"
-                                                            : isQualityMode
+                                                            : inputColorType === 'quality'
                                                                 ? "text-purple-400 font-bold"
                                                                 : "text-blue-400 font-bold";
 
-                                                    const inputBorderColor = isCustomLimit
-                                                        ? "border-emerald-500/50 focus:ring-emerald-400"
-                                                        : isRiskMode
+                                                    const inputBorderColor = inputColorType === 'manual'
+                                                        ? "border-pink-500/50 focus:ring-pink-400"
+                                                        : inputColorType === 'risk'
                                                             ? "border-amber-500/50 focus:ring-amber-400"
-                                                            : isQualityMode
+                                                            : inputColorType === 'quality'
                                                                 ? "border-purple-500/50 focus:ring-purple-400"
                                                                 : "border-blue-500/50 focus:ring-blue-400";
 
-                                                    const inputCurrencyColor = isCustomLimit
-                                                        ? "text-emerald-400/90 font-bold"
-                                                        : isRiskMode
+                                                    const inputCurrencyColor = inputColorType === 'manual'
+                                                        ? "text-pink-400/90 font-bold"
+                                                        : inputColorType === 'risk'
                                                             ? "text-amber-400/90 font-bold"
-                                                            : isQualityMode
+                                                            : inputColorType === 'quality'
                                                                 ? "text-purple-400/90 font-bold"
                                                                 : "text-blue-400/90 font-bold";
 
-                                                    const effectiveSaveBtnColor = isCustomLimit
-                                                        ? "bg-emerald-600 hover:bg-emerald-500"
-                                                        : kaufpreisSaveBtnColor;
+                                                    const effectiveSaveBtnColor = inputColorType === 'manual'
+                                                        ? "bg-pink-600 hover:bg-pink-500"
+                                                        : inputColorType === 'risk'
+                                                            ? "bg-amber-600 hover:bg-amber-500"
+                                                            : inputColorType === 'quality'
+                                                                ? "bg-purple-600 hover:bg-purple-500"
+                                                                : "bg-blue-600 hover:bg-blue-500";
 
                                                     return (
                                                         <>
@@ -2857,7 +2922,7 @@ export function FairValueCalculator() {
                                                                     onChange={(e) => setBuyLimitInput(e.target.value)}
                                                                     onKeyDown={(e) => {
                                                                         if (e.key === 'Enter') {
-                                                                            handleSaveBuyLimit(buyLimitInput);
+                                                                            handleSaveBuyLimit(buyLimitInput, 'manual');
                                                                         }
                                                                     }}
                                                                     placeholder={calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : "Optional"}
@@ -2870,7 +2935,7 @@ export function FairValueCalculator() {
 
                                                             <button
                                                                 type="button"
-                                                                onClick={() => handleSaveBuyLimit(buyLimitInput || (calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : ''))}
+                                                                onClick={() => handleSaveBuyLimit(buyLimitInput || (calculation.buyPrice > 0 ? calculation.buyPrice.toFixed(2) : ''), 'manual')}
                                                                 className={cn("px-2.5 py-1 lg:py-0.5 text-white text-xs font-semibold rounded-lg shadow-sm transition-all flex items-center gap-1 shrink-0 active:scale-95 h-7 sm:h-8 lg:h-6.5", effectiveSaveBtnColor)}
                                                                 title="In Kursdaten als Kauflimit speichern"
                                                             >
@@ -2973,7 +3038,7 @@ export function FairValueCalculator() {
                                                                 onClick={() => {
                                                                     const val = zone.targetPrice.toFixed(2);
                                                                     setBuyLimitInput(val);
-                                                                    handleSaveBuyLimit(val);
+                                                                    handleSaveBuyLimit(val, 'manual');
                                                                 }}
                                                                 className={cn(
                                                                     "px-2 py-1 text-[11px] font-semibold rounded-md border transition-all cursor-pointer whitespace-nowrap active:scale-95 flex items-center gap-1",

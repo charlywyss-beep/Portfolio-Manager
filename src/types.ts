@@ -62,6 +62,7 @@ export interface Stock {
     withholdingTaxRate?: number; // Quellensteuersatz in % (z.B. 15, 30, 35, 0)
     logoUrl?: string;
     targetPrice?: number; // Desired buy price (Fair Value) -> Buy Limit
+    targetPriceType?: 'conservative' | 'quality' | 'risk' | 'fairValue' | 'manual'; // Origin of target buy limit
     fairValue?: number; // Calculated Intrinsic Value (without Margin of Safety)
     fairValueParams?: {
         eps: number;
