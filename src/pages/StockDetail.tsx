@@ -520,7 +520,9 @@ export function StockDetail() {
                             )}
                             <span>
                                 {searchParams.get('from') === 'orderbook'
-                                    ? 'Auftragsbuch'
+                                    ? (activeOrder
+                                        ? `Auftragsbuch: ${activeOrder.mode === 'buy' ? 'Kauf' : 'Verkauf'} ${activeOrder.shares} Stk. à ${activeOrder.limitPrice.toFixed(2)} ${activeOrder.currency}`
+                                        : 'Auftragsbuch')
                                     : searchParams.get('from') === 'market-overview'
                                         ? 'Marktübersicht'
                                         : searchParams.get('from') === 'portfolio'
@@ -539,7 +541,7 @@ export function StockDetail() {
                                 title="Zum Auftragsbuch wechseln"
                             >
                                 <ClipboardList className="size-3.5 text-amber-500" />
-                                <span>Auftragsbuch</span>
+                                <span>Auftrag: {activeOrder.mode === 'buy' ? 'Kauf' : 'Verkauf'} {activeOrder.shares} Stk. à {activeOrder.limitPrice.toFixed(2)} {activeOrder.currency}</span>
                             </button>
                         )}
 
@@ -614,17 +616,6 @@ export function StockDetail() {
                                         <div className="size-2 md:size-2.5 rounded-full bg-red-500 cursor-help border border-background shrink-0" title={`Markt geschlossen (${displayLabel})`} />
                                     );
                                 })()}
-                                {activeOrder && (
-                                    <button
-                                        type="button"
-                                        onClick={() => navigate('/calculator?orderbook=true')}
-                                        className="inline-flex items-center gap-1.5 px-2.5 py-0.5 md:py-1 rounded-lg text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/35 hover:bg-amber-500/25 transition-all shadow-xs cursor-pointer"
-                                        title="Aktiver Auftrag im Auftragsbuch – Klicken um Auftragsbuch zu öffnen"
-                                    >
-                                        <ClipboardList className="size-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                                        <span>Auftrag: {activeOrder.mode === 'buy' ? 'Kauf' : 'Verkauf'} {activeOrder.shares} Stk. à {activeOrder.limitPrice.toFixed(2)} {activeOrder.currency}</span>
-                                    </button>
-                                )}
                                 <div className="flex items-center gap-1 ml-auto sm:ml-0">
                                     <button
                                         onClick={() => navigate(`/calculator?stock=${stock.id}&mode=buy`)}
