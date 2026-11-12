@@ -255,11 +255,11 @@ export function PerformanceDetailsModal({ isOpen, onClose, positions }: Performa
 
     return createPortal(
         <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-2 sm:p-4 md:py-3 iphone-modal-overlay"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center md:items-start justify-center p-2 sm:p-4 md:pt-6 lg:pt-8 md:pb-6 iphone-modal-overlay"
             onClick={onClose}
         >
             <div
-                className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-[96vw] md:max-w-5xl lg:max-w-6xl xl:max-w-7xl max-h-[96vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10 overflow-hidden iphone-modal-shell"
+                className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-[96vw] md:max-w-5xl lg:max-w-6xl xl:max-w-7xl md:h-[88vh] max-h-[96vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 relative z-10 overflow-hidden iphone-modal-shell"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card z-10 iphone-modal-header-card">
