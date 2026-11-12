@@ -2428,7 +2428,7 @@ export function FairValueCalculator() {
                                                 {isUndervalued ? 'KAUFEN' : (isFairHold || isRichHold) ? 'HOLD' : 'TEUER'}
                                             </div>
                                             <div className="text-[10px] sm:text-xs font-bold tracking-tight opacity-75 mt-0.5 leading-tight">
-                                                {isUndervalued ? 'Unterbewertet' : isFairHold ? 'Fair bewertet' : isRichHold ? 'Hoch bewertet' : 'Teuer bewertet'}
+                                                {isUndervalued ? 'Unterbewertet' : isFairHold ? 'Fair bewertet' : isRichHold ? 'Hoch bewertet' : 'Überbewertet'}
                                             </div>
                                         </div>
                                     </div>
@@ -2538,8 +2538,8 @@ export function FairValueCalculator() {
                                                     )}
                                                     {isOverheated && (
                                                         <>
-                                                            <div>Teuer bewertet – hohes Korrekturrisiko bezogen auf fundamentale Kennzahlen.</div>
-                                                            <div className="mt-0.5 text-muted-foreground/90">Aktuell kein Neukauf.</div>
+                                                            <div className="text-rose-400 font-medium">Überbewertet – hohes Korrekturrisiko bezogen auf fundamentale Kennzahlen.</div>
+                                                            <div className="mt-0.5 font-bold text-rose-400">Aktuell kein Neukauf.</div>
                                                         </>
                                                     )}
                                                 </div>
