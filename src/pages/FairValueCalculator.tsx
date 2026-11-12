@@ -2406,42 +2406,67 @@ export function FairValueCalculator() {
                                         Bewertung
                                     </h2>
 
-                                    {/* Traffic Light Badge (Abgerundetes Quadrat) mit Tooltip zur aktuellen Farbe */}
+                                    {/* Traffic Light Badge (Abgerundetes Quadrat) mit linksbündigem Tooltip */}
                                     {(() => {
-                                        const ratingTooltip = isUndervalued
-                                            ? 'KAUFEN (Unterbewertet): Kurs liegt unter dem Kauflimit (inkl. Sicherheitsmarge).'
+                                        const ratingText = isUndervalued
+                                            ? 'Kurs liegt unter dem Kauflimit (inkl. Sicherheitsmarge).'
                                             : isFairHold
-                                                ? 'HOLD (Fair bewertet): Kurs liegt im Korridor bis zu +12 % über dem fairen Wert. Bestände entspannt halten.'
+                                                ? 'Kurs liegt im Korridor bis zu +12 % über dem fairen Wert. Bestände entspannt halten.'
                                                 : isRichHold
-                                                    ? 'HOLD (Hoch bewertet): Kurs liegt zwischen +12 % und +45 % über dem fairen Wert. Bestände halten, kein Neukauf.'
-                                                    : 'TEUER (Überbewertet): Kurs liegt mehr als +45 % über dem fairen Wert. Hohes Korrekturrisiko.';
+                                                    ? 'Kurs liegt zwischen +12 % und +45 % über dem fairen Wert. Bestände halten, kein Neukauf.'
+                                                    : 'Kurs liegt mehr als +45 % über dem fairen Wert. Hohes Korrekturrisiko.';
+
+                                        const ratingTitle = isUndervalued
+                                            ? 'KAUFEN (Unterbewertet)'
+                                            : isFairHold
+                                                ? 'HOLD (Fair bewertet)'
+                                                : isRichHold
+                                                    ? 'HOLD (Hoch bewertet)'
+                                                    : 'TEUER (Überbewertet)';
 
                                         return (
-                                            <div
-                                                className={cn(
-                                                    "fair-value-circle fair-value-badge relative w-40 sm:w-48 lg:w-44 xl:w-52 py-2 px-3 sm:py-2.5 sm:px-4 rounded-2xl flex flex-col items-center justify-center border-2 shadow-md transition-all duration-500 text-center cursor-help",
-                                                    isUndervalued
-                                                        ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-emerald-500/20"
-                                                        : isFairHold
-                                                            ? "bg-yellow-500/10 border-yellow-500 text-yellow-500 shadow-yellow-500/20"
-                                                            : isRichHold
-                                                                ? "bg-amber-500/10 border-amber-500 text-amber-500 shadow-amber-500/20"
-                                                                : "bg-red-500/10 border-red-500 text-red-500 shadow-red-500/20"
-                                                )}
-                                                title={ratingTooltip}
-                                            >
-                                                <div className="flex flex-col items-center justify-center w-full">
-                                                    <div className="text-sm sm:text-base lg:text-base xl:text-lg font-black leading-tight whitespace-nowrap tabular-nums">
-                                                        {formatCurrency(currentPrice, quote.currency, false)}
+                                            <div className="relative group flex flex-col items-center">
+                                                <div
+                                                    className={cn(
+                                                        "fair-value-circle fair-value-badge relative w-40 sm:w-48 lg:w-44 xl:w-52 py-2 px-3 sm:py-2.5 sm:px-4 rounded-2xl flex flex-col items-center justify-center border-2 shadow-md transition-all duration-500 text-center cursor-help",
+                                                        isUndervalued
+                                                            ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-emerald-500/20"
+                                                            : isFairHold
+                                                                ? "bg-yellow-500/10 border-yellow-500 text-yellow-500 shadow-yellow-500/20"
+                                                                : isRichHold
+                                                                    ? "bg-amber-500/10 border-amber-500 text-amber-500 shadow-amber-500/20"
+                                                                    : "bg-red-500/10 border-red-500 text-red-500 shadow-red-500/20"
+                                                    )}
+                                                >
+                                                    <div className="flex flex-col items-center justify-center w-full">
+                                                        <div className="text-sm sm:text-base lg:text-base xl:text-lg font-black leading-tight whitespace-nowrap tabular-nums">
+                                                            {formatCurrency(currentPrice, quote.currency, false)}
+                                                        </div>
+                                                        <div className="text-[10px] sm:text-xs font-semibold opacity-85 leading-tight mb-1 sm:mb-1.5">
+                                                            Aktueller Kurs
+                                                        </div>
+                                                        <div className="text-xs sm:text-sm font-black tracking-wider uppercase opacity-90 leading-tight">
+                                                            {isUndervalued ? 'KAUFEN' : (isFairHold || isRichHold) ? 'HOLD' : 'TEUER'}
+                                                        </div>
+                                                        <div className="text-[10px] sm:text-xs font-bold tracking-tight opacity-75 mt-0.5 leading-tight">
+                                                            {isUndervalued ? 'Unterbewertet' : isFairHold ? 'Fair bewertet' : isRichHold ? 'Hoch bewertet' : 'Überbewertet'}
+                                                        </div>
                                                     </div>
-                                                    <div className="text-[10px] sm:text-xs font-semibold opacity-85 leading-tight mb-1 sm:mb-1.5">
-                                                        Aktueller Kurs
+                                                </div>
+
+                                                {/* Eigener Tooltip: Nach links ausgerichtet, berührt garantiert nicht den Scroller */}
+                                                <div className="pointer-events-none absolute top-full right-0 mt-1.5 z-50 w-72 sm:w-80 max-w-[85vw] p-2.5 rounded-xl border border-border/80 bg-slate-900/95 text-foreground shadow-2xl opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150 text-left text-xs leading-relaxed backdrop-blur-md">
+                                                    <div className="font-bold flex items-center gap-1.5 mb-0.5">
+                                                        <span className={cn(
+                                                            "size-2 rounded-full shrink-0",
+                                                            isUndervalued ? "bg-emerald-400" : isFairHold ? "bg-yellow-400" : isRichHold ? "bg-amber-400" : "bg-rose-400"
+                                                        )} />
+                                                        <span className={isUndervalued ? "text-emerald-400" : isFairHold ? "text-yellow-400" : isRichHold ? "text-amber-400" : "text-rose-400"}>
+                                                            {ratingTitle}
+                                                        </span>
                                                     </div>
-                                                    <div className="text-xs sm:text-sm font-black tracking-wider uppercase opacity-90 leading-tight">
-                                                        {isUndervalued ? 'KAUFEN' : (isFairHold || isRichHold) ? 'HOLD' : 'TEUER'}
-                                                    </div>
-                                                    <div className="text-[10px] sm:text-xs font-bold tracking-tight opacity-75 mt-0.5 leading-tight">
-                                                        {isUndervalued ? 'Unterbewertet' : isFairHold ? 'Fair bewertet' : isRichHold ? 'Hoch bewertet' : 'Überbewertet'}
+                                                    <div className="text-muted-foreground text-[12px] leading-snug">
+                                                        {ratingText}
                                                     </div>
                                                 </div>
                                             </div>
