@@ -122,8 +122,8 @@ export default defineConfig({
                        if (!chartMeta) return { symbol: sym, error: 'No chart data' };
                        
                         // Pre-Market / After-Hours aus 5m-Chart (includePrePost) ableiten - kein Crumb noetig
-                        const ext: { state: string | null; prePrice: number | null; prePct: number | null; postPrice: number | null; postPct: number | null } =
-                            { state: null, prePrice: null, prePct: null, postPrice: null, postPct: null };
+                        const ext: { state: string | null; prePrice: number | null; prePct: number | null; postPrice: number | null; postPct: number | null; preTime: number | null; postTime: number | null } =
+                            { state: null, prePrice: null, prePct: null, postPrice: null, postPct: null, preTime: null, postTime: null };
                         try {
                             const exRes = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=5m&range=1d&includePrePost=true`, { headers: { 'User-Agent': 'Mozilla/5.0' } });
                             if (exRes.ok) {
@@ -139,20 +139,20 @@ export default defineConfig({
                                     // Kerzen koennen vom Vortag stammen (z.B. vor Pre-Market): Perioden um ganze Tage verschieben
                                     const refPer = tp.pre || tp.regular;
                                     const dayShift = ts.length ? Math.max(0, Math.round((refPer.start - ts[0]) / 86400)) * 86400 : 0;
-                                    const lastIn = (per: any): number | null => {
+                                    const lastIn = (per: any): { px: number; t: number } | null => {
                                         if (!per) return null;
                                         for (let i = ts.length - 1; i >= 0; i--) {
-                                            if (ts[i] >= per.start - dayShift && ts[i] < per.end - dayShift && typeof closes[i] === 'number') return closes[i] as number;
+                                            if (ts[i] >= per.start - dayShift && ts[i] < per.end - dayShift && typeof closes[i] === 'number') return { px: closes[i] as number, t: ts[i] };
                                         }
                                         return null;
                                     };
                                     const regPx = chartMeta.regularMarketPrice;
                                     const pct = (v: number | null) => (v && regPx) ? (v / regPx - 1) * 100 : null;
                                     if (ext.state === 'PRE') {
-                                        ext.prePrice = lastIn(tp.pre);
+                                        const lp = lastIn(tp.pre); ext.prePrice = lp ? lp.px : null; ext.preTime = lp ? lp.t : null;
                                         ext.prePct = pct(ext.prePrice);
                                     } else if (ext.state === 'POST' || ext.state === 'CLOSED') {
-                                        ext.postPrice = lastIn(tp.post);
+                                        const lq = lastIn(tp.post); ext.postPrice = lq ? lq.px : null; ext.postTime = lq ? lq.t : null;
                                         ext.postPct = pct(ext.postPrice);
                                     }
                                 }
@@ -180,6 +180,8 @@ export default defineConfig({
                             preMarketChangePercent: ext.prePct,
                             postMarketPrice: ext.postPrice,
                             postMarketChangePercent: ext.postPct,
+                            preMarketTime: ext.preTime,
+                            postMarketTime: ext.postTime,
                            trailingPE: (chartMeta.regularMarketPrice && fallbackEps) ? (chartMeta.regularMarketPrice / fallbackEps) : null,
                            forwardPE: null,
                            eps: fallbackEps,
@@ -298,6 +300,8 @@ export default defineConfig({
                 preMarketChangePercent: getRawVal(quoteBasic?.preMarketChangePercent) ?? getRawVal(price.preMarketChangePercent) ?? null,
                 postMarketPrice: getRawVal(quoteBasic?.postMarketPrice) ?? getRawVal(price.postMarketPrice) ?? null,
                 postMarketChangePercent: getRawVal(quoteBasic?.postMarketChangePercent) ?? getRawVal(price.postMarketChangePercent) ?? null,
+                preMarketTime: ((v: any) => v instanceof Date ? Math.floor(v.getTime() / 1000) : (typeof v === 'number' ? v : null))(quoteBasic?.preMarketTime),
+                postMarketTime: ((v: any) => v instanceof Date ? Math.floor(v.getTime() / 1000) : (typeof v === 'number' ? v : null))(quoteBasic?.postMarketTime),
 
                 country: summaryProfile.country || null,
                 sector: summaryProfile.sector || null,

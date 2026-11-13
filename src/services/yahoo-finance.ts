@@ -352,6 +352,8 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
     preMarketChangePercent?: number | null,
     postMarketPrice?: number | null,
     postMarketChangePercent?: number | null,
+    preMarketTime?: number | null,
+    postMarketTime?: number | null,
     trailingPE?: number | null,
     forwardPE?: number | null,
     eps?: number | null,
@@ -410,6 +412,8 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
     preMarketChangePercent?: number | null,
     postMarketPrice?: number | null,
     postMarketChangePercent?: number | null,
+    preMarketTime?: number | null,
+    postMarketTime?: number | null,
             trailingPE?: number | null,
             forwardPE?: number | null,
             eps?: number | null,
@@ -438,6 +442,7 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
                 const extPct = (p: any, ext: number | null) => (typeof p === 'number') ? p : ((ext && price) ? (ext / price - 1) * 100 : null);
                 const preMarketPrice = extPrice(res.preMarketPrice);
                 const postMarketPrice = extPrice(res.postMarketPrice);
+                const extTime = (v: any): number | null => { if (typeof v === 'number') return v > 1e12 ? Math.floor(v / 1000) : v; if (typeof v === 'string') { const ms = Date.parse(v); return isNaN(ms) ? null : Math.floor(ms / 1000); } return null; };
 
                 // Extraction helper for potential Yahoo objects {raw, fmt}
                 const extractValue = (val: any) => (val && typeof val === 'object' && 'raw' in val) ? val.raw : val;
@@ -475,6 +480,8 @@ export async function fetchStockQuotes(symbols: string[]): Promise<Record<string
                     preMarketChangePercent: preMarketPrice ? extPct(res.preMarketChangePercent, preMarketPrice) : null,
                     postMarketPrice,
                     postMarketChangePercent: postMarketPrice ? extPct(res.postMarketChangePercent, postMarketPrice) : null,
+                    preMarketTime: preMarketPrice ? extTime(res.preMarketTime) : null,
+                    postMarketTime: postMarketPrice ? extTime(res.postMarketTime) : null,
                     trailingPE,
                     forwardPE,
                     eps,
@@ -536,6 +543,8 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
     preMarketChangePercent?: number | null,
     postMarketPrice?: number | null,
     postMarketChangePercent?: number | null,
+    preMarketTime?: number | null,
+    postMarketTime?: number | null,
     open?: number | null,
     previousClose?: number | null,
     sectorWeights?: { [key: string]: number } | null,
@@ -591,6 +600,8 @@ export async function fetchStockQuote(symbol: string, initialName?: string): Pro
                 preMarketChangePercent: batchResult.preMarketChangePercent ?? null,
                 postMarketPrice: batchResult.postMarketPrice ?? null,
                 postMarketChangePercent: batchResult.postMarketChangePercent ?? null,
+                preMarketTime: batchResult.preMarketTime ?? null,
+                postMarketTime: batchResult.postMarketTime ?? null,
                 open: (batchResult as any).open || null,
                 previousClose: batchResult.previousClose || null,
                 sectorWeights: sectorWeights,

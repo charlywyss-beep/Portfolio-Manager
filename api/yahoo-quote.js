@@ -261,6 +261,8 @@ export default async function handler(req, res) {
             preMarketChangePercent: quoteBasic?.preMarketChangePercent ?? quoteSummary?.price?.preMarketChangePercent ?? null,
             postMarketPrice: quoteBasic?.postMarketPrice ?? quoteSummary?.price?.postMarketPrice ?? null,
             postMarketChangePercent: quoteBasic?.postMarketChangePercent ?? quoteSummary?.price?.postMarketChangePercent ?? null,
+            preMarketTime: quoteBasic?.preMarketTime instanceof Date ? Math.floor(quoteBasic.preMarketTime.getTime() / 1000) : (typeof quoteBasic?.preMarketTime === 'number' ? quoteBasic.preMarketTime : null),
+            postMarketTime: quoteBasic?.postMarketTime instanceof Date ? Math.floor(quoteBasic.postMarketTime.getTime() / 1000) : (typeof quoteBasic?.postMarketTime === 'number' ? quoteBasic.postMarketTime : null),
             currency: quoteBasic?.currency || quoteSummary?.price?.currency,
 
             regularMarketTime: (quoteBasic?.regularMarketTime || quoteSummary?.price?.regularMarketTime) ?

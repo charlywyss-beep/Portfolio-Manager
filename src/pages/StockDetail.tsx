@@ -5,7 +5,8 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePortfolio } from '../context/PortfolioContext';
 
 import { useCurrencyFormatter } from '../utils/currency';
-import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, Pencil, Landmark, Activity, BarChart3, Calendar, Layers, Link2, ClipboardList } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, Pencil, Landmark, Activity, BarChart3, Calendar, Layers, Link2, ClipboardList, Info } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
 import { estimateMarketState } from '../utils/market';
@@ -108,6 +109,7 @@ export function StockDetail() {
     const [quoteDate, setQuoteDate] = useState<Date | null>(null);
     const [minutesAgo, setMinutesAgo] = useState(0);
     const [fvModeTick, setFvModeTick] = useState(0);
+    const [showKursInfo, setShowKursInfo] = useState(false);
 
     // Update time ago string every minute
     useEffect(() => {
@@ -417,7 +419,7 @@ export function StockDetail() {
                 }
 
                 // Pre-Market / After-Hours Indikation (immer synchronisieren, auch zum Zuruecksetzen)
-                const extKeys = ['marketState', 'preMarketPrice', 'preMarketChangePercent', 'postMarketPrice', 'postMarketChangePercent'] as const;
+                const extKeys = ['marketState', 'preMarketPrice', 'preMarketChangePercent', 'postMarketPrice', 'postMarketChangePercent', 'preMarketTime', 'postMarketTime'] as const;
                 for (const key of extKeys) {
                     const nv = (quoteResponse as any)[key] ?? undefined;
                     if (nv !== ((currentStock as any)[key] ?? undefined)) {
@@ -849,6 +851,66 @@ export function StockDetail() {
                             <Activity className="size-4 md:size-5 text-blue-500 shrink-0" />
                             <h3 className="font-bold text-base md:text-lg landscape:text-xs">Kursdaten</h3>
                             <Pencil className="size-3 md:size-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <button
+                                type="button"
+                                onClick={(ev) => { ev.stopPropagation(); setShowKursInfo(true); }}
+                                className="p-0.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                                title="Erklärung zu den Kursdaten"
+                                aria-label="Erklärung zu den Kursdaten"
+                            >
+                                <Info className="size-4 md:size-[18px]" />
+                            </button>
+                            {showKursInfo && createPortal(
+                                <div
+                                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+                                    onClick={(ev) => { ev.stopPropagation(); setShowKursInfo(false); }}
+                                >
+                                    <div
+                                        className="bg-card text-foreground border border-border rounded-xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-5 cursor-default"
+                                        onClick={(ev) => ev.stopPropagation()}
+                                    >
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h4 className="font-bold text-lg flex items-center gap-2"><Info className="size-5 text-blue-500" /> Erklärung: Kursdaten</h4>
+                                            <button type="button" onClick={() => setShowKursInfo(false)} className="px-2.5 py-1 rounded-lg text-sm font-semibold bg-muted hover:bg-muted/70">Schliessen</button>
+                                        </div>
+                                        <dl className="space-y-2.5 text-sm">
+                                            {[
+                                                ['Bestand', 'Anzahl Aktien, die du aktuell besitzt.'],
+                                                ['Kaufpreis Ø', 'Durchschnittlicher Einstandskurs über alle Käufe (inkl. Nachkäufe).'],
+                                                ['Gewinn/Verlust', 'Aktueller Kurs gegenüber Kaufpreis Ø, in Prozent und als Betrag. Noch nicht realisiert, also nur auf dem Papier.'],
+                                                ['Aktueller Kurs', 'Letzter Kurs der Börse. Ausserhalb der Handelszeit ist das der Schlusskurs.'],
+                                                ['Eröffnung / Vortag', 'Erster Kurs des heutigen Handelstages / Schlusskurs des Vortages. Die Tagesperformance rechnet gegen den Vortag.'],
+                                                ['Pre-Market', 'Handel vor der Börseneröffnung (nur US-Aktien). Der Kurs ist nur eine Indikation und kann sich bis zur Eröffnung stark ändern.'],
+                                                ['After-Hours', 'Handel nach Börsenschluss (nur US-Aktien). Gibt einen Hinweis, wie die Eröffnung am nächsten Tag ausfallen könnte. Die Uhrzeit hinter dem Namen zeigt, wann der Kurs zuletzt gehandelt wurde.'],
+                                                ['Kauflimit', 'Preis, bis zu dem du kaufen oder nachkaufen willst. Das Etikett zeigt die Herkunft: Sicherheit (A), Qualität (B), Risiko-Abschlag (C), Fairer Wert oder Eigenes Limit (aus dem Fairen-Wert-Rechner).'],
+                                                ['Verkaufslimit', 'Preis, ab dem du verkaufen willst.'],
+                                                ['Kaufpreis (A / B / Manuell)', 'Aus dem Fairen-Wert-Rechner berechneter Kaufpreis (Fairer Wert minus Sicherheitsmarge). Ein Klick auf die Beschriftung wechselt zwischen Sicherheit A, Qualität B und Manuell.'],
+                                                ['Fairer Wert', 'Innerer Wert der Aktie heute laut deinen Parametern im Fairen-Wert-Rechner (Zielrendite und Dividenden).'],
+                                                ['Zielkurs (5J)', 'Erwarteter Kurs in 5 Jahren laut deinen Parametern im Fairen-Wert-Rechner (Wachstum und Verkaufs-KGV).'],
+                                                ['Gewinn 5J (Bestand)', 'Erwarteter Gewinn deines aktuellen Bestands bis zum Zielkurs. Darunter steht die Rendite pro Jahr ab heute.'],
+                                            ].map(([t, d]) => (
+                                                <div key={t}>
+                                                    <dt className="font-semibold text-foreground">{t}</dt>
+                                                    <dd className="text-muted-foreground">{d}</dd>
+                                                </div>
+                                            ))}
+                                        </dl>
+                                        <div className="mt-4 pt-3 border-t border-border text-sm">
+                                            <div className="font-semibold mb-1">US-Handelszeiten in deiner Zeit (MEZ)</div>
+                                            <table className="w-full text-sm">
+                                                <thead><tr className="text-muted-foreground text-left"><th className="py-0.5 font-medium">Phase</th><th className="py-0.5 font-medium">US-Zeit (ET)</th><th className="py-0.5 font-medium">Deine Zeit</th></tr></thead>
+                                                <tbody>
+                                                    <tr><td className="py-0.5">Pre-Market</td><td>04:00 – 09:30</td><td>10:00 – 15:30</td></tr>
+                                                    <tr><td className="py-0.5">Regulärer Handel</td><td>09:30 – 16:00</td><td>15:30 – 22:00</td></tr>
+                                                    <tr><td className="py-0.5">After-Hours</td><td>16:00 – 20:00</td><td>22:00 – 02:00</td></tr>
+                                                </tbody>
+                                            </table>
+                                            <p className="text-muted-foreground mt-2">In den Wochen, in denen USA und Europa nicht am selben Tag auf Sommer- oder Winterzeit umstellen, verschiebt sich der Unterschied um eine Stunde. Für Aktien aus der Schweiz, Deutschland oder Grossbritannien gibt es keine Pre-Market- und After-Hours-Werte.</p>
+                                        </div>
+                                    </div>
+                                </div>,
+                                document.body
+                            )}
                         </div>
                         <button
                             type="button"
@@ -938,16 +1000,22 @@ export function StockDetail() {
                         const st = stock.marketState;
                         const isPre = st === 'PRE' || st === 'PREPRE';
                         const isPost = st === 'POST' || st === 'POSTPOST' || st === 'CLOSED';
+                        const fmtT = (s?: number | null) => {
+                            if (!s) return '';
+                            const d = new Date(s * 1000);
+                            const hm = d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
+                            return d.toDateString() === new Date().toDateString() ? hm : d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' }) + ' ' + hm;
+                        };
                         const ext = isPre
-                            ? { label: 'Pre-Market', price: stock.preMarketPrice, pct: stock.preMarketChangePercent }
+                            ? { label: 'Pre-Market', price: stock.preMarketPrice, pct: stock.preMarketChangePercent, time: stock.preMarketTime }
                             : isPost
-                                ? { label: 'After-Hours', price: stock.postMarketPrice, pct: stock.postMarketChangePercent }
+                                ? { label: 'After-Hours', price: stock.postMarketPrice, pct: stock.postMarketChangePercent, time: stock.postMarketTime }
                                 : null;
                         if (!ext || !ext.price) return null;
                         const pct = ext.pct ?? 0;
                         return (
                             <div className="flex justify-between py-1 md:py-1.5 landscape:py-0.5 border-b border-border/50 text-xs sm:text-sm landscape:text-[11px]">
-                                <span className="text-muted-foreground">{ext.label}</span>
+                                <span className="text-muted-foreground">{ext.label}{(ext as any).time ? ` · ${fmtT((ext as any).time)}` : ''}</span>
                                 <span className="font-medium tabular-nums text-right">
                                     {formatCurrency(ext.price, stock.currency, false)}
                                     {ext.pct !== null && ext.pct !== undefined && (

@@ -101,6 +101,8 @@ export interface Stock {
     preMarketChangePercent?: number | null;
     postMarketPrice?: number | null; // Yahoo After-Hours Indikation
     postMarketChangePercent?: number | null;
+    preMarketTime?: number | null; // Unix-Sekunden des Pre-Market-Kurses
+    postMarketTime?: number | null; // Unix-Sekunden des After-Hours-Kurses
     sectorWeights?: { [key: string]: number }; // NEW: For ETFs (Sector Allocation)
     countryWeights?: { [key: string]: number }; // NEW: For ETFs (Country Allocation)
 }
