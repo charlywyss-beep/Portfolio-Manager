@@ -7,6 +7,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { useCurrencyFormatter } from '../utils/currency';
 import { ArrowLeft, ArrowRight, RefreshCw, TrendingUp, Map as MapIcon, Save, Trash2, Calculator, BarChart2, ShieldCheck, Sparkles, Sliders, Pencil, Landmark, Activity, BarChart3, Calendar, Layers, Link2, ClipboardList, Info } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import { InfoHelp } from '../components/InfoHelp';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { FALLBACK_ALLOCATIONS } from '../data/fallbackAllocations';
 import { estimateMarketState } from '../utils/market';
@@ -783,6 +784,7 @@ export function StockDetail() {
                     <div className="flex items-center gap-2">
                         <TrendingUp className="size-5 text-blue-500 shrink-0" />
                         <h3 className="font-bold text-lg whitespace-nowrap"><span className="md:hidden">Kurs</span><span className="hidden md:inline">Kursverlauf</span></h3>
+                        <InfoHelp title="Kursverlauf" items={[{ term: "Zeiträume (1D bis 5J)", text: "Wählt die Zeitspanne des Charts. 1D ist der heutige Handelstag, 1W eine Woche, 1M ein Monat, 3M und 6M drei und sechs Monate, 1J, 3J und 5J ein, drei und fünf Jahre." }, { term: "Seit Kauf", text: "Zeigt den Verlauf ab etwa deinem Kaufdatum (mit kurzem Vorlauf). Erscheint nur, wenn du die Aktie besitzt." }, { term: "Performance", text: "Veränderung im gewählten Zeitraum in Prozent und als Betrag. Bei 1D wird gegen den Schlusskurs des Vortages gerechnet." }, { term: "H und T", text: "Höchster (H) und tiefster (T) Kurs im gewählten Zeitraum." }, { term: "CHF", text: "Rechnet die Kurse in Schweizer Franken um. Der Schalter erscheint nur bei Aktien in Fremdwährung." }, { term: "Messen", text: "Messmodus: Klicke zwei Punkte im Chart an oder wähle Hoch (H) oder Tief (T). Die App zeigt dann die Veränderung dazwischen. Mit dem Pfeil kannst du Start und Ziel vertauschen." }, { term: "Hinweis zur Datenaktualität", text: "Das Schild oben rechts im Chart zeigt, wie aktuell die Daten sind: Live-Kurs, Verzögerte Daten (die Börse liefert den Kurs mit Verspätung) oder Schlusskurs mit Datum und Uhrzeit, wenn die Börse geschlossen ist." }]} />
                     </div>
 
                     {/* Right: Action Buttons (Performance Details & Position bearbeiten) */}
@@ -1537,6 +1539,7 @@ export function StockDetail() {
                             <span className="text-xs sm:text-sm font-semibold text-primary flex items-center gap-1.5 transition-colors">
                                 <BarChart3 className="size-3.5 text-blue-400 shrink-0" />
                                 Bewertung & Kennzahlen
+                                <InfoHelp title="Bewertung & Kennzahlen" items={[{ term: "KGV (P/E)", text: "Kurs-Gewinn-Verhältnis: Kurs geteilt durch den Gewinn pro Aktie der letzten 12 Monate. Niedrig bedeutet günstiger bewertet, hoch bedeutet, dass der Markt starkes Wachstum erwartet. Steht \"(Fwd)\" dahinter, ist es das erwartete KGV auf Basis der Gewinnschätzung fürs nächste Jahr." }, { term: "KCV (P/CF)", text: "Kurs-Cashflow-Verhältnis: Marktwert geteilt durch den operativen Cashflow. Funktioniert wie das KGV, ist aber weniger anfällig für Buchhaltungseffekte. Auch hier gilt: niedriger heisst günstiger." }, { term: "Einordnung", text: "Vergleiche Kennzahlen nur innerhalb derselben Branche und immer zusammen mit dem Wachstum. Forward-KGV und PEG findest du im Fairen-Wert-Rechner." }]} />
                             </span>
                             <Pencil className="size-3 text-muted-foreground group-hover/sec:text-primary transition-colors opacity-60 group-hover/sec:opacity-100" />
                         </div>
@@ -1568,6 +1571,7 @@ export function StockDetail() {
                             <span className="text-xs sm:text-sm font-semibold text-primary flex items-center gap-1.5 transition-colors">
                                 <Calendar className="size-3.5 text-blue-400 shrink-0" />
                                 Dividenden & Termine
+                                <InfoHelp title="Dividenden & Termine" items={[{ term: "Div. Frequenz", text: "Wie oft die Dividende ausgezahlt wird: monatlich, quartalsweise, halbjährlich oder jährlich." }, { term: "Div. Rendite", text: "Jahresdividende im Verhältnis zum Kurs. \"% Kurs\" bezieht sich auf den aktuellen Kurs. \"% Käufe\" bezieht sich auf deinen durchschnittlichen Kaufpreis. Der CHF-Betrag ist die erwartete Jahresdividende für deinen Bestand in Franken, ohne Abzug von Steuern." }, { term: "Nächster Ex-Tag", text: "Ab diesem Tag wird die Aktie ohne die nächste Dividende gehandelt. Die Dividende bekommt, wer die Aktie vor dem Ex-Tag besitzt." }, { term: "Nächster Zahltag", text: "Tag, an dem die Dividende ausgezahlt wird. Auf deinem Konto kann sie beim Broker einige Tage später erscheinen." }]} />
                             </span>
                             <Pencil className="size-3 text-muted-foreground group-hover/sec:text-primary transition-colors opacity-60 group-hover/sec:opacity-100" />
                         </div>
