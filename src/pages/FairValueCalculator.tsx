@@ -1090,11 +1090,15 @@ export function FairValueCalculator() {
         const numEps = typeof eps === 'string' ? parseFloat(eps) || 0 : Number(eps) || 0;
         const curP = quote?.price || 0;
         const curPe = (curP > 0 && numEps > 0) ? (curP / numEps) : (quote?.trailingPE || 0);
-        const forwardPe = (quote?.forwardPE && quote.forwardPE > 2) ? quote.forwardPE : ((analysis?.forwardPE && analysis.forwardPE > 2) ? analysis.forwardPE : 0);
+        const forwardPe = (quote?.forwardPE && quote.forwardPE > 2 && quote.forwardPE < 200)
+            ? quote.forwardPE
+            : ((analysis?.forwardPE && analysis.forwardPE > 2 && analysis.forwardPE < 200)
+                ? analysis.forwardPE
+                : (curP > 0 && numEps > 0 ? curP / numEps : 0));
         const exitPe = typeof pe === 'string' ? parseFloat(pe) || 0 : Number(pe) || 0;
 
-        // Als Referenz-KGV für die Wachstumsplausibilität: Bevorzugt Forward-KGV (Zukunftsbewertung), sonst exitPe oder curPe
-        const refPe = forwardPe > 0 ? forwardPe : (exitPe > 0 ? exitPe : curPe);
+        // Als Referenz-KGV für die Wachstumsplausibilität: Bevorzugt Forward-KGV (Zukunftsbewertung der Aktie), sonst curPe oder exitPe
+        const refPe = forwardPe > 0 ? forwardPe : (curPe > 0 ? curPe : exitPe);
 
         // Dynamischer PEG basierend auf aktuellem Wachstums-Input und Referenz-KGV
         let peg: number | null = null;
